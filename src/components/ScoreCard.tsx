@@ -2,7 +2,7 @@
 // Animated score visualization — the shareable/viral piece of the app
 // Drop into src/components/ScoreCard.tsx
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 interface Scores {
   hook: number;
@@ -16,6 +16,7 @@ interface ScoreCardProps {
   scores: Scores;
   fileName?: string;
   onShare?: () => void;
+  isDark?: boolean;
 }
 
 const SCORE_LABELS: Record<keyof Scores, string> = {
@@ -49,12 +50,14 @@ function ScoreArc({
   size = 56,
   strokeWidth = 4,
   animated = true,
+  isDark = true,
 }: {
   score: number;
   color: string;
   size?: number;
   strokeWidth?: number;
   animated?: boolean;
+  isDark?: boolean;
 }) {
   const [displayScore, setDisplayScore] = useState(animated ? 0 : score);
   const radius = (size - strokeWidth * 2) / 2;
@@ -86,7 +89,7 @@ function ScoreArc({
         cy={center}
         r={radius}
         fill="none"
-        stroke="rgba(255,255,255,0.06)"
+        stroke={isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}
         strokeWidth={strokeWidth}
       />
       {/* Progress */}
@@ -111,11 +114,13 @@ function ScoreRow({
   score,
   color,
   delay = 0,
+  isDark = true,
 }: {
   label: string;
   score: number;
   color: string;
   delay?: number;
+  isDark?: boolean;
 }) {
   const [visible, setVisible] = useState(false);
   const [barWidth, setBarWidth] = useState(0);
@@ -130,6 +135,7 @@ function ScoreRow({
   }, [score, delay]);
 
   const { label: scoreLabel } = getScoreLabel(score);
+  const muted = isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)";
 
   return (
     <div
@@ -141,7 +147,7 @@ function ScoreRow({
         alignItems: "center",
         gap: "12px",
         padding: "10px 0",
-        borderBottom: "1px solid rgba(255,255,255,0.04)",
+        borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)"}`,
       }}
     >
       {/* Label */}
@@ -150,7 +156,7 @@ function ScoreRow({
           style={{
             fontSize: "11px",
             fontFamily: "'JetBrains Mono', monospace",
-            color: "rgba(255,255,255,0.45)",
+            color: isDark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.45)",
             letterSpacing: "0.08em",
             textTransform: "uppercase",
             marginBottom: "6px",
@@ -158,7 +164,7 @@ function ScoreRow({
         >
           {label}
         </div>
-        <div style={{ position: "relative", height: "3px", background: "rgba(255,255,255,0.06)", borderRadius: "2px" }}>
+        <div style={{ position: "relative", height: "3px", background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)", borderRadius: "2px" }}>
           <div
             style={{
               position: "absolute",
@@ -187,23 +193,27 @@ function ScoreRow({
           }}
         >
           {score}
-          <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", fontWeight: 400 }}>/10</span>
+          <span style={{ fontSize: "11px", color: muted, fontWeight: 400 }}>/10</span>
         </div>
-        <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)", marginTop: "2px" }}>{scoreLabel}</div>
+        <div style={{ fontSize: "10px", color: muted, marginTop: "2px" }}>{scoreLabel}</div>
       </div>
     </div>
   );
 }
 
-export function ScoreCard({ scores, fileName, onShare }: ScoreCardProps) {
+export function ScoreCard({ scores, fileName, onShare, isDark = true }: ScoreCardProps) {
   const { label: overallLabel, color: overallColor } = getScoreLabel(scores.overall);
   const scoreKeys = Object.keys(scores).filter((k) => k !== "overall") as Array<keyof Omit<Scores, "overall">>;
+  const muted = isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.35)";
+  const subtle = isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)";
+  const faint = isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)";
+  const btnBorder = isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)";
 
   return (
     <div
       style={{
-        background: "rgba(255,255,255,0.03)",
-        border: "1px solid rgba(255,255,255,0.08)",
+        background: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)",
+        border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}`,
         borderRadius: "12px",
         padding: "24px",
         position: "relative",
@@ -230,7 +240,7 @@ export function ScoreCard({ scores, fileName, onShare }: ScoreCardProps) {
             style={{
               fontSize: "10px",
               fontFamily: "'JetBrains Mono', monospace",
-              color: "rgba(255,255,255,0.35)",
+              color: muted,
               letterSpacing: "0.12em",
               textTransform: "uppercase",
               marginBottom: "4px",
@@ -242,7 +252,7 @@ export function ScoreCard({ scores, fileName, onShare }: ScoreCardProps) {
             <div
               style={{
                 fontSize: "12px",
-                color: "rgba(255,255,255,0.5)",
+                color: subtle,
                 fontFamily: "'JetBrains Mono', monospace",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
@@ -257,7 +267,7 @@ export function ScoreCard({ scores, fileName, onShare }: ScoreCardProps) {
 
         {/* Overall score arc */}
         <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <ScoreArc score={scores.overall} color={SCORE_COLORS.overall} size={72} strokeWidth={5} />
+          <ScoreArc score={scores.overall} color={SCORE_COLORS.overall} size={72} strokeWidth={5} isDark={isDark} />
           <div
             style={{
               position: "absolute",
@@ -275,7 +285,7 @@ export function ScoreCard({ scores, fileName, onShare }: ScoreCardProps) {
             >
               {scores.overall}
             </div>
-            <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.4)" }}>/ 10</div>
+            <div style={{ fontSize: "9px", color: faint }}>/ 10</div>
           </div>
         </div>
       </div>
@@ -315,6 +325,7 @@ export function ScoreCard({ scores, fileName, onShare }: ScoreCardProps) {
             score={scores[key]}
             color={SCORE_COLORS[key]}
             delay={i * 80}
+            isDark={isDark}
           />
         ))}
       </div>
@@ -328,9 +339,9 @@ export function ScoreCard({ scores, fileName, onShare }: ScoreCardProps) {
             width: "100%",
             padding: "10px",
             background: "transparent",
-            border: "1px solid rgba(255,255,255,0.1)",
+            border: `1px solid ${btnBorder}`,
             borderRadius: "6px",
-            color: "rgba(255,255,255,0.5)",
+            color: subtle,
             fontSize: "11px",
             fontFamily: "'JetBrains Mono', monospace",
             letterSpacing: "0.08em",
@@ -343,8 +354,8 @@ export function ScoreCard({ scores, fileName, onShare }: ScoreCardProps) {
             e.currentTarget.style.color = "#FF4444";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
-            e.currentTarget.style.color = "rgba(255,255,255,0.5)";
+            e.currentTarget.style.borderColor = btnBorder;
+            e.currentTarget.style.color = subtle;
           }}
         >
           Copy Scorecard ↗
