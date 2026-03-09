@@ -1,0 +1,5 @@
+{
+  "name": "Video Scene Analyzer",
+  "description": "A tool to analyze videos and generate structured scene-by-scene breakdowns, transcripts, and punchline analysis using AI.",
+  "requestFramePermissions": []
+}
