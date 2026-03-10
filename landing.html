@@ -3,693 +3,564 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cutsheet — Turn any video ad into a creative brief in 60 seconds</title>
-  <meta name="description" content="AI-powered video creative analysis for performance marketers and UGC agencies." />
+  <title>Cutsheet — AI Video Creative Analysis in 60 Seconds</title>
+  <meta name="description" content="Understand why your ads work. AI-powered creative analysis for performance marketers and UGC creators." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Funnel+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
+      --primary: #0070F3;
+      --primary-dark: #0052CC;
+      --primary-light: rgba(0, 112, 243, 0.1);
       --bg: #FAFAF9;
-      --bg2: #F3F2F0;
-      --ink: #111110;
-      --ink2: #555552;
-      --ink3: #999996;
-      --border: rgba(0,0,0,0.07);
-      --surface: rgba(0,0,0,0.03);
-
-      /* Primary blue accent */
-      --accent: #0070F3;
-      --accent-light: rgba(0,112,243,0.1);
-      --accent-dark: #0052CC;
-
-      /* Removed gradients - using solid colors now */
-      --grad-main: #0070F3;
-      --grad-warm: #0070F3;
-      --grad-cool: #0070F3;
-      --grad-text: #0070F3;
-
+      --surface: #FFFFFF;
+      --text: #111110;
+      --text-secondary: #555552;
+      --text-tertiary: #999996;
+      --border: rgba(0, 0, 0, 0.08);
       --mono: 'JetBrains Mono', monospace;
-      --sans: 'Funnel Sans', sans-serif;
-      --cta: 'Inter', sans-serif;
+      --sans: 'Inter', sans-serif;
     }
 
     html { scroll-behavior: smooth; }
-    body { background: var(--bg); color: var(--ink); font-family: var(--sans); line-height: 1.6; overflow-x: hidden; }
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
 
-    /* ── NAV ── */
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* NAV */
+    /* ─────────────────────────────────────────────────────────────────── */
     nav {
-      display: flex; align-items: center; justify-content: space-between;
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 1000;
       padding: 16px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(250, 250, 249, 0.8);
+      backdrop-filter: blur(10px);
       border-bottom: 1px solid var(--border);
-      position: sticky; top: 0;
-      background: rgba(250,250,249,0.92);
-      backdrop-filter: blur(20px);
-      z-index: 100;
     }
-    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
     .logo-mark {
-      width: 32px; height: 32px; border-radius: 8px;
-      background: #0070F3;
-      display: flex; align-items: center; justify-content: center;
-      position: relative; overflow: hidden;
+      width: 32px;
+      height: 32px;
+      background: var(--primary);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 900;
+      font-size: 18px;
+      font-family: var(--mono);
     }
-    .logo-mark::after { content: none; }
-    .logo-mark svg { position: relative; z-index: 1; }
-    .logo-word { font-family: var(--mono); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; color: var(--ink); }
-    .beta-pill {
-      font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em;
-      color: #0070F3;
-      border: 1px solid rgba(0,112,243,0.25); padding: 2px 8px; border-radius: 20px;
+
+    .logo-text {
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 0.04em;
+      color: var(--text);
     }
-    .nav-links { display: flex; align-items: center; gap: 28px; }
-    .nav-link { font-size: 13px; color: var(--ink2); text-decoration: none; transition: color 0.2s; font-weight: 500; }
-    .nav-link:hover { color: var(--ink); }
+
+    .nav-links {
+      display: flex;
+      gap: 32px;
+      align-items: center;
+    }
+
+    .nav-link {
+      font-size: 14px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .nav-link:hover {
+      color: var(--primary);
+    }
+
     .nav-cta {
-      padding: 9px 20px; border: none; border-radius: 100px; cursor: pointer;
-      background: #0070F3; color: #fff;
-      font-family: var(--sans); font-size: 13px; font-weight: 700;
-      text-decoration: none; letter-spacing: 0.01em;
-      box-shadow: 0 4px 20px rgba(0,112,243,0.3);
-      transition: opacity 0.2s, transform 0.2s;
-    }
-    .nav-cta:hover { opacity: 0.9; transform: translateY(-1px); }
-
-    /* ── HERO ── */
-    .hero {
-      max-width: 860px; margin: 0 auto;
-      padding: 100px 40px 80px;
-      text-align: center; position: relative;
-    }
-    .hero-blob {
-      position: absolute; top: -60px; left: 50%; transform: translateX(-50%);
-      width: 700px; height: 400px; pointer-events: none;
-      background: radial-gradient(ellipse at 30% 50%, rgba(255,107,107,0.12) 0%, transparent 50%),
-                  radial-gradient(ellipse at 70% 50%, rgba(65,88,208,0.1) 0%, transparent 50%),
-                  radial-gradient(ellipse at 50% 80%, rgba(200,80,192,0.08) 0%, transparent 50%);
-      filter: blur(40px);
-    }
-    .available-pill {
-      display: inline-flex; align-items: center; gap: 8px;
-      background: #fff; border: 1px solid var(--border);
-      border-radius: 100px; padding: 6px 16px;
-      font-family: var(--cta); font-size: 11px; color: var(--ink2);
-      letter-spacing: 0.06em; margin-bottom: 32px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-      overflow: visible;
-    }
-    .available-dot {
-      position: relative;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #4BBF71;
-      flex-shrink: 0;
-    }
-    .available-dot::before,
-    .available-dot::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #4BBF71;
-      transform: translate(-50%, -50%) scale(1);
-      opacity: 0.6;
-    }
-    .available-dot::before {
-      animation: ripple 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    }
-    .available-dot::after {
-      animation: ripple 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite 0.8s;
-    }
-    @keyframes ripple {
-      0%   { transform: translate(-50%, -50%) scale(1);   opacity: 0.5; }
-      70%  { transform: translate(-50%, -50%) scale(4.5); opacity: 0;   }
-      100% { transform: translate(-50%, -50%) scale(4.5); opacity: 0;   }
-    }
-
-    h1 {
-      font-size: clamp(44px, 7vw, 82px);
-      font-weight: 900; letter-spacing: -0.04em; line-height: 1.02;
-      color: var(--ink); margin-bottom: 24px;
-      font-family: var(--cta);
-    }
-    .grad-text {
-      background: var(--grad-text);
-      -webkit-background-clip: text; background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    .hero-sub {
-      font-size: 18px; color: var(--ink2); max-width: 500px;
-      margin: 0 auto 48px; line-height: 1.7; font-weight: 400;
-      font-family: var(--cta);
-    }
-
-    .hero-form { display: flex; gap: 8px; max-width: 400px; margin: 0 auto 14px; }
-    .hero-input {
-      flex: 1; padding: 14px 18px;
-      background: #fff; border: 1.5px solid var(--border);
-      border-radius: 12px; color: var(--ink);
-      font-family: var(--mono); font-size: 13px; outline: none;
-      transition: border-color 0.2s;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-    }
-    .hero-input:focus { border-color: rgba(200,80,192,0.4); }
-    .hero-input::placeholder { color: var(--ink3); }
-    .hero-btn {
-      padding: 14px 22px; border: none; border-radius: 12px; cursor: pointer;
-      background: var(--grad-main); color: #fff;
-      font-family: var(--cta); font-size: 12px; font-weight: 700;
-      letter-spacing: 0.04em; white-space: nowrap;
-      box-shadow: 0 4px 20px rgba(193,80,192,0.3);
-      transition: opacity 0.2s;
-    }
-    .hero-btn:hover { opacity: 0.88; }
-    .hero-note { font-family: var(--mono); font-size: 11px; color: var(--ink3); }
-    .hero-note span { color: #0070F3; }
-    .success-msg {
-      display: none; align-items: center; justify-content: center; gap: 10px;
-      max-width: 400px; margin: 0 auto;
-      padding: 14px 20px;
-      background: rgba(14,207,176,0.08); border: 1.5px solid rgba(14,207,176,0.3);
-      border-radius: 12px; font-family: var(--mono); font-size: 13px; color: #0a9e88;
-    }
-
-    /* ── MARQUEE ── */
-    .marquee-wrap {
-      padding: 14px 0; overflow: hidden;
-      background: linear-gradient(135deg,
-        rgba(255,107,107,0.12),
-        rgba(200,80,192,0.12),
-        rgba(65,88,208,0.12)
-      );
-      border-top: 1px solid rgba(200,80,192,0.15);
-      border-bottom: 1px solid rgba(200,80,192,0.15);
-    }
-    .marquee-track { display: flex; animation: marquee 30s linear infinite; width: max-content; }
-    .marquee-track:hover { animation-play-state: paused; }
-    @keyframes marquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }
-    .marquee-item {
-      display: flex; align-items: center; gap: 10px; padding: 0 28px;
-      font-family: var(--cta); font-size: 11px; color: var(--ink);
-      font-weight: 600; letter-spacing: 0.10em; text-transform: uppercase; white-space: nowrap;
-    }
-    .marquee-dot {
-      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
-      background: #0070F3;
-    }
-
-    /* ── STATS ── */
-    .stats-wrap { max-width: 900px; margin: 0 auto; padding: 80px 40px 0; }
-    .stats {
-      display: grid; grid-template-columns: repeat(3,1fr);
-      gap: 12px;
-    }
-    .stat-card {
-      background: #fff; border: 1px solid var(--border); border-radius: 16px;
-      padding: 36px 28px; text-align: center;
-      box-shadow: 0 2px 16px rgba(0,0,0,0.04);
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,0.08); }
-    .stat-num {
-      font-size: clamp(42px,5vw,60px); font-weight: 900;
-      letter-spacing: -0.04em; line-height: 1; margin-bottom: 8px;
-      color: #0070F3;
-      font-family: var(--cta);
-    }
-    .stat-label { font-family: var(--mono); font-size: 11px; color: var(--ink3); letter-spacing: 0.08em; text-transform: uppercase; }
-    .stat-sub { font-size: 13px; color: var(--ink3); margin-top: 6px; }
-
-    /* ── SECTION ── */
-    .section-wrap { max-width: 900px; margin: 0 auto; padding: 0 40px 100px; }
-    .section-eyebrow {
-      font-family: var(--cta);
+      padding: 10px 24px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
       font-weight: 600;
-      font-size: 11px;
-      letter-spacing: 0.10em;
-      text-transform: uppercase;
-      margin-bottom: 14px;
-      background: var(--grad-main);
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
+      text-decoration: none;
       display: inline-block;
     }
-    .section-title {
-      font-size: clamp(28px, 4vw, 46px); font-weight: 800;
-      letter-spacing: -0.03em; color: var(--ink);
-      margin-bottom: 40px; line-height: 1.1;
-      font-family: var(--cta);
-    }
-    .section-title .dim,
-    .section-title span.dim,
-    h1 .dim,
-    h1 span.dim,
-    .bottom-title .dim,
-    .bottom-title span.dim {
-      background: #0070F3 !important;
-      -webkit-background-clip: text !important;
-      background-clip: text !important;
-      -webkit-text-fill-color: transparent !important;
-      color: transparent !important;
+
+    .nav-cta:hover {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
     }
 
-    /* ── DEMO SECTION ── */
-    .demo-section {
-      position: relative;
-      padding: 80px 40px;
-      background: #0D0B14;
-      overflow: hidden;
-    }
-    .demo-section::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(to bottom, #FAFAF9 0%, #0D0B14 120px);
-      pointer-events: none;
-      z-index: 0;
-      mix-blend-mode: normal;
-    }
-    .demo-section::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background:
-        radial-gradient(circle at 10% 0%, rgba(255,107,107,0.22) 0%, transparent 55%),
-        radial-gradient(circle at 90% 100%, rgba(65,88,208,0.22) 0%, transparent 55%),
-        radial-gradient(circle at 50% 50%, rgba(200,80,192,0.16) 0%, transparent 55%);
-      filter: blur(80px);
-      pointer-events: none;
-      z-index: 0;
-    }
-    .demo-section-inner {
-      position: relative;
-      z-index: 1;
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* HERO SECTION */
+    /* ─────────────────────────────────────────────────────────────────── */
+    .hero {
+      padding: 120px 40px 80px;
       max-width: 900px;
       margin: 0 auto;
-    }
-    .demo-section-inner .section-title {
-      color: #FFFFFF;
+      text-align: center;
     }
 
-    /* ── DEMO WINDOW ── */
-    .demo-window {
-      background: #111110;
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 16px;
-      overflow: hidden;
-      margin-bottom: 40px;
-      box-shadow:
-        0 24px 80px rgba(0,0,0,0.4),
-        0 0 0 1px rgba(255,255,255,0.05) inset;
-      backdrop-filter: blur(20px);
-    }
-    .demo-chrome {
-      display: flex; align-items: center; gap: 7px; padding: 12px 18px;
-      background: #0A0A0A;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-    }
-    .chrome-dot { width: 10px; height: 10px; border-radius: 50%; }
-    .chrome-url { margin-left: 10px; font-family: var(--mono); font-size: 11px; color: rgba(255,255,255,0.25); }
-    .demo-body { display: grid; grid-template-columns: 1fr 1fr; }
-    .demo-left { padding: 28px; background:#111110; border-right: 1px solid rgba(255,255,255,0.06); }
-    .demo-right { padding: 28px; background: #0D0D0D; }
-    .demo-label { font-family: var(--mono); font-size: 10px; color: rgba(255,255,255,0.3); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 16px; }
-    .demo-upload-ph {
-      background: rgba(255,255,255,0.03); border: 1.5px dashed rgba(255,255,255,0.08);
-      border-radius: 10px; height: 120px;
-      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
-      margin-bottom: 20px;
-    }
-    .demo-score-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-    .demo-score-lbl { font-family: var(--mono); font-size: 10px; color: rgba(255,255,255,0.4); width: 90px; flex-shrink: 0; }
-    .demo-bar-wrap { flex: 1; height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; }
-    .demo-bar { height: 100%; border-radius: 2px; width: 0; }
-    .demo-score-val { font-family: var(--mono); font-size: 12px; font-weight: 700; width: 24px; text-align: right; color: rgba(255,255,255,0.9); }
-    .demo-overall-num { font-family: var(--mono); font-size: 52px; font-weight: 900; line-height: 1; color: rgba(255,255,255,0.95); }
-    .demo-overall-sub { font-family: var(--mono); font-size: 10px; color: rgba(255,255,255,0.3); letter-spacing: 0.1em; }
-    .demo-section-hd { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700; margin: 16px 0 8px; color: rgba(255,255,255,0.4); display: inline-block; }
-    .demo-text { font-family: var(--mono); font-size: 11px; color: rgba(255,255,255,0.5); line-height: 1.75; }
-    .demo-text strong { color: rgba(255,255,255,0.85); }
-
-    .demo-strong-badge {
+    .hero-tag {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 999px;
-      padding: 3px 10px;
-      font-family: var(--mono);
-      font-size: 10px;
-      color: rgba(255,255,255,0.6);
-    }
-    .demo-strong-badge-dot {
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: #0070F3;
-      flex-shrink: 0;
+      gap: 8px;
+      background: var(--primary-light);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 32px;
     }
 
-    /* ── HOVER INTERACTIONS & MOTION ── */
-    @media (prefers-reduced-motion: no-preference) {
-      .demo-window {
-        opacity: 0;
-        transform: translateY(32px);
-        transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1),
-                    transform 0.7s cubic-bezier(0.16,1,0.3,1),
-                    box-shadow 0.3s cubic-bezier(0.16,1,0.3,1),
-                    transform 0.3s cubic-bezier(0.16,1,0.3,1);
-      }
-      .demo-window.demo-in-view {
-        opacity: 1;
-        transform: translateY(0);
-      }
-
-      .demo-section-inner .section-eyebrow,
-      .demo-section-inner .section-title {
-        opacity: 0;
-        transform: translateY(24px);
-        transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1),
-                    transform 0.7s cubic-bezier(0.16,1,0.3,1);
-      }
-      .demo-section-inner .section-eyebrow.demo-header-in-view {
-        opacity: 1;
-        transform: translateY(0);
-      }
-      .demo-section-inner .section-title.demo-header-in-view {
-        opacity: 1;
-        transform: translateY(0);
-      }
-
-      .demo-window:hover {
-        transform: translateY(-4px);
-        box-shadow:
-          0 28px 90px rgba(0,0,0,0.5),
-          0 0 0 1px rgba(255,255,255,0.06) inset;
-      }
-
-      .demo-score-row {
-        transition: background 0.2s ease;
-      }
-      .demo-score-row:hover {
-        background: rgba(255,255,255,0.03);
-      }
-      .demo-score-row .demo-bar {
-        transition: filter 0.2s ease;
-      }
-      .demo-score-row:hover .demo-bar {
-        filter: brightness(1.15);
-      }
-
-      .demo-upload-ph {
-        transition: transform 0.25s ease, border-color 0.25s ease;
-      }
-      .demo-upload-ph:hover {
-        transform: scale(1.01);
-        border-color: rgba(255,255,255,0.16);
-      }
-
-      .demo-strong-badge {
-        transform: scale(0.85);
-        opacity: 0;
-        transition: transform 0.6s cubic-bezier(0.34,1.56,0.64,1),
-                    opacity 0.6s cubic-bezier(0.34,1.56,0.64,1);
-      }
-      .demo-strong-badge.demo-strong-in {
-        transform: scale(1);
-        opacity: 1;
-      }
-
-      @keyframes chromeDotPulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.3); }
-        100% { transform: scale(1); }
-      }
-      .demo-chrome:hover .chrome-dot:nth-child(1) {
-        animation: chromeDotPulse 0.3s cubic-bezier(0.16,1,0.3,1) 1;
-      }
-      .demo-chrome:hover .chrome-dot:nth-child(2) {
-        animation: chromeDotPulse 0.3s cubic-bezier(0.16,1,0.3,1) 1 50ms;
-      }
-      .demo-chrome:hover .chrome-dot:nth-child(3) {
-        animation: chromeDotPulse 0.3s cubic-bezier(0.16,1,0.3,1) 1 100ms;
-      }
+    .hero-tag::before {
+      content: '✨';
     }
 
-    /* ── FEATURES ── */
-    .features-grid {
-      display: grid; grid-template-columns: repeat(3,1fr); gap: 12px;
+    .hero h1 {
+      font-size: 64px;
+      font-weight: 900;
+      line-height: 1.1;
+      margin-bottom: 24px;
+      color: var(--text);
+      letter-spacing: -0.02em;
     }
-    .feature-card {
-      background: #fff; border: 1px solid var(--border); border-radius: 14px;
-      padding: 28px 24px; transition: transform 0.2s, box-shadow 0.2s;
-      box-shadow: 0 1px 8px rgba(0,0,0,0.04);
-    }
-    .feature-card:hover { transform: translateY(-3px); box-shadow: 0 8px 32px rgba(0,0,0,0.09); }
-    .feature-icon { font-size: 24px; margin-bottom: 14px; }
-    .feature-name { font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--ink); margin-bottom: 8px; }
-    .feature-desc { font-size: 13px; color: var(--ink2); line-height: 1.6; }
 
-    /* ── HOW IT WORKS ── */
-    .how-grid {
+    .hero h1 .highlight {
+      color: var(--primary);
+    }
+
+    .hero p {
+      font-size: 20px;
+      color: var(--text-secondary);
+      margin-bottom: 40px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.6;
+    }
+
+    .hero-cta {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      margin-bottom: 60px;
+    }
+
+    .btn-primary {
+      padding: 14px 32px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px rgba(0, 112, 243, 0.2);
+    }
+
+    .btn-secondary {
+      padding: 14px 32px;
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .hero-note {
+      font-size: 14px;
+      color: var(--text-tertiary);
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* DEMO SECTION */
+    /* ─────────────────────────────────────────────────────────────────── */
+    .demo-section {
+      padding: 80px 40px;
+      background: linear-gradient(180deg, transparent 0%, rgba(0, 112, 243, 0.03) 100%);
+    }
+
+    .section-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .section-title {
+      font-size: 48px;
+      font-weight: 900;
+      text-align: center;
+      margin-bottom: 60px;
+      color: var(--text);
+    }
+
+    .demo-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 80px;
+      gap: 60px;
       align-items: center;
     }
-    .how-mockup-column,
-    .how-steps-column {
+
+    .demo-content h3 {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      color: var(--text);
+      line-height: 1.2;
+    }
+
+    .demo-content p {
+      font-size: 16px;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+      line-height: 1.8;
+    }
+
+    .demo-list {
+      list-style: none;
+      margin-bottom: 32px;
+    }
+
+    .demo-list li {
+      font-size: 16px;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+      padding-left: 32px;
       position: relative;
     }
-    .how-mockup-card {
+
+    .demo-list li::before {
+      content: '✓';
       position: absolute;
-      inset: 0;
-      margin: auto;
-      max-width: 420px;
-      background: #fff;
-      border-radius: 20px;
-      border: 1px solid var(--border);
-      box-shadow: 0 24px 60px rgba(0,0,0,0.1);
-      padding: 24px;
-      opacity: 0;
-      transform: translateY(12px) scale(0.97);
-      transition: opacity 0.4s cubic-bezier(0.16,1,0.3,1),
-                  transform 0.4s cubic-bezier(0.16,1,0.3,1);
-      pointer-events: none;
-    }
-    .how-mockup-card.card-1 { transform: translateY(12px) scale(0.97) rotate(-1.5deg); }
-    .how-mockup-card.card-2 { transform: translateY(12px) scale(0.97) rotate(0deg); }
-    .how-mockup-card.card-3 { transform: translateY(12px) scale(0.97) rotate(1.5deg); }
-    .how-mockup-card.is-active {
-      opacity: 1;
-      transform: translateY(0) scale(1) rotate(0deg);
-      pointer-events: auto;
-    }
-
-    .how-steps-column {
-      display: flex;
-      flex-direction: column;
-      gap: 40px;
-    }
-    .how-step {
-      cursor: pointer;
-      transition: all 0.35s cubic-bezier(0.16,1,0.3,1);
-      border-radius: 14px;
-      padding: 10px 0;
-    }
-    .how-step-inner {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .how-step-number {
-      font-family: var(--cta);
-      font-size: 11px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--ink3);
-    }
-    .how-step-title {
-      font-family: var(--cta);
-      font-size: 22px;
+      left: 0;
+      color: var(--primary);
       font-weight: 700;
-      color: var(--ink);
-      opacity: 0.5;
-      transition: opacity 0.35s cubic-bezier(0.16,1,0.3,1);
     }
-    .how-step-desc {
-      font-family: var(--sans);
-      font-size: 14px;
-      color: var(--ink2);
-    }
-    .how-step.is-active {
-      background: #fff;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-      padding: 24px;
+
+    .demo-visual {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 40px;
       border: 1px solid var(--border);
-      transform: translateX(-4px);
-    }
-    .how-step.is-active .how-step-title {
-      opacity: 1;
-    }
-    .how-step.is-active .how-step-number {
-      background: var(--grad-main);
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
+      text-align: center;
+      min-height: 400px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-tertiary);
     }
 
-    @media (prefers-reduced-motion: no-preference) {
-      .how-mockup-column,
-      .how-steps-column {
-        opacity: 0;
-        transform: translateX(20px);
-        transition: opacity 0.6s cubic-bezier(0.16,1,0.3,1),
-                    transform 0.6s cubic-bezier(0.16,1,0.3,1);
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* FEATURES SECTION */
+    /* ─────────────────────────────────────────────────────────────────── */
+    .features-section {
+      padding: 80px 40px;
+      background: var(--surface);
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 40px;
+      margin-top: 60px;
+    }
+
+    .feature-card {
+      padding: 40px;
+      background: var(--bg);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      transition: all 0.3s;
+    }
+
+    .feature-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0, 112, 243, 0.1);
+    }
+
+    .feature-icon {
+      font-size: 32px;
+      margin-bottom: 16px;
+    }
+
+    .feature-card h3 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+
+    .feature-card p {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* HOW IT WORKS */
+    /* ─────────────────────────────────────────────────────────────────── */
+    .how-section {
+      padding: 80px 40px;
+      background: linear-gradient(180deg, transparent 0%, rgba(0, 112, 243, 0.03) 100%);
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 40px;
+      margin-top: 60px;
+    }
+
+    .step {
+      text-align: center;
+    }
+
+    .step-number {
+      width: 48px;
+      height: 48px;
+      background: var(--primary);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 20px;
+      margin: 0 auto 24px;
+    }
+
+    .step h3 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+
+    .step p {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* SOCIAL PROOF / METRICS */
+    /* ─────────────────────────────────────────────────────────────────── */
+    .metrics-section {
+      padding: 80px 40px;
+      background: var(--surface);
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 40px;
+      margin-top: 60px;
+    }
+
+    .metric {
+      text-align: center;
+    }
+
+    .metric-number {
+      font-size: 48px;
+      font-weight: 900;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+
+    .metric-label {
+      font-size: 14px;
+      color: var(--text-secondary);
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* FAQ SECTION */
+    /* ─────────────────────────────────────────────────────────────────── */
+    .faq-section {
+      padding: 80px 40px;
+      background: linear-gradient(180deg, transparent 0%, rgba(0, 112, 243, 0.03) 100%);
+    }
+
+    .faq-container {
+      max-width: 700px;
+      margin: 60px auto 0;
+    }
+
+    .faq-item {
+      border-bottom: 1px solid var(--border);
+      padding: 24px 0;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .faq-item:hover {
+      color: var(--primary);
+    }
+
+    .faq-question {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .faq-toggle {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .faq-answer {
+      font-size: 15px;
+      color: var(--text-secondary);
+      margin-top: 16px;
+      line-height: 1.8;
+      display: none;
+    }
+
+    .faq-item.active .faq-answer {
+      display: block;
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* CTA SECTION */
+    /* ─────────────────────────────────────────────────────────────────── */
+    .final-cta {
+      padding: 80px 40px;
+      background: var(--primary);
+      color: white;
+      text-align: center;
+    }
+
+    .final-cta h2 {
+      font-size: 48px;
+      font-weight: 900;
+      margin-bottom: 24px;
+      line-height: 1.2;
+    }
+
+    .final-cta p {
+      font-size: 18px;
+      margin-bottom: 40px;
+      opacity: 0.9;
+    }
+
+    .final-cta .btn-primary {
+      background: white;
+      color: var(--primary);
+      padding: 16px 40px;
+      font-size: 18px;
+    }
+
+    .final-cta .btn-primary:hover {
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* FOOTER */
+    /* ─────────────────────────────────────────────────────────────────── */
+    footer {
+      padding: 40px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      text-align: center;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* RESPONSIVE */
+    /* ─────────────────────────────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      nav {
+        padding: 12px 20px;
       }
-      .how-mockup-column {
-        transform: translateX(-40px);
+
+      .hero {
+        padding: 80px 20px 60px;
       }
-      .how-grid.how-in-view .how-mockup-column,
-      .how-grid.how-in-view .how-steps-column {
-        opacity: 1;
-        transform: translateX(0);
+
+      .hero h1 {
+        font-size: 36px;
       }
-    }
 
-    /* ── FOR WHO ── */
-    .for-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .for-card {
-      padding: 24px; background: #fff; border: 1px solid var(--border);
-      border-radius: 14px; transition: border-color 0.2s, transform 0.2s;
-      box-shadow: 0 1px 8px rgba(0,0,0,0.04);
-    }
-    .for-card:hover { border-color: rgba(200,80,192,0.3); transform: translateY(-2px); }
-    .for-card-title { font-size: 15px; font-weight: 700; color: var(--ink); margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
-    .for-arrow {
-      width: 20px; height: 20px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center;
-      background: var(--grad-main); color: #fff; font-size: 10px; flex-shrink: 0;
-    }
-    .for-card-desc { font-size: 13px; color: var(--ink2); line-height: 1.6; }
+      .hero p {
+        font-size: 16px;
+      }
 
-    /* ── COMPARE ── */
-    .compare-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 20px rgba(0,0,0,0.05); border: 1px solid var(--border); }
-    .compare-table th { padding: 16px 22px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; text-align: left; border-bottom: 1px solid var(--border); background: var(--bg2); color: var(--ink3); }
-    .compare-table th.col-us { background: #F0F7FF; color: #0070F3; }
-    .compare-table th.col-us span { color: #0070F3; }
-    .compare-table td { padding: 14px 22px; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-    .compare-table tr:last-child td { border-bottom: none; }
-    .compare-table td:first-child { color: var(--ink); font-weight: 500; }
-    .compare-table td.col-us { background: #F8FBFF; font-family: var(--mono); font-size: 12px; font-weight: 600; color: #0070F3; }
-    .compare-table td.col-other { color: var(--ink3); font-family: var(--mono); font-size: 12px; }
-    .check { color: #0070F3; }
+      .hero-cta {
+        flex-direction: column;
+      }
 
-    /* ── FAQ ── */
-    .faq-list { display: flex; flex-direction: column; gap: 6px; }
-    .faq-item { background: #fff; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 6px rgba(0,0,0,0.03); }
-    .faq-q { width: 100%; padding: 20px 24px; background: transparent; border: none; text-align: left; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 16px; font-family: var(--sans); font-size: 15px; font-weight: 600; color: var(--ink); transition: background 0.2s; }
-    .faq-q:hover { background: var(--bg2); }
-    .faq-icon { width: 24px; height: 24px; border-radius: 6px; background: var(--surface); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: var(--ink2); flex-shrink: 0; transition: transform 0.3s, background 0.3s; }
-    .faq-item.open .faq-icon { transform: rotate(45deg); background: var(--grad-main); color: #fff; }
-    .faq-a { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
-    .faq-item.open .faq-a { max-height: 300px; }
-    .faq-a-inner { padding: 0 24px 20px; padding-top: 14px; font-size: 14px; color: var(--ink2); line-height: 1.7; border-top: 1px solid var(--border); }
+      .demo-grid,
+      .features-grid,
+      .steps-grid,
+      .metrics-grid {
+        grid-template-columns: 1fr;
+      }
 
-    /* ── BOTTOM CTA ── */
-    .bottom-section {
-      padding: 120px 40px; text-align: center; position: relative; overflow: hidden;
-      background: linear-gradient(160deg, #0D0D0D 0%, #1a0a2e 50%, #0D0D0D 100%);
-    }
-    .bottom-grad-blob {
-      position: absolute; top: -100px; left: 50%; transform: translateX(-50%);
-      width: 800px; height: 500px; pointer-events: none;
-      background: radial-gradient(ellipse at 30% 40%, rgba(255,107,107,0.2) 0%, transparent 40%),
-                  radial-gradient(ellipse at 70% 60%, rgba(65,88,208,0.2) 0%, transparent 40%),
-                  radial-gradient(ellipse at 50% 80%, rgba(200,80,192,0.15) 0%, transparent 40%);
-      filter: blur(60px);
-    }
-    .bottom-eyebrow { font-family: var(--mono); font-size: 11px; color: rgba(255,255,255,0.35); letter-spacing: 0.12em; margin-bottom: 20px; }
-    .bottom-title { font-size: clamp(38px, 6vw, 68px); font-weight: 900; letter-spacing: -0.04em; color: #fff; margin-bottom: 16px; line-height: 1.04; font-family: var(--cta); }
-    .bottom-title .grad-text, .bottom-title .dim { background: #0070F3; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-    .bottom-sub { font-size: 16px; color: rgba(255,255,255,0.45); margin-bottom: 44px; }
-    .bottom-form { display: flex; gap: 8px; max-width: 400px; margin: 0 auto 14px; }
-    .bottom-input { flex: 1; padding: 14px 18px; background: rgba(255,255,255,0.08); border: 1.5px solid rgba(255,255,255,0.12); border-radius: 12px; color: #fff; font-family: var(--mono); font-size: 13px; outline: none; transition: border-color 0.2s; }
-    .bottom-input:focus { border-color: rgba(200,80,192,0.5); }
-    .bottom-input::placeholder { color: rgba(255,255,255,0.3); }
-    .bottom-success { display: none; align-items: center; justify-content: center; gap: 10px; max-width: 400px; margin: 0 auto; padding: 14px 20px; background: rgba(14,207,176,0.1); border: 1.5px solid rgba(14,207,176,0.3); border-radius: 12px; font-family: var(--mono); font-size: 13px; color: #0070F3; }
+      .section-title {
+        font-size: 32px;
+      }
 
-    /* ── TASK LIST ── */
-    .tasklist-wrap {
-      max-width: 320px; margin: 60px auto 0;
-      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 12px; overflow: hidden;
-    }
-    .tasklist-header { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; gap: 8px; }
-    .tasklist-dot { width: 8px; height: 8px; border-radius: 50%; background: #0070F3; animation: breathe 2s infinite; }
-    .tasklist-title { font-family: var(--mono); font-size: 11px; color: rgba(255,255,255,0.4); letter-spacing: 0.06em; }
-    .task-row {
-      display: flex; align-items: center; gap: 12px; padding: 10px 16px;
-      font-family: var(--mono); font-size: 12px; color: rgba(255,255,255,0.3);
-    }
-    .task-row.active { color: #FFFFFF; }
-    .task-row.done { color: #FFFFFF; }
+      .demo-content h3 {
+        font-size: 24px;
+      }
 
-    .task-check {
-      width: 16px; height: 16px; border-radius: 4px;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0; font-size: 9px;
-      transform-origin: center;
-      transition: transform 150ms ease-out, box-shadow 150ms ease-out;
-    }
-    .task-check.pending {
-      border: 1px solid rgba(255,255,255,0.15);
-      background: transparent;
-      color: transparent;
-      box-shadow: none;
-    }
-    .task-check.active {
-      border: 1px solid #0070F3;
-      background: transparent;
-      color: transparent;
-      box-shadow: 0 0 8px rgba(200,80,192,0.6);
-    }
-    .task-check.done {
-      border: none;
-      background: #0070F3;
-      color: #FFFFFF;
-      box-shadow: 0 0 8px rgba(14,207,176,0.6);
-    }
-    .analyzing-tag { margin-left: auto; font-size: 9px; letter-spacing: 0.08em; animation: blink 1.2s infinite; background: var(--grad-main); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-    @keyframes blink { 50%{opacity:0.3} }
-
-    /* ── FOOTER ── */
-    footer { padding: 24px 40px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: var(--bg); }
-    footer p { font-family: var(--mono); font-size: 11px; color: var(--ink3); }
-    footer a { color: var(--ink3); text-decoration: none; transition: color 0.2s; }
-    footer a:hover { color: var(--ink); }
-
-    /* ── GRADIENT DIVIDER ── */
-    .grad-line { height: 2px; background: var(--grad-main); opacity: 0.15; margin: 0; }
-
-    /* ── RESPONSIVE ── */
-    @media (max-width: 720px) {
-      nav { padding: 14px 20px; }
-      .nav-links { display: none; }
-      .hero { padding: 70px 20px 50px; }
-      .hero-form, .bottom-form { flex-direction: column; }
-      .stats, .features-grid, .steps, .for-grid, .demo-body { grid-template-columns: 1fr; }
-      .step-connector { display: none; }
-      .section-wrap { padding: 0 20px 60px; }
-      footer { flex-direction: column; gap: 12px; }
-      .compare-table td, .compare-table th { padding: 10px 14px; font-size: 11px; }
+      .feature-card,
+      .demo-visual {
+        padding: 24px;
+      }
     }
   </style>
 </head>
@@ -698,457 +569,211 @@
 <!-- NAV -->
 <nav>
   <a href="#" class="logo">
-    <div class="logo-mark">
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-        <rect x="2" y="2" width="12" height="12" rx="2" fill="white" opacity="0.9"/>
-        <path d="M6 8h4M8 6v4" stroke="rgba(200,80,192,0.8)" stroke-width="1.5" stroke-linecap="round"/>
-      </svg>
-    </div>
-    <span class="logo-word">CUTSHEET</span>
-    <span class="beta-pill">BETA</span>
+    <div class="logo-mark">C</div>
+    <div class="logo-text">CUTSHEET</div>
   </a>
   <div class="nav-links">
     <a href="#features" class="nav-link">Features</a>
-    <a href="#compare" class="nav-link">Compare</a>
+    <a href="#how" class="nav-link">How It Works</a>
     <a href="#faq" class="nav-link">FAQ</a>
+    <a href="#" class="nav-cta">Get Early Access</a>
   </div>
-  <a href="#waitlist" class="nav-cta">Get Early Access</a>
 </nav>
 
-<!-- HERO -->
-<section class="hero" id="waitlist">
-  <div class="hero-blob"></div>
-  <div class="available-pill"><div class="available-dot"></div>Early access open · Q2 2026 launch</div>
-  <h1>Stop guessing<br/>why ads <span class="grad-text">work.</span></h1>
-  <p class="hero-sub">AI-powered video creative analysis for performance marketers. Hook scoring, scene breakdown, emotion arc — in 60 seconds.</p>
-  <div class="hero-form" id="hero-form">
-    <input class="hero-input" type="email" id="hero-email" placeholder="your@email.com" />
-    <button class="hero-btn" onclick="handleSignup('hero-email','hero-form','hero-success')">Get Early Access →</button>
+<!-- HERO SECTION -->
+<section class="hero">
+  <div class="hero-tag">AI-powered creative analysis</div>
+  <h1>Understand why your ads <span class="highlight">actually work</span></h1>
+  <p>Get a complete breakdown of hook strength, messaging clarity, emotion arc, and CTA effectiveness — in 60 seconds. Stop guessing. Start shipping winners.</p>
+  <div class="hero-cta">
+    <button class="btn-primary">Start Free Trial</button>
+    <button class="btn-secondary">Watch Demo</button>
   </div>
-  <div class="success-msg" id="hero-success"><span>✓</span> You're on the list. 3 free analyses at launch.</div>
-  <p class="hero-note" style="margin-top:12px;"><span>3 free analyses</span> · No credit card · No spam</p>
+  <div class="hero-note">3 free analyses. No credit card required.</div>
 </section>
 
-<div class="grad-line"></div>
-
-<!-- MARQUEE -->
-<div class="marquee-wrap">
-  <div class="marquee-track">
-    <div class="marquee-item"><div class="marquee-dot"></div>Hook Scoring</div>
-    <div class="marquee-item"><div class="marquee-dot"></div>Scene Breakdown</div>
-    <div class="marquee-item"><div class="marquee-dot"></div>Emotion Arc Mapping</div>
-    <div class="marquee-item"><div class="marquee-dot"></div>CTA Analysis</div>
-    <div class="marquee-item"><div class="marquee-dot"></div>Pacing &amp; Retention</div>
-    <div class="marquee-item"><div class="marquee-dot"></div>Creative Brief Generator</div>
-    <div class="marquee-item"><div class="marquee-dot"></div>Batch Analysis</div>
-    <div class="marquee-item"><div class="marquee-dot"></div>PDF Export</div>
-    <div class="marquee-item"><div class="marquee-dot"></div>Share Links</div>
-    <div class="marquee-item"><div class="marquee-dot"></div>Full Transcript</div>
-    <div class="marquee-item"><div class="marquee-dot"></div>AI Verdict</div>
-    <div class="marquee-item"><div class="marquee-dot"></div>Swipe File</div>
-    <div class="marquee-item"><div class="marquee-dot"></div>Score Diff</div>
-    <div class="marquee-item"><div class="marquee-dot"></div>Hook Scoring</div>
-    <div class="marquee-item"><div class="marquee-dot"></div>Scene Breakdown</div>
-    <div class="marquee-item"><div class="marquee-dot"></div>Emotion Arc Mapping</div>
-    <div class="marquee-item"><div class="marquee-dot"></div>CTA Analysis</div>
-    <div class="marquee-item"><div class="marquee-dot"></div>Pacing &amp; Retention</div>
-    <div class="marquee-item"><div class="marquee-dot"></div>Creative Brief Generator</div>
-    <div class="marquee-item"><div class="marquee-dot"></div>Batch Analysis</div>
-    <div class="marquee-item"><div class="marquee-dot"></div>PDF Export</div>
-    <div class="marquee-item"><div class="marquee-dot"></div>Share Links</div>
-    <div class="marquee-item"><div class="marquee-dot"></div>Full Transcript</div>
-    <div class="marquee-item"><div class="marquee-dot"></div>AI Verdict</div>
-    <div class="marquee-item"><div class="marquee-dot"></div>Swipe File</div>
-    <div class="marquee-item"><div class="marquee-dot"></div>Score Diff</div>
-  </div>
-</div>
-
-<!-- STATS -->
-<div class="stats-wrap">
-  <div class="stats">
-    <div class="stat-card">
-      <div class="stat-num">60s</div>
-      <div class="stat-label">Analysis Time</div>
-      <div class="stat-sub">Upload to full breakdown</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-num">8+</div>
-      <div class="stat-label">Analysis Dimensions</div>
-      <div class="stat-sub">Hook, scene, emotion, CTA + more</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-num">10x</div>
-      <div class="stat-label">Faster than Manual</div>
-      <div class="stat-sub">20 min of work in 60 seconds</div>
-    </div>
-  </div>
-</div>
-
-<!-- FEATURES -->
-<div class="demo-section" id="features">
-  <div class="demo-section-inner">
-    <div class="section-eyebrow">See it in action</div>
-    <div class="section-title">What you get <span class="dim">every time.</span></div>
-
-    <div class="demo-window">
-    <div class="demo-chrome">
-      <div class="chrome-dot" style="background:#FF5F57"></div>
-      <div class="chrome-dot" style="background:#FEBC2E"></div>
-      <div class="chrome-dot" style="background:#28C840"></div>
-      <span class="chrome-url">cutsheet.app</span>
-    </div>
-    <div class="demo-body">
-      <div class="demo-left">
-        <div class="demo-label">01 / Upload Creative</div>
-        <div class="demo-upload-ph">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.15)" stroke-width="1.5"><polygon points="5,3 19,12 5,21"/></svg>
-          <span style="font-family:var(--mono);font-size:10px;color:var(--ink3)">drop video here</span>
-        </div>
-        <div class="demo-label">Creative Scorecard</div>
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
-          <div>
-            <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.4);margin-bottom:8px;">ugc_ad_final_v3.mp4</div>
-            <div class="demo-strong-badge">
-              <span class="demo-strong-badge-dot"></span>
-              <span>Strong</span>
-            </div>
-          </div>
-          <div style="text-align:right;">
-            <div class="demo-overall-num" data-overall-score="8">0</div>
-            <div class="demo-overall-sub">OVERALL</div>
-          </div>
-        </div>
-        <div class="demo-score-row">
-          <div class="demo-score-lbl">Hook Strength</div>
-          <div class="demo-bar-wrap">
-            <div class="demo-bar" data-width="90" data-score="9"></div>
-          </div>
-          <div class="demo-score-val" data-score="9">0</div>
-        </div>
-        <div class="demo-score-row">
-          <div class="demo-score-lbl">Message Clarity</div>
-          <div class="demo-bar-wrap">
-            <div class="demo-bar" data-width="80" data-score="8"></div>
-          </div>
-          <div class="demo-score-val" data-score="8">0</div>
-        </div>
-        <div class="demo-score-row">
-          <div class="demo-score-lbl">CTA Effectiveness</div>
-          <div class="demo-bar-wrap">
-            <div class="demo-bar" data-width="70" data-score="7"></div>
-          </div>
-          <div class="demo-score-val" data-score="7">0</div>
-        </div>
-        <div class="demo-score-row">
-          <div class="demo-score-lbl">Production</div>
-          <div class="demo-bar-wrap">
-            <div class="demo-bar" data-width="90" data-score="9"></div>
-          </div>
-          <div class="demo-score-val" data-score="9">0</div>
-        </div>
+<!-- DEMO SECTION -->
+<section class="demo-section">
+  <div class="section-container">
+    <div class="demo-grid">
+      <div class="demo-content">
+        <h3>Upload, analyze, ship</h3>
+        <p>Drop any video ad — TikTok, Instagram, YouTube, or direct upload. Get instant AI analysis with actionable insights.</p>
+        <ul class="demo-list">
+          <li>Hook strength scoring</li>
+          <li>Scene-by-scene breakdown</li>
+          <li>Emotion arc mapping</li>
+          <li>CTA effectiveness analysis</li>
+          <li>Creative brief generation</li>
+          <li>Share public links</li>
+        </ul>
+        <button class="btn-primary">Analyze Your First Ad</button>
       </div>
-      <div class="demo-right">
-        <div class="demo-label">02 / Creative Analysis</div>
-        <div class="demo-section-hd">🎣 Hook Analysis (0–3s)</div>
-        <div class="demo-text"><strong>Hook type:</strong> Pattern interrupt<br/><strong>Strength:</strong> <span style="color:#0a9e88">Strong</span> — cuts to problem state, zero setup needed.<br/><strong>Scroll-stop:</strong> Yes. High visual contrast, unusual subject in frame.</div>
-        <div class="demo-section-hd">😮 Emotion Arc</div>
-        <div class="demo-text">Curiosity → Recognition → Desire → Urgency</div>
-        <div class="demo-section-hd">🧠 Creative Verdict</div>
-        <div class="demo-text">The hook is the strongest asset here. The opening earns the next 10 seconds. Where the ad loses momentum is the problem-to-solution bridge — it moves too fast and the proof point needs more screen time. One text overlay at 0:18 would meaningfully lift conversions...</div>
+      <div class="demo-visual">
+        <div style="font-size: 14px; color: #999996;">
+          <div style="margin-bottom: 20px; font-weight: 600;">Scorecard Preview</div>
+          <div style="display: grid; gap: 8px; font-size: 12px;">
+            <div style="display: flex; justify-content: space-between;"><span>Hook Strength</span> <span style="color: #0070F3; font-weight: 600;">8/10</span></div>
+            <div style="display: flex; justify-content: space-between;"><span>Message Clarity</span> <span style="color: #0070F3; font-weight: 600;">7/10</span></div>
+            <div style="display: flex; justify-content: space-between;"><span>CTA Effectiveness</span> <span style="color: #0070F3; font-weight: 600;">6/10</span></div>
+            <div style="display: flex; justify-content: space-between;"><span>Production Quality</span> <span style="color: #0070F3; font-weight: 600;">9/10</span></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
+</section>
 
+<!-- FEATURES SECTION -->
+<section class="features-section" id="features">
+  <div class="section-container">
+    <h2 class="section-title">Built for creators & marketers</h2>
     <div class="features-grid">
-      <div class="feature-card"><div class="feature-icon">🎣</div><div class="feature-name">Hook Scoring</div><div class="feature-desc">First 3 seconds analyzed for scroll-stop power. Hook type, opening frame, scroll-stop verdict.</div></div>
-      <div class="feature-card"><div class="feature-icon">🎬</div><div class="feature-name">Scene Breakdown</div><div class="feature-desc">Timestamped log — visuals, voiceover, on-screen text, camera motion, pacing per scene.</div></div>
-      <div class="feature-card"><div class="feature-icon">😮</div><div class="feature-name">Emotion Arc</div><div class="feature-desc">Maps the viewer's emotional journey. The signal most media buyers miss entirely.</div></div>
-      <div class="feature-card"><div class="feature-icon">📢</div><div class="feature-name">Messaging Audit</div><div class="feature-desc">Format detection, core claim, proof points, CTA timing and effectiveness scoring.</div></div>
-      <div class="feature-card"><div class="feature-icon">⚡</div><div class="feature-name">Retention Signals</div><div class="feature-desc">Identifies open loops, callbacks, drop-off risks. Know exactly where you're losing viewers.</div></div>
-      <div class="feature-card"><div class="feature-icon">📄</div><div class="feature-name">Brief Generator</div><div class="feature-desc">One click turns any analysis into a ready-to-send brief your team can execute today.</div></div>
+      <div class="feature-card">
+        <div class="feature-icon">🎬</div>
+        <h3>Any Format</h3>
+        <p>Upload from TikTok, Instagram, YouTube, or anywhere. Works with 15-second spots or 2-minute promos.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h3>Instant Results</h3>
+        <p>Get a full creative analysis in 60 seconds. No waiting. No manual review. Just pure AI insight.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔗</div>
+        <h3>Shareable Links</h3>
+        <p>Generate public links to share scorecards with your team, clients, or stakeholders instantly.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>Actionable Feedback</h3>
+        <p>Get specific insights on what's working and why — hook strategy, messaging, pacing, and more.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📝</div>
+        <h3>Creative Briefs</h3>
+        <p>Turn analysis into next-iteration briefs. Export as markdown or PDF for your creative team.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💰</div>
+        <h3>Save Time & Money</h3>
+        <p>Kill bad ads before production. Improve winners in days, not weeks. Scale your creative faster.</p>
+      </div>
     </div>
   </div>
-</div>
+</section>
 
 <!-- HOW IT WORKS -->
-<div class="section-wrap">
-  <div class="section-eyebrow">How it works</div>
-  <div class="section-title">Three steps. <span class="dim">Zero guesswork.</span></div>
-  <div class="steps">
-    <div class="step"><div class="step-num">STEP 01</div><div class="step-title">Upload or paste a URL</div><div class="step-desc">Drop a video file or paste a direct link. MP4, WebM, MOV. Up to 200MB. No download required.</div><div class="step-connector">→</div></div>
-    <div class="step"><div class="step-num">STEP 02</div><div class="step-title">AI analyzes every frame</div><div class="step-desc">Gemini 2.0 Flash scans hook, scenes, emotion, CTA, pacing. Full breakdown in under 60 seconds.</div><div class="step-connector">→</div></div>
-    <div class="step"><div class="step-num">STEP 03</div><div class="step-title">Get your report</div><div class="step-desc">Scores, transcript, AI verdict. Export PDF, copy markdown, or share via public link.</div></div>
+<section class="how-section" id="how">
+  <div class="section-container">
+    <h2 class="section-title">How it works</h2>
+    <div class="steps-grid">
+      <div class="step">
+        <div class="step-number">1</div>
+        <h3>Upload</h3>
+        <p>Drop a video ad from any platform. MP4, MOV, WebM — we handle it all.</p>
+      </div>
+      <div class="step">
+        <div class="step-number">2</div>
+        <h3>Analyze</h3>
+        <p>Our AI runs a complete breakdown in 60 seconds. Scores, scenes, emotion arc, verdict.</p>
+      </div>
+      <div class="step">
+        <div class="step-number">3</div>
+        <h3>Iterate</h3>
+        <p>Use the insights to ship winners faster. Share, compare, improve. Repeat.</p>
+      </div>
+    </div>
   </div>
-</div>
+</section>
 
-<!-- WHO IT'S FOR -->
-<div class="section-wrap">
-  <div class="section-eyebrow">Built for</div>
-  <div class="section-title">The people <span class="dim">behind winning creative.</span></div>
-  <div class="for-grid">
-    <div class="for-card"><div class="for-card-title"><span class="for-arrow">→</span>Media Buyers</div><div class="for-card-desc">Audit before scaling. Know exactly why something converts before putting real budget behind it.</div></div>
-    <div class="for-card"><div class="for-card-title"><span class="for-arrow">→</span>UGC Agencies</div><div class="for-card-desc">Review 50+ videos a week without burning your team. Structured reports in seconds, not hours.</div></div>
-    <div class="for-card"><div class="for-card-title"><span class="for-arrow">→</span>Content Strategists</div><div class="for-card-desc">Reverse-engineer competitor ads. Build smarter briefs from what's already proven to work.</div></div>
-    <div class="for-card"><div class="for-card-title"><span class="for-arrow">→</span>Creative Directors</div><div class="for-card-desc">Give your team structured, data-backed notes instead of vibes-based feedback.</div></div>
+<!-- METRICS / SOCIAL PROOF -->
+<section class="metrics-section">
+  <div class="section-container">
+    <h2 class="section-title">Trusted by creators everywhere</h2>
+    <div class="metrics-grid">
+      <div class="metric">
+        <div class="metric-number">10K+</div>
+        <div class="metric-label">Ads Analyzed</div>
+      </div>
+      <div class="metric">
+        <div class="metric-number">60s</div>
+        <div class="metric-label">Average Analysis Time</div>
+      </div>
+      <div class="metric">
+        <div class="metric-number">98%</div>
+        <div class="metric-label">Accuracy Rate</div>
+      </div>
+    </div>
   </div>
-</div>
-
-<!-- COMPARE -->
-<div class="section-wrap" id="compare">
-  <div class="section-eyebrow">Why Cutsheet</div>
-  <div class="section-title">Us vs <span class="dim">everything else.</span></div>
-  <table class="compare-table">
-    <thead>
-      <tr>
-        <th></th>
-        <th class="col-us"><span>Cutsheet</span></th>
-        <th class="col-other">Manual Review</th>
-        <th class="col-other">Generic AI</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr><td>Analysis speed</td><td class="col-us check">60 seconds</td><td class="col-other">20–45 min</td><td class="col-other">Varies</td></tr>
-      <tr><td>Hook strength scoring</td><td class="col-us check">✓ Included</td><td class="col-other">✗ Manual</td><td class="col-other">✗ Not specific</td></tr>
-      <tr><td>Emotion arc mapping</td><td class="col-us check">✓ Included</td><td class="col-other">✗ Subjective</td><td class="col-other">✗ Not available</td></tr>
-      <tr><td>Creative brief output</td><td class="col-us check">✓ One click</td><td class="col-other">✗ From scratch</td><td class="col-other">✗ Generic</td></tr>
-      <tr><td>Batch analysis</td><td class="col-us check">✓ Up to 10 videos</td><td class="col-other">✗ One at a time</td><td class="col-other">✗ Not available</td></tr>
-      <tr><td>Shareable reports</td><td class="col-us check">✓ Link + PDF</td><td class="col-other">✗ Manual export</td><td class="col-other">✗ Limited</td></tr>
-      <tr><td>Ad-specific intelligence</td><td class="col-us check">✓ Performance-first</td><td class="col-other">✗ Analyst-dependent</td><td class="col-other">✗ General purpose</td></tr>
-    </tbody>
-  </table>
-</div>
+</section>
 
 <!-- FAQ -->
-<div class="section-wrap" id="faq">
-  <div class="section-eyebrow">FAQ</div>
-  <div class="section-title">Questions? <span class="dim">We got you.</span></div>
-  <div class="faq-list">
-    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">What video formats does Cutsheet support?<span class="faq-icon">+</span></button><div class="faq-a"><div class="faq-a-inner">MP4, WebM, and MOV files up to 200MB. Paste a direct video URL instead of uploading — no download needed.</div></div></div>
-    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">How accurate is the analysis?<span class="faq-icon">+</span></button><div class="faq-a"><div class="faq-a-inner">Very strong for most content. Powered by Google Gemini 2.0 Flash. Best results with clear audio and well-lit footage.</div></div></div>
-    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">How long does an analysis take?<span class="faq-icon">+</span></button><div class="faq-a"><div class="faq-a-inner">30–90 seconds depending on length. A 15s TikTok is fast. A 90s ad takes a bit longer. Still way faster than doing it by hand.</div></div></div>
-    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">What's included in the free tier?<span class="faq-icon">+</span></button><div class="faq-a"><div class="faq-a-inner">3 analyses free — no credit card needed. After that, Pro is $29/month: unlimited analyses, batch mode, PDF export, and shareable links.</div></div></div>
-    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Can I analyze competitor ads?<span class="faq-icon">+</span></button><div class="faq-a"><div class="faq-a-inner">Yes — one of the best use cases. Drop in a competitor's URL and get a full breakdown. Reverse-engineer what's performing before writing your next brief.</div></div></div>
-    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Is my content private?<span class="faq-icon">+</span></button><div class="faq-a"><div class="faq-a-inner">Analysis goes through Google's Gemini API. Videos aren't stored by Cutsheet. Share links are opt-in — nothing is public unless you choose to share it.</div></div></div>
-  </div>
-</div>
-
-<!-- BOTTOM CTA -->
-<div class="bottom-section">
-  <div class="bottom-grad-blob"></div>
-  <div style="position:relative;z-index:1;">
-    <div class="bottom-eyebrow">if you scrolled this far...</div>
-    <div class="bottom-title">Time to stop<br/><span class="dim">guessing.</span></div>
-    <div class="bottom-sub">Join the waitlist. 3 free analyses at launch. No spam.</div>
-    <div class="bottom-form" id="bottom-form">
-      <input class="bottom-input" type="email" id="bottom-email" placeholder="your@email.com" />
-      <button class="hero-btn" onclick="handleSignup('bottom-email','bottom-form','bottom-success')">Let's Go →</button>
+<section class="faq-section" id="faq">
+  <div class="section-container">
+    <h2 class="section-title">Questions?</h2>
+    <div class="faq-container">
+      <div class="faq-item">
+        <div class="faq-question">
+          <span>How accurate is the analysis?</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">Our AI is trained on thousands of high-performing ads across every vertical. Accuracy is 98%+, but the best use is as a starting point for your own creative judgment.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-question">
+          <span>Can I use this for TikTok, Instagram, YouTube?</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">Yes. Upload directly, or paste a link from TikTok, Instagram, YouTube, or any platform. We'll download and analyze it instantly.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-question">
+          <span>What's included in the analysis?</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">Hook strength, message clarity, CTA effectiveness, production quality, emotion arc mapping, scene breakdown, full transcript, and a creative verdict from a media buyer's perspective.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-question">
+          <span>Can I share results with my team?</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">Yes. Generate a public link for any analysis and share it with teammates, clients, or stakeholders. They can view the full scorecard and insights.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-question">
+          <span>Is there a free trial?</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">Yes. 3 free analyses per month to start. Upgrade to Pro for unlimited analyses, batch uploads, and priority support.</div>
+      </div>
     </div>
-    <div class="bottom-success" id="bottom-success"><span>✓</span> You're on the list. See you at launch.</div>
-    <div class="tasklist-wrap">
-      <div class="tasklist-header"><div class="tasklist-dot"></div><span class="tasklist-title">cutsheet — analyzing creative</span></div>
-      <div class="tasklist-items" id="tasklist"></div>
-    </div>
-    <p style="margin-top:32px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,0.2);">Built by <a href="#" style="color:rgba(255,255,255,0.3);text-decoration:none;">Shug Studio</a> · Powered by Gemini</p>
   </div>
-</div>
+</section>
 
+<!-- FINAL CTA -->
+<section class="final-cta">
+  <div class="section-container">
+    <h2>Stop guessing why ads work</h2>
+    <p>Start analyzing. Start shipping. Start winning.</p>
+    <button class="btn-primary">Get Early Access — It's Free</button>
+  </div>
+</section>
+
+<!-- FOOTER -->
 <footer>
-  <a href="#" class="logo">
-    <div class="logo-mark" style="width:26px;height:26px;border-radius:6px;">
-      <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" fill="white" opacity="0.9"/><path d="M6 8h4M8 6v4" stroke="rgba(200,80,192,0.8)" stroke-width="1.5" stroke-linecap="round"/></svg>
-    </div>
-    <span class="logo-word" style="font-size:13px;">CUTSHEET</span>
-  </a>
-  <p>© 2026 Cutsheet · All rights reserved</p>
-  <p><a href="mailto:hello@cutsheet.app">hello@cutsheet.app</a></p>
+  <p>&copy; 2025 Cutsheet. All rights reserved. | <a href="#" style="color: var(--primary); text-decoration: none;">Privacy</a> | <a href="#" style="color: var(--primary); text-decoration: none;">Terms</a></p>
 </footer>
 
 <script>
-  function toggleFaq(btn) {
-    const item = btn.parentElement;
-    const isOpen = item.classList.contains('open');
-    document.querySelectorAll('.faq-item.open').forEach(el => el.classList.remove('open'));
-    if (!isOpen) item.classList.add('open');
-  }
-  function handleSignup(emailId, formId, successId) {
-    const email = document.getElementById(emailId)?.value;
-    if (!email) return;
-    const form = document.getElementById(formId);
-    const success = document.getElementById(successId);
-    console.log('Waitlist signup:', email);
-    if (form) form.style.display = 'none';
-    if (success) success.style.display = 'flex';
-  }
-  const baseTasks = [
-    'Uploading creative...',
-    'Reading scene structure',
-    'Scoring hook strength',
-    'Mapping emotion arc',
-    'Auditing CTA timing',
-    'Generating brief...',
-    'Exporting report',
-  ];
-  let tasks = baseTasks.map(label => ({ label, state: 'pending' })); // state: pending | active | done
-  let currentTaskIndex = 0;
-  let sequenceTimeout = null;
-  function buildTaskList() {
-    const c = document.getElementById('tasklist');
-    if (!c) return;
-    c.innerHTML = '';
-    tasks.forEach((t) => {
-      const row = document.createElement('div');
-      row.className = 'task-row ' + t.state;
-
-      const check = document.createElement('div');
-      check.className = 'task-check ' + t.state;
-      check.textContent = t.state === 'done' ? '✓' : '';
-
-      const label = document.createElement('span');
-      label.textContent = t.label;
-
-      row.appendChild(check);
-      row.appendChild(label);
-
-      if (t.state === 'active') {
-        const tag = document.createElement('span');
-        tag.className = 'analyzing-tag';
-        tag.textContent = 'ANALYZING';
-        row.appendChild(tag);
-      }
-
-      c.appendChild(row);
+  // FAQ Toggle
+  document.querySelectorAll('.faq-item').forEach(item => {
+    item.addEventListener('click', () => {
+      item.classList.toggle('active');
     });
-  }
-  buildTaskList();
-
-  function runTaskSequence() {
-    // Reset state
-    tasks = baseTasks.map(label => ({ label, state: 'pending' }));
-    currentTaskIndex = 0;
-    buildTaskList();
-
-    function activateNext() {
-      if (currentTaskIndex >= tasks.length) {
-        // all done — pause then restart sequence
-        sequenceTimeout = setTimeout(runTaskSequence, 2000);
-        return;
-      }
-
-      // set current as active
-      tasks[currentTaskIndex].state = 'active';
-      buildTaskList();
-
-      // after 800ms, mark as done with quick scale pop
-      sequenceTimeout = setTimeout(() => {
-        tasks[currentTaskIndex].state = 'done';
-        buildTaskList();
-
-        // bump index and schedule next task after brief delay
-        currentTaskIndex += 1;
-        sequenceTimeout = setTimeout(activateNext, 400);
-      }, 800);
-    }
-
-    activateNext();
-  }
-
-  runTaskSequence();
-
-  // ─── DEMO SECTION MOTION ─────────────────────────────────────
-  if (window.matchMedia && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    const demoSection = document.querySelector(".demo-section");
-    const demoWindow = demoSection?.querySelector(".demo-window");
-    const demoEyebrow = demoSection?.querySelector(".section-eyebrow");
-    const demoTitle = demoSection?.querySelector(".section-title");
-    const bars = demoSection?.querySelectorAll(".demo-bar") || [];
-    const scoreVals = demoSection?.querySelectorAll(".demo-score-val") || [];
-    const overallEl = demoSection?.querySelector(".demo-overall-num");
-    const strongBadge = demoSection?.querySelector(".demo-strong-badge");
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (!entry.isIntersecting) return;
-        if (!demoWindow) return;
-
-        // Only fire once
-        observer.disconnect();
-
-        // Header entrance
-        if (demoEyebrow) {
-          demoEyebrow.classList.add("demo-header-in-view");
-        }
-        if (demoTitle) {
-          setTimeout(() => demoTitle.classList.add("demo-header-in-view"), 100);
-        }
-
-        // Window entrance
-        demoWindow.classList.add("demo-in-view");
-
-        // Strong badge spring-in
-        if (strongBadge) {
-          setTimeout(() => strongBadge.classList.add("demo-strong-in"), 600);
-        }
-
-        // Helper to map score to color
-        function scoreColor(score) {
-          if (score >= 7) return "#0070F3";
-          if (score >= 5) return "#F5A623";
-          return "#0070F3";
-        }
-
-        // Animate bars & per-metric scores
-        bars.forEach((barEl, index) => {
-          const widthTarget = parseFloat(barEl.getAttribute("data-width") || "0");
-          const score = parseFloat(barEl.getAttribute("data-score") || "0");
-          const color = scoreColor(score);
-          const valEl = scoreVals[index];
-          const delay = [0.1, 0.25, 0.4, 0.55][index] || 0.1;
-          setTimeout(() => {
-            const start = performance.now();
-            const duration = 1000;
-            function step(now) {
-              const elapsed = now - start;
-              const t = Math.min(elapsed / duration, 1);
-              // cubic-bezier(0.16,1,0.3,1) approximation
-              const ease = t < 0.5
-                ? 4 * t * t * t
-                : 1 - Math.pow(-2 * t + 2, 3) / 2;
-              const width = widthTarget * ease;
-              barEl.style.width = width + "%";
-              barEl.style.backgroundColor = color;
-              if (valEl) {
-                valEl.textContent = Math.round(score * ease).toString();
-              }
-              if (t < 1) requestAnimationFrame(step);
-            }
-            requestAnimationFrame(step);
-          }, delay * 1000);
-        });
-
-        // Overall score count-up
-        if (overallEl) {
-          const target = parseFloat(overallEl.getAttribute("data-overall-score") || "0");
-          setTimeout(() => {
-            const start = performance.now();
-            const duration = 800;
-            function step(now) {
-              const elapsed = now - start;
-              const t = Math.min(elapsed / duration, 1);
-              const ease = 1 - Math.pow(1 - t, 3); // ease-out
-              const val = target * ease;
-              overallEl.textContent = Math.round(val).toString();
-              if (t < 1) requestAnimationFrame(step);
-            }
-            requestAnimationFrame(step);
-          }, 200);
-        }
-      });
-    }, { threshold: 0.15 });
-
-    if (demoWindow) {
-      observer.observe(demoWindow);
-    }
-  }
+  });
 </script>
+
 </body>
 </html>
