@@ -61,15 +61,17 @@
     .logo-mark {
       width: 32px;
       height: 32px;
-      background: var(--primary);
       border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: white;
-      font-weight: 900;
-      font-size: 18px;
-      font-family: var(--mono);
+      overflow: hidden;
+    }
+
+    .logo-mark img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
     .logo-text {
@@ -569,7 +571,9 @@
 <!-- NAV -->
 <nav>
   <a href="#" class="logo">
-    <div class="logo-mark">C</div>
+    <div class="logo-mark">
+      <img src="/logo/cutsheet_Logo.png" alt="Cutsheet" />
+    </div>
     <div class="logo-text">CUTSHEET</div>
   </a>
   <div class="nav-links">
