@@ -294,16 +294,6 @@
       align-items: center;
       gap: 10px;
       margin-bottom: 10px;
-      opacity: 0;
-    }
-
-    .demo-score-row.active {
-      animation: fadeInSlide 0.4s ease both;
-    }
-
-    @keyframes fadeInSlide {
-      from { opacity: 0; transform: translateX(-8px); }
-      to { opacity: 1; transform: translateX(0); }
     }
 
     .demo-score-label {
@@ -325,9 +315,19 @@
     .demo-score-bar {
       height: 100%;
       border-radius: 2px;
+      animation: growBar 0.8s cubic-bezier(0.16,1,0.3,1) forwards;
+      animation-iteration-count: 1;
       width: 0;
-      transition: width 0.8s cubic-bezier(0.16,1,0.3,1);
     }
+
+    @keyframes growBar {
+      to { width: var(--target-width); }
+    }
+
+    .demo-score-row:nth-child(1) .demo-score-bar { animation-delay: 0ms; }
+    .demo-score-row:nth-child(2) .demo-score-bar { animation-delay: 150ms; }
+    .demo-score-row:nth-child(3) .demo-score-bar { animation-delay: 300ms; }
+    .demo-score-row:nth-child(4) .demo-score-bar { animation-delay: 450ms; }
 
     .demo-score-num {
       font-family: var(--mono);
@@ -338,81 +338,32 @@
     }
 
     .demo-overall-score {
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      text-align: right;
       margin-bottom: 20px;
     }
 
-    .demo-arc-svg {
-      transform: rotate(-90deg);
-    }
-
-    .demo-arc-bg {
-      fill: none;
-      stroke: rgba(255,255,255,0.06);
-      stroke-width: 5;
-    }
-
-    .demo-arc-progress {
-      fill: none;
-      stroke: #FF4444;
-      stroke-width: 5;
-      stroke-linecap: round;
-      stroke-dasharray: 226;
-      stroke-dashoffset: 226;
-      transition: stroke-dashoffset 1.2s cubic-bezier(0.16,1,0.3,1);
-    }
-
-    .demo-arc-progress.active {
-      stroke-dashoffset: 45; /* 80% of circumference = 20% of 226 */
-    }
-
-    .demo-arc-score {
-      position: absolute;
+    .demo-overall-score-num {
       font-family: var(--mono);
+      font-size: 48px;
       font-weight: 700;
-      font-size: 20px;
       color: #FF4444;
+      line-height: 1;
+    }
+
+    .demo-overall-score-label {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 0.1em;
     }
 
     .demo-section-header {
       color: #FF4444;
       font-weight: 700;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       font-size: 10px;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      opacity: 0;
-    }
-
-    .demo-section-header.active {
-      animation: fadeIn 0.3s ease both;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    .typing-text {
-      display: inline;
-    }
-
-    .typing-cursor {
-      display: inline-block;
-      width: 2px;
-      height: 12px;
-      background: #FF4444;
-      margin-left: 2px;
-      animation: blink 1s infinite;
-      vertical-align: text-bottom;
-    }
-
-    @keyframes blink {
-      0%, 49% { opacity: 1; }
-      50%, 100% { opacity: 0; }
     }
 
     /* FEATURES */
@@ -616,35 +567,32 @@
           <div style="margin-top:24px;">
             <div class="demo-label">Creative Scorecard</div>
             
-            <!-- Overall Score Arc -->
+            <!-- Overall Score -->
             <div class="demo-overall-score">
-              <svg class="demo-arc-svg" width="72" height="72" viewBox="0 0 72 72">
-                <circle class="demo-arc-bg" cx="36" cy="36" r="36"></circle>
-                <circle class="demo-arc-progress" id="demo-arc" cx="36" cy="36" r="36"></circle>
-              </svg>
-              <div class="demo-arc-score" id="demo-overall-score">0</div>
+              <div class="demo-overall-score-num">8</div>
+              <div class="demo-overall-score-label">OVERALL</div>
             </div>
 
             <!-- Score Rows -->
-            <div class="demo-score-row" data-score="8" data-width="80" data-color="#FF4444">
+            <div class="demo-score-row">
               <div class="demo-score-label">Hook Strength</div>
-              <div class="demo-score-bar-wrap"><div class="demo-score-bar" style="background:#FF4444"></div></div>
-              <div class="demo-score-num" style="color:#FF4444">0</div>
+              <div class="demo-score-bar-wrap"><div class="demo-score-bar" style="background:#FF4444;--target-width:80%"></div></div>
+              <div class="demo-score-num" style="color:#FF4444">8</div>
             </div>
-            <div class="demo-score-row" data-score="7" data-width="70" data-color="#FF7A00">
+            <div class="demo-score-row">
               <div class="demo-score-label">Message Clarity</div>
-              <div class="demo-score-bar-wrap"><div class="demo-score-bar" style="background:#FF7A00"></div></div>
-              <div class="demo-score-num" style="color:#FF7A00">0</div>
+              <div class="demo-score-bar-wrap"><div class="demo-score-bar" style="background:#FF7A00;--target-width:70%"></div></div>
+              <div class="demo-score-num" style="color:#FF7A00">7</div>
             </div>
-            <div class="demo-score-row" data-score="5" data-width="50" data-color="#FFB800">
+            <div class="demo-score-row">
               <div class="demo-score-label">CTA Effectiveness</div>
-              <div class="demo-score-bar-wrap"><div class="demo-score-bar" style="background:#FFB800"></div></div>
-              <div class="demo-score-num" style="color:#FFB800">0</div>
+              <div class="demo-score-bar-wrap"><div class="demo-score-bar" style="background:#FFB800;--target-width:50%"></div></div>
+              <div class="demo-score-num" style="color:#FFB800">5</div>
             </div>
-            <div class="demo-score-row" data-score="9" data-width="90" data-color="#00D4AA">
+            <div class="demo-score-row">
               <div class="demo-score-label">Production</div>
-              <div class="demo-score-bar-wrap"><div class="demo-score-bar" style="background:#00D4AA"></div></div>
-              <div class="demo-score-num" style="color:#00D4AA">0</div>
+              <div class="demo-score-bar-wrap"><div class="demo-score-bar" style="background:#00D4AA;--target-width:90%"></div></div>
+              <div class="demo-score-num" style="color:#00D4AA">9</div>
             </div>
           </div>
         </div>
@@ -653,7 +601,7 @@
           <div class="demo-label">02 / Creative Analysis</div>
           <!-- Simulated analysis output -->
           <div style="font-family:var(--mono);font-size:11px;line-height:1.8;color:rgba(255,255,255,0.4);">
-            <div class="demo-section-header">🎣 HOOK ANALYSIS (0–3s)</div>
+            <div class="demo-section-header">🎣 HOOK ANALYSIS</div>
             <div style="color:rgba(255,255,255,0.6);margin-bottom:4px;"><span style="color:rgba(255,255,255,0.3);">Hook type:</span> Pattern interrupt</div>
             <div style="color:rgba(255,255,255,0.6);margin-bottom:4px;"><span style="color:rgba(255,255,255,0.3);">Strength:</span> <span style="color:#88DD00;">Strong</span> — cuts directly into problem state without setup</div>
             <div style="color:rgba(255,255,255,0.6);margin-bottom:16px;"><span style="color:rgba(255,255,255,0.3);">Scroll-stop:</span> Yes. High visual contrast in opening frame.</div>
@@ -662,7 +610,7 @@
             <div style="color:rgba(255,255,255,0.6);margin-bottom:16px;">Curiosity → Recognition → Desire → Urgency</div>
 
             <div class="demo-section-header">🧠 CREATIVE VERDICT</div>
-            <div style="color:rgba(255,255,255,0.55);" id="verdict-text"></div>
+            <div style="color:rgba(255,255,255,0.55);">The hook is the strongest element here. The opening creates immediate pattern interrupt that earns the next 5 seconds. Where the ad loses momentum is in the transition from problem to solution — the bridge is too fast and the proof point needs more screen time...</div>
           </div>
         </div>
       </div>
@@ -796,136 +744,6 @@
 
     handleForm('wl-form', 'wl-email', 'wl-success');
     handleForm('wl-form-2', 'wl-email-2', 'wl-success-2');
-
-    // Demo Animation Sequence
-    function animateDemo() {
-      const rows = document.querySelectorAll('.demo-score-row');
-      const headers = document.querySelectorAll('.demo-section-header');
-      const arc = document.getElementById('demo-arc');
-      const overallScore = document.getElementById('demo-overall-score');
-      const verdictText = document.getElementById('verdict-text');
-
-      const verdictFullText = "The hook is the strongest element here. The opening creates immediate pattern interrupt that earns the next 5 seconds. Where the ad loses momentum is in the transition from problem to solution — the bridge is too fast and the proof point needs more screen time...";
-
-      // Reset everything
-      rows.forEach(row => {
-        row.classList.remove('active');
-        row.style.opacity = '0';
-        const bar = row.querySelector('.demo-score-bar');
-        const num = row.querySelector('.demo-score-num');
-        if (bar) bar.style.width = '0';
-        if (num) num.textContent = '0';
-      });
-
-      headers.forEach(h => h.classList.remove('active'));
-      if (arc) arc.classList.remove('active');
-      if (overallScore) overallScore.textContent = '0';
-      if (verdictText) {
-        verdictText.textContent = '';
-        verdictText.innerHTML = '';
-      }
-
-      // Animate overall score arc first
-      setTimeout(() => {
-        if (arc) arc.classList.add('active');
-        // Count up overall score
-        let current = 0;
-        const target = 8;
-        const duration = 1200;
-        const steps = 40;
-        const increment = target / steps;
-        const stepDuration = duration / steps;
-
-        const counter = setInterval(() => {
-          current += increment;
-          if (current >= target) {
-            current = target;
-            clearInterval(counter);
-          }
-          if (overallScore) overallScore.textContent = Math.round(current);
-        }, stepDuration);
-      }, 100);
-
-      // Animate score rows with stagger
-      rows.forEach((row, i) => {
-        setTimeout(() => {
-          row.classList.add('active');
-          row.style.opacity = '1';
-
-          const bar = row.querySelector('.demo-score-bar');
-          const num = row.querySelector('.demo-score-num');
-          const targetScore = parseInt(row.dataset.score);
-          const targetWidth = parseInt(row.dataset.width);
-
-          setTimeout(() => {
-            if (bar) bar.style.width = targetWidth + '%';
-
-            // Count up score numbers
-            let current = 0;
-            const duration = 800;
-            const steps = 20;
-            const increment = targetScore / steps;
-            const stepDuration = duration / steps;
-
-            const counter = setInterval(() => {
-              current += increment;
-              if (current >= targetScore) {
-                current = targetScore;
-                clearInterval(counter);
-              }
-              if (num) num.textContent = Math.round(current);
-            }, stepDuration);
-          }, 100);
-
-        }, 1300 + (i * 100)); // Start after arc animation, stagger by 100ms
-      });
-
-      // Animate section headers
-      headers.forEach((header, i) => {
-        setTimeout(() => {
-          header.classList.add('active');
-        }, 2000 + (i * 200));
-      });
-
-      // Type out verdict text
-      setTimeout(() => {
-        let charIndex = 0;
-        const cursor = document.createElement('span');
-        cursor.className = 'typing-cursor';
-
-        function typeChar() {
-          if (charIndex < verdictFullText.length) {
-            verdictText.textContent += verdictFullText[charIndex];
-            charIndex++;
-            setTimeout(typeChar, 30);
-          } else {
-            verdictText.appendChild(cursor);
-            setTimeout(() => cursor.remove(), 1000);
-          }
-        }
-
-        if (verdictText) typeChar();
-      }, 2600);
-
-      // Fade out and restart after 4 seconds of completion
-      setTimeout(() => {
-        const demoInner = document.querySelector('.demo-inner');
-        if (demoInner) {
-          demoInner.style.transition = 'opacity 0.5s ease';
-          demoInner.style.opacity = '0';
-
-          setTimeout(() => {
-            demoInner.style.opacity = '1';
-            animateDemo(); // Restart the loop
-          }, 600);
-        }
-      }, 7000); // Total time before fade: arc (1.3s) + rows (1.7s) + typing (3s) + hold (1s)
-    }
-
-    // Start animation when page loads
-    window.addEventListener('load', () => {
-      setTimeout(animateDemo, 500);
-    });
   </script>
 </body>
 </html>
