@@ -238,3 +238,94 @@ export function downloadMarkdown(result: AnalysisResult): void {
 export function copyToClipboard(text: string): Promise<void> {
   return navigator.clipboard.writeText(text);
 }
+
+// ─── COMPARE ──────────────────────────────────────────────────────────────────
+
+export async function compareAnalyses(
+  markdownA: string,
+  markdownB: string,
+  apiKey: string
+): Promise<string> {
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({
+    model: MODEL,
+    generationConfig: { maxOutputTokens: 2048, temperature: 0.4 },
+  });
+
+  const prompt = `You are a performance marketing creative analyst. Two video ad analyses are provided below.
+
+Given these two ad analyses, which creative is stronger and why? Be direct. Give a verdict, key differences, and one recommendation for each.
+
+Format your response exactly as:
+
+## VERDICT
+State clearly which ad is stronger and why in 2–3 sentences.
+
+## KEY DIFFERENCES
+- [3–5 bullet points comparing the two ads head to head]
+
+## RECOMMENDATION FOR AD A
+One specific, actionable recommendation.
+
+## RECOMMENDATION FOR AD B
+One specific, actionable recommendation.
+
+---
+
+## AD A ANALYSIS
+${markdownA}
+
+---
+
+## AD B ANALYSIS
+${markdownB}`;
+
+  const result = await model.generateContent(prompt);
+  return result.response.text();
+}
+
+// ─── GENERATE BRIEF ───────────────────────────────────────────────────────────
+
+export async function generateBrief(
+  analysisMarkdown: string,
+  apiKey: string
+): Promise<string> {
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({
+    model: MODEL,
+    systemInstruction:
+      "You are a senior creative strategist. You write tight, actionable creative briefs that creative teams can execute immediately.",
+    generationConfig: { maxOutputTokens: 2048, temperature: 0.6 },
+  });
+
+  const prompt = `Based on this video ad analysis, write a creative brief for the next iteration of this ad. Structure it exactly like this:
+
+## Creative Brief
+
+**Objective:** One sentence on what this ad should achieve.
+
+**Target Audience:** Who this is for, what they care about, what their pain point is.
+
+**Hook Direction:** 2-3 hook concepts with the first 3 seconds described for each.
+
+**Format:** [UGC / Talking head / Lifestyle / Animation / Other] — and why this format fits the audience.
+
+**Key Message:** The single most important thing the viewer should feel or understand.
+
+**Proof Points:** What evidence or credibility to include.
+
+**CTA:** Exact CTA copy + placement recommendation.
+
+**Do:** 3 things the creative must include or achieve.
+**Don't:** 3 things to avoid based on weaknesses in the current ad.
+
+Be specific. No generic advice. Every line should be actionable.
+
+---
+
+## AD ANALYSIS
+${analysisMarkdown}`;
+
+  const result = await model.generateContent(prompt);
+  return result.response.text();
+}

@@ -1,0 +1,99 @@
+// ReportAnalysis.tsx — Page 2+ of PDF report (full analysis + score card)
+import ReactMarkdown from "react-markdown";
+import { ScoreCard } from "./ScoreCard";
+import type { AnalysisResult } from "../services/analyzerService";
+
+export function ReportAnalysis({ result }: { result: AnalysisResult }) {
+  return (
+    <div
+      style={{
+        width: "794px",
+        background: "#0A0A0A",
+        color: "rgba(255,255,255,0.8)",
+        fontFamily: "'Outfit', sans-serif",
+        padding: "40px 56px 80px",
+        boxSizing: "border-box",
+      }}
+    >
+      <style>{`
+        .report-analysis-output h2 {
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 12px;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: #FF4444;
+          margin: 28px 0 12px;
+          padding-bottom: 8px;
+          border-bottom: 1px solid rgba(255,68,68,0.2);
+        }
+        .report-analysis-output h3, .report-analysis-output h4 {
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 11px;
+          color: rgba(255,255,255,0.5);
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          margin: 16px 0 6px;
+        }
+        .report-analysis-output p {
+          margin: 8px 0;
+          color: rgba(255,255,255,0.75);
+        }
+        .report-analysis-output strong {
+          color: rgba(255,255,255,0.95);
+          font-weight: 600;
+        }
+        .report-analysis-output ul, .report-analysis-output ol {
+          padding-left: 18px;
+          margin: 8px 0;
+        }
+        .report-analysis-output li {
+          margin: 4px 0;
+          color: rgba(255,255,255,0.7);
+        }
+        .report-analysis-output code {
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 12px;
+          background: rgba(255,255,255,0.06);
+          padding: 2px 6px;
+          border-radius: 3px;
+          color: rgba(255,255,255,0.8);
+        }
+        .report-analysis-output hr {
+          border: none;
+          border-top: 1px solid rgba(255,255,255,0.06);
+          margin: 20px 0;
+        }
+        .report-analysis-output blockquote {
+          border-left: 2px solid #FF4444;
+          padding-left: 12px;
+          margin: 12px 0;
+          color: rgba(255,255,255,0.5);
+          font-style: italic;
+        }
+      `}</style>
+
+      {/* Score card — all 5 bars, no share button */}
+      {result.scores && (
+        <div style={{ marginBottom: "32px" }}>
+          <ScoreCard
+            scores={result.scores}
+            fileName={result.fileName}
+            isDark={true}
+          />
+        </div>
+      )}
+
+      {/* Full analysis markdown */}
+      <div
+        className="report-analysis-output"
+        style={{
+          fontSize: "14px",
+          lineHeight: 1.7,
+        }}
+      >
+        <ReactMarkdown>{result.markdown}</ReactMarkdown>
+      </div>
+    </div>
+  );
+}

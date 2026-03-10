@@ -17,6 +17,7 @@ interface ScoreCardProps {
   fileName?: string;
   onShare?: () => void;
   isDark?: boolean;
+  winner?: boolean;
 }
 
 const SCORE_LABELS: Record<keyof Scores, string> = {
@@ -35,12 +36,20 @@ const SCORE_COLORS: Record<keyof Scores, string> = {
   overall: "#FF4444",
 };
 
-function getScoreLabel(score: number): { label: string; color: string } {
+function getScoreLabel(score: number, isCTA: boolean = false): { label: string; color: string } {
+  if (score === 0 && isCTA) return { label: "No CTA Detected", color: "#666666" };
+  if (score === 0) return { label: "N/A", color: "#666666" };
   if (score >= 9) return { label: "Exceptional", color: "#00D4AA" };
   if (score >= 7) return { label: "Strong", color: "#88DD00" };
   if (score >= 5) return { label: "Average", color: "#FFB800" };
   if (score >= 3) return { label: "Weak", color: "#FF7A00" };
   return { label: "Poor", color: "#FF4444" };
+}
+
+function formatFileName(fileName: string): string {
+  return fileName
+    .replace(/\.[^/.]+$/, "") // Remove extension
+    .replace(/[_-]/g, " "); // Replace underscores and hyphens with spaces
 }
 
 // SVG Radial progress arc
@@ -115,26 +124,33 @@ function ScoreRow({
   color,
   delay = 0,
   isDark = true,
+  isCTA = false,
 }: {
   label: string;
   score: number;
   color: string;
   delay?: number;
   isDark?: boolean;
+  isCTA?: boolean;
 }) {
   const [visible, setVisible] = useState(false);
   const [barWidth, setBarWidth] = useState(0);
+  const isZero = score === 0;
 
   useEffect(() => {
     const t1 = setTimeout(() => setVisible(true), delay);
-    const t2 = setTimeout(() => setBarWidth((score / 10) * 100), delay + 100);
+    const t2 = setTimeout(() => {
+      if (!isZero) {
+        setBarWidth((score / 10) * 100);
+      }
+    }, delay + 100);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
     };
-  }, [score, delay]);
+  }, [score, delay, isZero]);
 
-  const { label: scoreLabel } = getScoreLabel(score);
+  const { label: scoreLabel, color: labelColor } = getScoreLabel(score, isCTA);
   const muted = isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)";
 
   return (
@@ -165,19 +181,21 @@ function ScoreRow({
           {label}
         </div>
         <div style={{ position: "relative", height: "3px", background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)", borderRadius: "2px" }}>
-          <div
-            style={{
-              position: "absolute",
-              left: 0,
-              top: 0,
-              height: "100%",
-              width: `${barWidth}%`,
-              background: color,
-              borderRadius: "2px",
-              transition: "width 0.8s cubic-bezier(0.16, 1, 0.3, 1)",
-              boxShadow: `0 0 8px ${color}66`,
-            }}
-          />
+          {!isZero && (
+            <div
+              style={{
+                position: "absolute",
+                left: 0,
+                top: 0,
+                height: "100%",
+                width: `${barWidth}%`,
+                background: color,
+                borderRadius: "2px",
+                transition: "width 0.8s cubic-bezier(0.16, 1, 0.3, 1)",
+                boxShadow: `0 0 8px ${color}66`,
+              }}
+            />
+          )}
         </div>
       </div>
 
@@ -188,12 +206,12 @@ function ScoreRow({
             fontSize: "18px",
             fontFamily: "'JetBrains Mono', monospace",
             fontWeight: 700,
-            color,
+            color: isZero ? labelColor : color,
             lineHeight: 1,
           }}
         >
-          {score}
-          <span style={{ fontSize: "11px", color: muted, fontWeight: 400 }}>/10</span>
+          {isZero ? "N/A" : score}
+          {!isZero && <span style={{ fontSize: "11px", color: muted, fontWeight: 400 }}>/10</span>}
         </div>
         <div style={{ fontSize: "10px", color: muted, marginTop: "2px" }}>{scoreLabel}</div>
       </div>
@@ -201,7 +219,7 @@ function ScoreRow({
   );
 }
 
-export function ScoreCard({ scores, fileName, onShare, isDark = true }: ScoreCardProps) {
+export function ScoreCard({ scores, fileName, onShare, isDark = true, winner }: ScoreCardProps) {
   const { label: overallLabel, color: overallColor } = getScoreLabel(scores.overall);
   const scoreKeys = Object.keys(scores).filter((k) => k !== "overall") as Array<keyof Omit<Scores, "overall">>;
   const muted = isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.35)";
@@ -260,7 +278,7 @@ export function ScoreCard({ scores, fileName, onShare, isDark = true }: ScoreCar
                 maxWidth: "200px",
               }}
             >
-              {fileName}
+              {formatFileName(fileName)}
             </div>
           )}
         </div>
@@ -289,6 +307,36 @@ export function ScoreCard({ scores, fileName, onShare, isDark = true }: ScoreCar
           </div>
         </div>
       </div>
+
+      {/* Winner badge */}
+      {winner && (
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "5px",
+            background: "#FFB80018",
+            border: "1px solid #FFB80055",
+            borderRadius: "4px",
+            padding: "3px 8px",
+            marginBottom: "10px",
+            marginRight: "8px",
+          }}
+        >
+          <span style={{ fontSize: "11px", color: "#FFB800" }}>★</span>
+          <span
+            style={{
+              fontSize: "10px",
+              fontFamily: "'JetBrains Mono', monospace",
+              fontWeight: 700,
+              color: "#FFB800",
+              letterSpacing: "0.1em",
+            }}
+          >
+            WINNER
+          </span>
+        </div>
+      )}
 
       {/* Overall verdict badge */}
       <div
@@ -326,14 +374,56 @@ export function ScoreCard({ scores, fileName, onShare, isDark = true }: ScoreCar
             color={SCORE_COLORS[key]}
             delay={i * 80}
             isDark={isDark}
+            isCTA={key === "cta"}
           />
         ))}
+      </div>
+
+      {/* Footer with Cutsheet branding */}
+      <div
+        style={{
+          marginTop: "20px",
+          paddingTop: "16px",
+          borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-end",
+          gap: "8px",
+        }}
+      >
+        <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
+          <polygon
+            points="0,0 10,0 14,4 14,14 0,14"
+            fill={isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)"}
+            opacity="0.95"
+          />
+          <line
+            x1="9.5"
+            y1="0.5"
+            x2="13.5"
+            y2="4.5"
+            stroke={isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}
+            strokeWidth="1"
+          />
+        </svg>
+        <span
+          style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: "9px",
+            fontWeight: 700,
+            letterSpacing: "0.08em",
+            color: isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)",
+          }}
+        >
+          CUTSHEET
+        </span>
       </div>
 
       {/* Share button */}
       {onShare && (
         <button
           onClick={onShare}
+          data-html2canvas-ignore="true"
           style={{
             marginTop: "20px",
             width: "100%",
