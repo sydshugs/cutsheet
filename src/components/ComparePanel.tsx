@@ -11,6 +11,8 @@ interface ComparePanelProps {
   apiKey: string;
   isWinner: boolean | null;
   onResult: (result: AnalysisResult | null) => void;
+  canAnalyze?: boolean;
+  onAnalysisComplete?: () => void;
 }
 
 const STATUS_COPY: Record<string, string> = {
@@ -80,19 +82,30 @@ function MiniSpinner({ t }: { t: ThemeTokens }) {
   );
 }
 
-export function ComparePanel({ label, isDark, apiKey, isWinner, onResult }: ComparePanelProps) {
+export function ComparePanel({ label, isDark, apiKey, isWinner, onResult, canAnalyze = true, onAnalysisComplete }: ComparePanelProps) {
   const t = themes[isDark ? "dark" : "light"];
   const [file, setFile] = useState<File | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const { status, result, error, analyze, reset } = useVideoAnalyzer();
+  const lastReportedRef = useRef<string | null>(null);
   const isAnalyzing = status === "uploading" || status === "processing";
 
   useEffect(() => {
-    onResult(result);
+    if (result) {
+      const key = `${result.fileName}-${result.timestamp.toISOString()}`;
+      if (lastReportedRef.current !== key) {
+        lastReportedRef.current = key;
+        onAnalysisComplete?.();
+        onResult(result);
+      }
+    } else {
+      onResult(null);
+      lastReportedRef.current = null;
+    }
   }, [result]);
 
   const handleAnalyze = async () => {
-    if (!file || isAnalyzing) return;
+    if (!file || isAnalyzing || !canAnalyze) return;
     await analyze(file, apiKey);
   };
 
@@ -153,12 +166,13 @@ export function ComparePanel({ label, isDark, apiKey, isWinner, onResult }: Comp
       />
 
       {/* Analyze button */}
-      {file && status !== "complete" && !isAnalyzing && (
+      {file && status !== "complete" && (
         <button
           onClick={handleAnalyze}
+          disabled={isAnalyzing || !canAnalyze}
           style={{
             padding: "12px",
-            background: "#FF4444",
+            background: isAnalyzing || !canAnalyze ? "rgba(255,68,68,0.3)" : "#FF4444",
             border: "none",
             borderRadius: "8px",
             color: "#fff",
@@ -167,10 +181,10 @@ export function ComparePanel({ label, isDark, apiKey, isWinner, onResult }: Comp
             fontWeight: 700,
             letterSpacing: "0.08em",
             textTransform: "uppercase",
-            cursor: "pointer",
+            cursor: isAnalyzing || !canAnalyze ? "not-allowed" : "pointer",
           }}
         >
-          Run Analysis →
+          {!canAnalyze ? "Upgrade to run more" : "Run Analysis →"}
         </button>
       )}
 

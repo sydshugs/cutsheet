@@ -14,6 +14,7 @@ import { downloadMarkdown, copyToClipboard, generateBrief } from "./services/ana
 import { createShare } from "./services/shareService";
 import { exportToPdf } from "./utils/pdfExport";
 import { UpgradeModal } from "./components/UpgradeModal";
+import { checkShareLimit, incrementShareCount } from "./utils/rateLimiter";
 import { themes, type ThemeTokens, type Theme, THEME_KEY, getInitialTheme } from "./theme";
 import ReactMarkdown from "react-markdown";
 
@@ -325,6 +326,7 @@ export default function App() {
   const [briefCopied, setBriefCopied] = useState(false);
   const [shareToast, setShareToast] = useState(false);
   const [shareLoading, setShareLoading] = useState(false);
+  const [rateLimitError, setRateLimitError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const scorecardRef = useRef<HTMLDivElement | null>(null);
   const lastSavedRef = useRef<string | null>(null);
@@ -351,7 +353,7 @@ export default function App() {
         if (newCount >= FREE_LIMIT && !isPro) setShowUpgradeModal(true);
       }
     }
-  }, [status, result]);
+  }, [status, result, addEntry, increment, isPro, FREE_LIMIT]);
 
   // Clear loaded history entry and brief when a new analysis starts
   useEffect(() => {
@@ -529,7 +531,18 @@ export default function App() {
 
   const handleShareLink = async () => {
     if (!activeResult || shareLoading) return;
+
+    // Check rate limit
+    const { allowed, remaining, resetAt } = checkShareLimit();
+    if (!allowed) {
+      const resetTime = resetAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      setRateLimitError(`Share limit reached (10/hour). Resets at ${resetTime}`);
+      setTimeout(() => setRateLimitError(null), 5000);
+      return;
+    }
+
     setShareLoading(true);
+    setRateLimitError(null);
     try {
       const slug = await createShare({
         file_name: activeResult.fileName,
@@ -538,10 +551,16 @@ export default function App() {
       });
       const url = `${window.location.origin}/s/${slug}`;
       await navigator.clipboard.writeText(url);
+      
+      // Increment share count after successful share
+      incrementShareCount();
+      
       setShareToast(true);
       setTimeout(() => setShareToast(false), 3000);
-    } catch {
-      // silent fail or could set error state
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : "Failed to create share link";
+      setRateLimitError(errorMsg);
+      setTimeout(() => setRateLimitError(null), 5000);
     } finally {
       setShareLoading(false);
     }
@@ -844,7 +863,15 @@ export default function App() {
 
       {/* Compare mode */}
       {mode === "compare" && (
-        <CompareView isDark={isDark} apiKey={API_KEY} />
+        <CompareView
+          isDark={isDark}
+          apiKey={API_KEY}
+          canAnalyze={canAnalyze}
+          increment={increment}
+          isPro={isPro}
+          onLimitReached={() => setShowUpgradeModal(true)}
+          FREE_LIMIT={FREE_LIMIT}
+        />
       )}
 
       {/* Main layout — single mode */}
@@ -1322,6 +1349,32 @@ export default function App() {
           }}
         >
           Link copied to clipboard
+        </div>
+      )}
+
+      {/* Rate limit error toast */}
+      {rateLimitError && (
+        <div
+          role="alert"
+          aria-live="assertive"
+          style={{
+            position: "fixed",
+            bottom: "24px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            padding: "12px 20px",
+            background: "rgba(255,68,68,0.15)",
+            border: "1px solid rgba(255,68,68,0.3)",
+            borderRadius: "8px",
+            fontSize: "12px",
+            fontFamily: "'JetBrains Mono', monospace",
+            color: "#FF6B6B",
+            letterSpacing: "0.04em",
+            boxShadow: "0 4px 20px rgba(255,68,68,0.2)",
+            zIndex: 100,
+          }}
+        >
+          {rateLimitError}
         </div>
       )}
 

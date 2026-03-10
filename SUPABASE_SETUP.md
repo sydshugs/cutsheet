@@ -93,14 +93,104 @@ CREATE POLICY "Allow public insert"
 ### Current Setup (Development/Demo)
 - **Public read access**: Anyone with a link can view an analysis
 - **Public insert access**: Anyone can create share links
+- **Client-side rate limiting**: 10 shares per hour per browser (localStorage)
 - This is fine for demo/personal use with low traffic
+
+### Rate Limiting
+
+#### Client-Side (Current Implementation)
+The app currently uses localStorage to track share limits:
+- **Limit**: 10 shares per hour per browser
+- **Tracking**: Browser localStorage (can be cleared by user)
+- **Reset**: Automatic after 1 hour
+- **Implementation**: See `src/utils/rateLimiter.ts`
+
+**Pros:**
+- No backend required
+- Immediate feedback
+- No API calls for rate limit checks
+
+**Cons:**
+- Can be bypassed by clearing localStorage or using different browsers
+- Not IP-based
+- No cross-device tracking
+
+#### Server-Side (Production Recommendation)
+
+For production, implement IP-based rate limiting using Supabase Edge Functions:
+
+1. **Update schema to track IP addresses**:
+   ```sql
+   -- Run supabase/analyses_table_with_ip.sql
+   ALTER TABLE analyses ADD COLUMN created_by_ip TEXT;
+   CREATE INDEX analyses_ip_created_idx ON analyses(created_by_ip, created_at);
+   ```
+
+2. **Create a Supabase Edge Function** (`functions/create-share/index.ts`):
+   ```typescript
+   import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+   import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+
+   serve(async (req) => {
+     const clientIP = req.headers.get("x-forwarded-for") || 
+                      req.headers.get("x-real-ip") || 
+                      "unknown";
+
+     const supabase = createClient(
+       Deno.env.get('SUPABASE_URL') ?? '',
+       Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+     );
+
+     // Check rate limit
+     const { count } = await supabase
+       .from('analyses')
+       .select('*', { count: 'exact', head: true })
+       .eq('created_by_ip', clientIP)
+       .gt('created_at', new Date(Date.now() - 60 * 60 * 1000).toISOString());
+
+     if (count && count >= 10) {
+       return new Response(
+         JSON.stringify({ error: 'Rate limit exceeded' }),
+         { status: 429, headers: { "Content-Type": "application/json" } }
+       );
+     }
+
+     // Create share with IP tracking
+     const { slug, file_name, scores, markdown } = await req.json();
+     const { data, error } = await supabase
+       .from('analyses')
+       .insert({ slug, file_name, scores, markdown, created_by_ip: clientIP })
+       .select()
+       .single();
+
+     if (error) {
+       return new Response(
+         JSON.stringify({ error: error.message }),
+         { status: 400, headers: { "Content-Type": "application/json" } }
+       );
+     }
+
+     return new Response(
+       JSON.stringify({ slug: data.slug }),
+       { status: 200, headers: { "Content-Type": "application/json" } }
+     );
+   });
+   ```
+
+3. **Deploy the Edge Function**:
+   ```bash
+   supabase functions deploy create-share
+   ```
+
+4. **Update client code** to call the Edge Function instead of direct insert.
 
 ### Production Recommendations
 
-1. **Rate Limiting**: Implement rate limiting on the insert policy to prevent abuse
+1. **✅ Rate Limiting**: Implemented client-side, upgrade to Edge Function for production
 2. **Authentication**: Require users to be authenticated to create shares
 3. **Expiration**: Add a `expires_at` column and automatically delete old shares
 4. **Usage Limits**: Track shares per user and enforce limits
+5. **IP Allowlisting**: Block known VPNs/proxies if abuse occurs
 
 Example production policy with authentication:
 
