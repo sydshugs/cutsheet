@@ -475,6 +475,232 @@
     }
 
     /* ─────────────────────────────────────────────────────────────────── */
+    /* DEMO ANIMATION SECTION */
+    /* ─────────────────────────────────────────────────────────────────── */
+    .demo-animation {
+      padding: 80px 40px;
+      background: linear-gradient(135deg, #0a1a3d 0%, #1a2a5d 50%, #0d1f4a 100%);
+      color: white;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .demo-animation::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(circle at 20% 50%, rgba(0, 112, 243, 0.1) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .demo-animation-content {
+      position: relative;
+      z-index: 1;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .demo-label {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.5);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      font-family: var(--mono);
+    }
+
+    .demo-animation h2 {
+      font-size: 56px;
+      font-weight: 900;
+      margin-bottom: 16px;
+      line-height: 1.1;
+    }
+
+    .demo-animation h2 .highlight {
+      color: #0070F3;
+    }
+
+    .demo-animation p {
+      font-size: 16px;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 40px;
+    }
+
+    .demo-form {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 60px;
+    }
+
+    .demo-form input {
+      flex: 1;
+      padding: 14px 20px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      color: white;
+      font-size: 14px;
+      font-family: var(--mono);
+      transition: all 0.2s;
+    }
+
+    .demo-form input::placeholder {
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .demo-form input:focus {
+      outline: none;
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(0, 112, 243, 0.5);
+    }
+
+    .demo-form button {
+      padding: 14px 32px;
+      background: #0070F3;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .demo-form button:hover {
+      background: #0052CC;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(0, 112, 243, 0.3);
+    }
+
+    .checklist {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(0, 112, 243, 0.2);
+      border-radius: 12px;
+      padding: 32px;
+      text-align: left;
+      backdrop-filter: blur(10px);
+    }
+
+    .checklist-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 24px;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.6);
+      font-family: var(--mono);
+      letter-spacing: 0.05em;
+    }
+
+    .checklist-dot {
+      width: 8px;
+      height: 8px;
+      background: #0070F3;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .checklist-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.8);
+      font-family: var(--mono);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      opacity: 0;
+      animation: slideIn 0.4s ease forwards;
+    }
+
+    .checklist-item:last-child {
+      border-bottom: none;
+    }
+
+    .checklist-item:nth-child(1) { animation-delay: 0.1s; }
+    .checklist-item:nth-child(2) { animation-delay: 0.2s; }
+    .checklist-item:nth-child(3) { animation-delay: 0.3s; }
+    .checklist-item:nth-child(4) { animation-delay: 0.4s; }
+    .checklist-item:nth-child(5) { animation-delay: 0.5s; }
+    .checklist-item:nth-child(6) { animation-delay: 0.6s; }
+    .checklist-item:nth-child(7) { animation-delay: 0.7s; }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .checklist-checkbox {
+      width: 18px;
+      height: 18px;
+      border: 2px solid #0070F3;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: #0070F3;
+      font-weight: 700;
+      font-size: 12px;
+    }
+
+    .checklist-item.completed .checklist-checkbox {
+      background: #0070F3;
+      color: white;
+    }
+
+    .checklist-item.pending {
+      opacity: 0.5;
+    }
+
+    .checklist-item.pending .checklist-checkbox {
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .checklist-label {
+      flex: 1;
+    }
+
+    .checklist-status {
+      font-size: 11px;
+      color: rgba(0, 112, 243, 0.7);
+      font-family: var(--mono);
+      letter-spacing: 0.05em;
+    }
+
+    .demo-footer {
+      margin-top: 40px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.4);
+      font-family: var(--mono);
+    }
+
+    .demo-footer a {
+      color: rgba(0, 112, 243, 0.8);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .demo-footer a:hover {
+      color: #0070F3;
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
     /* CTA SECTION */
     /* ─────────────────────────────────────────────────────────────────── */
     .final-cta {
@@ -753,6 +979,60 @@
         </div>
         <div class="faq-answer">Yes. 3 free analyses per month to start. Upgrade to Pro for unlimited analyses, batch uploads, and priority support.</div>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO ANIMATION SECTION -->
+<section class="demo-animation">
+  <div class="demo-animation-content">
+    <div class="demo-label">If you scrolled this far...</div>
+    <h2>Time to stop <span class="highlight">guessing.</span></h2>
+    <p>Join the waitlist. 3 free analyses at launch. No spam.</p>
+    
+    <div class="demo-form">
+      <input type="email" placeholder="your@email.com" />
+      <button>Let's Go →</button>
+    </div>
+
+    <div class="checklist">
+      <div class="checklist-header">
+        <span class="checklist-dot"></span>
+        cutsheet — analyzing creative
+      </div>
+      <div class="checklist-item completed">
+        <div class="checklist-checkbox">✓</div>
+        <div class="checklist-label">Uploading creative...</div>
+      </div>
+      <div class="checklist-item completed">
+        <div class="checklist-checkbox">✓</div>
+        <div class="checklist-label">Reading scene structure</div>
+      </div>
+      <div class="checklist-item completed">
+        <div class="checklist-checkbox">✓</div>
+        <div class="checklist-label">Scoring hook strength</div>
+      </div>
+      <div class="checklist-item completed">
+        <div class="checklist-checkbox">✓</div>
+        <div class="checklist-label">Mapping emotion arc</div>
+      </div>
+      <div class="checklist-item completed">
+        <div class="checklist-checkbox">✓</div>
+        <div class="checklist-label">Auditing CTA timing</div>
+      </div>
+      <div class="checklist-item pending">
+        <div class="checklist-checkbox"></div>
+        <div class="checklist-label">Generating brief...</div>
+        <div class="checklist-status">ANALYZING</div>
+      </div>
+      <div class="checklist-item pending">
+        <div class="checklist-checkbox"></div>
+        <div class="checklist-label">Exporting report</div>
+      </div>
+    </div>
+
+    <div class="demo-footer">
+      Built by <a href="#">Shug Studio</a> · Powered by Gemini
     </div>
   </div>
 </section>
