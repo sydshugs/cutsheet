@@ -1,0 +1,89 @@
+"use client"
+import * as React from "react"
+
+interface SegmentedControlProps {
+  options: string[]
+  selected?: string
+  onChange?: (value: string) => void
+  className?: string
+}
+
+export function SegmentedControl({
+  options,
+  selected,
+  onChange,
+  className,
+}: SegmentedControlProps) {
+  const [active, setActive] = React.useState<string>(selected ?? options[0])
+
+  React.useEffect(() => {
+    if (selected !== undefined && options.includes(selected)) {
+      setActive(selected)
+    }
+  }, [selected, options])
+
+  const handleClick = (value: string) => {
+    setActive(value)
+    onChange?.(value)
+  }
+
+  return (
+    <div
+      className={className}
+      style={{
+        display: "inline-flex",
+        background: "var(--surface)",
+        border: "1px solid var(--border)",
+        borderRadius: 10,
+        padding: 4,
+        gap: 2,
+      }}
+    >
+      {options.map((option) => {
+        const isActive = option === active
+        return (
+          <button
+            key={option}
+            onClick={() => handleClick(option)}
+            style={{
+              padding: "7px 16px",
+              borderRadius: 7,
+              border: isActive
+                ? "1px solid var(--border-hover)"
+                : "1px solid transparent",
+              background: isActive ? "var(--surface-el)" : "transparent",
+              color: isActive ? "var(--ink)" : "var(--ink-muted)",
+              fontSize: 13,
+              fontWeight: isActive ? 600 : 500,
+              fontFamily: "var(--sans)",
+              cursor: "pointer",
+              transition: "all 0.15s var(--ease-out)",
+              whiteSpace: "nowrap",
+              outline: "none",
+              boxShadow: isActive
+                ? "inset 0 -1.5px 0 var(--accent)"
+                : "none",
+            }}
+            role="radio"
+            aria-checked={isActive}
+          >
+            {isActive ? (
+              <span
+                style={{
+                  background: "var(--grad)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}
+              >
+                {option}
+              </span>
+            ) : (
+              option
+            )}
+          </button>
+        )
+      })}
+    </div>
+  )
+}

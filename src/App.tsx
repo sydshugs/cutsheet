@@ -4,18 +4,23 @@
 import { useState, useRef, useEffect, Fragment, Children, type ReactNode } from "react";
 import html2canvas from "html2canvas";
 import { VideoDropzone } from "./components/VideoDropzone";
-import { ScoreCard } from "./components/ScoreCard";
+import { ScoreCard, getScoreColorByValue } from "./components/ScoreCard";
+import { Sidebar, type SidebarMode } from "./components/Sidebar";
 import { HistoryDrawer } from "./components/HistoryDrawer";
 import { CompareView } from "./components/CompareView";
+import { BatchView } from "./components/BatchView";
+import { SwipeFileView } from "./components/SwipeFileView";
+import { PreFlightView } from "./components/PreFlightView";
 import { useVideoAnalyzer } from "./hooks/useVideoAnalyzer";
 import { useHistory, type HistoryEntry } from "./hooks/useHistory";
+import { useSwipeFile } from "./hooks/useSwipeFile";
 import { useUsage } from "./hooks/useUsage";
 import { downloadMarkdown, copyToClipboard, generateBrief } from "./services/analyzerService";
 import { createShare } from "./services/shareService";
 import { exportToPdf } from "./utils/pdfExport";
 import { UpgradeModal } from "./components/UpgradeModal";
 import { checkShareLimit, incrementShareCount } from "./utils/rateLimiter";
-import { themes, type ThemeTokens, type Theme, THEME_KEY, getInitialTheme } from "./theme";
+import { themes, type ThemeTokens, THEME_KEY } from "./theme";
 import ReactMarkdown from "react-markdown";
 
 // ─── GOOGLE FONTS ─────────────────────────────────────────────────────────────
@@ -33,49 +38,17 @@ const STATUS_COPY = {
   idle: "",
 };
 
-// ─── THEME TOGGLE ─────────────────────────────────────────────────────────────
-function ThemeToggle({ theme, onToggle }: { theme: Theme; onToggle: () => void }) {
-  const isDark = theme === "dark";
-  return (
-    <button
-      onClick={onToggle}
-      title={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        width: "32px",
-        height: "32px",
-        background: "transparent",
-        border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}`,
-        borderRadius: "6px",
-        color: isDark ? "rgba(255,255,255,0.6)" : "rgba(10,10,10,0.6)",
-        cursor: "pointer",
-        padding: 0,
-        flexShrink: 0,
-      }}
-    >
-      {isDark ? (
-        // Sun — click to switch to light
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="5" />
-          <line x1="12" y1="1" x2="12" y2="3" />
-          <line x1="12" y1="21" x2="12" y2="23" />
-          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-          <line x1="1" y1="12" x2="3" y2="12" />
-          <line x1="21" y1="12" x2="23" y2="12" />
-          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-        </svg>
-      ) : (
-        // Moon — click to switch to dark
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-        </svg>
-      )}
-    </button>
-  );
+function relativeTime(iso: string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffDays = Math.floor(diffMs / (24 * 60 * 60 * 1000));
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "1d ago";
+  if (diffDays < 7) return `${diffDays}d ago`;
+  if (diffDays < 14) return "1w ago";
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
+  return d.toLocaleDateString();
 }
 
 // ─── LOADING INDICATOR ────────────────────────────────────────────────────────
@@ -92,52 +65,47 @@ function AnalyzingState({ message, t }: { message: string; t: ThemeTokens }) {
       }}
     >
       <style>{`
-        @keyframes ping {
-          0% { transform: scale(1); opacity: 0.8; }
-          100% { transform: scale(1.8); opacity: 0; }
-        }
-        @keyframes ping2 {
-          0% { transform: scale(1); opacity: 0.6; }
-          100% { transform: scale(1.6); opacity: 0; }
-        }
-        @keyframes pulse-dot {
-          0%, 100% { transform: scale(1); opacity: 1; }
-          50% { transform: scale(1.3); opacity: 0.7; }
-        }
-        @keyframes rotate-slow {
+        @keyframes analyzing-ring {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
+        }
+        @keyframes analyzing-pulse {
+          0%, 100% { opacity: 0.3; transform: scale(0.95); }
+          50% { opacity: 1; transform: scale(1.05); }
+        }
+        @keyframes analyzing-ripple {
+          0% { transform: scale(1); opacity: 0.5; }
+          100% { transform: scale(2); opacity: 0; }
         }
       `}</style>
 
       <div style={{ position: "relative", width: "80px", height: "80px",
         display: "flex", alignItems: "center", justifyContent: "center" }}>
 
-        {/* Ripple rings */}
+        {/* Outer rotating ring */}
         <div style={{ position: "absolute", inset: 0, borderRadius: "50%",
-          border: "1.5px solid rgba(255,68,68,0.6)",
-          animation: "ping 2s cubic-bezier(0,0,0.2,1) infinite" }} />
-        <div style={{ position: "absolute", inset: 0, borderRadius: "50%",
-          border: "1.5px solid rgba(255,68,68,0.4)",
-          animation: "ping 2s cubic-bezier(0,0,0.2,1) infinite",
-          animationDelay: "0.5s" }} />
-        <div style={{ position: "absolute", inset: 0, borderRadius: "50%",
-          border: "1.5px solid rgba(255,68,68,0.25)",
-          animation: "ping 2s cubic-bezier(0,0,0.2,1) infinite",
-          animationDelay: "1s" }} />
+          border: "2px solid transparent",
+          borderTopColor: "var(--accent)",
+          borderRightColor: "rgba(99,102,241,0.3)",
+          animation: "analyzing-ring 1.8s linear infinite" }} />
 
-        {/* Rotating outer ring */}
-        <div style={{ position: "absolute", inset: "8px", borderRadius: "50%",
+        {/* Inner counter-rotating ring */}
+        <div style={{ position: "absolute", inset: "10px", borderRadius: "50%",
           border: "1.5px solid transparent",
-          borderTopColor: "rgba(255,68,68,0.7)",
-          borderRightColor: "rgba(255,68,68,0.2)",
-          animation: "rotate-slow 1.2s linear infinite" }} />
+          borderBottomColor: "rgba(139,92,246,0.7)",
+          borderLeftColor: "rgba(139,92,246,0.2)",
+          animation: "analyzing-ring 1.3s linear infinite reverse" }} />
+
+        {/* Ripple */}
+        <div style={{ position: "absolute", inset: "15px", borderRadius: "50%",
+          border: "1px solid rgba(99,102,241,0.4)",
+          animation: "analyzing-ripple 2s ease-out infinite" }} />
 
         {/* Center dot */}
-        <div style={{ width: "10px", height: "10px", borderRadius: "50%",
-          background: "#FF4444",
-          boxShadow: "0 0 12px rgba(255,68,68,0.8)",
-          animation: "pulse-dot 1.5s ease-in-out infinite" }} />
+        <div style={{ width: "12px", height: "12px", borderRadius: "50%",
+          background: "var(--accent)",
+          boxShadow: "0 0 16px rgba(99,102,241,0.6)",
+          animation: "analyzing-pulse 2s ease-in-out infinite" }} />
       </div>
 
       <div style={{ textAlign: "center" }}>
@@ -184,7 +152,7 @@ function renderTextWithTimestamps(text: string, onSeekTo?: (seconds: number) => 
             background: "transparent",
             padding: 0,
             margin: 0,
-            color: "#FF6B6B",
+            color: "var(--accent)",
             cursor: "pointer",
             fontFamily: "'JetBrains Mono', monospace",
             fontSize: "0.9em",
@@ -225,10 +193,10 @@ function AnalysisOutput({ markdown, onSeekTo, t }: { markdown: string; onSeekTo?
           font-weight: 700;
           letter-spacing: 0.1em;
           text-transform: uppercase;
-          color: #FF4444;
+          color: var(--accent);
           margin: 28px 0 12px;
           padding-bottom: 8px;
-          border-bottom: 1px solid rgba(255,68,68,0.2);
+          border-bottom: 1px solid rgba(99,102,241,0.2);
         }
         .analysis-output h3, .analysis-output h4 {
           font-family: 'JetBrains Mono', monospace;
@@ -268,7 +236,7 @@ function AnalysisOutput({ markdown, onSeekTo, t }: { markdown: string; onSeekTo?
           margin: 20px 0;
         }
         .analysis-output blockquote {
-          border-left: 2px solid #FF4444;
+          border-left: 2px solid var(--accent);
           padding-left: 12px;
           margin: 12px 0;
           color: ${t.blockquoteColor};
@@ -295,22 +263,14 @@ function AnalysisOutput({ markdown, onSeekTo, t }: { markdown: string; onSeekTo?
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 export default function App() {
-  const [theme, setTheme] = useState<Theme>(() => {
-    const initial = getInitialTheme();
-    document.documentElement.setAttribute("data-theme", initial);
-    return initial;
-  });
-  const t = themes[theme];
-  const isDark = theme === "dark";
+  // Single dark mode — no theme toggle
+  const t = themes.dark;
+  const isDark = true;
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", "dark");
+  }, []);
 
-  const toggleTheme = () => {
-    const next: Theme = isDark ? "light" : "dark";
-    setTheme(next);
-    document.documentElement.setAttribute("data-theme", next);
-    try { localStorage.setItem(THEME_KEY, next); } catch {}
-  };
-
-  const [mode, setMode] = useState<"single" | "compare">("single");
+  const [mode, setMode] = useState<SidebarMode>("single");
 
   const [file, setFile] = useState<File | null>(null);
   const [copied, setCopied] = useState(false);
@@ -332,6 +292,8 @@ export default function App() {
   const lastSavedRef = useRef<string | null>(null);
   const { status, statusMessage, result, error, analyze, download, copy, reset } = useVideoAnalyzer();
   const { entries: historyEntries, addEntry, deleteEntry, clearAll } = useHistory();
+  const { addItem: addSwipeItem } = useSwipeFile();
+  const [previousResult, setPreviousResult] = useState<HistoryEntry | null>(null);
   const { usageCount, isPro, canAnalyze, increment, FREE_LIMIT } = useUsage();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
@@ -377,6 +339,18 @@ export default function App() {
 
   const handleAnalyze = async () => {
     if (!file || isAnalyzing || !canAnalyze) return;
+    // Capture previous live result for diffing (re-analyze flow)
+    if (!loadedEntry && result) {
+      setPreviousResult({
+        id: crypto.randomUUID(),
+        fileName: result.fileName,
+        timestamp: result.timestamp.toISOString(),
+        scores: result.scores,
+        markdown: result.markdown,
+      });
+    } else if (!result) {
+      setPreviousResult(null);
+    }
     await analyze(file, API_KEY);
   };
 
@@ -415,6 +389,7 @@ export default function App() {
   const handleReset = () => {
     setFile(null);
     setLoadedEntry(null);
+    setPreviousResult(null);
     reset();
     setBrief(null);
     setBriefError(null);
@@ -456,8 +431,8 @@ export default function App() {
     URL.revokeObjectURL(url);
   };
 
-  const handleImportFromUrl = async () => {
-    const trimmed = urlInput.trim();
+  const importFromUrl = async (rawUrl: string) => {
+    const trimmed = rawUrl.trim();
     if (!trimmed || isAnalyzing || isImporting) return;
 
     try {
@@ -570,321 +545,106 @@ export default function App() {
     <div
       style={{
         minHeight: "100vh",
-        background: t.bg,
-        color: t.text,
-        fontFamily: "'Outfit', sans-serif",
+        background: "var(--bg)",
+        color: "var(--ink)",
+        fontFamily: "var(--sans)",
+        display: "flex",
+        overflowX: "hidden",
       }}
     >
-      {/* Top nav */}
-      <nav
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "16px 24px",
-          borderBottom: `1px solid ${t.border}`,
-          position: "sticky",
-          top: 0,
-          background: t.navBg,
-          backdropFilter: "blur(12px)",
-          zIndex: 10,
+      <Sidebar
+        mode={mode}
+        onModeChange={(m) => {
+          setMode(m);
         }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <div
-            style={{
-              width: "28px",
-              height: "28px",
-              background: "#FF4444",
-              borderRadius: "6px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <polygon
-                points="0,0 10,0 14,4 14,14 0,14"
-                fill="white"
-                opacity="0.95"
-              />
-              <line
-                x1="9.5" y1="0.5"
-                x2="13.5" y2="4.5"
-                stroke="#FF4444"
-                strokeWidth="1"
-              />
-            </svg>
-          </div>
-          <span
-            style={{
-              fontFamily: "'JetBrains Mono', monospace",
-              fontWeight: 700,
-              fontSize: "14px",
-              letterSpacing: "0.04em",
-            }}
-          >
-            CUTSHEET
-          </span>
-          <span
-            style={{
-              fontSize: "10px",
-              fontFamily: "'JetBrains Mono', monospace",
-              color: t.textFaint,
-              background: t.surface,
-              padding: "2px 6px",
-              borderRadius: "3px",
-            }}
-          >
-            BETA
-          </span>
-          {isPro && (
-            <span
-              style={{
-                fontSize: "10px",
-                fontFamily: "'JetBrains Mono', monospace",
-                fontWeight: 700,
-                color: "#0A0A0A",
-                background: "#00D4AA",
-                padding: "2px 6px",
-                borderRadius: "3px",
-                letterSpacing: "0.04em",
-              }}
-            >
-              Pro
-            </span>
-          )}
+        isPro={isPro}
+        onNewAnalysis={handleReset}
+        onHistoryOpen={() => setHistoryOpen(true)}
+        userName="User"
+        userPlan={isPro ? "Pro Plan" : "Free"}
+      />
 
-          {/* Mode divider */}
-          <div style={{ width: "1px", height: "16px", background: t.border, margin: "0 4px" }} />
-
-          {/* Single / Compare toggle */}
-          <button
-            onClick={() => setMode(mode === "single" ? "compare" : "single")}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "5px",
-              padding: "4px 10px",
-              background: mode === "compare" ? "rgba(255,68,68,0.12)" : "transparent",
-              border: `1px solid ${mode === "compare" ? "rgba(255,68,68,0.4)" : t.border}`,
-              borderRadius: "5px",
-              color: mode === "compare" ? "#FF4444" : t.textMuted,
-              fontSize: "10px",
-              fontFamily: "'JetBrains Mono', monospace",
-              fontWeight: 700,
-              letterSpacing: "0.08em",
-              cursor: "pointer",
-            }}
-          >
-            {mode === "compare" ? (
-              <>
-                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                  <line x1="1" y1="1" x2="9" y2="9" />
-                  <line x1="9" y1="1" x2="1" y2="9" />
-                </svg>
-                COMPARE
-              </>
-            ) : (
-              <>
-                <svg width="12" height="10" viewBox="0 0 12 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                  <line x1="1" y1="5" x2="5" y2="5" />
-                  <line x1="7" y1="5" x2="11" y2="5" />
-                  <line x1="1" y1="2" x2="5" y2="2" />
-                  <line x1="7" y1="2" x2="11" y2="2" />
-                  <line x1="1" y1="8" x2="5" y2="8" />
-                  <line x1="7" y1="8" x2="11" y2="8" />
-                </svg>
-                COMPARE
-              </>
-            )}
-          </button>
-        </div>
-
-        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-          {/* History icon */}
-          <button
-            onClick={() => setHistoryOpen(true)}
-            title="Analysis history"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "32px",
-              height: "32px",
-              background: "transparent",
-              border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}`,
-              borderRadius: "6px",
-              color: isDark ? "rgba(255,255,255,0.6)" : "rgba(10,10,10,0.6)",
-              cursor: "pointer",
-              padding: 0,
-              flexShrink: 0,
-              position: "relative",
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <polyline points="12 6 12 12 16 14" />
-            </svg>
-            {historyEntries.length > 0 && (
-              <span
-                style={{
-                  position: "absolute",
-                  top: "-4px",
-                  right: "-4px",
-                  width: "14px",
-                  height: "14px",
-                  background: "#FF4444",
-                  borderRadius: "50%",
-                  fontSize: "8px",
-                  fontFamily: "'JetBrains Mono', monospace",
-                  fontWeight: 700,
-                  color: "#fff",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                {historyEntries.length > 9 ? "9+" : historyEntries.length}
-              </span>
-            )}
-          </button>
-          <ThemeToggle theme={theme} onToggle={toggleTheme} />
-          {!isPro && usageCount >= 1 && (
-            <a
-              href={import.meta.env.VITE_STRIPE_CHECKOUT_URL || "#"}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                padding: "7px 14px",
-                background: "rgba(0,212,170,0.12)",
-                border: "1px solid rgba(0,212,170,0.3)",
-                borderRadius: "6px",
-                color: "#00D4AA",
-                fontSize: "11px",
-                fontFamily: "'JetBrains Mono', monospace",
-                fontWeight: 700,
-                cursor: "pointer",
-                letterSpacing: "0.06em",
-                textDecoration: "none",
-              }}
-            >
-              Upgrade to Pro
-            </a>
-          )}
-          {activeResult && (
-            <>
-              <button
-                onClick={handleShareLink}
-                disabled={shareLoading}
-                style={{
-                  padding: "7px 14px",
-                  background: t.surface,
-                  border: `1px solid ${t.borderMid}`,
-                  borderRadius: "6px",
-                  color: t.textSecondary,
-                  fontSize: "11px",
-                  fontFamily: "'JetBrains Mono', monospace",
-                  cursor: shareLoading ? "not-allowed" : "pointer",
-                  letterSpacing: "0.06em",
-                }}
-              >
-                {shareLoading ? "Creating..." : "Share Link"}
-              </button>
-              <button
-                onClick={handleShareAsImage}
-                style={{
-                  padding: "7px 14px",
-                  background: t.surface,
-                  border: `1px solid ${t.borderMid}`,
-                  borderRadius: "6px",
-                  color: t.textSecondary,
-                  fontSize: "11px",
-                  fontFamily: "'JetBrains Mono', monospace",
-                  cursor: "pointer",
-                  letterSpacing: "0.06em",
-                }}
-              >
-                Share as image
-              </button>
-              <button
-                onClick={handleCopy}
-                style={{
-                  padding: "7px 14px",
-                  background: t.surface,
-                  border: `1px solid ${t.borderMid}`,
-                  borderRadius: "6px",
-                  color: t.textSecondary,
-                  fontSize: "11px",
-                  fontFamily: "'JetBrains Mono', monospace",
-                  cursor: "pointer",
-                  letterSpacing: "0.06em",
-                }}
-              >
-                {copied ? "Copied!" : "Copy MD"}
-              </button>
-              <button
-                onClick={handleDownload}
-                style={{
-                  padding: "7px 14px",
-                  background: "#FF4444",
-                  border: "none",
-                  borderRadius: "6px",
-                  color: "#fff",
-                  fontSize: "11px",
-                  fontFamily: "'JetBrains Mono', monospace",
-                  cursor: "pointer",
-                  fontWeight: 700,
-                  letterSpacing: "0.06em",
-                }}
-              >
-                Export .md
-              </button>
-              <button
-                onClick={handleExportPdf}
-                style={{
-                  padding: "7px 14px",
-                  background: t.surface,
-                  border: `1px solid ${t.borderMid}`,
-                  borderRadius: "6px",
-                  color: t.textSecondary,
-                  fontSize: "11px",
-                  fontFamily: "'JetBrains Mono', monospace",
-                  cursor: "pointer",
-                  letterSpacing: "0.06em",
-                }}
-              >
-                Export PDF
-              </button>
-            </>
-          )}
-        </div>
-      </nav>
+      <main className="main-content">
 
       {/* Compare mode */}
       {mode === "compare" && (
         <CompareView
           isDark={isDark}
           apiKey={API_KEY}
-          canAnalyze={canAnalyze}
-          increment={increment}
-          isPro={isPro}
-          onLimitReached={() => setShowUpgradeModal(true)}
-          FREE_LIMIT={FREE_LIMIT}
+        />
+      )}
+
+      {/* Batch mode */}
+      {mode === "batch" && (
+        <BatchView
+          isDark={isDark}
+          apiKey={API_KEY}
+          addHistoryEntry={addEntry}
+          t={t}
+        />
+      )}
+
+      {/* Pre-Flight mode */}
+      {mode === "preflight" && (
+        <PreFlightView
+          isDark={isDark}
+          apiKey={API_KEY}
+        />
+      )}
+
+      {/* Swipe file mode */}
+      {mode === "swipe" && (
+        <SwipeFileView
+          isDark={isDark}
         />
       )}
 
       {/* Main layout — single mode */}
       <div
         style={{
-          display: mode === "compare" ? "none" : "grid",
-          gridTemplateColumns: activeResult ? "1fr 1fr" : "1fr",
-          gap: "0",
-          maxWidth: "1400px",
-          margin: "0 auto",
-          minHeight: "calc(100vh - 57px)",
+          display: mode === "compare" || mode === "batch" || mode === "swipe" || mode === "preflight" ? "none" : "block",
+          flex: 1,
         }}
       >
+        {/* Results action bar */}
+        {(activeResult || (isAnalyzing && file)) && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "12px 24px",
+              borderBottom: "1px solid var(--border)",
+              background: "var(--bg)",
+              position: "sticky",
+              top: 0,
+              zIndex: 40,
+            }}
+          >
+            <span style={{ fontFamily: "var(--mono)", fontSize: 12, color: "var(--ink-muted)", marginRight: "auto" }}>
+              Analyzing: <span style={{ color: "var(--ink)", fontWeight: 500 }}>{activeResult?.fileName ?? file?.name ?? ""}</span>
+            </span>
+            {activeResult && (
+              <>
+                <button type="button" onClick={handleReset} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 7, fontSize: 13, fontWeight: 500, background: "transparent", color: "var(--ink-muted)", border: "1px solid var(--border)", cursor: "pointer", fontFamily: "var(--sans)" }}>Re-analyze</button>
+                <button type="button" onClick={handleExportPdf} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 7, fontSize: 13, fontWeight: 500, background: "transparent", color: "var(--ink-muted)", border: "1px solid var(--border)", cursor: "pointer", fontFamily: "var(--sans)" }}>Export PDF</button>
+                <button type="button" onClick={handleShareLink} disabled={shareLoading} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 7, fontSize: 13, fontWeight: 500, background: "transparent", color: "var(--ink-muted)", border: "1px solid var(--border)", cursor: shareLoading ? "not-allowed" : "pointer", fontFamily: "var(--sans)" }}>{shareLoading ? "Creating…" : "Share"}</button>
+                <button type="button" onClick={handleGenerateBrief} disabled={briefLoading} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 7, fontSize: 13, fontWeight: 500, background: "var(--grad)", color: "#fff", border: "none", cursor: briefLoading ? "not-allowed" : "pointer", fontFamily: "var(--sans)" }}>Generate Brief</button>
+              </>
+            )}
+          </div>
+        )}
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: activeResult ? "1fr 1fr" : "1fr",
+            gap: 0,
+            maxWidth: "1400px",
+            margin: "0 auto",
+            minHeight: activeResult || isAnalyzing ? "calc(100vh - 60px)" : "auto",
+          }}
+        >
         {/* LEFT — Upload + Controls */}
         <div
           style={{
@@ -902,8 +662,8 @@ export default function App() {
           <div
             style={{
               fontSize: "10px",
-              fontFamily: "'JetBrains Mono', monospace",
-              color: t.textFaint,
+              fontFamily: "var(--mono)",
+              color: "var(--ink-faint)",
               letterSpacing: "0.12em",
               textTransform: "uppercase",
             }}
@@ -911,67 +671,53 @@ export default function App() {
             01 / Upload Creative
           </div>
 
-          {/* URL import */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-              <input
-                type="text"
-                placeholder="Paste TikTok / Instagram / direct video URL"
-                value={urlInput}
-                onChange={(e) => setUrlInput(e.target.value)}
-                style={{
-                  flex: 1,
-                  padding: "10px 12px",
-                  borderRadius: "8px",
-                  border: `1px solid ${t.borderStrong}`,
-                  background: t.surfaceDim,
-                  color: t.textPrimary,
-                  fontSize: "12px",
-                  fontFamily: "'JetBrains Mono', monospace",
-                  outline: "none",
-                }}
-                disabled={isAnalyzing || isImporting}
-              />
-              <button
-                onClick={handleImportFromUrl}
-                disabled={!urlInput.trim() || isAnalyzing || isImporting}
-                style={{
-                  padding: "10px 12px",
-                  borderRadius: "8px",
-                  border: `1px solid ${t.borderStrong}`,
-                  background: isImporting ? t.surface : t.surfaceMid,
-                  color: t.text,
-                  fontSize: "11px",
-                  fontFamily: "'JetBrains Mono', monospace",
-                  cursor: !urlInput.trim() || isAnalyzing || isImporting ? "not-allowed" : "pointer",
-                  letterSpacing: "0.06em",
-                  textTransform: "uppercase",
-                }}
-              >
-                {isImporting ? "Importing..." : "Import"}
-              </button>
-            </div>
-            <div
-              style={{
-                fontSize: "11px",
-                fontFamily: "'JetBrains Mono', monospace",
-                color: t.textMuted,
-              }}
-            >
-              Paste a link instead of downloading the file first.
-            </div>
-            {urlError && (
-              <div
-                style={{
-                  fontSize: "11px",
-                  fontFamily: "'JetBrains Mono', monospace",
-                  color: "#FF6B6B",
-                }}
-              >
-                {urlError}
+          {/* Welcome state — shown when no file, no result, no history */}
+          {!file && !activeResult && !isAnalyzing && historyEntries.length === 0 && (
+            <div style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 8,
+              marginBottom: 8,
+              textAlign: "center",
+            }}>
+              <div style={{
+                width: 64,
+                height: 64,
+                borderRadius: 16,
+                background: "rgba(99,102,241,0.08)",
+                border: "1px solid rgba(99,102,241,0.15)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: 8,
+              }}>
+                <svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="23 7 16 12 23 17 23 7" />
+                  <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                </svg>
               </div>
-            )}
-          </div>
+              <h2 style={{
+                fontSize: 20,
+                fontWeight: 700,
+                color: "var(--ink)",
+                margin: 0,
+                fontFamily: "var(--sans)",
+              }}>
+                Analyze your video ad
+              </h2>
+              <p style={{
+                fontSize: 14,
+                color: "var(--ink-muted)",
+                margin: 0,
+                maxWidth: 400,
+                lineHeight: 1.6,
+                fontFamily: "var(--sans)",
+              }}>
+                Drop a video file or paste a URL to get AI-powered scores, scene breakdowns, and actionable creative insights.
+              </p>
+            </div>
+          )}
 
           <VideoDropzone
             file={file}
@@ -980,10 +726,73 @@ export default function App() {
               setFile(f);
               reset();
             }}
-            disabled={isAnalyzing}
+            disabled={isAnalyzing || isImporting}
             videoRef={videoRef}
             isDark={isDark}
+            onUrlSubmit={async (u) => {
+              setUrlInput(u);
+              await importFromUrl(u);
+            }}
           />
+
+          {/* Recent Analyses — empty state only */}
+          {!file && historyEntries.length > 0 && (
+            <>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", maxWidth: 900 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>Recent Analyses</span>
+                <button type="button" onClick={() => setHistoryOpen(true)} style={{ fontSize: 12, color: "var(--accent)", cursor: "pointer", fontWeight: 500, background: "none", border: "none", fontFamily: "var(--sans)" }}>View all →</button>
+              </div>
+              <div style={{ display: "flex", gap: 14, overflowX: "auto", paddingBottom: 4, width: "100%", maxWidth: 900, scrollbarWidth: "thin" }}>
+                {historyEntries.slice(0, 10).map((entry) => {
+                  const overall = entry.scores?.overall ?? 0;
+                  const scoreColor = getScoreColorByValue(overall);
+                  const displayName = entry.fileName.replace(/\.[^/.]+$/, "").replace(/[_-]/g, " ");
+                  return (
+                    <button
+                      key={entry.id}
+                      type="button"
+                      onClick={() => setLoadedEntry(entry)}
+                      style={{
+                        flexShrink: 0,
+                        width: 200,
+                        background: "var(--surface)",
+                        border: "1px solid var(--border)",
+                        borderRadius: "var(--radius)",
+                        overflow: "hidden",
+                        cursor: "pointer",
+                        transition: "transform 0.15s, border-color 0.15s",
+                        textAlign: "left",
+                        padding: 0,
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "translateY(-2px)";
+                        e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.borderColor = "var(--border)";
+                      }}
+                    >
+                      <div style={{ width: "100%", height: 110, background: "var(--surface-el)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
+                        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.08))" }} />
+                        <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", zIndex: 1 }}>
+                          <svg width={12} height={12} viewBox="0 0 16 16" fill="rgba(255,255,255,0.8)"><path d="M4 3l10 5-10 5V3z"/></svg>
+                        </div>
+                      </div>
+                      <div style={{ padding: 12 }}>
+                        <div style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 3, fontFamily: "var(--mono)" }}>—</div>
+                        <div style={{ fontSize: 13, fontWeight: 500, color: "var(--ink)", marginBottom: 8 }}>{displayName}</div>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                          <span style={{ fontFamily: "var(--mono)", fontSize: 12, fontWeight: 600, color: scoreColor, background: `${scoreColor}1a`, border: `1px solid ${scoreColor}33`, borderRadius: 5, padding: "2px 7px" }}>{overall}</span>
+                          <span style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-muted)" }}>{relativeTime(entry.timestamp)}</span>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
 
           {/* Analyze button */}
           {file && status !== "complete" && (
@@ -992,7 +801,7 @@ export default function App() {
               disabled={isAnalyzing || !file || !canAnalyze}
               style={{
                 padding: "14px",
-                background: isAnalyzing ? "rgba(255,68,68,0.3)" : !canAnalyze ? t.surface : "#FF4444",
+                background: isAnalyzing ? "rgba(99,102,241,0.3)" : !canAnalyze ? t.surface : "var(--grad)",
                 border: !canAnalyze ? `1px solid ${t.border}` : "none",
                 borderRadius: "8px",
                 color: "#fff",
@@ -1002,7 +811,8 @@ export default function App() {
                 letterSpacing: "0.08em",
                 textTransform: "uppercase",
                 cursor: isAnalyzing || !canAnalyze ? "not-allowed" : "pointer",
-                transition: "all 0.2s ease",
+                transition: "all 0.2s var(--ease-out)",
+                boxShadow: !isAnalyzing && canAnalyze ? "0 4px 16px rgba(99,102,241,0.3)" : "none",
               }}
             >
               {!canAnalyze ? "Upgrade to run more" : isAnalyzing ? "Analyzing..." : "Run AI Analysis →"}
@@ -1043,6 +853,85 @@ export default function App() {
                 isDark={isDark}
               />
             </div>
+          )}
+
+          {/* Re-analyze diff — show change vs previous live result */}
+          {activeResult?.scores && previousResult?.scores && !loadedEntry && (
+            <div
+              style={{
+                marginTop: "8px",
+                fontSize: "11px",
+                fontFamily: "'JetBrains Mono', monospace",
+                color: t.textSecondary,
+              }}
+            >
+              <span style={{ textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                Score change:&nbsp;
+              </span>
+              {(() => {
+                const metrics: Array<{
+                  key: keyof typeof activeResult.scores;
+                  label: string;
+                }> = [
+                  { key: "hook", label: "Hook" },
+                  { key: "clarity", label: "Clarity" },
+                  { key: "cta", label: "CTA" },
+                  { key: "production", label: "Production" },
+                  { key: "overall", label: "Overall" },
+                ];
+                return metrics.map((m, idx) => {
+                  const prev = previousResult.scores?.[m.key] ?? 0;
+                  const next = activeResult.scores![m.key];
+                  const delta = next - prev;
+                  const sign = delta > 0 ? "+" : "";
+                  const color =
+                    delta > 0 ? "#00D4AA" : delta < 0 ? "#FF6B6B" : t.textMuted;
+                  return (
+                    <span key={m.key}>
+                      {idx > 0 && <span style={{ color: t.textMuted }}> · </span>}
+                      <span>{m.label} </span>
+                      <span style={{ color }}>
+                        {delta === 0 ? "0" : `${sign}${delta}`}
+                      </span>
+                    </span>
+                  );
+                });
+              })()}
+            </div>
+          )}
+
+          {/* Save to swipe file */}
+          {activeResult && (
+            <button
+              onClick={() => {
+                addSwipeItem({
+                  fileName: activeResult.fileName,
+                  timestamp: activeResult.timestamp.toISOString(),
+                  scores: activeResult.scores,
+                  markdown: activeResult.markdown,
+                  brand: "",
+                  format: "",
+                  niche: "",
+                  platform: "",
+                  tags: [],
+                  notes: "",
+                });
+              }}
+              style={{
+                marginTop: "10px",
+                padding: "9px 10px",
+                background: "transparent",
+                border: `1px dashed ${t.border}`,
+                borderRadius: "6px",
+                color: t.textSecondary,
+                fontSize: "11px",
+                fontFamily: "'JetBrains Mono', monospace",
+                letterSpacing: "0.08em",
+                cursor: "pointer",
+              }}
+            >
+              + Save to Swipe File
+            </button>
           )}
 
           {/* New analysis button */}
@@ -1164,19 +1053,19 @@ export default function App() {
                         width: "100%",
                         padding: "12px",
                         background: "transparent",
-                        border: `1px solid ${isDark ? "rgba(255,68,68,0.3)" : "rgba(255,68,68,0.4)"}`,
+                        border: "1px solid rgba(99,102,241,0.3)",
                         borderRadius: "8px",
-                        color: "#FF4444",
+                        color: "var(--accent)",
                         fontSize: "12px",
                         fontFamily: "'JetBrains Mono', monospace",
                         fontWeight: 700,
                         letterSpacing: "0.08em",
                         textTransform: "uppercase",
                         cursor: "pointer",
-                        transition: "all 0.2s ease",
+                        transition: "all 0.2s var(--ease-out)",
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "rgba(255,68,68,0.08)";
+                        e.currentTarget.style.background = "rgba(99,102,241,0.08)";
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.background = "transparent";
@@ -1198,8 +1087,8 @@ export default function App() {
                         style={{
                           width: "14px",
                           height: "14px",
-                          border: "2px solid rgba(255,68,68,0.2)",
-                          borderTopColor: "#FF4444",
+                          border: "2px solid rgba(99,102,241,0.2)",
+                          borderTopColor: "var(--accent)",
                           borderRadius: "50%",
                           animation: "rotate-slow 0.8s linear infinite",
                           flexShrink: 0,
@@ -1238,10 +1127,10 @@ export default function App() {
                       style={{
                         width: "100%",
                         padding: "10px",
-                        background: "rgba(255,68,68,0.08)",
-                        border: "1px solid rgba(255,68,68,0.2)",
+                        background: "rgba(99,102,241,0.08)",
+                        border: "1px solid rgba(99,102,241,0.2)",
                         borderRadius: "6px",
-                        color: "#FF4444",
+                        color: "var(--accent)",
                         fontSize: "11px",
                         fontFamily: "'JetBrains Mono', monospace",
                         fontWeight: 700,
@@ -1287,7 +1176,7 @@ export default function App() {
                     onClick={handleBriefDownload}
                     style={{
                       padding: "6px 12px",
-                      background: "#FF4444",
+                      background: "var(--grad)",
                       border: "none",
                       borderRadius: "5px",
                       color: "#fff",
@@ -1325,6 +1214,9 @@ export default function App() {
           </div>
         )}
       </div>
+      </div>
+
+      </main>
 
       {/* Share link toast */}
       {shareToast && (

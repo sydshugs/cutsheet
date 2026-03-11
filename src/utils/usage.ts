@@ -25,6 +25,7 @@ export function incrementUsage(): number {
 
 export function isPro(): boolean {
   try {
+    if (typeof import.meta !== "undefined" && import.meta.env?.DEV) return true;
     return localStorage.getItem(PRO_KEY) === "true";
   } catch {
     return false;

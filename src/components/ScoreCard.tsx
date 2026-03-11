@@ -1,6 +1,4 @@
-// ScoreCard.tsx
-// Animated score visualization — the shareable/viral piece of the app
-// Drop into src/components/ScoreCard.tsx
+// ScoreCard.tsx — Visual translation from #screen-results (prototype)
 
 import { useEffect, useState } from "react";
 
@@ -28,427 +26,278 @@ const SCORE_LABELS: Record<keyof Scores, string> = {
   overall: "Overall Ad Strength",
 };
 
-const SCORE_COLORS: Record<keyof Scores, string> = {
-  hook: "#FF4444",
-  clarity: "#FF7A00",
-  cta: "#FFB800",
-  production: "#00D4AA",
-  overall: "#FF4444",
-};
+/** Score band color for chips/overlays: 9-10 green, 7-8 indigo, 5-6 amber, 1-4 red (scores 0-10). */
+export function getScoreColorByValue(score: number): string {
+  if (score >= 9) return "#10B981";
+  if (score >= 7) return "#6366F1";
+  if (score >= 5) return "#F59E0B";
+  return "#EF4444";
+}
 
 function getScoreLabel(score: number, isCTA: boolean = false): { label: string; color: string } {
   if (score === 0 && isCTA) return { label: "No CTA Detected", color: "#666666" };
   if (score === 0) return { label: "N/A", color: "#666666" };
-  if (score >= 9) return { label: "Exceptional", color: "#00D4AA" };
-  if (score >= 7) return { label: "Strong", color: "#88DD00" };
-  if (score >= 5) return { label: "Average", color: "#FFB800" };
-  if (score >= 3) return { label: "Weak", color: "#FF7A00" };
-  return { label: "Poor", color: "#FF4444" };
+  if (score >= 9) return { label: "Strong", color: "#10B981" };
+  if (score >= 7) return { label: "Strong", color: "#6366F1" };
+  if (score >= 5) return { label: "Average", color: "#F59E0B" };
+  if (score >= 3) return { label: "Weak", color: "#EF4444" };
+  return { label: "Poor", color: "#EF4444" };
 }
 
 function formatFileName(fileName: string): string {
   return fileName
-    .replace(/\.[^/.]+$/, "") // Remove extension
-    .replace(/[_-]/g, " "); // Replace underscores and hyphens with spaces
+    .replace(/\.[^/.]+$/, "")
+    .replace(/[_-]/g, " ");
 }
 
-// SVG Radial progress arc
-function ScoreArc({
-  score,
-  color,
-  size = 56,
-  strokeWidth = 4,
-  animated = true,
-  isDark = true,
-}: {
-  score: number;
-  color: string;
-  size?: number;
-  strokeWidth?: number;
-  animated?: boolean;
-  isDark?: boolean;
-}) {
-  const [displayScore, setDisplayScore] = useState(animated ? 0 : score);
-  const radius = (size - strokeWidth * 2) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const progress = (displayScore / 10) * circumference;
-  const center = size / 2;
-
-  useEffect(() => {
-    if (!animated) return;
-    const start = performance.now();
-    const duration = 1000 + score * 60;
-
-    const tick = (now: number) => {
-      const elapsed = now - start;
-      const t = Math.min(elapsed / duration, 1);
-      const ease = 1 - Math.pow(1 - t, 3);
-      setDisplayScore(parseFloat((ease * score).toFixed(1)));
-      if (t < 1) requestAnimationFrame(tick);
-    };
-
-    requestAnimationFrame(tick);
-  }, [score, animated]);
-
-  return (
-    <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
-      {/* Track */}
-      <circle
-        cx={center}
-        cy={center}
-        r={radius}
-        fill="none"
-        stroke={isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}
-        strokeWidth={strokeWidth}
-      />
-      {/* Progress */}
-      <circle
-        cx={center}
-        cy={center}
-        r={radius}
-        fill="none"
-        stroke={color}
-        strokeWidth={strokeWidth}
-        strokeLinecap="round"
-        strokeDasharray={circumference}
-        strokeDashoffset={circumference - progress}
-        style={{ transition: "stroke-dashoffset 0.05s linear" }}
-      />
-    </svg>
-  );
-}
-
-function ScoreRow({
-  label,
-  score,
-  color,
-  delay = 0,
-  isDark = true,
-  isCTA = false,
-}: {
-  label: string;
-  score: number;
-  color: string;
-  delay?: number;
-  isDark?: boolean;
-  isCTA?: boolean;
-}) {
-  const [visible, setVisible] = useState(false);
-  const [barWidth, setBarWidth] = useState(0);
-  const isZero = score === 0;
-
-  useEffect(() => {
-    const t1 = setTimeout(() => setVisible(true), delay);
-    const t2 = setTimeout(() => {
-      if (!isZero) {
-        setBarWidth((score / 10) * 100);
-      }
-    }, delay + 100);
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-    };
-  }, [score, delay, isZero]);
-
-  const { label: scoreLabel, color: labelColor } = getScoreLabel(score, isCTA);
-  const muted = isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)";
-
-  return (
-    <div
-      style={{
-        opacity: visible ? 1 : 0,
-        transform: visible ? "translateX(0)" : "translateX(-8px)",
-        transition: "opacity 0.4s ease, transform 0.4s ease",
-        display: "flex",
-        alignItems: "center",
-        gap: "12px",
-        padding: "10px 0",
-        borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)"}`,
-      }}
-    >
-      {/* Label */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            fontSize: "11px",
-            fontFamily: "'JetBrains Mono', monospace",
-            color: isDark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.45)",
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            marginBottom: "6px",
-          }}
-        >
-          {label}
-        </div>
-        <div style={{ position: "relative", height: "3px", background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)", borderRadius: "2px" }}>
-          {!isZero && (
-            <div
-              style={{
-                position: "absolute",
-                left: 0,
-                top: 0,
-                height: "100%",
-                width: `${barWidth}%`,
-                background: color,
-                borderRadius: "2px",
-                transition: "width 0.8s cubic-bezier(0.16, 1, 0.3, 1)",
-                boxShadow: `0 0 8px ${color}66`,
-              }}
-            />
-          )}
-        </div>
-      </div>
-
-      {/* Score */}
-      <div style={{ textAlign: "right", flexShrink: 0 }}>
-        <div
-          style={{
-            fontSize: "18px",
-            fontFamily: "'JetBrains Mono', monospace",
-            fontWeight: 700,
-            color: isZero ? labelColor : color,
-            lineHeight: 1,
-          }}
-        >
-          {isZero ? "N/A" : score}
-          {!isZero && <span style={{ fontSize: "11px", color: muted, fontWeight: 400 }}>/10</span>}
-        </div>
-        <div style={{ fontSize: "10px", color: muted, marginTop: "2px" }}>{scoreLabel}</div>
-      </div>
-    </div>
-  );
-}
+const scoreKeys = ["hook", "clarity", "cta", "production"] as const;
 
 export function ScoreCard({ scores, fileName, onShare, isDark = true, winner }: ScoreCardProps) {
-  const { label: overallLabel, color: overallColor } = getScoreLabel(scores.overall);
-  const scoreKeys = Object.keys(scores).filter((k) => k !== "overall") as Array<keyof Omit<Scores, "overall">>;
-  const muted = isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.35)";
-  const subtle = isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)";
-  const faint = isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)";
-  const btnBorder = isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)";
+  const { label: overallLabel } = getScoreLabel(scores.overall);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   return (
     <div
+      className="scorecard"
       style={{
-        background: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)",
-        border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}`,
-        borderRadius: "12px",
-        padding: "24px",
-        position: "relative",
-        overflow: "hidden",
+        background: "var(--surface)",
+        border: "1px solid var(--border)",
+        borderRadius: "var(--radius)",
+        padding: 18,
+        transition: "transform 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out)",
+      }}
+      onMouseEnter={(e) => {
+        if (window.matchMedia("(hover: hover)").matches) {
+          e.currentTarget.style.transform = "translateY(-2px)";
+          e.currentTarget.style.boxShadow = "var(--shadow-md)";
+        }
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "translateY(0)";
+        e.currentTarget.style.boxShadow = "none";
       }}
     >
-      {/* Glow effect behind overall score */}
       <div
         style={{
-          position: "absolute",
-          top: "-40px",
-          right: "-40px",
-          width: "160px",
-          height: "160px",
-          background: `radial-gradient(circle, ${SCORE_COLORS.overall}22 0%, transparent 70%)`,
-          pointerEvents: "none",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 16,
         }}
-      />
-
-      {/* Header row */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
-        <div>
-          <div
+      >
+        <span
+          style={{
+            fontSize: 12,
+            fontWeight: 600,
+            color: "var(--ink-muted)",
+            textTransform: "uppercase",
+            letterSpacing: "0.06em",
+            fontFamily: "var(--mono)",
+          }}
+        >
+          Overall Score
+        </span>
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 5,
+            background: `${getScoreColorByValue(scores.overall)}1a`,
+            border: `1px solid ${getScoreColorByValue(scores.overall)}40`,
+            borderRadius: 20,
+            padding: "3px 10px",
+            fontSize: 11,
+            fontWeight: 600,
+            color: getScoreColorByValue(scores.overall),
+            fontFamily: "var(--mono)",
+          }}
+        >
+          <span
             style={{
-              fontSize: "10px",
-              fontFamily: "'JetBrains Mono', monospace",
-              color: muted,
-              letterSpacing: "0.12em",
-              textTransform: "uppercase",
-              marginBottom: "4px",
+              width: 6,
+              height: 6,
+              borderRadius: "50%",
+              background: getScoreColorByValue(scores.overall),
             }}
-          >
-            Creative Scorecard
-          </div>
-          {fileName && (
-            <div
+          />
+          {overallLabel}
+        </span>
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16 }}>
+        {/* Arc gauge */}
+        <div style={{ position: "relative", width: 80, height: 48, flexShrink: 0 }}>
+          <svg viewBox="0 0 120 70" style={{ width: "100%", height: "100%" }}>
+            {/* Background arc */}
+            <path
+              d="M 10 60 A 50 50 0 0 1 110 60"
+              fill="none"
+              stroke="var(--surface-el)"
+              strokeWidth="8"
+              strokeLinecap="round"
+            />
+            {/* Filled arc */}
+            <path
+              d="M 10 60 A 50 50 0 0 1 110 60"
+              fill="none"
+              stroke={getScoreColorByValue(scores.overall)}
+              strokeWidth="8"
+              strokeLinecap="round"
+              strokeDasharray={`${mounted ? (scores.overall / 10) * 157 : 0} 157`}
               style={{
-                fontSize: "12px",
-                color: subtle,
-                fontFamily: "'JetBrains Mono', monospace",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                maxWidth: "200px",
+                transition: "stroke-dasharray 0.8s cubic-bezier(0.16, 1, 0.3, 1)",
+                filter: `drop-shadow(0 0 4px ${getScoreColorByValue(scores.overall)}60)`,
               }}
-            >
-              {formatFileName(fileName)}
-            </div>
-          )}
+            />
+          </svg>
         </div>
-
-        {/* Overall score arc */}
-        <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <ScoreArc score={scores.overall} color={SCORE_COLORS.overall} size={72} strokeWidth={5} isDark={isDark} />
-          <div
-            style={{
-              position: "absolute",
-              textAlign: "center",
-            }}
-          >
-            <div
-              style={{
-                fontSize: "20px",
-                fontFamily: "'JetBrains Mono', monospace",
-                fontWeight: 700,
-                color: SCORE_COLORS.overall,
-                lineHeight: 1,
-              }}
-            >
-              {scores.overall}
-            </div>
-            <div style={{ fontSize: "9px", color: faint }}>/ 10</div>
-          </div>
+        {/* Score number */}
+        <div style={{ fontFamily: "var(--mono)", lineHeight: 1 }}>
+          <span style={{
+            fontSize: 32,
+            fontWeight: 700,
+            color: getScoreColorByValue(scores.overall),
+          }}>
+            {scores.overall}
+          </span>
+          <span style={{
+            fontSize: 16,
+            color: "var(--ink-muted)",
+          }}>/10</span>
         </div>
       </div>
 
-      {/* Winner badge */}
       {winner && (
         <div
           style={{
             display: "inline-flex",
             alignItems: "center",
-            gap: "5px",
-            background: "#FFB80018",
-            border: "1px solid #FFB80055",
-            borderRadius: "4px",
-            padding: "3px 8px",
-            marginBottom: "10px",
-            marginRight: "8px",
+            gap: 5,
+            background: "rgba(245,158,11,0.1)",
+            border: "1px solid rgba(245,158,11,0.25)",
+            borderRadius: 20,
+            padding: "3px 10px",
+            marginBottom: 12,
+            fontSize: 11,
+            fontWeight: 600,
+            color: "#F59E0B",
+            fontFamily: "var(--mono)",
           }}
         >
-          <span style={{ fontSize: "11px", color: "#FFB800" }}>★</span>
-          <span
-            style={{
-              fontSize: "10px",
-              fontFamily: "'JetBrains Mono', monospace",
-              fontWeight: 700,
-              color: "#FFB800",
-              letterSpacing: "0.1em",
-            }}
-          >
-            WINNER
-          </span>
+          ★ Winner
         </div>
       )}
 
-      {/* Overall verdict badge */}
-      <div
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "6px",
-          background: `${overallColor}18`,
-          border: `1px solid ${overallColor}44`,
-          borderRadius: "4px",
-          padding: "4px 10px",
-          marginBottom: "20px",
-        }}
-      >
-        <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: overallColor }} />
-        <span
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {scoreKeys.map((key) => {
+          const value = scores[key];
+          const pct = value <= 0 ? 0 : Math.min(100, (value / 10) * 100);
+          return (
+            <div key={key}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: 5,
+                }}
+              >
+                <span
+                  style={{
+                    fontFamily: "var(--mono)",
+                    fontSize: 11,
+                    color: "var(--ink-muted)",
+                    fontWeight: 500,
+                  }}
+                >
+                  {SCORE_LABELS[key]}
+                </span>
+                <span
+                  style={{
+                    fontFamily: "var(--mono)",
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: getScoreColorByValue(value),
+                  }}
+                >
+                  {value}
+                </span>
+              </div>
+              <div
+                style={{
+                  height: "var(--bar-height)",
+                  background: "var(--surface-el)",
+                  borderRadius: "var(--bar-radius)",
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    height: "100%",
+                    width: mounted ? `${pct}%` : "0%",
+                    background: `linear-gradient(90deg, ${getScoreColorByValue(value)}, ${getScoreColorByValue(value)}cc)`,
+                    borderRadius: "var(--bar-radius)",
+                    boxShadow: `0 0 8px ${getScoreColorByValue(value)}40`,
+                    transition: "width 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
+                  }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {fileName && (
+        <div
           style={{
-            fontSize: "11px",
-            fontFamily: "'JetBrains Mono', monospace",
-            color: overallColor,
-            letterSpacing: "0.06em",
+            marginTop: 12,
+            fontSize: 11,
+            fontFamily: "var(--mono)",
+            color: "var(--ink-muted)",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
           }}
         >
-          {overallLabel}
-        </span>
-      </div>
+          {formatFileName(fileName)}
+        </div>
+      )}
 
-      {/* Individual scores */}
-      <div>
-        {scoreKeys.map((key, i) => (
-          <ScoreRow
-            key={key}
-            label={SCORE_LABELS[key]}
-            score={scores[key]}
-            color={SCORE_COLORS[key]}
-            delay={i * 80}
-            isDark={isDark}
-            isCTA={key === "cta"}
-          />
-        ))}
-      </div>
-
-      {/* Footer with Cutsheet branding */}
-      <div
-        style={{
-          marginTop: "20px",
-          paddingTop: "16px",
-          borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "flex-end",
-          gap: "8px",
-        }}
-      >
-        <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
-          <polygon
-            points="0,0 10,0 14,4 14,14 0,14"
-            fill={isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)"}
-            opacity="0.95"
-          />
-          <line
-            x1="9.5"
-            y1="0.5"
-            x2="13.5"
-            y2="4.5"
-            stroke={isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}
-            strokeWidth="1"
-          />
-        </svg>
-        <span
-          style={{
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: "9px",
-            fontWeight: 700,
-            letterSpacing: "0.08em",
-            color: isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)",
-          }}
-        >
-          CUTSHEET
-        </span>
-      </div>
-
-      {/* Share button */}
       {onShare && (
         <button
+          type="button"
           onClick={onShare}
           data-html2canvas-ignore="true"
           style={{
-            marginTop: "20px",
+            marginTop: 16,
             width: "100%",
-            padding: "10px",
+            padding: "8px 12px",
             background: "transparent",
-            border: `1px solid ${btnBorder}`,
-            borderRadius: "6px",
-            color: subtle,
-            fontSize: "11px",
-            fontFamily: "'JetBrains Mono', monospace",
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
+            border: "1px solid var(--border)",
+            borderRadius: 7,
+            color: "var(--ink-muted)",
+            fontSize: 12,
+            fontFamily: "var(--sans)",
+            fontWeight: 500,
             cursor: "pointer",
-            transition: "all 0.2s ease",
+            transition: "all 0.15s ease",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = "rgba(255,68,68,0.4)";
-            e.currentTarget.style.color = "#FF4444";
+            e.currentTarget.style.background = "var(--surface-el)";
+            e.currentTarget.style.color = "var(--ink)";
+            e.currentTarget.style.borderColor = "var(--border-hover)";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = btnBorder;
-            e.currentTarget.style.color = subtle;
+            e.currentTarget.style.background = "transparent";
+            e.currentTarget.style.color = "var(--ink-muted)";
+            e.currentTarget.style.borderColor = "var(--border)";
+            e.currentTarget.style.transform = "scale(1)";
           }}
+          onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.97)"; }}
+          onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
         >
-          Copy Scorecard ↗
+          Copy Scorecard
         </button>
       )}
     </div>

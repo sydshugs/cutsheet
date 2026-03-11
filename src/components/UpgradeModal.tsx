@@ -70,7 +70,7 @@ export function UpgradeModal({ onClose, t }: UpgradeModalProps) {
             disabled={!CHECKOUT_URL}
             style={{
               padding: "12px 16px",
-              background: "#FF4444",
+              background: "linear-gradient(135deg, #FF6B6B 0%, #C850C0 50%, #4158D0 100%)",
               border: "none",
               borderRadius: "8px",
               color: "#fff",

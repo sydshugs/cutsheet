@@ -8,11 +8,6 @@ import type { AnalysisResult } from "../services/analyzerService";
 interface CompareViewProps {
   isDark: boolean;
   apiKey: string;
-  canAnalyze: boolean;
-  increment: () => number;
-  isPro: boolean;
-  onLimitReached: () => void;
-  FREE_LIMIT: number;
 }
 
 function CompareOutput({ markdown, t }: { markdown: string; t: ThemeTokens }) {
@@ -25,10 +20,10 @@ function CompareOutput({ markdown, t }: { markdown: string; t: ThemeTokens }) {
           font-weight: 700;
           letter-spacing: 0.1em;
           text-transform: uppercase;
-          color: #FF4444;
+          color: var(--accent);
           margin: 24px 0 10px;
           padding-bottom: 8px;
-          border-bottom: 1px solid rgba(255,68,68,0.2);
+          border-bottom: 1px solid rgba(99,102,241,0.2);
         }
         .compare-output p { margin: 8px 0; color: ${t.pColor}; }
         .compare-output strong { color: ${t.strongColor}; font-weight: 600; }
@@ -43,7 +38,7 @@ function CompareOutput({ markdown, t }: { markdown: string; t: ThemeTokens }) {
   );
 }
 
-export function CompareView({ isDark, apiKey, canAnalyze, increment, isPro, onLimitReached, FREE_LIMIT }: CompareViewProps) {
+export function CompareView({ isDark, apiKey }: CompareViewProps) {
   const t = themes[isDark ? "dark" : "light"];
   const [resultA, setResultA] = useState<AnalysisResult | null>(null);
   const [resultB, setResultB] = useState<AnalysisResult | null>(null);
@@ -92,11 +87,6 @@ export function CompareView({ isDark, apiKey, canAnalyze, increment, isPro, onLi
 
   const bothDone = !!(resultA && resultB);
 
-  const onAnalysisComplete = () => {
-    const n = increment();
-    if (n >= FREE_LIMIT && !isPro) onLimitReached();
-  };
-
   return (
     <div style={{ display: "flex", flexDirection: "column" }}>
       {/* Two panels */}
@@ -107,8 +97,6 @@ export function CompareView({ isDark, apiKey, canAnalyze, increment, isPro, onLi
           apiKey={apiKey}
           isWinner={winnerA}
           onResult={setResultA}
-          canAnalyze={canAnalyze}
-          onAnalysisComplete={onAnalysisComplete}
         />
         {/* Panel B — no right border needed */}
         <div style={{ borderLeft: `1px solid ${t.border}` }}>
@@ -118,8 +106,6 @@ export function CompareView({ isDark, apiKey, canAnalyze, increment, isPro, onLi
             apiKey={apiKey}
             isWinner={winnerA === null ? null : !winnerA}
             onResult={setResultB}
-            canAnalyze={canAnalyze}
-            onAnalysisComplete={onAnalysisComplete}
           />
         </div>
       </div>
@@ -158,7 +144,7 @@ export function CompareView({ isDark, apiKey, canAnalyze, increment, isPro, onLi
                   style={{
                     fontSize: "10px",
                     fontFamily: "'JetBrains Mono', monospace",
-                    color: "rgba(255,68,68,0.7)",
+                    color: "rgba(99,102,241,0.7)",
                     letterSpacing: "0.06em",
                   }}
                 >
@@ -200,8 +186,8 @@ export function CompareView({ isDark, apiKey, canAnalyze, increment, isPro, onLi
                 style={{
                   width: "16px",
                   height: "16px",
-                  border: "2px solid rgba(255,68,68,0.2)",
-                  borderTopColor: "#FF4444",
+                  border: "2px solid rgba(99,102,241,0.2)",
+                  borderTopColor: "var(--accent)",
                   borderRadius: "50%",
                   animation: "spin 0.8s linear infinite",
                   flexShrink: 0,

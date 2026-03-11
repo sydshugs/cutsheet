@@ -11,8 +11,6 @@ interface ComparePanelProps {
   apiKey: string;
   isWinner: boolean | null;
   onResult: (result: AnalysisResult | null) => void;
-  canAnalyze?: boolean;
-  onAnalysisComplete?: () => void;
 }
 
 const STATUS_COPY: Record<string, string> = {
@@ -39,7 +37,7 @@ function MiniSpinner({ t }: { t: ThemeTokens }) {
           style={{
             position: "absolute",
             inset: 0,
-            border: "1.5px solid rgba(255,68,68,0.3)",
+            border: "1.5px solid rgba(99,102,241,0.3)",
             borderRadius: "50%",
             animation: "spin 2s linear infinite",
           }}
@@ -48,7 +46,7 @@ function MiniSpinner({ t }: { t: ThemeTokens }) {
           style={{
             position: "absolute",
             inset: "6px",
-            border: "1.5px solid rgba(255,68,68,0.6)",
+            border: "1.5px solid rgba(99,102,241,0.6)",
             borderRadius: "50%",
             animation: "spin 1.4s linear infinite reverse",
           }}
@@ -57,14 +55,14 @@ function MiniSpinner({ t }: { t: ThemeTokens }) {
           style={{
             position: "absolute",
             inset: "12px",
-            background: "rgba(255,68,68,0.15)",
+            background: "rgba(99,102,241,0.15)",
             borderRadius: "50%",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
           }}
         >
-          <div style={{ width: "5px", height: "5px", background: "#FF4444", borderRadius: "50%" }} />
+          <div style={{ width: "5px", height: "5px", background: "var(--accent)", borderRadius: "50%" }} />
         </div>
       </div>
       <div
@@ -82,7 +80,7 @@ function MiniSpinner({ t }: { t: ThemeTokens }) {
   );
 }
 
-export function ComparePanel({ label, isDark, apiKey, isWinner, onResult, canAnalyze = true, onAnalysisComplete }: ComparePanelProps) {
+export function ComparePanel({ label, isDark, apiKey, isWinner, onResult }: ComparePanelProps) {
   const t = themes[isDark ? "dark" : "light"];
   const [file, setFile] = useState<File | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -95,7 +93,6 @@ export function ComparePanel({ label, isDark, apiKey, isWinner, onResult, canAna
       const key = `${result.fileName}-${result.timestamp.toISOString()}`;
       if (lastReportedRef.current !== key) {
         lastReportedRef.current = key;
-        onAnalysisComplete?.();
         onResult(result);
       }
     } else {
@@ -105,7 +102,7 @@ export function ComparePanel({ label, isDark, apiKey, isWinner, onResult, canAna
   }, [result]);
 
   const handleAnalyze = async () => {
-    if (!file || isAnalyzing || !canAnalyze) return;
+    if (!file || isAnalyzing) return;
     await analyze(file, apiKey);
   };
 
@@ -169,10 +166,10 @@ export function ComparePanel({ label, isDark, apiKey, isWinner, onResult, canAna
       {file && status !== "complete" && (
         <button
           onClick={handleAnalyze}
-          disabled={isAnalyzing || !canAnalyze}
+          disabled={isAnalyzing}
           style={{
             padding: "12px",
-            background: isAnalyzing || !canAnalyze ? "rgba(255,68,68,0.3)" : "#FF4444",
+            background: isAnalyzing ? "rgba(255,68,68,0.3)" : "#FF4444",
             border: "none",
             borderRadius: "8px",
             color: "#fff",
@@ -181,10 +178,10 @@ export function ComparePanel({ label, isDark, apiKey, isWinner, onResult, canAna
             fontWeight: 700,
             letterSpacing: "0.08em",
             textTransform: "uppercase",
-            cursor: isAnalyzing || !canAnalyze ? "not-allowed" : "pointer",
+            cursor: isAnalyzing ? "not-allowed" : "pointer",
           }}
         >
-          {!canAnalyze ? "Upgrade to run more" : "Run Analysis →"}
+          Run Analysis →
         </button>
       )}
 

@@ -1,1 +1,18 @@
+@import "./styles/tokens.css";
 @import "tailwindcss";
+
+/* Main content offset by sidebar (220px expanded, 56px collapsed < 1024px) */
+.main-content {
+  margin-left: 220px;
+  flex: 1;
+  min-height: 100vh;
+}
+@media (max-width: 1023px) {
+  .main-content {
+    margin-left: 56px;
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

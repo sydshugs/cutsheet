@@ -6,6 +6,10 @@ import { createClient } from "@supabase/supabase-js";
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? "";
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? "";
 
+// #region agent log
+fetch('http://127.0.0.1:7507/ingest/7b417cce-8333-4e0d-b8aa-0b72fbc0f1de',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'363193'},body:JSON.stringify({sessionId:'363193',location:'supabaseClient.ts:init',message:'Supabase env at load',data:{hasUrl:!!supabaseUrl,urlLength:supabaseUrl.length,hasAnonKey:!!supabaseAnonKey,anonKeyLength:supabaseAnonKey?.length??0},timestamp:Date.now(),hypothesisId:'A'})}).catch(()=>{});
+// #endregion
+
 export const supabase = supabaseUrl && supabaseAnonKey
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
@@ -56,8 +60,15 @@ export async function saveAnalysis(
   });
 
   if (error) {
+    // #region agent log
+    fetch('http://127.0.0.1:7507/ingest/7b417cce-8333-4e0d-b8aa-0b72fbc0f1de',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'363193'},body:JSON.stringify({sessionId:'363193',location:'supabaseClient.ts:saveAnalysis',message:'Supabase insert error',data:{errorMessage:error.message,errorCode:error.code,errorDetails:error.details},timestamp:Date.now(),hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
     console.error("Error saving analysis:", error);
-    return { slug: "", error: error.message };
+    const message =
+      error.message === "Invalid API key"
+        ? "Invalid API key. Copy the anon (public) key from Supabase Dashboard → your project → Settings → API — it's a long JWT starting with eyJ. Put it in .env as VITE_SUPABASE_ANON_KEY and restart the dev server."
+        : error.message;
+    return { slug: "", error: message };
   }
 
   return { slug };

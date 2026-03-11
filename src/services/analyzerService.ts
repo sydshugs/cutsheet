@@ -152,6 +152,33 @@ function parseScores(markdown: string): AnalysisResult["scores"] {
   }
 }
 
+// Recalculate overall score when Gemini returns zero values
+// If overall is 0 or any metric is 0, recompute overall as the
+// average of only the non-zero component scores.
+export function recalculateOverallScore(
+  scores: AnalysisResult["scores"]
+): AnalysisResult["scores"] {
+  if (!scores) return scores;
+
+  const { hook, clarity, cta, production, overall } = scores;
+  const metrics = [hook, clarity, cta, production];
+  const hasZeroMetric = metrics.some((v) => v === 0);
+
+  if (overall === 0 || hasZeroMetric) {
+    const nonZero = metrics.filter((v) => v > 0);
+    if (nonZero.length > 0) {
+      const avg = nonZero.reduce((sum, v) => sum + v, 0) / nonZero.length;
+      const rounded = Math.round(avg);
+      return {
+        ...scores,
+        overall: rounded,
+      };
+    }
+  }
+
+  return scores;
+}
+
 // ─── MAIN ANALYZER ────────────────────────────────────────────────────────────
 
 export async function analyzeVideo(
@@ -184,7 +211,7 @@ export async function analyzeVideo(
     const result = await model.generateContent([
       {
         inlineData: {
-          mimeType: file.type as "video/mp4" | "video/webm" | "video/quicktime",
+          mimeType: file.type as string,
           data: base64Data,
         },
       },
@@ -201,8 +228,9 @@ export async function analyzeVideo(
       throw new Error("Gemini returned an empty response. Try again.");
     }
 
-    // 5. Parse scores from markdown
-    const scores = parseScores(markdown);
+    // 5. Parse scores from markdown and normalize overall score
+    const parsedScores = parseScores(markdown);
+    const scores = recalculateOverallScore(parsedScores);
 
     emit("complete");
 
@@ -325,6 +353,42 @@ Be specific. No generic advice. Every line should be actionable.
 
 ## AD ANALYSIS
 ${analysisMarkdown}`;
+
+  const result = await model.generateContent(prompt);
+  return result.response.text();
+}
+
+// ─── BATCH VERDICT ────────────────────────────────────────────────────────────
+
+export interface BatchVerdictInput {
+  fileName: string;
+  scores: AnalysisResult["scores"];
+}
+
+export async function generateBatchVerdict(
+  items: BatchVerdictInput[],
+  apiKey: string
+): Promise<string> {
+  if (items.length === 0) return "";
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({
+    model: MODEL,
+    systemInstruction:
+      "You are a performance marketing creative analyst. You rank video ads from strongest to weakest and give one sentence per ad.",
+    generationConfig: { maxOutputTokens: 2048, temperature: 0.4 },
+  });
+
+  const lines = items.map((item) => {
+    const s = item.scores;
+    if (!s) return `${item.fileName}: No scores`;
+    return `${item.fileName}: Hook ${s.hook}/10, Clarity ${s.clarity}/10, CTA ${s.cta}/10, Production ${s.production}/10, Overall ${s.overall}/10`;
+  });
+
+  const prompt = `You have analyzed several video ads. Here are their filenames and overall scores (Hook, Message Clarity, CTA Effectiveness, Production Quality, Overall Ad Strength):
+
+${lines.join("\n")}
+
+Rank these ads from strongest to weakest and give a one sentence reason for each ranking. Write one paragraph: start with the strongest ad (filename + one sentence why), then the next, and so on until the weakest. Be direct and specific.`;
 
   const result = await model.generateContent(prompt);
   return result.response.text();
