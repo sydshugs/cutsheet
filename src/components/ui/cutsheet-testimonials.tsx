@@ -37,13 +37,13 @@ function TestimonialCard({
   initials,
 }: (typeof TESTIMONIALS)[number]) {
   return (
-    <div className="group relative rounded-3xl border border-white/[0.08] bg-white/[0.03] p-6 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/30">
+    <div className="group relative flex h-full flex-col rounded-3xl border border-white/[0.08] bg-white/[0.03] p-6 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/30">
       {/* Decorative quote mark */}
       <span className="select-none text-4xl font-bold leading-none text-indigo-500/60">
         &ldquo;
       </span>
 
-      <p className="mt-2 text-sm leading-relaxed text-zinc-300">{quote}</p>
+      <p className="mt-2 flex-1 text-sm leading-relaxed text-zinc-300">{quote}</p>
 
       <div className="mt-6 flex items-center gap-3">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-xs font-bold text-white">
