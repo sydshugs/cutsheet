@@ -32,7 +32,7 @@ const PLANS: Plan[] = [
     monthlyPrice: 0,
     annualPrice: 0,
     description: "Try Cutsheet risk-free. No card, no commitment.",
-    cta: "Start Analyzing",
+    cta: "Join Waitlist",
     featured: false,
     limit: "5 analyses / month",
     features: [
@@ -49,7 +49,7 @@ const PLANS: Plan[] = [
     monthlyPrice: 29,
     annualPrice: 19,
     description: "For performance marketers and creative teams shipping weekly.",
-    cta: "Get Pro",
+    cta: "Lock In Early Access",
     featured: true,
     limit: "Unlimited analyses",
     features: [
@@ -68,7 +68,7 @@ const PLANS: Plan[] = [
     monthlyPrice: 79,
     annualPrice: 59,
     description: "For agencies and in-house teams reviewing high-volume campaigns.",
-    cta: "Get Team",
+    cta: "Reserve Team Access",
     featured: false,
     limit: "Unlimited + team seats",
     features: [
@@ -190,7 +190,12 @@ function PlanCard({ plan, annual }: { plan: Plan; annual: boolean }) {
         ))}
       </ul>
 
-      <button
+      <a
+        href="#waitlist"
+        onClick={(e) => {
+          e.preventDefault();
+          document.getElementById("waitlist")?.scrollIntoView({ behavior: "smooth" });
+        }}
         className={`group w-full rounded-2xl py-3.5 text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
           plan.featured
             ? "bg-indigo-600 text-white hover:bg-indigo-500 shadow-lg shadow-indigo-600/25 hover:scale-[1.02] active:scale-[0.98]"
@@ -199,7 +204,7 @@ function PlanCard({ plan, annual }: { plan: Plan; annual: boolean }) {
       >
         {plan.cta}
         <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-      </button>
+      </a>
     </div>
   );
 
@@ -218,11 +223,16 @@ export default function CutsheetPricing() {
   const [annual, setAnnual] = useState(true);
 
   return (
-    <section className="relative w-full bg-zinc-950 text-white overflow-hidden py-24 px-4 sm:px-6 lg:px-8">
+    <section id="pricing" className="relative w-full bg-zinc-950 text-white overflow-hidden py-24 px-4 sm:px-6 lg:px-8">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-indigo-600/6 rounded-full blur-[120px] pointer-events-none" />
 
       <div className="relative z-10 mx-auto max-w-6xl">
         <div className="text-center mb-12">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-indigo-400/25 bg-indigo-500/10 px-4 py-1.5 text-xs font-semibold text-indigo-300">
+            <span>🚀</span>
+            Early Access Pricing — Lock in your rate before we launch.
+          </div>
+          <br />
           <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1.5 mb-6">
             <Zap className="w-3.5 h-3.5 text-indigo-400" />
             <span className="text-[11px] font-semibold uppercase tracking-widest text-indigo-300">
@@ -233,7 +243,7 @@ export default function CutsheetPricing() {
             Simple, honest pricing.
           </h2>
           <p className="text-zinc-400 text-lg max-w-lg mx-auto leading-relaxed">
-            Start free, upgrade when you need more. No hidden fees, no per-analysis charges.
+            Start free, upgrade when you need more.<br />No hidden fees, no per-analysis charges.
           </p>
 
           <div className="mt-8 inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 p-1">

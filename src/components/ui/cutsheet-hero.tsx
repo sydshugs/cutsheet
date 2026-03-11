@@ -1,6 +1,6 @@
 import React from "react";
+import EarlyAccessForm from "./cutsheet-early-access-form";
 import {
-  ArrowRight,
   Play,
   Zap,
   Crown,
@@ -16,6 +16,38 @@ import {
   Layers,
   Award,
 } from "lucide-react";
+import { AnimatedTooltip } from "./animated-tooltip";
+
+const SOCIAL_PROOF_PEOPLE = [
+  {
+    id: 1,
+    name: "Sarah Chen",
+    designation: "Performance Marketer",
+    image:
+      "https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8YXZhdGFyfGVufDB8fDB8fHww&auto=format&fit=crop&w=800&q=60",
+  },
+  {
+    id: 2,
+    name: "Marcus Rivera",
+    designation: "Creative Director",
+    image:
+      "https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=3387&q=80",
+  },
+  {
+    id: 3,
+    name: "Emily Parker",
+    designation: "Media Buyer",
+    image:
+      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fGF2YXRhcnxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=800&q=60",
+  },
+  {
+    id: 4,
+    name: "James Kim",
+    designation: "Brand Strategist",
+    image:
+      "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8YXZhdGFyfGVufDB8fDB8fHww&auto=format&fit=crop&w=800&q=60",
+  },
+];
 
 // Scoring categories for marquee
 const SCORE_CATEGORIES = [
@@ -52,6 +84,13 @@ export default function CutsheetHero() {
         @keyframes marquee {
           from { transform: translateX(0); }
           to { transform: translateX(-50%); }
+        }
+        @keyframes nudgeRight {
+          0%, 100% { transform: translateX(0); }
+          50% { transform: translateX(4px); }
+        }
+        .animate-nudge {
+          animation: nudgeRight 1.5s ease-in-out infinite;
         }
         @keyframes barFill {
           from { width: 0%; }
@@ -136,31 +175,24 @@ export default function CutsheetHero() {
             </p>
 
             {/* CTA Buttons */}
-            <div className="animate-fade-in delay-400 flex flex-col sm:flex-row gap-4">
-              <button className="group inline-flex items-center justify-center gap-2 rounded-full bg-indigo-600 px-8 py-4 text-sm font-semibold text-white transition-all hover:scale-[1.02] hover:bg-indigo-500 active:scale-[0.98] shadow-lg shadow-indigo-600/25">
-                Analyze Your First Ad
-                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-              </button>
+            <div id="waitlist" className="animate-fade-in delay-400 flex flex-col gap-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <EarlyAccessForm />
 
-              <button className="group inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-8 py-4 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/10 hover:border-white/20">
-                <Play className="w-4 h-4 fill-current" />
-                Watch Demo
-              </button>
+                <button className="group inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-8 py-4 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/10 hover:border-white/20">
+                  <Play className="w-4 h-4 fill-current" />
+                  Watch Demo
+                </button>
+              </div>
+              <p className="text-xs text-zinc-600">
+                No card required &middot; Limited early access spots
+              </p>
             </div>
 
             {/* Social proof */}
             <div className="animate-fade-in delay-500 flex items-center gap-3">
-              <div className="flex -space-x-2">
-                {["4A", "7B", "2C", "9D"].map((seed, i) => (
-                  <div
-                    key={i}
-                    className="w-8 h-8 rounded-full border-2 border-zinc-950 bg-gradient-to-br from-indigo-400 to-violet-600 flex items-center justify-center text-[9px] font-bold text-white"
-                  >
-                    {seed}
-                  </div>
-                ))}
-              </div>
-              <p className="text-sm text-zinc-500">
+              <AnimatedTooltip items={SOCIAL_PROOF_PEOPLE} />
+              <p className="text-sm text-zinc-500 ml-2">
                 <span className="text-white font-medium">2,400+</span> ads analyzed this week
               </p>
             </div>

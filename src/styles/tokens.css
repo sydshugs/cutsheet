@@ -1,3 +1,12 @@
+/* TBJ Interval — logo font */
+@font-face {
+  font-family: 'TBJ Interval';
+  src: url('/fonts/TBJInterval-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Cutsheet design tokens — match prototype + landing */
 :root {
   --bg:          #08080F;
