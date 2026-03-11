@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ArrowRight, Check, Loader2 } from "lucide-react";
+import confetti from "canvas-confetti";
 
 type Status = "idle" | "loading" | "success" | "error";
 
@@ -29,6 +30,33 @@ export default function EarlyAccessForm({
     }
   }, []);
 
+  function fireConfetti() {
+    const end = Date.now() + 2 * 1000;
+    const colors = ["#6366f1", "#8b5cf6", "#06b6d4", "#ffffff"];
+
+    const frame = () => {
+      if (Date.now() > end) return;
+      confetti({
+        particleCount: 2,
+        angle: 60,
+        spread: 55,
+        startVelocity: 60,
+        origin: { x: 0, y: 0.5 },
+        colors,
+      });
+      confetti({
+        particleCount: 2,
+        angle: 120,
+        spread: 55,
+        startVelocity: 60,
+        origin: { x: 1, y: 0.5 },
+        colors,
+      });
+      requestAnimationFrame(frame);
+    };
+    frame();
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErrorMsg("");
@@ -46,10 +74,12 @@ export default function EarlyAccessForm({
       if (!res.ok) throw new Error("non-200");
       localStorage.setItem(LS_KEY, trimmed);
       setStatus("success");
+      fireConfetti();
     } catch {
       // For placeholder endpoint, still succeed
       localStorage.setItem(LS_KEY, trimmed);
       setStatus("success");
+      fireConfetti();
     }
   }
 

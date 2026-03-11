@@ -23,9 +23,9 @@ const DATA: Record<string, [V, V]> = {
 };
 
 function Cell({ v }: { v: "y" | "n" | "p" }) {
-  if (v === "y") return <Check className="h-4 w-4 text-green-400 mx-auto" />;
-  if (v === "p") return <Minus className="h-4 w-4 text-yellow-400/70 mx-auto" />;
-  return <X className="h-4 w-4 text-red-400/50 mx-auto" />;
+  if (v === "y") return <Check className="h-4 w-4 shrink-0 text-green-400" />;
+  if (v === "p") return <Minus className="h-4 w-4 shrink-0 text-yellow-400/70" />;
+  return <X className="h-4 w-4 shrink-0 text-red-400/50" />;
 }
 
 const CARDS = [
@@ -37,7 +37,7 @@ const CARDS = [
   {
     icon: Puzzle,
     headline: "Not a feature. A focused tool.",
-    body: "AdCreative.ai buries ad scoring inside a generation platform you may not need. Cutsheet does one thing exceptionally well: tell you exactly what's working in your video ad and what to fix.",
+    body: "AdCreative.ai buries ad scoring inside a generation platform you may not need. Cutsheet does one thing exceptionally well: tell you exactly what's working in your ad creative and what to fix.",
   },
   {
     icon: DollarSign,
@@ -71,49 +71,58 @@ export default function CutsheetWhy() {
           </p>
         </div>
 
-        {/* Comparison table */}
-        <div className="overflow-x-auto mb-16">
-          <table className="w-full text-left">
-            <thead>
-              <tr>
-                <th className="pb-3 pr-4 text-xs font-medium uppercase tracking-widest text-zinc-500">
-                  Feature
-                </th>
-                <th className="pb-3 px-4 text-center text-xs font-medium uppercase tracking-widest text-indigo-300 bg-indigo-500/10 border-x border-indigo-500/20 rounded-t-xl">
-                  Cutsheet
-                </th>
-                <th className="pb-3 px-4 text-center text-xs font-medium uppercase tracking-widest text-zinc-500">
-                  Enterprise Tools
-                </th>
-                <th className="pb-3 pl-4 text-center text-xs font-medium uppercase tracking-widest text-zinc-500">
-                  Ad Platforms
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {ROWS.map((row, i) => {
-                const [ent, plat] = DATA[row];
-                const isAlt = i % 2 === 1;
+        {/* Comparison grid */}
+        <div className="mb-16 grid gap-4 sm:grid-cols-3">
+          {/* Cutsheet column */}
+          <div className="rounded-3xl border border-indigo-500/20 bg-indigo-500/[0.06] p-6 backdrop-blur-sm">
+            <h3 className="mb-5 text-center text-xs font-semibold uppercase tracking-widest text-indigo-300">
+              Cutsheet
+            </h3>
+            <div className="space-y-3">
+              {ROWS.map((row) => (
+                <div key={row} className="flex items-center gap-3 rounded-xl bg-white/[0.04] px-4 py-2.5">
+                  <Check className="h-4 w-4 shrink-0 text-green-400" />
+                  <span className="text-sm text-zinc-200">{row}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Enterprise Tools column */}
+          <div className="rounded-3xl border border-white/[0.08] bg-white/[0.02] p-6">
+            <h3 className="mb-5 text-center text-xs font-semibold uppercase tracking-widest text-zinc-500">
+              Enterprise Tools
+            </h3>
+            <div className="space-y-3">
+              {ROWS.map((row) => {
+                const v = DATA[row][0];
                 return (
-                  <tr
-                    key={row}
-                    className={`border-b border-white/5 ${isAlt ? "bg-white/[0.02]" : ""}`}
-                  >
-                    <td className="py-3.5 pr-4 text-sm text-zinc-300">{row}</td>
-                    <td className={`py-3.5 px-4 text-center bg-indigo-500/10 border-x border-indigo-500/20 ${i === ROWS.length - 1 ? "rounded-b-xl" : ""}`}>
-                      <Check className="h-4 w-4 text-green-400 mx-auto" />
-                    </td>
-                    <td className="py-3.5 px-4 text-center">
-                      <Cell v={ent} />
-                    </td>
-                    <td className="py-3.5 pl-4 text-center">
-                      <Cell v={plat} />
-                    </td>
-                  </tr>
+                  <div key={row} className="flex items-center gap-3 px-4 py-2.5">
+                    <Cell v={v} />
+                    <span className="text-sm text-zinc-500">{row}</span>
+                  </div>
                 );
               })}
-            </tbody>
-          </table>
+            </div>
+          </div>
+
+          {/* Ad Platforms column */}
+          <div className="rounded-3xl border border-white/[0.08] bg-white/[0.02] p-6">
+            <h3 className="mb-5 text-center text-xs font-semibold uppercase tracking-widest text-zinc-500">
+              Ad Platforms
+            </h3>
+            <div className="space-y-3">
+              {ROWS.map((row) => {
+                const v = DATA[row][1];
+                return (
+                  <div key={row} className="flex items-center gap-3 px-4 py-2.5">
+                    <Cell v={v} />
+                    <span className="text-sm text-zinc-500">{row}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
         {/* Callout cards */}

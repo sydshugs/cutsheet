@@ -6,7 +6,7 @@ const STEPS = [
     number: "01",
     title: "Upload your ad",
     description:
-      "Drag in any video file — TikTok, Meta, YouTube, whatever. We accept MP4, MOV, and WebM up to 500 MB.",
+      "Drag in static images and video files — TikTok, Meta, YouTube, whatever. We accept MP4, MOV, WebM, JPG, and PNG up to 500 MB.",
     icon: Upload,
     spotlightColor: "rgba(99, 102, 241, 0.15)",
   },

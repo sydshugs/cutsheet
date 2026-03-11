@@ -161,7 +161,7 @@ export default function CutsheetHero() {
               Analyze Any
               <br />
               <span className="bg-gradient-to-br from-white via-indigo-100 to-indigo-400 bg-clip-text text-transparent">
-                Video Ad.
+                Ad Creative.
               </span>
               <br />
               In Seconds.
@@ -169,7 +169,7 @@ export default function CutsheetHero() {
 
             {/* Description */}
             <p className="animate-fade-in delay-300 max-w-xl text-lg text-zinc-400 leading-relaxed">
-              Upload your creative and get a full AI breakdown — hook strength,
+              Upload your video or static creative and get a full AI breakdown — hook strength,
               pacing, CTA clarity, emotional pull, and a score that tells you
               exactly what to fix before you spend a dollar on media.
             </p>
