@@ -46,16 +46,10 @@ export default function CutsheetNav() {
         {/* Right side */}
         <div className="flex items-center gap-3">
           <a
-            href="/app"
-            className="hidden sm:inline-flex text-sm text-zinc-400 transition-colors hover:text-white px-3 py-1.5"
-          >
-            Log In
-          </a>
-          <a
-            href="/app"
+            href="#waitlist"
             className="inline-flex items-center gap-1.5 rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-indigo-500 hover:scale-[1.02] active:scale-[0.98]"
           >
-            Analyze Free
+            Sign Up Now
             <ArrowRight className="h-3.5 w-3.5" />
           </a>
         </div>

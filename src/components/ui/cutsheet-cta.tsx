@@ -1,4 +1,36 @@
 import EarlyAccessForm from "./cutsheet-early-access-form";
+import { AnimatedTooltip } from "./animated-tooltip";
+
+const SOCIAL_PROOF_PEOPLE = [
+  {
+    id: 1,
+    name: "Sarah Chen",
+    designation: "Performance Marketer",
+    image:
+      "https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8YXZhdGFyfGVufDB8fDB8fHww&auto=format&fit=crop&w=800&q=60",
+  },
+  {
+    id: 2,
+    name: "Marcus Rivera",
+    designation: "Creative Director",
+    image:
+      "https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=3387&q=80",
+  },
+  {
+    id: 3,
+    name: "Emily Parker",
+    designation: "Media Buyer",
+    image:
+      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fGF2YXRhcnxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=800&q=60",
+  },
+  {
+    id: 4,
+    name: "James Kim",
+    designation: "Brand Strategist",
+    image:
+      "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8YXZhdGFyfGVufDB8fDB8fHww&auto=format&fit=crop&w=800&q=60",
+  },
+];
 
 export default function CutsheetCTA() {
   return (
@@ -27,9 +59,12 @@ export default function CutsheetCTA() {
           />
         </div>
 
-        <p className="mt-6 text-sm text-zinc-500">
-          Join <span className="text-zinc-300 font-medium">2,400+</span> marketers already using Cutsheet
-        </p>
+        <div className="mt-8 flex items-center justify-center gap-3">
+          <AnimatedTooltip items={SOCIAL_PROOF_PEOPLE} />
+          <p className="text-sm text-zinc-500 ml-2">
+            <span className="text-white font-medium">2,400+</span> ads analyzed this week
+          </p>
+        </div>
       </div>
     </section>
   );

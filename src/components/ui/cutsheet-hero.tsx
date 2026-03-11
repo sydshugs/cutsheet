@@ -1,7 +1,6 @@
 import React from "react";
 import EarlyAccessForm from "./cutsheet-early-access-form";
 import {
-  Play,
   Zap,
   Crown,
   Star,
@@ -178,11 +177,6 @@ export default function CutsheetHero() {
             <div id="waitlist" className="animate-fade-in delay-400 flex flex-col gap-4">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <EarlyAccessForm />
-
-                <button className="group inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-8 py-4 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/10 hover:border-white/20">
-                  <Play className="w-4 h-4 fill-current" />
-                  Watch Demo
-                </button>
               </div>
               <p className="text-xs text-zinc-600">
                 No card required &middot; Limited early access spots
