@@ -22,6 +22,7 @@ import { UpgradeModal } from "./components/UpgradeModal";
 import { checkShareLimit, incrementShareCount } from "./utils/rateLimiter";
 import { themes, type ThemeTokens, THEME_KEY } from "./theme";
 import ReactMarkdown from "react-markdown";
+import { TopBar } from "./components/TopBar";
 
 // ─── GOOGLE FONTS ─────────────────────────────────────────────────────────────
 // Add to your index.html <head>:
@@ -38,18 +39,6 @@ const STATUS_COPY = {
   idle: "",
 };
 
-function relativeTime(iso: string): string {
-  const d = new Date(iso);
-  const now = new Date();
-  const diffMs = now.getTime() - d.getTime();
-  const diffDays = Math.floor(diffMs / (24 * 60 * 60 * 1000));
-  if (diffDays === 0) return "Today";
-  if (diffDays === 1) return "1d ago";
-  if (diffDays < 7) return `${diffDays}d ago`;
-  if (diffDays < 14) return "1w ago";
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
-  return d.toLocaleDateString();
-}
 
 // ─── LOADING INDICATOR ────────────────────────────────────────────────────────
 function AnalyzingState({ message, t }: { message: string; t: ThemeTokens }) {
@@ -112,7 +101,7 @@ function AnalyzingState({ message, t }: { message: string; t: ThemeTokens }) {
         <div
           style={{
             fontSize: "13px",
-            fontFamily: "'JetBrains Mono', monospace",
+            fontFamily: "var(--mono)",
             color: t.spinnerText,
             letterSpacing: "0.06em",
           }}
@@ -122,7 +111,7 @@ function AnalyzingState({ message, t }: { message: string; t: ThemeTokens }) {
         <div
           style={{
             fontSize: "11px",
-            fontFamily: "'JetBrains Mono', monospace",
+            fontFamily: "var(--mono)",
             color: t.spinnerSub,
             marginTop: "6px",
           }}
@@ -154,7 +143,7 @@ function renderTextWithTimestamps(text: string, onSeekTo?: (seconds: number) => 
             margin: 0,
             color: "var(--accent)",
             cursor: "pointer",
-            fontFamily: "'JetBrains Mono', monospace",
+            fontFamily: "var(--mono)",
             fontSize: "0.9em",
             textDecoration: "underline",
           }}
@@ -180,7 +169,7 @@ function AnalysisOutput({ markdown, onSeekTo, t }: { markdown: string; onSeekTo?
   return (
     <div
       style={{
-        fontFamily: "'Outfit', sans-serif",
+        fontFamily: "var(--sans)",
         color: t.markdownText,
         fontSize: "14px",
         lineHeight: 1.7,
@@ -188,18 +177,18 @@ function AnalysisOutput({ markdown, onSeekTo, t }: { markdown: string; onSeekTo?
     >
       <style>{`
         .analysis-output h2 {
-          font-family: 'JetBrains Mono', monospace;
-          font-size: 12px;
-          font-weight: 700;
-          letter-spacing: 0.1em;
+          font-family: var(--sans);
+          font-size: 11px;
+          font-weight: 600;
+          letter-spacing: 0.18em;
           text-transform: uppercase;
-          color: var(--accent);
+          color: var(--label);
           margin: 28px 0 12px;
           padding-bottom: 8px;
-          border-bottom: 1px solid rgba(99,102,241,0.2);
+          border-bottom: 1px solid rgba(99,102,241,0.12);
         }
         .analysis-output h3, .analysis-output h4 {
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--mono);
           font-size: 11px;
           color: ${t.h3Color};
           letter-spacing: 0.06em;
@@ -223,7 +212,7 @@ function AnalysisOutput({ markdown, onSeekTo, t }: { markdown: string; onSeekTo?
           color: ${t.liColor};
         }
         .analysis-output code {
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--mono);
           font-size: 12px;
           background: ${t.codeBg};
           padding: 2px 6px;
@@ -296,6 +285,7 @@ export default function App() {
   const [previousResult, setPreviousResult] = useState<HistoryEntry | null>(null);
   const { usageCount, isPro, canAnalyze, increment, FREE_LIMIT } = useUsage();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const isAnalyzing = status === "uploading" || status === "processing";
 
@@ -336,6 +326,8 @@ export default function App() {
         timestamp: new Date(loadedEntry.timestamp),
       }
     : result;
+
+  const showRightPanel = mode === "single" && status === "complete" && activeResult !== null;
 
   const handleAnalyze = async () => {
     if (!file || isAnalyzing || !canAnalyze) return;
@@ -542,730 +534,210 @@ export default function App() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "var(--bg)",
-        color: "var(--ink)",
-        fontFamily: "var(--sans)",
-        display: "flex",
-        overflowX: "hidden",
-      }}
-    >
+    <div className="flex h-screen bg-zinc-950">
+      {/* Sidebar */}
       <Sidebar
         mode={mode}
-        onModeChange={(m) => {
-          setMode(m);
-        }}
+        onModeChange={(m) => setMode(m)}
         isPro={isPro}
         onNewAnalysis={handleReset}
         onHistoryOpen={() => setHistoryOpen(true)}
         userName="User"
         userPlan={isPro ? "Pro Plan" : "Free"}
+        mobileOpen={mobileOpen}
+        onMobileClose={() => setMobileOpen(false)}
       />
 
-      <main className="main-content">
-
-      {/* Compare mode */}
-      {mode === "compare" && (
-        <CompareView
-          isDark={isDark}
-          apiKey={API_KEY}
+      {/* Main area (right of sidebar) */}
+      <div className="main-content flex flex-col">
+        {/* Top bar */}
+        <TopBar
+          onNewAnalysis={handleReset}
+          onHistoryOpen={() => setHistoryOpen(true)}
+          onMobileMenuToggle={() => setMobileOpen(prev => !prev)}
+          showMobileMenu={mobileOpen}
+          userName="User"
+          userPlan={isPro ? "pro" : "free"}
         />
-      )}
 
-      {/* Batch mode */}
-      {mode === "batch" && (
-        <BatchView
-          isDark={isDark}
-          apiKey={API_KEY}
-          addHistoryEntry={addEntry}
-          t={t}
-        />
-      )}
+        {/* Content + Right panel wrapper */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Main content */}
+          <div className="flex-1 overflow-y-auto relative">
+            {/* Ambient glow */}
+            <div className="pointer-events-none absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-indigo-600/10 blur-[120px]" />
+            <div className="pointer-events-none absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-violet-600/[0.08] blur-[100px]" />
 
-      {/* Pre-Flight mode */}
-      {mode === "preflight" && (
-        <PreFlightView
-          isDark={isDark}
-          apiKey={API_KEY}
-        />
-      )}
+            {/* Mode content */}
+            <div className="relative px-8 py-6">
+              {/* ── SINGLE / ANALYZER MODE ── */}
+              {mode === "single" && (
+                <div>
+                  {/* Keep existing Analyzer inline JSX for now — replaced in Task 12 */}
 
-      {/* Swipe file mode */}
-      {mode === "swipe" && (
-        <SwipeFileView
-          isDark={isDark}
-        />
-      )}
-
-      {/* Main layout — single mode */}
-      <div
-        style={{
-          display: mode === "compare" || mode === "batch" || mode === "swipe" || mode === "preflight" ? "none" : "block",
-          flex: 1,
-        }}
-      >
-        {/* Results action bar */}
-        {(activeResult || (isAnalyzing && file)) && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "12px 24px",
-              borderBottom: "1px solid var(--border)",
-              background: "var(--bg)",
-              position: "sticky",
-              top: 0,
-              zIndex: 40,
-            }}
-          >
-            <span style={{ fontFamily: "var(--mono)", fontSize: 12, color: "var(--ink-muted)", marginRight: "auto" }}>
-              Analyzing: <span style={{ color: "var(--ink)", fontWeight: 500 }}>{activeResult?.fileName ?? file?.name ?? ""}</span>
-            </span>
-            {activeResult && (
-              <>
-                <button type="button" onClick={handleReset} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 7, fontSize: 13, fontWeight: 500, background: "transparent", color: "var(--ink-muted)", border: "1px solid var(--border)", cursor: "pointer", fontFamily: "var(--sans)" }}>Re-analyze</button>
-                <button type="button" onClick={handleExportPdf} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 7, fontSize: 13, fontWeight: 500, background: "transparent", color: "var(--ink-muted)", border: "1px solid var(--border)", cursor: "pointer", fontFamily: "var(--sans)" }}>Export PDF</button>
-                <button type="button" onClick={handleShareLink} disabled={shareLoading} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 7, fontSize: 13, fontWeight: 500, background: "transparent", color: "var(--ink-muted)", border: "1px solid var(--border)", cursor: shareLoading ? "not-allowed" : "pointer", fontFamily: "var(--sans)" }}>{shareLoading ? "Creating…" : "Share"}</button>
-                <button type="button" onClick={handleGenerateBrief} disabled={briefLoading} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 7, fontSize: 13, fontWeight: 500, background: "var(--grad)", color: "#fff", border: "none", cursor: briefLoading ? "not-allowed" : "pointer", fontFamily: "var(--sans)" }}>Generate Brief</button>
-              </>
-            )}
-          </div>
-        )}
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: activeResult ? "1fr 1fr" : "1fr",
-            gap: 0,
-            maxWidth: "1400px",
-            margin: "0 auto",
-            minHeight: activeResult || isAnalyzing ? "calc(100vh - 60px)" : "auto",
-          }}
-        >
-        {/* LEFT — Upload + Controls */}
-        <div
-          style={{
-            padding: "32px 24px",
-            borderRight: activeResult ? `1px solid ${t.border}` : "none",
-            display: "flex",
-            flexDirection: "column",
-            gap: "20px",
-            maxWidth: activeResult ? "100%" : "560px",
-            margin: activeResult ? "0" : "0 auto",
-            width: "100%",
-          }}
-        >
-          {/* Section label */}
-          <div
-            style={{
-              fontSize: "10px",
-              fontFamily: "var(--mono)",
-              color: "var(--ink-faint)",
-              letterSpacing: "0.12em",
-              textTransform: "uppercase",
-            }}
-          >
-            01 / Upload Creative
-          </div>
-
-          {/* Welcome state — shown when no file, no result, no history */}
-          {!file && !activeResult && !isAnalyzing && historyEntries.length === 0 && (
-            <div style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 8,
-              marginBottom: 8,
-              textAlign: "center",
-            }}>
-              <div style={{
-                width: 64,
-                height: 64,
-                borderRadius: 16,
-                background: "rgba(99,102,241,0.08)",
-                border: "1px solid rgba(99,102,241,0.15)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                marginBottom: 8,
-              }}>
-                <svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polygon points="23 7 16 12 23 17 23 7" />
-                  <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
-                </svg>
-              </div>
-              <h2 style={{
-                fontSize: 20,
-                fontWeight: 700,
-                color: "var(--ink)",
-                margin: 0,
-                fontFamily: "var(--sans)",
-              }}>
-                Analyze your video ad
-              </h2>
-              <p style={{
-                fontSize: 14,
-                color: "var(--ink-muted)",
-                margin: 0,
-                maxWidth: 400,
-                lineHeight: 1.6,
-                fontFamily: "var(--sans)",
-              }}>
-                Drop a video file or paste a URL to get AI-powered scores, scene breakdowns, and actionable creative insights.
-              </p>
-            </div>
-          )}
-
-          <VideoDropzone
-            file={file}
-            onFileSelect={(f) => {
-              if (!f) { handleReset(); return; }
-              setFile(f);
-              reset();
-            }}
-            disabled={isAnalyzing || isImporting}
-            videoRef={videoRef}
-            isDark={isDark}
-            onUrlSubmit={async (u) => {
-              setUrlInput(u);
-              await importFromUrl(u);
-            }}
-          />
-
-          {/* Recent Analyses — empty state only */}
-          {!file && historyEntries.length > 0 && (
-            <>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", maxWidth: 900 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>Recent Analyses</span>
-                <button type="button" onClick={() => setHistoryOpen(true)} style={{ fontSize: 12, color: "var(--accent)", cursor: "pointer", fontWeight: 500, background: "none", border: "none", fontFamily: "var(--sans)" }}>View all →</button>
-              </div>
-              <div style={{ display: "flex", gap: 14, overflowX: "auto", paddingBottom: 4, width: "100%", maxWidth: 900, scrollbarWidth: "thin" }}>
-                {historyEntries.slice(0, 10).map((entry) => {
-                  const overall = entry.scores?.overall ?? 0;
-                  const scoreColor = getScoreColorByValue(overall);
-                  const displayName = entry.fileName.replace(/\.[^/.]+$/, "").replace(/[_-]/g, " ");
-                  return (
-                    <button
-                      key={entry.id}
-                      type="button"
-                      onClick={() => setLoadedEntry(entry)}
-                      style={{
-                        flexShrink: 0,
-                        width: 200,
-                        background: "var(--surface)",
-                        border: "1px solid var(--border)",
-                        borderRadius: "var(--radius)",
-                        overflow: "hidden",
-                        cursor: "pointer",
-                        transition: "transform 0.15s, border-color 0.15s",
-                        textAlign: "left",
-                        padding: 0,
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = "translateY(-2px)";
-                        e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = "translateY(0)";
-                        e.currentTarget.style.borderColor = "var(--border)";
-                      }}
-                    >
-                      <div style={{ width: "100%", height: 110, background: "var(--surface-el)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
-                        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.08))" }} />
-                        <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", zIndex: 1 }}>
-                          <svg width={12} height={12} viewBox="0 0 16 16" fill="rgba(255,255,255,0.8)"><path d="M4 3l10 5-10 5V3z"/></svg>
-                        </div>
-                      </div>
-                      <div style={{ padding: 12 }}>
-                        <div style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 3, fontFamily: "var(--mono)" }}>—</div>
-                        <div style={{ fontSize: 13, fontWeight: 500, color: "var(--ink)", marginBottom: 8 }}>{displayName}</div>
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                          <span style={{ fontFamily: "var(--mono)", fontSize: 12, fontWeight: 600, color: scoreColor, background: `${scoreColor}1a`, border: `1px solid ${scoreColor}33`, borderRadius: 5, padding: "2px 7px" }}>{overall}</span>
-                          <span style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-muted)" }}>{relativeTime(entry.timestamp)}</span>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </>
-          )}
-
-          {/* Analyze button */}
-          {file && status !== "complete" && (
-            <button
-              onClick={handleAnalyze}
-              disabled={isAnalyzing || !file || !canAnalyze}
-              style={{
-                padding: "14px",
-                background: isAnalyzing ? "rgba(99,102,241,0.3)" : !canAnalyze ? t.surface : "var(--grad)",
-                border: !canAnalyze ? `1px solid ${t.border}` : "none",
-                borderRadius: "8px",
-                color: "#fff",
-                fontSize: "13px",
-                fontFamily: "'JetBrains Mono', monospace",
-                fontWeight: 700,
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
-                cursor: isAnalyzing || !canAnalyze ? "not-allowed" : "pointer",
-                transition: "all 0.2s var(--ease-out)",
-                boxShadow: !isAnalyzing && canAnalyze ? "0 4px 16px rgba(99,102,241,0.3)" : "none",
-              }}
-            >
-              {!canAnalyze ? "Upgrade to run more" : isAnalyzing ? "Analyzing..." : "Run AI Analysis →"}
-            </button>
-          )}
-
-          {/* Error state */}
-          {error && (
-            <div
-              style={{
-                padding: "12px 16px",
-                background: "rgba(255,68,68,0.08)",
-                border: "1px solid rgba(255,68,68,0.2)",
-                borderRadius: "8px",
-                fontSize: "12px",
-                fontFamily: "'JetBrains Mono', monospace",
-                color: "#FF6B6B",
-              }}
-            >
-              {error}
-            </div>
-          )}
-
-          {/* Score card — shows below upload on complete */}
-          {activeResult?.scores && (
-            <div
-              ref={scorecardRef}
-              style={{
-                background: t.scorecardBg,
-                padding: "16px",
-                borderRadius: "12px",
-              }}
-            >
-              <ScoreCard
-                scores={activeResult.scores}
-                fileName={activeResult.fileName}
-                onShare={handleCopy}
-                isDark={isDark}
-              />
-            </div>
-          )}
-
-          {/* Re-analyze diff — show change vs previous live result */}
-          {activeResult?.scores && previousResult?.scores && !loadedEntry && (
-            <div
-              style={{
-                marginTop: "8px",
-                fontSize: "11px",
-                fontFamily: "'JetBrains Mono', monospace",
-                color: t.textSecondary,
-              }}
-            >
-              <span style={{ textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                Score change:&nbsp;
-              </span>
-              {(() => {
-                const metrics: Array<{
-                  key: keyof typeof activeResult.scores;
-                  label: string;
-                }> = [
-                  { key: "hook", label: "Hook" },
-                  { key: "clarity", label: "Clarity" },
-                  { key: "cta", label: "CTA" },
-                  { key: "production", label: "Production" },
-                  { key: "overall", label: "Overall" },
-                ];
-                return metrics.map((m, idx) => {
-                  const prev = previousResult.scores?.[m.key] ?? 0;
-                  const next = activeResult.scores![m.key];
-                  const delta = next - prev;
-                  const sign = delta > 0 ? "+" : "";
-                  const color =
-                    delta > 0 ? "#00D4AA" : delta < 0 ? "#FF6B6B" : t.textMuted;
-                  return (
-                    <span key={m.key}>
-                      {idx > 0 && <span style={{ color: t.textMuted }}> · </span>}
-                      <span>{m.label} </span>
-                      <span style={{ color }}>
-                        {delta === 0 ? "0" : `${sign}${delta}`}
+                  {/* Results action bar */}
+                  {(activeResult || (isAnalyzing && file)) && (
+                    <div className="flex items-center gap-2 py-3 mb-4 border-b border-white/5">
+                      <span className="font-mono text-xs text-zinc-500 mr-auto">
+                        Analyzing: <span className="text-white font-medium">{activeResult?.fileName ?? file?.name ?? ""}</span>
                       </span>
-                    </span>
-                  );
-                });
-              })()}
-            </div>
-          )}
+                      {activeResult && (
+                        <>
+                          <button type="button" onClick={handleReset} className="text-xs text-zinc-400 hover:text-white border border-white/10 rounded-lg px-3 py-1.5 transition-colors">Re-analyze</button>
+                          <button type="button" onClick={handleExportPdf} className="text-xs text-zinc-400 hover:text-white border border-white/10 rounded-lg px-3 py-1.5 transition-colors">Export PDF</button>
+                          <button type="button" onClick={handleShareLink} disabled={shareLoading} className="text-xs text-zinc-400 hover:text-white border border-white/10 rounded-lg px-3 py-1.5 transition-colors disabled:opacity-50">{shareLoading ? "Creating…" : "Share"}</button>
+                          <button type="button" onClick={handleGenerateBrief} disabled={briefLoading} className="text-xs text-white bg-gradient-to-r from-indigo-600 to-violet-600 rounded-lg px-3 py-1.5 transition-colors disabled:opacity-50">Generate Brief</button>
+                        </>
+                      )}
+                    </div>
+                  )}
 
-          {/* Save to swipe file */}
-          {activeResult && (
-            <button
-              onClick={() => {
-                addSwipeItem({
-                  fileName: activeResult.fileName,
-                  timestamp: activeResult.timestamp.toISOString(),
-                  scores: activeResult.scores,
-                  markdown: activeResult.markdown,
-                  brand: "",
-                  format: "",
-                  niche: "",
-                  platform: "",
-                  tags: [],
-                  notes: "",
-                });
-              }}
-              style={{
-                marginTop: "10px",
-                padding: "9px 10px",
-                background: "transparent",
-                border: `1px dashed ${t.border}`,
-                borderRadius: "6px",
-                color: t.textSecondary,
-                fontSize: "11px",
-                fontFamily: "'JetBrains Mono', monospace",
-                letterSpacing: "0.08em",
-                cursor: "pointer",
-              }}
-            >
-              + Save to Swipe File
-            </button>
-          )}
+                  {/* Welcome state */}
+                  {!file && !activeResult && !isAnalyzing && historyEntries.length === 0 && (
+                    <div className="flex flex-col items-center gap-2 mb-2 text-center">
+                      <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/25 flex items-center justify-center mb-2">
+                        <svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-indigo-400">
+                          <polygon points="23 7 16 12 23 17 23 7" />
+                          <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                        </svg>
+                      </div>
+                      <h2 className="text-xl font-bold text-white">Analyze your video ad</h2>
+                      <p className="text-sm text-zinc-400 max-w-[400px] leading-relaxed">
+                        Drop a video file or paste a URL to get AI-powered scores, scene breakdowns, and actionable creative insights.
+                      </p>
+                    </div>
+                  )}
 
-          {/* New analysis button */}
-          {activeResult && (
-            <button
-              onClick={handleReset}
-              style={{
-                padding: "10px",
-                background: "transparent",
-                border: `1px solid ${t.border}`,
-                borderRadius: "6px",
-                color: t.textMuted,
-                fontSize: "11px",
-                fontFamily: "'JetBrains Mono', monospace",
-                letterSpacing: "0.08em",
-                cursor: "pointer",
-              }}
-            >
-              ← New Analysis
-            </button>
-          )}
-        </div>
+                  <VideoDropzone
+                    file={file}
+                    onFileSelect={(f) => {
+                      if (!f) { handleReset(); return; }
+                      setFile(f);
+                      reset();
+                    }}
+                    disabled={isAnalyzing || isImporting}
+                    videoRef={videoRef}
+                    isDark={isDark}
+                    onUrlSubmit={async (u) => {
+                      setUrlInput(u);
+                      await importFromUrl(u);
+                    }}
+                  />
 
-        {/* History drawer */}
-        <HistoryDrawer
-          open={historyOpen}
-          entries={historyEntries}
-          onClose={() => setHistoryOpen(false)}
-          onSelect={(entry) => { setLoadedEntry(entry); }}
-          onDelete={deleteEntry}
-          onClearAll={clearAll}
-          isDark={isDark}
-        />
-
-        {/* RIGHT — Analysis output */}
-        {(isAnalyzing || activeResult) && (
-          <div
-            style={{
-              padding: "32px 24px",
-              overflowY: "auto",
-              maxHeight: "calc(100vh - 57px)",
-              position: "sticky",
-              top: "57px",
-            }}
-          >
-            {/* Header row: label + tabs */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: "24px",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "10px",
-                  fontFamily: "'JetBrains Mono', monospace",
-                  color: t.textFaint,
-                  letterSpacing: "0.12em",
-                  textTransform: "uppercase",
-                }}
-              >
-                {rightTab === "brief" ? "03 / Creative Brief" : "02 / Creative Analysis"}
-              </div>
-
-              {/* Tab switcher — shown once brief exists */}
-              {(brief || briefLoading) && (
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "2px",
-                    background: t.surfaceDim,
-                    border: `1px solid ${t.border}`,
-                    borderRadius: "6px",
-                    padding: "2px",
-                  }}
-                >
-                  {(["analysis", "brief"] as const).map((tab) => (
+                  {/* Analyze button */}
+                  {file && status !== "complete" && (
                     <button
-                      key={tab}
-                      onClick={() => setRightTab(tab)}
-                      style={{
-                        padding: "4px 10px",
-                        background: rightTab === tab ? (isDark ? "rgba(255,255,255,0.08)" : "#fff") : "transparent",
-                        border: "none",
-                        borderRadius: "4px",
-                        color: rightTab === tab ? t.text : t.textMuted,
-                        fontSize: "10px",
-                        fontFamily: "'JetBrains Mono', monospace",
-                        fontWeight: rightTab === tab ? 700 : 400,
-                        letterSpacing: "0.08em",
-                        textTransform: "uppercase",
-                        cursor: "pointer",
-                        transition: "all 0.15s ease",
-                      }}
+                      onClick={handleAnalyze}
+                      disabled={isAnalyzing || !file || !canAnalyze}
+                      className={`w-full mt-5 py-3.5 rounded-xl text-white text-sm font-mono font-bold tracking-wider uppercase transition-all ${
+                        isAnalyzing ? 'bg-indigo-600/30 cursor-not-allowed' :
+                        !canAnalyze ? 'bg-zinc-800 border border-white/10 cursor-not-allowed' :
+                        'bg-gradient-to-r from-indigo-600 to-violet-600 shadow-[0_4px_16px_rgba(99,102,241,0.3)] hover:shadow-[0_4px_20px_rgba(99,102,241,0.4)] cursor-pointer'
+                      }`}
                     >
-                      {tab}
+                      {!canAnalyze ? "Upgrade to run more" : isAnalyzing ? "Analyzing..." : "Run AI Analysis →"}
                     </button>
-                  ))}
+                  )}
+
+                  {/* Error state */}
+                  {error && (
+                    <div className="mt-4 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-lg text-xs font-mono text-red-400">
+                      {error}
+                    </div>
+                  )}
+
+                  {/* Analyzing spinner */}
+                  {isAnalyzing && <AnalyzingState message={statusMessage || STATUS_COPY[status]} t={t} />}
+
+                  {/* Analysis output — inline for now, replaced by ReportCards in Task 12 */}
+                  {activeResult && rightTab === "analysis" && (
+                    <div className="mt-6">
+                      <AnalysisOutput markdown={activeResult.markdown} onSeekTo={handleSeekTo} t={t} />
+                    </div>
+                  )}
+
+                  {/* Brief tab — inline for now */}
+                  {rightTab === "brief" && brief && (
+                    <div className="mt-6">
+                      <div className="flex gap-2 mb-6">
+                        <button onClick={handleBriefCopy} className="text-xs text-zinc-400 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 font-mono">{briefCopied ? "Copied!" : "Copy MD"}</button>
+                        <button onClick={handleBriefDownload} className="text-xs text-white bg-gradient-to-r from-indigo-600 to-violet-600 rounded-lg px-3 py-1.5 font-mono font-bold">Export .md</button>
+                        <button onClick={handleGenerateBrief} disabled={briefLoading} className="text-xs text-zinc-500 border border-white/10 rounded-lg px-3 py-1.5 font-mono disabled:opacity-50">{briefLoading ? "Regenerating..." : "Regenerate"}</button>
+                      </div>
+                      <AnalysisOutput markdown={brief} t={t} />
+                    </div>
+                  )}
+
+                  {/* Save to swipe file */}
+                  {activeResult && (
+                    <button
+                      onClick={() => {
+                        addSwipeItem({
+                          fileName: activeResult.fileName,
+                          timestamp: activeResult.timestamp.toISOString(),
+                          scores: activeResult.scores,
+                          markdown: activeResult.markdown,
+                          brand: "",
+                          format: "",
+                          niche: "",
+                          platform: "",
+                          tags: [],
+                          notes: "",
+                        });
+                      }}
+                      className="mt-3 w-full py-2.5 text-xs font-mono text-zinc-500 border border-dashed border-white/10 rounded-lg tracking-wider hover:text-white hover:border-white/20 transition-colors"
+                    >
+                      + Save to Swipe File
+                    </button>
+                  )}
                 </div>
               )}
+
+              {/* ── NON-ANALYZER MODES ── Keep exactly as-is with existing props */}
+              {mode === "compare" && <CompareView isDark={isDark} apiKey={API_KEY} />}
+              {mode === "batch" && <BatchView isDark={isDark} apiKey={API_KEY} addHistoryEntry={addEntry} t={t} />}
+              {mode === "preflight" && <PreFlightView isDark={isDark} apiKey={API_KEY} />}
+              {mode === "swipe" && <SwipeFileView isDark={isDark} />}
             </div>
+          </div>
 
-            {/* Analyzing spinner */}
-            {isAnalyzing && <AnalyzingState message={statusMessage || STATUS_COPY[status]} t={t} />}
-
-            {/* Analysis tab */}
-            {activeResult && rightTab === "analysis" && (
-              <>
-                <AnalysisOutput markdown={activeResult.markdown} onSeekTo={handleSeekTo} t={t} />
-
-                {/* Generate Brief — below analysis */}
-                <div style={{ marginTop: "32px", paddingTop: "24px", borderTop: `1px solid ${t.border}` }}>
-                  {!brief && !briefLoading && (
-                    <button
-                      onClick={handleGenerateBrief}
-                      style={{
-                        width: "100%",
-                        padding: "12px",
-                        background: "transparent",
-                        border: "1px solid rgba(99,102,241,0.3)",
-                        borderRadius: "8px",
-                        color: "var(--accent)",
-                        fontSize: "12px",
-                        fontFamily: "'JetBrains Mono', monospace",
-                        fontWeight: 700,
-                        letterSpacing: "0.08em",
-                        textTransform: "uppercase",
-                        cursor: "pointer",
-                        transition: "all 0.2s var(--ease-out)",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "rgba(99,102,241,0.08)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "transparent";
-                      }}
-                    >
-                      Generate Brief →
-                    </button>
-                  )}
-                  {briefLoading && (
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "10px",
-                        padding: "12px 0",
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: "14px",
-                          height: "14px",
-                          border: "2px solid rgba(99,102,241,0.2)",
-                          borderTopColor: "var(--accent)",
-                          borderRadius: "50%",
-                          animation: "rotate-slow 0.8s linear infinite",
-                          flexShrink: 0,
-                        }}
-                      />
-                      <span
-                        style={{
-                          fontSize: "11px",
-                          fontFamily: "'JetBrains Mono', monospace",
-                          color: t.textMuted,
-                          letterSpacing: "0.06em",
-                        }}
-                      >
-                        Generating brief...
-                      </span>
-                    </div>
-                  )}
-                  {briefError && (
-                    <div
-                      style={{
-                        padding: "10px 14px",
-                        background: "rgba(255,68,68,0.08)",
-                        border: "1px solid rgba(255,68,68,0.2)",
-                        borderRadius: "6px",
-                        fontSize: "11px",
-                        fontFamily: "'JetBrains Mono', monospace",
-                        color: "#FF6B6B",
-                      }}
-                    >
-                      {briefError}
-                    </div>
-                  )}
-                  {brief && (
-                    <button
-                      onClick={() => setRightTab("brief")}
-                      style={{
-                        width: "100%",
-                        padding: "10px",
-                        background: "rgba(99,102,241,0.08)",
-                        border: "1px solid rgba(99,102,241,0.2)",
-                        borderRadius: "6px",
-                        color: "var(--accent)",
-                        fontSize: "11px",
-                        fontFamily: "'JetBrains Mono', monospace",
-                        fontWeight: 700,
-                        letterSpacing: "0.08em",
-                        cursor: "pointer",
-                      }}
-                    >
-                      View Brief →
-                    </button>
-                  )}
-                </div>
-              </>
-            )}
-
-            {/* Brief tab */}
-            {rightTab === "brief" && brief && (
-              <>
-                {/* Brief actions */}
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "8px",
-                    marginBottom: "24px",
-                  }}
-                >
-                  <button
-                    onClick={handleBriefCopy}
-                    style={{
-                      padding: "6px 12px",
-                      background: t.surface,
-                      border: `1px solid ${t.borderMid}`,
-                      borderRadius: "5px",
-                      color: t.textSecondary,
-                      fontSize: "10px",
-                      fontFamily: "'JetBrains Mono', monospace",
-                      letterSpacing: "0.06em",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {briefCopied ? "Copied!" : "Copy MD"}
-                  </button>
-                  <button
-                    onClick={handleBriefDownload}
-                    style={{
-                      padding: "6px 12px",
-                      background: "var(--grad)",
-                      border: "none",
-                      borderRadius: "5px",
-                      color: "#fff",
-                      fontSize: "10px",
-                      fontFamily: "'JetBrains Mono', monospace",
-                      fontWeight: 700,
-                      letterSpacing: "0.06em",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Export .md
-                  </button>
-                  <button
-                    onClick={handleGenerateBrief}
-                    disabled={briefLoading}
-                    style={{
-                      padding: "6px 12px",
-                      background: "transparent",
-                      border: `1px solid ${t.border}`,
-                      borderRadius: "5px",
-                      color: t.textMuted,
-                      fontSize: "10px",
-                      fontFamily: "'JetBrains Mono', monospace",
-                      letterSpacing: "0.06em",
-                      cursor: briefLoading ? "not-allowed" : "pointer",
-                    }}
-                  >
-                    {briefLoading ? "Regenerating..." : "Regenerate"}
-                  </button>
-                </div>
-
-                <AnalysisOutput markdown={brief} t={t} />
-              </>
+          {/* Right panel (results only) */}
+          <div className={`shrink-0 bg-zinc-900/50 backdrop-blur-xl border-l border-white/5 overflow-y-auto overflow-x-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${showRightPanel ? 'w-[340px] opacity-100' : 'w-0 opacity-0'}`}>
+            {showRightPanel && activeResult?.scores && (
+              <div ref={scorecardRef} className="p-4">
+                <ScoreCard
+                  scores={activeResult.scores}
+                  fileName={activeResult.fileName}
+                  onShare={handleCopy}
+                  isDark={isDark}
+                />
+              </div>
             )}
           </div>
-        )}
-      </div>
+        </div>
       </div>
 
-      </main>
+      {/* History drawer */}
+      <HistoryDrawer
+        open={historyOpen}
+        entries={historyEntries}
+        onClose={() => setHistoryOpen(false)}
+        onSelect={(entry) => { setLoadedEntry(entry); }}
+        onDelete={deleteEntry}
+        onClearAll={clearAll}
+        isDark={isDark}
+      />
 
       {/* Share link toast */}
       {shareToast && (
-        <div
-          role="status"
-          aria-live="polite"
-          style={{
-            position: "fixed",
-            bottom: "24px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            padding: "12px 20px",
-            background: isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)",
-            border: `1px solid ${t.borderMid}`,
-            borderRadius: "8px",
-            fontSize: "12px",
-            fontFamily: "'JetBrains Mono', monospace",
-            color: t.textSecondary,
-            letterSpacing: "0.04em",
-            boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
-            zIndex: 100,
-          }}
-        >
+        <div role="status" aria-live="polite" className="fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-3 bg-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-xl text-xs font-mono text-zinc-300 shadow-lg z-[100]">
           Link copied to clipboard
         </div>
       )}
 
       {/* Rate limit error toast */}
       {rateLimitError && (
-        <div
-          role="alert"
-          aria-live="assertive"
-          style={{
-            position: "fixed",
-            bottom: "24px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            padding: "12px 20px",
-            background: "rgba(255,68,68,0.15)",
-            border: "1px solid rgba(255,68,68,0.3)",
-            borderRadius: "8px",
-            fontSize: "12px",
-            fontFamily: "'JetBrains Mono', monospace",
-            color: "#FF6B6B",
-            letterSpacing: "0.04em",
-            boxShadow: "0 4px 20px rgba(255,68,68,0.2)",
-            zIndex: 100,
-          }}
-        >
+        <div role="alert" aria-live="assertive" className="fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-3 bg-red-500/15 border border-red-500/30 rounded-xl text-xs font-mono text-red-400 shadow-lg z-[100]">
           {rateLimitError}
         </div>
       )}
