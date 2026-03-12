@@ -16,6 +16,11 @@ interface ScoreCardProps {
   onShare?: () => void;
   isDark?: boolean;
   winner?: boolean;
+  // New props:
+  analysisTime?: Date;
+  modelName?: string;
+  onGenerateBrief?: () => void;
+  onAddToSwipeFile?: () => void;
 }
 
 const SCORE_LABELS: Record<keyof Scores, string> = {
@@ -34,14 +39,20 @@ export function getScoreColorByValue(score: number): string {
   return "#EF4444";
 }
 
-function getScoreLabel(score: number, isCTA: boolean = false): { label: string; color: string } {
-  if (score === 0 && isCTA) return { label: "No CTA Detected", color: "#666666" };
-  if (score === 0) return { label: "N/A", color: "#666666" };
-  if (score >= 9) return { label: "Strong", color: "#10B981" };
-  if (score >= 7) return { label: "Strong", color: "#6366F1" };
+function getScoreLabel(score: number, isCTA?: boolean): { label: string; color: string } {
+  if (isCTA && score === 0) return { label: "No CTA Detected", color: "#EF4444" };
+  if (score >= 9) return { label: "Excellent", color: "#10B981" };
+  if (score >= 7) return { label: "Good", color: "#6366F1" };
   if (score >= 5) return { label: "Average", color: "#F59E0B" };
-  if (score >= 3) return { label: "Weak", color: "#EF4444" };
-  return { label: "Poor", color: "#EF4444" };
+  return { label: "Weak", color: "#EF4444" };
+}
+
+function getScoreBadgeClasses(score: number, isCTA?: boolean): string {
+  if (isCTA && score === 0) return "bg-red-500/15 text-red-400";
+  if (score >= 9) return "bg-emerald-500/15 text-emerald-400";
+  if (score >= 7) return "bg-indigo-500/15 text-indigo-400";
+  if (score >= 5) return "bg-amber-500/15 text-amber-400";
+  return "bg-red-500/15 text-red-400";
 }
 
 function formatFileName(fileName: string): string {
@@ -50,90 +61,74 @@ function formatFileName(fileName: string): string {
     .replace(/[_-]/g, " ");
 }
 
+function formatRelativeTime(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHour = Math.floor(diffMin / 60);
+
+  if (diffSec < 60) return "just now";
+  if (diffMin < 60) return `${diffMin}m ago`;
+  if (diffHour < 24) return `${diffHour}h ago`;
+  return `${Math.floor(diffHour / 24)}d ago`;
+}
+
 const scoreKeys = ["hook", "clarity", "cta", "production"] as const;
 
-export function ScoreCard({ scores, fileName, onShare, isDark = true, winner }: ScoreCardProps) {
+export function ScoreCard({
+  scores,
+  fileName,
+  onShare,
+  isDark = true,
+  winner,
+  analysisTime,
+  modelName = "Gemini 2.0 Flash",
+  onGenerateBrief,
+  onAddToSwipeFile,
+}: ScoreCardProps) {
   const { label: overallLabel } = getScoreLabel(scores.overall);
   const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const [relativeTime, setRelativeTime] = useState<string>("");
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!analysisTime) return;
+    setRelativeTime(formatRelativeTime(analysisTime));
+    const interval = setInterval(() => {
+      setRelativeTime(formatRelativeTime(analysisTime));
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [analysisTime]);
+
+  const overallColor = getScoreColorByValue(scores.overall);
+  const badgeClasses = getScoreBadgeClasses(scores.overall);
 
   return (
-    <div
-      className="scorecard"
-      style={{
-        background: "var(--surface)",
-        border: "1px solid var(--border)",
-        borderRadius: "var(--radius)",
-        padding: 18,
-        transition: "transform 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out)",
-      }}
-      onMouseEnter={(e) => {
-        if (window.matchMedia("(hover: hover)").matches) {
-          e.currentTarget.style.transform = "translateY(-2px)";
-          e.currentTarget.style.boxShadow = "var(--shadow-md)";
-        }
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.boxShadow = "none";
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: 16,
-        }}
-      >
-        <span
-          style={{
-            fontSize: 12,
-            fontWeight: 600,
-            color: "var(--ink-muted)",
-            textTransform: "uppercase",
-            letterSpacing: "0.06em",
-            fontFamily: "var(--mono)",
-          }}
-        >
-          Overall Score
-        </span>
-        <span
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 5,
-            background: `${getScoreColorByValue(scores.overall)}1a`,
-            border: `1px solid ${getScoreColorByValue(scores.overall)}40`,
-            borderRadius: 20,
-            padding: "3px 10px",
-            fontSize: 11,
-            fontWeight: 600,
-            color: getScoreColorByValue(scores.overall),
-            fontFamily: "var(--mono)",
-          }}
-        >
-          <span
-            style={{
-              width: 6,
-              height: 6,
-              borderRadius: "50%",
-              background: getScoreColorByValue(scores.overall),
-            }}
-          />
-          {overallLabel}
-        </span>
+    <div className="scorecard flex flex-col h-full">
+      {/* Header */}
+      <div className="p-5 border-b border-white/5 flex items-center justify-between">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-sm font-semibold text-white">Score Overview</span>
+          {analysisTime && (
+            <span className="text-xs text-zinc-600">{relativeTime}</span>
+          )}
+        </div>
+        <span className="text-xs text-zinc-600 font-mono">{modelName}</span>
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16 }}>
-        {/* Arc gauge */}
-        <div style={{ position: "relative", width: 80, height: 48, flexShrink: 0 }}>
-          <svg viewBox="0 0 120 70" style={{ width: "100%", height: "100%" }}>
+      {/* Arc gauge */}
+      <div className="px-5 pt-5 flex flex-col items-center">
+        <div className="relative w-40 h-24 flex-shrink-0">
+          <svg viewBox="0 0 120 70" className="w-full h-full">
             {/* Background arc */}
             <path
               d="M 10 60 A 50 50 0 0 1 110 60"
               fill="none"
-              stroke="var(--surface-el)"
+              stroke="rgba(255,255,255,0.05)"
               strokeWidth="8"
               strokeLinecap="round"
             />
@@ -141,106 +136,61 @@ export function ScoreCard({ scores, fileName, onShare, isDark = true, winner }: 
             <path
               d="M 10 60 A 50 50 0 0 1 110 60"
               fill="none"
-              stroke={getScoreColorByValue(scores.overall)}
+              stroke={overallColor}
               strokeWidth="8"
               strokeLinecap="round"
               strokeDasharray={`${mounted ? (scores.overall / 10) * 157 : 0} 157`}
               style={{
                 transition: "stroke-dasharray 0.8s cubic-bezier(0.16, 1, 0.3, 1)",
-                filter: `drop-shadow(0 0 4px ${getScoreColorByValue(scores.overall)}60)`,
+                filter: `drop-shadow(0 0 4px ${overallColor}60)`,
               }}
             />
           </svg>
         </div>
+
         {/* Score number */}
-        <div style={{ fontFamily: "var(--mono)", lineHeight: 1 }}>
-          <span style={{
-            fontSize: 32,
-            fontWeight: 700,
-            color: getScoreColorByValue(scores.overall),
-          }}>
+        <div className="flex items-baseline gap-1 -mt-4">
+          <span className="text-4xl font-bold font-mono text-white leading-none">
             {scores.overall}
           </span>
-          <span style={{
-            fontSize: 16,
-            color: "var(--ink-muted)",
-          }}>/10</span>
+          <span className="text-zinc-500 font-mono">/10</span>
         </div>
+
+        {/* Status badge */}
+        <div className={`mt-3 px-3 py-1 rounded-full text-xs font-semibold font-mono ${badgeClasses}`}>
+          {overallLabel}
+        </div>
+
+        {/* Winner badge */}
+        {winner && (
+          <div className="mt-2 px-3 py-1 rounded-full text-xs font-semibold font-mono bg-amber-500/10 text-amber-400 border border-amber-500/25">
+            ★ Winner
+          </div>
+        )}
       </div>
 
-      {winner && (
-        <div
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 5,
-            background: "rgba(245,158,11,0.1)",
-            border: "1px solid rgba(245,158,11,0.25)",
-            borderRadius: 20,
-            padding: "3px 10px",
-            marginBottom: 12,
-            fontSize: 11,
-            fontWeight: 600,
-            color: "#F59E0B",
-            fontFamily: "var(--mono)",
-          }}
-        >
-          ★ Winner
-        </div>
-      )}
-
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      {/* Metric bars */}
+      <div className="px-5 py-4 flex flex-col gap-2">
         {scoreKeys.map((key) => {
           const value = scores[key];
-          const pct = value <= 0 ? 0 : Math.min(100, (value / 10) * 100);
+          const pct = value <= 0 ? 2 : Math.min(100, (value / 10) * 100);
+          const barColor = getScoreColorByValue(value);
           return (
             <div key={key}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginBottom: 5,
-                }}
-              >
-                <span
-                  style={{
-                    fontFamily: "var(--mono)",
-                    fontSize: 11,
-                    color: "var(--ink-muted)",
-                    fontWeight: 500,
-                  }}
-                >
-                  {SCORE_LABELS[key]}
-                </span>
-                <span
-                  style={{
-                    fontFamily: "var(--mono)",
-                    fontSize: 11,
-                    fontWeight: 600,
-                    color: getScoreColorByValue(value),
-                  }}
-                >
-                  {value}
-                </span>
+              <div className="flex justify-between text-xs mb-1.5">
+                <span className="text-zinc-400">{SCORE_LABELS[key]}</span>
+                <span className="font-mono text-white">{value}</span>
               </div>
-              <div
-                style={{
-                  height: "var(--bar-height)",
-                  background: "var(--surface-el)",
-                  borderRadius: "var(--bar-radius)",
-                  overflow: "hidden",
-                }}
-              >
+              <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
                 <div
+                  className="h-full rounded-full"
                   style={{
-                    height: "100%",
+                    "--bar-width": `${pct}%`,
                     width: mounted ? `${pct}%` : "0%",
-                    background: `linear-gradient(90deg, ${getScoreColorByValue(value)}, ${getScoreColorByValue(value)}cc)`,
-                    borderRadius: "var(--bar-radius)",
-                    boxShadow: `0 0 8px ${getScoreColorByValue(value)}40`,
-                    transition: "width 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
-                  }}
+                    background: `linear-gradient(90deg, ${barColor}, ${barColor}cc)`,
+                    animation: mounted ? "barFill 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards" : "none",
+                    boxShadow: `0 0 6px ${barColor}40`,
+                  } as React.CSSProperties}
                 />
               </div>
             </div>
@@ -248,57 +198,48 @@ export function ScoreCard({ scores, fileName, onShare, isDark = true, winner }: 
         })}
       </div>
 
+      {/* File name */}
       {fileName && (
-        <div
-          style={{
-            marginTop: 12,
-            fontSize: 11,
-            fontFamily: "var(--mono)",
-            color: "var(--ink-muted)",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
+        <div className="px-5 pb-2 text-xs font-mono text-zinc-600 truncate">
           {formatFileName(fileName)}
         </div>
       )}
 
+      {/* Share button (backward compat) */}
       {onShare && (
-        <button
-          type="button"
-          onClick={onShare}
-          data-html2canvas-ignore="true"
-          style={{
-            marginTop: 16,
-            width: "100%",
-            padding: "8px 12px",
-            background: "transparent",
-            border: "1px solid var(--border)",
-            borderRadius: 7,
-            color: "var(--ink-muted)",
-            fontSize: 12,
-            fontFamily: "var(--sans)",
-            fontWeight: 500,
-            cursor: "pointer",
-            transition: "all 0.15s ease",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "var(--surface-el)";
-            e.currentTarget.style.color = "var(--ink)";
-            e.currentTarget.style.borderColor = "var(--border-hover)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "transparent";
-            e.currentTarget.style.color = "var(--ink-muted)";
-            e.currentTarget.style.borderColor = "var(--border)";
-            e.currentTarget.style.transform = "scale(1)";
-          }}
-          onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.97)"; }}
-          onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
-        >
-          Copy Scorecard
-        </button>
+        <div className="px-5 pb-2" data-html2canvas-ignore="true">
+          <button
+            type="button"
+            onClick={onShare}
+            className="w-full py-2 px-3 bg-transparent border border-white/10 rounded-lg text-zinc-400 text-xs font-medium hover:bg-white/5 hover:text-white hover:border-white/20 transition-all duration-150 cursor-pointer"
+          >
+            Copy Scorecard
+          </button>
+        </div>
+      )}
+
+      {/* Quick actions */}
+      {(onGenerateBrief || onAddToSwipeFile) && (
+        <div className="mt-auto p-5 border-t border-white/5 flex flex-col gap-2">
+          {onGenerateBrief && (
+            <button
+              type="button"
+              onClick={onGenerateBrief}
+              className="bg-white/5 hover:bg-white/10 text-white text-sm rounded-xl w-full py-2.5 text-center transition-colors duration-150 cursor-pointer"
+            >
+              Generate Brief
+            </button>
+          )}
+          {onAddToSwipeFile && (
+            <button
+              type="button"
+              onClick={onAddToSwipeFile}
+              className="bg-white/5 hover:bg-white/10 text-white text-sm rounded-xl w-full py-2.5 text-center transition-colors duration-150 cursor-pointer"
+            >
+              Add to Swipe File
+            </button>
+          )}
+        </div>
       )}
     </div>
   );
