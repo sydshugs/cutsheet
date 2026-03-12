@@ -1,16 +1,15 @@
 // App.tsx — Full wired app
 // src/App.tsx
 
-import { useState, useRef, useEffect, Fragment, Children, type ReactNode } from "react";
-import html2canvas from "html2canvas";
-import { VideoDropzone } from "./components/VideoDropzone";
-import { ScoreCard, getScoreColorByValue } from "./components/ScoreCard";
+import { useState, useRef, useEffect } from "react";
+import { ScoreCard } from "./components/ScoreCard";
 import { Sidebar, type SidebarMode } from "./components/Sidebar";
 import { HistoryDrawer } from "./components/HistoryDrawer";
 import { CompareView } from "./components/CompareView";
 import { BatchView } from "./components/BatchView";
 import { SwipeFileView } from "./components/SwipeFileView";
 import { PreFlightView } from "./components/PreFlightView";
+import { AnalyzerView } from "./components/AnalyzerView";
 import { useVideoAnalyzer } from "./hooks/useVideoAnalyzer";
 import { useHistory, type HistoryEntry } from "./hooks/useHistory";
 import { useSwipeFile } from "./hooks/useSwipeFile";
@@ -20,8 +19,7 @@ import { createShare } from "./services/shareService";
 import { exportToPdf } from "./utils/pdfExport";
 import { UpgradeModal } from "./components/UpgradeModal";
 import { checkShareLimit, incrementShareCount } from "./utils/rateLimiter";
-import { themes, type ThemeTokens, THEME_KEY } from "./theme";
-import ReactMarkdown from "react-markdown";
+import { themes } from "./theme";
 import { TopBar } from "./components/TopBar";
 
 // ─── GOOGLE FONTS ─────────────────────────────────────────────────────────────
@@ -38,217 +36,6 @@ const STATUS_COPY = {
   error: "Something went wrong",
   idle: "",
 };
-
-
-// ─── LOADING INDICATOR ────────────────────────────────────────────────────────
-function AnalyzingState({ message, t }: { message: string; t: ThemeTokens }) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "80px 24px",
-        gap: "20px",
-      }}
-    >
-      <style>{`
-        @keyframes analyzing-ring {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        @keyframes analyzing-pulse {
-          0%, 100% { opacity: 0.3; transform: scale(0.95); }
-          50% { opacity: 1; transform: scale(1.05); }
-        }
-        @keyframes analyzing-ripple {
-          0% { transform: scale(1); opacity: 0.5; }
-          100% { transform: scale(2); opacity: 0; }
-        }
-      `}</style>
-
-      <div style={{ position: "relative", width: "80px", height: "80px",
-        display: "flex", alignItems: "center", justifyContent: "center" }}>
-
-        {/* Outer rotating ring */}
-        <div style={{ position: "absolute", inset: 0, borderRadius: "50%",
-          border: "2px solid transparent",
-          borderTopColor: "var(--accent)",
-          borderRightColor: "rgba(99,102,241,0.3)",
-          animation: "analyzing-ring 1.8s linear infinite" }} />
-
-        {/* Inner counter-rotating ring */}
-        <div style={{ position: "absolute", inset: "10px", borderRadius: "50%",
-          border: "1.5px solid transparent",
-          borderBottomColor: "rgba(139,92,246,0.7)",
-          borderLeftColor: "rgba(139,92,246,0.2)",
-          animation: "analyzing-ring 1.3s linear infinite reverse" }} />
-
-        {/* Ripple */}
-        <div style={{ position: "absolute", inset: "15px", borderRadius: "50%",
-          border: "1px solid rgba(99,102,241,0.4)",
-          animation: "analyzing-ripple 2s ease-out infinite" }} />
-
-        {/* Center dot */}
-        <div style={{ width: "12px", height: "12px", borderRadius: "50%",
-          background: "var(--accent)",
-          boxShadow: "0 0 16px rgba(99,102,241,0.6)",
-          animation: "analyzing-pulse 2s ease-in-out infinite" }} />
-      </div>
-
-      <div style={{ textAlign: "center" }}>
-        <div
-          style={{
-            fontSize: "13px",
-            fontFamily: "var(--mono)",
-            color: t.spinnerText,
-            letterSpacing: "0.06em",
-          }}
-        >
-          {message}
-        </div>
-        <div
-          style={{
-            fontSize: "11px",
-            fontFamily: "var(--mono)",
-            color: t.spinnerSub,
-            marginTop: "6px",
-          }}
-        >
-          This takes 30–90 seconds depending on video length
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── MARKDOWN OUTPUT ──────────────────────────────────────────────────────────
-function renderTextWithTimestamps(text: string, onSeekTo?: (seconds: number) => void) {
-  const parts = text.split(/(\[\d{1,2}:\d{2}\])/g);
-  return parts.map((part, idx) => {
-    const match = part.match(/^\[(\d{1,2}):(\d{2})\]$/);
-    if (match && onSeekTo) {
-      const minutes = parseInt(match[1], 10);
-      const seconds = parseInt(match[2], 10);
-      const totalSeconds = minutes * 60 + seconds;
-      return (
-        <button
-          key={idx}
-          onClick={() => onSeekTo(totalSeconds)}
-          style={{
-            border: "none",
-            background: "transparent",
-            padding: 0,
-            margin: 0,
-            color: "var(--accent)",
-            cursor: "pointer",
-            fontFamily: "var(--mono)",
-            fontSize: "0.9em",
-            textDecoration: "underline",
-          }}
-        >
-          {part}
-        </button>
-      );
-    }
-    return <Fragment key={idx}>{part}</Fragment>;
-  });
-}
-
-function renderNodesWithTimestamps(children: ReactNode, onSeekTo?: (seconds: number) => void) {
-  return Children.toArray(children).map((child, idx) => {
-    if (typeof child === "string") {
-      return <Fragment key={idx}>{renderTextWithTimestamps(child, onSeekTo)}</Fragment>;
-    }
-    return <Fragment key={idx}>{child}</Fragment>;
-  });
-}
-
-function AnalysisOutput({ markdown, onSeekTo, t }: { markdown: string; onSeekTo?: (seconds: number) => void; t: ThemeTokens }) {
-  return (
-    <div
-      style={{
-        fontFamily: "var(--sans)",
-        color: t.markdownText,
-        fontSize: "14px",
-        lineHeight: 1.7,
-      }}
-    >
-      <style>{`
-        .analysis-output h2 {
-          font-family: var(--sans);
-          font-size: 11px;
-          font-weight: 600;
-          letter-spacing: 0.18em;
-          text-transform: uppercase;
-          color: var(--label);
-          margin: 28px 0 12px;
-          padding-bottom: 8px;
-          border-bottom: 1px solid rgba(99,102,241,0.12);
-        }
-        .analysis-output h3, .analysis-output h4 {
-          font-family: var(--mono);
-          font-size: 11px;
-          color: ${t.h3Color};
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
-          margin: 16px 0 6px;
-        }
-        .analysis-output p {
-          margin: 8px 0;
-          color: ${t.pColor};
-        }
-        .analysis-output strong {
-          color: ${t.strongColor};
-          font-weight: 600;
-        }
-        .analysis-output ul, .analysis-output ol {
-          padding-left: 18px;
-          margin: 8px 0;
-        }
-        .analysis-output li {
-          margin: 4px 0;
-          color: ${t.liColor};
-        }
-        .analysis-output code {
-          font-family: var(--mono);
-          font-size: 12px;
-          background: ${t.codeBg};
-          padding: 2px 6px;
-          border-radius: 3px;
-          color: ${t.codeColor};
-        }
-        .analysis-output hr {
-          border: none;
-          border-top: 1px solid ${t.hrColor};
-          margin: 20px 0;
-        }
-        .analysis-output blockquote {
-          border-left: 2px solid var(--accent);
-          padding-left: 12px;
-          margin: 12px 0;
-          color: ${t.blockquoteColor};
-          font-style: italic;
-        }
-      `}</style>
-      <div className="analysis-output">
-        <ReactMarkdown
-          components={{
-            p({ children }) {
-              return <p>{renderNodesWithTimestamps(children, onSeekTo)}</p>;
-            },
-            li({ children }) {
-              return <li>{renderNodesWithTimestamps(children, onSeekTo)}</li>;
-            },
-          }}
-        >
-          {markdown}
-        </ReactMarkdown>
-      </div>
-    </div>
-  );
-}
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 export default function App() {
@@ -276,18 +63,23 @@ export default function App() {
   const [shareToast, setShareToast] = useState(false);
   const [shareLoading, setShareLoading] = useState(false);
   const [rateLimitError, setRateLimitError] = useState<string | null>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [analysisCompletedAt, setAnalysisCompletedAt] = useState<Date | null>(null);
   const scorecardRef = useRef<HTMLDivElement | null>(null);
   const lastSavedRef = useRef<string | null>(null);
   const { status, statusMessage, result, error, analyze, download, copy, reset } = useVideoAnalyzer();
   const { entries: historyEntries, addEntry, deleteEntry, clearAll } = useHistory();
   const { addItem: addSwipeItem } = useSwipeFile();
   const [previousResult, setPreviousResult] = useState<HistoryEntry | null>(null);
-  const { usageCount, isPro, canAnalyze, increment, FREE_LIMIT } = useUsage();
+  const { isPro, canAnalyze, increment, FREE_LIMIT } = useUsage();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const isAnalyzing = status === "uploading" || status === "processing";
+
+  // Set analysisCompletedAt when status transitions to complete
+  useEffect(() => {
+    if (status === "complete") setAnalysisCompletedAt(new Date());
+  }, [status]);
 
   // Save completed analyses to history and track usage for paywall
   useEffect(() => {
@@ -316,6 +108,13 @@ export default function App() {
       setRightTab("analysis");
     }
   }, [status]);
+
+  // Auto-analyze when file is selected
+  useEffect(() => {
+    if (file && status === "idle" && canAnalyze) {
+      handleAnalyze();
+    }
+  }, [file]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Unified display result — history load takes precedence over live result
   const activeResult = loadedEntry
@@ -469,30 +268,20 @@ export default function App() {
     }
   };
 
-  const handleSeekTo = (seconds: number) => {
-    if (videoRef.current) {
-      videoRef.current.currentTime = seconds;
-      if (videoRef.current.paused) {
-        void videoRef.current.play();
-      }
-    }
-  };
-
-  const handleShareAsImage = async () => {
-    if (!scorecardRef.current || !activeResult) return;
-    try {
-      const canvas = await html2canvas(scorecardRef.current, {
-        backgroundColor: t.scorecardBg,
-        scale: 2,
-        useCORS: true,
+  const handleAddToSwipeFile = () => {
+    if (activeResult) {
+      addSwipeItem({
+        fileName: activeResult.fileName,
+        timestamp: activeResult.timestamp.toISOString(),
+        scores: activeResult.scores,
+        markdown: activeResult.markdown,
+        brand: "",
+        format: "",
+        niche: "",
+        platform: "",
+        tags: [],
+        notes: "",
       });
-      const png = canvas.toDataURL("image/png");
-      const a = document.createElement("a");
-      a.href = png;
-      a.download = (activeResult.fileName.replace(/\.[^/.]+$/, "") || "scorecard") + "_cutsheet.png";
-      a.click();
-    } catch {
-      // fallback silent
     }
   };
 
@@ -518,10 +307,10 @@ export default function App() {
       });
       const url = `${window.location.origin}/s/${slug}`;
       await navigator.clipboard.writeText(url);
-      
+
       // Increment share count after successful share
       incrementShareCount();
-      
+
       setShareToast(true);
       setTimeout(() => setShareToast(false), 3000);
     } catch (err) {
@@ -572,125 +361,34 @@ export default function App() {
             <div className="relative px-8 py-6">
               {/* ── SINGLE / ANALYZER MODE ── */}
               {mode === "single" && (
-                <div>
-                  {/* Keep existing Analyzer inline JSX for now — replaced in Task 12 */}
-
-                  {/* Results action bar */}
-                  {(activeResult || (isAnalyzing && file)) && (
-                    <div className="flex items-center gap-2 py-3 mb-4 border-b border-white/5">
-                      <span className="font-mono text-xs text-zinc-500 mr-auto">
-                        Analyzing: <span className="text-white font-medium">{activeResult?.fileName ?? file?.name ?? ""}</span>
-                      </span>
-                      {activeResult && (
-                        <>
-                          <button type="button" onClick={handleReset} className="text-xs text-zinc-400 hover:text-white border border-white/10 rounded-lg px-3 py-1.5 transition-colors">Re-analyze</button>
-                          <button type="button" onClick={handleExportPdf} className="text-xs text-zinc-400 hover:text-white border border-white/10 rounded-lg px-3 py-1.5 transition-colors">Export PDF</button>
-                          <button type="button" onClick={handleShareLink} disabled={shareLoading} className="text-xs text-zinc-400 hover:text-white border border-white/10 rounded-lg px-3 py-1.5 transition-colors disabled:opacity-50">{shareLoading ? "Creating…" : "Share"}</button>
-                          <button type="button" onClick={handleGenerateBrief} disabled={briefLoading} className="text-xs text-white bg-gradient-to-r from-indigo-600 to-violet-600 rounded-lg px-3 py-1.5 transition-colors disabled:opacity-50">Generate Brief</button>
-                        </>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Welcome state */}
-                  {!file && !activeResult && !isAnalyzing && historyEntries.length === 0 && (
-                    <div className="flex flex-col items-center gap-2 mb-2 text-center">
-                      <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/25 flex items-center justify-center mb-2">
-                        <svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-indigo-400">
-                          <polygon points="23 7 16 12 23 17 23 7" />
-                          <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
-                        </svg>
-                      </div>
-                      <h2 className="text-xl font-bold text-white">Analyze your video ad</h2>
-                      <p className="text-sm text-zinc-400 max-w-[400px] leading-relaxed">
-                        Drop a video file or paste a URL to get AI-powered scores, scene breakdowns, and actionable creative insights.
-                      </p>
-                    </div>
-                  )}
-
-                  <VideoDropzone
-                    file={file}
-                    onFileSelect={(f) => {
-                      if (!f) { handleReset(); return; }
-                      setFile(f);
-                      reset();
-                    }}
-                    disabled={isAnalyzing || isImporting}
-                    videoRef={videoRef}
-                    isDark={isDark}
-                    onUrlSubmit={async (u) => {
-                      setUrlInput(u);
-                      await importFromUrl(u);
-                    }}
-                  />
-
-                  {/* Analyze button */}
-                  {file && status !== "complete" && (
-                    <button
-                      onClick={handleAnalyze}
-                      disabled={isAnalyzing || !file || !canAnalyze}
-                      className={`w-full mt-5 py-3.5 rounded-xl text-white text-sm font-mono font-bold tracking-wider uppercase transition-all ${
-                        isAnalyzing ? 'bg-indigo-600/30 cursor-not-allowed' :
-                        !canAnalyze ? 'bg-zinc-800 border border-white/10 cursor-not-allowed' :
-                        'bg-gradient-to-r from-indigo-600 to-violet-600 shadow-[0_4px_16px_rgba(99,102,241,0.3)] hover:shadow-[0_4px_20px_rgba(99,102,241,0.4)] cursor-pointer'
-                      }`}
-                    >
-                      {!canAnalyze ? "Upgrade to run more" : isAnalyzing ? "Analyzing..." : "Run AI Analysis →"}
-                    </button>
-                  )}
-
-                  {/* Error state */}
-                  {error && (
-                    <div className="mt-4 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-lg text-xs font-mono text-red-400">
-                      {error}
-                    </div>
-                  )}
-
-                  {/* Analyzing spinner */}
-                  {isAnalyzing && <AnalyzingState message={statusMessage || STATUS_COPY[status]} t={t} />}
-
-                  {/* Analysis output — inline for now, replaced by ReportCards in Task 12 */}
-                  {activeResult && rightTab === "analysis" && (
-                    <div className="mt-6">
-                      <AnalysisOutput markdown={activeResult.markdown} onSeekTo={handleSeekTo} t={t} />
-                    </div>
-                  )}
-
-                  {/* Brief tab — inline for now */}
-                  {rightTab === "brief" && brief && (
-                    <div className="mt-6">
-                      <div className="flex gap-2 mb-6">
-                        <button onClick={handleBriefCopy} className="text-xs text-zinc-400 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 font-mono">{briefCopied ? "Copied!" : "Copy MD"}</button>
-                        <button onClick={handleBriefDownload} className="text-xs text-white bg-gradient-to-r from-indigo-600 to-violet-600 rounded-lg px-3 py-1.5 font-mono font-bold">Export .md</button>
-                        <button onClick={handleGenerateBrief} disabled={briefLoading} className="text-xs text-zinc-500 border border-white/10 rounded-lg px-3 py-1.5 font-mono disabled:opacity-50">{briefLoading ? "Regenerating..." : "Regenerate"}</button>
-                      </div>
-                      <AnalysisOutput markdown={brief} t={t} />
-                    </div>
-                  )}
-
-                  {/* Save to swipe file */}
-                  {activeResult && (
-                    <button
-                      onClick={() => {
-                        addSwipeItem({
-                          fileName: activeResult.fileName,
-                          timestamp: activeResult.timestamp.toISOString(),
-                          scores: activeResult.scores,
-                          markdown: activeResult.markdown,
-                          brand: "",
-                          format: "",
-                          niche: "",
-                          platform: "",
-                          tags: [],
-                          notes: "",
-                        });
-                      }}
-                      className="mt-3 w-full py-2.5 text-xs font-mono text-zinc-500 border border-dashed border-white/10 rounded-lg tracking-wider hover:text-white hover:border-white/20 transition-colors"
-                    >
-                      + Save to Swipe File
-                    </button>
-                  )}
-                </div>
+                <AnalyzerView
+                  file={file}
+                  status={loadedEntry ? "complete" : status}
+                  statusMessage={statusMessage || STATUS_COPY[status]}
+                  result={activeResult}
+                  error={error}
+                  onFileSelect={(f) => {
+                    if (!f) { handleReset(); return; }
+                    setFile(f);
+                    reset();
+                    // Auto-analyze after setting file
+                  }}
+                  onUrlSubmit={async (u) => {
+                    setUrlInput(u);
+                    await importFromUrl(u);
+                  }}
+                  onAnalyze={handleAnalyze}
+                  onReset={handleReset}
+                  onCopy={handleCopy}
+                  onExportPdf={handleExportPdf}
+                  onShare={handleShareLink}
+                  onGenerateBrief={handleGenerateBrief}
+                  onAddToSwipeFile={handleAddToSwipeFile}
+                  copied={copied}
+                  shareLoading={shareLoading}
+                  historyEntries={historyEntries}
+                  onHistoryEntryClick={(entry) => setLoadedEntry(entry)}
+                />
               )}
 
               {/* ── NON-ANALYZER MODES ── Keep exactly as-is with existing props */}
@@ -704,10 +402,14 @@ export default function App() {
           {/* Right panel (results only) */}
           <div className={`shrink-0 bg-zinc-900/50 backdrop-blur-xl border-l border-white/5 overflow-y-auto overflow-x-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${showRightPanel ? 'w-[340px] opacity-100' : 'w-0 opacity-0'}`}>
             {showRightPanel && activeResult?.scores && (
-              <div ref={scorecardRef} className="p-4">
+              <div ref={scorecardRef}>
                 <ScoreCard
                   scores={activeResult.scores}
                   fileName={activeResult.fileName}
+                  analysisTime={analysisCompletedAt ?? undefined}
+                  modelName="Gemini 2.0 Flash"
+                  onGenerateBrief={handleGenerateBrief}
+                  onAddToSwipeFile={handleAddToSwipeFile}
                   onShare={handleCopy}
                   isDark={isDark}
                 />
