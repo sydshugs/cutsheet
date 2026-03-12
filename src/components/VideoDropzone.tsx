@@ -1,11 +1,13 @@
 import { useRef, useState, useCallback, useEffect, type RefObject } from "react";
+import { motion } from "framer-motion";
+import { Upload } from "lucide-react";
 
 interface VideoDropzoneProps {
   onFileSelect: (file: File | null) => void;
   file: File | null;
   disabled?: boolean;
   videoRef?: RefObject<HTMLVideoElement>;
-  isDark?: boolean;
+  isDark?: boolean;  // Preserved for out-of-scope views. Always renders dark.
   acceptImages?: boolean;
   onUrlSubmit?: (url: string) => void;
 }
@@ -24,6 +26,7 @@ export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, 
   const [error, setError] = useState<string | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [duration, setDuration] = useState<number | null>(null);
+  const [pastedUrl, setPastedUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const internalVideoRef = useRef<HTMLVideoElement>(null);
   const videoElementRef = videoRef ?? internalVideoRef;
@@ -38,6 +41,18 @@ export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, 
       setVideoUrl(null);
     }
   }, [file]);
+
+  // Global paste listener
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      const text = e.clipboardData?.getData('text')?.trim();
+      if (text && /^https?:\/\//.test(text)) {
+        setPastedUrl(text);
+      }
+    };
+    document.addEventListener('paste', handlePaste);
+    return () => document.removeEventListener('paste', handlePaste);
+  }, []);
 
   const validate = (f: File): string | null => {
     if (!acceptedTypes.includes(f.type)) {
@@ -96,192 +111,102 @@ export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, 
     return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
   };
 
-  const rgba = (light: string, dark: string) => (isDark ? dark : light);
-
-  // Empty state — dropzone from #screen-analyzer
+  // Empty state — dropzone
   if (!file) {
-    const formatPills = acceptImages ? ["MP4", "MOV", "AVI", "WEBM", "MKV", "PNG", "JPEG"] : ["MP4", "MOV", "AVI", "WEBM", "MKV"];
+    const formatPills = acceptImages ? ["MP4", "MOV", "WEBM", "PNG", "JPEG"] : ["MP4", "MOV", "WEBM"];
+    const shortcutKey = typeof navigator !== 'undefined' && navigator.platform?.includes('Mac') ? '⌘V' : 'Ctrl+V';
+
     return (
-      <div style={{ width: "100%", maxWidth: 640 }}>
-        <div
-          onClick={() => !disabled && fileInputRef.current?.click()}
-          onDrop={onDrop}
-          onDragOver={onDragOver}
-          onDragLeave={onDragLeave}
-          role="button"
-          aria-label="Upload video file"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              if (!disabled) fileInputRef.current?.click();
-            }
-          }}
-          style={{
-            border: "1.5px dashed rgba(99,102,241,0.35)",
-            borderRadius: "var(--radius-lg)",
-            background: isDragging ? "rgba(99,102,241,0.06)" : "var(--surface)",
-            padding: "64px 40px",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 16,
-            cursor: disabled ? "not-allowed" : "pointer",
-            transition: "all 0.25s var(--ease-out)",
-            userSelect: "none",
-            transform: isDragging ? "scale(1.01)" : "scale(1)",
-            borderColor: isDragging ? "rgba(99,102,241,0.7)" : undefined,
-            boxShadow: isDragging ? "0 0 30px rgba(99,102,241,0.1)" : "none",
-          }}
-          onMouseEnter={(e) => {
-            if (disabled) return;
-            e.currentTarget.style.borderColor = "rgba(99,102,241,0.6)";
-            e.currentTarget.style.background = "rgba(99,102,241,0.04)";
-            e.currentTarget.style.boxShadow = "inset 0 0 0 1px rgba(99,102,241,0.08), 0 0 20px rgba(99,102,241,0.06)";
-          }}
-          onMouseLeave={(e) => {
-            if (isDragging) return;
-            e.currentTarget.style.borderColor = "rgba(99,102,241,0.35)";
-            e.currentTarget.style.background = "var(--surface)";
-            e.currentTarget.style.boxShadow = "none";
-          }}
-        >
+      <div className="w-full max-w-[640px] mx-auto">
+        <motion.div layoutId="analyzer-card" className="bg-zinc-900/50 backdrop-blur-xl rounded-3xl border border-white/5 p-8">
           <div
-            style={{
-              width: 56,
-              height: 56,
-              borderRadius: 14,
-              background: "rgba(99,102,241,0.1)",
-              border: "1px solid rgba(99,102,241,0.2)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              transform: isDragging ? "scale(1.15) translateY(-2px)" : "scale(1)",
-              transition: "transform 0.25s var(--spring)",
+            onClick={() => !disabled && fileInputRef.current?.click()}
+            onDrop={onDrop}
+            onDragOver={onDragOver}
+            onDragLeave={onDragLeave}
+            role="button"
+            aria-label="Upload video file"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                if (!disabled) fileInputRef.current?.click();
+              }
             }}
+            className={`border-2 border-dashed rounded-2xl p-10 flex flex-col items-center gap-4 transition-all cursor-pointer select-none ${
+              isDragging
+                ? 'border-indigo-500/50 scale-[1.01] shadow-[0_0_20px_rgba(99,102,241,0.15)]'
+                : 'border-white/10 hover:border-indigo-500/30'
+            } ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
           >
-            <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5">
-              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-              <polyline points="17 8 12 3 7 8" />
-              <line x1="12" y1="3" x2="12" y2="15" />
-            </svg>
+            {/* Upload icon */}
+            <div className={`w-14 h-14 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center transition-transform ${isDragging ? 'scale-110 -translate-y-0.5' : ''}`}>
+              <Upload size={24} className="text-white" />
+            </div>
+
+            <div className="text-xl font-semibold text-white">Drop your creative here</div>
+            <div className="text-sm text-zinc-400 text-center">or browse to upload</div>
+
+            {/* Format chips */}
+            <div className="flex gap-1.5 flex-wrap justify-center">
+              {formatPills.map((p) => (
+                <span key={p} className="bg-white/5 rounded-full text-xs text-zinc-500 px-3 py-1 font-mono">
+                  {p}
+                </span>
+              ))}
+            </div>
+
+            {/* Browse button */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!disabled) fileInputRef.current?.click();
+              }}
+              className="mt-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl px-6 py-3 transition-colors"
+            >
+              Browse Files
+            </button>
+
+            {/* Validation error */}
+            {error && (
+              <p className="text-xs text-red-400 animate-[shake_0.3s_ease-in-out]">{error}</p>
+            )}
+
+            {/* Shortcut hint */}
+            <p className="text-xs text-zinc-600">or paste a URL · {shortcutKey} to upload from clipboard</p>
           </div>
-          <div style={{ fontSize: 16, fontWeight: 600, color: "var(--ink)" }}>
-            {acceptImages ? "Drop your creative here" : "Drop your creative here"}
-          </div>
-          <div style={{ fontSize: 13, color: "var(--ink-muted)", textAlign: "center", lineHeight: 1.5 }}>
-            Drag & drop video files, or click to browse.<br />
-            Supports MP4, MOV, AVI up to {MAX_SIZE_MB}MB.
-          </div>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center" }}>
-            {formatPills.map((p) => (
-              <span
-                key={p}
-                style={{
-                  fontFamily: "var(--mono)",
-                  fontSize: 11,
-                  padding: "3px 8px",
-                  borderRadius: 4,
-                  background: "var(--surface-el)",
-                  border: "1px solid var(--border)",
-                  color: "var(--ink-muted)",
+
+          {/* Pasted URL input — appears when URL is pasted */}
+          {pastedUrl && (
+            <div className="mt-4 flex gap-2 animate-[fadeIn_0.2s_ease-out]">
+              <input
+                type="text"
+                value={pastedUrl}
+                onChange={(e) => setPastedUrl(e.target.value)}
+                className="flex-1 bg-white/5 rounded-xl text-sm text-white px-4 py-2.5 outline-none border border-white/10 focus:border-indigo-500/50"
+                onClick={(e) => e.stopPropagation()}
+              />
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (pastedUrl && onUrlSubmit) onUrlSubmit(pastedUrl);
+                  setPastedUrl(null);
                 }}
+                className="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl px-4 py-2.5 transition-colors"
               >
-                {p}
-              </span>
-            ))}
-          </div>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (!disabled) fileInputRef.current?.click();
-            }}
-            style={{
-              marginTop: 8,
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "7px 14px",
-              borderRadius: 7,
-              fontSize: 13,
-              fontWeight: 500,
-              cursor: disabled ? "not-allowed" : "pointer",
-              background: "transparent",
-              color: "var(--accent)",
-              border: "1px solid rgba(99,102,241,0.3)",
-              fontFamily: "var(--sans)",
-            }}
-            onMouseEnter={(e) => {
-              if (!disabled) e.currentTarget.style.background = "rgba(99,102,241,0.08)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "transparent";
-            }}
-          >
-            Browse Files
-          </button>
-        </div>
-
-        {error && (
-          <div
-            style={{
-              marginTop: 8,
-              padding: "8px 12px",
-              background: "rgba(255,68,68,0.08)",
-              border: "1px solid rgba(255,68,68,0.2)",
-              borderRadius: 6,
-              fontSize: 12,
-              color: "#FF6B6B",
-              fontFamily: "var(--mono)",
-            }}
-          >
-            {error}
-          </div>
-        )}
-
-        {onUrlSubmit && (
-          <div style={{ width: "100%", display: "flex", gap: 8, marginTop: 4 }}>
-            <input
-              type="text"
-              placeholder="Or paste a video URL..."
-              style={{
-                flex: 1,
-                padding: "9px 14px",
-                background: "var(--surface)",
-                border: "1px solid var(--border)",
-                borderRadius: 8,
-                fontSize: 13,
-                color: "var(--ink)",
-                fontFamily: "var(--sans)",
-                outline: "none",
-                transition: "border-color 0.15s, box-shadow 0.15s",
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = "rgba(99,102,241,0.4)";
-                e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99,102,241,0.15)";
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = "var(--border)";
-                e.currentTarget.style.boxShadow = "none";
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  const val = (e.target as HTMLInputElement).value.trim();
-                  if (val) onUrlSubmit(val);
-                }
-              }}
-              onClick={(e) => e.stopPropagation()}
-            />
-          </div>
-        )}
+                Go
+              </button>
+            </div>
+          )}
+        </motion.div>
 
         <input
           ref={fileInputRef}
           type="file"
           accept={acceptedTypes.join(",")}
           onChange={onInputChange}
-          style={{ display: "none" }}
+          className="hidden"
         />
       </div>
     );
@@ -290,29 +215,20 @@ export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, 
   // Preview state — file loaded
   const fileIsImage = isImageFile(file);
   return (
-    <div style={{ position: "relative" }}>
-      {/* Preview */}
-      <div
-        style={{
-          borderRadius: "10px",
-          overflow: "hidden",
-          background: "#000",
-          position: "relative",
-          border: `1px solid ${rgba("rgba(0,0,0,0.08)", "rgba(255,255,255,0.08)")}`,
-        }}
-      >
+    <div className="relative">
+      <div className="rounded-2xl overflow-hidden bg-zinc-950 border border-white/5">
         {fileIsImage ? (
           <img
             src={videoUrl ?? undefined}
             alt={file.name}
-            style={{ width: "100%", display: "block", maxHeight: "320px", objectFit: "contain" }}
+            className="w-full block max-h-[320px] object-contain"
           />
         ) : (
           <video
             ref={videoElementRef}
             src={videoUrl ?? undefined}
             controls
-            style={{ width: "100%", display: "block", maxHeight: "320px", objectFit: "contain" }}
+            className="w-full block max-h-[320px] object-contain"
             onLoadedMetadata={() => {
               if (videoElementRef.current) setDuration(videoElementRef.current.duration);
             }}
@@ -320,65 +236,22 @@ export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, 
         )}
       </div>
 
-      {/* File metadata bar */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginTop: "10px",
-          padding: "8px 12px",
-          background: rgba("rgba(0,0,0,0.03)", "rgba(255,255,255,0.03)"),
-          borderRadius: "6px",
-          border: `1px solid ${rgba("rgba(0,0,0,0.06)", "rgba(255,255,255,0.06)")}`,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
-          <div
-            style={{
-              width: "6px",
-              height: "6px",
-              borderRadius: "50%",
-              background: "#00D4AA",
-              flexShrink: 0,
-            }}
-          />
-          <span
-            style={{
-              fontSize: "11px",
-              fontFamily: "'JetBrains Mono', monospace",
-              color: rgba("rgba(10,10,10,0.6)", "rgba(255,255,255,0.6)"),
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {file.name}
-          </span>
+      <div className="flex items-center justify-between mt-2.5 px-3 py-2 bg-white/5 rounded-xl border border-white/5">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+          <span className="text-xs font-mono text-zinc-400 truncate">{file.name}</span>
         </div>
-        <div style={{ display: "flex", gap: "12px", flexShrink: 0, marginLeft: "12px" }}>
+        <div className="flex gap-3 shrink-0 ml-3">
           {!fileIsImage && duration !== null && (
-            <span style={{ fontSize: "11px", fontFamily: "'JetBrains Mono', monospace", color: rgba("rgba(0,0,0,0.35)", "rgba(255,255,255,0.35)") }}>
-              {formatDuration(duration)}
-            </span>
+            <span className="text-xs font-mono text-zinc-600">{formatDuration(duration)}</span>
           )}
-          <span style={{ fontSize: "11px", fontFamily: "'JetBrains Mono', monospace", color: rgba("rgba(0,0,0,0.35)", "rgba(255,255,255,0.35)") }}>
-            {formatSize(file.size)}
-          </span>
+          <span className="text-xs font-mono text-zinc-600">{formatSize(file.size)}</span>
           <button
             onClick={() => {
               onFileSelect(null);
               setError(null);
             }}
-            style={{
-              background: "none",
-              border: "none",
-              color: rgba("rgba(0,0,0,0.3)", "rgba(255,255,255,0.3)"),
-              cursor: "pointer",
-              fontSize: "11px",
-              fontFamily: "'JetBrains Mono', monospace",
-              padding: 0,
-            }}
+            className="text-xs font-mono text-zinc-500 hover:text-white transition-colors"
           >
             Remove
           </button>
