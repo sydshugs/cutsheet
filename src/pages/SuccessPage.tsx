@@ -14,7 +14,7 @@ export function SuccessPage() {
         minHeight: "100vh",
         background: "#0A0A0A",
         color: "#fff",
-        fontFamily: "'Outfit', sans-serif",
+        fontFamily: "var(--sans)",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -40,13 +40,13 @@ export function SuccessPage() {
             justifyContent: "center",
           }}
         >
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#00D4AA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="20 6 9 17 4 12" />
           </svg>
         </div>
         <h1
           style={{
-            fontFamily: "'JetBrains Mono', monospace",
+            fontFamily: "var(--mono)",
             fontSize: "18px",
             fontWeight: 700,
             letterSpacing: "0.06em",
@@ -71,12 +71,12 @@ export function SuccessPage() {
           style={{
             display: "inline-block",
             padding: "12px 24px",
-            background: "#FF4444",
+            background: "var(--grad)",
             border: "none",
             borderRadius: "8px",
             color: "#fff",
             fontSize: "12px",
-            fontFamily: "'JetBrains Mono', monospace",
+            fontFamily: "var(--mono)",
             fontWeight: 700,
             letterSpacing: "0.06em",
             textDecoration: "none",

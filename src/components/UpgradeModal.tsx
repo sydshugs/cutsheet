@@ -24,7 +24,7 @@ export function UpgradeModal({ onClose, t }: UpgradeModalProps) {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "rgba(0,0,0,0.7)",
+        background: "var(--overlay)",
         padding: "24px",
       }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
@@ -33,17 +33,19 @@ export function UpgradeModal({ onClose, t }: UpgradeModalProps) {
         style={{
           background: t.bg,
           border: `1px solid ${t.border}`,
-          borderRadius: "12px",
+          borderRadius: "var(--radius-xl)",
           padding: "32px",
           maxWidth: "400px",
           width: "100%",
-          boxShadow: "0 24px 48px rgba(0,0,0,0.4)",
+          boxShadow: "var(--shadow-lg)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
         <h2
           style={{
-            fontFamily: "'JetBrains Mono', monospace",
+            fontFamily: "var(--mono)",
             fontSize: "14px",
             fontWeight: 700,
             letterSpacing: "0.06em",
@@ -55,7 +57,7 @@ export function UpgradeModal({ onClose, t }: UpgradeModalProps) {
         </h2>
         <p
           style={{
-            fontFamily: "'Outfit', sans-serif",
+            fontFamily: "var(--sans)",
             fontSize: "13px",
             color: t.textSecondary,
             lineHeight: 1.6,
@@ -70,12 +72,12 @@ export function UpgradeModal({ onClose, t }: UpgradeModalProps) {
             disabled={!CHECKOUT_URL}
             style={{
               padding: "12px 16px",
-              background: "linear-gradient(135deg, #FF6B6B 0%, #C850C0 50%, #4158D0 100%)",
+              background: "var(--grad)",
               border: "none",
-              borderRadius: "8px",
+              borderRadius: "var(--radius-sm)",
               color: "#fff",
               fontSize: "12px",
-              fontFamily: "'JetBrains Mono', monospace",
+              fontFamily: "var(--mono)",
               fontWeight: 700,
               letterSpacing: "0.06em",
               cursor: CHECKOUT_URL ? "pointer" : "not-allowed",
@@ -89,10 +91,10 @@ export function UpgradeModal({ onClose, t }: UpgradeModalProps) {
               padding: "12px 16px",
               background: "transparent",
               border: `1px solid ${t.border}`,
-              borderRadius: "8px",
+              borderRadius: "var(--radius-sm)",
               color: t.textSecondary,
               fontSize: "12px",
-              fontFamily: "'JetBrains Mono', monospace",
+              fontFamily: "var(--mono)",
               letterSpacing: "0.06em",
               cursor: "pointer",
             }}

@@ -1,7 +1,7 @@
 // ReportCover.tsx — Page 1 of PDF report (cover)
 import type { AnalysisResult } from "../services/analyzerService";
 
-const ACCENT = "#FF4444";
+const ACCENT = "#6366F1";
 
 function StaticScoreArc({ score, size = 120, strokeWidth = 8 }: { score: number; size?: number; strokeWidth?: number }) {
   const radius = (size - strokeWidth * 2) / 2;
@@ -48,7 +48,7 @@ export function ReportCover({ result }: { result: AnalysisResult }) {
         minHeight: "1123px",
         background: "#0A0A0A",
         color: "#fff",
-        fontFamily: "'Outfit', sans-serif",
+        fontFamily: "var(--sans)",
         padding: "48px 56px",
         boxSizing: "border-box",
         display: "flex",
@@ -75,7 +75,7 @@ export function ReportCover({ result }: { result: AnalysisResult }) {
         </div>
         <span
           style={{
-            fontFamily: "'JetBrains Mono', monospace",
+            fontFamily: "var(--mono)",
             fontWeight: 700,
             fontSize: "14px",
             letterSpacing: "0.04em",
@@ -89,7 +89,7 @@ export function ReportCover({ result }: { result: AnalysisResult }) {
       {/* Headline */}
       <h1
         style={{
-          fontFamily: "'JetBrains Mono', monospace",
+          fontFamily: "var(--mono)",
           fontSize: "24px",
           fontWeight: 700,
           letterSpacing: "0.08em",
@@ -104,7 +104,7 @@ export function ReportCover({ result }: { result: AnalysisResult }) {
       {/* Filename + date */}
       <div
         style={{
-          fontFamily: "'JetBrains Mono', monospace",
+          fontFamily: "var(--mono)",
           fontSize: "12px",
           color: "rgba(255,255,255,0.5)",
           marginBottom: "80px",
@@ -136,7 +136,7 @@ export function ReportCover({ result }: { result: AnalysisResult }) {
             <span
               style={{
                 fontSize: "36px",
-                fontFamily: "'JetBrains Mono', monospace",
+                fontFamily: "var(--mono)",
                 fontWeight: 700,
                 color: ACCENT,
                 lineHeight: 1,
@@ -149,7 +149,7 @@ export function ReportCover({ result }: { result: AnalysisResult }) {
         </div>
         <div
           style={{
-            fontFamily: "'JetBrains Mono', monospace",
+            fontFamily: "var(--mono)",
             fontSize: "11px",
             color: "rgba(255,255,255,0.4)",
             letterSpacing: "0.08em",

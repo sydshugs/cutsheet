@@ -15,9 +15,9 @@ export default function LandingPage() {
       <CutsheetNav />
       <CutsheetHero />
       <CutsheetHowItWorks />
-      <CutsheetWhy />
       <CutsheetFeatures />
       <CutsheetTestimonials />
+      <CutsheetWhy />
       <CutsheetPricing />
       <CutsheetFAQ />
       <CutsheetCTA />

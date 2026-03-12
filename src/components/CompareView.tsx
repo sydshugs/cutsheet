@@ -12,18 +12,18 @@ interface CompareViewProps {
 
 function CompareOutput({ markdown, t }: { markdown: string; t: ThemeTokens }) {
   return (
-    <div style={{ fontFamily: "'Outfit', sans-serif", color: t.markdownText, fontSize: "14px", lineHeight: 1.7 }}>
+    <div style={{ fontFamily: "var(--sans)", color: t.markdownText, fontSize: "14px", lineHeight: 1.7 }}>
       <style>{`
         .compare-output h2 {
-          font-family: 'JetBrains Mono', monospace;
-          font-size: 12px;
-          font-weight: 700;
-          letter-spacing: 0.1em;
+          font-family: var(--sans);
+          font-size: 11px;
+          font-weight: 600;
+          letter-spacing: 0.18em;
           text-transform: uppercase;
-          color: var(--accent);
+          color: var(--label);
           margin: 24px 0 10px;
           padding-bottom: 8px;
-          border-bottom: 1px solid rgba(99,102,241,0.2);
+          border-bottom: 1px solid rgba(99,102,241,0.12);
         }
         .compare-output p { margin: 8px 0; color: ${t.pColor}; }
         .compare-output strong { color: ${t.strongColor}; font-weight: 600; }
@@ -130,10 +130,11 @@ export function CompareView({ isDark, apiKey }: CompareViewProps) {
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <div
                 style={{
-                  fontSize: "10px",
-                  fontFamily: "'JetBrains Mono', monospace",
-                  color: t.textFaint,
-                  letterSpacing: "0.12em",
+                  fontSize: "11px",
+                  fontFamily: "var(--sans)",
+                  fontWeight: 600,
+                  color: "var(--label)",
+                  letterSpacing: "0.18em",
                   textTransform: "uppercase",
                 }}
               >
@@ -143,7 +144,7 @@ export function CompareView({ isDark, apiKey }: CompareViewProps) {
                 <span
                   style={{
                     fontSize: "10px",
-                    fontFamily: "'JetBrains Mono', monospace",
+                    fontFamily: "var(--mono)",
                     color: "rgba(99,102,241,0.7)",
                     letterSpacing: "0.06em",
                   }}
@@ -159,10 +160,10 @@ export function CompareView({ isDark, apiKey }: CompareViewProps) {
                   padding: "5px 10px",
                   background: "transparent",
                   border: `1px solid ${t.border}`,
-                  borderRadius: "4px",
+                  borderRadius: "var(--radius-sm)",
                   color: t.textMuted,
                   fontSize: "10px",
-                  fontFamily: "'JetBrains Mono', monospace",
+                  fontFamily: "var(--mono)",
                   letterSpacing: "0.06em",
                   cursor: "pointer",
                 }}
@@ -196,7 +197,7 @@ export function CompareView({ isDark, apiKey }: CompareViewProps) {
               <span
                 style={{
                   fontSize: "12px",
-                  fontFamily: "'JetBrains Mono', monospace",
+                  fontFamily: "var(--mono)",
                   color: t.spinnerText,
                   letterSpacing: "0.06em",
                 }}
@@ -212,12 +213,12 @@ export function CompareView({ isDark, apiKey }: CompareViewProps) {
             <div
               style={{
                 padding: "12px 16px",
-                background: "rgba(255,68,68,0.08)",
-                border: "1px solid rgba(255,68,68,0.2)",
+                background: "rgba(239,68,68,0.08)",
+                border: "1px solid rgba(239,68,68,0.2)",
                 borderRadius: "8px",
                 fontSize: "12px",
-                fontFamily: "'JetBrains Mono', monospace",
-                color: "#FF6B6B",
+                fontFamily: "var(--mono)",
+                color: "var(--error)",
                 marginBottom: "12px",
               }}
             >

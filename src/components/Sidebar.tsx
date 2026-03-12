@@ -37,7 +37,7 @@ function SidebarContent({
     <>
       {/* Logo */}
       <div className="mb-6">
-        <img src="/cutsheet-logo.png" alt="Cutsheet" className="w-7 h-7" />
+        <img src="/cutsheet-logo.svg" alt="Cutsheet" className="w-7 h-7" />
       </div>
 
       {/* Mode buttons */}

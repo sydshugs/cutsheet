@@ -22,10 +22,10 @@ function MetricRow({
   reason: string;
   isDark: boolean;
 }) {
-  const textPrimary = isDark ? "#fff" : "#0A0A0A";
-  const textSecondary = isDark ? "rgba(255,255,255,0.55)" : "rgba(0,0,0,0.55)";
-  const textMuted = isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)";
-  const border = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)";
+  const textPrimary = "var(--ink)";
+  const textSecondary = "var(--ink-muted)";
+  const textMuted = "var(--ink-faint)";
+  const border = "var(--border)";
 
   return (
     <div
@@ -43,7 +43,7 @@ function MetricRow({
           <span
             style={{
               fontSize: "12px",
-              fontFamily: "'JetBrains Mono', monospace",
+              fontFamily: "var(--mono)",
               fontWeight: 700,
               color: textPrimary,
               letterSpacing: "0.04em",
@@ -54,13 +54,13 @@ function MetricRow({
           <span
             style={{
               fontSize: "10px",
-              fontFamily: "'JetBrains Mono', monospace",
+              fontFamily: "var(--mono)",
               fontWeight: 700,
-              color: "#FF6B6B",
-              background: "rgba(255,107,107,0.1)",
-              border: "1px solid rgba(255,107,107,0.2)",
+              color: "var(--accent)",
+              background: "var(--accent-subtle)",
+              border: "1px solid var(--accent-muted)",
               padding: "2px 8px",
-              borderRadius: "4px",
+              borderRadius: "var(--radius-sm)",
               letterSpacing: "0.04em",
             }}
           >
@@ -72,7 +72,7 @@ function MetricRow({
             fontSize: "12px",
             color: textSecondary,
             lineHeight: 1.5,
-            fontFamily: "'Outfit', sans-serif",
+            fontFamily: "var(--sans)",
           }}
         >
           {reason}
@@ -88,11 +88,11 @@ export function PreFlightHeadToHead({
   hybridNote,
   isDark,
 }: PreFlightHeadToHeadProps) {
-  const bg = isDark ? "#111110" : "#fff";
-  const border = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)";
-  const textPrimary = isDark ? "#fff" : "#0A0A0A";
-  const textSecondary = isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.55)";
-  const textMuted = isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)";
+  const bg = "var(--surface-el)";
+  const border = "var(--border)";
+  const textPrimary = "var(--ink)";
+  const textSecondary = "var(--ink-muted)";
+  const textMuted = "var(--ink-faint)";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
@@ -101,20 +101,21 @@ export function PreFlightHeadToHead({
         style={{
           background: bg,
           border: `1px solid ${border}`,
-          borderRadius: "14px",
+          borderRadius: "var(--radius-lg)",
           padding: "24px",
-          boxShadow: isDark
-            ? "0 4px 20px rgba(0,0,0,0.2)"
-            : "0 2px 12px rgba(0,0,0,0.04)",
+          boxShadow: "var(--shadow-md)",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
         }}
       >
         <div
           style={{
-            fontSize: "10px",
-            fontFamily: "'JetBrains Mono', monospace",
-            letterSpacing: "0.12em",
+            fontSize: "11px",
+            fontFamily: "var(--sans)",
+            fontWeight: 600,
+            letterSpacing: "0.18em",
             textTransform: "uppercase",
-            color: textMuted,
+            color: "var(--label)",
             marginBottom: "16px",
           }}
         >
@@ -151,20 +152,21 @@ export function PreFlightHeadToHead({
         style={{
           background: bg,
           border: `1px solid ${border}`,
-          borderRadius: "14px",
+          borderRadius: "var(--radius-lg)",
           padding: "24px",
-          boxShadow: isDark
-            ? "0 4px 20px rgba(0,0,0,0.2)"
-            : "0 2px 12px rgba(0,0,0,0.04)",
+          boxShadow: "var(--shadow-md)",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
         }}
       >
         <div
           style={{
-            fontSize: "10px",
-            fontFamily: "'JetBrains Mono', monospace",
-            letterSpacing: "0.12em",
+            fontSize: "11px",
+            fontFamily: "var(--sans)",
+            fontWeight: 600,
+            letterSpacing: "0.18em",
             textTransform: "uppercase",
-            color: textMuted,
+            color: "var(--label)",
             marginBottom: "12px",
           }}
         >
@@ -175,7 +177,7 @@ export function PreFlightHeadToHead({
             fontSize: "14px",
             color: textPrimary,
             lineHeight: 1.7,
-            fontFamily: "'Outfit', sans-serif",
+            fontFamily: "var(--sans)",
             fontWeight: 500,
           }}
         >
@@ -191,22 +193,22 @@ export function PreFlightHeadToHead({
             alignItems: "flex-start",
             gap: "10px",
             padding: "16px 20px",
-            background: "rgba(200,80,192,0.06)",
-            border: "1px solid rgba(200,80,192,0.15)",
-            borderRadius: "12px",
+            background: "rgba(139,92,246,0.06)",
+            border: "1px solid rgba(139,92,246,0.15)",
+            borderRadius: "var(--radius)",
           }}
         >
           <span style={{ fontSize: "16px", flexShrink: 0 }}>💡</span>
           <div>
             <div
               style={{
-                fontSize: "10px",
-                fontFamily: "'JetBrains Mono', monospace",
-                letterSpacing: "0.1em",
+                fontSize: "11px",
+                fontFamily: "var(--sans)",
+                letterSpacing: "0.18em",
                 textTransform: "uppercase",
-                color: "#C850C0",
+                color: "var(--label)",
                 marginBottom: "6px",
-                fontWeight: 700,
+                fontWeight: 600,
               }}
             >
               HYBRID OPPORTUNITY
@@ -216,7 +218,7 @@ export function PreFlightHeadToHead({
                 fontSize: "13px",
                 color: textSecondary,
                 lineHeight: 1.6,
-                fontFamily: "'Outfit', sans-serif",
+                fontFamily: "var(--sans)",
               }}
             >
               {hybridNote}

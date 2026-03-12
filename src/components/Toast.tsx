@@ -38,9 +38,9 @@ export function Toast({ message, onClose, duration = 3000 }: ToastProps) {
         alignItems: "center",
         gap: "10px",
         zIndex: 1000,
-        fontFamily: "'JetBrains Mono', monospace",
+        fontFamily: "var(--mono)",
         fontSize: "13px",
-        color: "#00D4AA",
+        color: "#10B981",
         pointerEvents: "none",
       }}
     >

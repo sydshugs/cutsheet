@@ -82,7 +82,7 @@ export default function CutsheetFAQ() {
             <MessageCircle className="h-3 w-3" />
             FAQ
           </span>
-          <h2 className="mt-5 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+          <h2 className="mt-5 text-2xl font-bold tracking-tight text-white sm:text-3xl">
             Everything you need to know.
           </h2>
         </div>

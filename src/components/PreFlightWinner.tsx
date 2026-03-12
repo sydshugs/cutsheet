@@ -9,12 +9,12 @@ interface PreFlightWinnerProps {
 
 function ConfidenceBadge({ level, isDark }: { level: string; isDark: boolean }) {
   const colors: Record<string, { bg: string; text: string; border: string }> = {
-    high: { bg: "rgba(0,212,170,0.12)", text: "#00D4AA", border: "rgba(0,212,170,0.3)" },
-    medium: { bg: "rgba(255,186,0,0.12)", text: "#FFB800", border: "rgba(255,186,0,0.3)" },
+    high: { bg: "var(--score-excellent-bg)", text: "var(--success)", border: "var(--score-excellent-border)" },
+    medium: { bg: "var(--score-average-bg)", text: "var(--warn)", border: "var(--score-average-border)" },
     low: {
-      bg: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)",
-      text: isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)",
-      border: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
+      bg: "var(--surface-dim)",
+      text: "var(--ink-faint)",
+      border: "var(--border)",
     },
   };
   const c = colors[level] || colors.low;
@@ -27,9 +27,9 @@ function ConfidenceBadge({ level, isDark }: { level: string; isDark: boolean }) 
         padding: "3px 10px",
         background: c.bg,
         border: `1px solid ${c.border}`,
-        borderRadius: "100px",
+        borderRadius: "var(--radius-full)",
         fontSize: "10px",
-        fontFamily: "'JetBrains Mono', monospace",
+        fontFamily: "var(--mono)",
         fontWeight: 700,
         color: c.text,
         letterSpacing: "0.06em",
@@ -42,24 +42,24 @@ function ConfidenceBadge({ level, isDark }: { level: string; isDark: boolean }) 
 }
 
 export function PreFlightWinner({ winner, isDark }: PreFlightWinnerProps) {
-  const bg = isDark ? "#111110" : "#fff";
-  const border = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)";
-  const textPrimary = isDark ? "#fff" : "#0A0A0A";
-  const textSecondary = isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.55)";
-  const textMuted = isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.35)";
+  const bg = "var(--surface-el)";
+  const border = "var(--border)";
+  const textPrimary = "var(--ink)";
+  const textSecondary = "var(--ink-muted)";
+  const textMuted = "var(--ink-faint)";
 
   return (
     <div
       style={{
         background: bg,
         border: `1px solid ${border}`,
-        borderRadius: "16px",
+        borderRadius: "var(--radius-xl)",
         padding: "32px",
         position: "relative",
         overflow: "hidden",
-        boxShadow: isDark
-          ? "0 8px 40px rgba(0,0,0,0.3)"
-          : "0 4px 24px rgba(0,0,0,0.06)",
+        boxShadow: "var(--shadow-lg)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
       }}
     >
       {/* Subtle gradient border glow at top */}
@@ -70,8 +70,8 @@ export function PreFlightWinner({ winner, isDark }: PreFlightWinnerProps) {
           left: 0,
           right: 0,
           height: "3px",
-          background: "linear-gradient(90deg, #FF6B6B, #C850C0, #4158D0)",
-          borderRadius: "16px 16px 0 0",
+          background: "var(--grad)",
+          borderRadius: "var(--radius-xl) var(--radius-xl) 0 0",
         }}
       />
 
@@ -81,8 +81,8 @@ export function PreFlightWinner({ winner, isDark }: PreFlightWinnerProps) {
           style={{
             width: "36px",
             height: "36px",
-            borderRadius: "10px",
-            background: "linear-gradient(135deg, #FF6B6B, #C850C0)",
+            borderRadius: "var(--radius-sm)",
+            background: "var(--grad)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -95,11 +95,12 @@ export function PreFlightWinner({ winner, isDark }: PreFlightWinnerProps) {
         <div>
           <div
             style={{
-              fontSize: "10px",
-              fontFamily: "'JetBrains Mono', monospace",
-              letterSpacing: "0.12em",
+              fontSize: "11px",
+              fontFamily: "var(--sans)",
+              fontWeight: 600,
+              letterSpacing: "0.18em",
               textTransform: "uppercase",
-              color: textMuted,
+              color: "var(--label)",
               marginBottom: "2px",
             }}
           >
@@ -108,7 +109,7 @@ export function PreFlightWinner({ winner, isDark }: PreFlightWinnerProps) {
           <div
             style={{
               fontSize: "18px",
-              fontFamily: "'JetBrains Mono', monospace",
+              fontFamily: "var(--mono)",
               fontWeight: 800,
               color: textPrimary,
               letterSpacing: "-0.02em",
@@ -130,7 +131,7 @@ export function PreFlightWinner({ winner, isDark }: PreFlightWinnerProps) {
           color: textPrimary,
           lineHeight: 1.4,
           marginBottom: "12px",
-          fontFamily: "'Outfit', sans-serif",
+          fontFamily: "var(--sans)",
         }}
       >
         "{winner.headline}"
@@ -143,13 +144,13 @@ export function PreFlightWinner({ winner, isDark }: PreFlightWinnerProps) {
           alignItems: "center",
           gap: "6px",
           padding: "6px 12px",
-          background: "rgba(0,212,170,0.08)",
-          border: "1px solid rgba(0,212,170,0.2)",
-          borderRadius: "8px",
+          background: "var(--score-excellent-bg)",
+          border: "1px solid var(--score-excellent-border)",
+          borderRadius: "var(--radius-sm)",
           marginBottom: "16px",
           fontSize: "12px",
-          fontFamily: "'JetBrains Mono', monospace",
-          color: "#00D4AA",
+          fontFamily: "var(--mono)",
+          color: "var(--success)",
           fontWeight: 600,
         }}
       >
@@ -166,7 +167,7 @@ export function PreFlightWinner({ winner, isDark }: PreFlightWinnerProps) {
           fontSize: "13px",
           color: textSecondary,
           lineHeight: 1.7,
-          fontFamily: "'Outfit', sans-serif",
+          fontFamily: "var(--sans)",
         }}
       >
         {winner.reasoning}

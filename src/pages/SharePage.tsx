@@ -43,7 +43,7 @@ export function SharePage() {
           minHeight: "100vh",
           background: "#0A0A0A",
           color: "#fff",
-          fontFamily: "'Outfit', sans-serif",
+          fontFamily: "var(--sans)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -51,7 +51,7 @@ export function SharePage() {
       >
         <div
           style={{
-            fontFamily: "'JetBrains Mono', monospace",
+            fontFamily: "var(--mono)",
             fontSize: "13px",
             color: "rgba(255,255,255,0.5)",
           }}
@@ -69,7 +69,7 @@ export function SharePage() {
           minHeight: "100vh",
           background: "#0A0A0A",
           color: "#fff",
-          fontFamily: "'Outfit', sans-serif",
+          fontFamily: "var(--sans)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -79,9 +79,9 @@ export function SharePage() {
       >
         <div
           style={{
-            fontFamily: "'JetBrains Mono', monospace",
+            fontFamily: "var(--mono)",
             fontSize: "14px",
-            color: "#FF6B6B",
+            color: "#6366F1",
           }}
         >
           {error || "Analysis not found"}
@@ -90,11 +90,11 @@ export function SharePage() {
           to="/"
           style={{
             padding: "10px 20px",
-            background: "#FF4444",
+            background: "#6366F1",
             border: "none",
             borderRadius: "6px",
             color: "#fff",
-            fontFamily: "'JetBrains Mono', monospace",
+            fontFamily: "var(--mono)",
             fontSize: "12px",
             fontWeight: 700,
             textDecoration: "none",
@@ -113,7 +113,7 @@ export function SharePage() {
         minHeight: "100vh",
         background: "#0A0A0A",
         color: "#fff",
-        fontFamily: "'Outfit', sans-serif",
+        fontFamily: "var(--sans)",
       }}
     >
       {/* Header */}
@@ -139,7 +139,7 @@ export function SharePage() {
             style={{
               width: "28px",
               height: "28px",
-              background: "#FF4444",
+              background: "#6366F1",
               borderRadius: "6px",
               display: "flex",
               alignItems: "center",
@@ -157,14 +157,14 @@ export function SharePage() {
                 y1="0.5"
                 x2="13.5"
                 y2="4.5"
-                stroke="#FF4444"
+                stroke="#6366F1"
                 strokeWidth="1"
               />
             </svg>
           </div>
           <span
             style={{
-              fontFamily: "'JetBrains Mono', monospace",
+              fontFamily: "var(--mono)",
               fontWeight: 700,
               fontSize: "14px",
               letterSpacing: "0.04em",
@@ -178,7 +178,7 @@ export function SharePage() {
         <div
           style={{
             fontSize: "11px",
-            fontFamily: "'JetBrains Mono', monospace",
+            fontFamily: "var(--mono)",
             color: "rgba(255,255,255,0.35)",
           }}
         >
@@ -214,7 +214,7 @@ export function SharePage() {
         >
           <div
             style={{
-              fontFamily: "'Outfit', sans-serif",
+              fontFamily: "var(--sans)",
               color: "rgba(255,255,255,0.8)",
               fontSize: "14px",
               lineHeight: 1.7,
@@ -222,18 +222,18 @@ export function SharePage() {
           >
             <style>{`
               .share-analysis h2 {
-                font-family: 'JetBrains Mono', monospace;
+                font-family: var(--mono);
                 font-size: 12px;
                 font-weight: 700;
                 letter-spacing: 0.1em;
                 text-transform: uppercase;
-                color: #FF4444;
+                color: #6366F1;
                 margin: 28px 0 12px;
                 padding-bottom: 8px;
-                border-bottom: 1px solid rgba(255,68,68,0.2);
+                border-bottom: 1px solid rgba(239,68,68,0.2);
               }
               .share-analysis h3, .share-analysis h4 {
-                font-family: 'JetBrains Mono', monospace;
+                font-family: var(--mono);
                 font-size: 11px;
                 color: rgba(255,255,255,0.5);
                 letter-spacing: 0.06em;
@@ -257,7 +257,7 @@ export function SharePage() {
                 color: rgba(255,255,255,0.7);
               }
               .share-analysis code {
-                font-family: 'JetBrains Mono', monospace;
+                font-family: var(--mono);
                 font-size: 12px;
                 background: rgba(255,255,255,0.06);
                 padding: 2px 6px;
@@ -270,7 +270,7 @@ export function SharePage() {
                 margin: 20px 0;
               }
               .share-analysis blockquote {
-                border-left: 2px solid #FF4444;
+                border-left: 2px solid #6366F1;
                 padding-left: 12px;
                 margin: 12px 0;
                 color: rgba(255,255,255,0.5);
@@ -294,7 +294,7 @@ export function SharePage() {
         >
           <div
             style={{
-              fontFamily: "'JetBrains Mono', monospace",
+              fontFamily: "var(--mono)",
               fontSize: "11px",
               color: "rgba(255,255,255,0.3)",
               marginBottom: "12px",
@@ -310,25 +310,25 @@ export function SharePage() {
               gap: "8px",
               textDecoration: "none",
               padding: "8px 16px",
-              background: "rgba(255,68,68,0.1)",
-              border: "1px solid rgba(255,68,68,0.2)",
+              background: "rgba(239,68,68,0.1)",
+              border: "1px solid rgba(239,68,68,0.2)",
               borderRadius: "6px",
               transition: "all 0.2s ease",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(255,68,68,0.15)";
-              e.currentTarget.style.borderColor = "rgba(255,68,68,0.3)";
+              e.currentTarget.style.background = "rgba(239,68,68,0.15)";
+              e.currentTarget.style.borderColor = "rgba(239,68,68,0.3)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(255,68,68,0.1)";
-              e.currentTarget.style.borderColor = "rgba(255,68,68,0.2)";
+              e.currentTarget.style.background = "rgba(239,68,68,0.1)";
+              e.currentTarget.style.borderColor = "rgba(239,68,68,0.2)";
             }}
           >
             <div
               style={{
                 width: "20px",
                 height: "20px",
-                background: "#FF4444",
+                background: "#6366F1",
                 borderRadius: "4px",
                 display: "flex",
                 alignItems: "center",
@@ -346,18 +346,18 @@ export function SharePage() {
                   y1="0.5"
                   x2="13.5"
                   y2="4.5"
-                  stroke="#FF4444"
+                  stroke="#6366F1"
                   strokeWidth="1"
                 />
               </svg>
             </div>
             <span
               style={{
-                fontFamily: "'JetBrains Mono', monospace",
+                fontFamily: "var(--mono)",
                 fontWeight: 700,
                 fontSize: "12px",
                 letterSpacing: "0.04em",
-                color: "#FF4444",
+                color: "#6366F1",
               }}
             >
               CUTSHEET

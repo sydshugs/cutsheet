@@ -62,7 +62,7 @@ export default function CutsheetCTA() {
         <div className="mt-8 flex items-center justify-center gap-3">
           <AnimatedTooltip items={SOCIAL_PROOF_PEOPLE} />
           <p className="text-sm text-zinc-500 ml-2">
-            <span className="text-white font-medium">2,400+</span> ads analyzed this week
+            <span className="text-white font-medium">2,400+</span> on the waitlist
           </p>
         </div>
       </div>

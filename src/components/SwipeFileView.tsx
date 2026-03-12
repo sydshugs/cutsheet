@@ -41,8 +41,8 @@ export function SwipeFileView({ isDark }: SwipeFileViewProps) {
 
   return (
     <div style={{ padding: "28px 32px", display: "flex", flexDirection: "column", gap: 24 }}>
-      <div style={{ fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500, color: "var(--accent)", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-        // Screen 05 — Swipe File
+      <div style={{ fontFamily: "var(--sans)", fontSize: 11, fontWeight: 600, color: "var(--label)", letterSpacing: "0.18em", textTransform: "uppercase" }}>
+        Swipe File
       </div>
 
       {/* Filter bar — prototype filter-bar */}
@@ -58,13 +58,13 @@ export function SwipeFileView({ isDark }: SwipeFileViewProps) {
               width: "100%",
               background: "var(--surface)",
               border: "1px solid var(--border)",
-              borderRadius: 8,
+              borderRadius: "var(--radius-sm)",
               padding: "9px 14px 9px 36px",
               fontSize: 13,
               color: "var(--ink)",
               fontFamily: "var(--sans)",
               outline: "none",
-              transition: "border-color 0.15s",
+              transition: "border-color var(--duration-fast) var(--ease-out)",
             }}
             onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(99,102,241,0.4)"; }}
             onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
@@ -73,7 +73,7 @@ export function SwipeFileView({ isDark }: SwipeFileViewProps) {
         <select
           value={verticalFilter}
           onChange={(e) => setVerticalFilter(e.target.value)}
-          style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, padding: "9px 14px", fontSize: 13, color: "var(--ink)", fontFamily: "var(--sans)", outline: "none", cursor: "pointer", minWidth: 120 }}
+          style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "9px 14px", fontSize: 13, color: "var(--ink)", fontFamily: "var(--sans)", outline: "none", cursor: "pointer", minWidth: 120 }}
         >
           <option>All Verticals</option>
           <option>DTC</option>
@@ -84,7 +84,7 @@ export function SwipeFileView({ isDark }: SwipeFileViewProps) {
         <select
           value={formatFilter}
           onChange={(e) => setFormatFilter(e.target.value)}
-          style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, padding: "9px 14px", fontSize: 13, color: "var(--ink)", fontFamily: "var(--sans)", outline: "none", cursor: "pointer", minWidth: 120 }}
+          style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "9px 14px", fontSize: 13, color: "var(--ink)", fontFamily: "var(--sans)", outline: "none", cursor: "pointer", minWidth: 120 }}
         >
           <option>All Formats</option>
           <option>UGC</option>
@@ -95,7 +95,7 @@ export function SwipeFileView({ isDark }: SwipeFileViewProps) {
         <select
           value={sortFilter}
           onChange={(e) => setSortFilter(e.target.value)}
-          style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, padding: "9px 14px", fontSize: 13, color: "var(--ink)", fontFamily: "var(--sans)", outline: "none", cursor: "pointer", minWidth: 160 }}
+          style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "9px 14px", fontSize: 13, color: "var(--ink)", fontFamily: "var(--sans)", outline: "none", cursor: "pointer", minWidth: 160 }}
         >
           <option>Score: High → Low</option>
           <option>Score: Low → High</option>
@@ -105,7 +105,7 @@ export function SwipeFileView({ isDark }: SwipeFileViewProps) {
         <select
           value={platformFilter}
           onChange={(e) => setPlatformFilter(e.target.value)}
-          style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, padding: "9px 14px", fontSize: 13, color: "var(--ink)", fontFamily: "var(--sans)", outline: "none", cursor: "pointer", minWidth: 120 }}
+          style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "9px 14px", fontSize: 13, color: "var(--ink)", fontFamily: "var(--sans)", outline: "none", cursor: "pointer", minWidth: 120 }}
         >
           <option>All Platforms</option>
           <option>TikTok</option>
@@ -120,7 +120,7 @@ export function SwipeFileView({ isDark }: SwipeFileViewProps) {
           {items.length} creatives · Avg score: <span style={{ color: "var(--accent)" }}>{avgScore}</span>
         </span>
         {items.length > 0 && (
-          <button type="button" onClick={clearAll} style={{ padding: "7px 12px", fontSize: 12, background: "transparent", border: "1px solid var(--border)", borderRadius: 7, color: "var(--ink-muted)", cursor: "pointer", fontFamily: "var(--sans)" }}>Clear all</button>
+          <button type="button" onClick={clearAll} style={{ padding: "7px 12px", fontSize: 12, background: "transparent", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", color: "var(--ink-muted)", cursor: "pointer", fontFamily: "var(--sans)" }}>Clear all</button>
         )}
       </div>
 
@@ -140,7 +140,7 @@ export function SwipeFileView({ isDark }: SwipeFileViewProps) {
           <div style={{
             width: 56,
             height: 56,
-            borderRadius: 14,
+            borderRadius: "var(--radius-lg)",
             background: "rgba(99,102,241,0.08)",
             border: "1px solid rgba(99,102,241,0.15)",
             display: "flex",
@@ -181,15 +181,19 @@ export function SwipeFileView({ isDark }: SwipeFileViewProps) {
                   borderRadius: "var(--radius-lg)",
                   overflow: "hidden",
                   cursor: "pointer",
-                  transition: "transform 0.15s, border-color 0.15s",
+                  transition: "transform var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out)",
+                  backdropFilter: "blur(16px)",
+                  WebkitBackdropFilter: "blur(16px)",
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = "translateY(-2px)";
                   e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
+                  e.currentTarget.style.boxShadow = "var(--shadow-md)";
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = "translateY(0)";
                   e.currentTarget.style.borderColor = "var(--border)";
+                  e.currentTarget.style.boxShadow = "none";
                 }}
               >
                 <div style={{ width: "100%", aspectRatio: "9/16", maxHeight: 200, background: "var(--surface-el)", position: "relative", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -208,7 +212,7 @@ export function SwipeFileView({ isDark }: SwipeFileViewProps) {
                         fontWeight: 700,
                         color: "#fff",
                         background: scoreColor,
-                        borderRadius: 5,
+                        borderRadius: "var(--radius-sm)",
                         padding: "2px 7px",
                         zIndex: 2,
                       }}
@@ -218,7 +222,7 @@ export function SwipeFileView({ isDark }: SwipeFileViewProps) {
                   )}
                 </div>
                 <div style={{ padding: "12px 14px" }}>
-                  <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>{brandLabel}</div>
+                  <div style={{ fontFamily: "var(--sans)", fontSize: 11, fontWeight: 600, color: "var(--label)", textTransform: "uppercase", letterSpacing: "0.18em", marginBottom: 4 }}>{brandLabel}</div>
                   <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 8, lineHeight: 1.4, color: "var(--ink)" }}>{displayName}</div>
                   <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
                     {item.tags.slice(0, 3).map((tag) => (
@@ -229,7 +233,7 @@ export function SwipeFileView({ isDark }: SwipeFileViewProps) {
                           fontSize: 10,
                           fontWeight: 500,
                           padding: "2px 7px",
-                          borderRadius: 4,
+                          borderRadius: "var(--radius-sm)",
                           background: "var(--surface-el)",
                           border: "1px solid var(--border)",
                           color: "var(--ink-muted)",
@@ -242,7 +246,7 @@ export function SwipeFileView({ isDark }: SwipeFileViewProps) {
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); deleteItem(item.id); }}
-                    style={{ marginTop: 8, padding: "4px 8px", fontSize: 11, background: "transparent", border: "1px solid var(--border)", borderRadius: 4, color: "var(--ink-muted)", cursor: "pointer", fontFamily: "var(--sans)" }}
+                    style={{ marginTop: 8, padding: "4px 8px", fontSize: 11, background: "transparent", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", color: "var(--ink-muted)", cursor: "pointer", fontFamily: "var(--sans)" }}
                   >
                     Remove
                   </button>

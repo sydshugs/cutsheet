@@ -11,11 +11,10 @@ interface HistoryDrawerProps {
 }
 
 function scoreColor(overall: number): string {
-  if (overall >= 9) return "#00D4AA";
-  if (overall >= 7) return "#88DD00";
-  if (overall >= 5) return "#FFB800";
-  if (overall >= 3) return "#FF7A00";
-  return "#FF4444";
+  if (overall >= 9) return "var(--score-excellent)";
+  if (overall >= 7) return "var(--score-good)";
+  if (overall >= 5) return "var(--score-average)";
+  return "var(--score-weak)";
 }
 
 function formatTime(iso: string): string {
@@ -40,14 +39,14 @@ export function HistoryDrawer({
   onClearAll,
   isDark,
 }: HistoryDrawerProps) {
-  const bg = isDark ? "#111111" : "#FFFFFF";
-  const border = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)";
-  const text = isDark ? "#fff" : "#0A0A0A";
-  const muted = isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.35)";
-  const surface = isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)";
-  const hoverBg = isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)";
-  const deleteBg = isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.06)";
-  const deleteColor = isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)";
+  const bg = "var(--surface)";
+  const border = "var(--border)";
+  const text = "var(--ink)";
+  const muted = "var(--ink-muted)";
+  const surface = "var(--surface-el)";
+  const hoverBg = "var(--surface-el)";
+  const deleteBg = "var(--surface-el)";
+  const deleteColor = "var(--ink-faint)";
 
   return (
     <>
@@ -57,11 +56,11 @@ export function HistoryDrawer({
         style={{
           position: "fixed",
           inset: 0,
-          background: "rgba(0,0,0,0.4)",
-          zIndex: 40,
+          background: "var(--overlay)",
+          zIndex: 110,
           opacity: open ? 1 : 0,
           pointerEvents: open ? "auto" : "none",
-          transition: "opacity 0.25s ease",
+          transition: "opacity var(--duration-mid) var(--ease-out)",
         }}
       />
 
@@ -75,12 +74,14 @@ export function HistoryDrawer({
           width: "320px",
           background: bg,
           borderRight: `1px solid ${border}`,
-          zIndex: 50,
+          zIndex: 120,
           display: "flex",
           flexDirection: "column",
           transform: open ? "translateX(0)" : "translateX(-100%)",
-          transition: "transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
-          boxShadow: open ? "4px 0 24px rgba(0,0,0,0.3)" : "none",
+          transition: "transform var(--duration-mid) var(--ease-out)",
+          boxShadow: open ? "var(--shadow-lg)" : "none",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
         }}
       >
         {/* Header */}
@@ -97,11 +98,11 @@ export function HistoryDrawer({
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <span
               style={{
-                fontFamily: "'JetBrains Mono', monospace",
-                fontWeight: 700,
-                fontSize: "12px",
-                letterSpacing: "0.08em",
-                color: text,
+                fontFamily: "var(--sans)",
+                fontWeight: 600,
+                fontSize: "11px",
+                letterSpacing: "0.18em",
+                color: "var(--label)",
               }}
             >
               HISTORY
@@ -110,11 +111,11 @@ export function HistoryDrawer({
               <span
                 style={{
                   fontSize: "10px",
-                  fontFamily: "'JetBrains Mono', monospace",
+                  fontFamily: "var(--mono)",
                   color: muted,
                   background: surface,
                   padding: "1px 6px",
-                  borderRadius: "3px",
+                  borderRadius: "var(--radius-sm)",
                 }}
               >
                 {entries.length}
@@ -129,10 +130,10 @@ export function HistoryDrawer({
                   padding: "4px 8px",
                   background: "transparent",
                   border: `1px solid ${border}`,
-                  borderRadius: "4px",
+                  borderRadius: "var(--radius-sm)",
                   color: muted,
                   fontSize: "10px",
-                  fontFamily: "'JetBrains Mono', monospace",
+                  fontFamily: "var(--mono)",
                   letterSpacing: "0.06em",
                   cursor: "pointer",
                 }}
@@ -150,7 +151,7 @@ export function HistoryDrawer({
                 justifyContent: "center",
                 background: "transparent",
                 border: `1px solid ${border}`,
-                borderRadius: "4px",
+                borderRadius: "var(--radius-sm)",
                 color: muted,
                 cursor: "pointer",
                 padding: 0,
@@ -173,7 +174,7 @@ export function HistoryDrawer({
                 textAlign: "center",
                 color: muted,
                 fontSize: "12px",
-                fontFamily: "'JetBrains Mono', monospace",
+                fontFamily: "var(--mono)",
                 lineHeight: 1.6,
               }}
             >
@@ -183,7 +184,7 @@ export function HistoryDrawer({
             </div>
           ) : (
             entries.map((entry) => {
-              const color = entry.scores ? scoreColor(entry.scores.overall) : "#666";
+              const color = entry.scores ? scoreColor(entry.scores.overall) : "var(--ink-faint)";
               return (
                 <div
                   key={entry.id}
@@ -192,9 +193,9 @@ export function HistoryDrawer({
                     alignItems: "center",
                     gap: "10px",
                     padding: "10px 10px",
-                    borderRadius: "6px",
+                    borderRadius: "var(--radius-sm)",
                     cursor: "pointer",
-                    transition: "background 0.15s ease",
+                    transition: "background var(--duration-fast) var(--ease-out)",
                     marginBottom: "2px",
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.background = hoverBg; }}
@@ -208,7 +209,7 @@ export function HistoryDrawer({
                     <div
                       style={{
                         fontSize: "12px",
-                        fontFamily: "'JetBrains Mono', monospace",
+                        fontFamily: "var(--mono)",
                         color: text,
                         whiteSpace: "nowrap",
                         overflow: "hidden",
@@ -222,7 +223,7 @@ export function HistoryDrawer({
                       <span
                         style={{
                           fontSize: "10px",
-                          fontFamily: "'JetBrains Mono', monospace",
+                          fontFamily: "var(--mono)",
                           color: muted,
                         }}
                       >
@@ -232,12 +233,12 @@ export function HistoryDrawer({
                         <span
                           style={{
                             fontSize: "10px",
-                            fontFamily: "'JetBrains Mono', monospace",
+                            fontFamily: "var(--mono)",
                             fontWeight: 700,
                             color,
                             background: `${color}18`,
                             border: `1px solid ${color}44`,
-                            borderRadius: "3px",
+                            borderRadius: "var(--radius-sm)",
                             padding: "1px 5px",
                           }}
                         >
@@ -259,7 +260,7 @@ export function HistoryDrawer({
                       justifyContent: "center",
                       background: deleteBg,
                       border: "none",
-                      borderRadius: "4px",
+                      borderRadius: "var(--radius-sm)",
                       color: deleteColor,
                       cursor: "pointer",
                       padding: 0,

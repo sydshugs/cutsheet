@@ -68,7 +68,7 @@ function MiniSpinner({ t }: { t: ThemeTokens }) {
       <div
         style={{
           fontSize: "11px",
-          fontFamily: "'JetBrains Mono', monospace",
+          fontFamily: "var(--mono)",
           color: t.spinnerText,
           letterSpacing: "0.06em",
         }}
@@ -126,10 +126,11 @@ export function ComparePanel({ label, isDark, apiKey, isWinner, onResult }: Comp
       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
         <div
           style={{
-            fontSize: "10px",
-            fontFamily: "'JetBrains Mono', monospace",
-            color: t.textFaint,
-            letterSpacing: "0.12em",
+            fontSize: "11px",
+            fontFamily: "var(--sans)",
+            color: "var(--label)",
+            letterSpacing: "0.18em",
+            fontWeight: 600,
             textTransform: "uppercase",
           }}
         >
@@ -141,7 +142,7 @@ export function ComparePanel({ label, isDark, apiKey, isWinner, onResult }: Comp
               width: "6px",
               height: "6px",
               borderRadius: "50%",
-              background: "#00D4AA",
+              background: "var(--success)",
               flexShrink: 0,
             }}
           />
@@ -169,12 +170,12 @@ export function ComparePanel({ label, isDark, apiKey, isWinner, onResult }: Comp
           disabled={isAnalyzing}
           style={{
             padding: "12px",
-            background: isAnalyzing ? "rgba(255,68,68,0.3)" : "#FF4444",
+            background: isAnalyzing ? "rgba(99,102,241,0.3)" : "var(--grad)",
             border: "none",
-            borderRadius: "8px",
+            borderRadius: "var(--radius-sm)",
             color: "#fff",
             fontSize: "12px",
-            fontFamily: "'JetBrains Mono', monospace",
+            fontFamily: "var(--mono)",
             fontWeight: 700,
             letterSpacing: "0.08em",
             textTransform: "uppercase",
@@ -193,12 +194,12 @@ export function ComparePanel({ label, isDark, apiKey, isWinner, onResult }: Comp
         <div
           style={{
             padding: "10px 14px",
-            background: "rgba(255,68,68,0.08)",
-            border: "1px solid rgba(255,68,68,0.2)",
-            borderRadius: "6px",
+            background: "rgba(239,68,68,0.08)",
+            border: "1px solid rgba(239,68,68,0.2)",
+            borderRadius: "var(--radius-sm)",
             fontSize: "11px",
-            fontFamily: "'JetBrains Mono', monospace",
-            color: "#FF6B6B",
+            fontFamily: "var(--mono)",
+            color: "var(--error)",
           }}
         >
           {STATUS_COPY.error}: {error}
@@ -207,7 +208,7 @@ export function ComparePanel({ label, isDark, apiKey, isWinner, onResult }: Comp
 
       {/* Scorecard */}
       {result?.scores && (
-        <div style={{ background: t.scorecardBg, borderRadius: "10px", padding: "12px" }}>
+        <div style={{ background: t.scorecardBg, borderRadius: "var(--radius)", padding: "12px" }}>
           <ScoreCard
             scores={result.scores}
             fileName={result.fileName}
@@ -225,10 +226,10 @@ export function ComparePanel({ label, isDark, apiKey, isWinner, onResult }: Comp
             padding: "8px",
             background: "transparent",
             border: `1px solid ${t.border}`,
-            borderRadius: "6px",
+            borderRadius: "var(--radius-sm)",
             color: t.textMuted,
             fontSize: "11px",
-            fontFamily: "'JetBrains Mono', monospace",
+            fontFamily: "var(--mono)",
             letterSpacing: "0.08em",
             cursor: "pointer",
           }}

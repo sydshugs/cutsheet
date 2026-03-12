@@ -38,11 +38,11 @@ function CutsheetLogoWatermark() {
     >
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
         <polygon points="0,0 10,0 14,4 14,14 0,14" fill="#fff" opacity="0.9" />
-        <line x1="9.5" y1="0.5" x2="13.5" y2="4.5" stroke="#FF4444" strokeWidth="1" />
+        <line x1="9.5" y1="0.5" x2="13.5" y2="4.5" stroke="#6366F1" strokeWidth="1" />
       </svg>
       <span
         style={{
-          fontFamily: "'JetBrains Mono', monospace",
+          fontFamily: "var(--mono)",
           fontSize: "9px",
           fontWeight: 700,
           letterSpacing: "0.08em",

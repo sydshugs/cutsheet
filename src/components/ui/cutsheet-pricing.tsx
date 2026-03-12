@@ -280,7 +280,7 @@ export default function CutsheetPricing() {
         </div>
 
         <p className="mt-8 text-center text-xs text-zinc-600">
-          All plans include a 7-day free trial on paid features. Cancel anytime.
+          Prices lock in at early access rates. Cancel anytime after launch.
         </p>
       </div>
     </section>

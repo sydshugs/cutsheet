@@ -32,12 +32,12 @@ const CARDS = [
   {
     icon: Building2,
     headline: "Not built for enterprise. Built for you.",
-    body: "CreativeX, Alison.ai, Replai — powerful tools with 6-month onboarding, $2,000/mo minimums, and sales calls before you see a single score. Cutsheet gives you results in 30 seconds with no contract.",
+    body: "Enterprise creative analytics tools come with 6-month onboarding, $2,000/mo minimums, and sales calls before you see a single score. Cutsheet gives you results in 30 seconds with no contract.",
   },
   {
     icon: Puzzle,
     headline: "Not a feature. A focused tool.",
-    body: "AdCreative.ai buries ad scoring inside a generation platform you may not need. Cutsheet does one thing exceptionally well: tell you exactly what's working in your ad creative and what to fix.",
+    body: "Most platforms bury ad scoring inside generation tools you may not need. Cutsheet does one thing exceptionally well: tell you exactly what's working in your ad creative and what to fix.",
   },
   {
     icon: DollarSign,
@@ -56,71 +56,73 @@ export default function CutsheetWhy() {
       />
 
       <div className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-14 text-center">
+        {/* Header — left-aligned for rhythm variation */}
+        <div className="mb-14 max-w-2xl">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3.5 py-1 text-xs font-medium uppercase tracking-widest text-zinc-300">
             <Trophy className="h-3 w-3 text-amber-400" />
             Why Cutsheet
           </span>
-          <h2 className="mt-5 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+          <h2 className="mt-5 text-2xl font-bold tracking-tight text-white sm:text-3xl">
             Everything you need. Nothing you don't.
           </h2>
-          <p className="mt-4 text-base text-zinc-400 max-w-xl mx-auto leading-relaxed">
+          <p className="mt-4 text-base text-zinc-400 leading-relaxed">
             No enterprise contract. No agency retainer. No platform lock-in.
             Just upload your ad and know.
           </p>
         </div>
 
-        {/* Comparison grid */}
-        <div className="mb-16 grid gap-4 sm:grid-cols-3">
-          {/* Cutsheet column */}
-          <div className="rounded-3xl border border-indigo-500/20 bg-indigo-500/[0.06] p-6 backdrop-blur-sm">
-            <h3 className="mb-5 text-center text-xs font-semibold uppercase tracking-widest text-indigo-300">
-              Cutsheet
-            </h3>
-            <div className="space-y-3">
-              {ROWS.map((row) => (
-                <div key={row} className="flex items-center gap-3 rounded-xl bg-white/[0.04] px-4 py-2.5">
-                  <Check className="h-4 w-4 shrink-0 text-green-400" />
-                  <span className="text-sm text-zinc-200">{row}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Enterprise Tools column */}
-          <div className="rounded-3xl border border-white/[0.08] bg-white/[0.02] p-6">
-            <h3 className="mb-5 text-center text-xs font-semibold uppercase tracking-widest text-zinc-500">
-              Enterprise Tools
-            </h3>
-            <div className="space-y-3">
-              {ROWS.map((row) => {
-                const v = DATA[row][0];
-                return (
-                  <div key={row} className="flex items-center gap-3 px-4 py-2.5">
-                    <Cell v={v} />
-                    <span className="text-sm text-zinc-500">{row}</span>
+        {/* Comparison grid — horizontal scroll on mobile to preserve side-by-side */}
+        <div className="mb-16 -mx-4 px-4 sm:mx-0 sm:px-0">
+          <div className="flex gap-4 overflow-x-auto pb-4 sm:pb-0 sm:grid sm:grid-cols-3 sm:overflow-visible snap-x snap-mandatory">
+            {/* Cutsheet column */}
+            <div className="min-w-[260px] flex-shrink-0 snap-start rounded-3xl border border-indigo-500/20 bg-indigo-500/[0.06] p-6 backdrop-blur-sm sm:min-w-0 sm:flex-shrink">
+              <h3 className="mb-5 text-center text-xs font-semibold uppercase tracking-widest text-indigo-300">
+                Cutsheet
+              </h3>
+              <div className="space-y-3">
+                {ROWS.map((row) => (
+                  <div key={row} className="flex items-center gap-3 rounded-xl bg-white/[0.04] px-4 py-2.5">
+                    <Check className="h-4 w-4 shrink-0 text-green-400" />
+                    <span className="text-sm text-zinc-200 whitespace-nowrap sm:whitespace-normal">{row}</span>
                   </div>
-                );
-              })}
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* Ad Platforms column */}
-          <div className="rounded-3xl border border-white/[0.08] bg-white/[0.02] p-6">
-            <h3 className="mb-5 text-center text-xs font-semibold uppercase tracking-widest text-zinc-500">
-              Ad Platforms
-            </h3>
-            <div className="space-y-3">
-              {ROWS.map((row) => {
-                const v = DATA[row][1];
-                return (
-                  <div key={row} className="flex items-center gap-3 px-4 py-2.5">
-                    <Cell v={v} />
-                    <span className="text-sm text-zinc-500">{row}</span>
-                  </div>
-                );
-              })}
+            {/* Enterprise Tools column */}
+            <div className="min-w-[260px] flex-shrink-0 snap-start rounded-3xl border border-white/[0.08] bg-white/[0.02] p-6 sm:min-w-0 sm:flex-shrink">
+              <h3 className="mb-5 text-center text-xs font-semibold uppercase tracking-widest text-zinc-500">
+                Enterprise Tools
+              </h3>
+              <div className="space-y-3">
+                {ROWS.map((row) => {
+                  const v = DATA[row][0];
+                  return (
+                    <div key={row} className="flex items-center gap-3 px-4 py-2.5">
+                      <Cell v={v} />
+                      <span className="text-sm text-zinc-500 whitespace-nowrap sm:whitespace-normal">{row}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Ad Platforms column */}
+            <div className="min-w-[260px] flex-shrink-0 snap-start rounded-3xl border border-white/[0.08] bg-white/[0.02] p-6 sm:min-w-0 sm:flex-shrink">
+              <h3 className="mb-5 text-center text-xs font-semibold uppercase tracking-widest text-zinc-500">
+                Ad Platforms
+              </h3>
+              <div className="space-y-3">
+                {ROWS.map((row) => {
+                  const v = DATA[row][1];
+                  return (
+                    <div key={row} className="flex items-center gap-3 px-4 py-2.5">
+                      <Cell v={v} />
+                      <span className="text-sm text-zinc-500 whitespace-nowrap sm:whitespace-normal">{row}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>

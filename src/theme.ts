@@ -13,7 +13,7 @@ export function getInitialTheme(): Theme {
 export const themes = {
   dark: {
     // Dark contexts only (modals / share page) with aurora-style background
-    bg: "radial-gradient(circle at 0% 0%, rgba(255,107,107,0.2), transparent 55%), radial-gradient(circle at 100% 0%, rgba(65,88,208,0.25), transparent 55%), #0D0D0D",
+    bg: "radial-gradient(circle at 0% 0%, rgba(99,102,241,0.2), transparent 55%), radial-gradient(circle at 100% 0%, rgba(65,88,208,0.25), transparent 55%), #0D0D0D",
     navBg: "rgba(13,13,13,0.92)",
     text: "#FAFAF9",
     textPrimary: "rgba(250,250,249,0.92)",

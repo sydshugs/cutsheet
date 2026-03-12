@@ -93,7 +93,7 @@ export default function CutsheetHero() {
         }
         @keyframes barFill {
           from { width: 0%; }
-          to { width: 87%; }
+          to { width: var(--bar-width, 87%); }
         }
         .animate-fade-in {
           animation: fadeSlideIn 0.8s ease-out forwards;
@@ -187,7 +187,7 @@ export default function CutsheetHero() {
             <div className="animate-fade-in delay-500 flex items-center gap-3">
               <AnimatedTooltip items={SOCIAL_PROOF_PEOPLE} />
               <p className="text-sm text-zinc-500 ml-2">
-                <span className="text-white font-medium">2,400+</span> ads analyzed this week
+                <span className="text-white font-medium">2,400+</span> on the waitlist
               </p>
             </div>
           </div>
@@ -228,7 +228,7 @@ export default function CutsheetHero() {
                         <div
                           className={`h-full rounded-full bg-gradient-to-r ${color} animate-bar`}
                           style={{
-                            width: `${score}%`,
+                            ['--bar-width' as string]: `${score}%`,
                             animation: `barFill 1.6s ease-out ${0.8 + Math.random() * 0.4}s forwards`,
                           }}
                         />

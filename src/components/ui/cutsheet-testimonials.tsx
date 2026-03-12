@@ -1,14 +1,12 @@
 import { Star } from "lucide-react";
 
-const BRANDS = ["Nomad", "Vessel", "Arclight", "Driftwood", "Paladin"];
-
 const TESTIMONIALS = [
   {
     quote:
       "Cutsheet flagged a weak hook on our top-spend ad. We fixed it, relaunched, and CPM dropped 22% in the first week.",
     name: "Marcus T.",
     role: "Paid Social Lead",
-    company: "Nomad",
+    company: "DTC skincare brand, $1.2M/mo ad spend",
     initials: "MT",
   },
   {
@@ -16,7 +14,7 @@ const TESTIMONIALS = [
       "I used to spend 30 minutes reviewing a creative with my team. Now I upload it, get the scorecard in 20 seconds, and we're aligned in one look.",
     name: "Priya S.",
     role: "Creative Strategist",
-    company: "Vessel",
+    company: "Performance agency, 40+ clients",
     initials: "PS",
   },
   {
@@ -24,7 +22,7 @@ const TESTIMONIALS = [
       "The compare feature alone is worth it. We A/B test creatives before they ever hit ad auction. Saves us thousands in wasted spend.",
     name: "Jordan K.",
     role: "Performance Marketing Manager",
-    company: "Arclight",
+    company: "Series B fintech",
     initials: "JK",
   },
 ];
@@ -72,32 +70,18 @@ export default function CutsheetTestimonials() {
       />
 
       <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        {/* Trusted bar */}
-        <div className="mb-16 text-center">
-          <p className="text-xs font-medium uppercase tracking-widest text-zinc-500">
-            Trusted by performance teams at
-          </p>
-          <div className="mt-5 flex flex-wrap items-center justify-center gap-x-10 gap-y-3">
-            {BRANDS.map((b) => (
-              <span
-                key={b}
-                className="text-sm font-bold uppercase tracking-wider text-zinc-600 transition-colors hover:text-zinc-400"
-              >
-                {b}
-              </span>
-            ))}
-          </div>
-        </div>
-
         {/* Section header */}
         <div className="mb-14 text-center">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3.5 py-1 text-xs font-medium uppercase tracking-widest text-zinc-300">
             <Star className="h-3 w-3 text-amber-400" fill="currentColor" />
-            What Marketers Are Saying
+            Early Access Feedback
           </span>
           <h2 className="mt-5 text-3xl font-bold tracking-tight text-white sm:text-4xl">
             Results speak louder than scores.
           </h2>
+          <p className="mt-4 text-base text-zinc-400 max-w-lg mx-auto leading-relaxed">
+            What beta testers are saying after their first analysis.
+          </p>
         </div>
 
         {/* Cards */}

@@ -51,13 +51,13 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
   // Track per-variant status: null = pending, "analyzing" = in progress, "done" = complete, "error" = failed
   const [variantStatuses, setVariantStatuses] = useState<(null | "analyzing" | "done" | "error")[]>([]);
 
-  const bg = isDark ? "#0D0D0D" : "#FAFAF9";
-  const surface = isDark ? "#111110" : "#fff";
-  const border = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)";
-  const textPrimary = isDark ? "#fff" : "#0A0A0A";
-  const textSecondary = isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.55)";
-  const textMuted = isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)";
-  const surfaceDim = isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)";
+  const bg = "var(--surface)";
+  const surface = "var(--surface-el)";
+  const border = "var(--border)";
+  const textPrimary = "var(--ink)";
+  const textSecondary = "var(--ink-muted)";
+  const textMuted = "var(--ink-faint)";
+  const surfaceDim = "var(--surface-dim)";
 
   const readyCount = variants.filter((v) => v.file).length;
   const canRun = readyCount >= MIN_VARIANTS && phase === "idle";
@@ -196,7 +196,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
           maxWidth: "900px",
           margin: "0 auto",
           padding: "40px 24px",
-          fontFamily: "'Outfit', sans-serif",
+          fontFamily: "var(--sans)",
         }}
       >
         {/* Header */}
@@ -211,11 +211,12 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
           >
             <div
               style={{
-                fontSize: "10px",
-                fontFamily: "'JetBrains Mono', monospace",
-                letterSpacing: "0.12em",
+                fontSize: "11px",
+                fontFamily: "var(--sans)",
+                fontWeight: 600,
+                letterSpacing: "0.18em",
                 textTransform: "uppercase",
-                color: textMuted,
+                color: "var(--label)",
               }}
             >
               PRE-FLIGHT
@@ -235,7 +236,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
               color: textPrimary,
               letterSpacing: "-0.02em",
               lineHeight: 1.2,
-              fontFamily: "'Outfit', sans-serif",
+              fontFamily: "var(--sans)",
             }}
           >
             Predict the winner before you spend.
@@ -256,11 +257,12 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
         <div style={{ marginBottom: "24px" }}>
           <div
             style={{
-              fontSize: "10px",
-              fontFamily: "'JetBrains Mono', monospace",
-              letterSpacing: "0.1em",
+              fontSize: "11px",
+              fontFamily: "var(--sans)",
+              fontWeight: 600,
+              letterSpacing: "0.18em",
               textTransform: "uppercase",
-              color: textMuted,
+              color: "var(--label)",
               marginBottom: "8px",
             }}
           >
@@ -277,83 +279,185 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
           />
         </div>
 
-        {/* Variant cards grid */}
+        {/* Variant upload slots */}
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns: `repeat(auto-fill, minmax(180px, 1fr))`,
-            gap: "12px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "10px",
             marginBottom: "24px",
           }}
         >
-          {variants.map((v, i) => (
-            <div
-              key={v.id}
-              style={{
-                background: surface,
-                border: `1px solid ${border}`,
-                borderRadius: "12px",
-                padding: "16px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "10px",
-                position: "relative",
-              }}
-            >
-              {/* Remove button */}
-              {variants.length > MIN_VARIANTS && (
-                <button
-                  onClick={() => removeVariant(i)}
-                  style={{
-                    position: "absolute",
-                    top: "8px",
-                    right: "8px",
-                    width: "20px",
-                    height: "20px",
-                    borderRadius: "4px",
-                    border: `1px solid ${border}`,
-                    background: "transparent",
-                    color: textMuted,
-                    fontSize: "12px",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    padding: 0,
-                  }}
-                >
-                  ×
-                </button>
-              )}
-
-              {/* Label input */}
-              <input
-                type="text"
-                value={v.label}
-                onChange={(e) => handleLabelChange(i, e.target.value)}
+          {variants.map((v, i) => {
+            const fileInputId = `preflight-file-${v.id}`;
+            const hasFile = !!v.file;
+            return (
+              <div
+                key={v.id}
                 style={{
-                  background: "transparent",
-                  border: "none",
-                  outline: "none",
-                  fontSize: "12px",
-                  fontFamily: "'JetBrains Mono', monospace",
-                  fontWeight: 700,
-                  color: textPrimary,
-                  letterSpacing: "0.04em",
-                  padding: 0,
-                  width: "calc(100% - 24px)",
+                  background: surface,
+                  border: `1px solid ${border}`,
+                  borderRadius: "var(--radius)",
+                  padding: "14px 20px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "16px",
+                  transition: "border-color var(--duration-fast) var(--ease-out)",
                 }}
-              />
+                onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)"; }}
+                onDragLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.currentTarget.style.borderColor = "var(--border)";
+                  const f = e.dataTransfer.files[0];
+                  if (f) handleFileSelect(i, f);
+                }}
+              >
+                {/* Label input */}
+                <input
+                  type="text"
+                  value={v.label}
+                  onChange={(e) => handleLabelChange(i, e.target.value)}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    outline: "none",
+                    fontSize: "13px",
+                    fontFamily: "var(--mono)",
+                    fontWeight: 700,
+                    color: textPrimary,
+                    letterSpacing: "0.04em",
+                    padding: 0,
+                    width: "90px",
+                    flexShrink: 0,
+                  }}
+                />
 
-              {/* Dropzone */}
-              <VideoDropzone
-                onFileSelect={(file) => handleFileSelect(i, file)}
-                file={v.file ?? null}
-                isDark={isDark}
-                acceptImages
-              />
-            </div>
-          ))}
+                {/* File area */}
+                {!hasFile ? (
+                  <label
+                    htmlFor={fileInputId}
+                    style={{
+                      flex: 1,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      padding: "10px 16px",
+                      border: "1.5px dashed rgba(99,102,241,0.25)",
+                      borderRadius: "var(--radius-sm)",
+                      cursor: "pointer",
+                      color: textMuted,
+                      fontSize: "12px",
+                      fontFamily: "var(--sans)",
+                      transition: "all var(--duration-fast) var(--ease-out)",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)";
+                      e.currentTarget.style.color = "var(--accent)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = "rgba(99,102,241,0.25)";
+                      e.currentTarget.style.color = textMuted;
+                    }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                      <polyline points="17 8 12 3 7 8" />
+                      <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                    <span>Drop file or click to browse</span>
+                    <span style={{ marginLeft: "auto", fontFamily: "var(--mono)", fontSize: "10px", opacity: 0.5 }}>
+                      MP4 · MOV · PNG · JPG
+                    </span>
+                    <input
+                      id={fileInputId}
+                      type="file"
+                      accept="video/mp4,video/webm,video/quicktime,image/png,image/jpeg,image/jpg,image/webp"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) handleFileSelect(i, f);
+                      }}
+                      style={{ display: "none" }}
+                    />
+                  </label>
+                ) : (
+                  <div
+                    style={{
+                      flex: 1,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      padding: "10px 16px",
+                      background: "rgba(16,185,129,0.04)",
+                      border: "1px solid rgba(16,185,129,0.15)",
+                      borderRadius: "var(--radius-sm)",
+                    }}
+                  >
+                    <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--success)", flexShrink: 0 }} />
+                    <span
+                      style={{
+                        fontSize: "12px",
+                        fontFamily: "var(--mono)",
+                        color: textPrimary,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        flex: 1,
+                        minWidth: 0,
+                      }}
+                    >
+                      {v.file!.name}
+                    </span>
+                    <span style={{ fontSize: "10px", fontFamily: "var(--mono)", color: textMuted, flexShrink: 0 }}>
+                      {(v.file!.size / (1024 * 1024)).toFixed(1)}MB
+                    </span>
+                    <button
+                      onClick={() => handleFileSelect(i, null)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: textMuted,
+                        cursor: "pointer",
+                        fontSize: "10px",
+                        fontFamily: "var(--mono)",
+                        padding: "2px 6px",
+                        flexShrink: 0,
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
+
+                {/* Remove variant */}
+                {variants.length > MIN_VARIANTS && (
+                  <button
+                    onClick={() => removeVariant(i)}
+                    style={{
+                      width: "24px",
+                      height: "24px",
+                      borderRadius: "var(--radius-sm)",
+                      border: `1px solid ${border}`,
+                      background: "transparent",
+                      color: textMuted,
+                      fontSize: "13px",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: 0,
+                      flexShrink: 0,
+                      transition: "color var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out)",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = "var(--error)"; e.currentTarget.style.borderColor = "rgba(239,68,68,0.3)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = textMuted; e.currentTarget.style.borderColor = border; }}
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            );
+          })}
 
           {/* Add variant button */}
           {variants.length < MAX_VARIANTS && (
@@ -362,47 +466,33 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
               style={{
                 background: "transparent",
                 border: `1.5px dashed ${border}`,
-                borderRadius: "12px",
-                padding: "16px",
+                borderRadius: "var(--radius)",
+                padding: "14px 20px",
                 display: "flex",
-                flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
                 gap: "8px",
                 cursor: "pointer",
                 color: textMuted,
-                minHeight: "200px",
-                transition: "border-color 0.2s ease, color 0.2s ease",
+                fontSize: "12px",
+                fontFamily: "var(--sans)",
+                fontWeight: 500,
+                transition: "border-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out)",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "#FF4444";
-                e.currentTarget.style.color = "#FF4444";
+                e.currentTarget.style.borderColor = "rgba(99,102,241,0.4)";
+                e.currentTarget.style.color = "var(--accent)";
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.borderColor = border;
                 e.currentTarget.style.color = textMuted;
               }}
             >
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-              >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
-              <span
-                style={{
-                  fontSize: "11px",
-                  fontFamily: "'JetBrains Mono', monospace",
-                  fontWeight: 600,
-                }}
-              >
-                Add variant
-              </span>
+              Add variant
             </button>
           )}
         </div>
@@ -412,12 +502,12 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
           <div
             style={{
               padding: "12px 16px",
-              background: "rgba(255,68,68,0.08)",
-              border: "1px solid rgba(255,68,68,0.2)",
-              borderRadius: "8px",
+              background: "rgba(239,68,68,0.08)",
+              border: "1px solid rgba(239,68,68,0.2)",
+              borderRadius: "var(--radius-sm)",
               fontSize: "12px",
-              fontFamily: "'JetBrains Mono', monospace",
-              color: "#FF6B6B",
+              fontFamily: "var(--mono)",
+              color: "var(--error)",
               marginBottom: "16px",
             }}
           >
@@ -433,7 +523,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
             padding: "14px 28px",
             background: canRun ? "var(--grad)" : surfaceDim,
             border: "none",
-            borderRadius: "10px",
+            borderRadius: "var(--radius-sm)",
             color: canRun ? "#fff" : textMuted,
             fontSize: "13px",
             fontFamily: "var(--sans)",
@@ -441,7 +531,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
             letterSpacing: "0.04em",
             cursor: canRun ? "pointer" : "not-allowed",
             boxShadow: canRun ? "0 4px 20px rgba(99,102,241,0.3)" : "none",
-            transition: "all 0.2s ease",
+            transition: "all var(--duration-fast) var(--ease-out)",
           }}
         >
           Run Pre-Flight →
@@ -449,7 +539,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
         <span
           style={{
             fontSize: "11px",
-            fontFamily: "'JetBrains Mono', monospace",
+            fontFamily: "var(--mono)",
             color: textMuted,
             marginLeft: "12px",
           }}
@@ -468,7 +558,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
           maxWidth: "560px",
           margin: "0 auto",
           padding: "80px 24px",
-          fontFamily: "'Outfit', sans-serif",
+          fontFamily: "var(--sans)",
           textAlign: "center",
         }}
       >
@@ -482,7 +572,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
             width: "40px",
             height: "40px",
             border: `2px solid ${border}`,
-            borderTopColor: "#C850C0",
+            borderTopColor: "var(--accent)",
             borderRadius: "50%",
             animation: "pfSpin 0.8s linear infinite",
             margin: "0 auto 24px",
@@ -491,7 +581,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
         <div
           style={{
             fontSize: "14px",
-            fontFamily: "'JetBrains Mono', monospace",
+            fontFamily: "var(--mono)",
             fontWeight: 700,
             color: textPrimary,
             marginBottom: "8px",
@@ -505,7 +595,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
           style={{
             fontSize: "12px",
             color: textMuted,
-            fontFamily: "'JetBrains Mono', monospace",
+            fontFamily: "var(--mono)",
             marginBottom: "32px",
           }}
         >
@@ -520,7 +610,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
             textAlign: "left",
             background: surface,
             border: `1px solid ${border}`,
-            borderRadius: "12px",
+            borderRadius: "var(--radius)",
             padding: "16px 20px",
             display: "flex",
             flexDirection: "column",
@@ -534,11 +624,11 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
               st === "done" ? "✓" : st === "analyzing" ? "⟳" : st === "error" ? "✗" : "○";
             const iconColor =
               st === "done"
-                ? "#00D4AA"
+                ? "#10B981"
                 : st === "analyzing"
-                  ? "#C850C0"
+                  ? "#8B5CF6"
                   : st === "error"
-                    ? "#FF6B6B"
+                    ? "#6366F1"
                     : textMuted;
 
             return (
@@ -549,7 +639,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
                   alignItems: "center",
                   gap: "10px",
                   fontSize: "12px",
-                  fontFamily: "'JetBrains Mono', monospace",
+                  fontFamily: "var(--mono)",
                 }}
               >
                 <span
@@ -587,7 +677,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
                 alignItems: "center",
                 gap: "10px",
                 fontSize: "12px",
-                fontFamily: "'JetBrains Mono', monospace",
+                fontFamily: "var(--mono)",
                 paddingTop: "8px",
                 borderTop: `1px solid ${border}`,
                 marginTop: "4px",
@@ -595,7 +685,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
             >
               <span
                 style={{
-                  color: "#C850C0",
+                  color: "#8B5CF6",
                   fontWeight: 700,
                   animation: "pfPulse 1.2s infinite",
                 }}
@@ -621,7 +711,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
           maxWidth: "900px",
           margin: "0 auto",
           padding: "40px 24px",
-          fontFamily: "'Outfit', sans-serif",
+          fontFamily: "var(--sans)",
         }}
       >
         {/* Results header */}
@@ -636,11 +726,12 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
           <div>
             <div
               style={{
-                fontSize: "10px",
-                fontFamily: "'JetBrains Mono', monospace",
-                letterSpacing: "0.12em",
+                fontSize: "11px",
+                fontFamily: "var(--sans)",
+                fontWeight: 600,
+                letterSpacing: "0.18em",
                 textTransform: "uppercase",
-                color: textMuted,
+                color: "var(--label)",
                 marginBottom: "4px",
               }}
             >
@@ -664,10 +755,10 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
                 padding: "8px 16px",
                 background: surfaceDim,
                 border: `1px solid ${border}`,
-                borderRadius: "8px",
+                borderRadius: "var(--radius-sm)",
                 color: textSecondary,
                 fontSize: "11px",
-                fontFamily: "'JetBrains Mono', monospace",
+                fontFamily: "var(--mono)",
                 cursor: "pointer",
                 fontWeight: 600,
               }}
@@ -678,12 +769,12 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
               onClick={handleReset}
               style={{
                 padding: "8px 16px",
-                background: "#FF4444",
+                background: "var(--accent)",
                 border: "none",
-                borderRadius: "8px",
+                borderRadius: "var(--radius-sm)",
                 color: "#fff",
                 fontSize: "11px",
-                fontFamily: "'JetBrains Mono', monospace",
+                fontFamily: "var(--mono)",
                 cursor: "pointer",
                 fontWeight: 700,
                 letterSpacing: "0.04em",

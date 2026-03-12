@@ -202,8 +202,8 @@ export function BatchView({
   return (
     <div style={{ padding: "28px 32px", display: "flex", flexDirection: "column", gap: 28 }}>
       {/* Screen label */}
-      <div style={{ fontFamily: "var(--mono)", fontSize: 10, fontWeight: 500, color: "var(--accent)", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-        // Batch
+      <div style={{ fontFamily: "var(--sans)", fontSize: 11, fontWeight: 600, color: "var(--label)", letterSpacing: "0.18em", textTransform: "uppercase" }}>
+        Batch
       </div>
 
       {/* Multi-file dropzone — prototype batch-dropzone */}
@@ -225,7 +225,7 @@ export function BatchView({
           justifyContent: "center",
           gap: 20,
           cursor: isRunning ? "not-allowed" : "pointer",
-          transition: "all 0.2s",
+          transition: "all var(--duration-fast) var(--ease-out)",
         }}
         onMouseEnter={(e) => {
           if (isRunning) return;
@@ -249,7 +249,7 @@ export function BatchView({
             e.target.value = "";
           }}
         />
-        <div style={{ width: 56, height: 56, borderRadius: 14, background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <div style={{ width: 56, height: 56, borderRadius: "var(--radius-lg)", background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
           <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth={1.5}>
             <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
           </svg>
@@ -261,7 +261,7 @@ export function BatchView({
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
-          style={{ padding: "7px 14px", borderRadius: 7, fontSize: 13, fontWeight: 500, background: "transparent", color: "var(--accent)", border: "1px solid rgba(99,102,241,0.3)", cursor: "pointer", fontFamily: "var(--sans)" }}
+          style={{ padding: "7px 14px", borderRadius: "var(--radius-sm)", fontSize: 13, fontWeight: 500, background: "transparent", color: "var(--accent)", border: "1px solid rgba(99,102,241,0.3)", cursor: "pointer", fontFamily: "var(--sans)" }}
         >
           Browse
         </button>
@@ -289,16 +289,20 @@ export function BatchView({
                     border: "1px solid var(--border)",
                     borderRadius: "var(--radius)",
                     padding: 16,
-                    transition: "transform 0.15s, border-color 0.15s",
+                    transition: "transform var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out)",
                     cursor: "pointer",
+                    backdropFilter: "blur(16px)",
+                    WebkitBackdropFilter: "blur(16px)",
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = "translateY(-2px)";
                     e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
+                    e.currentTarget.style.boxShadow = "var(--shadow-md)";
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = "translateY(0)";
                     e.currentTarget.style.borderColor = "var(--border)";
+                    e.currentTarget.style.boxShadow = "none";
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
@@ -324,7 +328,7 @@ export function BatchView({
                       {item.status === "error" && "Error"}
                     </span>
                   </div>
-                  <div style={{ width: "100%", height: 80, background: "var(--surface-el)", borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12, position: "relative", overflow: "hidden" }}>
+                  <div style={{ width: "100%", height: 80, background: "var(--surface-el)", borderRadius: "var(--radius-sm)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12, position: "relative", overflow: "hidden" }}>
                     <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(99,102,241,0.1), transparent)" }} />
                     <svg width={20} height={20} viewBox="0 0 24 24" fill="rgba(255,255,255,0.3)" style={{ position: "relative", zIndex: 1 }}><path d="M5 3l14 9-14 9V3z"/></svg>
                   </div>
@@ -348,7 +352,7 @@ export function BatchView({
               <button
                 type="button"
                 onClick={clearAll}
-                style={{ padding: "7px 14px", borderRadius: 7, fontSize: 13, fontWeight: 500, background: "transparent", color: "var(--ink-muted)", border: "1px solid var(--border)", cursor: "pointer", fontFamily: "var(--sans)" }}
+                style={{ padding: "7px 14px", borderRadius: "var(--radius-sm)", fontSize: 13, fontWeight: 500, background: "transparent", color: "var(--ink-muted)", border: "1px solid var(--border)", cursor: "pointer", fontFamily: "var(--sans)" }}
               >
                 Clear Queue
               </button>
@@ -360,7 +364,7 @@ export function BatchView({
                   padding: "7px 14px",
                   background: items.every((i) => i.status !== "pending") ? "var(--surface-el)" : "var(--grad)",
                   border: "none",
-                  borderRadius: 7,
+                  borderRadius: "var(--radius-sm)",
                   color: items.every((i) => i.status !== "pending") ? "var(--ink-muted)" : "#fff",
                   fontSize: 13,
                   fontWeight: 500,
@@ -414,7 +418,7 @@ export function BatchView({
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>Batch Results</span>
-              <button type="button" onClick={exportCsv} style={{ padding: "5px 10px", fontSize: 12, background: "transparent", color: "var(--ink-muted)", border: "1px solid var(--border)", borderRadius: 7, cursor: "pointer", fontFamily: "var(--sans)" }}>Export CSV</button>
+              <button type="button" onClick={exportCsv} style={{ padding: "5px 10px", fontSize: 12, background: "transparent", color: "var(--ink-muted)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", cursor: "pointer", fontFamily: "var(--sans)" }}>Export CSV</button>
             </div>
             <BatchTable results={batchResults} />
           </div>
@@ -425,13 +429,13 @@ export function BatchView({
       {allDone && completed.length > 0 && (
         <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: 20 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-            <span style={{ fontFamily: "var(--mono)", fontSize: 10, fontWeight: 600, color: "var(--accent)", textTransform: "uppercase", letterSpacing: "0.1em" }}>// AI Ranking Rationale</span>
+            <span style={{ fontFamily: "var(--mono)", fontSize: 11, fontWeight: 600, color: "var(--accent)", textTransform: "uppercase", letterSpacing: "0.18em" }}>// AI Ranking Rationale</span>
           </div>
           {!verdict && !verdictLoading && (
-            <button type="button" onClick={fetchVerdict} style={{ padding: "8px 16px", background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)", borderRadius: 7, color: "var(--accent)", fontSize: 12, fontWeight: 500, fontFamily: "var(--sans)", cursor: "pointer" }}>Generate ranking</button>
+            <button type="button" onClick={fetchVerdict} style={{ padding: "8px 16px", background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)", borderRadius: "var(--radius-sm)", color: "var(--accent)", fontSize: 12, fontWeight: 500, fontFamily: "var(--sans)", cursor: "pointer" }}>Generate ranking</button>
           )}
           {verdictLoading && <div style={{ fontSize: 13, color: "var(--ink-muted)" }}>Generating verdict…</div>}
-          {verdictError && <div style={{ padding: 10, background: "rgba(255,68,68,0.08)", borderRadius: 8, color: "#FF6B6B", fontSize: 12 }}>{verdictError}</div>}
+          {verdictError && <div style={{ padding: 10, background: "rgba(239,68,68,0.08)", borderRadius: "var(--radius-sm)", color: "var(--error)", fontSize: 12 }}>{verdictError}</div>}
           {verdict && <p style={{ fontSize: 13.5, color: "var(--ink-muted)", lineHeight: 1.65, margin: 0 }}>{verdict}</p>}
         </div>
       )}
