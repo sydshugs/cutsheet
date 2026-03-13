@@ -18,6 +18,18 @@ import {
   FlaskConical,
 } from "lucide-react";
 import { SpotlightCard } from "./spotlight-card";
+import { ScoreCard } from "@/src/components/ScoreCard";
+import { BatchTable } from "@/src/components/BatchTable";
+import { PreFlightWinner } from "@/src/components/PreFlightWinner";
+import { PreFlightRankCard } from "@/src/components/PreFlightRankCard";
+import {
+  MOCK_SCORES,
+  MOCK_IMPROVEMENTS,
+  MOCK_BUDGET,
+  MOCK_HASHTAGS,
+  MOCK_COMPARISON,
+  MOCK_BATCH_RESULTS,
+} from "@/src/components/demo/mockData";
 
 const METRICS = [
   {
@@ -112,6 +124,42 @@ const MetricCard = ({
   </div>
 );
 
+/** Scaled-down live UI preview with gradient fade at bottom */
+function DemoPreview({
+  children,
+  height = 240,
+  scale = 0.55,
+}: {
+  children: React.ReactNode;
+  height?: number;
+  scale?: number;
+}) {
+  return (
+    <div
+      className="relative overflow-hidden rounded-2xl border border-white/[0.06]"
+      style={{ height, background: "var(--bg, #08080F)" }}
+    >
+      <div
+        className="pointer-events-none origin-top-left"
+        style={{
+          transform: `scale(${scale})`,
+          width: `${100 / scale}%`,
+        }}
+      >
+        {children}
+      </div>
+      {/* Gradient fade — dissolves UI into card bg */}
+      <div
+        className="pointer-events-none absolute bottom-0 left-0 right-0 h-28"
+        style={{
+          background:
+            "linear-gradient(to top, var(--bg, #08080F) 5%, transparent)",
+        }}
+      />
+    </div>
+  );
+}
+
 export default function CutsheetFeatures() {
   return (
     <section id="features" className="relative w-full bg-zinc-950 text-white border-t border-white/5">
@@ -188,15 +236,15 @@ export default function CutsheetFeatures() {
           </div>
 
           <div className="grid gap-4 md:gap-5 md:grid-cols-2">
+            {/* ── Compare: ScoreCard with gauge + bars ── */}
             <SpotlightCard
               spotlightColor="rgba(99, 102, 241, 0.15)"
               className="rounded-3xl border-white/5 bg-zinc-900/60 p-6 sm:p-7 backdrop-blur-xl"
             >
               <div className="space-y-3">
-                <div className="relative overflow-hidden rounded-2xl border border-white/[0.06]" style={{ background: "rgba(12, 8, 29, 1)" }}>
-                  <img src="/demos/scorecard-deep-dive.webp" alt="Compare mode demo" className="w-full" style={{ borderRadius: 16 }} />
-                  <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-24" style={{ background: "linear-gradient(to top, rgba(24,24,27,0.95), transparent)" }} />
-                </div>
+                <DemoPreview height={260} scale={0.58}>
+                  <ScoreCard scores={MOCK_SCORES} isDark={true} />
+                </DemoPreview>
                 <div className="inline-flex items-center gap-2 rounded-full bg-zinc-900/80 px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-indigo-300 uppercase">
                   <SplitSquareVertical className="h-3.5 w-3.5" />
                   Compare
@@ -211,15 +259,15 @@ export default function CutsheetFeatures() {
               </div>
             </SpotlightCard>
 
+            {/* ── Batch Mode: Ranked results table ── */}
             <SpotlightCard
               spotlightColor="rgba(139, 92, 246, 0.15)"
               className="rounded-3xl border-white/5 bg-zinc-900/60 p-6 sm:p-7 backdrop-blur-xl"
             >
               <div className="space-y-3">
-                <div className="relative overflow-hidden rounded-2xl border border-white/[0.06]" style={{ background: "rgba(12, 8, 29, 1)" }}>
-                  <img src="/demos/batch-mode.webp" alt="Batch mode demo" className="w-full" style={{ borderRadius: 16 }} />
-                  <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-24" style={{ background: "linear-gradient(to top, rgba(24,24,27,0.95), transparent)" }} />
-                </div>
+                <DemoPreview height={260} scale={0.58}>
+                  <BatchTable results={MOCK_BATCH_RESULTS} />
+                </DemoPreview>
                 <div className="inline-flex items-center gap-2 rounded-full bg-zinc-900/80 px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-violet-300 uppercase">
                   <Rows4 className="h-3.5 w-3.5" />
                   Batch Mode
@@ -234,15 +282,28 @@ export default function CutsheetFeatures() {
               </div>
             </SpotlightCard>
 
+            {/* ── Pre-Flight A/B: Winner + rank cards ── */}
             <SpotlightCard
               spotlightColor="rgba(6, 182, 212, 0.15)"
               className="rounded-3xl border-white/5 bg-zinc-900/60 p-6 sm:p-7 backdrop-blur-xl"
             >
               <div className="space-y-3">
-                <div className="relative overflow-hidden rounded-2xl border border-white/[0.06]" style={{ background: "rgba(12, 8, 29, 1)" }}>
-                  <img src="/demos/ab-pre-flight.webp" alt="A/B pre-flight testing demo" className="w-full" style={{ borderRadius: 16 }} />
-                  <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-24" style={{ background: "linear-gradient(to top, rgba(24,24,27,0.95), transparent)" }} />
-                </div>
+                <DemoPreview height={260} scale={0.52}>
+                  <div className="flex flex-col gap-3 p-1">
+                    <PreFlightWinner winner={MOCK_COMPARISON.winner} isDark={true} />
+                    <div className="flex gap-3">
+                      {MOCK_COMPARISON.rankings.map((ranking) => (
+                        <div key={ranking.variant} className="flex-1">
+                          <PreFlightRankCard
+                            variant={ranking}
+                            isWinner={ranking.rank === 1}
+                            isDark={true}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </DemoPreview>
                 <div className="inline-flex items-center gap-2 rounded-full bg-zinc-900/80 px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-cyan-300 uppercase">
                   <FlaskConical className="h-3.5 w-3.5" />
                   Pre-Flight A/B Testing
@@ -257,15 +318,21 @@ export default function CutsheetFeatures() {
               </div>
             </SpotlightCard>
 
+            {/* ── Creative Briefs: ScoreCard with improvements + budget ── */}
             <SpotlightCard
               spotlightColor="rgba(99, 102, 241, 0.15)"
               className="rounded-3xl border-white/5 bg-zinc-900/60 p-6 sm:p-7 backdrop-blur-xl"
             >
               <div className="space-y-3">
-                <div className="relative overflow-hidden rounded-2xl border border-white/[0.06]" style={{ background: "rgba(12, 8, 29, 1)" }}>
-                  <img src="/demos/scorecard-deep-dive.webp" alt="Creative briefs demo" className="w-full" style={{ borderRadius: 16 }} />
-                  <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-24" style={{ background: "linear-gradient(to top, rgba(24,24,27,0.95), transparent)" }} />
-                </div>
+                <DemoPreview height={260} scale={0.58}>
+                  <ScoreCard
+                    scores={MOCK_SCORES}
+                    improvements={MOCK_IMPROVEMENTS}
+                    budget={MOCK_BUDGET}
+                    hashtags={MOCK_HASHTAGS}
+                    isDark={true}
+                  />
+                </DemoPreview>
                 <div className="inline-flex items-center gap-2 rounded-full bg-zinc-900/80 px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-indigo-300 uppercase">
                   <FileText className="h-3.5 w-3.5" />
                   Creative Briefs
