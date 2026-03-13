@@ -126,7 +126,8 @@ export default function App() {
       }
     : result;
 
-  const showRightPanel = mode === "single" && status === "complete" && activeResult !== null;
+  const effectiveStatus = loadedEntry ? "complete" : status;
+  const showRightPanel = mode === "single" && effectiveStatus === "complete" && activeResult !== null;
 
   const handleAnalyze = async () => {
     if (!file || isAnalyzing || !canAnalyze) return;
