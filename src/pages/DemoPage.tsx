@@ -29,7 +29,7 @@ export default function DemoPage() {
   if (seq && SEQUENCE_MAP[seq]) {
     const Demo = SEQUENCE_MAP[seq];
     return (
-      <div className="w-screen h-screen overflow-hidden" style={{ background: "var(--bg, #08080F)" }}>
+      <div className="w-screen h-screen overflow-hidden" style={{ background: "transparent" }}>
         <Demo playing={playing} />
       </div>
     );
@@ -68,7 +68,7 @@ export default function DemoPage() {
                 Sequence {key}: {SEQUENCE_LABELS[key]}
               </span>
               <span className="text-[10px] font-mono text-zinc-600">
-                {key === "1" || key === "4" ? "3s" : "4s"} loop
+                {key === "1" || key === "4" ? "6s" : "8s"} loop
               </span>
             </div>
             <div className="aspect-video relative overflow-hidden">

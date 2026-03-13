@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Capture demo sequences as frame PNGs, then stitch into GIF + MP4 via ffmpeg
-// All inputs are hardcoded constants — no user input, safe to use execSync.
+// Capture demo sequences as frame PNGs, then stitch into WebP (alpha) + MP4 via ffmpeg
+// All inputs are hardcoded constants — no user input, safe to use execFileSync.
 
 import puppeteer from "puppeteer";
 import { execFileSync } from "child_process";
@@ -16,10 +16,10 @@ const FPS = 24;
 const VIEWPORT = { width: 1280, height: 800, deviceScaleFactor: 2 };
 
 const SEQUENCES = [
-  { id: 1, name: "upload-to-analysis", duration: 3000 },
-  { id: 2, name: "scorecard-deep-dive", duration: 4000 },
-  { id: 3, name: "ab-pre-flight", duration: 4000 },
-  { id: 4, name: "batch-mode", duration: 3000 },
+  { id: 1, name: "upload-to-analysis", duration: 6000 },
+  { id: 2, name: "scorecard-deep-dive", duration: 8000 },
+  { id: 3, name: "ab-pre-flight", duration: 8000 },
+  { id: 4, name: "batch-mode", duration: 6000 },
 ];
 
 function sleep(ms) {
@@ -60,7 +60,8 @@ async function captureSequence(browser, seq) {
       frameDir,
       `frame-${String(i).padStart(4, "0")}.png`
     );
-    await page.screenshot({ path: framePath, type: "png" });
+    // Capture with transparent background (omitBackground for alpha)
+    await page.screenshot({ path: framePath, type: "png", omitBackground: true });
 
     if ((i + 1) % 10 === 0 || i === totalFrames - 1) {
       process.stdout.write(`    ${i + 1}/${totalFrames} frames\r`);
@@ -79,7 +80,7 @@ async function captureSequence(browser, seq) {
 
   const framePattern = path.join(frameDir, "frame-%04d.png");
 
-  // ffmpeg: frames -> MP4 (high quality)
+  // ffmpeg: frames -> MP4 (high quality, no alpha in MP4)
   const mp4Out = path.join(OUTPUT_DIR, `${seq.name}.mp4`);
   console.log(`  Encoding MP4...`);
   execFileSync(FFMPEG, [
@@ -95,30 +96,22 @@ async function captureSequence(browser, seq) {
   const mp4Size = (fs.statSync(mp4Out).size / 1024).toFixed(0);
   console.log(`     ${seq.name}.mp4 (${mp4Size} KB)`);
 
-  // ffmpeg: frames -> GIF (palettegen for quality, 640px wide)
-  const palettePath = path.join(frameDir, "palette.png");
-  const gifOut = path.join(OUTPUT_DIR, `${seq.name}.gif`);
-  console.log(`  Encoding GIF...`);
-
+  // ffmpeg: frames -> animated WebP (with alpha channel, 640px wide)
+  const webpOut = path.join(OUTPUT_DIR, `${seq.name}.webp`);
+  console.log(`  Encoding WebP...`);
   execFileSync(FFMPEG, [
     "-y",
     "-framerate", String(FPS),
     "-i", framePattern,
-    "-vf", `fps=${FPS},scale=640:-1:flags=lanczos,palettegen=stats_mode=diff`,
-    palettePath,
+    "-vf", `fps=${FPS},scale=640:-1:flags=lanczos`,
+    "-c:v", "libwebp_anim",
+    "-lossless", "0",
+    "-quality", "80",
+    "-loop", "0",
+    webpOut,
   ], { stdio: "pipe" });
-
-  execFileSync(FFMPEG, [
-    "-y",
-    "-framerate", String(FPS),
-    "-i", framePattern,
-    "-i", palettePath,
-    "-lavfi", `fps=${FPS},scale=640:-1:flags=lanczos [x]; [x][1:v] paletteuse=dither=bayer:bayer_scale=5`,
-    gifOut,
-  ], { stdio: "pipe" });
-
-  const gifSize = (fs.statSync(gifOut).size / 1024).toFixed(0);
-  console.log(`     ${seq.name}.gif (${gifSize} KB)`);
+  const webpSize = (fs.statSync(webpOut).size / 1024).toFixed(0);
+  console.log(`     ${seq.name}.webp (${webpSize} KB)`);
 
   // Cleanup frames
   fs.rmSync(frameDir, { recursive: true, force: true });

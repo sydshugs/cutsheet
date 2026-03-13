@@ -11,7 +11,7 @@ import {
 } from "./mockData";
 import { getScoreColorByValue } from "@/src/components/ScoreCard";
 
-const DURATION = 4000;
+const DURATION = 8000;
 
 const SCORE_LABELS: Record<string, string> = {
   hook: "Hook Strength",
@@ -50,16 +50,16 @@ export function DemoScorecardDeepDive({ playing = true }: Props) {
   const { elapsed, loopCount } = useTimeline({ duration: DURATION, playing });
 
   const showGauge = elapsed >= 0;
-  const showImprovements = elapsed >= 1000;
-  const showBudget = elapsed >= 2000;
-  const showHashtags = elapsed >= 3000;
+  const showImprovements = elapsed >= 2000;
+  const showBudget = elapsed >= 4000;
+  const showHashtags = elapsed >= 6000;
 
   const overallColor = getScoreColorByValue(MOCK_SCORES.overall);
   const badgeClasses = getScoreBadgeClasses(MOCK_SCORES.overall);
   const overallLabel = getOverallLabel(MOCK_SCORES.overall);
 
-  // Arc gauge fill progress (animate over first 800ms)
-  const gaugeProgress = Math.min(1, elapsed / 800);
+  // Arc gauge fill progress (animate over first 1600ms)
+  const gaugeProgress = Math.min(1, elapsed / 1600);
   const dashLen = gaugeProgress * (MOCK_SCORES.overall / 10) * 157;
 
   return (
@@ -119,9 +119,9 @@ export function DemoScorecardDeepDive({ playing = true }: Props) {
                   const value = MOCK_SCORES[key];
                   const pct = value <= 0 ? 2 : Math.min(100, (value / 10) * 100);
                   const barColor = getScoreColorByValue(value);
-                  // Stagger bars: each starts 100ms after previous
-                  const barDelay = 200 + i * 150;
-                  const barProgress = Math.max(0, Math.min(1, (elapsed - barDelay) / 600));
+                  // Stagger bars: each starts 200ms after previous
+                  const barDelay = 400 + i * 300;
+                  const barProgress = Math.max(0, Math.min(1, (elapsed - barDelay) / 1200));
                   const barWidth = barProgress * pct;
 
                   return (
@@ -155,7 +155,7 @@ export function DemoScorecardDeepDive({ playing = true }: Props) {
               </p>
               <ul className="flex flex-col gap-1">
                 {MOCK_IMPROVEMENTS.map((item, i) => {
-                  const itemDelay = 1000 + i * 200;
+                  const itemDelay = 2000 + i * 400;
                   if (elapsed < itemDelay) return null;
                   return (
                     <motion.li
@@ -227,7 +227,7 @@ export function DemoScorecardDeepDive({ playing = true }: Props) {
                 <div key={platform} className="flex items-center gap-1.5 flex-wrap mb-2">
                   <span className="text-xs text-zinc-500 w-16 flex-shrink-0">{platform}</span>
                   {tags.map((tag, tagIdx) => {
-                    const tagDelay = 3000 + rowIdx * 120 + tagIdx * 60;
+                    const tagDelay = 6000 + rowIdx * 240 + tagIdx * 120;
                     if (elapsed < tagDelay) return null;
                     return (
                       <motion.span

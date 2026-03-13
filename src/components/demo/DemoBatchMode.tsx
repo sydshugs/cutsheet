@@ -7,14 +7,14 @@ import { DemoShell } from "./DemoShell";
 import { BatchTable } from "@/src/components/BatchTable";
 import { MOCK_BATCH_FILES, MOCK_BATCH_RESULTS } from "./mockData";
 
-const DURATION = 3000;
+const DURATION = 6000;
 
 type Phase = "dropzone" | "files" | "analyzing" | "results";
 
 function getPhase(elapsed: number): Phase {
-  if (elapsed < 500) return "dropzone";
-  if (elapsed < 1000) return "files";
-  if (elapsed < 2000) return "analyzing";
+  if (elapsed < 1000) return "dropzone";
+  if (elapsed < 2000) return "files";
+  if (elapsed < 4000) return "analyzing";
   return "results";
 }
 
@@ -24,9 +24,9 @@ const FILE_SIZES = ["12.4 MB", "8.7 MB", "3.2 MB", "15.1 MB", "6.9 MB"];
 type FileStatus = "pending" | "analyzing" | "done";
 
 function getFileStatus(fileIndex: number, elapsed: number): FileStatus {
-  // Each file starts analyzing 200ms apart after 1000ms
-  const startMs = 1000 + fileIndex * 200;
-  const doneMs = startMs + 200;
+  // Each file starts analyzing 400ms apart after 2000ms
+  const startMs = 2000 + fileIndex * 400;
+  const doneMs = startMs + 400;
   if (elapsed < startMs) return "pending";
   if (elapsed < doneMs) return "analyzing";
   return "done";
@@ -77,8 +77,8 @@ export function DemoBatchMode({ playing = true }: Props) {
             <motion.div key="files" {...fade} className="w-full max-w-md">
               <div className="grid grid-cols-3 gap-3">
                 {MOCK_BATCH_FILES.map((filename, i) => {
-                  const delay = i * 80;
-                  const show = elapsed >= 500 + delay;
+                  const delay = i * 160;
+                  const show = elapsed >= 1000 + delay;
                   if (!show) return <div key={filename} />;
                   return (
                     <motion.div

@@ -164,8 +164,8 @@ export default function CutsheetHero() {
             {/* Hero demo GIF */}
             <div className="animate-fade-in delay-500">
               <img
-                src="/demos/upload-to-analysis.gif"
-                className="w-full rounded-2xl shadow-2xl"
+                src="/demos/upload-to-analysis.webp"
+                className="w-full rounded-2xl"
                 alt="Cutsheet analyzing an ad creative"
               />
             </div>

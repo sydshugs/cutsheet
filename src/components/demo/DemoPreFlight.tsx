@@ -9,13 +9,13 @@ import { PreFlightRankCard } from "@/src/components/PreFlightRankCard";
 import { PreFlightHeadToHead } from "@/src/components/PreFlightHeadToHead";
 import { MOCK_COMPARISON } from "./mockData";
 
-const DURATION = 4000;
+const DURATION = 8000;
 
 type Phase = "upload" | "analyzing" | "results";
 
 function getPhase(elapsed: number): Phase {
-  if (elapsed < 500) return "upload";
-  if (elapsed < 1500) return "analyzing";
+  if (elapsed < 1000) return "upload";
+  if (elapsed < 3000) return "analyzing";
   return "results";
 }
 
@@ -67,11 +67,11 @@ export function DemoPreFlight({ playing = true }: Props) {
   const { elapsed, loopCount } = useTimeline({ duration: DURATION, playing });
   const phase = getPhase(elapsed);
 
-  const analysisStep = elapsed >= 1000 ? 2 : 1;
+  const analysisStep = elapsed >= 2000 ? 2 : 1;
 
-  const showWinner = elapsed >= 1500;
-  const showRanks = elapsed >= 2000;
-  const showH2H = elapsed >= 2500;
+  const showWinner = elapsed >= 3000;
+  const showRanks = elapsed >= 4000;
+  const showH2H = elapsed >= 5000;
 
   return (
     <DemoShell>

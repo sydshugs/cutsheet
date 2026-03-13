@@ -13,7 +13,7 @@ import {
   MOCK_HASHTAGS,
 } from "./mockData";
 
-const DURATION = 3000;
+const DURATION = 6000;
 
 const ANALYSIS_HINTS = [
   "Detecting hook pattern...",
@@ -25,9 +25,9 @@ const ANALYSIS_HINTS = [
 type Phase = "dropzone" | "dragover" | "analyzing" | "results";
 
 function getPhase(elapsed: number): Phase {
-  if (elapsed < 500) return "dropzone";
-  if (elapsed < 1000) return "dragover";
-  if (elapsed < 1500) return "analyzing";
+  if (elapsed < 1000) return "dropzone";
+  if (elapsed < 2000) return "dragover";
+  if (elapsed < 3000) return "analyzing";
   return "results";
 }
 
@@ -135,7 +135,7 @@ export function DemoUploadToAnalysis({ playing = true }: Props) {
 
                   {/* Cycling hint */}
                   <p className="text-xs text-zinc-500 font-mono">
-                    {ANALYSIS_HINTS[Math.floor(((elapsed - 1000) / 500) * ANALYSIS_HINTS.length) % ANALYSIS_HINTS.length]}
+                    {ANALYSIS_HINTS[Math.floor(((elapsed - 2000) / 1000) * ANALYSIS_HINTS.length) % ANALYSIS_HINTS.length]}
                   </p>
                 </div>
               </div>
