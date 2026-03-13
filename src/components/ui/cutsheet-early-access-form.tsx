@@ -66,17 +66,12 @@ export default function EarlyAccessForm({
 
     setStatus("loading");
     try {
-      const res = await fetch("https://app.loops.so/api/v1/contacts/create", {
+      const res = await fetch("/api/waitlist", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_LOOPS_API_KEY}`,
         },
-        body: JSON.stringify({
-          email: trimmed,
-          source: "landing-page-waitlist",
-          userGroup: "waitlist",
-        }),
+        body: JSON.stringify({ email: trimmed }),
       });
       if (!res.ok) throw new Error("non-200");
       localStorage.setItem(LS_KEY, trimmed);
