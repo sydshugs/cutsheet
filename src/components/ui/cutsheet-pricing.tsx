@@ -10,6 +10,9 @@ import {
   FileText,
   Upload,
   Infinity,
+  Lightbulb,
+  FlaskConical,
+  Share2,
 } from "lucide-react";
 
 type Plan = {
@@ -32,12 +35,12 @@ const PLANS: Plan[] = [
     description: "Try Cutsheet risk-free. No card, no commitment.",
     cta: "Get Early Access",
     featured: false,
-    limit: "5 analyses / month",
+    limit: "3 analyses / month",
     features: [
-      { label: "5 video analyses per month", icon: BarChart2 },
-      { label: "All 11 scoring metrics", icon: Zap },
-      { label: "Scene breakdown", icon: FileText },
-      { label: "Basic scorecard export", icon: FileText },
+      { label: "Single video analysis", icon: BarChart2 },
+      { label: "11-metric scorecard", icon: Zap },
+      { label: "Improve This Ad suggestions", icon: Lightbulb },
+      { label: "3 analyses per month", icon: FileText },
     ],
   },
   {
@@ -50,13 +53,14 @@ const PLANS: Plan[] = [
     featured: true,
     limit: "Unlimited analyses",
     features: [
-      { label: "Unlimited video analyses", icon: Infinity },
-      { label: "All 11 scoring metrics", icon: Zap },
+      { label: "Everything in Free", icon: Check },
+      { label: "Unlimited analyses", icon: Infinity },
       { label: "Side-by-side compare", icon: GitCompare },
-      { label: "AI creative brief generator", icon: FileText },
-      { label: "Swipe file (save 100 creatives)", icon: FolderHeart },
-      { label: "Batch analysis (10 at once)", icon: Upload },
-      { label: "Priority processing", icon: Zap },
+      { label: "Batch analysis (10 files)", icon: Upload },
+      { label: "Pre-Flight A/B testing", icon: FlaskConical },
+      { label: "Generate creative brief", icon: FileText },
+      { label: "PDF export & share links", icon: Share2 },
+      { label: "Swipe file (coming soon)", icon: FolderHeart },
     ],
   },
   {
@@ -69,11 +73,7 @@ const PLANS: Plan[] = [
     limit: "Unlimited + team seats",
     features: [
       { label: "Everything in Pro", icon: Check },
-      { label: "5 team seats included", icon: Crown },
-      { label: "Unlimited swipe file", icon: FolderHeart },
-      { label: "Batch analysis (50 at once)", icon: Upload },
-      { label: "Shared team swipe file", icon: FolderHeart },
-      { label: "Client-ready PDF exports", icon: FileText },
+      { label: "Multiple team seats", icon: Crown },
       { label: "Priority support", icon: Zap },
     ],
   },

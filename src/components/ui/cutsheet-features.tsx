@@ -15,6 +15,7 @@ import {
   Rows4,
   FolderHeart,
   FileText,
+  FlaskConical,
 } from "lucide-react";
 import { SpotlightCard } from "./spotlight-card";
 
@@ -172,14 +173,17 @@ export default function CutsheetFeatures() {
           </div>
         </div>
 
-        {/* Bottom: Roadmap features */}
-        <div className="space-y-6 opacity-75">
+        {/* Live features */}
+        <div className="space-y-6">
           <div className="max-w-2xl space-y-2">
-            <p className="text-sm font-medium text-zinc-500 uppercase tracking-wider">
-              On the roadmap
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-300">
+              Built & Live
             </p>
-            <p className="text-sm text-zinc-400">
-              Early access members get these features first.
+            <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white">
+              More than a scorecard
+            </h2>
+            <p className="text-sm sm:text-base text-zinc-400 max-w-xl">
+              Compare variants, batch-analyze campaigns, A/B test creatives, and generate briefs — all live today.
             </p>
           </div>
 
@@ -194,31 +198,11 @@ export default function CutsheetFeatures() {
                   Compare
                 </div>
                 <h3 className="text-lg font-semibold text-white">
-                  Instant A/B breakdowns for hooks and edits.
-                  <span className="bg-white/10 text-zinc-500 text-xs rounded-full px-2 py-0.5 ml-1.5 whitespace-nowrap">Coming soon</span>
+                  Side-by-side A/B breakdowns for hooks and edits.
                 </h3>
                 <p className="text-sm text-zinc-400">
-                  Drop multiple variants and see which opener, script, and structure the model
-                  would scale with first — before you light up spend.
-                </p>
-              </div>
-            </SpotlightCard>
-
-            <SpotlightCard
-              spotlightColor="rgba(16, 185, 129, 0.15)"
-              className="rounded-3xl border-white/5 bg-zinc-900/60 p-6 sm:p-7 backdrop-blur-xl"
-            >
-              <div className="space-y-3">
-                <div className="inline-flex items-center gap-2 rounded-full bg-zinc-900/80 px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-emerald-300 uppercase">
-                  <FolderHeart className="h-3.5 w-3.5" />
-                  Swipe File
-                </div>
-                <h3 className="text-lg font-semibold text-white">
-                  Save winners into a living library.
-                  <span className="bg-white/10 text-zinc-500 text-xs rounded-full px-2 py-0.5 ml-1.5 whitespace-nowrap">Coming soon</span>
-                </h3>
-                <p className="text-sm text-zinc-400">
-                  Keep the best hooks, scripts, and edits one click away for your next brainstorm.
+                  Drop two variants and see which opener, script, and structure the model
+                  would scale first — with a head-to-head comparison report.
                 </p>
               </div>
             </SpotlightCard>
@@ -234,11 +218,29 @@ export default function CutsheetFeatures() {
                 </div>
                 <h3 className="text-lg font-semibold text-white">
                   Drag in a folder, score the whole campaign.
-                  <span className="bg-white/10 text-zinc-500 text-xs rounded-full px-2 py-0.5 ml-1.5 whitespace-nowrap">Coming soon</span>
                 </h3>
                 <p className="text-sm text-zinc-400">
                   Run up to 10 ads at once and sort by predicted performance, hook strength,
                   or any of the 11 metrics.
+                </p>
+              </div>
+            </SpotlightCard>
+
+            <SpotlightCard
+              spotlightColor="rgba(6, 182, 212, 0.15)"
+              className="rounded-3xl border-white/5 bg-zinc-900/60 p-6 sm:p-7 backdrop-blur-xl"
+            >
+              <div className="space-y-3">
+                <div className="inline-flex items-center gap-2 rounded-full bg-zinc-900/80 px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-cyan-300 uppercase">
+                  <FlaskConical className="h-3.5 w-3.5" />
+                  Pre-Flight A/B Testing
+                </div>
+                <h3 className="text-lg font-semibold text-white">
+                  Rank 2–4 variants before you spend a dollar.
+                </h3>
+                <p className="text-sm text-zinc-400">
+                  Upload multiple creatives and get a ranked leaderboard with scores,
+                  strengths, weaknesses, and a winner call — all before media goes live.
                 </p>
               </div>
             </SpotlightCard>
@@ -254,11 +256,43 @@ export default function CutsheetFeatures() {
                 </div>
                 <h3 className="text-lg font-semibold text-white">
                   Turn any analysis into a ready-to-ship brief.
+                </h3>
+                <p className="text-sm text-zinc-400">
+                  One click generates a structured creative brief with hooks, scene notes,
+                  and talking points your team can actually build from.
+                </p>
+              </div>
+            </SpotlightCard>
+          </div>
+        </div>
+
+        {/* Roadmap */}
+        <div className="space-y-6 opacity-75">
+          <div className="max-w-2xl space-y-2">
+            <p className="text-sm font-medium text-zinc-500 uppercase tracking-wider">
+              On the roadmap
+            </p>
+            <p className="text-sm text-zinc-400">
+              Early access members get these features first.
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:gap-5 md:grid-cols-2">
+            <SpotlightCard
+              spotlightColor="rgba(16, 185, 129, 0.15)"
+              className="rounded-3xl border-white/5 bg-zinc-900/60 p-6 sm:p-7 backdrop-blur-xl"
+            >
+              <div className="space-y-3">
+                <div className="inline-flex items-center gap-2 rounded-full bg-zinc-900/80 px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-emerald-300 uppercase">
+                  <FolderHeart className="h-3.5 w-3.5" />
+                  Swipe File
+                </div>
+                <h3 className="text-lg font-semibold text-white">
+                  Save winners into a living library.
                   <span className="bg-white/10 text-zinc-500 text-xs rounded-full px-2 py-0.5 ml-1.5 whitespace-nowrap">Coming soon</span>
                 </h3>
                 <p className="text-sm text-zinc-400">
-                  Export talking points, hooks, and scene notes into a structured doc your team
-                  can actually build from.
+                  Keep the best hooks, scripts, and edits one click away for your next brainstorm.
                 </p>
               </div>
             </SpotlightCard>
