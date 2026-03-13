@@ -34,7 +34,7 @@ export default function CutsheetNav() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
         {/* Logo */}
         <a href="/" className="flex items-center gap-2.5">
-          <img src="/cutsheet-logo.svg" alt="Cutsheet" className="h-[23px] w-[23px]" />
+          <img src="/cutsheet-logo.png" alt="Cutsheet" className="h-[23px] w-[23px]" />
           <span
             className="text-white"
             style={{ fontFamily: "'TBJ Interval', monospace", fontSize: "20px" }}

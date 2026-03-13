@@ -5,7 +5,7 @@ export default function CutsheetFooter() {
         <div className="flex flex-col items-center gap-6 sm:flex-row sm:justify-between">
           {/* Logo */}
           <a href="/" className="flex items-center gap-2.5">
-            <img src="/cutsheet-logo.svg" alt="Cutsheet" className="h-[23px] w-[23px]" />
+            <img src="/cutsheet-logo.png" alt="Cutsheet" className="h-[23px] w-[23px]" />
             <span
               className="text-white"
               style={{ fontFamily: "'TBJ Interval', monospace", fontSize: "20px" }}
