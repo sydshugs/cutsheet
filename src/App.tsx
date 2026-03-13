@@ -14,7 +14,7 @@ import { useVideoAnalyzer } from "./hooks/useVideoAnalyzer";
 import { useHistory, type HistoryEntry } from "./hooks/useHistory";
 import { useSwipeFile } from "./hooks/useSwipeFile";
 import { useUsage } from "./hooks/useUsage";
-import { downloadMarkdown, copyToClipboard, generateBrief, parseImprovements, parseBudget } from "./services/analyzerService";
+import { downloadMarkdown, copyToClipboard, generateBrief, parseImprovements, parseBudget, parseHashtags } from "./services/analyzerService";
 import { createShare } from "./services/shareService";
 import { exportToPdf } from "./utils/pdfExport";
 import { UpgradeModal } from "./components/UpgradeModal";
@@ -124,6 +124,7 @@ export default function App() {
         scores: loadedEntry.scores,
         improvements: parseImprovements(loadedEntry.markdown),
         budget: parseBudget(loadedEntry.markdown),
+        hashtags: parseHashtags(loadedEntry.markdown),
         fileName: loadedEntry.fileName,
         timestamp: new Date(loadedEntry.timestamp),
       }
@@ -422,6 +423,7 @@ export default function App() {
                   scores={activeResult.scores}
                   improvements={activeResult.improvements}
                   budget={activeResult.budget}
+                  hashtags={activeResult.hashtags}
                   fileName={activeResult.fileName}
                   analysisTime={analysisCompletedAt ?? undefined}
                   modelName="Gemini 2.5 Flash"

@@ -1,7 +1,7 @@
 // ScoreCard.tsx — Visual translation from #screen-results (prototype)
 
 import { useEffect, useState } from "react";
-import type { BudgetRecommendation } from "../services/analyzerService";
+import type { BudgetRecommendation, Hashtags } from "../services/analyzerService";
 
 interface Scores {
   hook: number;
@@ -15,11 +15,11 @@ interface ScoreCardProps {
   scores: Scores;
   improvements?: string[];
   budget?: BudgetRecommendation | null;
+  hashtags?: Hashtags;
   fileName?: string;
   onShare?: () => void;
   isDark?: boolean;
   winner?: boolean;
-  // New props:
   analysisTime?: Date;
   modelName?: string;
   onGenerateBrief?: () => void;
@@ -83,6 +83,7 @@ export function ScoreCard({
   scores,
   improvements,
   budget,
+  hashtags,
   fileName,
   onShare,
   isDark = true,
@@ -264,6 +265,31 @@ export function ScoreCard({
           {/* Reason */}
           {budget.reason && (
             <p className="text-xs text-zinc-500 italic leading-relaxed">{budget.reason}</p>
+          )}
+        </div>
+      )}
+
+      {/* Recommended Hashtags */}
+      {hashtags && (hashtags.tiktok.length > 0 || hashtags.meta.length > 0 || hashtags.instagram.length > 0) && (
+        <div className="px-5 border-t border-white/5 mt-4 pt-4">
+          <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-3">
+            Recommended Hashtags
+          </p>
+          {([["TikTok", hashtags.tiktok], ["Meta", hashtags.meta], ["Instagram", hashtags.instagram]] as const).map(
+            ([platform, tags]) =>
+              tags.length > 0 && (
+                <div key={platform} className="flex items-center gap-1.5 flex-wrap mb-2">
+                  <span className="text-xs text-zinc-500 w-16 flex-shrink-0">{platform}</span>
+                  {tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="bg-zinc-800 text-zinc-300 text-xs px-2 py-0.5 rounded-md font-mono"
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              )
           )}
         </div>
       )}

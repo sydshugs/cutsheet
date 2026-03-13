@@ -108,7 +108,22 @@ Based on the ad's quality and likely performance, recommend a media buying strat
 - **Platform:** [Meta / TikTok / YouTube / Meta + TikTok / All platforms] — the best-fit platform(s) for this creative style and audience.
 - **Daily Budget:** [$X–$Y/day] — a specific daily budget range recommendation (e.g. "$50–$100/day").
 - **Duration:** [X days / X weeks] — how long to run at this budget before evaluating (e.g. "7 days", "2 weeks").
-- **Reason:** One sentence explaining why this budget and timeline make sense for this specific creative.`;
+- **Reason:** One sentence explaining why this budget and timeline make sense for this specific creative.
+
+---
+
+## #️⃣ HASHTAGS
+Recommend platform-specific hashtags based on the creative content, theme, and audience. Format exactly as:
+TIKTOK: #hashtag1 #hashtag2 #hashtag3 #hashtag4 #hashtag5
+META: #hashtag1 #hashtag2 #hashtag3 #hashtag4 #hashtag5
+INSTAGRAM: #hashtag1 #hashtag2 #hashtag3 #hashtag4 #hashtag5
+
+Rules:
+- TikTok: trending, short, broad discovery tags (5 tags)
+- Meta: interest and demographic targeting tags (5 tags)
+- Instagram: niche community + aesthetic tags (5 tags)
+- All tags should be relevant to the actual creative content analyzed
+- No generic filler tags like #fyp #viral unless genuinely appropriate`;
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -118,6 +133,12 @@ export interface BudgetRecommendation {
   daily: string;
   duration: string;
   reason: string;
+}
+
+export interface Hashtags {
+  tiktok: string[];
+  meta: string[];
+  instagram: string[];
 }
 
 export interface AnalysisResult {
@@ -131,6 +152,7 @@ export interface AnalysisResult {
   } | null;
   improvements: string[];
   budget: BudgetRecommendation | null;
+  hashtags?: Hashtags;
   timestamp: Date;
   fileName: string;
 }
@@ -230,6 +252,36 @@ export function parseBudget(markdown: string): BudgetRecommendation | null {
   }
 }
 
+export function parseHashtags(markdown: string): Hashtags | undefined {
+  try {
+    const match = markdown.match(/##\s*(?:#️⃣\s*)?HASHTAGS\s*\n([\s\S]*?)(?=\n---|\n##|$)/i);
+    if (!match) return undefined;
+
+    const section = match[1].trim();
+
+    const extract = (platform: string): string[] => {
+      const re = new RegExp(`${platform}:\\s*(.+)`, "i");
+      const m = section.match(re);
+      if (!m) return [];
+      return m[1]
+        .trim()
+        .split(/\s+/)
+        .map((t) => t.replace(/^#/, "").trim())
+        .filter((t) => t.length > 0);
+    };
+
+    const tiktok = extract("TIKTOK");
+    const meta = extract("META");
+    const instagram = extract("INSTAGRAM");
+
+    if (tiktok.length === 0 && meta.length === 0 && instagram.length === 0) return undefined;
+
+    return { tiktok, meta, instagram };
+  } catch {
+    return undefined;
+  }
+}
+
 // Recalculate overall score when Gemini returns zero values
 // If overall is 0 or any metric is 0, recompute overall as the
 // average of only the non-zero component scores.
@@ -316,6 +368,9 @@ export async function analyzeVideo(
     // 7. Parse budget recommendation from markdown
     const budget = parseBudget(markdown);
 
+    // 8. Parse hashtag recommendations from markdown
+    const hashtags = parseHashtags(markdown);
+
     emit("complete");
 
     return {
@@ -323,6 +378,7 @@ export async function analyzeVideo(
       scores,
       improvements,
       budget,
+      hashtags,
       timestamp: new Date(),
       fileName: file.name,
     };
