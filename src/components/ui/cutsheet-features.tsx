@@ -16,20 +16,16 @@ import {
   FolderHeart,
   FileText,
   FlaskConical,
+  Trophy,
+  ArrowUpRight,
+  CheckCircle2,
+  XCircle,
+  Sparkles,
+  Rocket,
 } from "lucide-react";
 import { SpotlightCard } from "./spotlight-card";
-import { ScoreCard } from "@/src/components/ScoreCard";
-import { BatchTable } from "@/src/components/BatchTable";
-import { PreFlightWinner } from "@/src/components/PreFlightWinner";
-import { PreFlightRankCard } from "@/src/components/PreFlightRankCard";
-import {
-  MOCK_SCORES,
-  MOCK_IMPROVEMENTS,
-  MOCK_BUDGET,
-  MOCK_HASHTAGS,
-  MOCK_COMPARISON,
-  MOCK_BATCH_RESULTS,
-} from "@/src/components/demo/mockData";
+
+/* ─── Metrics carousel data ──────────────────────────────────────────── */
 
 const METRICS = [
   {
@@ -104,7 +100,6 @@ const MetricCard = ({
   name,
   desc,
   icon: Icon,
-  accent,
 }: {
   name: string;
   desc: string;
@@ -124,57 +119,333 @@ const MetricCard = ({
   </div>
 );
 
-/** Scaled-down live UI preview with gradient fade at bottom */
-function DemoPreview({
-  children,
-  height = 240,
-  scale = 0.55,
-}: {
-  children: React.ReactNode;
-  height?: number;
-  scale?: number;
-}) {
+/* ─── Feature preview animations CSS ─────────────────────────────────── */
+
+const FEATURE_STYLES = `
+  @keyframes metricsScroll {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  .animate-metrics {
+    animation: metricsScroll 45s linear infinite;
+  }
+  .animate-metrics:hover {
+    animation-play-state: paused;
+  }
+
+  @keyframes feat-bar {
+    from { width: 0%; }
+    to { width: var(--w); }
+  }
+  .feat-bar {
+    width: 0%;
+    animation: feat-bar 1.4s ease-out forwards;
+  }
+
+  @keyframes feat-fade {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .feat-fade {
+    opacity: 0;
+    animation: feat-fade 0.5s ease-out forwards;
+  }
+
+  @keyframes feat-pop {
+    0% { opacity: 0; transform: scale(0.85); }
+    60% { transform: scale(1.03); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  .feat-pop {
+    opacity: 0;
+    animation: feat-pop 0.5s ease-out forwards;
+  }
+`;
+
+/* ─── Shared card container (matches hero stats card style) ──────────── */
+
+function PreviewCard({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      className="relative overflow-hidden rounded-2xl border border-white/[0.06]"
-      style={{ height, background: "var(--bg, #08080F)" }}
-    >
-      <div
-        className="pointer-events-none origin-top-left"
-        style={{
-          transform: `scale(${scale})`,
-          width: `${100 / scale}%`,
-        }}
-      >
-        {children}
-      </div>
-      {/* Gradient fade — dissolves UI into card bg */}
-      <div
-        className="pointer-events-none absolute bottom-0 left-0 right-0 h-28"
-        style={{
-          background:
-            "linear-gradient(to top, var(--bg, #08080F) 5%, transparent)",
-        }}
-      />
+    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl">
+      <div className="absolute top-0 right-0 -mr-10 -mt-10 h-36 w-36 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
+      <div className="relative z-10">{children}</div>
     </div>
   );
 }
 
+/* ─── 1. Compare Preview ─────────────────────────────────────────────── */
+
+const COMPARE_BARS = [
+  { label: "Hook", a: 92, b: 54, color: "from-indigo-500 to-indigo-400" },
+  { label: "CTA", a: 78, b: 65, color: "from-violet-500 to-violet-400" },
+  { label: "Pacing", a: 85, b: 42, color: "from-cyan-500 to-cyan-400" },
+];
+
+function ComparePreview() {
+  return (
+    <PreviewCard>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <SplitSquareVertical className="h-4 w-4 text-indigo-400" />
+          <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+            Head to Head
+          </span>
+        </div>
+      </div>
+
+      {/* Variant labels */}
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-sm font-semibold text-white">Variant A</span>
+        <span className="text-[10px] text-zinc-500 uppercase tracking-wider">vs</span>
+        <span className="text-sm font-semibold text-zinc-400">Variant B</span>
+      </div>
+
+      {/* Bars */}
+      <div className="space-y-3">
+        {COMPARE_BARS.map(({ label, a, b, color }, i) => (
+          <div key={label} className="feat-fade" style={{ animationDelay: `${0.3 + i * 0.15}s` }}>
+            <div className="flex justify-between text-[11px] mb-1">
+              <span className="text-zinc-400">{label}</span>
+              <div className="flex gap-3">
+                <span className="text-white font-medium">{a}</span>
+                <span className="text-zinc-500">{b}</span>
+              </div>
+            </div>
+            <div className="flex gap-1.5">
+              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-800/60">
+                <div
+                  className={`h-full rounded-full bg-gradient-to-r ${color} feat-bar`}
+                  style={{ "--w": `${a}%`, animationDelay: `${0.5 + i * 0.15}s` } as React.CSSProperties}
+                />
+              </div>
+              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-800/60">
+                <div
+                  className="h-full rounded-full bg-zinc-600 feat-bar"
+                  style={{ "--w": `${b}%`, animationDelay: `${0.6 + i * 0.15}s` } as React.CSSProperties}
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Winner badge */}
+      <div
+        className="mt-4 feat-pop inline-flex items-center gap-1.5 rounded-full border border-green-500/20 bg-green-500/10 px-3 py-1"
+        style={{ animationDelay: "1.1s" }}
+      >
+        <Trophy className="h-3 w-3 text-green-400" />
+        <span className="text-[10px] font-semibold text-green-400 uppercase tracking-wide">
+          Variant A wins
+        </span>
+      </div>
+    </PreviewCard>
+  );
+}
+
+/* ─── 2. Batch Mode Preview ──────────────────────────────────────────── */
+
+const BATCH_ROWS = [
+  { rank: 1, file: "hero-spot-final.mp4", score: 9, scale: true },
+  { rank: 2, file: "ugc-testimonial-v3.mp4", score: 8, scale: true },
+  { rank: 3, file: "product-demo-15s.mp4", score: 7, scale: true },
+  { rank: 4, file: "lifestyle-montage.mp4", score: 5, scale: false },
+];
+
+const MEDALS: Record<number, string> = { 1: "\u{1F947}", 2: "\u{1F948}", 3: "\u{1F949}" };
+
+function scoreColor(val: number) {
+  if (val >= 9) return "text-emerald-400";
+  if (val >= 7) return "text-indigo-400";
+  if (val >= 5) return "text-amber-400";
+  return "text-red-400";
+}
+
+function BatchPreview() {
+  return (
+    <PreviewCard>
+      {/* Header */}
+      <div className="flex items-center gap-2 mb-4">
+        <Rows4 className="h-4 w-4 text-violet-400" />
+        <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+          Campaign Results
+        </span>
+        <span className="ml-auto text-[10px] text-zinc-600 font-mono">4 files</span>
+      </div>
+
+      {/* Table header */}
+      <div className="grid grid-cols-[24px_1fr_36px_48px] gap-2 mb-2 px-1">
+        <span className="text-[9px] text-zinc-600 uppercase">#</span>
+        <span className="text-[9px] text-zinc-600 uppercase">File</span>
+        <span className="text-[9px] text-zinc-600 uppercase text-right">Score</span>
+        <span className="text-[9px] text-zinc-600 uppercase text-right">Scale</span>
+      </div>
+
+      {/* Rows */}
+      <div className="space-y-1">
+        {BATCH_ROWS.map(({ rank, file, score, scale }, i) => (
+          <div
+            key={rank}
+            className={`feat-fade grid grid-cols-[24px_1fr_36px_48px] gap-2 items-center rounded-lg px-1 py-1.5 ${
+              rank === 1 ? "bg-white/[0.03] border-l-2 border-green-500/50" : ""
+            }`}
+            style={{ animationDelay: `${0.3 + i * 0.12}s` }}
+          >
+            <span className="text-xs font-mono text-zinc-400">
+              {MEDALS[rank] || `#${rank}`}
+            </span>
+            <span className={`text-xs truncate ${rank === 1 ? "text-white font-medium" : "text-zinc-400"}`}>
+              {file}
+            </span>
+            <span className={`text-xs font-bold text-right ${scoreColor(score)}`}>
+              {score}
+            </span>
+            <div className="flex justify-end">
+              {scale ? (
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+              ) : (
+                <XCircle className="h-3.5 w-3.5 text-zinc-600" />
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Summary */}
+      <div className="mt-3 flex items-center gap-2 feat-fade" style={{ animationDelay: "0.9s" }}>
+        <div className="h-px flex-1 bg-white/5" />
+        <span className="text-[10px] text-zinc-500">
+          <span className="text-emerald-400 font-semibold">3</span> of 4 would scale
+        </span>
+        <div className="h-px flex-1 bg-white/5" />
+      </div>
+    </PreviewCard>
+  );
+}
+
+/* ─── 3. Pre-Flight A/B Preview ──────────────────────────────────────── */
+
+function PreFlightPreview() {
+  return (
+    <PreviewCard>
+      {/* Header */}
+      <div className="flex items-center gap-2 mb-4">
+        <FlaskConical className="h-4 w-4 text-cyan-400" />
+        <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+          Predicted Winner
+        </span>
+      </div>
+
+      {/* Winner callout */}
+      <div
+        className="feat-fade rounded-xl border border-green-500/15 bg-green-500/5 p-3.5 mb-3"
+        style={{ animationDelay: "0.3s" }}
+      >
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Trophy className="h-4 w-4 text-yellow-500" />
+            <span className="text-sm font-bold text-white">Variant A</span>
+          </div>
+          <span className="text-[9px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 border border-green-500/20">
+            High
+          </span>
+        </div>
+        <div
+          className="feat-pop inline-flex items-center gap-1 rounded-full bg-green-500/10 px-2.5 py-0.5 border border-green-500/20"
+          style={{ animationDelay: "0.7s" }}
+        >
+          <ArrowUpRight className="h-3 w-3 text-green-400" />
+          <span className="text-[10px] font-semibold text-green-400">15–25% higher CTR/CVR</span>
+        </div>
+      </div>
+
+      {/* Variant cards */}
+      <div className="grid grid-cols-2 gap-2">
+        <div
+          className="feat-fade rounded-lg border border-indigo-500/20 bg-indigo-500/5 p-3 text-center"
+          style={{ animationDelay: "0.5s" }}
+        >
+          <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">#1</div>
+          <div className="text-lg font-bold text-white">
+            8<span className="text-xs text-zinc-500 font-normal">/10</span>
+          </div>
+          <div className="text-[10px] text-indigo-300 font-medium mt-0.5">Variant A</div>
+        </div>
+        <div
+          className="feat-fade rounded-lg border border-white/5 bg-white/[0.02] p-3 text-center"
+          style={{ animationDelay: "0.6s" }}
+        >
+          <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">#2</div>
+          <div className="text-lg font-bold text-zinc-400">
+            6<span className="text-xs text-zinc-600 font-normal">/10</span>
+          </div>
+          <div className="text-[10px] text-zinc-500 font-medium mt-0.5">Variant B</div>
+        </div>
+      </div>
+    </PreviewCard>
+  );
+}
+
+/* ─── 4. Creative Briefs Preview ─────────────────────────────────────── */
+
+const BRIEF_ITEMS = [
+  "Add text overlay reinforcing offer at 3-second mark",
+  "Consider faster cut at 0:04 to maintain momentum",
+  "Direct CTA in final 2 seconds with urgency copy",
+];
+
+function BriefsPreview() {
+  return (
+    <PreviewCard>
+      {/* Header */}
+      <div className="flex items-center gap-2 mb-4">
+        <Sparkles className="h-4 w-4 text-indigo-400" />
+        <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+          Improve This Ad
+        </span>
+      </div>
+
+      {/* Bullet points */}
+      <div className="space-y-2.5 mb-4">
+        {BRIEF_ITEMS.map((item, i) => (
+          <div
+            key={i}
+            className="feat-fade flex items-start gap-2"
+            style={{ animationDelay: `${0.3 + i * 0.18}s` }}
+          >
+            <div className="mt-1 h-1 w-1 shrink-0 rounded-full bg-indigo-400" />
+            <p className="text-xs text-zinc-300 leading-relaxed">{item}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="h-px w-full bg-white/5 mb-3" />
+
+      {/* Budget recommendation */}
+      <div className="feat-fade" style={{ animationDelay: "0.9s" }}>
+        <div className="text-[9px] text-zinc-600 uppercase tracking-wider mb-2">
+          Budget Recommendation
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="feat-pop inline-flex items-center gap-1.5 rounded-full border border-green-500/20 bg-green-500/10 px-2.5 py-1" style={{ animationDelay: "1s" }}>
+            <Rocket className="h-3 w-3 text-green-400" />
+            <span className="text-[10px] font-semibold text-green-400">Boost It</span>
+          </div>
+          <span className="text-[10px] text-zinc-500">TikTok + Meta</span>
+          <span className="text-[10px] text-zinc-400 font-medium">$100–$200/day</span>
+        </div>
+      </div>
+    </PreviewCard>
+  );
+}
+
+/* ═══ Main Component ═════════════════════════════════════════════════ */
+
 export default function CutsheetFeatures() {
   return (
     <section id="features" className="relative w-full bg-zinc-950 text-white border-t border-white/5">
-      <style>{`
-        @keyframes metricsScroll {
-          from { transform: translateX(0); }
-          to { transform: translateX(-50%); }
-        }
-        .animate-metrics {
-          animation: metricsScroll 45s linear infinite;
-        }
-        .animate-metrics:hover {
-          animation-play-state: paused;
-        }
-      `}</style>
+      <style>{FEATURE_STYLES}</style>
 
       {/* Ambient background to match hero */}
       <div className="absolute inset-0 z-0">
@@ -236,15 +507,13 @@ export default function CutsheetFeatures() {
           </div>
 
           <div className="grid gap-4 md:gap-5 md:grid-cols-2">
-            {/* ── Compare: ScoreCard with gauge + bars ── */}
+            {/* ── Compare ── */}
             <SpotlightCard
               spotlightColor="rgba(99, 102, 241, 0.15)"
               className="rounded-3xl border-white/5 bg-zinc-900/60 p-6 sm:p-7 backdrop-blur-xl"
             >
-              <div className="space-y-3">
-                <DemoPreview height={260} scale={0.58}>
-                  <ScoreCard scores={MOCK_SCORES} isDark={true} />
-                </DemoPreview>
+              <div className="space-y-4">
+                <ComparePreview />
                 <div className="inline-flex items-center gap-2 rounded-full bg-zinc-900/80 px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-indigo-300 uppercase">
                   <SplitSquareVertical className="h-3.5 w-3.5" />
                   Compare
@@ -259,15 +528,13 @@ export default function CutsheetFeatures() {
               </div>
             </SpotlightCard>
 
-            {/* ── Batch Mode: Ranked results table ── */}
+            {/* ── Batch Mode ── */}
             <SpotlightCard
               spotlightColor="rgba(139, 92, 246, 0.15)"
               className="rounded-3xl border-white/5 bg-zinc-900/60 p-6 sm:p-7 backdrop-blur-xl"
             >
-              <div className="space-y-3">
-                <DemoPreview height={260} scale={0.58}>
-                  <BatchTable results={MOCK_BATCH_RESULTS} />
-                </DemoPreview>
+              <div className="space-y-4">
+                <BatchPreview />
                 <div className="inline-flex items-center gap-2 rounded-full bg-zinc-900/80 px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-violet-300 uppercase">
                   <Rows4 className="h-3.5 w-3.5" />
                   Batch Mode
@@ -282,28 +549,13 @@ export default function CutsheetFeatures() {
               </div>
             </SpotlightCard>
 
-            {/* ── Pre-Flight A/B: Winner + rank cards ── */}
+            {/* ── Pre-Flight A/B Testing ── */}
             <SpotlightCard
               spotlightColor="rgba(6, 182, 212, 0.15)"
               className="rounded-3xl border-white/5 bg-zinc-900/60 p-6 sm:p-7 backdrop-blur-xl"
             >
-              <div className="space-y-3">
-                <DemoPreview height={260} scale={0.52}>
-                  <div className="flex flex-col gap-3 p-1">
-                    <PreFlightWinner winner={MOCK_COMPARISON.winner} isDark={true} />
-                    <div className="flex gap-3">
-                      {MOCK_COMPARISON.rankings.map((ranking) => (
-                        <div key={ranking.variant} className="flex-1">
-                          <PreFlightRankCard
-                            variant={ranking}
-                            isWinner={ranking.rank === 1}
-                            isDark={true}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </DemoPreview>
+              <div className="space-y-4">
+                <PreFlightPreview />
                 <div className="inline-flex items-center gap-2 rounded-full bg-zinc-900/80 px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-cyan-300 uppercase">
                   <FlaskConical className="h-3.5 w-3.5" />
                   Pre-Flight A/B Testing
@@ -318,21 +570,13 @@ export default function CutsheetFeatures() {
               </div>
             </SpotlightCard>
 
-            {/* ── Creative Briefs: ScoreCard with improvements + budget ── */}
+            {/* ── Creative Briefs ── */}
             <SpotlightCard
               spotlightColor="rgba(99, 102, 241, 0.15)"
               className="rounded-3xl border-white/5 bg-zinc-900/60 p-6 sm:p-7 backdrop-blur-xl"
             >
-              <div className="space-y-3">
-                <DemoPreview height={260} scale={0.58}>
-                  <ScoreCard
-                    scores={MOCK_SCORES}
-                    improvements={MOCK_IMPROVEMENTS}
-                    budget={MOCK_BUDGET}
-                    hashtags={MOCK_HASHTAGS}
-                    isDark={true}
-                  />
-                </DemoPreview>
+              <div className="space-y-4">
+                <BriefsPreview />
                 <div className="inline-flex items-center gap-2 rounded-full bg-zinc-900/80 px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-indigo-300 uppercase">
                   <FileText className="h-3.5 w-3.5" />
                   Creative Briefs
