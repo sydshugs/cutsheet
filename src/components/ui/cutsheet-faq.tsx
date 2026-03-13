@@ -8,7 +8,7 @@ const FAQS = [
   },
   {
     q: "What video formats and lengths are supported?",
-    a: "We support MP4, MOV, and AVI files up to 500MB. Videos up to 10 minutes are analyzed in full, though Cutsheet is optimized for short-form ads between 6 and 90 seconds — the formats that matter most on paid social and CTV.",
+    a: "We support MP4, MOV, and WebM files up to 500MB. Videos up to 10 minutes are analyzed in full, though Cutsheet is optimized for short-form ads between 6 and 90 seconds — the formats that matter most on paid social and CTV.",
   },
   {
     q: "How is this different from just watching the ad myself?",

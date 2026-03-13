@@ -1,4 +1,4 @@
-import { Upload, Cpu, BarChart2, FileText } from "lucide-react";
+import { Upload, Cpu, BarChart2, FileText, GitCompare, Bookmark, Layers } from "lucide-react";
 import { SpotlightCard } from "./spotlight-card";
 
 const STEPS = [
@@ -106,18 +106,18 @@ export default function CutsheetHowItWorks() {
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             {[
-              { label: "Compare", icon: "↔" },
-              { label: "Brief", icon: "📄" },
-              { label: "Swipe File", icon: "📁" },
-              { label: "Batch", icon: "📦" },
+              { label: "Compare", icon: GitCompare },
+              { label: "Brief", icon: FileText },
+              { label: "Swipe File", icon: Bookmark },
+              { label: "Batch", icon: Layers },
             ].map((item) => (
               <div
                 key={item.label}
                 className="inline-flex items-center gap-2 rounded-full border border-white/8 bg-white/5 px-4 py-2 text-sm text-zinc-300"
               >
-                <span>{item.icon}</span>
+                <item.icon size={16} className="text-zinc-400" />
                 {item.label}
-                <span className="bg-white/10 text-zinc-500 text-xs rounded-full px-2 py-0.5 ml-1.5">
+                <span className="bg-white/10 text-zinc-500 text-xs rounded-full px-2 py-0.5 ml-1.5 whitespace-nowrap">
                   Coming soon
                 </span>
               </div>
