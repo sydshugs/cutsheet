@@ -1,4 +1,4 @@
-import { StrictMode, useEffect } from "react";
+import { StrictMode, lazy, Suspense, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import App from "./App.tsx";
@@ -9,6 +9,8 @@ import NotFoundPage from "./pages/NotFoundPage.tsx";
 import { SharePage } from "./pages/SharePage.tsx";
 import { SuccessPage } from "./pages/SuccessPage.tsx";
 import "./index.css";
+
+const DemoPage = lazy(() => import("./pages/DemoPage.tsx"));
 
 function ScrollToTop() {
   const { pathname, hash } = useLocation();
@@ -31,6 +33,7 @@ createRoot(document.getElementById("root")!).render(
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/success" element={<SuccessPage />} />
         <Route path="/s/:slug" element={<SharePage />} />
+        <Route path="/demo" element={<Suspense fallback={null}><DemoPage /></Suspense>} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
