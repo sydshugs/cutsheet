@@ -1,6 +1,7 @@
 // ScoreCard.tsx — Visual translation from #screen-results (prototype)
 
 import { useEffect, useState } from "react";
+import type { BudgetRecommendation } from "../services/analyzerService";
 
 interface Scores {
   hook: number;
@@ -13,6 +14,7 @@ interface Scores {
 interface ScoreCardProps {
   scores: Scores;
   improvements?: string[];
+  budget?: BudgetRecommendation | null;
   fileName?: string;
   onShare?: () => void;
   isDark?: boolean;
@@ -80,6 +82,7 @@ const scoreKeys = ["hook", "clarity", "cta", "production"] as const;
 export function ScoreCard({
   scores,
   improvements,
+  budget,
   fileName,
   onShare,
   isDark = true,
@@ -214,6 +217,54 @@ export function ScoreCard({
               </li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {/* Budget Recommendation */}
+      {budget && (
+        <div className="px-5 border-t border-white/5 mt-4 pt-4">
+          <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-3">
+            Budget Recommendation
+          </p>
+
+          {/* Verdict badge */}
+          <div className="mb-3">
+            <span
+              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold font-mono ${
+                budget.verdict === "Boost It"
+                  ? "bg-emerald-500/15 text-emerald-400"
+                  : budget.verdict === "Test It"
+                  ? "bg-amber-500/15 text-amber-400"
+                  : "bg-red-500/15 text-red-400"
+              }`}
+            >
+              {budget.verdict === "Boost It" && "🚀"}
+              {budget.verdict === "Test It" && "🧪"}
+              {budget.verdict === "Fix First" && "🔧"}
+              {budget.verdict}
+            </span>
+          </div>
+
+          {/* Details grid */}
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-3">
+            <div>
+              <span className="text-[10px] uppercase tracking-wider text-zinc-600">Platform</span>
+              <p className="text-xs text-zinc-300 font-mono mt-0.5">{budget.platform}</p>
+            </div>
+            <div>
+              <span className="text-[10px] uppercase tracking-wider text-zinc-600">Daily</span>
+              <p className="text-xs text-zinc-300 font-mono mt-0.5">{budget.daily}</p>
+            </div>
+            <div className="col-span-2">
+              <span className="text-[10px] uppercase tracking-wider text-zinc-600">Duration</span>
+              <p className="text-xs text-zinc-300 font-mono mt-0.5">{budget.duration}</p>
+            </div>
+          </div>
+
+          {/* Reason */}
+          {budget.reason && (
+            <p className="text-xs text-zinc-500 italic leading-relaxed">{budget.reason}</p>
+          )}
         </div>
       )}
 

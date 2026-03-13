@@ -14,7 +14,7 @@ import { useVideoAnalyzer } from "./hooks/useVideoAnalyzer";
 import { useHistory, type HistoryEntry } from "./hooks/useHistory";
 import { useSwipeFile } from "./hooks/useSwipeFile";
 import { useUsage } from "./hooks/useUsage";
-import { downloadMarkdown, copyToClipboard, generateBrief, parseImprovements } from "./services/analyzerService";
+import { downloadMarkdown, copyToClipboard, generateBrief, parseImprovements, parseBudget } from "./services/analyzerService";
 import { createShare } from "./services/shareService";
 import { exportToPdf } from "./utils/pdfExport";
 import { UpgradeModal } from "./components/UpgradeModal";
@@ -122,6 +122,7 @@ export default function App() {
         markdown: loadedEntry.markdown,
         scores: loadedEntry.scores,
         improvements: parseImprovements(loadedEntry.markdown),
+        budget: parseBudget(loadedEntry.markdown),
         fileName: loadedEntry.fileName,
         timestamp: new Date(loadedEntry.timestamp),
       }
@@ -162,6 +163,8 @@ export default function App() {
       downloadMarkdown({
         markdown: loadedEntry.markdown,
         scores: loadedEntry.scores,
+        improvements: parseImprovements(loadedEntry.markdown),
+        budget: parseBudget(loadedEntry.markdown),
         timestamp: new Date(loadedEntry.timestamp),
         fileName: loadedEntry.fileName,
       });
@@ -408,6 +411,7 @@ export default function App() {
                 <ScoreCard
                   scores={activeResult.scores}
                   improvements={activeResult.improvements}
+                  budget={activeResult.budget}
                   fileName={activeResult.fileName}
                   analysisTime={analysisCompletedAt ?? undefined}
                   modelName="Gemini 2.0 Flash"

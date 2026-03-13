@@ -98,9 +98,27 @@ Three paragraphs written as a media buyer debriefing a creative team:
 After your analysis, list exactly 3-5 specific, actionable suggestions to improve this creative. Each suggestion should be one sentence, direct, and specific to what you observed in this creative. Format as a numbered list.
 1. [Specific improvement based on what you observed]
 2. [Specific improvement based on what you observed]
-3. [Specific improvement based on what you observed]`;
+3. [Specific improvement based on what you observed]
+
+---
+
+## 💰 BUDGET RECOMMENDATION
+Based on the ad's quality and likely performance, recommend a media buying strategy. Use this exact format:
+- **Verdict:** [Boost It / Test It / Fix First] — "Boost It" means the ad is strong enough to scale spend immediately, "Test It" means it has potential but should be tested with a small budget first, "Fix First" means the creative needs improvement before any spend.
+- **Platform:** [Meta / TikTok / YouTube / Meta + TikTok / All platforms] — the best-fit platform(s) for this creative style and audience.
+- **Daily Budget:** [$X–$Y/day] — a specific daily budget range recommendation (e.g. "$50–$100/day").
+- **Duration:** [X days / X weeks] — how long to run at this budget before evaluating (e.g. "7 days", "2 weeks").
+- **Reason:** One sentence explaining why this budget and timeline make sense for this specific creative.`;
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
+
+export interface BudgetRecommendation {
+  verdict: "Boost It" | "Test It" | "Fix First";
+  platform: string;
+  daily: string;
+  duration: string;
+  reason: string;
+}
 
 export interface AnalysisResult {
   markdown: string;
@@ -112,6 +130,7 @@ export interface AnalysisResult {
     overall: number;
   } | null;
   improvements: string[];
+  budget: BudgetRecommendation | null;
   timestamp: Date;
   fileName: string;
 }
@@ -175,6 +194,39 @@ export function parseImprovements(markdown: string): string[] {
       .filter((line) => line.length > 0 && !line.startsWith("#"));
   } catch {
     return [];
+  }
+}
+
+export function parseBudget(markdown: string): BudgetRecommendation | null {
+  try {
+    const match = markdown.match(/##\s*(?:💰\s*)?BUDGET RECOMMENDATION\s*\n([\s\S]*?)(?=\n---|\n##|$)/i);
+    if (!match) return null;
+
+    const section = match[1].trim();
+
+    const verdictMatch = section.match(/\*\*Verdict:\*\*\s*(Boost It|Test It|Fix First)/i);
+    const platformMatch = section.match(/\*\*Platform:\*\*\s*(.+)/i);
+    const dailyMatch = section.match(/\*\*Daily Budget:\*\*\s*(.+)/i);
+    const durationMatch = section.match(/\*\*Duration:\*\*\s*(.+)/i);
+    const reasonMatch = section.match(/\*\*Reason:\*\*\s*(.+)/i);
+
+    if (!verdictMatch) return null;
+
+    // Normalize verdict to exact type
+    const rawVerdict = verdictMatch[1].trim();
+    let verdict: BudgetRecommendation["verdict"] = "Test It";
+    if (/boost it/i.test(rawVerdict)) verdict = "Boost It";
+    else if (/fix first/i.test(rawVerdict)) verdict = "Fix First";
+
+    return {
+      verdict,
+      platform: platformMatch ? platformMatch[1].replace(/\s*—.*$/, "").trim() : "Meta",
+      daily: dailyMatch ? dailyMatch[1].replace(/\s*—.*$/, "").trim() : "$20–$50/day",
+      duration: durationMatch ? durationMatch[1].replace(/\s*—.*$/, "").trim() : "7 days",
+      reason: reasonMatch ? reasonMatch[1].trim() : "",
+    };
+  } catch {
+    return null;
   }
 }
 
@@ -261,12 +313,16 @@ export async function analyzeVideo(
     // 6. Parse improvements from markdown
     const improvements = parseImprovements(markdown);
 
+    // 7. Parse budget recommendation from markdown
+    const budget = parseBudget(markdown);
+
     emit("complete");
 
     return {
       markdown,
       scores,
       improvements,
+      budget,
       timestamp: new Date(),
       fileName: file.name,
     };
