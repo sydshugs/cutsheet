@@ -47,6 +47,7 @@ export default function App() {
   }, []);
 
   const [mode, setMode] = useState<SidebarMode>("single");
+  const [compareKey, setCompareKey] = useState(0);
 
   const [file, setFile] = useState<File | null>(null);
   const [copied, setCopied] = useState(false);
@@ -332,7 +333,16 @@ export default function App() {
       {/* Sidebar */}
       <Sidebar
         mode={mode}
-        onModeChange={(m) => setMode(m)}
+        onModeChange={(m) => {
+          // Reset compare panels when entering Compare mode
+          if (m === "compare") setCompareKey((k) => k + 1);
+          // Clear single-analyzer error state so it doesn't persist across mode switches
+          if (mode === "single" && (status === "error" || error)) {
+            reset();
+            setFile(null);
+          }
+          setMode(m);
+        }}
         isPro={isPro}
         onNewAnalysis={handleReset}
         onHistoryOpen={() => setHistoryOpen(true)}
@@ -397,7 +407,7 @@ export default function App() {
               )}
 
               {/* ── NON-ANALYZER MODES ── Keep exactly as-is with existing props */}
-              {mode === "compare" && <CompareView isDark={isDark} apiKey={API_KEY} />}
+              {mode === "compare" && <CompareView key={compareKey} isDark={isDark} apiKey={API_KEY} />}
               {mode === "batch" && <BatchView isDark={isDark} apiKey={API_KEY} addHistoryEntry={addEntry} t={t} canAnalyze={canAnalyze} isPro={isPro} increment={increment} FREE_LIMIT={FREE_LIMIT} />}
               {mode === "preflight" && <PreFlightView isDark={isDark} apiKey={API_KEY} />}
               {mode === "swipe" && <SwipeFileView isDark={isDark} />}
