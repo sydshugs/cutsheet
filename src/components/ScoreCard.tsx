@@ -88,7 +88,7 @@ export function ScoreCard({
   isDark = true,
   winner,
   analysisTime,
-  modelName = "Gemini 2.0 Flash",
+  modelName = "Gemini 2.5 Flash",
   onGenerateBrief,
   onAddToSwipeFile,
 }: ScoreCardProps) {

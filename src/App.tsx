@@ -398,7 +398,7 @@ export default function App() {
 
               {/* ── NON-ANALYZER MODES ── Keep exactly as-is with existing props */}
               {mode === "compare" && <CompareView isDark={isDark} apiKey={API_KEY} />}
-              {mode === "batch" && <BatchView isDark={isDark} apiKey={API_KEY} addHistoryEntry={addEntry} t={t} />}
+              {mode === "batch" && <BatchView isDark={isDark} apiKey={API_KEY} addHistoryEntry={addEntry} t={t} canAnalyze={canAnalyze} isPro={isPro} increment={increment} FREE_LIMIT={FREE_LIMIT} />}
               {mode === "preflight" && <PreFlightView isDark={isDark} apiKey={API_KEY} />}
               {mode === "swipe" && <SwipeFileView isDark={isDark} />}
             </div>
@@ -414,7 +414,7 @@ export default function App() {
                   budget={activeResult.budget}
                   fileName={activeResult.fileName}
                   analysisTime={analysisCompletedAt ?? undefined}
-                  modelName="Gemini 2.0 Flash"
+                  modelName="Gemini 2.5 Flash"
                   onGenerateBrief={handleGenerateBrief}
                   onAddToSwipeFile={handleAddToSwipeFile}
                   onShare={handleCopy}

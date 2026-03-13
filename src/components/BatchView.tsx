@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from "react";
 import { BatchTable } from "./BatchTable";
 import { analyzeVideo, generateBatchVerdict, recalculateOverallScore, type AnalysisResult } from "../services/analyzerService";
+import { UpgradeModal } from "./UpgradeModal";
 import type { ThemeTokens } from "../theme";
 
 const ACCEPTED_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
@@ -29,6 +30,10 @@ interface BatchViewProps {
   apiKey: string;
   addHistoryEntry: (entry: { fileName: string; timestamp: string; scores: AnalysisResult["scores"]; markdown: string }) => void;
   t: ThemeTokens;
+  canAnalyze: boolean;
+  isPro: boolean;
+  increment: () => number;
+  FREE_LIMIT: number;
 }
 
 export function BatchView({
@@ -36,6 +41,10 @@ export function BatchView({
   apiKey,
   addHistoryEntry,
   t,
+  canAnalyze,
+  isPro,
+  increment,
+  FREE_LIMIT,
 }: BatchViewProps) {
   const [items, setItems] = useState<BatchItem[]>([]);
   const [isRunning, setIsRunning] = useState(false);
@@ -43,6 +52,7 @@ export function BatchView({
   const [verdict, setVerdict] = useState<string | null>(null);
   const [verdictLoading, setVerdictLoading] = useState(false);
   const [verdictError, setVerdictError] = useState<string | null>(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const completed = items.filter((i) => i.status === "complete" && i.result?.scores);
@@ -96,6 +106,13 @@ export function BatchView({
 
   const runBatch = useCallback(async () => {
     if (items.length === 0 || isRunning) return;
+
+    // Paywall check — block free users who have hit the limit
+    if (!canAnalyze && !isPro) {
+      setShowUpgradeModal(true);
+      return;
+    }
+
     setIsRunning(true);
     setVerdict(null);
     setVerdictError(null);
@@ -124,7 +141,12 @@ export function BatchView({
           scores: result.scores,
           markdown: result.markdown,
         });
-        // Batch bypasses usage limit — no increment/onLimitReached
+        // Increment usage after each analysis
+        const newCount = increment();
+        if (newCount >= FREE_LIMIT && !isPro) {
+          setShowUpgradeModal(true);
+          break; // Stop batch — user hit the free limit
+        }
       } catch (err) {
         setItems((prev) =>
           prev.map((x) =>
@@ -142,7 +164,7 @@ export function BatchView({
 
     setCurrentIndex(0);
     setIsRunning(false);
-  }, [items, isRunning, apiKey, addHistoryEntry]);
+  }, [items, isRunning, apiKey, addHistoryEntry, canAnalyze, isPro, increment, FREE_LIMIT]);
 
   const fetchVerdict = useCallback(async () => {
     const withScores = items
@@ -439,6 +461,8 @@ export function BatchView({
           {verdict && <p style={{ fontSize: 13.5, color: "var(--ink-muted)", lineHeight: 1.65, margin: 0 }}>{verdict}</p>}
         </div>
       )}
+
+      {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} t={t} />}
     </div>
   );
 }

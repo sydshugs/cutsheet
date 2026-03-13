@@ -11,10 +11,6 @@ interface SwipeFileViewProps {
 export function SwipeFileView({ isDark }: SwipeFileViewProps) {
   const { items, deleteItem, clearAll } = useSwipeFile();
   const [search, setSearch] = useState("");
-  const [verticalFilter, setVerticalFilter] = useState("All Verticals");
-  const [formatFilter, setFormatFilter] = useState("All Formats");
-  const [sortFilter, setSortFilter] = useState("Score: High → Low");
-  const [platformFilter, setPlatformFilter] = useState("All Platforms");
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -70,48 +66,7 @@ export function SwipeFileView({ isDark }: SwipeFileViewProps) {
             onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
           />
         </div>
-        <select
-          value={verticalFilter}
-          onChange={(e) => setVerticalFilter(e.target.value)}
-          style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "9px 14px", fontSize: 13, color: "var(--ink)", fontFamily: "var(--sans)", outline: "none", cursor: "pointer", minWidth: 120 }}
-        >
-          <option>All Verticals</option>
-          <option>DTC</option>
-          <option>SaaS</option>
-          <option>E-commerce</option>
-          <option>Beauty</option>
-        </select>
-        <select
-          value={formatFilter}
-          onChange={(e) => setFormatFilter(e.target.value)}
-          style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "9px 14px", fontSize: 13, color: "var(--ink)", fontFamily: "var(--sans)", outline: "none", cursor: "pointer", minWidth: 120 }}
-        >
-          <option>All Formats</option>
-          <option>UGC</option>
-          <option>Motion</option>
-          <option>Static</option>
-          <option>Testimonial</option>
-        </select>
-        <select
-          value={sortFilter}
-          onChange={(e) => setSortFilter(e.target.value)}
-          style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "9px 14px", fontSize: 13, color: "var(--ink)", fontFamily: "var(--sans)", outline: "none", cursor: "pointer", minWidth: 160 }}
-        >
-          <option>Score: High → Low</option>
-          <option>Score: Low → High</option>
-          <option>Newest First</option>
-          <option>Oldest First</option>
-        </select>
-        <select
-          value={platformFilter}
-          onChange={(e) => setPlatformFilter(e.target.value)}
-          style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "9px 14px", fontSize: 13, color: "var(--ink)", fontFamily: "var(--sans)", outline: "none", cursor: "pointer", minWidth: 120 }}
-        >
-          <option>All Platforms</option>
-          <option>TikTok</option>
-          <option>Meta</option>
-          <option>YouTube</option>
-        </select>
+        {/* Filters coming soon */}
       </div>
 
       {/* Stats row */}
