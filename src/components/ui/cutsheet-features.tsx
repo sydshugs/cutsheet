@@ -193,6 +193,7 @@ export default function CutsheetFeatures() {
               className="rounded-3xl border-white/5 bg-zinc-900/60 p-6 sm:p-7 backdrop-blur-xl"
             >
               <div className="space-y-3">
+                <img src="/demos/scorecard-deep-dive.gif" alt="Compare mode demo" className="w-full rounded-xl mb-3 object-cover max-h-40" />
                 <div className="inline-flex items-center gap-2 rounded-full bg-zinc-900/80 px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-indigo-300 uppercase">
                   <SplitSquareVertical className="h-3.5 w-3.5" />
                   Compare
@@ -212,6 +213,7 @@ export default function CutsheetFeatures() {
               className="rounded-3xl border-white/5 bg-zinc-900/60 p-6 sm:p-7 backdrop-blur-xl"
             >
               <div className="space-y-3">
+                <img src="/demos/batch-mode.gif" alt="Batch mode demo" className="w-full rounded-xl mb-3 object-cover max-h-40" />
                 <div className="inline-flex items-center gap-2 rounded-full bg-zinc-900/80 px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-violet-300 uppercase">
                   <Rows4 className="h-3.5 w-3.5" />
                   Batch Mode
@@ -231,6 +233,7 @@ export default function CutsheetFeatures() {
               className="rounded-3xl border-white/5 bg-zinc-900/60 p-6 sm:p-7 backdrop-blur-xl"
             >
               <div className="space-y-3">
+                <img src="/demos/ab-pre-flight.gif" alt="A/B pre-flight testing demo" className="w-full rounded-xl mb-3 object-cover max-h-40" />
                 <div className="inline-flex items-center gap-2 rounded-full bg-zinc-900/80 px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-cyan-300 uppercase">
                   <FlaskConical className="h-3.5 w-3.5" />
                   Pre-Flight A/B Testing
@@ -250,6 +253,7 @@ export default function CutsheetFeatures() {
               className="rounded-3xl border-white/5 bg-zinc-900/60 p-6 sm:p-7 backdrop-blur-xl"
             >
               <div className="space-y-3">
+                <img src="/demos/scorecard-deep-dive.gif" alt="Creative briefs demo" className="w-full rounded-xl mb-3 object-cover max-h-40" />
                 <div className="inline-flex items-center gap-2 rounded-full bg-zinc-900/80 px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-indigo-300 uppercase">
                   <FileText className="h-3.5 w-3.5" />
                   Creative Briefs
