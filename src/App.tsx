@@ -14,6 +14,7 @@ import { useVideoAnalyzer } from "./hooks/useVideoAnalyzer";
 import { useHistory, type HistoryEntry } from "./hooks/useHistory";
 import { useSwipeFile } from "./hooks/useSwipeFile";
 import { useUsage } from "./hooks/useUsage";
+import { useThumbnail } from "./hooks/useThumbnail";
 import { downloadMarkdown, copyToClipboard, generateBrief, parseImprovements, parseBudget, parseHashtags } from "./services/analyzerService";
 import { createShare } from "./services/shareService";
 import { exportToPdf } from "./utils/pdfExport";
@@ -72,6 +73,7 @@ export default function App() {
   const { addItem: addSwipeItem } = useSwipeFile();
   const [previousResult, setPreviousResult] = useState<HistoryEntry | null>(null);
   const { isPro, canAnalyze, increment, FREE_LIMIT } = useUsage();
+  const thumbnailDataUrl = useThumbnail(file);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -93,6 +95,7 @@ export default function App() {
           timestamp: result.timestamp.toISOString(),
           scores: result.scores,
           markdown: result.markdown,
+          thumbnailDataUrl: thumbnailDataUrl ?? undefined,
         });
         const newCount = increment();
         if (newCount >= FREE_LIMIT && !isPro) setShowUpgradeModal(true);
@@ -118,6 +121,11 @@ export default function App() {
   }, [file]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Unified display result — history load takes precedence over live result
+  // For live results, attach the current thumbnail from the hook
+  const liveResult = result
+    ? { ...result, thumbnailDataUrl: thumbnailDataUrl ?? result.thumbnailDataUrl }
+    : result;
+
   const activeResult = loadedEntry
     ? {
         markdown: loadedEntry.markdown,
@@ -125,10 +133,11 @@ export default function App() {
         improvements: parseImprovements(loadedEntry.markdown),
         budget: parseBudget(loadedEntry.markdown),
         hashtags: parseHashtags(loadedEntry.markdown),
+        thumbnailDataUrl: loadedEntry.thumbnailDataUrl,
         fileName: loadedEntry.fileName,
         timestamp: new Date(loadedEntry.timestamp),
       }
-    : result;
+    : liveResult;
 
   const effectiveStatus = loadedEntry ? "complete" : status;
   const showRightPanel = mode === "single" && effectiveStatus === "complete" && activeResult !== null;
@@ -383,6 +392,7 @@ export default function App() {
                   statusMessage={statusMessage || STATUS_COPY[status]}
                   result={activeResult}
                   error={error}
+                  thumbnailDataUrl={activeResult?.thumbnailDataUrl}
                   onFileSelect={(f) => {
                     if (!f) { handleReset(); return; }
                     setFile(f);

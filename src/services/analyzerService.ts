@@ -153,6 +153,7 @@ export interface AnalysisResult {
   improvements: string[];
   budget: BudgetRecommendation | null;
   hashtags?: Hashtags;
+  thumbnailDataUrl?: string;
   timestamp: Date;
   fileName: string;
 }

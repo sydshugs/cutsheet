@@ -12,6 +12,7 @@ interface AnalyzerViewProps {
   statusMessage: string;
   result: AnalysisResult | null;
   error: string | null;
+  thumbnailDataUrl?: string;
   onFileSelect: (file: File | null) => void;
   onUrlSubmit?: (url: string) => void;
   onAnalyze: () => void;
@@ -33,6 +34,7 @@ export function AnalyzerView({
   statusMessage,
   result,
   error,
+  thumbnailDataUrl,
   onFileSelect,
   onUrlSubmit,
   onAnalyze,
@@ -109,6 +111,7 @@ export function AnalyzerView({
           <ReportCards
             file={file}
             markdown={result.markdown}
+            thumbnailDataUrl={thumbnailDataUrl}
             onCopy={onCopy}
             onExportPdf={onExportPdf}
             onShare={onShare}

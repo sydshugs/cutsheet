@@ -12,6 +12,7 @@ export interface HistoryEntry {
     overall: number;
   } | null;
   markdown: string;
+  thumbnailDataUrl?: string;
 }
 
 const HISTORY_KEY = "cutsheet-history";

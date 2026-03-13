@@ -5,6 +5,7 @@ import { Copy, FileDown, Share2 } from "lucide-react";
 interface ReportCardsProps {
   file: File | null;
   markdown: string;
+  thumbnailDataUrl?: string;
   onCopy: () => void;
   onExportPdf: () => void;
   onShare: () => void;
@@ -21,7 +22,7 @@ function splitMarkdown(md: string): { title: string | null; content: string }[] 
   }).filter(s => s.content);
 }
 
-export function ReportCards({ file, markdown, onCopy, onExportPdf, onShare, copied, shareLoading }: ReportCardsProps) {
+export function ReportCards({ file, markdown, thumbnailDataUrl, onCopy, onExportPdf, onShare, copied, shareLoading }: ReportCardsProps) {
   const videoUrl = useMemo(() => file ? URL.createObjectURL(file) : null, [file]);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -39,6 +40,7 @@ export function ReportCards({ file, markdown, onCopy, onExportPdf, onShare, copi
           <video
             ref={videoRef}
             src={videoUrl}
+            poster={thumbnailDataUrl ?? undefined}
             controls
             className="rounded-2xl border border-white/5 overflow-hidden max-h-[320px] w-full object-contain bg-black"
           />
