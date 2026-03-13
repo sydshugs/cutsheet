@@ -79,6 +79,18 @@
 }
 
 /* ─── ANIMATIONS ──────────────────────────────────────────── */
+
+@property --glow-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes glow-rotate {
+  from { --glow-angle: 0deg; }
+  to { --glow-angle: 360deg; }
+}
+
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }

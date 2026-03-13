@@ -161,13 +161,45 @@ export default function CutsheetHero() {
 
           {/* Right column */}
           <div className="lg:col-span-5 space-y-5 lg:mt-8">
-            {/* Hero demo GIF */}
-            <div className="animate-fade-in delay-500">
-              <img
-                src="/demos/upload-to-analysis.webp"
-                className="w-full rounded-2xl"
-                alt="Cutsheet analyzing an ad creative"
+            {/* Hero demo — Madgicx-style rotating glow border */}
+            <div className="animate-fade-in delay-500 relative" style={{ borderRadius: 40 }}>
+              {/* Rotating conic-gradient glow (outer) */}
+              <div
+                className="absolute -inset-[1px] z-0 pointer-events-none"
+                style={{
+                  borderRadius: 40,
+                  background: `conic-gradient(from var(--glow-angle), transparent 75%, rgba(99,102,241,0.6))`,
+                  animation: "glow-rotate 9s linear infinite",
+                }}
               />
+              {/* Blurred duplicate for soft halo */}
+              <div
+                className="absolute -inset-[1px] z-0 pointer-events-none"
+                style={{
+                  borderRadius: 40,
+                  background: `conic-gradient(from var(--glow-angle), rgba(99,102,241,0.5), transparent 15%)`,
+                  animation: "glow-rotate 9s linear infinite reverse",
+                  filter: "blur(24px)",
+                  opacity: 0.5,
+                }}
+              />
+              {/* Inner container */}
+              <div
+                className="relative z-10 overflow-hidden"
+                style={{
+                  borderRadius: 40,
+                  background: "rgba(12, 8, 29, 1)",
+                  border: "1px solid rgba(99,102,241,0.1)",
+                  padding: 8,
+                }}
+              >
+                <img
+                  src="/demos/upload-to-analysis.webp"
+                  className="w-full"
+                  style={{ borderRadius: 32 }}
+                  alt="Cutsheet analyzing an ad creative"
+                />
+              </div>
             </div>
 
             {/* Marquee — scoring categories */}
