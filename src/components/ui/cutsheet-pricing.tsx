@@ -32,7 +32,7 @@ const PLANS: Plan[] = [
     monthlyPrice: 0,
     annualPrice: 0,
     description: "Try Cutsheet risk-free. No card, no commitment.",
-    cta: "Join Waitlist",
+    cta: "Get Early Access",
     featured: false,
     limit: "5 analyses / month",
     features: [
@@ -49,7 +49,7 @@ const PLANS: Plan[] = [
     monthlyPrice: 29,
     annualPrice: 19,
     description: "For performance marketers and creative teams shipping weekly.",
-    cta: "Lock In Early Access",
+    cta: "Get Early Access",
     featured: true,
     limit: "Unlimited analyses",
     features: [
@@ -68,7 +68,7 @@ const PLANS: Plan[] = [
     monthlyPrice: 79,
     annualPrice: 59,
     description: "For agencies and in-house teams reviewing high-volume campaigns.",
-    cta: "Reserve Team Access",
+    cta: "Get Early Access",
     featured: false,
     limit: "Unlimited + team seats",
     features: [

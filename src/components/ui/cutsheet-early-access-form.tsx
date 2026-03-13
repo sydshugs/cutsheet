@@ -14,7 +14,7 @@ interface EarlyAccessFormProps {
 }
 
 export default function EarlyAccessForm({
-  placeholder = "Enter your work email",
+  placeholder = "Enter your email",
   buttonText = "Get Early Access",
   size = "md",
   className = "",

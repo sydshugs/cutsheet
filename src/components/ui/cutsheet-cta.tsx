@@ -24,8 +24,8 @@ export default function CutsheetCTA() {
 
         <div className="mt-8 flex justify-center">
           <EarlyAccessForm
-            placeholder="Your work email"
-            buttonText="Join the Waitlist"
+            placeholder="Enter your email"
+            buttonText="Get Early Access"
           />
         </div>
 

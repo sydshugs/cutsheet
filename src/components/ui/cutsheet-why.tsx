@@ -13,8 +13,8 @@ const ROWS = [
 // y = yes, n = no, p = partial
 type V = "y" | "n" | "p";
 const DATA: Record<string, [V, V]> = {
-  "Self-serve, no demo needed":      ["n", "n"],
-  "Video-first analysis":            ["p", "n"],
+  "Self-serve, no demo needed":      ["n", "y"],
+  "Video-first analysis":            ["y", "n"],
   "Results in under 30 seconds":     ["n", "n"],
   "Free tier available":             ["n", "n"],
   "Built for performance marketers": ["n", "p"],
