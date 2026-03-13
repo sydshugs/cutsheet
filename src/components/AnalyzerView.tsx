@@ -48,7 +48,7 @@ export function AnalyzerView({
   return (
     <AnimatePresence mode="wait">
       {status === "idle" && (
-        <div key="idle" className="flex-1 flex flex-col items-center justify-center p-8">
+        <div key="idle" className="flex-1 flex flex-col items-center justify-center p-4 md:p-8">
           <VideoDropzone
             onFileSelect={onFileSelect}
             file={file}
@@ -84,7 +84,7 @@ export function AnalyzerView({
       )}
 
       {(status === "uploading" || status === "processing") && (
-        <div key="progress" className="flex-1 flex items-center justify-center p-8">
+        <div key="progress" className="flex-1 flex items-center justify-center p-4 md:p-8">
           <ProgressCard
             file={file!}
             status={status}
@@ -95,7 +95,7 @@ export function AnalyzerView({
       )}
 
       {status === "error" && (
-        <div key="error" className="flex-1 flex items-center justify-center p-8">
+        <div key="error" className="flex-1 flex items-center justify-center p-4 md:p-8">
           <ErrorCard
             error={error}
             onRetry={onAnalyze}
@@ -105,7 +105,7 @@ export function AnalyzerView({
       )}
 
       {status === "complete" && result && (
-        <div key="complete" className="flex-1 overflow-y-auto">
+        <div key="complete">
           <ReportCards
             file={file}
             markdown={result.markdown}

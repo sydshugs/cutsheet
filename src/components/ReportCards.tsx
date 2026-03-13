@@ -66,7 +66,7 @@ export function ReportCards({ file, markdown, onCopy, onExportPdf, onShare, copi
       </div>
 
       {/* Sticky action bar */}
-      <div className="sticky bottom-0 bg-zinc-950/80 backdrop-blur-xl border-t border-white/5 px-6 py-3 flex items-center gap-3 mt-6 -mx-8 -mb-6">
+      <div className="sticky bottom-0 bg-zinc-950/80 backdrop-blur-xl border-t border-white/5 px-4 md:px-6 py-3 flex items-center gap-3 mt-6 -mx-4 md:-mx-8 -mb-6">
         <button
           onClick={onCopy}
           className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-white text-sm rounded-xl px-4 py-2 transition-colors"

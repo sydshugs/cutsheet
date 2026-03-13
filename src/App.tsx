@@ -359,7 +359,7 @@ export default function App() {
             <div className="pointer-events-none absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-violet-600/[0.08] blur-[100px]" />
 
             {/* Mode content */}
-            <div className="relative px-4 py-6 md:px-8">
+            <div className="relative px-4 py-6 md:px-8 min-h-full flex flex-col">
               {/* ── SINGLE / ANALYZER MODE ── */}
               {mode === "single" && (
                 <AnalyzerView
@@ -401,7 +401,7 @@ export default function App() {
           </div>
 
           {/* Right panel (results only) */}
-          <div className={`shrink-0 bg-zinc-900/50 backdrop-blur-xl border-l border-white/5 overflow-y-auto overflow-x-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:w-full max-lg:border-l-0 max-lg:border-t max-lg:border-white/5 ${showRightPanel ? 'w-[340px] opacity-100' : 'w-0 opacity-0'}`}>
+          <div className={`shrink-0 bg-zinc-900/50 backdrop-blur-xl border-l border-white/5 overflow-y-auto overflow-x-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-white/5 ${showRightPanel ? 'w-[340px] max-lg:w-full opacity-100' : 'w-0 max-lg:w-0 opacity-0'}`}>
             {showRightPanel && activeResult?.scores && (
               <div ref={scorecardRef}>
                 <ScoreCard
