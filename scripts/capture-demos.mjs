@@ -12,14 +12,14 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const FFMPEG = "/Users/atlas/.local/bin/ffmpeg";
 const OUTPUT_DIR = path.resolve(__dirname, "../demo-exports");
 const BASE_URL = "http://localhost:3000/demo";
-const FPS = 24;
-const VIEWPORT = { width: 1280, height: 800, deviceScaleFactor: 2 };
+const FPS = 15;
+const VIEWPORT = { width: 1440, height: 900, deviceScaleFactor: 2 };
 
 const SEQUENCES = [
-  { id: 1, name: "upload-to-analysis", duration: 6000 },
-  { id: 2, name: "scorecard-deep-dive", duration: 8000 },
-  { id: 3, name: "ab-pre-flight", duration: 8000 },
-  { id: 4, name: "batch-mode", duration: 6000 },
+  { id: 1, name: "upload-to-analysis", duration: 8000 },
+  { id: 2, name: "scorecard-deep-dive", duration: 10000 },
+  { id: 3, name: "ab-pre-flight", duration: 10000 },
+  { id: 4, name: "batch-mode", duration: 8000 },
 ];
 
 function sleep(ms) {
@@ -96,14 +96,14 @@ async function captureSequence(browser, seq) {
   const mp4Size = (fs.statSync(mp4Out).size / 1024).toFixed(0);
   console.log(`     ${seq.name}.mp4 (${mp4Size} KB)`);
 
-  // ffmpeg: frames -> animated WebP (with alpha channel, 640px wide)
+  // ffmpeg: frames -> animated WebP (with alpha channel, 720px wide)
   const webpOut = path.join(OUTPUT_DIR, `${seq.name}.webp`);
   console.log(`  Encoding WebP...`);
   execFileSync(FFMPEG, [
     "-y",
     "-framerate", String(FPS),
     "-i", framePattern,
-    "-vf", `fps=${FPS},scale=640:-1:flags=lanczos`,
+    "-vf", `fps=${FPS},scale=720:-1:flags=lanczos`,
     "-c:v", "libwebp_anim",
     "-lossless", "0",
     "-quality", "80",
@@ -130,7 +130,7 @@ async function main() {
       "--no-sandbox",
       "--disable-setuid-sandbox",
       "--disable-gpu",
-      "--window-size=1280,800",
+      "--window-size=1440,900",
     ],
   });
 

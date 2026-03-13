@@ -1,4 +1,4 @@
-// DemoUploadToAnalysis.tsx — Sequence 1: Upload → Analyze → Results (3s loop)
+// DemoUploadToAnalysis.tsx — Sequence 1: Upload → Analyze → Results (8s loop)
 
 import { motion, AnimatePresence } from "framer-motion";
 import { Upload } from "lucide-react";
@@ -13,7 +13,7 @@ import {
   MOCK_HASHTAGS,
 } from "./mockData";
 
-const DURATION = 6000;
+const DURATION = 8000;
 
 const ANALYSIS_HINTS = [
   "Detecting hook pattern...",
@@ -24,10 +24,11 @@ const ANALYSIS_HINTS = [
 
 type Phase = "dropzone" | "dragover" | "analyzing" | "results";
 
+// 8s total: dropzone 0-1s, dragover 1-2s, analyzing 2-3.5s, results 3.5-8s (56% on results)
 function getPhase(elapsed: number): Phase {
   if (elapsed < 1000) return "dropzone";
   if (elapsed < 2000) return "dragover";
-  if (elapsed < 3000) return "analyzing";
+  if (elapsed < 3500) return "analyzing";
   return "results";
 }
 
@@ -35,7 +36,7 @@ const fade = {
   initial: { opacity: 0 },
   animate: { opacity: 1 },
   exit: { opacity: 0 },
-  transition: { duration: 0.2 },
+  transition: { duration: 0.6, ease: "easeInOut" as const },
 };
 
 interface Props {
@@ -48,7 +49,7 @@ export function DemoUploadToAnalysis({ playing = true }: Props) {
 
   return (
     <DemoShell>
-      <div className="flex items-center justify-center w-full h-full p-6" key={loopCount}>
+      <div className="flex items-center justify-center w-full h-full p-3" key={loopCount}>
         <AnimatePresence mode="wait">
           {/* ── Dropzone ── */}
           {phase === "dropzone" && (
@@ -100,7 +101,7 @@ export function DemoUploadToAnalysis({ playing = true }: Props) {
                 <motion.div
                   initial={{ opacity: 0, y: -12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.25 }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
                   className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-md bg-indigo-500 px-3 py-1 text-[11px] font-mono font-semibold text-white shadow-lg"
                 >
                   {MOCK_FILENAME}
@@ -135,7 +136,7 @@ export function DemoUploadToAnalysis({ playing = true }: Props) {
 
                   {/* Cycling hint */}
                   <p className="text-xs text-zinc-500 font-mono">
-                    {ANALYSIS_HINTS[Math.floor(((elapsed - 2000) / 1000) * ANALYSIS_HINTS.length) % ANALYSIS_HINTS.length]}
+                    {ANALYSIS_HINTS[Math.floor(((elapsed - 2000) / 1500) * ANALYSIS_HINTS.length) % ANALYSIS_HINTS.length]}
                   </p>
                 </div>
               </div>
@@ -156,7 +157,7 @@ export function DemoUploadToAnalysis({ playing = true }: Props) {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.35 }}
+              transition={{ duration: 0.6, ease: "easeInOut" }}
               className="w-full max-w-[340px] rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden"
             >
               <ScoreCard

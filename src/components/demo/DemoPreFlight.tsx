@@ -1,4 +1,4 @@
-// DemoPreFlight.tsx — Sequence 3: A/B Pre-Flight comparison (4s loop)
+// DemoPreFlight.tsx — Sequence 3: A/B Pre-Flight comparison (10s loop)
 
 import { motion, AnimatePresence } from "framer-motion";
 import { Upload, Loader2 } from "lucide-react";
@@ -9,13 +9,14 @@ import { PreFlightRankCard } from "@/src/components/PreFlightRankCard";
 import { PreFlightHeadToHead } from "@/src/components/PreFlightHeadToHead";
 import { MOCK_COMPARISON } from "./mockData";
 
-const DURATION = 8000;
+const DURATION = 10000;
 
 type Phase = "upload" | "analyzing" | "results";
 
+// 10s total: upload 0-1.5s, analyzing 1.5-3.5s, results 3.5-10s (65% on results, winner visible longest)
 function getPhase(elapsed: number): Phase {
-  if (elapsed < 1000) return "upload";
-  if (elapsed < 3000) return "analyzing";
+  if (elapsed < 1500) return "upload";
+  if (elapsed < 3500) return "analyzing";
   return "results";
 }
 
@@ -23,13 +24,13 @@ const fade = {
   initial: { opacity: 0 },
   animate: { opacity: 1 },
   exit: { opacity: 0 },
-  transition: { duration: 0.2 },
+  transition: { duration: 0.6, ease: "easeInOut" as const },
 };
 
 const slideUp = {
   initial: { opacity: 0, y: 16 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.35 },
+  transition: { duration: 0.6, ease: "easeInOut" as const },
 };
 
 interface Props {
@@ -67,15 +68,16 @@ export function DemoPreFlight({ playing = true }: Props) {
   const { elapsed, loopCount } = useTimeline({ duration: DURATION, playing });
   const phase = getPhase(elapsed);
 
-  const analysisStep = elapsed >= 2000 ? 2 : 1;
+  const analysisStep = elapsed >= 2500 ? 2 : 1;
 
-  const showWinner = elapsed >= 3000;
-  const showRanks = elapsed >= 4000;
-  const showH2H = elapsed >= 5000;
+  // Winner at 3.5s, ranks at 5s, H2H at 6.5s — winner visible for 6.5s total
+  const showWinner = elapsed >= 3500;
+  const showRanks = elapsed >= 5000;
+  const showH2H = elapsed >= 6500;
 
   return (
     <DemoShell>
-      <div className="flex items-start justify-center w-full h-full p-6 overflow-y-auto" key={loopCount}>
+      <div className="flex items-start justify-center w-full h-full p-3 overflow-y-auto" key={loopCount}>
         <AnimatePresence mode="wait">
           {/* ── Upload Slots ── */}
           {phase === "upload" && (
@@ -121,7 +123,7 @@ export function DemoPreFlight({ playing = true }: Props) {
               {showRanks && (
                 <motion.div
                   {...slideUp}
-                  transition={{ duration: 0.35, delay: 0.05 }}
+                  transition={{ duration: 0.6, ease: "easeInOut", delay: 0.1 }}
                   className="flex gap-4"
                 >
                   {MOCK_COMPARISON.rankings.map((ranking) => (
@@ -137,7 +139,7 @@ export function DemoPreFlight({ playing = true }: Props) {
               )}
 
               {showH2H && (
-                <motion.div {...slideUp} transition={{ duration: 0.35, delay: 0.1 }}>
+                <motion.div {...slideUp} transition={{ duration: 0.6, ease: "easeInOut", delay: 0.15 }}>
                   <PreFlightHeadToHead
                     headToHead={MOCK_COMPARISON.headToHead}
                     recommendation={MOCK_COMPARISON.recommendation}

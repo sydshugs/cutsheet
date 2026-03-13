@@ -1,4 +1,4 @@
-// DemoScorecardDeepDive.tsx — Sequence 2: Phased scorecard reveal (4s loop)
+// DemoScorecardDeepDive.tsx — Sequence 2: Phased scorecard reveal (10s loop)
 
 import { motion } from "framer-motion";
 import { useTimeline } from "./useTimeline";
@@ -11,7 +11,7 @@ import {
 } from "./mockData";
 import { getScoreColorByValue } from "@/src/components/ScoreCard";
 
-const DURATION = 8000;
+const DURATION = 10000;
 
 const SCORE_LABELS: Record<string, string> = {
   hook: "Hook Strength",
@@ -39,7 +39,7 @@ function getOverallLabel(score: number): string {
 const slideUp = {
   initial: { opacity: 0, y: 8 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.35 },
+  transition: { duration: 0.6, ease: "easeInOut" as const },
 };
 
 interface Props {
@@ -49,22 +49,23 @@ interface Props {
 export function DemoScorecardDeepDive({ playing = true }: Props) {
   const { elapsed, loopCount } = useTimeline({ duration: DURATION, playing });
 
+  // 10s total: gauge 0-2.5s, improvements 2.5-5s, budget 5-7.5s, hashtags 7.5-10s
   const showGauge = elapsed >= 0;
-  const showImprovements = elapsed >= 2000;
-  const showBudget = elapsed >= 4000;
-  const showHashtags = elapsed >= 6000;
+  const showImprovements = elapsed >= 2500;
+  const showBudget = elapsed >= 5000;
+  const showHashtags = elapsed >= 7500;
 
   const overallColor = getScoreColorByValue(MOCK_SCORES.overall);
   const badgeClasses = getScoreBadgeClasses(MOCK_SCORES.overall);
   const overallLabel = getOverallLabel(MOCK_SCORES.overall);
 
-  // Arc gauge fill progress (animate over first 1600ms)
-  const gaugeProgress = Math.min(1, elapsed / 1600);
+  // Arc gauge fill progress (animate over first 2000ms)
+  const gaugeProgress = Math.min(1, elapsed / 2000);
   const dashLen = gaugeProgress * (MOCK_SCORES.overall / 10) * 157;
 
   return (
     <DemoShell>
-      <div className="flex items-start justify-center w-full h-full p-6 overflow-y-auto">
+      <div className="flex items-start justify-center w-full h-full p-3 overflow-y-auto">
         <div
           key={loopCount}
           className="scorecard w-[340px] flex flex-col rounded-2xl border border-white/10 bg-white/[0.03]"
@@ -119,9 +120,9 @@ export function DemoScorecardDeepDive({ playing = true }: Props) {
                   const value = MOCK_SCORES[key];
                   const pct = value <= 0 ? 2 : Math.min(100, (value / 10) * 100);
                   const barColor = getScoreColorByValue(value);
-                  // Stagger bars: each starts 200ms after previous
-                  const barDelay = 400 + i * 300;
-                  const barProgress = Math.max(0, Math.min(1, (elapsed - barDelay) / 1200));
+                  // Stagger bars: each starts 400ms after previous
+                  const barDelay = 500 + i * 400;
+                  const barProgress = Math.max(0, Math.min(1, (elapsed - barDelay) / 1500));
                   const barWidth = barProgress * pct;
 
                   return (
@@ -155,14 +156,14 @@ export function DemoScorecardDeepDive({ playing = true }: Props) {
               </p>
               <ul className="flex flex-col gap-1">
                 {MOCK_IMPROVEMENTS.map((item, i) => {
-                  const itemDelay = 2000 + i * 400;
+                  const itemDelay = 2500 + i * 500;
                   if (elapsed < itemDelay) return null;
                   return (
                     <motion.li
                       key={i}
                       initial={{ opacity: 0, y: 6 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.25 }}
+                      transition={{ duration: 0.4, ease: "easeOut" }}
                       className="flex gap-2 items-start py-1.5"
                     >
                       <span className="w-1 h-1 rounded-full bg-indigo-400 mt-2 flex-shrink-0" />
@@ -185,7 +186,7 @@ export function DemoScorecardDeepDive({ playing = true }: Props) {
                 className="mb-3"
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                transition={{ type: "spring", stiffness: 300, damping: 25 }}
               >
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold font-mono bg-emerald-500/15 text-emerald-400">
                   {MOCK_BUDGET.verdict}
@@ -227,14 +228,14 @@ export function DemoScorecardDeepDive({ playing = true }: Props) {
                 <div key={platform} className="flex items-center gap-1.5 flex-wrap mb-2">
                   <span className="text-xs text-zinc-500 w-16 flex-shrink-0">{platform}</span>
                   {tags.map((tag, tagIdx) => {
-                    const tagDelay = 6000 + rowIdx * 240 + tagIdx * 120;
+                    const tagDelay = 7500 + rowIdx * 300 + tagIdx * 150;
                     if (elapsed < tagDelay) return null;
                     return (
                       <motion.span
                         key={tag}
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.15 }}
+                        transition={{ duration: 0.3, ease: "easeOut" }}
                         className="bg-zinc-800 text-zinc-300 text-xs px-2 py-0.5 rounded-md font-mono"
                       >
                         #{tag}

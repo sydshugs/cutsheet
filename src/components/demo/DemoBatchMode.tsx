@@ -1,4 +1,4 @@
-// DemoBatchMode.tsx — Sequence 4: Batch Mode upload → analyze → table (3s loop)
+// DemoBatchMode.tsx — Sequence 4: Batch Mode upload → analyze → table (8s loop)
 
 import { motion, AnimatePresence } from "framer-motion";
 import { Upload, Loader2, Check } from "lucide-react";
@@ -7,10 +7,11 @@ import { DemoShell } from "./DemoShell";
 import { BatchTable } from "@/src/components/BatchTable";
 import { MOCK_BATCH_FILES, MOCK_BATCH_RESULTS } from "./mockData";
 
-const DURATION = 6000;
+const DURATION = 8000;
 
 type Phase = "dropzone" | "files" | "analyzing" | "results";
 
+// 8s total: dropzone 0-1s, files 1-2s, analyzing 2-4s, results 4-8s (50% on results table)
 function getPhase(elapsed: number): Phase {
   if (elapsed < 1000) return "dropzone";
   if (elapsed < 2000) return "files";
@@ -36,7 +37,7 @@ const fade = {
   initial: { opacity: 0 },
   animate: { opacity: 1 },
   exit: { opacity: 0 },
-  transition: { duration: 0.2 },
+  transition: { duration: 0.6, ease: "easeInOut" as const },
 };
 
 interface Props {
@@ -49,7 +50,7 @@ export function DemoBatchMode({ playing = true }: Props) {
 
   return (
     <DemoShell>
-      <div className="flex items-start justify-center w-full h-full p-6 overflow-y-auto" key={loopCount}>
+      <div className="flex items-start justify-center w-full h-full p-3 overflow-y-auto" key={loopCount}>
         <AnimatePresence mode="wait">
           {/* ── Dropzone ── */}
           {phase === "dropzone" && (
@@ -85,7 +86,7 @@ export function DemoBatchMode({ playing = true }: Props) {
                       key={filename}
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.2 }}
+                      transition={{ duration: 0.4, ease: "easeOut" }}
                       className="flex flex-col gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] p-3"
                     >
                       <p className="text-[11px] font-mono text-white truncate">{filename}</p>
@@ -164,7 +165,7 @@ export function DemoBatchMode({ playing = true }: Props) {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.35 }}
+              transition={{ duration: 0.6, ease: "easeInOut" }}
               className="w-full max-w-2xl relative"
             >
               {/* Subtle glow behind top row */}

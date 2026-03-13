@@ -68,7 +68,7 @@ export default function DemoPage() {
                 Sequence {key}: {SEQUENCE_LABELS[key]}
               </span>
               <span className="text-[10px] font-mono text-zinc-600">
-                {key === "1" || key === "4" ? "6s" : "8s"} loop
+                {key === "1" || key === "4" ? "8s" : "10s"} loop
               </span>
             </div>
             <div className="aspect-video relative overflow-hidden">
