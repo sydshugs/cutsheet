@@ -90,7 +90,15 @@ Three paragraphs written as a media buyer debriefing a creative team:
 - Message Clarity: X/10
 - CTA Effectiveness: X/10
 - Production Quality: X/10
-- Overall Ad Strength: X/10`;
+- Overall Ad Strength: X/10
+
+---
+
+## 🔧 IMPROVEMENTS
+After your analysis, list exactly 3-5 specific, actionable suggestions to improve this creative. Each suggestion should be one sentence, direct, and specific to what you observed in this creative. Format as a numbered list.
+1. [Specific improvement based on what you observed]
+2. [Specific improvement based on what you observed]
+3. [Specific improvement based on what you observed]`;
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -103,6 +111,7 @@ export interface AnalysisResult {
     production: number;
     overall: number;
   } | null;
+  improvements: string[];
   timestamp: Date;
   fileName: string;
 }
@@ -149,6 +158,23 @@ function parseScores(markdown: string): AnalysisResult["scores"] {
     };
   } catch {
     return null;
+  }
+}
+
+export function parseImprovements(markdown: string): string[] {
+  try {
+    // Find the IMPROVEMENTS section
+    const match = markdown.match(/##\s*(?:🔧\s*)?IMPROVEMENTS\s*\n([\s\S]*?)(?=\n---|\n##|$)/i);
+    if (!match) return [];
+
+    const section = match[1].trim();
+    // Extract numbered items, strip numbering
+    return section
+      .split("\n")
+      .map((line) => line.replace(/^\d+\.\s*/, "").trim())
+      .filter((line) => line.length > 0 && !line.startsWith("#"));
+  } catch {
+    return [];
   }
 }
 
@@ -232,11 +258,15 @@ export async function analyzeVideo(
     const parsedScores = parseScores(markdown);
     const scores = recalculateOverallScore(parsedScores);
 
+    // 6. Parse improvements from markdown
+    const improvements = parseImprovements(markdown);
+
     emit("complete");
 
     return {
       markdown,
       scores,
+      improvements,
       timestamp: new Date(),
       fileName: file.name,
     };

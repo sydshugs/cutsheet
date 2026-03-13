@@ -12,6 +12,7 @@ interface Scores {
 
 interface ScoreCardProps {
   scores: Scores;
+  improvements?: string[];
   fileName?: string;
   onShare?: () => void;
   isDark?: boolean;
@@ -78,6 +79,7 @@ const scoreKeys = ["hook", "clarity", "cta", "production"] as const;
 
 export function ScoreCard({
   scores,
+  improvements,
   fileName,
   onShare,
   isDark = true,
@@ -197,6 +199,23 @@ export function ScoreCard({
           );
         })}
       </div>
+
+      {/* Improve This Ad */}
+      {improvements && improvements.length > 0 && (
+        <div className="px-5 border-t border-white/5 mt-4 pt-4">
+          <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-3">
+            Improve This Ad
+          </p>
+          <ul className="flex flex-col gap-1">
+            {improvements.map((item, i) => (
+              <li key={i} className="flex gap-2 items-start py-1.5">
+                <span className="w-1 h-1 rounded-full bg-indigo-400 mt-2 flex-shrink-0" />
+                <span className="text-xs text-zinc-400 leading-relaxed">{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* File name */}
       {fileName && (
