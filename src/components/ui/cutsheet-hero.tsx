@@ -2,6 +2,7 @@ import React from "react";
 import EarlyAccessForm from "./cutsheet-early-access-form";
 import {
   Zap,
+  Crown,
   Star,
   TrendingUp,
   Clock,
@@ -32,6 +33,15 @@ const SCORE_CATEGORIES = [
   { name: "Scroll Stop", icon: BarChart2 },
 ] as const;
 
+const StatItem = ({ value, label }: { value: string; label: string }) => (
+  <div className="flex flex-col items-center justify-center transition-transform hover:-translate-y-1 cursor-default">
+    <span className="text-xl font-bold text-white sm:text-2xl">{value}</span>
+    <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium sm:text-xs">
+      {label}
+    </span>
+  </div>
+);
+
 export default function CutsheetHero() {
   return (
     <div className="relative w-full bg-zinc-950 text-white overflow-hidden font-sans">
@@ -51,12 +61,20 @@ export default function CutsheetHero() {
         .animate-nudge {
           animation: nudgeRight 1.5s ease-in-out infinite;
         }
+        @keyframes barFill {
+          from { width: 0%; }
+          to { width: var(--bar-width, 87%); }
+        }
         .animate-fade-in {
           animation: fadeSlideIn 0.8s ease-out forwards;
           opacity: 0;
         }
         .animate-marquee {
           animation: marquee 35s linear infinite;
+        }
+        .animate-bar {
+          animation: barFill 1.8s ease-out 0.8s forwards;
+          width: 0%;
         }
         .delay-100 { animation-delay: 0.1s; }
         .delay-200 { animation-delay: 0.2s; }
@@ -161,13 +179,79 @@ export default function CutsheetHero() {
 
           {/* Right column */}
           <div className="lg:col-span-5 space-y-5 lg:mt-8">
-            {/* Hero demo */}
-            <div className="animate-fade-in delay-500">
-              <img
-                src="/demos/upload-to-analysis.webp"
-                className="w-full rounded-2xl"
-                alt="Cutsheet analyzing an ad creative"
-              />
+            {/* Stats Card */}
+            <div className="animate-fade-in delay-500 relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-7 backdrop-blur-xl shadow-2xl">
+              <div className="absolute top-0 right-0 -mr-12 -mt-12 h-48 w-48 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
+
+              <div className="relative z-10">
+                {/* Top stat */}
+                <div className="flex items-center gap-4 mb-7">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/15 ring-1 ring-indigo-500/30">
+                    <BarChart2 className="h-6 w-6 text-indigo-400" />
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold tracking-tight text-white">
+                      87<span className="text-indigo-400">/100</span>
+                    </div>
+                    <div className="text-sm text-zinc-400">Average Ad Score</div>
+                  </div>
+                </div>
+
+                {/* Score bars */}
+                <div className="space-y-3 mb-7">
+                  {[
+                    { label: "Hook Strength", score: 92, color: "from-indigo-500 to-indigo-400" },
+                    { label: "CTA Clarity", score: 78, color: "from-violet-500 to-violet-400" },
+                    { label: "Pacing", score: 85, color: "from-cyan-500 to-cyan-400" },
+                  ].map(({ label, score, color }) => (
+                    <div key={label}>
+                      <div className="flex justify-between text-xs mb-1.5">
+                        <span className="text-zinc-400">{label}</span>
+                        <span className="text-white font-medium">{score}</span>
+                      </div>
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-800/60">
+                        <div
+                          className={`h-full rounded-full bg-gradient-to-r ${color} animate-bar`}
+                          style={{
+                            ['--bar-width' as string]: `${score}%`,
+                            animation: `barFill 1.6s ease-out ${0.8 + Math.random() * 0.4}s forwards`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="h-px w-full bg-white/8 mb-5" />
+
+                {/* Mini stats */}
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <StatItem value="11" label="Metrics" />
+                  <div className="w-px bg-white/10 mx-auto" />
+                  <StatItem value="< 30s" label="Analysis" />
+                  <div className="w-px bg-white/10 mx-auto" />
+                  <StatItem value="AI" label="Powered" />
+                </div>
+
+                {/* Tags */}
+                <div className="mt-6 flex flex-wrap gap-2">
+                  <div className="inline-flex items-center gap-1.5 rounded-full border border-green-500/20 bg-green-500/10 px-3 py-1 text-[10px] font-medium tracking-wide text-green-400">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+                    </span>
+                    LIVE ANALYSIS
+                  </div>
+                  <div className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-medium tracking-wide text-zinc-300">
+                    <Crown className="w-3 h-3 text-yellow-500" />
+                    BATCH MODE
+                  </div>
+                  <div className="inline-flex items-center gap-1.5 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1 text-[10px] font-medium tracking-wide text-indigo-300">
+                    <Layers className="w-3 h-3" />
+                    COMPARE
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Marquee — scoring categories */}
