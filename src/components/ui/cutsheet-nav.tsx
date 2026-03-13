@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 
 export default function CutsheetNav() {
@@ -33,7 +34,7 @@ export default function CutsheetNav() {
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
         {/* Logo */}
-        <a href="/" className="flex items-center gap-2.5">
+        <Link to="/" className="flex items-center gap-2.5">
           <img src="/cutsheet-logo.png" alt="Cutsheet" className="h-[23px] w-[23px]" />
           <span
             className="text-white"
@@ -41,7 +42,7 @@ export default function CutsheetNav() {
           >
             cutsheet
           </span>
-        </a>
+        </Link>
 
         {/* Right side */}
         <div className="flex items-center gap-3">
