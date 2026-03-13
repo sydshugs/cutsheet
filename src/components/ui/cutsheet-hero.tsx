@@ -14,6 +14,7 @@ import {
   Volume2,
   Layers,
   Award,
+  ChevronDown,
 } from "lucide-react";
 const WAITLIST_INITIALS = ["S", "M", "E", "J"];
 
@@ -150,6 +151,12 @@ export default function CutsheetHero() {
               <p className="text-xs text-zinc-600">
                 No card required &middot; Limited early access spots
               </p>
+              <a
+                href="#how-it-works"
+                className="text-sm text-zinc-400 hover:text-white transition-colors flex items-center gap-1.5"
+              >
+                See how it works <ChevronDown size={14} />
+              </a>
             </div>
 
             {/* Social proof */}

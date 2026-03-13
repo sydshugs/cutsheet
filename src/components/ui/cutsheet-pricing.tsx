@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   Check,
   Zap,
@@ -16,8 +16,7 @@ type Plan = {
   id: string;
   name: string;
   badge?: string;
-  monthlyPrice: number;
-  annualPrice: number;
+  priceLabel: string;
   description: string;
   cta: string;
   featured: boolean;
@@ -29,8 +28,7 @@ const PLANS: Plan[] = [
   {
     id: "free",
     name: "Free",
-    monthlyPrice: 0,
-    annualPrice: 0,
+    priceLabel: "Free forever",
     description: "Try Cutsheet risk-free. No card, no commitment.",
     cta: "Get Early Access",
     featured: false,
@@ -46,8 +44,7 @@ const PLANS: Plan[] = [
     id: "pro",
     name: "Pro",
     badge: "Most Popular",
-    monthlyPrice: 29,
-    annualPrice: 19,
+    priceLabel: "Early access pricing",
     description: "For performance marketers and creative teams shipping weekly.",
     cta: "Get Early Access",
     featured: true,
@@ -65,8 +62,7 @@ const PLANS: Plan[] = [
   {
     id: "team",
     name: "Team",
-    monthlyPrice: 79,
-    annualPrice: 59,
+    priceLabel: "Contact us",
     description: "For agencies and in-house teams reviewing high-volume campaigns.",
     cta: "Get Early Access",
     featured: false,
@@ -119,9 +115,7 @@ function ShineBorder({
   );
 }
 
-function PlanCard({ plan, annual }: { plan: Plan; annual: boolean }) {
-  const price = annual ? plan.annualPrice : plan.monthlyPrice;
-
+function PlanCard({ plan }: { plan: Plan }) {
   const inner = (
     <div
       className={`relative flex flex-col gap-6 rounded-3xl p-7 h-full transition-all duration-300 ${
@@ -148,23 +142,9 @@ function PlanCard({ plan, annual }: { plan: Plan; annual: boolean }) {
       </div>
 
       <div className="flex items-baseline gap-1">
-        {price === 0 ? (
-          <span className="text-5xl font-bold tracking-tighter text-white">
-            Free
-          </span>
-        ) : (
-          <>
-            <span className="text-5xl font-bold tracking-tighter text-white">
-              ${price}
-            </span>
-            <span className="text-zinc-500 text-sm">/mo</span>
-            {annual && (
-              <span className="ml-2 text-[10px] font-semibold text-green-400 bg-green-400/10 border border-green-400/20 rounded-full px-2 py-0.5">
-                SAVE {Math.round((1 - plan.annualPrice / plan.monthlyPrice) * 100)}%
-              </span>
-            )}
-          </>
-        )}
+        <span className="text-3xl font-bold tracking-tighter text-white">
+          {plan.priceLabel}
+        </span>
       </div>
 
       <p className="text-sm text-zinc-400 leading-relaxed -mt-2">
@@ -220,19 +200,12 @@ function PlanCard({ plan, annual }: { plan: Plan; annual: boolean }) {
 }
 
 export default function CutsheetPricing() {
-  const [annual, setAnnual] = useState(true);
-
   return (
     <section id="pricing" className="relative w-full bg-zinc-950 text-white overflow-hidden py-24 px-4 sm:px-6 lg:px-8">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-indigo-600/6 rounded-full blur-[120px] pointer-events-none" />
 
       <div className="relative z-10 mx-auto max-w-6xl">
         <div className="text-center mb-12">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-indigo-400/25 bg-indigo-500/10 px-4 py-1.5 text-xs font-semibold text-indigo-300">
-            <span>🚀</span>
-            Early Access Pricing — Lock in your rate before we launch.
-          </div>
-          <br />
           <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1.5 mb-6">
             <Zap className="w-3.5 h-3.5 text-indigo-400" />
             <span className="text-[11px] font-semibold uppercase tracking-widest text-indigo-300">
@@ -245,37 +218,15 @@ export default function CutsheetPricing() {
           <p className="text-zinc-400 text-lg max-w-lg mx-auto leading-relaxed">
             Start free, upgrade when you need more.<br />No hidden fees, no per-analysis charges.
           </p>
+        </div>
 
-          <div className="mt-8 inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 p-1">
-            <button
-              onClick={() => setAnnual(false)}
-              className={`rounded-full px-5 py-2 text-sm font-medium transition-all ${
-                !annual
-                  ? "bg-white text-zinc-950 shadow"
-                  : "text-zinc-400 hover:text-white"
-              }`}
-            >
-              Monthly
-            </button>
-            <button
-              onClick={() => setAnnual(true)}
-              className={`rounded-full px-5 py-2 text-sm font-medium transition-all flex items-center gap-2 ${
-                annual
-                  ? "bg-white text-zinc-950 shadow"
-                  : "text-zinc-400 hover:text-white"
-              }`}
-            >
-              Annual
-              <span className="text-[10px] font-bold text-green-500 bg-green-500/15 rounded-full px-1.5 py-0.5">
-                SAVE 34%
-              </span>
-            </button>
-          </div>
+        <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-2xl px-6 py-4 text-sm text-indigo-300 text-center mb-8">
+          Pricing will be announced at launch. Early access members lock in founder rates.
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
           {PLANS.map((plan) => (
-            <PlanCard key={plan.id} plan={plan} annual={annual} />
+            <PlanCard key={plan.id} plan={plan} />
           ))}
         </div>
 

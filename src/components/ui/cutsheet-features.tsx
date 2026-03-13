@@ -149,11 +149,10 @@ export default function CutsheetFeatures() {
               What Cutsheet Measures
             </p>
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight text-white">
-              11 creative metrics, scored in one pass.
+              What Cutsheet scores
             </h2>
             <p className="text-sm sm:text-base text-zinc-400 max-w-xl">
-              Every analysis breaks your ad into the same consistent scorecard, so
-              you can compare hooks, scripts, and edits apples-to-apples across campaigns.
+              Every analysis covers 11 creative dimensions — instantly, on any ad format.
             </p>
           </div>
 
@@ -173,15 +172,15 @@ export default function CutsheetFeatures() {
           </div>
         </div>
 
-        {/* Bottom: Platform feature bento grid */}
-        <div className="space-y-6">
+        {/* Bottom: Roadmap features */}
+        <div className="space-y-6 opacity-75">
           <div className="max-w-2xl space-y-2">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-300">
-              Built For Creative Teams
+            <p className="text-sm font-medium text-zinc-500 uppercase tracking-wider">
+              On the roadmap
             </p>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight text-white">
-              One workflow, four superpowers.
-            </h2>
+            <p className="text-sm text-zinc-400">
+              Early access members get these features first.
+            </p>
           </div>
 
           <div className="grid gap-4 md:gap-5 md:grid-cols-2">

@@ -102,7 +102,7 @@ export default function CutsheetHowItWorks() {
         {/* Then do more — action row */}
         <div className="mt-14 text-center space-y-6">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-300">
-            Then do more
+            Coming soon
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             {[
