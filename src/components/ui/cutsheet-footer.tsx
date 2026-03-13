@@ -41,7 +41,7 @@ export default function CutsheetFooter() {
           {/* Social + copyright */}
           <div className="flex items-center gap-5">
             <a
-              href="https://twitter.com/cutsheetai"
+              href="https://x.com/getcutsheet"
               target="_blank"
               rel="noopener noreferrer"
               className="text-zinc-600 transition-colors hover:text-zinc-300"
@@ -52,7 +52,7 @@ export default function CutsheetFooter() {
               </svg>
             </a>
             <a
-              href="https://instagram.com/cutsheetai"
+              href="https://www.instagram.com/getcutsheet/"
               target="_blank"
               rel="noopener noreferrer"
               className="text-zinc-600 transition-colors hover:text-zinc-300"

@@ -26,6 +26,14 @@ const FAQS = [
     q: "Do I need a credit card to start?",
     a: "No. The Free plan gives you 5 analyses per month with no card required. Upgrade to Pro or Team when you need more.",
   },
+  {
+    q: "Can I cancel anytime?",
+    a: "Yes. There are no contracts or cancellation fees. You can downgrade or cancel your plan at any time from your account settings. If you cancel a paid plan, you'll keep access through the end of your current billing period.",
+  },
+  {
+    q: "What happens when early access pricing ends?",
+    a: "Your rate locks in for as long as you stay subscribed. Early access members keep their discounted price even after we raise prices at general launch. If you cancel and re-subscribe later, you'll pay the current rate at that time.",
+  },
 ];
 
 function AccordionItem({
