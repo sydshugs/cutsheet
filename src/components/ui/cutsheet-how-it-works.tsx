@@ -98,6 +98,32 @@ export default function CutsheetHowItWorks() {
             </SpotlightCard>
           ))}
         </div>
+
+        {/* Then do more — action row */}
+        <div className="mt-14 text-center space-y-6">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-300">
+            Then do more
+          </p>
+          <div className="flex flex-wrap justify-center gap-3">
+            {[
+              { label: "Compare", icon: "↔" },
+              { label: "Brief", icon: "📄" },
+              { label: "Swipe File", icon: "📁" },
+              { label: "Batch", icon: "📦" },
+            ].map((item) => (
+              <div
+                key={item.label}
+                className="inline-flex items-center gap-2 rounded-full border border-white/8 bg-white/5 px-4 py-2 text-sm text-zinc-300"
+              >
+                <span>{item.icon}</span>
+                {item.label}
+                <span className="bg-white/10 text-zinc-500 text-xs rounded-full px-2 py-0.5 ml-1.5">
+                  Coming soon
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );

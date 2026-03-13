@@ -16,14 +16,16 @@ export default function CutsheetFooter() {
 
           {/* Links */}
           <div className="flex items-center gap-6">
+            {/* TODO: create /privacy and /terms pages */}
             <a
-              href="/privacy"
+              href="#"
               className="text-xs text-zinc-500 transition-colors hover:text-zinc-300"
             >
               Privacy
             </a>
+            {/* TODO: create /privacy and /terms pages */}
             <a
-              href="/terms"
+              href="#"
               className="text-xs text-zinc-500 transition-colors hover:text-zinc-300"
             >
               Terms

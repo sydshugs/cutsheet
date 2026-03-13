@@ -196,6 +196,7 @@ export default function CutsheetFeatures() {
                 </div>
                 <h3 className="text-lg font-semibold text-white">
                   Instant A/B breakdowns for hooks and edits.
+                  <span className="bg-white/10 text-zinc-500 text-xs rounded-full px-2 py-0.5 ml-1.5">Coming soon</span>
                 </h3>
                 <p className="text-sm text-zinc-400">
                   Drop multiple variants and see which opener, script, and structure the model
@@ -215,6 +216,7 @@ export default function CutsheetFeatures() {
                 </div>
                 <h3 className="text-lg font-semibold text-white">
                   Save winners into a living library.
+                  <span className="bg-white/10 text-zinc-500 text-xs rounded-full px-2 py-0.5 ml-1.5">Coming soon</span>
                 </h3>
                 <p className="text-sm text-zinc-400">
                   Keep the best hooks, scripts, and edits one click away for your next brainstorm.
@@ -233,6 +235,7 @@ export default function CutsheetFeatures() {
                 </div>
                 <h3 className="text-lg font-semibold text-white">
                   Drag in a folder, score the whole campaign.
+                  <span className="bg-white/10 text-zinc-500 text-xs rounded-full px-2 py-0.5 ml-1.5">Coming soon</span>
                 </h3>
                 <p className="text-sm text-zinc-400">
                   Run up to 10 ads at once and sort by predicted performance, hook strength,
@@ -252,6 +255,7 @@ export default function CutsheetFeatures() {
                 </div>
                 <h3 className="text-lg font-semibold text-white">
                   Turn any analysis into a ready-to-ship brief.
+                  <span className="bg-white/10 text-zinc-500 text-xs rounded-full px-2 py-0.5 ml-1.5">Coming soon</span>
                 </h3>
                 <p className="text-sm text-zinc-400">
                   Export talking points, hooks, and scene notes into a structured doc your team
