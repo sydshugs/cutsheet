@@ -45,6 +45,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
   const [testType, setTestType] = useState<TestType>("full");
   const [phase, setPhase] = useState<PreFlightPhase>("idle");
   const [analyses, setAnalyses] = useState<AnalysisResult[]>([]);
+  const [analysisLabels, setAnalysisLabels] = useState<string[]>([]);
   const [comparison, setComparison] = useState<ComparisonResult | null>(null);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -144,6 +145,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
     }
 
     setAnalyses(results);
+    setAnalysisLabels(labels);
 
     // Stage 2: Run comparison
     setPhase("comparing");
@@ -166,6 +168,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
     setTestType("full");
     setPhase("idle");
     setAnalyses([]);
+    setAnalysisLabels([]);
     setComparison(null);
     setAnalysisProgress(0);
     setErrorMsg(null);
@@ -174,17 +177,19 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
 
   const handleExportPdf = useCallback(async () => {
     if (!analyses.length || !comparison) return;
-    // Export the winner's analysis as PDF
-    const winnerIndex = comparison.rankings.findIndex((r) => r.rank === 1);
+    // Find the winner's label and map it to the correct analysis index
+    const winnerLabel = comparison.winner?.label
+      ?? comparison.rankings.find((r) => r.rank === 1)?.label;
+    const winnerIndex = winnerLabel ? analysisLabels.indexOf(winnerLabel) : -1;
     const winnerAnalysis = analyses[winnerIndex >= 0 ? winnerIndex : 0];
     if (winnerAnalysis) {
       try {
         await exportToPdf(winnerAnalysis);
-      } catch {
-        // silent
+      } catch (err) {
+        console.error("PDF export failed:", err);
       }
     }
-  }, [analyses, comparison]);
+  }, [analyses, analysisLabels, comparison]);
 
   const isRunning = phase === "analyzing" || phase === "comparing";
 

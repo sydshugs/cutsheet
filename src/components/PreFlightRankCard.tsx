@@ -18,9 +18,9 @@ function scoreColor(score: number): string {
 export function PreFlightRankCard({ variant, isWinner, isDark }: PreFlightRankCardProps) {
   const bg = "var(--surface-el)";
   const border = "var(--border)";
-  const textPrimary = "var(--ink)";
-  const textSecondary = "var(--ink-muted)";
-  const textMuted = "var(--ink-faint)";
+  const textPrimary = isWinner ? "#fff" : "var(--ink)";
+  const textSecondary = isWinner ? "rgba(255,255,255,0.85)" : "var(--ink-muted)";
+  const textMuted = isWinner ? "rgba(255,255,255,0.5)" : "var(--ink-faint)";
   const surfaceDim = "var(--surface-dim)";
 
   return (
@@ -57,7 +57,7 @@ export function PreFlightRankCard({ variant, isWinner, isDark }: PreFlightRankCa
               fontSize: "22px",
               fontFamily: "var(--mono)",
               fontWeight: 900,
-              color: variant.rank === 1 ? "var(--accent)" : textMuted,
+              color: isWinner ? "#fff" : textMuted,
               letterSpacing: "-0.02em",
             }}
           >
@@ -83,7 +83,7 @@ export function PreFlightRankCard({ variant, isWinner, isDark }: PreFlightRankCa
             fontSize: "32px",
             fontFamily: "var(--mono)",
             fontWeight: 900,
-            color: scoreColor(variant.overallScore),
+            color: isWinner ? "#fff" : scoreColor(variant.overallScore),
             lineHeight: 1,
           }}
         >
@@ -113,14 +113,14 @@ export function PreFlightRankCard({ variant, isWinner, isDark }: PreFlightRankCa
             fontFamily: "var(--mono)",
             fontWeight: 600,
             background: variant.wouldScale
-              ? "var(--score-excellent-bg)"
-              : surfaceDim,
+              ? isWinner ? "rgba(16,185,129,0.2)" : "var(--score-excellent-bg)"
+              : isWinner ? "rgba(255,255,255,0.1)" : surfaceDim,
             color: variant.wouldScale
-              ? "var(--success)"
-              : textMuted,
+              ? isWinner ? "#6EE7B7" : "var(--success)"
+              : isWinner ? "rgba(255,255,255,0.7)" : textMuted,
             border: variant.wouldScale
-              ? "1px solid var(--score-excellent-border)"
-              : `1px solid ${border}`,
+              ? isWinner ? "1px solid rgba(16,185,129,0.35)" : "1px solid var(--score-excellent-border)"
+              : isWinner ? "1px solid rgba(255,255,255,0.2)" : `1px solid ${border}`,
           }}
         >
           {variant.wouldScale ? "✓" : "✗"} {variant.wouldScale ? "Would scale" : "Don't scale"}
@@ -134,7 +134,7 @@ export function PreFlightRankCard({ variant, isWinner, isDark }: PreFlightRankCa
             fontSize: "11px",
             fontFamily: "var(--sans)",
             fontWeight: 600,
-            color: "var(--label)",
+            color: isWinner ? "rgba(255,255,255,0.7)" : "var(--label)",
             letterSpacing: "0.18em",
             textTransform: "uppercase",
             marginBottom: "4px",
@@ -161,7 +161,7 @@ export function PreFlightRankCard({ variant, isWinner, isDark }: PreFlightRankCa
             fontSize: "11px",
             fontFamily: "var(--sans)",
             fontWeight: 600,
-            color: "var(--label)",
+            color: isWinner ? "rgba(255,255,255,0.7)" : "var(--label)",
             letterSpacing: "0.18em",
             textTransform: "uppercase",
             marginBottom: "4px",
