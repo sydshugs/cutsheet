@@ -28,5 +28,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(response.status).json(data);
   }
 
+  try {
+    await fetch("https://app.loops.so/api/v1/transactional", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.LOOPS_API_KEY}`,
+      },
+      body: JSON.stringify({
+        transactionalId: "cmmnyrn350n2s0izsaf08nqkp",
+        email,
+      }),
+    });
+  } catch (err) {
+    console.error("Failed to send welcome email:", err);
+  }
+
   return res.status(200).json(data);
 }
