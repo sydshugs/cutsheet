@@ -24,7 +24,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   });
 
   const data = await response.json();
-  if (!response.ok) {
+  const alreadyExists = data?.message?.includes("already");
+  if (!response.ok && !alreadyExists) {
     return res.status(response.status).json(data);
   }
 
