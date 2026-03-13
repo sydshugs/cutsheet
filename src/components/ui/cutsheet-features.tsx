@@ -159,7 +159,7 @@ export default function CutsheetFeatures() {
 
           {/* Carousel */}
           <div
-            className="relative -mx-4 sm:-mx-6 lg:-mx-8 overflow-hidden"
+            className="relative -mx-4 sm:-mx-6 lg:-mx-8 overflow-x-auto sm:overflow-hidden"
             style={{
               maskImage: "linear-gradient(to right, transparent, black 5%, black 95%, transparent)",
               WebkitMaskImage: "linear-gradient(to right, transparent, black 5%, black 95%, transparent)",

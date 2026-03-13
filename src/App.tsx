@@ -339,7 +339,7 @@ export default function App() {
       />
 
       {/* Main area (right of sidebar) */}
-      <div className="main-content flex flex-col">
+      <div className="main-content flex flex-col min-w-0">
         {/* Top bar */}
         <TopBar
           onNewAnalysis={handleReset}
@@ -359,7 +359,7 @@ export default function App() {
             <div className="pointer-events-none absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-violet-600/[0.08] blur-[100px]" />
 
             {/* Mode content */}
-            <div className="relative px-8 py-6">
+            <div className="relative px-4 py-6 md:px-8">
               {/* ── SINGLE / ANALYZER MODE ── */}
               {mode === "single" && (
                 <AnalyzerView

@@ -1,6 +1,6 @@
 export default function CutsheetFooter() {
   return (
-    <footer className="border-t border-white/[0.08] bg-zinc-950">
+    <footer className="border-t border-white/[0.08] bg-zinc-950 pb-8 sm:pb-0">
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center gap-6 sm:flex-row sm:justify-between">
           {/* Logo */}

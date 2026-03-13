@@ -118,7 +118,7 @@ export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, 
 
     return (
       <div className="w-full max-w-[640px] mx-auto">
-        <motion.div layoutId="analyzer-card" className="bg-zinc-900/50 backdrop-blur-xl rounded-3xl border border-white/5 p-8">
+        <motion.div layoutId="analyzer-card" className="bg-zinc-900/50 backdrop-blur-xl rounded-3xl border border-white/5 p-4 md:p-8">
           <div
             onClick={() => !disabled && fileInputRef.current?.click()}
             onDrop={onDrop}
@@ -133,7 +133,7 @@ export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, 
                 if (!disabled) fileInputRef.current?.click();
               }
             }}
-            className={`border-2 border-dashed rounded-2xl p-10 flex flex-col items-center gap-4 transition-all cursor-pointer select-none ${
+            className={`border-2 border-dashed rounded-2xl px-4 py-8 md:px-10 md:py-10 flex flex-col items-center gap-4 transition-all cursor-pointer select-none text-center ${
               isDragging
                 ? 'border-indigo-500/50 scale-[1.01] shadow-[0_0_20px_rgba(99,102,241,0.15)]'
                 : 'border-white/10 hover:border-indigo-500/30'
@@ -144,7 +144,7 @@ export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, 
               <Upload size={24} className="text-white" />
             </div>
 
-            <div className="text-xl font-semibold text-white">Drop your creative here</div>
+            <div className="text-base md:text-xl font-semibold text-white">Drop your creative here</div>
             <div className="text-sm text-zinc-400 text-center">or browse to upload</div>
 
             {/* Format chips */}
