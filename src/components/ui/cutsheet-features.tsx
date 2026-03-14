@@ -22,6 +22,7 @@ import {
   XCircle,
   Sparkles,
   Rocket,
+  Swords,
 } from "lucide-react";
 import { SpotlightCard } from "./spotlight-card";
 
@@ -620,6 +621,25 @@ export default function CutsheetFeatures() {
                 </h3>
                 <p className="text-sm text-zinc-400">
                   Keep the best hooks, scripts, and edits one click away for your next brainstorm.
+                </p>
+              </div>
+            </SpotlightCard>
+
+            <SpotlightCard
+              spotlightColor="rgba(239, 68, 68, 0.15)"
+              className="rounded-3xl border-white/5 bg-zinc-900/60 p-6 sm:p-7 backdrop-blur-xl"
+            >
+              <div className="space-y-3">
+                <div className="inline-flex items-center gap-2 rounded-full bg-zinc-900/80 px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-red-300 uppercase">
+                  <Swords className="h-3.5 w-3.5" />
+                  Competitor Analysis
+                </div>
+                <h3 className="text-lg font-semibold text-white">
+                  Upload your ad alongside a competitor's.
+                  <span className="bg-white/10 text-zinc-500 text-xs rounded-full px-2 py-0.5 ml-1.5 whitespace-nowrap">Coming soon</span>
+                </h3>
+                <p className="text-sm text-zinc-400">
+                  See exactly where they're beating you and get a specific action plan to outperform them.
                 </p>
               </div>
             </SpotlightCard>
