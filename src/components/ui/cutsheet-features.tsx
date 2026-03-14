@@ -461,7 +461,7 @@ export default function CutsheetFeatures() {
         />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24 space-y-16">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 pt-16 pb-8 sm:px-6 lg:px-8 lg:pt-24 lg:pb-12 space-y-16">
         {/* Top: Metrics carousel */}
         <div className="space-y-8">
           <div className="max-w-2xl space-y-2">

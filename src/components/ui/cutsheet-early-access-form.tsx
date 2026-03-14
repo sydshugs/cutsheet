@@ -23,12 +23,8 @@ export default function EarlyAccessForm({
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
-  // Check localStorage on mount
-  useEffect(() => {
-    if (localStorage.getItem(LS_KEY)) {
-      setStatus("success");
-    }
-  }, []);
+  // localStorage is only used to persist the email after submission —
+  // never auto-set success on mount so the form always starts fresh.
 
   function fireConfetti() {
     const end = Date.now() + 2 * 1000;
