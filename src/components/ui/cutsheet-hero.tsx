@@ -230,7 +230,16 @@ export default function CutsheetHero() {
                   <div className="w-px bg-white/10 mx-auto" />
                   <StatItem value="< 30s" label="Analysis" />
                   <div className="w-px bg-white/10 mx-auto" />
-                  <StatItem value="AI" label="Powered" />
+                  <div className="flex flex-col items-center justify-center transition-transform hover:-translate-y-1 cursor-default">
+                    <div className="flex items-center gap-1">
+                      <span className="text-sm font-bold text-white sm:text-base">Gemini</span>
+                      <span className="text-[10px] text-zinc-500 sm:text-xs">+</span>
+                      <span className="text-sm font-bold text-white sm:text-base">Claude</span>
+                    </div>
+                    <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium sm:text-xs">
+                      Powered
+                    </span>
+                  </div>
                 </div>
 
                 {/* Tags */}

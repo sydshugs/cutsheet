@@ -503,7 +503,7 @@ export default function CutsheetFeatures() {
               More than a scorecard
             </h2>
             <p className="text-sm sm:text-base text-zinc-400 max-w-xl">
-              Compare variants, batch-analyze campaigns, A/B test creatives, and generate briefs — all live today.
+              Powered by Gemini 2.5 Flash for video analysis and Claude Sonnet for actionable copy — the sharpest AI stack in creative intelligence.
             </p>
           </div>
 
@@ -588,6 +588,63 @@ export default function CutsheetFeatures() {
                 <p className="text-sm text-zinc-400">
                   One click generates a structured creative brief with hooks, scene notes,
                   and talking points your team can actually build from.
+                </p>
+              </div>
+            </SpotlightCard>
+
+            {/* ── CTA Rewrite ── */}
+            <SpotlightCard
+              spotlightColor="rgba(139, 92, 246, 0.15)"
+              className="rounded-3xl border-white/5 bg-zinc-900/60 p-6 sm:p-7 backdrop-blur-xl"
+            >
+              <div className="space-y-4">
+                <PreviewCard>
+                  {/* Header */}
+                  <div className="flex items-center gap-2 mb-4">
+                    <Sparkles className="h-4 w-4 text-violet-400" />
+                    <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+                      CTA Rewrite
+                    </span>
+                  </div>
+
+                  {/* Weak CTA score */}
+                  <div className="feat-fade mb-3" style={{ animationDelay: "0.3s" }}>
+                    <div className="flex justify-between text-[11px] mb-1.5">
+                      <span className="text-zinc-400">CTA Effectiveness</span>
+                      <span className="text-red-400 font-bold">3</span>
+                    </div>
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-800/60">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-red-500 to-red-400 feat-bar"
+                        style={{ "--w": "30%", animationDelay: "0.5s" } as React.CSSProperties}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Rewrites */}
+                  <div className="space-y-1.5">
+                    {["Shop now — 40% ends tonight", "Grab yours before it's gone", "Start your free trial →"].map((cta, i) => (
+                      <div
+                        key={i}
+                        className="feat-fade flex items-center gap-2 bg-violet-500/5 rounded-lg px-2.5 py-1.5"
+                        style={{ animationDelay: `${0.7 + i * 0.15}s` }}
+                      >
+                        <span className="text-[10px] text-violet-400 font-mono">{i + 1}.</span>
+                        <span className="text-xs text-zinc-300">{cta}</span>
+                      </div>
+                    ))}
+                  </div>
+                </PreviewCard>
+                <div className="inline-flex items-center gap-2 rounded-full bg-zinc-900/80 px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-violet-300 uppercase">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  CTA Rewrite
+                </div>
+                <h3 className="text-lg font-semibold text-white">
+                  Score ≤5 on CTA? Get 3 rewrites instantly.
+                </h3>
+                <p className="text-sm text-zinc-400">
+                  Claude writes 3 sharper, more urgent CTA alternatives — ready to copy-paste
+                  into your next iteration.
                 </p>
               </div>
             </SpotlightCard>
