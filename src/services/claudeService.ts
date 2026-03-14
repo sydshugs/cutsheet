@@ -2,7 +2,7 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 
-const CLAUDE_MODEL = "claude-sonnet-4-5-20250514";
+const CLAUDE_MODEL = "claude-sonnet-4-20250514";
 
 function getClient(): Anthropic {
   const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
