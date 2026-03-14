@@ -450,7 +450,7 @@ export default function App() {
 
           {/* Right panel (results only) */}
           <div className={`shrink-0 bg-zinc-900/50 backdrop-blur-xl border-l border-white/5 overflow-y-auto overflow-x-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-white/5 ${showRightPanel ? 'w-[340px] max-lg:w-full opacity-100' : 'w-0 max-lg:w-0 opacity-0'}`}>
-            {showRightPanel && activeResult?.scores && (
+            {showRightPanel && activeResult?.scores && rightTab === "analysis" && (
               <div ref={scorecardRef}>
                 <ScoreCard
                   scores={activeResult.scores}
@@ -468,6 +468,93 @@ export default function App() {
                   onShare={handleCopy}
                   isDark={isDark}
                 />
+              </div>
+            )}
+
+            {/* Brief display panel */}
+            {showRightPanel && rightTab === "brief" && (
+              <div className="flex flex-col h-full">
+                {/* Header */}
+                <div className="p-5 border-b border-white/5 flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => setRightTab("analysis")}
+                    className="text-xs text-zinc-500 hover:text-white transition-colors cursor-pointer"
+                  >
+                    ← Back to Scorecard
+                  </button>
+                  <span className="text-xs text-zinc-600 font-mono">Claude Sonnet</span>
+                </div>
+
+                {/* Loading state */}
+                {briefLoading && !brief && (
+                  <div className="flex-1 flex flex-col items-center justify-center gap-3 px-5">
+                    <div className="w-5 h-5 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
+                    <span className="text-xs text-zinc-500">Generating creative brief...</span>
+                  </div>
+                )}
+
+                {/* Error state */}
+                {briefError && (
+                  <div className="px-5 py-4">
+                    <p className="text-xs text-red-400">{briefError}</p>
+                  </div>
+                )}
+
+                {/* Brief content */}
+                {brief && (
+                  <>
+                    <div className="px-5 pt-5 pb-2 flex-1 overflow-y-auto">
+                      <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-4">
+                        Creative Brief
+                      </p>
+                      <div className="flex flex-col gap-0.5">
+                        {brief.split("\n").map((line, i) => {
+                          const trimmed = line.trim();
+                          if (!trimmed) return null;
+                          // Markdown heading
+                          if (trimmed.startsWith("## ")) return (
+                            <p key={i} className="text-xs font-semibold text-white mt-4 mb-1">
+                              {trimmed.replace(/^##\s*/, "")}
+                            </p>
+                          );
+                          // Bold label line: **Label:** Value
+                          const boldMatch = trimmed.match(/^\*\*(.+?)\*\*:?\s*(.*)/);
+                          if (boldMatch) return (
+                            <div key={i} className="mb-3">
+                              <p className="text-xs text-zinc-500 font-medium">{boldMatch[1]}</p>
+                              {boldMatch[2] && <p className="text-xs text-zinc-300 leading-relaxed mt-0.5">{boldMatch[2]}</p>}
+                            </div>
+                          );
+                          // Bullet point
+                          if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) return (
+                            <div key={i} className="flex gap-2 items-start ml-1 mb-1">
+                              <span className="w-1 h-1 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
+                              <span className="text-xs text-zinc-400 leading-relaxed">{trimmed.replace(/^[-*]\s*/, "")}</span>
+                            </div>
+                          );
+                          // Separator
+                          if (trimmed === "---") return <div key={i} className="border-t border-white/5 my-3" />;
+                          // Regular text
+                          return (
+                            <p key={i} className="text-xs text-zinc-300 leading-relaxed mb-1">{trimmed}</p>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Copy Brief button */}
+                    <div className="p-5 border-t border-white/5">
+                      <button
+                        type="button"
+                        onClick={handleBriefCopy}
+                        className="w-full py-2 px-3 bg-transparent border border-white/10 rounded-lg text-zinc-400 text-xs font-medium hover:bg-white/5 hover:text-white hover:border-white/20 transition-all duration-150 cursor-pointer"
+                      >
+                        {briefCopied ? "Copied!" : "Copy Brief"}
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </div>
