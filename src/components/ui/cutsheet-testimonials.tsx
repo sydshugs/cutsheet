@@ -1,4 +1,4 @@
-import { Megaphone, PenTool, ShoppingBag, Video, Users, BarChart2 } from "lucide-react";
+import { Megaphone, PenTool, ShoppingBag, Video, Users, BarChart2, Figma } from "lucide-react";
 
 const PERSONAS = [
   {
@@ -30,6 +30,11 @@ const PERSONAS = [
     icon: BarChart2,
     title: "Media Buyers",
     pain: "Predict which variants will win before you split-test. Cut testing costs in half.",
+  },
+  {
+    icon: Figma,
+    title: "Freelance & Agency Designers",
+    pain: "Stop letting clients pick the wrong ad on gut feel. Walk into every presentation with a scored breakdown that backs your creative decisions.",
   },
 ];
 
