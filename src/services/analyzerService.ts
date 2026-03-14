@@ -2,6 +2,7 @@
 // Drop this into src/services/analyzerService.ts
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { generateImprovements as claudeImprovements } from "./claudeService";
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 
@@ -364,7 +365,13 @@ export async function analyzeVideo(
     const scores = recalculateOverallScore(parsedScores);
 
     // 6. Parse improvements from markdown
-    const improvements = parseImprovements(markdown);
+    let improvements = parseImprovements(markdown);
+
+    // 6b. Enhance improvements with Claude (silent fallback to Gemini)
+    try {
+      const enhanced = await claudeImprovements(markdown, scores);
+      if (enhanced.length > 0) improvements = enhanced;
+    } catch { /* silent fallback — keep Gemini improvements */ }
 
     // 7. Parse budget recommendation from markdown
     const budget = parseBudget(markdown);

@@ -16,6 +16,7 @@ import { useSwipeFile } from "./hooks/useSwipeFile";
 import { useUsage } from "./hooks/useUsage";
 import { useThumbnail } from "./hooks/useThumbnail";
 import { downloadMarkdown, copyToClipboard, generateBrief, parseImprovements, parseBudget, parseHashtags } from "./services/analyzerService";
+import { generateBriefWithClaude, generateCTARewrites } from "./services/claudeService";
 import { createShare } from "./services/shareService";
 import { exportToPdf } from "./utils/pdfExport";
 import { UpgradeModal } from "./components/UpgradeModal";
@@ -62,6 +63,8 @@ export default function App() {
   const [briefLoading, setBriefLoading] = useState(false);
   const [briefError, setBriefError] = useState<string | null>(null);
   const [briefCopied, setBriefCopied] = useState(false);
+  const [ctaRewrites, setCtaRewrites] = useState<string[] | null>(null);
+  const [ctaLoading, setCtaLoading] = useState(false);
   const [shareToast, setShareToast] = useState(false);
   const [shareLoading, setShareLoading] = useState(false);
   const [rateLimitError, setRateLimitError] = useState<string | null>(null);
@@ -201,6 +204,8 @@ export default function App() {
     setBrief(null);
     setBriefError(null);
     setBriefLoading(false);
+    setCtaRewrites(null);
+    setCtaLoading(false);
     setRightTab("analysis");
   };
 
@@ -209,14 +214,32 @@ export default function App() {
     setBriefLoading(true);
     setBriefError(null);
     try {
-      const result = await generateBrief(activeResult.markdown, API_KEY);
+      const result = await generateBriefWithClaude(activeResult.markdown, activeResult.fileName);
       setBrief(result);
       setRightTab("brief");
-    } catch (err) {
-      setBriefError(err instanceof Error ? err.message : "Failed to generate brief.");
+    } catch {
+      // Fallback to Gemini
+      try {
+        const result = await generateBrief(activeResult.markdown, API_KEY);
+        setBrief(result);
+        setRightTab("brief");
+      } catch (err) {
+        setBriefError(err instanceof Error ? err.message : "Failed to generate brief.");
+      }
     } finally {
       setBriefLoading(false);
     }
+  };
+
+  const handleCTARewrite = async () => {
+    if (!activeResult || ctaLoading) return;
+    setCtaLoading(true);
+    try {
+      const ctaSection = activeResult.markdown.match(/CTA[\s\S]*?(?=\n##|\n---)/i)?.[0] ?? "";
+      const rewrites = await generateCTARewrites(ctaSection, activeResult.fileName);
+      setCtaRewrites(rewrites);
+    } catch { /* silent fail */ }
+    finally { setCtaLoading(false); }
   };
 
   const handleBriefCopy = async () => {
@@ -439,6 +462,9 @@ export default function App() {
                   modelName="Gemini 2.5 Flash"
                   onGenerateBrief={handleGenerateBrief}
                   onAddToSwipeFile={handleAddToSwipeFile}
+                  onCTARewrite={handleCTARewrite}
+                  ctaRewrites={ctaRewrites}
+                  ctaLoading={ctaLoading}
                   onShare={handleCopy}
                   isDark={isDark}
                 />

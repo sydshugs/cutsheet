@@ -24,6 +24,9 @@ interface ScoreCardProps {
   modelName?: string;
   onGenerateBrief?: () => void;
   onAddToSwipeFile?: () => void;
+  onCTARewrite?: () => void;
+  ctaRewrites?: string[] | null;
+  ctaLoading?: boolean;
 }
 
 const SCORE_LABELS: Record<keyof Scores, string> = {
@@ -92,6 +95,9 @@ export function ScoreCard({
   modelName = "Gemini 2.5 Flash",
   onGenerateBrief,
   onAddToSwipeFile,
+  onCTARewrite,
+  ctaRewrites,
+  ctaLoading,
 }: ScoreCardProps) {
   const { label: overallLabel } = getScoreLabel(scores.overall);
   const [mounted, setMounted] = useState(false);
@@ -199,6 +205,29 @@ export function ScoreCard({
                   } as React.CSSProperties}
                 />
               </div>
+              {/* CTA rewrite button — only when CTA score ≤ 5 */}
+              {key === "cta" && value <= 5 && onCTARewrite && (
+                <div className="mt-1.5">
+                  {!ctaRewrites ? (
+                    <button
+                      onClick={onCTARewrite}
+                      disabled={ctaLoading}
+                      className="text-[10px] text-indigo-400 hover:text-indigo-300 font-mono transition-colors disabled:opacity-50"
+                    >
+                      {ctaLoading ? "Rewriting..." : "✦ Rewrite CTA"}
+                    </button>
+                  ) : (
+                    <div className="flex flex-col gap-1 mt-1">
+                      {ctaRewrites.map((r, i) => (
+                        <div key={i} className="flex items-center gap-2 bg-indigo-500/5 rounded-lg px-2.5 py-1.5">
+                          <span className="text-[10px] text-indigo-400 font-mono">{i + 1}.</span>
+                          <span className="text-xs text-zinc-300">{r}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           );
         })}
