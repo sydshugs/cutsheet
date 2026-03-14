@@ -1,25 +1,25 @@
 import { Trophy, Check, X, Minus, Building2, Puzzle, DollarSign } from "lucide-react";
 
 const ROWS = [
-  "Self-serve, no demo needed",
-  "Video-first analysis",
-  "Results in under 30 seconds",
+  "Upload any video",
+  "No ad account needed",
+  "Scene-by-scene breakdown",
   "Free tier available",
-  "Built for performance marketers",
+  "Works for UGC creators",
   "No enterprise contract",
-  "AI creative brief included",
+  "Budget recommendation",
 ] as const;
 
 // y = yes, n = no, p = partial
 type V = "y" | "n" | "p";
 const DATA: Record<string, [V, V]> = {
-  "Self-serve, no demo needed":      ["n", "y"],
-  "Video-first analysis":            ["y", "n"],
-  "Results in under 30 seconds":     ["n", "n"],
-  "Free tier available":             ["n", "n"],
-  "Built for performance marketers": ["n", "p"],
-  "No enterprise contract":          ["n", "y"],
-  "AI creative brief included":      ["n", "n"],
+  "Upload any video":          ["p", "n"],
+  "No ad account needed":      ["y", "n"],
+  "Scene-by-scene breakdown":  ["n", "n"],
+  "Free tier available":       ["n", "n"],
+  "Works for UGC creators":    ["p", "n"],
+  "No enterprise contract":    ["n", "n"],
+  "Budget recommendation":     ["n", "n"],
 };
 
 function Cell({ v }: { v: "y" | "n" | "p" }) {
@@ -89,10 +89,10 @@ export default function CutsheetWhy() {
               </div>
             </div>
 
-            {/* Enterprise Tools column */}
+            {/* AdCreative.ai column */}
             <div className="min-w-[260px] flex-shrink-0 snap-start rounded-3xl border border-white/[0.08] bg-white/[0.02] p-6 sm:min-w-0 sm:flex-shrink">
               <h3 className="mb-5 text-center text-xs font-semibold uppercase tracking-widest text-zinc-500">
-                Enterprise Tools
+                AdCreative.ai
               </h3>
               <div className="space-y-3">
                 {ROWS.map((row) => {
@@ -107,10 +107,10 @@ export default function CutsheetWhy() {
               </div>
             </div>
 
-            {/* Ad Platforms column */}
+            {/* Madgicx column */}
             <div className="min-w-[260px] flex-shrink-0 snap-start rounded-3xl border border-white/[0.08] bg-white/[0.02] p-6 sm:min-w-0 sm:flex-shrink">
               <h3 className="mb-5 text-center text-xs font-semibold uppercase tracking-widest text-zinc-500">
-                Ad Platforms
+                Madgicx
               </h3>
               <div className="space-y-3">
                 {ROWS.map((row) => {
