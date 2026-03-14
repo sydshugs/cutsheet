@@ -1,6 +1,5 @@
 import { useRef, useState, useCallback, useEffect, type RefObject } from "react";
-import { motion } from "framer-motion";
-import { Upload } from "lucide-react";
+import { Upload, Video, Image } from "lucide-react";
 
 interface VideoDropzoneProps {
   onFileSelect: (file: File | null) => void;
@@ -113,12 +112,12 @@ export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, 
 
   // Empty state — dropzone
   if (!file) {
-    const formatPills = acceptImages ? ["MP4", "MOV", "WEBM", "PNG", "JPEG"] : ["MP4", "MOV", "WEBM"];
+    const formatPills = ["MP4", "MOV", "WEBM", "JPG", "PNG", "WEBP"];
     const shortcutKey = typeof navigator !== 'undefined' && navigator.platform?.includes('Mac') ? '⌘V' : 'Ctrl+V';
 
     return (
       <div className="w-full max-w-[640px] mx-auto">
-        <motion.div layoutId="analyzer-card" className="bg-zinc-900/50 backdrop-blur-xl rounded-3xl border border-white/5 p-4 md:p-8">
+        <div className="bg-zinc-900/50 backdrop-blur-xl rounded-3xl border border-white/5 p-4 md:p-8">
           <div
             onClick={() => !disabled && fileInputRef.current?.click()}
             onDrop={onDrop}
@@ -145,7 +144,7 @@ export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, 
             </div>
 
             <div className="text-base md:text-xl font-semibold text-white">Drop your creative here</div>
-            <div className="text-sm text-zinc-400 text-center">or browse to upload</div>
+            <div className="text-sm text-zinc-400 text-center">video or static — any ad format</div>
 
             {/* Format chips */}
             <div className="flex gap-1.5 flex-wrap justify-center">
@@ -199,7 +198,7 @@ export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, 
               </button>
             </div>
           )}
-        </motion.div>
+        </div>
 
         <input
           ref={fileInputRef}
@@ -236,25 +235,40 @@ export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, 
         )}
       </div>
 
-      <div className="flex items-center justify-between mt-2.5 px-3 py-2 bg-white/5 rounded-xl border border-white/5">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-          <span className="text-xs font-mono text-zinc-400 truncate">{file.name}</span>
+      <div className="flex flex-col gap-1.5 mt-2.5">
+        <div className="flex items-center justify-between px-3 py-2 bg-white/5 rounded-xl border border-white/5">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+            <span className="text-xs font-mono text-zinc-400 truncate">{file.name}</span>
+          </div>
+          <div className="flex gap-3 shrink-0 ml-3">
+            {!fileIsImage && duration !== null && (
+              <span className="text-xs font-mono text-zinc-600">{formatDuration(duration)}</span>
+            )}
+            <span className="text-xs font-mono text-zinc-600">{formatSize(file.size)}</span>
+            <button
+              onClick={() => {
+                onFileSelect(null);
+                setError(null);
+              }}
+              className="text-xs font-mono text-zinc-500 hover:text-white transition-colors"
+            >
+              Remove
+            </button>
+          </div>
         </div>
-        <div className="flex gap-3 shrink-0 ml-3">
-          {!fileIsImage && duration !== null && (
-            <span className="text-xs font-mono text-zinc-600">{formatDuration(duration)}</span>
+        <div className="flex items-center gap-1.5 px-3 text-xs text-zinc-500">
+          {fileIsImage ? (
+            <>
+              <Image className="h-3 w-3" />
+              <span>Analyzing as static creative</span>
+            </>
+          ) : (
+            <>
+              <Video className="h-3 w-3" />
+              <span>Analyzing as video creative</span>
+            </>
           )}
-          <span className="text-xs font-mono text-zinc-600">{formatSize(file.size)}</span>
-          <button
-            onClick={() => {
-              onFileSelect(null);
-              setError(null);
-            }}
-            className="text-xs font-mono text-zinc-500 hover:text-white transition-colors"
-          >
-            Remove
-          </button>
         </div>
       </div>
     </div>

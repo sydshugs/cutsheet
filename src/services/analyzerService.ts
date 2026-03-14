@@ -338,8 +338,13 @@ export async function analyzeVideo(
     emit("uploading", "Reading video file...");
     const base64Data = await fileToBase64(file);
 
-    // 3. Build request with inline video data
-    emit("processing", "Gemini is analyzing your creative...");
+    // 3. Build request with inline data — format-aware prompt
+    const isImage = file.type.startsWith("image/");
+    emit("processing", isImage ? "Gemini is analyzing your static creative..." : "Gemini is analyzing your creative...");
+
+    const staticPrefix = `This is a STATIC AD CREATIVE (image). Analyze it as a static advertisement. For Hook Strength, assess the visual impact and scroll-stop potential of the static image. For Pacing & Retention, assess visual hierarchy and how the eye moves through the composition instead. All other metrics apply as normal.\n\n`;
+    const prompt = isImage ? staticPrefix + ANALYSIS_PROMPT : ANALYSIS_PROMPT;
+
     const result = await model.generateContent([
       {
         inlineData: {
@@ -348,7 +353,7 @@ export async function analyzeVideo(
         },
       },
       {
-        text: ANALYSIS_PROMPT,
+        text: prompt,
       },
     ]);
 
