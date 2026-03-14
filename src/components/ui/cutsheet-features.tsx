@@ -692,11 +692,11 @@ export default function CutsheetFeatures() {
                   Competitor Analysis
                 </div>
                 <h3 className="text-lg font-semibold text-white">
-                  Upload your ad alongside a competitor's.
+                  Upload your ad. Upload theirs. See exactly how to win.
                   <span className="bg-white/10 text-zinc-500 text-xs rounded-full px-2 py-0.5 ml-1.5 whitespace-nowrap">Coming soon</span>
                 </h3>
                 <p className="text-sm text-zinc-400">
-                  See exactly where they're beating you and get a specific action plan to outperform them.
+                  Get a scored gap analysis against any competitor creative — with a specific action plan to outperform them.
                 </p>
               </div>
             </SpotlightCard>
