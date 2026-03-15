@@ -459,7 +459,7 @@ export default function App() {
                   hashtags={activeResult.hashtags}
                   fileName={activeResult.fileName}
                   analysisTime={analysisCompletedAt ?? undefined}
-                  modelName="Gemini 2.5 Flash"
+                  modelName="Gemini + Claude"
                   onGenerateBrief={handleGenerateBrief}
                   onAddToSwipeFile={handleAddToSwipeFile}
                   onCTARewrite={handleCTARewrite}
