@@ -12,8 +12,8 @@ export default defineConfig(({mode}) => {
       tailwindcss(),
       Sitemap({
         hostname: 'https://cutsheet.xyz',
-        dynamicRoutes: ['/', '/app', '/privacy', '/terms'],
-        exclude: ['/success', '/s/*', '/demo'],
+        dynamicRoutes: ['/app', '/privacy', '/terms'],
+        exclude: ['/success', '/s/*', '/demo', '/landing'],
         changefreq: 'weekly',
         priority: 0.7,
         lastmod: new Date().toISOString(),
