@@ -182,22 +182,22 @@ function fileToBase64(file: File): Promise<string> {
 
 function parseScores(markdown: string): AnalysisResult["scores"] {
   try {
-    const hookMatch = markdown.match(/Hook Strength:\s*(\d+)\/10/);
-    const clarityMatch = markdown.match(/Message Clarity:\s*(\d+)\/10/);
-    const ctaMatch = markdown.match(/CTA Effectiveness:\s*(\d+)\/10/);
-    const productionMatch = markdown.match(/Production Quality:\s*(\d+)\/10/);
-    const overallMatch = markdown.match(/Overall Ad Strength:\s*(\d+)\/10/);
+    const hookMatch = markdown.match(/Hook Strength:\s*(\d+(?:\.\d+)?)\/10/);
+    const clarityMatch = markdown.match(/Message Clarity:\s*(\d+(?:\.\d+)?)\/10/);
+    const ctaMatch = markdown.match(/CTA Effectiveness:\s*(\d+(?:\.\d+)?)\/10/);
+    const productionMatch = markdown.match(/Production Quality:\s*(\d+(?:\.\d+)?)\/10/);
+    const overallMatch = markdown.match(/Overall Ad Strength:\s*(\d+(?:\.\d+)?)\/10/);
 
     if (!hookMatch || !clarityMatch || !ctaMatch || !productionMatch || !overallMatch) {
       return null;
     }
 
     return {
-      hook: parseInt(hookMatch[1]),
-      clarity: parseInt(clarityMatch[1]),
-      cta: parseInt(ctaMatch[1]),
-      production: parseInt(productionMatch[1]),
-      overall: parseInt(overallMatch[1]),
+      hook: Math.round(parseFloat(hookMatch[1])),
+      clarity: Math.round(parseFloat(clarityMatch[1])),
+      cta: Math.round(parseFloat(ctaMatch[1])),
+      production: Math.round(parseFloat(productionMatch[1])),
+      overall: Math.round(parseFloat(overallMatch[1])),
     };
   } catch {
     return null;

@@ -3,7 +3,22 @@ import ReactMarkdown from "react-markdown";
 import { ScoreCard } from "./ScoreCard";
 import type { AnalysisResult } from "../services/analyzerService";
 
+/** Preprocess markdown to fix line-break issues in hashtag section and platform lines */
+function fixMarkdownLineBreaks(md: string): string {
+  // In the HASHTAGS section, ensure each platform line is a separate paragraph
+  // by replacing single newlines between PLATFORM: lines with double newlines
+  return md.replace(
+    /(##\s*(?:#️⃣\s*)?HASHTAGS\s*\n)([\s\S]*?)(?=\n---|\n##|$)/gi,
+    (_match, header, body) => {
+      const fixed = body.replace(/\n(?=\s*(TIKTOK|META|INSTAGRAM|YOUTUBE|X|TWITTER):)/gi, "\n\n");
+      return header + fixed;
+    }
+  );
+}
+
 export function ReportAnalysis({ result }: { result: AnalysisResult }) {
+  const processedMarkdown = fixMarkdownLineBreaks(result.markdown);
+
   return (
     <div
       style={{
@@ -92,7 +107,7 @@ export function ReportAnalysis({ result }: { result: AnalysisResult }) {
           lineHeight: 1.7,
         }}
       >
-        <ReactMarkdown>{result.markdown}</ReactMarkdown>
+        <ReactMarkdown>{processedMarkdown}</ReactMarkdown>
       </div>
     </div>
   );

@@ -161,6 +161,7 @@ export function ComparePanel({ label, isDark, apiKey, isWinner, onResult }: Comp
         disabled={isAnalyzing}
         videoRef={videoRef}
         isDark={isDark}
+        acceptImages
       />
 
       {/* Analyze button */}

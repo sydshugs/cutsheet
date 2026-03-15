@@ -26,35 +26,6 @@ function createOffscreenContainer(): HTMLDivElement {
   return el;
 }
 
-function CutsheetLogoWatermark() {
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "6px",
-        opacity: 0.25,
-      }}
-    >
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-        <polygon points="0,0 10,0 14,4 14,14 0,14" fill="#fff" opacity="0.9" />
-        <line x1="9.5" y1="0.5" x2="13.5" y2="4.5" stroke="#6366F1" strokeWidth="1" />
-      </svg>
-      <span
-        style={{
-          fontFamily: "var(--mono)",
-          fontSize: "9px",
-          fontWeight: 700,
-          letterSpacing: "0.08em",
-          color: "#fff",
-        }}
-      >
-        CUTSHEET
-      </span>
-    </div>
-  );
-}
-
 export async function exportToPdf(result: AnalysisResult): Promise<void> {
   const container = createOffscreenContainer();
 
@@ -77,22 +48,8 @@ export async function exportToPdf(result: AnalysisResult): Promise<void> {
     });
     pdf.addImage(coverCanvas.toDataURL("image/png"), "PNG", 0, 0, A4_W_MM, A4_H_MM);
 
-    // Footer watermark on page 1
-    const footerDiv = document.createElement("div");
-    footerDiv.style.cssText = "display:flex;alignItems:center;gap:6px;opacity:0.25;padding:8px;background:#0A0A0A;";
-    container.appendChild(footerDiv);
-    const footerRoot = createRoot(footerDiv);
-    footerRoot.render(<CutsheetLogoWatermark />);
-    await new Promise((r) => setTimeout(r, 100));
-    const footerCanvas = await html2canvas(footerDiv, { scale: 1, backgroundColor: "#0A0A0A", logging: false });
-    const fw = 30;
-    const fh = (footerCanvas.height / footerCanvas.width) * fw;
-    pdf.addImage(footerCanvas.toDataURL("image/png"), "PNG", 10, A4_H_MM - fh - 10, fw, fh);
-
     coverRoot.unmount();
-    footerRoot.unmount();
     container.removeChild(coverDiv);
-    container.removeChild(footerDiv);
 
     // —— Page 2+: Full analysis ——
     const analysisDiv = document.createElement("div");
@@ -117,11 +74,16 @@ export async function exportToPdf(result: AnalysisResult): Promise<void> {
     const imgH = (analysisCanvas.height / analysisCanvas.width) * imgW;
     const pageCount = Math.ceil(imgH / A4_H_MM);
 
-    for (let i = 0; i < pageCount; i++) {
+    // Trim trailing white page: skip last page if it has < 5% content
+    const lastPageRemaining = imgH - (pageCount - 1) * A4_H_MM;
+    const effectivePages = lastPageRemaining < A4_H_MM * 0.05 ? pageCount - 1 : pageCount;
+
+    const analysisDataUrl = analysisCanvas.toDataURL("image/png");
+
+    for (let i = 0; i < effectivePages; i++) {
       pdf.addPage();
       const yOffset = -i * A4_H_MM;
-      pdf.addImage(analysisCanvas.toDataURL("image/png"), "PNG", 0, yOffset, imgW, imgH);
-      pdf.addImage(footerCanvas.toDataURL("image/png"), "PNG", 10, A4_H_MM - fh - 10, fw, fh);
+      pdf.addImage(analysisDataUrl, "PNG", 0, yOffset, imgW, imgH);
     }
 
     const baseName = result.fileName.replace(/\.[^/.]+$/, "") || "report";

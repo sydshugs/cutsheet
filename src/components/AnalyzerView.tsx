@@ -55,6 +55,7 @@ export function AnalyzerView({
             onFileSelect={onFileSelect}
             file={file}
             onUrlSubmit={onUrlSubmit}
+            acceptImages
           />
           {historyEntries && historyEntries.length > 0 && (
             <div className="max-w-[640px] mx-auto mt-6">
