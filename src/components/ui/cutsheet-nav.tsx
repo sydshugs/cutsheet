@@ -14,13 +14,13 @@ export default function CutsheetNav() {
       ticking.current = true;
       requestAnimationFrame(() => {
         const y = window.scrollY;
-        // Only hide after scrolling past 60px, show immediately on scroll up
-        if (y > 60 && y > lastY.current) {
+        // Only hide after scrolling past 80px, show immediately on scroll up
+        if (y > 80 && y > lastY.current) {
           setHidden(true);
         } else {
           setHidden(false);
         }
-        setScrolled(y > 20);
+        setScrolled(y > 80);
         lastY.current = y;
         ticking.current = false;
       });
@@ -34,10 +34,10 @@ export default function CutsheetNav() {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-xl transition-all duration-300 ease-out ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-200 ease-out ${
         scrolled
-          ? "border-b border-white/[0.08] bg-zinc-950/90 shadow-lg shadow-black/20"
-          : "border-b border-transparent bg-zinc-950/40"
+          ? "backdrop-blur-xl border-b border-white/[0.06] bg-zinc-950/90 shadow-lg shadow-black/20"
+          : "border-b border-transparent bg-transparent"
       }`}
       style={{ transform: hidden ? "translateY(-100%)" : "translateY(0)" }}
     >

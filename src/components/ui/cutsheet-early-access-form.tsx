@@ -135,7 +135,7 @@ export default function EarlyAccessForm({
           <button
             type="submit"
             disabled={status === "loading"}
-            className={`inline-flex shrink-0 items-center justify-center gap-1.5 bg-indigo-600 font-semibold text-white transition-all hover:bg-indigo-500 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none ${
+            className={`inline-flex shrink-0 items-center justify-center gap-1.5 bg-indigo-600 font-semibold text-white transition-all duration-150 ease-out hover:bg-indigo-500 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(99,102,241,0.3)] active:scale-[0.97] disabled:opacity-60 disabled:pointer-events-none ${
               isSm
                 ? "w-full rounded-xl px-6 py-3 text-sm"
                 : "rounded-full px-6 py-2.5 text-sm"

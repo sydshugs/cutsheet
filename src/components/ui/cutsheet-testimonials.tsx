@@ -1,5 +1,5 @@
 import { Megaphone, PenTool, ShoppingBag, Video, Users, BarChart2, Figma } from "lucide-react";
-import { FadeIn, StaggerContainer, StaggerItem } from "./fade-in";
+import { FadeIn, StaggerContainer, ScaleStaggerItem } from "./fade-in";
 
 const PERSONAS = [
   {
@@ -66,9 +66,9 @@ export default function CutsheetTestimonials() {
         </FadeIn>
 
         {/* Persona grid */}
-        <StaggerContainer className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" stagger={0.07}>
+        <StaggerContainer className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" stagger={0.06}>
           {PERSONAS.map((persona) => (
-            <StaggerItem key={persona.title}>
+            <ScaleStaggerItem key={persona.title}>
               <div className="group relative rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6 transition-all duration-300 hover:-translate-y-0.5 hover:border-indigo-500/20 hover:bg-indigo-500/[0.04]">
                 <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/10 transition-colors group-hover:bg-indigo-500/15">
                   <persona.icon className="h-5 w-5 text-indigo-400" />
@@ -78,7 +78,7 @@ export default function CutsheetTestimonials() {
                   {persona.pain}
                 </p>
               </div>
-            </StaggerItem>
+            </ScaleStaggerItem>
           ))}
         </StaggerContainer>
       </div>

@@ -1,5 +1,5 @@
 import { Trophy, Check, X, Minus, Building2, Puzzle, DollarSign } from "lucide-react";
-import { FadeIn, StaggerContainer, StaggerItem } from "./fade-in";
+import { FadeIn, StaggerContainer, StaggerItem, ScaleStaggerItem } from "./fade-in";
 
 const ROWS = [
   "Upload any video",
@@ -80,14 +80,16 @@ export default function CutsheetWhy() {
               <h3 className="mb-5 text-center text-xs font-semibold uppercase tracking-widest text-indigo-300">
                 Cutsheet
               </h3>
-              <div className="space-y-3">
+              <StaggerContainer className="space-y-3" stagger={0.06} delayChildren={0.2}>
                 {ROWS.map((row) => (
-                  <div key={row} className="flex items-center gap-3 rounded-xl bg-white/[0.04] px-4 py-2.5">
-                    <Check className="h-4 w-4 shrink-0 text-green-400" />
-                    <span className="text-sm text-zinc-200 whitespace-nowrap sm:whitespace-normal">{row}</span>
-                  </div>
+                  <ScaleStaggerItem key={row}>
+                    <div className="flex items-center gap-3 rounded-xl bg-white/[0.04] px-4 py-2.5">
+                      <Check className="h-4 w-4 shrink-0 text-green-400" />
+                      <span className="text-sm text-zinc-200 whitespace-nowrap sm:whitespace-normal">{row}</span>
+                    </div>
+                  </ScaleStaggerItem>
                 ))}
-              </div>
+              </StaggerContainer>
             </div>
 
             {/* AdCreative.ai column */}
@@ -95,17 +97,19 @@ export default function CutsheetWhy() {
               <h3 className="mb-5 text-center text-xs font-semibold uppercase tracking-widest text-zinc-500">
                 AdCreative.ai
               </h3>
-              <div className="space-y-3">
+              <StaggerContainer className="space-y-3" stagger={0.06} delayChildren={0.2}>
                 {ROWS.map((row) => {
                   const v = DATA[row][0];
                   return (
-                    <div key={row} className="flex items-center gap-3 px-4 py-2.5">
-                      <Cell v={v} />
-                      <span className="text-sm text-zinc-500 whitespace-nowrap sm:whitespace-normal">{row}</span>
-                    </div>
+                    <ScaleStaggerItem key={row}>
+                      <div className="flex items-center gap-3 px-4 py-2.5">
+                        <Cell v={v} />
+                        <span className="text-sm text-zinc-500 whitespace-nowrap sm:whitespace-normal">{row}</span>
+                      </div>
+                    </ScaleStaggerItem>
                   );
                 })}
-              </div>
+              </StaggerContainer>
             </div>
 
             {/* Madgicx column */}
@@ -113,17 +117,19 @@ export default function CutsheetWhy() {
               <h3 className="mb-5 text-center text-xs font-semibold uppercase tracking-widest text-zinc-500">
                 Madgicx
               </h3>
-              <div className="space-y-3">
+              <StaggerContainer className="space-y-3" stagger={0.06} delayChildren={0.2}>
                 {ROWS.map((row) => {
                   const v = DATA[row][1];
                   return (
-                    <div key={row} className="flex items-center gap-3 px-4 py-2.5">
-                      <Cell v={v} />
-                      <span className="text-sm text-zinc-500 whitespace-nowrap sm:whitespace-normal">{row}</span>
-                    </div>
+                    <ScaleStaggerItem key={row}>
+                      <div className="flex items-center gap-3 px-4 py-2.5">
+                        <Cell v={v} />
+                        <span className="text-sm text-zinc-500 whitespace-nowrap sm:whitespace-normal">{row}</span>
+                      </div>
+                    </ScaleStaggerItem>
                   );
                 })}
-              </div>
+              </StaggerContainer>
             </div>
           </div>
         </FadeIn>

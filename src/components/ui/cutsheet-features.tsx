@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Zap,
   Clock,
@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { SpotlightCard } from "./spotlight-card";
 import { FadeIn } from "./fade-in";
+
 
 /* ─── Metrics carousel data ──────────────────────────────────────────── */
 
@@ -141,6 +142,8 @@ const FEATURE_STYLES = `
   }
   .feat-bar {
     width: 0%;
+  }
+  .in-view .feat-bar {
     animation: feat-bar 1.4s ease-out forwards;
   }
 
@@ -150,6 +153,8 @@ const FEATURE_STYLES = `
   }
   .feat-fade {
     opacity: 0;
+  }
+  .in-view .feat-fade {
     animation: feat-fade 0.5s ease-out forwards;
   }
 
@@ -160,6 +165,8 @@ const FEATURE_STYLES = `
   }
   .feat-pop {
     opacity: 0;
+  }
+  .in-view .feat-pop {
     animation: feat-pop 0.5s ease-out forwards;
   }
 `;
@@ -445,6 +452,22 @@ function BriefsPreview() {
 /* ═══ Main Component ═════════════════════════════════════════════════ */
 
 export default function CutsheetFeatures() {
+  useEffect(() => {
+    const el = document.getElementById("feature-grid");
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          el.classList.add("in-view");
+          obs.disconnect();
+        }
+      },
+      { rootMargin: "-60px" },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
   return (
     <section id="features" className="relative w-full bg-zinc-950 text-white border-t border-white/5">
       <style>{FEATURE_STYLES}</style>
@@ -508,7 +531,7 @@ export default function CutsheetFeatures() {
             </p>
           </FadeIn>
 
-          <div className="grid gap-4 md:gap-5 md:grid-cols-2">
+          <div id="feature-grid" className="grid gap-4 md:gap-5 md:grid-cols-2">
             {/* ── Compare ── */}
             <SpotlightCard
               spotlightColor="rgba(99, 102, 241, 0.15)"
@@ -666,7 +689,7 @@ export default function CutsheetFeatures() {
           <div className="grid gap-4 md:gap-5 md:grid-cols-2">
             <SpotlightCard
               spotlightColor="rgba(16, 185, 129, 0.15)"
-              className="rounded-3xl border-white/5 bg-zinc-900/60 p-6 sm:p-7 backdrop-blur-xl"
+              className="rounded-3xl border-white/5 bg-zinc-900/60 p-6 sm:p-7 backdrop-blur-xl transition-all duration-200 ease-out hover:-translate-y-1 hover:border-indigo-500/30"
             >
               <div className="space-y-3">
                 <div className="inline-flex items-center gap-2 rounded-full bg-zinc-900/80 px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-emerald-300 uppercase">
@@ -685,7 +708,7 @@ export default function CutsheetFeatures() {
 
             <SpotlightCard
               spotlightColor="rgba(239, 68, 68, 0.15)"
-              className="rounded-3xl border-white/5 bg-zinc-900/60 p-6 sm:p-7 backdrop-blur-xl"
+              className="rounded-3xl border-white/5 bg-zinc-900/60 p-6 sm:p-7 backdrop-blur-xl transition-all duration-200 ease-out hover:-translate-y-1 hover:border-indigo-500/30"
             >
               <div className="space-y-3">
                 <div className="inline-flex items-center gap-2 rounded-full bg-zinc-900/80 px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-red-300 uppercase">

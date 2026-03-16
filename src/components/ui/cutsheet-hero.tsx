@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import EarlyAccessForm from "./cutsheet-early-access-form";
 import {
   Zap,
@@ -43,6 +43,22 @@ const StatItem = ({ value, label }: { value: string; label: string }) => (
 );
 
 export default function CutsheetHero() {
+  useEffect(() => {
+    const el = document.getElementById("hero-stats");
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          el.classList.add("hero-bars-visible");
+          obs.disconnect();
+        }
+      },
+      { rootMargin: "-40px" },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
   return (
     <div className="relative w-full bg-zinc-950 text-white overflow-hidden font-sans">
       <style>{`
@@ -54,34 +70,35 @@ export default function CutsheetHero() {
           from { transform: translateX(0); }
           to { transform: translateX(-50%); }
         }
-        @keyframes nudgeRight {
-          0%, 100% { transform: translateX(0); }
-          50% { transform: translateX(4px); }
-        }
-        .animate-nudge {
-          animation: nudgeRight 1.5s ease-in-out infinite;
-        }
         @keyframes barFill {
           from { width: 0%; }
           to { width: var(--bar-width, 87%); }
         }
         .animate-fade-in {
-          animation: fadeSlideIn 0.8s ease-out forwards;
+          animation: fadeSlideIn 600ms cubic-bezier(0.25,0.46,0.45,0.94) forwards;
           opacity: 0;
         }
         .animate-marquee {
           animation: marquee 35s linear infinite;
         }
-        .animate-bar {
-          animation: barFill 1.8s ease-out 0.8s forwards;
+        .hero-bar {
           width: 0%;
         }
-        .delay-100 { animation-delay: 0.1s; }
-        .delay-200 { animation-delay: 0.2s; }
-        .delay-300 { animation-delay: 0.3s; }
-        .delay-400 { animation-delay: 0.4s; }
-        .delay-500 { animation-delay: 0.5s; }
-        .delay-600 { animation-delay: 0.6s; }
+        .hero-bars-visible .hero-bar {
+          animation: barFill 800ms ease-out forwards;
+        }
+        .delay-0   { animation-delay: 0ms; }
+        .delay-150 { animation-delay: 150ms; }
+        .delay-300 { animation-delay: 300ms; }
+        .delay-450 { animation-delay: 450ms; }
+        .delay-550 { animation-delay: 550ms; }
+        .delay-650 { animation-delay: 650ms; }
+        @media (prefers-reduced-motion: reduce) {
+          *, *::before, *::after {
+            animation-duration: 0.01ms !important;
+            transition-duration: 0.01ms !important;
+          }
+        }
       `}</style>
 
       {/* Ambient glow background */}
@@ -104,7 +121,7 @@ export default function CutsheetHero() {
           {/* Left column */}
           <div className="lg:col-span-7 flex flex-col justify-center space-y-8 pt-8">
             {/* Badge */}
-            <div className="animate-fade-in delay-100">
+            <div className="animate-fade-in delay-0">
               <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1.5 backdrop-blur-md transition-colors hover:bg-indigo-500/15">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75" />
@@ -119,7 +136,7 @@ export default function CutsheetHero() {
 
             {/* Heading */}
             <h1
-              className="animate-fade-in delay-200 text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-medium tracking-tighter leading-[0.9]"
+              className="animate-fade-in delay-150 text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-medium tracking-tighter leading-[0.9]"
               style={{
                 maskImage:
                   "linear-gradient(180deg, black 0%, black 80%, transparent 100%)",
@@ -144,7 +161,7 @@ export default function CutsheetHero() {
             </p>
 
             {/* CTA Buttons */}
-            <div id="waitlist" className="animate-fade-in delay-400 flex flex-col gap-4">
+            <div id="waitlist" className="animate-fade-in delay-450 flex flex-col gap-4">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <EarlyAccessForm />
               </div>
@@ -160,7 +177,7 @@ export default function CutsheetHero() {
             </div>
 
             {/* Social proof */}
-            <div className="animate-fade-in delay-500 flex items-center gap-3">
+            <div className="animate-fade-in delay-550 flex items-center gap-3">
               <div className="flex -space-x-2">
                 {WAITLIST_INITIALS.map((initial) => (
                   <div
@@ -180,7 +197,7 @@ export default function CutsheetHero() {
           {/* Right column */}
           <div className="lg:col-span-5 space-y-5 lg:mt-8">
             {/* Stats Card */}
-            <div className="animate-fade-in delay-500 relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-7 backdrop-blur-xl shadow-2xl">
+            <div id="hero-stats" className="animate-fade-in delay-450 relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-7 backdrop-blur-xl shadow-2xl">
               <div className="absolute top-0 right-0 -mr-12 -mt-12 h-48 w-48 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
 
               <div className="relative z-10">
@@ -200,10 +217,10 @@ export default function CutsheetHero() {
                 {/* Score bars */}
                 <div className="space-y-3 mb-7">
                   {[
-                    { label: "Hook Strength", score: 92, color: "from-indigo-500 to-indigo-400" },
-                    { label: "CTA Clarity", score: 78, color: "from-violet-500 to-violet-400" },
-                    { label: "Pacing", score: 85, color: "from-cyan-500 to-cyan-400" },
-                  ].map(({ label, score, color }) => (
+                    { label: "Hook Strength", score: 92, color: "from-indigo-500 to-indigo-400", delay: 0 },
+                    { label: "CTA Clarity", score: 78, color: "from-violet-500 to-violet-400", delay: 100 },
+                    { label: "Pacing", score: 85, color: "from-cyan-500 to-cyan-400", delay: 200 },
+                  ].map(({ label, score, color, delay }) => (
                     <div key={label}>
                       <div className="flex justify-between text-xs mb-1.5">
                         <span className="text-zinc-400">{label}</span>
@@ -211,10 +228,10 @@ export default function CutsheetHero() {
                       </div>
                       <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-800/60">
                         <div
-                          className={`h-full rounded-full bg-gradient-to-r ${color} animate-bar`}
+                          className={`h-full rounded-full bg-gradient-to-r ${color} hero-bar`}
                           style={{
                             ['--bar-width' as string]: `${score}%`,
-                            animation: `barFill 1.6s ease-out ${0.8 + Math.random() * 0.4}s forwards`,
+                            animationDelay: `${delay}ms`,
                           }}
                         />
                       </div>
@@ -264,7 +281,7 @@ export default function CutsheetHero() {
             </div>
 
             {/* Marquee — scoring categories */}
-            <div className="animate-fade-in delay-600 relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 py-6 backdrop-blur-xl">
+            <div className="animate-fade-in delay-650 relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 py-6 backdrop-blur-xl">
               <h3 className="mb-4 px-6 text-xs font-medium text-zinc-500 uppercase tracking-widest">
                 What We Score
               </h3>

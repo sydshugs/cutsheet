@@ -72,3 +72,21 @@ export function StaggerItem({ children, className }: { children: ReactNode; clas
     </motion.div>
   );
 }
+
+const fadeUpScaleVariants: Variants = {
+  hidden: { opacity: 0, y: 16, scale: 0.97 },
+  visible: { opacity: 1, y: 0, scale: 1 },
+};
+
+/** A child of StaggerContainer that fades up + scales in when revealed. */
+export function ScaleStaggerItem({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <motion.div
+      variants={fadeUpScaleVariants}
+      transition={{ duration: 0.5, ease: EASE_OUT_EXPO }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
