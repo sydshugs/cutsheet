@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
-
-// TODO: Replace with Clerk/Supabase auth in auth sprint
+import { supabase } from "../lib/supabase";
+import { useAuth } from "../context/AuthContext";
 
 function TravelingBeams() {
   const beamColor = "rgba(99,102,241,0.7)";
@@ -85,17 +85,47 @@ const fieldVariants = {
 };
 
 export default function Login() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const from = (location.state as any)?.from?.pathname || "/app";
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (user) navigate(from, { replace: true });
+  }, [user]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // TODO: Replace with Clerk/Supabase auth in auth sprint
-    setTimeout(() => setIsLoading(false), 1500);
+    setError("");
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setError(error.message);
+      setIsLoading(false);
+    } else {
+      navigate(from, { replace: true });
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/app`,
+      },
+    });
   };
 
   return (
@@ -229,6 +259,13 @@ export default function Login() {
               </Link>
             </motion.div>
 
+            {/* Error message */}
+            {error && (
+              <p style={{ fontSize: 13, color: "#ef4444", textAlign: "center" }}>
+                {error}
+              </p>
+            )}
+
             {/* Sign In button */}
             <motion.div custom={4} variants={fieldVariants} initial="hidden" animate="visible">
               <motion.button
@@ -274,6 +311,7 @@ export default function Login() {
             <motion.div custom={6} variants={fieldVariants} initial="hidden" animate="visible">
               <motion.button
                 type="button"
+                onClick={handleGoogleSignIn}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.97 }}
                 className="w-full h-[44px] rounded-full text-white font-medium text-sm flex items-center justify-center gap-2.5 transition-all"

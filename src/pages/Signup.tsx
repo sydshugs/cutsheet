@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
-
-// TODO: Replace with Clerk/Supabase auth in auth sprint
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, CheckCircle } from "lucide-react";
+import { supabase } from "../lib/supabase";
 
 function TravelingBeams() {
   const beamColor = "rgba(99,102,241,0.7)";
@@ -91,18 +90,49 @@ const fieldVariants = {
 };
 
 export default function Signup() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
     setIsLoading(true);
-    // TODO: Replace with Clerk/Supabase auth in auth sprint
-    setTimeout(() => setIsLoading(false), 1500);
+    setError("");
+
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/app`,
+      },
+    });
+
+    if (error) {
+      setError(error.message);
+      setIsLoading(false);
+    } else {
+      setSubmitted(true);
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignUp = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/app`,
+      },
+    });
   };
 
   return (
@@ -126,10 +156,20 @@ export default function Signup() {
         >
           <TravelingBeams />
 
-          <form onSubmit={handleSubmit} className="relative z-10 flex flex-col gap-6">
+          <div className="relative z-10 flex flex-col gap-6">
             {/* Logo */}
             <CutsheetLogo />
 
+            <AnimatePresence mode="wait">
+            {!submitted ? (
+            <motion.form
+              key="form"
+              onSubmit={handleSubmit}
+              className="flex flex-col gap-6"
+              initial={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
             {/* Heading */}
             <motion.div
               className="text-center"
@@ -242,6 +282,13 @@ export default function Signup() {
               </div>
             </motion.div>
 
+            {/* Error message */}
+            {error && (
+              <p style={{ fontSize: 13, color: "#ef4444", textAlign: "center" }}>
+                {error}
+              </p>
+            )}
+
             {/* Create Account button */}
             <motion.div custom={4} variants={fieldVariants} initial="hidden" animate="visible">
               <motion.button
@@ -304,6 +351,7 @@ export default function Signup() {
             <motion.div custom={7} variants={fieldVariants} initial="hidden" animate="visible">
               <motion.button
                 type="button"
+                onClick={handleGoogleSignUp}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.97 }}
                 className="w-full h-[44px] rounded-full text-white font-medium text-sm flex items-center justify-center gap-2.5 transition-all"
@@ -338,7 +386,42 @@ export default function Signup() {
                 Sign in
               </Link>
             </motion.p>
-          </form>
+            </motion.form>
+            ) : (
+              <motion.div
+                key="success"
+                className="flex flex-col items-center gap-4 py-4"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+              >
+                <div
+                  className="w-12 h-12 rounded-full flex items-center justify-center"
+                  style={{
+                    background: "rgba(16,185,129,0.15)",
+                    border: "1px solid rgba(16,185,129,0.2)",
+                  }}
+                >
+                  <CheckCircle size={24} style={{ color: "#10b981" }} />
+                </div>
+                <h2 style={{ fontSize: 18, fontWeight: 600, color: "#f4f4f5", textAlign: "center" }}>
+                  Check your email
+                </h2>
+                <p style={{ fontSize: 13, color: "#71717a", textAlign: "center" }}>
+                  We sent a confirmation link to {email}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setSubmitted(false)}
+                  className="text-[13px] font-medium transition-colors hover:underline"
+                  style={{ color: "#6366f1" }}
+                >
+                  Wrong email?
+                </button>
+              </motion.div>
+            )}
+            </AnimatePresence>
+          </div>
         </div>
       </motion.div>
     </div>
