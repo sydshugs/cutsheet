@@ -1,6 +1,7 @@
 // Sidebar.tsx — 64px icon-only sidebar with Tailwind classes
 
-import { BarChart3, GitCompare, Layers, FlaskConical, Bookmark, Settings } from "lucide-react";
+import { BarChart3, GitCompare, Layers, FlaskConical, Bookmark, Settings, LogOut } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 export type SidebarMode = "single" | "compare" | "batch" | "preflight" | "swipe";
 
@@ -23,6 +24,32 @@ const MODES: { id: SidebarMode; label: string; icon: React.ComponentType<{ size?
   { id: "preflight", label: "A/B Test", icon: FlaskConical },
   { id: "swipe", label: "Swipe File", icon: Bookmark },
 ];
+
+function SignOutButton({ showLabels = false }: { showLabels?: boolean }) {
+  const { signOut } = useAuth();
+  return (
+    <div className={showLabels ? "" : "group relative"}>
+      <button
+        type="button"
+        aria-label="Sign out"
+        onClick={signOut}
+        className={
+          showLabels
+            ? "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-zinc-400 hover:bg-red-500/10 hover:text-red-400 transition-colors w-full focus-visible:ring-1 focus-visible:ring-indigo-500/50 focus-visible:outline-none"
+            : "w-10 h-10 flex items-center justify-center rounded-xl text-zinc-500 hover:bg-red-500/10 hover:text-red-400 focus-visible:ring-1 focus-visible:ring-indigo-500/50 focus-visible:outline-none transition-colors"
+        }
+      >
+        <LogOut size={20} />
+        {showLabels && "Sign out"}
+      </button>
+      {!showLabels && (
+        <span className="absolute left-full ml-2 bg-zinc-900 text-white text-xs rounded-lg px-2 py-1 whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 top-1/2 -translate-y-1/2">
+          Sign out
+        </span>
+      )}
+    </div>
+  );
+}
 
 function SidebarContent({
   mode,
@@ -89,25 +116,28 @@ function SidebarContent({
         })}
       </div>
 
-      {/* Settings at bottom */}
-      <div className={`mt-auto ${showLabels ? "w-full px-3" : ""} group relative`}>
-        <button
-          type="button"
-          aria-label="Settings"
-          className={
-            showLabels
-              ? "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-zinc-400 hover:bg-white/5 hover:text-zinc-200 transition-colors w-full focus-visible:ring-1 focus-visible:ring-indigo-500/50 focus-visible:outline-none"
-              : "w-10 h-10 flex items-center justify-center rounded-xl text-zinc-500 hover:bg-white/5 hover:text-zinc-300 focus-visible:ring-1 focus-visible:ring-indigo-500/50 focus-visible:outline-none transition-colors"
-          }
-        >
-          <Settings size={20} />
-          {showLabels && "Settings"}
-        </button>
-        {!showLabels && (
-          <span className="absolute left-full ml-2 bg-zinc-900 text-white text-xs rounded-lg px-2 py-1 whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 top-1/2 -translate-y-1/2">
-            Settings
-          </span>
-        )}
+      {/* Settings + Sign Out at bottom */}
+      <div className={`mt-auto flex flex-col ${showLabels ? "w-full px-3 gap-1" : "items-center gap-2"}`}>
+        <div className={`${showLabels ? "" : "group relative"}`}>
+          <button
+            type="button"
+            aria-label="Settings"
+            className={
+              showLabels
+                ? "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-zinc-400 hover:bg-white/5 hover:text-zinc-200 transition-colors w-full focus-visible:ring-1 focus-visible:ring-indigo-500/50 focus-visible:outline-none"
+                : "w-10 h-10 flex items-center justify-center rounded-xl text-zinc-500 hover:bg-white/5 hover:text-zinc-300 focus-visible:ring-1 focus-visible:ring-indigo-500/50 focus-visible:outline-none transition-colors"
+            }
+          >
+            <Settings size={20} />
+            {showLabels && "Settings"}
+          </button>
+          {!showLabels && (
+            <span className="absolute left-full ml-2 bg-zinc-900 text-white text-xs rounded-lg px-2 py-1 whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 top-1/2 -translate-y-1/2">
+              Settings
+            </span>
+          )}
+        </div>
+        <SignOutButton showLabels={showLabels} />
       </div>
     </>
   );

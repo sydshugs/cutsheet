@@ -1,10 +1,8 @@
-import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Lock, Eye, EyeOff, Loader2, CheckCircle, ArrowRight } from "lucide-react";
-
-// TODO: Validate token from URL params with Clerk/Supabase
-// If token is invalid or expired, show error state
+import { supabase } from "../lib/supabase";
 
 function TravelingBeams() {
   const beamColor = "rgba(99,102,241,0.7)";
@@ -112,8 +110,6 @@ function StrengthIndicator({ password }: { password: string }) {
 
 export default function ResetPassword() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const _token = searchParams.get("token");
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -122,19 +118,41 @@ export default function ResetPassword() {
   const [isLoading, setIsLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [touched, setTouched] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event) => {
+        if (event === "PASSWORD_RECOVERY") {
+          // User arrived via reset link — they're authenticated
+          // Form can now submit the new password
+        }
+      }
+    );
+    return () => subscription.unsubscribe();
+  }, []);
 
   const passwordsMatch = password === confirmPassword;
   const showMismatch = touched && confirmPassword.length > 0 && !passwordsMatch;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!passwordsMatch) return;
+    if (!passwordsMatch) {
+      setError("Passwords do not match");
+      return;
+    }
     setIsLoading(true);
-    // TODO: Replace with real password reset API call
-    setTimeout(() => {
-      setIsLoading(false);
+    setError("");
+
+    const { error } = await supabase.auth.updateUser({ password });
+
+    setIsLoading(false);
+    if (error) {
+      setError(error.message);
+    } else {
       setSubmitted(true);
-    }, 1500);
+      setTimeout(() => navigate("/app"), 2000);
+    }
   };
 
   return (
@@ -268,6 +286,13 @@ export default function ResetPassword() {
                       </motion.p>
                     )}
                   </motion.div>
+
+                  {/* Error message */}
+                  {error && (
+                    <p style={{ fontSize: 13, color: "#ef4444", textAlign: "center" }}>
+                      {error}
+                    </p>
+                  )}
 
                   {/* Submit button */}
                   <motion.div custom={3} variants={fieldVariants} initial="hidden" animate="visible">

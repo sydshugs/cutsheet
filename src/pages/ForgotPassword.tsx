@@ -2,8 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, ArrowLeft, Loader2, CheckCircle } from "lucide-react";
-
-// TODO: Replace with real password reset API call
+import { supabase } from "../lib/supabase";
 
 function TravelingBeams() {
   const beamColor = "rgba(99,102,241,0.7)";
@@ -72,15 +71,23 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // TODO: Replace with real password reset API call
-    setTimeout(() => {
-      setIsLoading(false);
+    setError("");
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+
+    setIsLoading(false);
+    if (error) {
+      setError(error.message);
+    } else {
       setSubmitted(true);
-    }, 1500);
+    }
   };
 
   return (
@@ -164,6 +171,13 @@ export default function ForgotPassword() {
                       />
                     </div>
                   </motion.div>
+
+                  {/* Error message */}
+                  {error && (
+                    <p style={{ fontSize: 13, color: "#ef4444", textAlign: "center" }}>
+                      {error}
+                    </p>
+                  )}
 
                   {/* Submit button */}
                   <motion.div custom={2} variants={fieldVariants} initial="hidden" animate="visible">
