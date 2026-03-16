@@ -1,7 +1,7 @@
 /**
  * Cutsheet Product Demo
  * ─────────────────────
- * Canvas:   1280 × 720 @ 30fps
+ * Canvas:   1200 × 750 @ 30fps
  * Duration: 956 frames / 31.9s
  * Scenes:   8 (22-frame crossfade overlap between each)
  *
@@ -34,8 +34,8 @@ import { PreFlightScene } from './scenes/PreFlightScene';
 
 export const DEMO_FPS = 30;
 export const DEMO_DURATION_FRAMES = 956;
-export const DEMO_WIDTH = 1280;
-export const DEMO_HEIGHT = 720;
+export const DEMO_WIDTH = 1200;
+export const DEMO_HEIGHT = 750;
 
 export function CutsheetDemoComposition() {
   return (

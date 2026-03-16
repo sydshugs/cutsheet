@@ -32,7 +32,7 @@ export function IntroScene() {
   });
 
   // Scene-level fade-in + fade-out envelope with scale
-  const envelope = sceneEnvelope(frame, 150);
+  const envelope = sceneEnvelope(frame, 150, 12);
 
   return (
     <AbsoluteFill style={{
