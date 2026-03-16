@@ -10,6 +10,7 @@ import { SharePage } from "./pages/SharePage.tsx";
 import { SuccessPage } from "./pages/SuccessPage.tsx";
 import Login from "./pages/Login.tsx";
 import Signup from "./pages/Signup.tsx";
+import ForgotPassword from "./pages/ForgotPassword.tsx";
 import "./index.css";
 
 const DemoPage = lazy(() => import("./pages/DemoPage.tsx"));
@@ -37,6 +38,7 @@ createRoot(document.getElementById("root")!).render(
         <Route path="/s/:slug" element={<SharePage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/demo" element={<Suspense fallback={null}><DemoPage /></Suspense>} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
