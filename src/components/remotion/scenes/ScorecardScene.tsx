@@ -64,7 +64,7 @@ export function ScorecardScene() {
             width: '80%',
             maxWidth: 960,
             ...CARD_STYLE,
-            overflow: 'hidden',
+            overflow: 'visible',
             ...springPop(frame, 5),
           }}>
             {/* Header */}
@@ -84,10 +84,10 @@ export function ScorecardScene() {
             <div style={{ display: 'flex', flexDirection: 'row' as const, padding: '24px 24px 8px' }}>
               {/* Left column — arc gauge + score + badge */}
               <div style={{ minWidth: 200, display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="200" height="120" viewBox="0 0 120 70">
+                <svg width="220" height="130" viewBox="0 0 130 75" style={{ overflow: 'visible' }}>
                   {/* Background arc */}
                   <path
-                    d="M 10 60 A 50 50 0 0 1 110 60"
+                    d="M 15 65 A 50 50 0 0 1 115 65"
                     fill="none"
                     stroke="rgba(255,255,255,0.05)"
                     strokeWidth="8"
@@ -95,7 +95,7 @@ export function ScorecardScene() {
                   />
                   {/* Filled arc with glow */}
                   <path
-                    d="M 10 60 A 50 50 0 0 1 110 60"
+                    d="M 15 65 A 50 50 0 0 1 115 65"
                     fill="none"
                     stroke={overallColor}
                     strokeWidth="8"

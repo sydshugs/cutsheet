@@ -15,7 +15,7 @@ export const easeInOutCubic = (t: number): number =>
 export function sceneEnvelope(
   frame: number,
   totalFrames: number,
-  fadeFrames = 22,
+  fadeFrames = 15,
 ): { opacity: number; transform: string } {
   const fadeIn = interpolate(frame, [0, fadeFrames], [0, 1], {
     extrapolateLeft: 'clamp',

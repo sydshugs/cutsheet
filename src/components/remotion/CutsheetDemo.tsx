@@ -2,23 +2,23 @@
  * Cutsheet Product Demo
  * ─────────────────────
  * Canvas:   1200 × 750 @ 30fps
- * Duration: 956 frames / 31.9s
- * Scenes:   8 (22-frame crossfade overlap between each)
+ * Duration: 1110 frames / 37.0s
+ * Scenes:   8 (hard cuts, per-scene fade envelope)
  *
- * Timeline (post-overlap):
+ * Timeline (zero overlap):
  * ┌──────────────┬───────┬────────┬─────────┐
  * │ Scene        │ From  │ Frames │ Seconds │
  * ├──────────────┼───────┼────────┼─────────┤
  * │ Intro        │     0 │    150 │    5.0s │
- * │ Dropzone     │   128 │    150 │    5.0s │
- * │ Analyzing    │   256 │    120 │    4.0s │
- * │ Scorecard    │   354 │    150 │    5.0s │
- * │ Improvements │   482 │    120 │    4.0s │
- * │ CTA Rewrite  │   580 │    120 │    4.0s │
- * │ Budget       │   678 │    150 │    5.0s │
- * │ Pre-Flight   │   806 │    150 │    5.0s │
+ * │ Dropzone     │   150 │    150 │    5.0s │
+ * │ Analyzing    │   300 │    120 │    4.0s │
+ * │ Scorecard    │   420 │    150 │    5.0s │
+ * │ Improvements │   570 │    120 │    4.0s │
+ * │ CTA Rewrite  │   690 │    120 │    4.0s │
+ * │ Budget       │   810 │    150 │    5.0s │
+ * │ Pre-Flight   │   960 │    150 │    5.0s │
  * └──────────────┴───────┴────────┴─────────┘
- * Last scene ends at 806 + 150 = 956
+ * Last scene ends at 960 + 150 = 1110
  */
 
 import { AbsoluteFill, Sequence } from 'remotion';
@@ -33,7 +33,7 @@ import { BudgetScene } from './scenes/BudgetScene';
 import { PreFlightScene } from './scenes/PreFlightScene';
 
 export const DEMO_FPS = 30;
-export const DEMO_DURATION_FRAMES = 956;
+export const DEMO_DURATION_FRAMES = 1110;
 export const DEMO_WIDTH = 1200;
 export const DEMO_HEIGHT = 750;
 
@@ -48,31 +48,31 @@ export function CutsheetDemoComposition() {
         <IntroScene />
       </Sequence>
       {/* Dropzone — 150f / 5.0s */}
-      <Sequence from={128} durationInFrames={150} name="Dropzone">
+      <Sequence from={150} durationInFrames={150} name="Dropzone">
         <DropzoneScene />
       </Sequence>
       {/* Analyzing — 120f / 4.0s */}
-      <Sequence from={256} durationInFrames={120} name="Analyzing">
+      <Sequence from={300} durationInFrames={120} name="Analyzing">
         <AnalyzingScene />
       </Sequence>
       {/* Scorecard — 150f / 5.0s */}
-      <Sequence from={354} durationInFrames={150} name="Scorecard">
+      <Sequence from={420} durationInFrames={150} name="Scorecard">
         <ScorecardScene />
       </Sequence>
       {/* Improvements — 120f / 4.0s */}
-      <Sequence from={482} durationInFrames={120} name="Improvements">
+      <Sequence from={570} durationInFrames={120} name="Improvements">
         <ImprovementsScene />
       </Sequence>
       {/* CTA Rewrite — 120f / 4.0s */}
-      <Sequence from={580} durationInFrames={120} name="CTA Rewrite">
+      <Sequence from={690} durationInFrames={120} name="CTA Rewrite">
         <CTARewriteScene />
       </Sequence>
       {/* Budget — 150f / 5.0s */}
-      <Sequence from={678} durationInFrames={150} name="Budget">
+      <Sequence from={810} durationInFrames={150} name="Budget">
         <BudgetScene />
       </Sequence>
       {/* Pre-Flight — 150f / 5.0s */}
-      <Sequence from={806} durationInFrames={150} name="Pre-Flight">
+      <Sequence from={960} durationInFrames={150} name="Pre-Flight">
         <PreFlightScene />
       </Sequence>
     </AbsoluteFill>
