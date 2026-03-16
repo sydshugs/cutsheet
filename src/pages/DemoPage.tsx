@@ -53,7 +53,7 @@ export default function DemoPage() {
       </Suspense>
 
       <p className="mt-6 text-xs text-zinc-600 font-mono">
-        28s product walkthrough &middot; cutsheet.xyz
+        37s product walkthrough &middot; cutsheet.xyz
       </p>
     </div>
   );
