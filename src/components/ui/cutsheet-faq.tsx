@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ChevronDown, MessageCircle } from "lucide-react";
+import { FadeIn } from "./fade-in";
 
 const FAQS = [
   {
@@ -85,7 +86,7 @@ export default function CutsheetFAQ() {
     <section className="border-t border-white/5 bg-zinc-950 py-24 sm:py-32">
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-14 text-center">
+        <FadeIn className="mb-14 text-center">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3.5 py-1 text-xs font-medium uppercase tracking-widest text-zinc-300">
             <MessageCircle className="h-3 w-3" />
             FAQ
@@ -93,10 +94,10 @@ export default function CutsheetFAQ() {
           <h2 className="mt-5 text-2xl font-bold tracking-tight text-white sm:text-3xl">
             Everything you need to know.
           </h2>
-        </div>
+        </FadeIn>
 
         {/* Accordion */}
-        <div className="border-t border-white/[0.08]">
+        <FadeIn delay={0.1} className="border-t border-white/[0.08]">
           {FAQS.map((item, i) => (
             <AccordionItem
               key={i}
@@ -106,7 +107,7 @@ export default function CutsheetFAQ() {
               onToggle={() => setOpenIdx(openIdx === i ? null : i)}
             />
           ))}
-        </div>
+        </FadeIn>
 
         {/* Footer */}
         <p className="mt-10 text-center text-sm text-zinc-500">

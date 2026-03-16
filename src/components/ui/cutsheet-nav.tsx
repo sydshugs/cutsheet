@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react";
 
 export default function CutsheetNav() {
   const [hidden, setHidden] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const lastY = useRef(0);
   const ticking = useRef(false);
 
@@ -19,6 +20,7 @@ export default function CutsheetNav() {
         } else {
           setHidden(false);
         }
+        setScrolled(y > 20);
         lastY.current = y;
         ticking.current = false;
       });
@@ -32,7 +34,11 @@ export default function CutsheetNav() {
 
   return (
     <nav
-      className="fixed top-0 left-0 right-0 z-50 border-b border-white/[0.08] bg-zinc-950/80 backdrop-blur-xl transition-transform duration-300 ease-out"
+      className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-xl transition-all duration-300 ease-out ${
+        scrolled
+          ? "border-b border-white/[0.08] bg-zinc-950/90 shadow-lg shadow-black/20"
+          : "border-b border-transparent bg-zinc-950/40"
+      }`}
       style={{ transform: hidden ? "translateY(-100%)" : "translateY(0)" }}
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">

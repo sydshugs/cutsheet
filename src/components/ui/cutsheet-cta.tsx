@@ -1,4 +1,5 @@
 import EarlyAccessForm from "./cutsheet-early-access-form";
+import { FadeIn } from "./fade-in";
 
 const WAITLIST_INITIALS = ["S", "M", "E", "J"];
 
@@ -12,24 +13,26 @@ export default function CutsheetCTA() {
       />
 
       <div className="relative z-10 mx-auto max-w-2xl px-4 text-center sm:px-6">
-        <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
-          Stop guessing.
-          <br />
-          Start scaling the right creative.
-        </h2>
+        <FadeIn>
+          <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
+            Stop guessing.
+            <br />
+            Start scaling the right creative.
+          </h2>
 
-        <p className="mt-5 text-base text-zinc-400 sm:text-lg">
-          Analyze your first ad free — no card required.
-        </p>
+          <p className="mt-5 text-base text-zinc-400 sm:text-lg">
+            Analyze your first ad free — no card required.
+          </p>
+        </FadeIn>
 
-        <div className="mt-8 flex justify-center">
+        <FadeIn delay={0.15} className="mt-8 flex justify-center">
           <EarlyAccessForm
             placeholder="Enter your email"
             buttonText="Get Early Access"
           />
-        </div>
+        </FadeIn>
 
-        <div className="mt-8 flex items-center justify-center gap-3">
+        <FadeIn delay={0.25} className="mt-8 flex items-center justify-center gap-3">
           <div className="flex -space-x-2">
             {WAITLIST_INITIALS.map((initial) => (
               <div
@@ -43,7 +46,7 @@ export default function CutsheetCTA() {
           <p className="text-sm text-zinc-500 ml-2">
             <span className="text-white font-medium">200+</span> marketers on the waitlist
           </p>
-        </div>
+        </FadeIn>
       </div>
     </section>
   );

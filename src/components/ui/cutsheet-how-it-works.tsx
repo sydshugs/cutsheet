@@ -1,5 +1,6 @@
 import { Upload, Cpu, BarChart2, FileText, Bookmark } from "lucide-react";
 import { SpotlightCard } from "./spotlight-card";
+import { FadeIn, StaggerContainer, StaggerItem } from "./fade-in";
 
 const STEPS = [
   {
@@ -54,7 +55,7 @@ export default function CutsheetHowItWorks() {
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
         {/* Header */}
-        <div className="text-center mb-16 space-y-3">
+        <FadeIn className="text-center mb-16 space-y-3">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-300">
             How It Works
           </p>
@@ -64,43 +65,44 @@ export default function CutsheetHowItWorks() {
           <p className="text-zinc-400 text-base sm:text-lg max-w-lg mx-auto leading-relaxed">
             Four steps. Zero guesswork.<br />Just data-driven creative decisions.
           </p>
-        </div>
+        </FadeIn>
 
         {/* Steps grid */}
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <StaggerContainer className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4" stagger={0.1}>
           {STEPS.map((step) => (
-            <SpotlightCard
-              key={step.number}
-              spotlightColor={step.spotlightColor}
-              className="rounded-3xl border-white/5 bg-zinc-900/40 p-6 sm:p-7 backdrop-blur-xl"
-            >
-              <div className="space-y-4">
-                {/* Step number */}
-                <span className="text-[11px] font-bold tracking-[0.2em] text-zinc-600 uppercase">
-                  Step {step.number}
-                </span>
+            <StaggerItem key={step.number}>
+              <SpotlightCard
+                spotlightColor={step.spotlightColor}
+                className="rounded-3xl border-white/5 bg-zinc-900/40 p-6 sm:p-7 backdrop-blur-xl"
+              >
+                <div className="space-y-4">
+                  {/* Step number */}
+                  <span className="text-[11px] font-bold tracking-[0.2em] text-zinc-600 uppercase">
+                    Step {step.number}
+                  </span>
 
-                {/* Icon */}
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-900/80 ring-1 ring-white/10">
-                  <step.icon className="h-4.5 w-4.5 text-indigo-300" />
+                  {/* Icon */}
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-900/80 ring-1 ring-white/10">
+                    <step.icon className="h-4.5 w-4.5 text-indigo-300" />
+                  </div>
+
+                  {/* Title */}
+                  <h3 className="text-base font-semibold text-white">
+                    {step.title}
+                  </h3>
+
+                  {/* Description */}
+                  <p className="text-[13px] leading-relaxed text-zinc-400">
+                    {step.description}
+                  </p>
                 </div>
-
-                {/* Title */}
-                <h3 className="text-base font-semibold text-white">
-                  {step.title}
-                </h3>
-
-                {/* Description */}
-                <p className="text-[13px] leading-relaxed text-zinc-400">
-                  {step.description}
-                </p>
-              </div>
-            </SpotlightCard>
+              </SpotlightCard>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerContainer>
 
         {/* Coming soon — action row */}
-        <div className="mt-14 text-center space-y-6">
+        <FadeIn className="mt-14 text-center space-y-6">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-300">
             Coming soon
           </p>
@@ -113,7 +115,7 @@ export default function CutsheetHowItWorks() {
               </span>
             </div>
           </div>
-        </div>
+        </FadeIn>
       </div>
     </section>
   );

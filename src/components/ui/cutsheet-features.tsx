@@ -25,6 +25,7 @@ import {
   Swords,
 } from "lucide-react";
 import { SpotlightCard } from "./spotlight-card";
+import { FadeIn } from "./fade-in";
 
 /* ─── Metrics carousel data ──────────────────────────────────────────── */
 
@@ -465,7 +466,7 @@ export default function CutsheetFeatures() {
       <div className="relative z-10 mx-auto max-w-7xl px-4 pt-16 pb-8 sm:px-6 lg:px-8 lg:pt-24 lg:pb-12 space-y-16">
         {/* Top: Metrics carousel */}
         <div className="space-y-8">
-          <div className="max-w-2xl space-y-2">
+          <FadeIn className="max-w-2xl space-y-2">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-300">
               What Cutsheet Measures
             </p>
@@ -475,7 +476,7 @@ export default function CutsheetFeatures() {
             <p className="text-sm sm:text-base text-zinc-400 max-w-xl">
               Every analysis covers 11 creative dimensions — instantly, on any ad format.
             </p>
-          </div>
+          </FadeIn>
 
           {/* Carousel */}
           <div
@@ -495,7 +496,7 @@ export default function CutsheetFeatures() {
 
         {/* Live features */}
         <div className="space-y-6">
-          <div className="max-w-2xl space-y-2">
+          <FadeIn className="max-w-2xl space-y-2">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-300">
               Built & Live
             </p>
@@ -505,7 +506,7 @@ export default function CutsheetFeatures() {
             <p className="text-sm sm:text-base text-zinc-400 max-w-xl">
               Powered by Gemini 2.5 Flash for video analysis and Claude Sonnet for actionable copy — the sharpest AI stack in creative intelligence.
             </p>
-          </div>
+          </FadeIn>
 
           <div className="grid gap-4 md:gap-5 md:grid-cols-2">
             {/* ── Compare ── */}
@@ -652,7 +653,7 @@ export default function CutsheetFeatures() {
         </div>
 
         {/* Roadmap */}
-        <div className="space-y-6 opacity-75">
+        <FadeIn className="space-y-6 opacity-75">
           <div className="max-w-2xl space-y-2">
             <p className="text-sm font-medium text-zinc-500 uppercase tracking-wider">
               On the roadmap
@@ -701,7 +702,7 @@ export default function CutsheetFeatures() {
               </div>
             </SpotlightCard>
           </div>
-        </div>
+        </FadeIn>
       </div>
     </section>
   );

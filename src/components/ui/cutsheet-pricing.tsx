@@ -14,6 +14,7 @@ import {
   FlaskConical,
   Share2,
 } from "lucide-react";
+import { FadeIn, StaggerContainer, StaggerItem } from "./fade-in";
 
 type Plan = {
   id: string;
@@ -205,7 +206,7 @@ export default function CutsheetPricing() {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-indigo-600/6 rounded-full blur-[120px] pointer-events-none" />
 
       <div className="relative z-10 mx-auto max-w-6xl">
-        <div className="text-center mb-12">
+        <FadeIn className="text-center mb-12">
           <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1.5 mb-6">
             <Zap className="w-3.5 h-3.5 text-indigo-400" />
             <span className="text-[11px] font-semibold uppercase tracking-widest text-indigo-300">
@@ -218,17 +219,21 @@ export default function CutsheetPricing() {
           <p className="text-zinc-400 text-lg max-w-lg mx-auto leading-relaxed">
             Start free, upgrade when you need more.<br />No hidden fees, no per-analysis charges.
           </p>
-        </div>
+        </FadeIn>
 
-        <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-2xl px-6 py-4 text-sm text-indigo-300 text-center mb-8">
-          Pricing will be announced at launch. Early access members lock in founder rates.
-        </div>
+        <FadeIn delay={0.1}>
+          <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-2xl px-6 py-4 text-sm text-indigo-300 text-center mb-8">
+            Pricing will be announced at launch. Early access members lock in founder rates.
+          </div>
+        </FadeIn>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
+        <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch" stagger={0.12}>
           {PLANS.map((plan) => (
-            <PlanCard key={plan.id} plan={plan} />
+            <StaggerItem key={plan.id}>
+              <PlanCard plan={plan} />
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerContainer>
 
         <p className="mt-8 text-center text-xs text-zinc-600">
           Prices lock in at early access rates. Cancel anytime after launch.

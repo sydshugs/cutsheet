@@ -1,4 +1,5 @@
 import { Trophy, Check, X, Minus, Building2, Puzzle, DollarSign } from "lucide-react";
+import { FadeIn, StaggerContainer, StaggerItem } from "./fade-in";
 
 const ROWS = [
   "Upload any video",
@@ -57,7 +58,7 @@ export default function CutsheetWhy() {
 
       <div className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         {/* Header — left-aligned for rhythm variation */}
-        <div className="mb-14 max-w-2xl">
+        <FadeIn className="mb-14 max-w-2xl">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3.5 py-1 text-xs font-medium uppercase tracking-widest text-zinc-300">
             <Trophy className="h-3 w-3 text-amber-400" />
             Why Cutsheet
@@ -69,10 +70,10 @@ export default function CutsheetWhy() {
             No enterprise contract. No agency retainer. No platform lock-in.
             Just upload your ad and know.
           </p>
-        </div>
+        </FadeIn>
 
         {/* Comparison grid — horizontal scroll on mobile to preserve side-by-side */}
-        <div className="mb-16 -mx-4 px-4 sm:mx-0 sm:px-0">
+        <FadeIn className="mb-16 -mx-4 px-4 sm:mx-0 sm:px-0" delay={0.1}>
           <div className="flex gap-4 overflow-x-auto pb-4 sm:pb-0 sm:grid sm:grid-cols-3 sm:overflow-visible snap-x snap-mandatory">
             {/* Cutsheet column */}
             <div className="min-w-[260px] flex-shrink-0 snap-start rounded-3xl border border-indigo-500/20 bg-indigo-500/[0.06] p-6 backdrop-blur-sm sm:min-w-0 sm:flex-shrink">
@@ -125,25 +126,24 @@ export default function CutsheetWhy() {
               </div>
             </div>
           </div>
-        </div>
+        </FadeIn>
 
         {/* Callout cards */}
-        <div className="space-y-4">
+        <StaggerContainer className="space-y-4" stagger={0.1}>
           {CARDS.map((card) => (
-            <div
-              key={card.headline}
-              className="flex items-start gap-5 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/20"
-            >
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-500/10">
-                <card.icon className="h-5 w-5 text-indigo-400" />
+            <StaggerItem key={card.headline}>
+              <div className="flex items-start gap-5 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/20">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-500/10">
+                  <card.icon className="h-5 w-5 text-indigo-400" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-white">{card.headline}</h3>
+                  <p className="mt-1 text-sm leading-relaxed text-zinc-400">{card.body}</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-sm font-semibold text-white">{card.headline}</h3>
-                <p className="mt-1 text-sm leading-relaxed text-zinc-400">{card.body}</p>
-              </div>
-            </div>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerContainer>
       </div>
     </section>
   );

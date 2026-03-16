@@ -1,4 +1,5 @@
 import { Megaphone, PenTool, ShoppingBag, Video, Users, BarChart2, Figma } from "lucide-react";
+import { FadeIn, StaggerContainer, StaggerItem } from "./fade-in";
 
 const PERSONAS = [
   {
@@ -51,7 +52,7 @@ export default function CutsheetTestimonials() {
 
       <div className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-14 text-center">
+        <FadeIn className="mb-14 text-center">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3.5 py-1 text-xs font-medium uppercase tracking-widest text-zinc-300">
             <Users className="h-3 w-3" />
             Built For You
@@ -62,25 +63,24 @@ export default function CutsheetTestimonials() {
           <p className="mt-4 max-w-lg mx-auto text-base text-zinc-400 leading-relaxed">
             If you make ads, review ads, or spend money on ads — Cutsheet gives you the data to make better creative decisions.
           </p>
-        </div>
+        </FadeIn>
 
         {/* Persona grid */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <StaggerContainer className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" stagger={0.07}>
           {PERSONAS.map((persona) => (
-            <div
-              key={persona.title}
-              className="group relative rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6 transition-all duration-300 hover:-translate-y-0.5 hover:border-indigo-500/20 hover:bg-indigo-500/[0.04]"
-            >
-              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/10 transition-colors group-hover:bg-indigo-500/15">
-                <persona.icon className="h-5 w-5 text-indigo-400" />
+            <StaggerItem key={persona.title}>
+              <div className="group relative rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6 transition-all duration-300 hover:-translate-y-0.5 hover:border-indigo-500/20 hover:bg-indigo-500/[0.04]">
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/10 transition-colors group-hover:bg-indigo-500/15">
+                  <persona.icon className="h-5 w-5 text-indigo-400" />
+                </div>
+                <h3 className="text-sm font-semibold text-white">{persona.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-400">
+                  {persona.pain}
+                </p>
               </div>
-              <h3 className="text-sm font-semibold text-white">{persona.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-zinc-400">
-                {persona.pain}
-              </p>
-            </div>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerContainer>
       </div>
     </section>
   );
