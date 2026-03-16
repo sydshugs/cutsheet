@@ -73,6 +73,7 @@ export default function EarlyAccessForm({
       localStorage.setItem(LS_KEY, trimmed);
       setStatus("success");
       fireConfetti();
+      window.dispatchEvent(new CustomEvent('cutsheet:waitlist-signup'));
     } catch {
       setStatus("error");
       setErrorMsg("Something went wrong — try again.");
