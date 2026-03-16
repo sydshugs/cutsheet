@@ -367,6 +367,9 @@ export async function analyzeVideo(
 
     // 5. Parse scores from markdown and normalize overall score
     const parsedScores = parseScores(markdown);
+    if (!parsedScores) {
+      throw new Error("Could not parse scores from the AI response. The output format may have changed — try again.");
+    }
     const scores = recalculateOverallScore(parsedScores);
 
     // 6. Parse improvements from markdown

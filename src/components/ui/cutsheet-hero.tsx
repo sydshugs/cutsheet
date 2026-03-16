@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import EarlyAccessForm from "./cutsheet-early-access-form";
+import WatchDemoButton from "./WatchDemoButton";
 import {
   Zap,
   Crown,
@@ -168,12 +169,16 @@ export default function CutsheetHero() {
               <p className="text-xs text-zinc-600">
                 No card required &middot; Limited early access spots
               </p>
-              <a
-                href="#how-it-works"
-                className="text-sm text-zinc-400 hover:text-white transition-colors flex items-center gap-1.5"
-              >
-                See how it works <ChevronDown size={14} />
-              </a>
+              <div className="flex items-center gap-4">
+                <a
+                  href="#how-it-works"
+                  className="text-sm text-zinc-400 hover:text-white transition-colors flex items-center gap-1.5"
+                >
+                  See how it works <ChevronDown size={14} />
+                </a>
+                <span className="text-zinc-700">|</span>
+                <WatchDemoButton />
+              </div>
             </div>
 
             {/* Social proof */}
