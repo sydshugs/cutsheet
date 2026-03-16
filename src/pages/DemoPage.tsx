@@ -33,12 +33,12 @@ export default function DemoPage() {
   // Default: Remotion product demo
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center p-8"
+      className="min-h-screen flex flex-col items-center pt-16 sm:justify-center sm:pt-0 px-3 py-6 sm:p-8"
       style={{ background: "#08080F" }}
     >
       <Link
         to="/"
-        className="text-sm text-zinc-500 hover:text-white transition-colors mb-8 flex items-center gap-1.5"
+        className="text-sm text-zinc-500 hover:text-white transition-colors mb-4 sm:mb-8 flex items-center gap-1.5"
       >
         <ArrowLeft size={14} />
         Back to home
