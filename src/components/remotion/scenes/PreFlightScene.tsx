@@ -68,39 +68,39 @@ export function PreFlightScene() {
   const headerStyle = slideUp(frame, 0, 20, 20);
 
   // 30–70f: Scores count up
-  const scoreA = interpolate(frame, [30, 70], [0, VARIANT_A.score], {
+  const scoreA = interpolate(frame, [20, 60], [0, VARIANT_A.score], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
     easing: easeOutExpo,
   });
-  const scoreB = interpolate(frame, [30, 70], [0, VARIANT_B.score], {
+  const scoreB = interpolate(frame, [20, 60], [0, VARIANT_B.score], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
     easing: easeOutExpo,
   });
 
   // 75f: Verdict badges appear
-  const verdictOpacity = fadeIn(frame, 75, 15);
+  const verdictOpacity = fadeIn(frame, 65, 15);
 
   // 90f+: Winner badge springs in
   const winnerScale = spring({
-    frame: Math.max(0, frame - 90),
+    frame: Math.max(0, frame - 80),
     fps: 30,
     config: { damping: 12, stiffness: 200, mass: 0.8 },
   });
-  const winnerOpacity = interpolate(frame, [90, 100], [0, 1], {
+  const winnerOpacity = interpolate(frame, [80, 90], [0, 1], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
 
   // Variant B dims when winner reveals
-  const bDim = interpolate(frame, [90, 105], [1, 0.4], {
+  const bDim = interpolate(frame, [80, 95], [1, 0.4], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
 
   // H2H + winner card fade in
-  const h2hOpacity = fadeIn(frame, 90, 15);
+  const h2hOpacity = fadeIn(frame, 80, 15);
 
   return (
     <AbsoluteFill style={{
@@ -205,7 +205,7 @@ export function PreFlightScene() {
               </div>
 
               {/* Winner badge on top */}
-              {frame >= 90 && (
+              {frame >= 80 && (
                 <div style={{
                   position: 'absolute',
                   top: -12,
@@ -307,7 +307,7 @@ export function PreFlightScene() {
           </div>
 
           {/* Bottom section: Winner card + Head-to-head */}
-          {frame >= 90 && (
+          {frame >= 80 && (
             <div style={{ marginTop: 16, width: '100%', maxWidth: 540, opacity: h2hOpacity }}>
               {/* Winner prediction card */}
               <div style={{

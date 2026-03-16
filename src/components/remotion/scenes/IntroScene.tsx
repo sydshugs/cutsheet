@@ -41,12 +41,12 @@ export function IntroScene() {
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      justifyContent: 'flex-start',
+      justifyContent: 'center',
       ...envelope,
     }}>
       {/* Logo icon + Wordmark — positioned at ~35% from top */}
       <div style={{
-        marginTop: '25%',
+        marginTop: 0,
         textAlign: 'center' as const,
         transform: `scale(${logoScaleMapped})`,
         opacity: logoOpacity,
@@ -91,7 +91,7 @@ export function IntroScene() {
 
       {/* Feature pills — start at ~60% from top */}
       <div style={{
-        marginTop: 60,
+        marginTop: 40,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',

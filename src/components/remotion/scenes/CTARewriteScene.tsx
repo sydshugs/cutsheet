@@ -1,6 +1,6 @@
 import { AbsoluteFill, useCurrentFrame } from 'remotion';
 import { TOKENS, STEP_LABEL_STYLE, HEADING_STYLE } from '../tokens';
-import { fadeIn, typewriter, scaleIn, sceneEnvelope, slideUp } from '../helpers';
+import { fadeIn, typewriter, sceneEnvelope, slideUp } from '../helpers';
 import { AppWindow } from '../AppWindow';
 
 const BEFORE_CTA = 'Shop Now';
@@ -22,15 +22,12 @@ export function CTARewriteScene() {
     ? `0 0 ${12 + Math.sin((frame - 40) / 20 * Math.PI) * 8}px rgba(99, 102, 241, 0.4)`
     : 'none';
 
-  // Phase 3 (60-90): After card slides in from below
-  const afterSlide = slideUp(frame, 60, 24, 30);
+  // Phase 3 (50-70): After card slides in from below
+  const afterSlide = slideUp(frame, 50, 24, 20);
 
-  // Phase 4 (70+): Typewriter starts after card is visible
-  const afterText = typewriter(AFTER_CTA, frame, 70, 0.8);
-  const cursorVisible = frame >= 70 && afterText.length < AFTER_CTA.length && Math.floor(frame / 8) % 2 === 0;
-
-  // Checkmark at end
-  const checkStyle = scaleIn(frame, 105, 12);
+  // Phase 4 (60+): Typewriter starts after card is visible
+  const afterText = typewriter(AFTER_CTA, frame, 60, 0.8);
+  const cursorVisible = frame >= 60 && afterText.length < AFTER_CTA.length && Math.floor(frame / 8) % 2 === 0;
 
   return (
     <AbsoluteFill style={{
@@ -127,43 +124,17 @@ export function CTARewriteScene() {
               </p>
             </div>
 
-            {/* Checkmark completion */}
-            <div style={{
-              ...checkStyle,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-              marginTop: 20,
-            }}>
-              <div style={{
-                width: 28,
-                height: 28,
-                borderRadius: '50%',
-                background: 'rgba(16, 185, 129, 0.15)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={TOKENS.success} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              </div>
-              <span style={{ fontSize: 13, color: TOKENS.success, fontWeight: 500 }}>
-                Stronger CTA ready
-              </span>
-            </div>
-
-            {/* Gemini attribution */}
+            {/* Status line */}
             <p style={{
-              opacity: fadeIn(frame, 108, 10),
-              fontSize: 10,
-              fontFamily: TOKENS.fontMono,
-              color: TOKENS.inkFaint,
+              opacity: fadeIn(frame, 70, 12),
+              fontSize: 13,
+              fontWeight: 500,
+              color: TOKENS.success,
               textAlign: 'center' as const,
               marginTop: 16,
+              margin: '16px 0 0',
             }}>
-              Powered by Gemini 2.5 Flash
+              ✦ Stronger CTA ready
             </p>
           </div>
         </div>
