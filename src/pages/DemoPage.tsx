@@ -51,10 +51,6 @@ export default function DemoPage() {
       >
         <RemotionDemoPlayer />
       </Suspense>
-
-      <p className="mt-6 text-xs text-zinc-600 font-mono">
-        32s product walkthrough &middot; cutsheet.xyz
-      </p>
     </div>
   );
 }
