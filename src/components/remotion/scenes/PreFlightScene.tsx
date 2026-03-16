@@ -1,4 +1,4 @@
-import { AbsoluteFill, useCurrentFrame, interpolate, spring, Img, staticFile } from 'remotion';
+import { AbsoluteFill, useCurrentFrame, interpolate, spring } from 'remotion';
 import { TOKENS, STEP_LABEL_STYLE, CARD_STYLE, HEADING_STYLE } from '../tokens';
 import { slideUp, fadeIn, easeOutExpo, sceneEnvelope, springPop } from '../helpers';
 import { AppWindow } from '../AppWindow';
@@ -20,6 +20,45 @@ const VARIANT_B = {
   strength: 'Pattern interrupt has potential',
   weakness: 'Buried CTA and dense body text kills retention',
 };
+
+function MockAdCard({ headline, body }: { headline: string; body: string }) {
+  return (
+    <div style={{
+      width: '100%',
+      height: 160,
+      borderRadius: 8,
+      marginBottom: 12,
+      border: '1px solid rgba(255,255,255,0.10)',
+      background: '#faf8f4',
+      display: 'flex',
+      flexDirection: 'column' as const,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '20px 24px',
+      textAlign: 'center' as const,
+    }}>
+      <p style={{
+        fontFamily: "'Georgia', 'Times New Roman', serif",
+        fontSize: 18,
+        fontWeight: 700,
+        color: '#1a1a1a',
+        margin: 0,
+        lineHeight: 1.3,
+      }}>
+        {headline}
+      </p>
+      <p style={{
+        fontFamily: "'Geist', system-ui, sans-serif",
+        fontSize: 11,
+        color: '#666',
+        margin: '8px 0 0',
+        lineHeight: 1.4,
+      }}>
+        {body}
+      </p>
+    </div>
+  );
+}
 
 export function PreFlightScene() {
   const frame = useCurrentFrame();
@@ -92,16 +131,9 @@ export function PreFlightScene() {
             {/* Variant A */}
             <div style={{ width: 260, ...springPop(frame, 10), position: 'relative' }}>
               {/* Image thumbnail */}
-              <Img
-                src={staticFile('demos/variant-a.png')}
-                style={{
-                  width: '100%',
-                  height: 160,
-                  objectFit: 'cover',
-                  borderRadius: TOKENS.radiusSm,
-                  marginBottom: 12,
-                  border: `1px solid ${TOKENS.border}`,
-                }}
+              <MockAdCard
+                headline="There's no creative."
+                body="We made the ad invisible. The product speaks for itself."
               />
               {/* Label */}
               <p style={{
@@ -199,16 +231,9 @@ export function PreFlightScene() {
             {/* Variant B — dims at frame 90 */}
             <div style={{ width: 260, ...springPop(frame, 18), opacity: bDim }}>
               {/* Image thumbnail */}
-              <Img
-                src={staticFile('demos/variant-b.png')}
-                style={{
-                  width: '100%',
-                  height: 160,
-                  objectFit: 'cover',
-                  borderRadius: TOKENS.radiusSm,
-                  marginBottom: 12,
-                  border: `1px solid ${TOKENS.border}`,
-                }}
+              <MockAdCard
+                headline="We skipped the ad."
+                body="No flashy visuals. No bold CTA. Just vibes."
               />
               {/* Label */}
               <p style={{

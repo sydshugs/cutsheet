@@ -150,7 +150,6 @@ export default function RemotionDemoPlayer() {
     <div
       ref={containerRef}
       className="relative w-full select-none"
-      style={{ maxWidth: 960 }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onMouseMove={handleMouseMove}

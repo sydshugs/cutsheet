@@ -1,4 +1,4 @@
-import { AbsoluteFill, useCurrentFrame, Img, staticFile } from 'remotion';
+import { AbsoluteFill, useCurrentFrame } from 'remotion';
 import { TOKENS, STEP_LABEL_STYLE, CARD_STYLE } from '../tokens';
 import { AppWindow } from '../AppWindow';
 import { fadeIn, sceneEnvelope } from '../helpers';
@@ -44,17 +44,25 @@ export function AnalyzingScene() {
             padding: 24,
           }}>
             {/* Image thumbnail, dimmed */}
-            <Img
-              src={staticFile('demos/variant-a.png')}
-              style={{
-                width: '100%',
-                height: 140,
-                objectFit: 'cover',
-                borderRadius: 12,
-                opacity: 0.4,
-                marginBottom: 12,
-              }}
-            />
+            <div style={{
+              width: '100%',
+              height: 140,
+              borderRadius: 12,
+              opacity: 0.4,
+              marginBottom: 12,
+              background: 'linear-gradient(135deg, #faf8f4 0%, #f0ece4 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <span style={{
+                fontFamily: "'Georgia', serif",
+                fontSize: 14,
+                color: '#999',
+              }}>
+                summer-campaign-v2.mp4
+              </span>
+            </div>
 
             {/* File info */}
             <div style={{

@@ -1,27 +1,36 @@
 import { AbsoluteFill, useCurrentFrame } from 'remotion';
 import { TOKENS, STEP_LABEL_STYLE, HEADING_STYLE } from '../tokens';
-import { fadeIn, typewriter, scaleIn, sceneEnvelope } from '../helpers';
+import { fadeIn, typewriter, scaleIn, sceneEnvelope, slideUp } from '../helpers';
 import { AppWindow } from '../AppWindow';
 
-const BEFORE_CTA = 'Shop now.';
-const AFTER_CTA = 'Get 50% off — today only. Tap to claim your deal.';
+const BEFORE_CTA = 'Shop Now';
+const AFTER_CTA = 'Get 50% off — today only. Tap to claim 🎯';
 
 export function CTARewriteScene() {
   const frame = useCurrentFrame();
   const envelope = sceneEnvelope(frame, 120);
 
-  // "Before" fades out over first 20 frames
-  const beforeOpacity = 1 - fadeIn(frame, 5, 20);
+  // Phase 1 (20-40): Before card fades IN
+  const beforeOpacity = fadeIn(frame, 20, 20);
 
-  // "After" types in starting at frame 30
-  const afterText = typewriter(AFTER_CTA, frame, 30, 0.6);
-  const afterOpacity = fadeIn(frame, 25, 10);
+  // Phase 2 (40-60): Rewrite button pulses
+  const buttonPulse = frame >= 40 && frame <= 60;
+  const buttonScale = buttonPulse
+    ? 1 + Math.sin((frame - 40) / 20 * Math.PI) * 0.06
+    : 1;
+  const buttonGlow = buttonPulse
+    ? `0 0 ${12 + Math.sin((frame - 40) / 20 * Math.PI) * 8}px rgba(99, 102, 241, 0.4)`
+    : 'none';
 
-  // Checkmark appears after typing completes (~frame 105)
+  // Phase 3 (60-90): After card slides in from below
+  const afterSlide = slideUp(frame, 60, 24, 30);
+
+  // Phase 4 (70+): Typewriter starts after card is visible
+  const afterText = typewriter(AFTER_CTA, frame, 70, 0.8);
+  const cursorVisible = frame >= 70 && afterText.length < AFTER_CTA.length && Math.floor(frame / 8) % 2 === 0;
+
+  // Checkmark at end
   const checkStyle = scaleIn(frame, 105, 12);
-
-  // Cursor blink for typewriter
-  const cursorVisible = frame >= 30 && afterText.length < AFTER_CTA.length && Math.floor(frame / 8) % 2 === 0;
 
   return (
     <AbsoluteFill style={{
@@ -44,19 +53,17 @@ export function CTARewriteScene() {
             {/* Rewrite button */}
             <div style={{
               display: 'flex', justifyContent: 'center', marginBottom: 20,
-              opacity: fadeIn(frame, 0, 10),
+              opacity: fadeIn(frame, 35, 10),
             }}>
               <div style={{
-                background: frame >= 15 && frame <= 25
-                  ? `rgba(99, 102, 241, ${0.8 + Math.sin((frame - 15) / 10 * Math.PI) * 0.2})`
-                  : TOKENS.accent,
+                background: TOKENS.accent,
                 color: 'white',
                 borderRadius: 10,
                 padding: '8px 18px',
                 fontSize: 13,
                 fontWeight: 600,
-                transform: frame >= 15 && frame <= 25 ? 'scale(0.97)' : 'scale(1)',
-                transition: 'transform 0.1s',
+                transform: `scale(${buttonScale})`,
+                boxShadow: buttonGlow,
               }}>
                 ✦ Rewrite CTA
               </div>
@@ -93,10 +100,10 @@ export function CTARewriteScene() {
 
             {/* After card */}
             <div style={{
-              opacity: afterOpacity,
+              ...afterSlide,
               padding: '20px 24px',
               borderRadius: TOKENS.radiusSm,
-              border: `1px solid rgba(16, 185, 129, 0.2)`,
+              border: '1px solid rgba(16, 185, 129, 0.2)',
               background: 'rgba(16, 185, 129, 0.05)',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
