@@ -31,11 +31,8 @@ export function IntroScene() {
     extrapolateRight: 'clamp',
   });
 
-  // 120–150f: Scene fade-out
-  const sceneOpacity = interpolate(frame, [120, 150], [1, 0], {
-    extrapolateLeft: 'clamp',
-    extrapolateRight: 'clamp',
-  });
+  // Scene-level fade-in + fade-out envelope with scale
+  const envelope = sceneEnvelope(frame, 150);
 
   return (
     <AbsoluteFill style={{
@@ -45,7 +42,7 @@ export function IntroScene() {
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'flex-start',
-      opacity: sceneOpacity,
+      ...envelope,
     }}>
       {/* Logo icon + Wordmark — positioned at ~35% from top */}
       <div style={{
