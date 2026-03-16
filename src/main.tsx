@@ -8,6 +8,8 @@ import TermsPage from "./pages/TermsPage.tsx";
 import NotFoundPage from "./pages/NotFoundPage.tsx";
 import { SharePage } from "./pages/SharePage.tsx";
 import { SuccessPage } from "./pages/SuccessPage.tsx";
+import Login from "./pages/Login.tsx";
+import Signup from "./pages/Signup.tsx";
 import "./index.css";
 
 const DemoPage = lazy(() => import("./pages/DemoPage.tsx"));
@@ -33,6 +35,8 @@ createRoot(document.getElementById("root")!).render(
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/success" element={<SuccessPage />} />
         <Route path="/s/:slug" element={<SharePage />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
         <Route path="/demo" element={<Suspense fallback={null}><DemoPage /></Suspense>} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
