@@ -11,7 +11,7 @@ import CutsheetFooter from "../components/ui/cutsheet-footer";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-zinc-950">
+    <div className="min-h-screen bg-zinc-950 overflow-x-hidden">
       <CutsheetNav />
       <CutsheetHero />
       <CutsheetHowItWorks />

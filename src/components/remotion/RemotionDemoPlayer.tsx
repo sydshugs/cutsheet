@@ -164,18 +164,13 @@ export default function RemotionDemoPlayer() {
         fps={DEMO_FPS}
         loop
         playbackRate={playbackRate}
-        style={{
-          width: "100%",
-          borderRadius: 16,
-          overflow: "hidden",
-          border: "1px solid rgba(255,255,255,0.1)",
-        }}
+        className="rounded-[10px] sm:rounded-2xl overflow-hidden border border-white/10"
+        style={{ width: "100%" }}
       />
 
       {/* Click-to-play overlay */}
       <div
-        className="absolute inset-0 z-10 cursor-pointer"
-        style={{ borderRadius: 16 }}
+        className="absolute inset-0 z-10 cursor-pointer rounded-[10px] sm:rounded-2xl"
         onClick={togglePlay}
       />
 
@@ -187,20 +182,19 @@ export default function RemotionDemoPlayer() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
             transition={{ duration: 0.2 }}
-            className="absolute bottom-0 left-0 right-0 z-20 p-3"
-            style={{ borderRadius: "0 0 16px 16px" }}
+            className="absolute bottom-0 left-0 right-0 z-20 p-1.5 sm:p-3 rounded-b-[10px] sm:rounded-b-2xl"
           >
-            <div className="flex items-center gap-3 rounded-xl bg-black/60 backdrop-blur-xl border border-white/10 px-4 py-2.5">
+            <div className="flex items-center gap-1.5 sm:gap-3 rounded-lg sm:rounded-xl bg-black/60 backdrop-blur-xl border border-white/10 px-2 sm:px-4 py-2 sm:py-2.5">
               {/* Play / Pause */}
               <button
                 onClick={togglePlay}
-                className="flex items-center justify-center w-8 h-8 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                className="flex items-center justify-center w-9 h-9 sm:w-8 sm:h-8 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors shrink-0"
               >
                 {isPlaying ? <Pause size={16} /> : <Play size={16} className="ml-0.5" />}
               </button>
 
               {/* Time */}
-              <span className="text-xs font-mono text-zinc-400 tabular-nums whitespace-nowrap">
+              <span className="text-[10px] sm:text-xs font-mono text-zinc-400 tabular-nums whitespace-nowrap">
                 {formatTime(currentFrame, DEMO_FPS)} / {formatTime(DEMO_DURATION_FRAMES, DEMO_FPS)}
               </span>
 
@@ -212,8 +206,8 @@ export default function RemotionDemoPlayer() {
                 className="flex-1 min-w-0"
               />
 
-              {/* Volume */}
-              <div className="flex items-center gap-1.5 group/vol">
+              {/* Volume — hidden on mobile */}
+              <div className="hidden sm:flex items-center gap-1.5 group/vol">
                 <button
                   onClick={toggleMute}
                   className="flex items-center justify-center w-8 h-8 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors"
@@ -229,10 +223,10 @@ export default function RemotionDemoPlayer() {
                 </div>
               </div>
 
-              {/* Speed */}
+              {/* Speed — hidden on mobile */}
               <button
                 onClick={cycleSpeed}
-                className="flex items-center justify-center h-7 px-2 rounded-md text-xs font-mono font-medium text-zinc-400 hover:text-white hover:bg-white/10 transition-colors tabular-nums"
+                className="hidden sm:flex items-center justify-center h-7 px-2 rounded-md text-xs font-mono font-medium text-zinc-400 hover:text-white hover:bg-white/10 transition-colors tabular-nums"
               >
                 {playbackRate}x
               </button>
@@ -240,7 +234,7 @@ export default function RemotionDemoPlayer() {
               {/* Fullscreen */}
               <button
                 onClick={toggleFullscreen}
-                className="flex items-center justify-center w-8 h-8 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                className="flex items-center justify-center w-9 h-9 sm:w-8 sm:h-8 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors shrink-0"
               >
                 {isFullscreen ? <Minimize size={15} /> : <Maximize size={15} />}
               </button>
