@@ -69,29 +69,9 @@ function TravelingBeams() {
 
 function CutsheetLogo() {
   return (
-    <motion.div
-      className="flex flex-col items-center gap-3"
-      initial={{ scale: 0.7, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ type: "spring", duration: 0.8 }}
-    >
-      <div className="flex items-center gap-2.5">
-        <div
-          className="w-8 h-8 rounded-lg flex items-center justify-center"
-          style={{ background: "#6366f1" }}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="18" y1="20" x2="18" y2="10" />
-            <line x1="12" y1="20" x2="12" y2="4" />
-            <line x1="6" y1="20" x2="6" y2="14" />
-          </svg>
-        </div>
-        <span style={{ fontFamily: "'Geist', system-ui, sans-serif", fontSize: 18, fontWeight: 600, color: "#f4f4f5" }}>
-          cutsheet
-        </span>
-      </div>
-      <div className="w-1.5 h-1.5 rounded-full" style={{ background: "#6366f1", boxShadow: "0 0 12px rgba(99,102,241,0.5)" }} />
-    </motion.div>
+    <div className="flex justify-center">
+      <img src="/cutsheet-logo-full.png" alt="Cutsheet" className="w-14 h-14" />
+    </div>
   );
 }
 
