@@ -1,13 +1,14 @@
-import { AbsoluteFill, useCurrentFrame, interpolate, spring } from 'remotion';
-import { TOKENS } from '../tokens';
-import { slideUp, fadeIn, easeOutExpo, sceneEnvelope } from '../helpers';
+import { AbsoluteFill, useCurrentFrame, interpolate, spring, Img, staticFile } from 'remotion';
+import { TOKENS, STEP_LABEL_STYLE, CARD_STYLE, HEADING_STYLE } from '../tokens';
+import { slideUp, fadeIn, easeOutExpo, sceneEnvelope, springPop } from '../helpers';
+import { AppWindow } from '../AppWindow';
 
 const VARIANT_A = {
   label: 'Variant A',
   score: 8.5,
   verdict: '✓ Would Scale',
   verdictColor: TOKENS.success,
-  strength: 'Bold, self-aware hook grabs attention instantly',
+  strength: 'Bold, self-aware hook grabs attention',
   weakness: 'Static nature may struggle vs. dynamic content',
 };
 
@@ -20,12 +21,6 @@ const VARIANT_B = {
   weakness: 'Buried CTA and dense body text kills retention',
 };
 
-const H2H_CATEGORIES = [
-  { label: 'Hook', winner: 'A wins' },
-  { label: 'CTA', winner: 'A wins' },
-  { label: 'Retention', winner: 'A wins' },
-];
-
 export function PreFlightScene() {
   const frame = useCurrentFrame();
   const envelope = sceneEnvelope(frame, 150);
@@ -33,345 +28,313 @@ export function PreFlightScene() {
   // 0–20f: Header fades + slides up
   const headerStyle = slideUp(frame, 0, 20, 20);
 
-  // 20–50f: Cards animate in from sides
-  const cardProgress = interpolate(frame, [20, 50], [0, 1], {
+  // 30–70f: Scores count up
+  const scoreA = interpolate(frame, [30, 70], [0, VARIANT_A.score], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
     easing: easeOutExpo,
   });
-  const cardAX = interpolate(cardProgress, [0, 1], [-60, 0]);
-  const cardBX = interpolate(cardProgress, [0, 1], [60, 0]);
-
-  // 50–80f: Scores count up
-  const scoreA = interpolate(frame, [50, 80], [0, VARIANT_A.score], {
-    extrapolateLeft: 'clamp',
-    extrapolateRight: 'clamp',
-    easing: easeOutExpo,
-  });
-  const scoreB = interpolate(frame, [50, 80], [0, VARIANT_B.score], {
+  const scoreB = interpolate(frame, [30, 70], [0, VARIANT_B.score], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
     easing: easeOutExpo,
   });
 
-  // 80–95f: Verdicts fade in
-  const verdictOpacity = fadeIn(frame, 80, 15);
+  // 75f: Verdict badges appear
+  const verdictOpacity = fadeIn(frame, 75, 15);
 
-  // 105–150f: Winner badge with spring scale
+  // 90f+: Winner badge springs in
   const winnerScale = spring({
-    frame: frame - 105,
+    frame: Math.max(0, frame - 90),
     fps: 30,
     config: { damping: 12, stiffness: 200, mass: 0.8 },
   });
-  const winnerOpacity = interpolate(frame, [105, 115], [0, 1], {
+  const winnerOpacity = interpolate(frame, [90, 100], [0, 1], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
 
   // Variant B dims when winner reveals
-  const bDim = interpolate(frame, [105, 120], [1, 0.4], {
+  const bDim = interpolate(frame, [90, 105], [1, 0.4], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
 
-  // A gets indigo border glow at winner reveal
-  const aGlow = interpolate(frame, [105, 120], [0, 1], {
-    extrapolateLeft: 'clamp',
-    extrapolateRight: 'clamp',
-  });
-
-  // H2H row fades in with winner badge
-  const h2hOpacity = fadeIn(frame, 105, 15);
-
-  // Recommendation line
-  const recOpacity = fadeIn(frame, 115, 15);
-
-  const cardBg = '#18181b';
-  const cardBorder = '#27272a';
-
-  function renderCard(
-    variant: { label: string; score: number; verdict: string; verdictColor: string; strength: string; weakness: string },
-    score: number,
-    xOffset: number,
-    extraStyles: React.CSSProperties = {},
-  ) {
-    return (
-      <div style={{
-        width: 280,
-        borderRadius: TOKENS.radiusLg,
-        border: `1px solid ${cardBorder}`,
-        background: cardBg,
-        padding: 24,
-        transform: `translateX(${xOffset}px)`,
-        opacity: cardProgress,
-        position: 'relative',
-        ...extraStyles,
-      }}>
-        {/* Label */}
-        <p style={{
-          fontSize: 11,
-          fontWeight: 600,
-          textTransform: 'uppercase' as const,
-          letterSpacing: '0.08em',
-          color: TOKENS.inkMuted,
-          margin: 0,
-          fontFamily: TOKENS.fontMono,
-        }}>
-          {variant.label}
-        </p>
-
-        {/* Score */}
-        <div style={{
-          marginTop: 16,
-          display: 'flex',
-          alignItems: 'baseline',
-          gap: 4,
-        }}>
-          <span style={{
-            fontSize: 42,
-            fontWeight: 700,
-            color: TOKENS.ink,
-            lineHeight: 1,
-          }}>
-            {score.toFixed(1)}
-          </span>
-          <span style={{
-            fontSize: 16,
-            fontWeight: 500,
-            color: TOKENS.inkFaint,
-          }}>
-            /10
-          </span>
-        </div>
-
-        {/* Verdict badge */}
-        <div style={{
-          marginTop: 14,
-          opacity: verdictOpacity,
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 6,
-          background: `${variant.verdictColor}18`,
-          border: `1px solid ${variant.verdictColor}40`,
-          borderRadius: 20,
-          padding: '5px 12px',
-          fontSize: 12,
-          fontWeight: 600,
-          color: variant.verdictColor,
-        }}>
-          {variant.verdict}
-        </div>
-
-        {/* Strength */}
-        <div style={{ marginTop: 18 }}>
-          <p style={{
-            fontSize: 10,
-            fontWeight: 600,
-            textTransform: 'uppercase' as const,
-            letterSpacing: '0.06em',
-            color: TOKENS.success,
-            margin: 0,
-          }}>
-            Strength
-          </p>
-          <p style={{
-            fontSize: 12,
-            color: TOKENS.inkMuted,
-            margin: '4px 0 0',
-            lineHeight: 1.5,
-          }}>
-            {variant.strength}
-          </p>
-        </div>
-
-        {/* Weakness */}
-        <div style={{ marginTop: 12 }}>
-          <p style={{
-            fontSize: 10,
-            fontWeight: 600,
-            textTransform: 'uppercase' as const,
-            letterSpacing: '0.06em',
-            color: TOKENS.error,
-            margin: 0,
-          }}>
-            Weakness
-          </p>
-          <p style={{
-            fontSize: 12,
-            color: TOKENS.inkMuted,
-            margin: '4px 0 0',
-            lineHeight: 1.5,
-          }}>
-            {variant.weakness}
-          </p>
-        </div>
-      </div>
-    );
-  }
+  // H2H + winner card fade in
+  const h2hOpacity = fadeIn(frame, 90, 15);
 
   return (
     <AbsoluteFill style={{
-      backgroundColor: '#09090b',
+      backgroundColor: TOKENS.bg,
       fontFamily: TOKENS.fontSans,
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: 40,
-      opacity: envelope,
+      ...envelope,
     }}>
-      {/* Scene label top-left */}
-      <div style={{
-        position: 'absolute',
-        top: 28,
-        left: 36,
-        fontSize: 10,
-        fontWeight: 600,
-        textTransform: 'uppercase' as const,
-        letterSpacing: '0.12em',
-        color: '#818cf8',
-        fontFamily: TOKENS.fontMono,
-        opacity: envelope,
-      }}>
-        Pre-Flight
-      </div>
-
-      {/* Header */}
-      <div style={{
-        textAlign: 'center' as const,
-        marginBottom: 32,
-        ...headerStyle,
-      }}>
-        <h2 style={{
-          fontSize: 28,
-          fontWeight: 700,
-          color: TOKENS.ink,
-          margin: 0,
+      <div style={STEP_LABEL_STYLE}>Pre-Flight</div>
+      <AppWindow>
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100%',
+          padding: 24,
         }}>
-          Pre-Flight — A/B Testing
-        </h2>
-        <p style={{
-          fontSize: 14,
-          color: TOKENS.inkMuted,
-          margin: '8px 0 0',
-        }}>
-          Test before you spend. Pick the winner before launch.
-        </p>
-      </div>
-
-      {/* Cards */}
-      <div style={{
-        display: 'flex',
-        gap: 24,
-        alignItems: 'flex-start',
-        position: 'relative',
-      }}>
-        {/* Variant A — winner */}
-        <div style={{ position: 'relative' }}>
-          {renderCard(VARIANT_A, scoreA, cardAX, {
-            borderColor: aGlow > 0
-              ? `rgba(99, 102, 241, ${interpolate(aGlow, [0, 1], [0, 0.5])})`
-              : cardBorder,
-            boxShadow: aGlow > 0
-              ? `0 0 ${interpolate(aGlow, [0, 1], [0, 24])}px rgba(99, 102, 241, ${interpolate(aGlow, [0, 1], [0, 0.2])})`
-              : 'none',
-          })}
-
-          {/* Winner badge */}
-          {frame >= 105 && (
-            <div style={{
-              position: 'absolute',
-              top: -14,
-              left: '50%',
-              transform: `translateX(-50%) scale(${winnerScale})`,
-              opacity: winnerOpacity,
-              background: TOKENS.accent,
-              color: '#fff',
-              fontSize: 10,
-              fontWeight: 700,
-              textTransform: 'uppercase' as const,
-              letterSpacing: '0.1em',
-              padding: '5px 14px',
-              borderRadius: 20,
-              whiteSpace: 'nowrap' as const,
-              boxShadow: `0 0 16px ${TOKENS.accent}50`,
-            }}>
-              PREDICTED WINNER
-            </div>
-          )}
-
-          {/* Winner stat */}
-          {frame >= 105 && (
-            <div style={{
-              opacity: winnerOpacity,
-              textAlign: 'center' as const,
-              marginTop: 10,
-            }}>
-              <p style={{
-                fontSize: 11,
-                color: TOKENS.success,
-                fontWeight: 500,
-                margin: 0,
-                fontFamily: TOKENS.fontMono,
-              }}>
-                30–50% higher CTR · 20–40% higher CVR
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Variant B — dims on winner reveal */}
-        <div style={{ opacity: bDim }}>
-          {renderCard(VARIANT_B, scoreB, cardBX)}
-        </div>
-      </div>
-
-      {/* Head-to-head row */}
-      <div style={{
-        display: 'flex',
-        gap: 10,
-        marginTop: 20,
-        opacity: h2hOpacity,
-      }}>
-        {H2H_CATEGORIES.map((cat) => (
-          <div key={cat.label} style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            background: `${TOKENS.success}18`,
-            border: `1px solid ${TOKENS.success}30`,
-            borderRadius: 20,
-            padding: '4px 12px',
-          }}>
-            <span style={{
-              fontSize: 11,
-              color: TOKENS.inkMuted,
-              fontWeight: 500,
-            }}>
-              {cat.label}:
-            </span>
-            <span style={{
-              fontSize: 11,
-              color: TOKENS.success,
-              fontWeight: 600,
-            }}>
-              {cat.winner}
-            </span>
+          {/* Header */}
+          <div style={{ textAlign: 'center' as const, marginBottom: 24, ...headerStyle }}>
+            <h2 style={{ ...HEADING_STYLE, margin: 0 }}>Pre-Flight — A/B Testing</h2>
+            <p style={{ fontSize: 13, color: TOKENS.inkMuted, margin: '6px 0 0' }}>
+              Test before you spend. Pick the winner before launch.
+            </p>
           </div>
-        ))}
-      </div>
 
-      {/* Recommendation */}
-      <p style={{
-        opacity: recOpacity,
-        fontSize: 13,
-        color: TOKENS.inkMuted,
-        fontStyle: 'italic',
-        marginTop: 20,
-        marginBottom: 0,
-      }}>
-        Pause Variant B. Allocate all budget to Variant A.
-      </p>
+          {/* Two columns */}
+          <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
+            {/* Variant A */}
+            <div style={{ width: 260, ...springPop(frame, 10), position: 'relative' }}>
+              {/* Image thumbnail */}
+              <Img
+                src={staticFile('demos/variant-a.png')}
+                style={{
+                  width: '100%',
+                  height: 160,
+                  objectFit: 'cover',
+                  borderRadius: TOKENS.radiusSm,
+                  marginBottom: 12,
+                  border: `1px solid ${TOKENS.border}`,
+                }}
+              />
+              {/* Label */}
+              <p style={{
+                fontSize: 10,
+                fontWeight: 600,
+                textTransform: 'uppercase' as const,
+                letterSpacing: '0.08em',
+                color: TOKENS.inkMuted,
+                fontFamily: TOKENS.fontMono,
+                margin: 0,
+              }}>
+                {VARIANT_A.label}
+              </p>
+              {/* Score */}
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 8 }}>
+                <span style={{ fontSize: 32, fontWeight: 700, color: TOKENS.ink, fontFamily: TOKENS.fontMono }}>
+                  {scoreA.toFixed(1)}
+                </span>
+                <span style={{ fontSize: 14, color: TOKENS.inkFaint }}>/10</span>
+              </div>
+              {/* Would Scale badge */}
+              <div style={{
+                marginTop: 8,
+                opacity: verdictOpacity,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                background: `${VARIANT_A.verdictColor}18`,
+                border: `1px solid ${VARIANT_A.verdictColor}40`,
+                borderRadius: 20,
+                padding: '4px 10px',
+                fontSize: 11,
+                fontWeight: 600,
+                color: VARIANT_A.verdictColor,
+              }}>
+                {VARIANT_A.verdict}
+              </div>
+              {/* Strength */}
+              <div style={{ marginTop: 12 }}>
+                <p style={{
+                  fontSize: 10,
+                  fontWeight: 600,
+                  textTransform: 'uppercase' as const,
+                  letterSpacing: '0.06em',
+                  color: TOKENS.success,
+                  margin: 0,
+                }}>
+                  Strength
+                </p>
+                <p style={{ fontSize: 11, color: TOKENS.inkMuted, margin: '3px 0 0', lineHeight: 1.4 }}>
+                  {VARIANT_A.strength}
+                </p>
+              </div>
+              {/* Weakness */}
+              <div style={{ marginTop: 8 }}>
+                <p style={{
+                  fontSize: 10,
+                  fontWeight: 600,
+                  textTransform: 'uppercase' as const,
+                  letterSpacing: '0.06em',
+                  color: TOKENS.error,
+                  margin: 0,
+                }}>
+                  Weakness
+                </p>
+                <p style={{ fontSize: 11, color: TOKENS.inkMuted, margin: '3px 0 0', lineHeight: 1.4 }}>
+                  {VARIANT_A.weakness}
+                </p>
+              </div>
+
+              {/* Winner badge on top */}
+              {frame >= 90 && (
+                <div style={{
+                  position: 'absolute',
+                  top: -12,
+                  left: '50%',
+                  transform: `translateX(-50%) scale(${winnerScale})`,
+                  opacity: winnerOpacity,
+                  background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+                  color: '#fff',
+                  fontSize: 10,
+                  fontWeight: 700,
+                  textTransform: 'uppercase' as const,
+                  letterSpacing: '0.1em',
+                  padding: '4px 14px',
+                  borderRadius: 20,
+                  whiteSpace: 'nowrap' as const,
+                  boxShadow: '0 0 16px rgba(99,102,241,0.4)',
+                }}>
+                  🏆 PREDICTED WINNER
+                </div>
+              )}
+            </div>
+
+            {/* Variant B — dims at frame 90 */}
+            <div style={{ width: 260, ...springPop(frame, 18), opacity: bDim }}>
+              {/* Image thumbnail */}
+              <Img
+                src={staticFile('demos/variant-b.png')}
+                style={{
+                  width: '100%',
+                  height: 160,
+                  objectFit: 'cover',
+                  borderRadius: TOKENS.radiusSm,
+                  marginBottom: 12,
+                  border: `1px solid ${TOKENS.border}`,
+                }}
+              />
+              {/* Label */}
+              <p style={{
+                fontSize: 10,
+                fontWeight: 600,
+                textTransform: 'uppercase' as const,
+                letterSpacing: '0.08em',
+                color: TOKENS.inkMuted,
+                fontFamily: TOKENS.fontMono,
+                margin: 0,
+              }}>
+                {VARIANT_B.label}
+              </p>
+              {/* Score */}
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 8 }}>
+                <span style={{ fontSize: 32, fontWeight: 700, color: TOKENS.ink, fontFamily: TOKENS.fontMono }}>
+                  {scoreB.toFixed(1)}
+                </span>
+                <span style={{ fontSize: 14, color: TOKENS.inkFaint }}>/10</span>
+              </div>
+              {/* Don't Scale badge */}
+              <div style={{
+                marginTop: 8,
+                opacity: verdictOpacity,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                background: `${VARIANT_B.verdictColor}18`,
+                border: `1px solid ${VARIANT_B.verdictColor}40`,
+                borderRadius: 20,
+                padding: '4px 10px',
+                fontSize: 11,
+                fontWeight: 600,
+                color: VARIANT_B.verdictColor,
+              }}>
+                {VARIANT_B.verdict}
+              </div>
+              {/* Strength */}
+              <div style={{ marginTop: 12 }}>
+                <p style={{
+                  fontSize: 10,
+                  fontWeight: 600,
+                  textTransform: 'uppercase' as const,
+                  letterSpacing: '0.06em',
+                  color: TOKENS.success,
+                  margin: 0,
+                }}>
+                  Strength
+                </p>
+                <p style={{ fontSize: 11, color: TOKENS.inkMuted, margin: '3px 0 0', lineHeight: 1.4 }}>
+                  {VARIANT_B.strength}
+                </p>
+              </div>
+              {/* Weakness */}
+              <div style={{ marginTop: 8 }}>
+                <p style={{
+                  fontSize: 10,
+                  fontWeight: 600,
+                  textTransform: 'uppercase' as const,
+                  letterSpacing: '0.06em',
+                  color: TOKENS.error,
+                  margin: 0,
+                }}>
+                  Weakness
+                </p>
+                <p style={{ fontSize: 11, color: TOKENS.inkMuted, margin: '3px 0 0', lineHeight: 1.4 }}>
+                  {VARIANT_B.weakness}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom section: Winner card + Head-to-head */}
+          {frame >= 90 && (
+            <div style={{ marginTop: 16, width: '100%', maxWidth: 540, opacity: h2hOpacity }}>
+              {/* Winner prediction card */}
+              <div style={{
+                ...CARD_STYLE,
+                padding: '12px 16px',
+                marginBottom: 10,
+                borderTop: '2px solid',
+                borderImage: 'linear-gradient(90deg, #6366F1, #8B5CF6) 1',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: TOKENS.accent }}>
+                    Variant A dominates
+                  </span>
+                  <span style={{
+                    background: `${TOKENS.success}20`,
+                    border: `1px solid ${TOKENS.success}40`,
+                    borderRadius: 12,
+                    padding: '2px 8px',
+                    fontSize: 10,
+                    fontWeight: 600,
+                    color: TOKENS.success,
+                  }}>
+                    HIGH CONFIDENCE
+                  </span>
+                </div>
+                <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 11, color: TOKENS.success, fontWeight: 500 }}>
+                    ↑ 15–25% higher CTR/CVR
+                  </span>
+                </div>
+              </div>
+
+              {/* Head-to-head pills */}
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                {['Hook: A wins', 'CTA: A wins', 'Retention: A wins'].map((text) => (
+                  <div key={text} style={{
+                    background: `${TOKENS.success}12`,
+                    border: `1px solid ${TOKENS.success}25`,
+                    borderRadius: 20,
+                    padding: '3px 10px',
+                    fontSize: 10,
+                    color: TOKENS.success,
+                    fontWeight: 500,
+                  }}>
+                    {text}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </AppWindow>
     </AbsoluteFill>
   );
 }

@@ -8,10 +8,15 @@ export const easeInOutCubic = (t: number): number =>
   t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
 /**
- * Scene-level fade envelope. Fades in over the first `fadeFrames` and
- * out over the last `fadeFrames` of a scene with `totalFrames` duration.
+ * Scene-level fade + scale envelope. Fades in over the first `fadeFrames` and
+ * out over the last `fadeFrames`, with a subtle 0.95→1.0 scale for smooth crossfades.
+ * Returns { opacity, transform } for spread into style.
  */
-export function sceneEnvelope(frame: number, totalFrames: number, fadeFrames = 18): number {
+export function sceneEnvelope(
+  frame: number,
+  totalFrames: number,
+  fadeFrames = 22,
+): { opacity: number; transform: string } {
   const fadeIn = interpolate(frame, [0, fadeFrames], [0, 1], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
@@ -22,7 +27,9 @@ export function sceneEnvelope(frame: number, totalFrames: number, fadeFrames = 1
     extrapolateRight: 'clamp',
     easing: easeInOutCubic,
   });
-  return fadeIn * fadeOut;
+  const envelope = fadeIn * fadeOut;
+  const scale = interpolate(envelope, [0, 1], [0.95, 1]);
+  return { opacity: envelope, transform: `scale(${scale})` };
 }
 
 /**
