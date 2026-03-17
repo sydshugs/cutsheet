@@ -316,7 +316,8 @@ export function recalculateOverallScore(
 export async function analyzeVideo(
   file: File,
   apiKey: string,
-  onStatusChange?: (status: AnalysisStatus, message?: string) => void
+  onStatusChange?: (status: AnalysisStatus, message?: string) => void,
+  contextPrefix?: string
 ): Promise<AnalysisResult> {
   const emit = (status: AnalysisStatus, message?: string) => {
     onStatusChange?.(status, message);
@@ -343,7 +344,8 @@ export async function analyzeVideo(
     emit("processing", isImage ? "Gemini is analyzing your static creative..." : "Gemini is analyzing your creative...");
 
     const staticPrefix = `This is a STATIC AD CREATIVE (image). Analyze it as a static advertisement. For Hook Strength, assess the visual impact and scroll-stop potential of the static image. For Pacing & Retention, assess visual hierarchy and how the eye moves through the composition instead. All other metrics apply as normal.\n\n`;
-    const prompt = isImage ? staticPrefix + ANALYSIS_PROMPT : ANALYSIS_PROMPT;
+    const basePrompt = isImage ? staticPrefix + ANALYSIS_PROMPT : ANALYSIS_PROMPT;
+    const prompt = contextPrefix ? `${contextPrefix}\n\n${basePrompt}` : basePrompt;
 
     const result = await model.generateContent([
       {
