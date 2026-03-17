@@ -1,7 +1,6 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { CheckCircle, ArrowRight, Loader2 } from "lucide-react";
+import { CheckCircle, ArrowRight } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { redirectToCheckout } from "../lib/stripe";
 
@@ -15,19 +14,13 @@ const FEATURES = [
 export default function Upgrade() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
 
-  const handleUpgrade = async () => {
+  const handleUpgrade = () => {
     if (!user) {
       navigate("/login");
       return;
     }
-    setLoading(true);
-    try {
-      await redirectToCheckout(user.id, user.email || "");
-    } catch {
-      setLoading(false);
-    }
+    redirectToCheckout(user.id, user.email || "");
   };
 
   return (
@@ -117,10 +110,9 @@ export default function Upgrade() {
           <motion.button
             type="button"
             onClick={handleUpgrade}
-            disabled={loading}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.97 }}
-            className="w-full h-[52px] rounded-full text-white font-semibold text-[15px] flex items-center justify-center gap-2 transition-all disabled:opacity-70"
+            className="w-full h-[52px] rounded-full text-white font-semibold text-[15px] flex items-center justify-center gap-2 transition-all"
             style={{ background: "#6366f1" }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = "#4f46e5";
@@ -132,13 +124,7 @@ export default function Upgrade() {
               e.currentTarget.style.boxShadow = "none";
             }}
           >
-            {loading ? (
-              <Loader2 size={18} className="animate-spin" />
-            ) : (
-              <>
-                Upgrade to Pro <ArrowRight size={16} />
-              </>
-            )}
+            Upgrade to Pro <ArrowRight size={16} />
           </motion.button>
 
           {/* Restore access */}
