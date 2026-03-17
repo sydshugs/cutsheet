@@ -117,10 +117,12 @@ function SidebarContent({
   mode,
   onModeChange,
   showLabels = false,
+  onSettingsClick,
 }: {
   mode: SidebarMode;
   onModeChange: (mode: SidebarMode) => void;
   showLabels?: boolean;
+  onSettingsClick?: () => void;
 }) {
   return (
     <>
@@ -185,6 +187,7 @@ function SidebarContent({
           <button
             type="button"
             aria-label="Settings"
+            onClick={onSettingsClick}
             className={
               showLabels
                 ? "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-zinc-400 hover:bg-white/5 hover:text-zinc-200 transition-colors w-full focus-visible:ring-1 focus-visible:ring-indigo-500/50 focus-visible:outline-none"
@@ -212,11 +215,14 @@ export function Sidebar({
   mobileOpen,
   onMobileClose,
 }: SidebarProps) {
+  const navigate = useNavigate();
+  const handleSettings = () => navigate("/settings");
+
   return (
     <>
       {/* Desktop sidebar — icon-only, hidden below lg */}
       <nav className="fixed left-0 top-0 bottom-0 w-16 bg-zinc-950 border-r border-white/5 flex-col items-center py-4 z-50 hidden lg:flex">
-        <SidebarContent mode={mode} onModeChange={onModeChange} />
+        <SidebarContent mode={mode} onModeChange={onModeChange} onSettingsClick={handleSettings} />
       </nav>
 
       {/* Mobile sidebar overlay — visible only when mobileOpen */}
@@ -229,7 +235,12 @@ export function Sidebar({
           />
           {/* Sidebar panel */}
           <nav className="fixed left-0 top-0 bottom-0 z-50 w-64 bg-zinc-950 border-r border-white/5 flex flex-col py-4 lg:hidden">
-            <SidebarContent mode={mode} onModeChange={(m) => { onModeChange(m); onMobileClose?.(); }} showLabels />
+            <SidebarContent
+              mode={mode}
+              onModeChange={(m) => { onModeChange(m); onMobileClose?.(); }}
+              showLabels
+              onSettingsClick={() => { handleSettings(); onMobileClose?.(); }}
+            />
           </nav>
         </>
       )}

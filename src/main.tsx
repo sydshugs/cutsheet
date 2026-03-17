@@ -18,6 +18,7 @@ import CheckoutSuccess from "./pages/CheckoutSuccess.tsx";
 import CheckoutCancel from "./pages/CheckoutCancel.tsx";
 import { AuthProvider } from "./context/AuthContext.tsx";
 import { ProtectedRoute } from "./components/ProtectedRoute.tsx";
+import { Settings } from "./pages/Settings.tsx";
 import "./index.css";
 
 const DemoPage = lazy(() => import("./pages/DemoPage.tsx"));
@@ -53,6 +54,7 @@ createRoot(document.getElementById("root")!).render(
         <Route path="/checkout/success" element={<CheckoutSuccess />} />
         <Route path="/checkout/cancel" element={<CheckoutCancel />} />
         <Route path="/demo" element={<Suspense fallback={null}><DemoPage /></Suspense>} />
+        <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
       </AuthProvider>
