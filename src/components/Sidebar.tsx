@@ -1,7 +1,10 @@
 // Sidebar.tsx — 64px icon-only sidebar with Tailwind classes
 
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { BarChart3, GitCompare, Layers, FlaskConical, Bookmark, Settings, LogOut } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { getUsageInfo } from "../services/usageService";
 
 export type SidebarMode = "single" | "compare" | "batch" | "preflight" | "swipe";
 
@@ -47,6 +50,65 @@ function SignOutButton({ showLabels = false }: { showLabels?: boolean }) {
           Sign out
         </span>
       )}
+    </div>
+  );
+}
+
+function UsageIndicator({ showLabels = false }: { showLabels?: boolean }) {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [usage, setUsage] = useState<{ used: number; limit: number; isPro: boolean } | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    getUsageInfo().then(setUsage).catch(() => {});
+  }, [user]);
+
+  if (!usage) return null;
+
+  if (usage.isPro) {
+    return (
+      <div className={`flex flex-col items-center ${showLabels ? "px-3" : ""}`}>
+        <span
+          className="rounded-full px-2 py-0.5 text-[11px] font-medium"
+          style={{
+            background: "rgba(99,102,241,0.15)",
+            color: "#818cf8",
+          }}
+        >
+          Pro
+        </span>
+      </div>
+    );
+  }
+
+  const usageColor =
+    usage.used >= 3
+      ? "#ef4444"
+      : usage.used >= 2
+        ? "#f59e0b"
+        : "#71717a";
+
+  return (
+    <div className={`flex flex-col items-center gap-1 ${showLabels ? "px-3" : ""}`}>
+      <span
+        className="rounded-full px-2 py-0.5 text-[11px] font-medium"
+        style={{
+          background: "rgba(255,255,255,0.04)",
+          border: "1px solid rgba(255,255,255,0.08)",
+          color: usageColor,
+        }}
+      >
+        {usage.used}/{usage.limit} analyses
+      </span>
+      <button
+        type="button"
+        onClick={() => navigate("/upgrade")}
+        className="text-[11px] underline transition-colors hover:opacity-80"
+        style={{ color: "#6366f1" }}
+      >
+        Upgrade
+      </button>
     </div>
   );
 }
@@ -116,9 +178,10 @@ function SidebarContent({
         })}
       </div>
 
-      {/* Settings + Sign Out at bottom */}
+      {/* Usage indicator + Settings + Sign Out at bottom */}
       <div className={`mt-auto flex flex-col ${showLabels ? "w-full px-3 gap-1" : "items-center gap-2"}`}>
-        <div className={`${showLabels ? "" : "group relative"}`}>
+        <UsageIndicator showLabels={showLabels} />
+        <div className={`${showLabels ? "" : "group relative"} mt-1`}>
           <button
             type="button"
             aria-label="Settings"

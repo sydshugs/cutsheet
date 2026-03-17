@@ -13,6 +13,9 @@ import Signup from "./pages/Signup.tsx";
 import ForgotPassword from "./pages/ForgotPassword.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
 import Welcome from "./pages/Welcome.tsx";
+import Upgrade from "./pages/Upgrade.tsx";
+import CheckoutSuccess from "./pages/CheckoutSuccess.tsx";
+import CheckoutCancel from "./pages/CheckoutCancel.tsx";
 import { AuthProvider } from "./context/AuthContext.tsx";
 import { ProtectedRoute } from "./components/ProtectedRoute.tsx";
 import "./index.css";
@@ -46,6 +49,9 @@ createRoot(document.getElementById("root")!).render(
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/welcome" element={<Welcome />} />
+        <Route path="/upgrade" element={<Upgrade />} />
+        <Route path="/checkout/success" element={<CheckoutSuccess />} />
+        <Route path="/checkout/cancel" element={<CheckoutCancel />} />
         <Route path="/demo" element={<Suspense fallback={null}><DemoPage /></Suspense>} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
