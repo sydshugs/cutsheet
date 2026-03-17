@@ -22,7 +22,7 @@ import { exportToPdf } from "./utils/pdfExport";
 import { UpgradeModal } from "./components/UpgradeModal";
 import { checkShareLimit, incrementShareCount } from "./utils/rateLimiter";
 import { themes } from "./theme";
-import { TopBar } from "./components/TopBar";
+import { Menu } from "lucide-react";
 
 // ─── GOOGLE FONTS ─────────────────────────────────────────────────────────────
 // Add to your index.html <head>:
@@ -387,24 +387,25 @@ export default function App() {
 
       {/* Main area (right of sidebar) */}
       <div className="main-content flex flex-col min-w-0">
-        {/* Top bar */}
-        <TopBar
-          onNewAnalysis={handleReset}
-          onHistoryOpen={() => setHistoryOpen(true)}
-          onMobileMenuToggle={() => setMobileOpen(prev => !prev)}
-          showMobileMenu={mobileOpen}
-          userName="User"
-          userPlan={isPro ? "pro" : "free"}
-        />
+        {/* Mobile top bar — hamburger only */}
+        <div className="lg:hidden flex items-center px-4 py-3 border-b border-white/5">
+          <button
+            type="button"
+            aria-label="Open menu"
+            onClick={() => setMobileOpen(prev => !prev)}
+            className="w-10 h-10 flex items-center justify-center rounded-xl text-zinc-400 hover:bg-white/5 hover:text-white transition-colors"
+          >
+            <Menu size={20} />
+          </button>
+          <span className="ml-2 text-sm font-semibold text-white tracking-tight" style={{ fontFamily: "'TBJ Interval', sans-serif" }}>
+            cutsheet
+          </span>
+        </div>
 
         {/* Content + Right panel wrapper */}
         <div className="flex flex-1 overflow-hidden max-lg:flex-col">
           {/* Main content */}
           <div className="flex-1 overflow-y-auto relative">
-            {/* Ambient glow */}
-            <div className="pointer-events-none absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-indigo-600/10 blur-[120px]" />
-            <div className="pointer-events-none absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-violet-600/[0.08] blur-[100px]" />
-
             {/* Mode content */}
             <div className="relative px-4 py-6 md:px-8 min-h-full flex flex-col">
               {/* ── SINGLE / ANALYZER MODE ── */}
@@ -420,7 +421,6 @@ export default function App() {
                     if (!f) { handleReset(); return; }
                     setFile(f);
                     reset();
-                    // Auto-analyze after setting file
                   }}
                   onUrlSubmit={async (u) => {
                     setUrlInput(u);
@@ -437,6 +437,10 @@ export default function App() {
                   shareLoading={shareLoading}
                   historyEntries={historyEntries}
                   onHistoryEntryClick={(entry) => setLoadedEntry(entry)}
+                  onModeChange={(m) => {
+                    if (m === "compare") setCompareKey((k) => k + 1);
+                    setMode(m);
+                  }}
                 />
               )}
 
