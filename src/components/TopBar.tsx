@@ -60,14 +60,6 @@ export function TopBar({
         <Menu size={20} />
       </button>
 
-      {/* Wordmark */}
-      <span
-        className="text-base text-white"
-        style={{ fontFamily: "'TBJ Interval', sans-serif" }}
-      >
-        cutsheet
-      </span>
-
       {/* Spacer */}
       <div className="flex-1" />
 
