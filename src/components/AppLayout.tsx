@@ -1,0 +1,110 @@
+// AppLayout.tsx — layout shell for all /app/* routes
+import { useRef, useCallback, useState } from "react";
+import { Outlet, useNavigate } from "react-router-dom";
+import { Sidebar, type SidebarMode } from "./Sidebar";
+import { TopBar } from "./TopBar";
+import { UpgradeModal } from "./UpgradeModal";
+import { useUsage } from "../hooks/useUsage";
+import { useHistory, type HistoryEntry } from "../hooks/useHistory";
+import { useSwipeFile, type SwipeItem } from "../hooks/useSwipeFile";
+import { useAuth } from "../context/AuthContext";
+import { themes } from "../theme";
+
+// ─── OUTLET CONTEXT TYPE ─────────────────────────────────────────────────────
+
+export interface AppSharedContext {
+  historyEntries: HistoryEntry[];
+  addHistoryEntry: (entry: Omit<HistoryEntry, "id">) => void;
+  deleteHistoryEntry: (id: string) => void;
+  clearAllHistory: () => void;
+  addSwipeItem: (item: Omit<SwipeItem, "id">) => void;
+  canAnalyze: boolean;
+  isPro: boolean;
+  increment: () => number;
+  FREE_LIMIT: number;
+  usageCount: number;
+  onUpgradeRequired: () => void;
+  registerCallbacks: (
+    cbs: { onNewAnalysis?: () => void; onHistoryOpen?: () => void } | null
+  ) => void;
+}
+
+// ─── COMPONENT ───────────────────────────────────────────────────────────────
+
+export default function AppLayout() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const { usageCount, isPro, canAnalyze, increment, FREE_LIMIT } = useUsage();
+  const { entries: historyEntries, addEntry: addHistoryEntry, deleteEntry: deleteHistoryEntry, clearAll: clearAllHistory } = useHistory();
+  const { addItem: addSwipeItem } = useSwipeFile();
+
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [sidebarMode, setSidebarMode] = useState<SidebarMode>("single");
+
+  // TopBar delegates to whichever page is currently mounted
+  const onNewAnalysisRef = useRef<() => void>(() => navigate("/app/paid"));
+  const onHistoryOpenRef = useRef<() => void>(() => {});
+
+  const registerCallbacks = useCallback(
+    (cbs: { onNewAnalysis?: () => void; onHistoryOpen?: () => void } | null) => {
+      if (!cbs) {
+        onNewAnalysisRef.current = () => navigate("/app/paid");
+        onHistoryOpenRef.current = () => {};
+        return;
+      }
+      if (cbs.onNewAnalysis) onNewAnalysisRef.current = cbs.onNewAnalysis;
+      if (cbs.onHistoryOpen) onHistoryOpenRef.current = cbs.onHistoryOpen;
+    },
+    [navigate]
+  );
+
+  const ctx: AppSharedContext = {
+    historyEntries,
+    addHistoryEntry,
+    deleteHistoryEntry,
+    clearAllHistory,
+    addSwipeItem,
+    canAnalyze,
+    isPro,
+    increment,
+    FREE_LIMIT,
+    usageCount,
+    onUpgradeRequired: () => setShowUpgradeModal(true),
+    registerCallbacks,
+  };
+
+  const userEmail = user?.email ?? "";
+
+  return (
+    <div className="flex h-screen overflow-hidden" style={{ background: "#09090b" }}>
+      <Sidebar
+        mode={sidebarMode}
+        onModeChange={setSidebarMode}
+        mobileOpen={mobileOpen}
+        onMobileClose={() => setMobileOpen(false)}
+        userName={userEmail}
+        isPro={isPro}
+      />
+
+      <div className="flex flex-col flex-1 min-w-0">
+        <TopBar
+          onNewAnalysis={() => onNewAnalysisRef.current()}
+          onHistoryOpen={() => onHistoryOpenRef.current()}
+          onMobileMenuToggle={() => setMobileOpen((p) => !p)}
+          showMobileMenu={mobileOpen}
+          userName={userEmail}
+          userPlan={isPro ? "pro" : "free"}
+        />
+        <main className="flex-1 overflow-auto">
+          <Outlet context={ctx} />
+        </main>
+      </div>
+
+      {showUpgradeModal && (
+        <UpgradeModal onClose={() => setShowUpgradeModal(false)} t={themes.dark} />
+      )}
+    </div>
+  );
+}
