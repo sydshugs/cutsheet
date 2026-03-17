@@ -2,7 +2,7 @@
 @import "tailwindcss";
 
 .main-content {
-  margin-left: 64px;
+  margin-left: 240px;
   flex: 1;
   min-height: 100vh;
 }
