@@ -186,13 +186,13 @@ export default function Welcome() {
     if (!user) return;
     await supabase
       .from("profiles")
-      .update({
+      .upsert({
+        id: user.id,
         niche: selectedNiche,
         platform: selectedPlatform,
         role: selectedRole,
         onboarding_completed: true,
-      })
-      .eq("id", user.id);
+      });
   };
 
   const handleFinish = () => {
