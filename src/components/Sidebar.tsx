@@ -1,188 +1,392 @@
-// Sidebar.tsx — 64px icon-only sidebar with Tailwind classes
-
-import { useNavigate } from "react-router-dom";
-import { BarChart3, GitCompare, Layers, FlaskConical, Bookmark, Settings, LogOut } from "lucide-react";
+// src/components/Sidebar.tsx — complete redesign, URL-based nav, brand tokens
+import { useState, useRef } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import {
+  Zap, TrendingUp, Monitor, GitBranch, Swords, LayoutGrid,
+  Bookmark, Settings, ChevronLeft, ChevronRight, MoreHorizontal, X,
+} from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { UsageIndicator } from "./UsageIndicator";
 
-export type SidebarMode = "single" | "compare" | "batch" | "preflight" | "swipe";
+// ─── TYPES ────────────────────────────────────────────────────────────────────
 
-interface SidebarProps {
-  mode: SidebarMode;
-  onModeChange: (mode: SidebarMode) => void;
-  isPro?: boolean;
-  onNewAnalysis?: () => void;
-  onHistoryOpen?: () => void;
-  userName?: string;
-  userPlan?: string;
-  mobileOpen?: boolean;
-  onMobileClose?: () => void;
+interface NavItem {
+  label: string;
+  sublabel: string;
+  path: string;
+  icon: React.ComponentType<{ size?: number; className?: string; color?: string }>;
+  comingSoon?: boolean;
 }
 
-const MODES: { id: SidebarMode; label: string; icon: React.ComponentType<{ size?: number }> }[] = [
-  { id: "single", label: "Analyzer", icon: BarChart3 },
-  { id: "compare", label: "Compare", icon: GitCompare },
-  { id: "batch", label: "Batch", icon: Layers },
-  { id: "preflight", label: "A/B Test", icon: FlaskConical },
-  { id: "swipe", label: "Swipe File", icon: Bookmark },
+interface SidebarProps {
+  mobileOpen: boolean;
+  onMobileClose: () => void;
+  userEmail: string;
+  isPro: boolean;
+  usageCount: number;
+  FREE_LIMIT: number;
+}
+
+// ─── NAV CONFIG ───────────────────────────────────────────────────────────────
+
+const ANALYZE: NavItem[] = [
+  { label: "Paid Ad",  sublabel: "Meta, TikTok, Google",  path: "/app/paid",     icon: Zap },
+  { label: "Organic",  sublabel: "TikTok, Reels, Shorts", path: "/app/organic",  icon: TrendingUp },
+  { label: "Display",  sublabel: "Google, affiliate",     path: "/app/display",  icon: Monitor, comingSoon: true },
 ];
 
-function SignOutButton({ showLabels = false }: { showLabels?: boolean }) {
-  const { signOut } = useAuth();
+const COMPARE: NavItem[] = [
+  { label: "A/B Test",   sublabel: "Test variants",      path: "/app/ab-test",    icon: GitBranch },
+  { label: "Competitor", sublabel: "Your ad vs theirs",  path: "/app/competitor", icon: Swords, comingSoon: true },
+  { label: "Batch",      sublabel: "Score up to 10",     path: "/app/batch",      icon: LayoutGrid },
+];
+
+const LIBRARY: NavItem[] = [
+  { label: "Swipe File", sublabel: "Saved winners", path: "/app/swipe-file", icon: Bookmark },
+];
+
+const MORE_ITEMS = [...COMPARE.slice(1), ...LIBRARY]; // Competitor, Batch, Swipe File
+
+// ─── SECTION LABEL ────────────────────────────────────────────────────────────
+
+function SectionLabel({ label }: { label: string }) {
   return (
-    <div className={showLabels ? "" : "group relative"}>
-      <button
-        type="button"
-        aria-label="Sign out"
-        onClick={signOut}
-        className={
-          showLabels
-            ? "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-zinc-400 hover:bg-red-500/10 hover:text-red-400 transition-colors w-full focus-visible:ring-1 focus-visible:ring-indigo-500/50 focus-visible:outline-none"
-            : "w-10 h-10 flex items-center justify-center rounded-xl text-zinc-500 hover:bg-red-500/10 hover:text-red-400 focus-visible:ring-1 focus-visible:ring-indigo-500/50 focus-visible:outline-none transition-colors"
-        }
-      >
-        <LogOut size={20} />
-        {showLabels && "Sign out"}
-      </button>
-      {!showLabels && (
-        <span className="absolute left-full ml-2 bg-zinc-900 text-white text-xs rounded-lg px-2 py-1 whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 top-1/2 -translate-y-1/2">
-          Sign out
-        </span>
-      )}
+    <div style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "#52525b", padding: "0 12px", marginTop: 24, marginBottom: 2 }}>
+      {label}
     </div>
   );
 }
 
+// ─── NAV ITEM ROW ─────────────────────────────────────────────────────────────
 
-function SidebarContent({
-  mode,
-  onModeChange,
-  showLabels = false,
-  onSettingsClick,
-}: {
-  mode: SidebarMode;
-  onModeChange: (mode: SidebarMode) => void;
-  showLabels?: boolean;
-  onSettingsClick?: () => void;
-}) {
-  return (
+function NavItemRow({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
+  const Icon = item.icon;
+  const [showCSTip, setShowCSTip] = useState(false);
+  const tipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleCSClick = () => {
+    setShowCSTip(true);
+    if (tipTimerRef.current) clearTimeout(tipTimerRef.current);
+    tipTimerRef.current = setTimeout(() => setShowCSTip(false), 2000);
+  };
+
+  const inner = (isActive: boolean) => (
     <>
-      {/* Logo */}
-      <div className="mb-6">
-        <img src="/cutsheet-logo.png" alt="Cutsheet" className="w-7 h-7" />
-      </div>
+      {/* Active left bar */}
+      {isActive && !collapsed && (
+        <div style={{ position: "absolute", left: 0, top: 6, bottom: 6, width: 2, background: "#6366f1", borderRadius: "0 2px 2px 0" }} />
+      )}
 
-      {/* Mode buttons */}
-      <div className={`flex flex-col ${showLabels ? "gap-1 w-full px-3" : "items-center gap-2"}`}>
-        {MODES.map((m) => {
-          const isActive = mode === m.id;
-          const Icon = m.icon;
-          return showLabels ? (
-            <button
-              key={m.id}
-              type="button"
-              aria-current={isActive ? "page" : undefined}
-              onClick={() => onModeChange(m.id)}
-              className={[
-                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors",
-                "focus-visible:ring-1 focus-visible:ring-indigo-500/50 focus-visible:outline-none",
-                isActive
-                  ? "bg-indigo-500/15 text-indigo-400"
-                  : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200",
-              ].join(" ")}
-            >
-              <Icon size={20} />
-              {m.label}
-            </button>
-          ) : (
-            <div key={m.id} className="group relative">
-              <button
-                type="button"
-                aria-label={m.label}
-                aria-current={isActive ? "page" : undefined}
-                onClick={() => onModeChange(m.id)}
-                className={[
-                  "w-10 h-10 flex items-center justify-center rounded-xl",
-                  "focus-visible:ring-1 focus-visible:ring-indigo-500/50 focus-visible:outline-none",
-                  "transition-colors",
-                  isActive
-                    ? "bg-indigo-500/15 text-indigo-400"
-                    : "text-zinc-500 hover:bg-white/5 hover:text-zinc-300",
-                ].join(" ")}
-              >
-                <Icon size={20} />
-              </button>
-              {/* Tooltip */}
-              <span className="absolute left-full ml-2 bg-zinc-900 text-white text-xs rounded-lg px-2 py-1 whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 top-1/2 -translate-y-1/2">
-                {m.label}
-              </span>
-            </div>
-          );
-        })}
-      </div>
+      {/* Icon */}
+      <Icon
+        size={18}
+        className={
+          isActive
+            ? "text-[#818cf8]"
+            : "text-[#71717a] group-hover:text-[#a1a1aa] transition-colors"
+        }
+      />
 
-      {/* Settings + Sign Out at bottom */}
-      <div className={`mt-auto flex flex-col ${showLabels ? "w-full px-3 gap-1" : "items-center gap-2"}`}>
-        <div className={`${showLabels ? "" : "group relative"}`}>
-          <button
-            type="button"
-            aria-label="Settings"
-            onClick={onSettingsClick}
-            className={
-              showLabels
-                ? "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-zinc-400 hover:bg-white/5 hover:text-zinc-200 transition-colors w-full focus-visible:ring-1 focus-visible:ring-indigo-500/50 focus-visible:outline-none"
-                : "w-10 h-10 flex items-center justify-center rounded-xl text-zinc-500 hover:bg-white/5 hover:text-zinc-300 focus-visible:ring-1 focus-visible:ring-indigo-500/50 focus-visible:outline-none transition-colors"
-            }
+      {/* Labels */}
+      {!collapsed && (
+        <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+          <span
+            style={{ fontSize: 13, fontWeight: 500, lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
+            className={isActive ? "text-[#f4f4f5]" : "text-[#a1a1aa] group-hover:text-[#f4f4f5] transition-colors"}
           >
-            <Settings size={20} />
-            {showLabels && "Settings"}
-          </button>
-          {!showLabels && (
-            <span className="absolute left-full ml-2 bg-zinc-900 text-white text-xs rounded-lg px-2 py-1 whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 top-1/2 -translate-y-1/2">
-              Settings
+            {item.label}
+          </span>
+          <span style={{ fontSize: 11, color: "#52525b", lineHeight: 1.3, whiteSpace: "nowrap" }}>
+            {item.sublabel}
+          </span>
+        </div>
+      )}
+
+      {/* Collapsed tooltip */}
+      {collapsed && (
+        <span
+          className="absolute opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity"
+          style={{
+            left: "calc(100% + 8px)", top: "50%", transform: "translateY(-50%)",
+            background: "#18181b", border: "1px solid rgba(255,255,255,0.08)",
+            color: "#f4f4f5", fontSize: 12, borderRadius: 8, padding: "4px 8px",
+            whiteSpace: "nowrap", zIndex: 50,
+          }}
+        >
+          {item.label}
+        </span>
+      )}
+
+      {/* Coming-soon click tooltip */}
+      {showCSTip && (
+        <span
+          style={{
+            position: "absolute", left: collapsed ? "calc(100% + 8px)" : "calc(100% - 12px)",
+            top: "50%", transform: "translateY(-50%)",
+            background: "#18181b", border: "1px solid rgba(99,102,241,0.3)",
+            color: "#818cf8", fontSize: 11, borderRadius: 8, padding: "4px 8px",
+            whiteSpace: "nowrap", zIndex: 60, pointerEvents: "none",
+          }}
+        >
+          Coming soon
+        </span>
+      )}
+    </>
+  );
+
+  const baseStyle: React.CSSProperties = {
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    height: collapsed ? 40 : 52,
+    opacity: item.comingSoon ? 0.4 : 1,
+    textDecoration: "none",
+  };
+
+  if (item.comingSoon) {
+    return (
+      <div
+        className="group"
+        style={{ ...baseStyle, margin: collapsed ? "2px auto" : "2px 8px", width: collapsed ? 40 : "auto", borderRadius: 10, padding: collapsed ? 0 : "0 10px", cursor: "default", justifyContent: collapsed ? "center" : "flex-start" }}
+        onClick={handleCSClick}
+      >
+        {inner(false)}
+      </div>
+    );
+  }
+
+  return (
+    <NavLink
+      to={item.path}
+      className={({ isActive }) =>
+        `group relative flex items-center transition-colors ${
+          collapsed
+            ? "justify-center rounded-[10px]"
+            : isActive
+            ? "rounded-[0_10px_10px_0]"
+            : "rounded-[10px] hover:bg-[rgba(255,255,255,0.04)]"
+        }`
+      }
+      style={({ isActive }) => ({
+        ...baseStyle,
+        margin: collapsed ? "2px auto" : isActive ? "2px 8px 2px 0" : "2px 8px",
+        width: collapsed ? 40 : "auto",
+        padding: collapsed ? 0 : "0 10px",
+        justifyContent: collapsed ? "center" : "flex-start",
+        background: isActive ? "rgba(99,102,241,0.1)" : undefined,
+      })}
+    >
+      {({ isActive }) => inner(isActive)}
+    </NavLink>
+  );
+}
+
+// ─── DESKTOP SIDEBAR ──────────────────────────────────────────────────────────
+
+function DesktopSidebar({
+  userEmail, isPro, usageCount, FREE_LIMIT,
+}: { userEmail: string; isPro: boolean; usageCount: number; FREE_LIMIT: number }) {
+  const [collapsed, setCollapsed] = useState(false);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const initial = (user?.email ?? userEmail).charAt(0).toUpperCase() || "U";
+  const width = collapsed ? 64 : 220;
+
+  return (
+    <nav
+      className="sidebar-desktop hidden md:flex flex-col flex-shrink-0 relative z-40"
+      style={{
+        width, minWidth: width,
+        background: "#111113",
+        borderRight: "1px solid rgba(255,255,255,0.06)",
+        transition: "width 200ms cubic-bezier(0.16,1,0.3,1)",
+        overflow: "hidden",
+      }}
+    >
+      {/* Collapse toggle */}
+      <button
+        type="button"
+        onClick={() => setCollapsed((c) => !c)}
+        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        className="absolute top-4 right-2 flex items-center justify-center text-[#52525b] hover:text-[#a1a1aa] hover:bg-[rgba(255,255,255,0.04)] transition-colors rounded-md z-10"
+        style={{ width: 24, height: 24, background: "transparent", border: "none", cursor: "pointer" }}
+      >
+        {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+      </button>
+
+      {/* Logo */}
+      <div
+        style={{
+          padding: collapsed ? "20px 0 0" : "20px 16px 0",
+          display: "flex", alignItems: "center", gap: 10,
+          justifyContent: collapsed ? "center" : "flex-start",
+          marginBottom: 4,
+        }}
+      >
+        <div style={{ width: 32, height: 32, borderRadius: 10, background: "#6366f1", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <Zap size={16} color="white" fill="white" />
+        </div>
+        {!collapsed && (
+          <span style={{ fontFamily: "var(--mono)", fontSize: 15, fontWeight: 600, color: "#f4f4f5", letterSpacing: "-0.02em" }}>
+            cutsheet
+          </span>
+        )}
+      </div>
+
+      {/* Nav items */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden py-1">
+        {!collapsed ? <SectionLabel label="Analyze" /> : <div style={{ height: 20 }} />}
+        {ANALYZE.map((item) => <NavItemRow key={item.path} item={item} collapsed={collapsed} />)}
+
+        {!collapsed ? <SectionLabel label="Compare" /> : <div style={{ height: 20 }} />}
+        {COMPARE.map((item) => <NavItemRow key={item.path} item={item} collapsed={collapsed} />)}
+
+        {!collapsed ? <SectionLabel label="Library" /> : <div style={{ height: 20 }} />}
+        {LIBRARY.map((item) => <NavItemRow key={item.path} item={item} collapsed={collapsed} />)}
+      </div>
+
+      {/* Bottom */}
+      <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "8px 0 12px", display: "flex", flexDirection: "column", gap: 2 }}>
+        <UsageIndicator usageCount={usageCount} FREE_LIMIT={FREE_LIMIT} isPro={isPro} collapsed={collapsed} />
+
+        {/* Settings */}
+        <button
+          type="button"
+          onClick={() => navigate("/settings")}
+          className="group flex items-center gap-[10px] transition-colors hover:bg-[rgba(255,255,255,0.04)] rounded-[8px]"
+          style={{ height: 40, padding: collapsed ? 0 : "0 16px", margin: "0 8px", background: "transparent", border: "none", cursor: "pointer", justifyContent: collapsed ? "center" : "flex-start" }}
+          aria-label="Settings"
+        >
+          <Settings size={18} className="text-[#71717a] group-hover:text-[#a1a1aa] transition-colors" />
+          {!collapsed && (
+            <span style={{ fontSize: 13, fontWeight: 500, color: "#a1a1aa" }}>Settings</span>
+          )}
+        </button>
+
+        {/* User avatar */}
+        <button
+          type="button"
+          onClick={() => navigate("/settings")}
+          className="group flex items-center gap-[10px] transition-colors hover:bg-[rgba(255,255,255,0.04)] rounded-[8px]"
+          style={{ height: 40, padding: collapsed ? 0 : "0 16px", margin: "0 8px", background: "transparent", border: "none", cursor: "pointer", justifyContent: collapsed ? "center" : "flex-start" }}
+          aria-label="Profile settings"
+        >
+          <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#6366f1", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 12, fontWeight: 600, color: "white" }}>
+            {initial}
+          </div>
+          {!collapsed && (
+            <span style={{ fontSize: 12, color: "#a1a1aa" }}>
+              {isPro ? "Pro Plan" : "Free Plan"}
             </span>
           )}
+        </button>
+      </div>
+    </nav>
+  );
+}
+
+// ─── MOBILE BOTTOM TAB BAR ────────────────────────────────────────────────────
+
+const MOBILE_TABS = [
+  { label: "Paid",     path: "/app/paid",     icon: Zap },
+  { label: "Organic",  path: "/app/organic",  icon: TrendingUp },
+  { label: "A/B Test", path: "/app/ab-test",  icon: GitBranch },
+];
+
+function MobileTabBar({ onMoreClick }: { onMoreClick: () => void }) {
+  return (
+    <nav
+      className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex"
+      style={{ height: 60, background: "#111113", borderTop: "1px solid rgba(255,255,255,0.06)" }}
+    >
+      {MOBILE_TABS.map((tab) => {
+        const Icon = tab.icon;
+        return (
+          <NavLink
+            key={tab.path}
+            to={tab.path}
+            style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3, textDecoration: "none" }}
+          >
+            {({ isActive }) => (
+              <>
+                <Icon size={20} color={isActive ? "#6366f1" : "#52525b"} />
+                <span style={{ fontSize: 10, color: isActive ? "#6366f1" : "#52525b", fontWeight: isActive ? 500 : 400 }}>
+                  {tab.label}
+                </span>
+              </>
+            )}
+          </NavLink>
+        );
+      })}
+      <button
+        type="button"
+        onClick={onMoreClick}
+        style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3, background: "transparent", border: "none", cursor: "pointer" }}
+      >
+        <MoreHorizontal size={20} color="#52525b" />
+        <span style={{ fontSize: 10, color: "#52525b" }}>More</span>
+      </button>
+    </nav>
+  );
+}
+
+// ─── MOBILE MORE DRAWER ───────────────────────────────────────────────────────
+
+function MobileMoreDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const navigate = useNavigate();
+  if (!open) return null;
+  return (
+    <>
+      <div className="fixed inset-0 z-50 bg-black/60" onClick={onClose} />
+      <div className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl" style={{ background: "#111113", border: "1px solid rgba(255,255,255,0.08)" }}>
+        <div className="flex justify-center pt-3 pb-1">
+          <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.12)" }} />
         </div>
-        <SignOutButton showLabels={showLabels} />
+        <div className="flex items-center justify-between px-4 pb-2">
+          <span style={{ fontSize: 13, fontWeight: 600, color: "#f4f4f5" }}>More</span>
+          <button type="button" onClick={onClose} style={{ background: "transparent", border: "none", cursor: "pointer", color: "#71717a" }}>
+            <X size={18} />
+          </button>
+        </div>
+        <div className="px-4 pb-8">
+          {MORE_ITEMS.map((item) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.path}
+                type="button"
+                onClick={() => { if (!item.comingSoon) { navigate(item.path); onClose(); } }}
+                style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "12px 0", background: "transparent", border: "none", borderBottom: "1px solid rgba(255,255,255,0.06)", cursor: item.comingSoon ? "default" : "pointer", opacity: item.comingSoon ? 0.4 : 1 }}
+              >
+                <Icon size={18} color="#71717a" />
+                <div style={{ textAlign: "left" }}>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: "#f4f4f5" }}>{item.label}</div>
+                  <div style={{ fontSize: 11, color: "#52525b" }}>{item.sublabel}</div>
+                </div>
+                {item.comingSoon && (
+                  <span style={{ marginLeft: "auto", fontSize: 10, color: "#818cf8", background: "rgba(99,102,241,0.1)", padding: "2px 8px", borderRadius: 999, border: "1px solid rgba(99,102,241,0.2)" }}>
+                    Soon
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </>
   );
 }
 
-export function Sidebar({
-  mode,
-  onModeChange,
-  mobileOpen,
-  onMobileClose,
-}: SidebarProps) {
-  const navigate = useNavigate();
-  const handleSettings = () => navigate("/settings");
+// ─── MAIN EXPORT ──────────────────────────────────────────────────────────────
 
+export function Sidebar({ mobileOpen: _mobileOpen, onMobileClose: _onMobileClose, userEmail, isPro, usageCount, FREE_LIMIT }: SidebarProps) {
+  const [moreOpen, setMoreOpen] = useState(false);
   return (
     <>
-      {/* Desktop sidebar — icon-only, hidden below lg */}
-      <nav className="fixed left-0 top-0 bottom-0 w-16 bg-zinc-950 border-r border-white/5 flex-col items-center py-4 z-50 hidden lg:flex">
-        <SidebarContent mode={mode} onModeChange={onModeChange} onSettingsClick={handleSettings} />
-      </nav>
-
-      {/* Mobile sidebar overlay — visible only when mobileOpen */}
-      {mobileOpen && (
-        <>
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-            onClick={onMobileClose}
-          />
-          {/* Sidebar panel */}
-          <nav className="fixed left-0 top-0 bottom-0 z-50 w-64 bg-zinc-950 border-r border-white/5 flex flex-col py-4 lg:hidden">
-            <SidebarContent
-              mode={mode}
-              onModeChange={(m) => { onModeChange(m); onMobileClose?.(); }}
-              showLabels
-              onSettingsClick={() => { handleSettings(); onMobileClose?.(); }}
-            />
-          </nav>
-        </>
-      )}
+      <DesktopSidebar userEmail={userEmail} isPro={isPro} usageCount={usageCount} FREE_LIMIT={FREE_LIMIT} />
+      <MobileTabBar onMoreClick={() => setMoreOpen(true)} />
+      <MobileMoreDrawer open={moreOpen} onClose={() => setMoreOpen(false)} />
     </>
   );
 }

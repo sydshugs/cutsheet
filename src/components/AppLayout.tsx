@@ -1,7 +1,7 @@
 // AppLayout.tsx — layout shell for all /app/* routes
 import { useRef, useCallback, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
-import { Sidebar, type SidebarMode } from "./Sidebar";
+import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { UpgradeModal } from "./UpgradeModal";
 import { useUsage } from "../hooks/useUsage";
@@ -41,7 +41,6 @@ export default function AppLayout() {
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [sidebarMode, setSidebarMode] = useState<SidebarMode>("single");
 
   // TopBar delegates to whichever page is currently mounted
   const onNewAnalysisRef = useRef<() => void>(() => navigate("/app/paid"));
@@ -80,12 +79,12 @@ export default function AppLayout() {
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: "#09090b" }}>
       <Sidebar
-        mode={sidebarMode}
-        onModeChange={setSidebarMode}
         mobileOpen={mobileOpen}
         onMobileClose={() => setMobileOpen(false)}
-        userName={userEmail}
+        userEmail={userEmail}
         isPro={isPro}
+        usageCount={usageCount}
+        FREE_LIMIT={FREE_LIMIT}
       />
 
       <div className="flex flex-col flex-1 min-w-0">
