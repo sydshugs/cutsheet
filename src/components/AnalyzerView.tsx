@@ -6,8 +6,6 @@ import { ProgressCard } from "./ProgressCard";
 import { ErrorCard } from "./ErrorCard";
 import { ReportCards } from "./ReportCards";
 import { DashboardIdleView } from "./DashboardIdleView";
-import { type SidebarMode } from "./Sidebar";
-
 interface AnalyzerViewProps {
   file: File | null;
   status: AnalysisStatus;
@@ -28,7 +26,7 @@ interface AnalyzerViewProps {
   shareLoading?: boolean;
   historyEntries?: HistoryEntry[];
   onHistoryEntryClick?: (entry: HistoryEntry) => void;
-  onModeChange?: (mode: SidebarMode) => void;
+  onModeChange?: (mode: string) => void;
 }
 
 export function AnalyzerView({
