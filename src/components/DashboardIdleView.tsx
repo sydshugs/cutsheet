@@ -2,7 +2,6 @@
 
 import { useRef, useState, useCallback, useEffect } from "react";
 import { BarChart3, GitCompare, Layers, FlaskConical, Paperclip, Upload } from "lucide-react";
-import { type SidebarMode } from "./Sidebar";
 import { type HistoryEntry } from "../hooks/useHistory";
 
 const VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
@@ -16,7 +15,7 @@ const QUICK_STARTS: {
   id: string;
   label: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
-  action: "file" | SidebarMode;
+  action: "file" | string;
 }[] = [
   { id: "analyze", label: "Analyze Creative", icon: BarChart3, action: "file" },
   { id: "compare", label: "Compare Videos", icon: GitCompare, action: "compare" },
@@ -41,7 +40,7 @@ interface DashboardIdleViewProps {
   onUrlSubmit?: (url: string) => void;
   historyEntries?: HistoryEntry[];
   onHistoryEntryClick?: (entry: HistoryEntry) => void;
-  onModeChange: (mode: SidebarMode) => void;
+  onModeChange: (mode: string) => void;
 }
 
 export function DashboardIdleView({
@@ -106,7 +105,7 @@ export function DashboardIdleView({
 
   const onDragLeave = () => setIsDragging(false);
 
-  const handleQuickStart = (action: "file" | SidebarMode) => {
+  const handleQuickStart = (action: "file" | string) => {
     if (action === "file") {
       fileInputRef.current?.click();
     } else {
