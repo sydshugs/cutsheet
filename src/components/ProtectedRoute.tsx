@@ -1,10 +1,38 @@
-import { Navigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { supabase } from '../lib/supabase'
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
+  const navigate = useNavigate()
+  const [checking, setChecking] = useState(true)
 
-  if (loading) {
+  useEffect(() => {
+    if (loading) return
+    if (!user) {
+      setChecking(false)
+      return
+    }
+
+    supabase
+      .from('profiles')
+      .select('onboarding_completed')
+      .eq('id', user.id)
+      .single()
+      .then(({ data }) => {
+        if (!data?.onboarding_completed) {
+          navigate('/welcome', { replace: true })
+        }
+        setChecking(false)
+      })
+      .catch(() => {
+        // If profile doesn't exist or query fails, let them through
+        setChecking(false)
+      })
+  }, [user, loading])
+
+  if (loading || checking) {
     return (
       <div style={{
         minHeight: '100vh',

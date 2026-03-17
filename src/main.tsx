@@ -12,6 +12,7 @@ import Login from "./pages/Login.tsx";
 import Signup from "./pages/Signup.tsx";
 import ForgotPassword from "./pages/ForgotPassword.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
+import Welcome from "./pages/Welcome.tsx";
 import { AuthProvider } from "./context/AuthContext.tsx";
 import { ProtectedRoute } from "./components/ProtectedRoute.tsx";
 import "./index.css";
@@ -44,6 +45,7 @@ createRoot(document.getElementById("root")!).render(
         <Route path="/signup" element={<Signup />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/welcome" element={<Welcome />} />
         <Route path="/demo" element={<Suspense fallback={null}><DemoPage /></Suspense>} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
