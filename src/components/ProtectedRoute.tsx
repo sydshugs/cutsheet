@@ -21,13 +21,14 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
       .eq('id', user.id)
       .single()
       .then(({ data }) => {
-        if (!data?.onboarding_completed) {
+        if (!data || !data.onboarding_completed) {
           navigate('/welcome', { replace: true })
         }
         setChecking(false)
       })
       .catch(() => {
-        // If profile doesn't exist or query fails, let them through
+        // If query fails, redirect to onboarding to be safe
+        navigate('/welcome', { replace: true })
         setChecking(false)
       })
   }, [user, loading])
