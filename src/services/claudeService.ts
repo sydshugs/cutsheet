@@ -118,3 +118,34 @@ export async function generateCTARewrites(
     .filter((line) => line.length > 0)
     .slice(0, 3);
 }
+
+// ─── SECOND EYE REVIEW ───────────────────────────────────────────────────────
+
+export async function generateSecondEyeReview(
+  analysisMarkdown: string,
+  fileName: string
+): Promise<string> {
+  const client = getClient();
+  const message = await client.messages.create({
+    model: CLAUDE_MODEL,
+    max_tokens: 1024,
+    system: `You are a first-time viewer watching organic social content. You have never seen this video. You scroll fast, your attention span is short, and you are brutally honest about when you would stop watching and why. Provide specific, timestamped feedback — not vague observations.`,
+    messages: [
+      {
+        role: "user",
+        content: `Based on this analysis of "${fileName}", act as a first-time viewer. List timestamped moments where a new viewer would stop watching and why.
+
+Format: **[Timestamp]** — [What happens] → [Why a viewer stops here]
+
+Be specific. Be brutal. Focus on the first 30 seconds. 3–6 moments maximum.
+
+Analysis:
+${analysisMarkdown}`,
+      },
+    ],
+  });
+
+  const text = message.content[0].type === "text" ? message.content[0].text : "";
+  if (!text.trim()) throw new Error("Claude returned empty Second Eye review");
+  return text;
+}
