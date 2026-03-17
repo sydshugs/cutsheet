@@ -212,6 +212,7 @@ export default function OrganicAnalyzer() {
   const [ctaRewrites, setCtaRewrites] = useState<string[] | null>(null);
   const [ctaLoading, setCtaLoading] = useState(false);
   const [shareToast, setShareToast] = useState(false);
+  const [infoToast, setInfoToast] = useState<string | null>(null);
   const [shareLoading, setShareLoading] = useState(false);
   const [rateLimitError, setRateLimitError] = useState<string | null>(null);
   const [analysisCompletedAt, setAnalysisCompletedAt] = useState<Date | null>(null);
@@ -328,7 +329,10 @@ export default function OrganicAnalyzer() {
   };
   void handleDownload;
 
-  const handleExportPdf = async () => { /* pdfExport util not available */ };
+  const handleExportPdf = async () => {
+    setInfoToast("PDF export coming soon — we're working on it.");
+    setTimeout(() => setInfoToast(null), 3000);
+  };
 
   const handleGenerateBrief = async () => {
     if (!activeResult || briefLoading) return;
@@ -348,8 +352,11 @@ export default function OrganicAnalyzer() {
     try {
       const ctaSection = activeResult.markdown.match(/CTA[\s\S]*?(?=\n##|\n---)/i)?.[0] ?? "";
       setCtaRewrites(await generateCTARewrites(ctaSection, activeResult.fileName));
-    } catch { /* silent */ }
-    finally { setCtaLoading(false); }
+    } catch (err) {
+      console.error('CTA rewrite failed:', err);
+      setRateLimitError('CTA rewrite failed. Please try again.');
+      setTimeout(() => setRateLimitError(null), 5000);
+    } finally { setCtaLoading(false); }
   };
 
   const handleBriefCopy = async () => {
@@ -516,6 +523,11 @@ export default function OrganicAnalyzer() {
       {rateLimitError && (
         <div role="alert" aria-live="assertive" className="fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-3 bg-red-500/15 border border-red-500/30 rounded-xl text-xs font-mono text-red-400 shadow-lg z-[100]">
           {rateLimitError}
+        </div>
+      )}
+      {infoToast && (
+        <div role="status" aria-live="polite" className="fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-3 bg-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-xl text-xs font-mono text-zinc-300 shadow-lg z-[100]">
+          {infoToast}
         </div>
       )}
     </div>
