@@ -453,7 +453,7 @@ export default function App() {
           </div>
 
           {/* Right panel (results only) */}
-          <div className={`shrink-0 bg-zinc-900/50 backdrop-blur-xl border-l border-white/5 overflow-y-auto overflow-x-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-white/5 ${showRightPanel ? 'w-[340px] max-lg:w-full opacity-100' : 'w-0 max-lg:w-0 opacity-0'}`}>
+          <div className={`shrink-0 overflow-y-auto overflow-x-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${showRightPanel ? 'w-[340px] max-lg:w-full opacity-100 bg-zinc-900/50 backdrop-blur-xl border-l border-white/5 max-lg:border-l-0 max-lg:border-t max-lg:border-white/5' : 'w-0 max-lg:w-0 opacity-0'}`}>
             {showRightPanel && activeResult?.scores && rightTab === "analysis" && (
               <div ref={scorecardRef}>
                 <ScoreCard
