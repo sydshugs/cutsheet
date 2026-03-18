@@ -13,21 +13,24 @@ interface ReportCardsProps {
   shareLoading?: boolean;
 }
 
-function splitMarkdown(md: string): { title: string | null; content: string }[] {
-  // Strip trailing JSON blocks (scenes data, raw objects) that Gemini sometimes appends
-  const cleaned = md.replace(/\n```(?:json)?\s*\n\{[\s\S]*?\}\s*\n```/g, '')
-    .replace(/\n\{[\s\S]*"scenes"[\s\S]*\}\s*$/, '');
+const JSON_TITLE_RE = /json|scene|raw\s*data/i;
+const JSON_CONTENT_RE = /^\s*[\[{]/;
 
-  const sections = cleaned.split(/\n(?=## )/);
+function splitMarkdown(md: string): { title: string | null; content: string }[] {
+  const sections = md.split(/\n(?=## )/);
   return sections.map(section => {
     const match = section.match(/^## (.+)\n([\s\S]*)$/);
     if (match) return { title: match[1], content: match[2].trim() };
     return { title: null, content: section.trim() };
   }).filter(s => {
     if (!s.content) return false;
-    // Filter out sections that are just raw JSON
+    // Filter out sections with JSON-related titles (SCENE JSON, Raw Data, etc.)
+    if (s.title && JSON_TITLE_RE.test(s.title)) return false;
+    // Filter out sections whose content is raw JSON
     const trimmed = s.content.trim();
-    if (trimmed.startsWith('{') && trimmed.endsWith('}')) return false;
+    if (JSON_CONTENT_RE.test(trimmed) && (trimmed.endsWith('}') || trimmed.endsWith(']'))) return false;
+    // Filter out sections that contain "scenes": [ ... ] pattern
+    if (/"scenes"\s*:\s*\[/.test(trimmed)) return false;
     return true;
   });
 }
