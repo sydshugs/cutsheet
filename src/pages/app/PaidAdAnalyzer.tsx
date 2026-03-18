@@ -36,6 +36,30 @@ const FORMATS = ["video", "static"] as const;
 type Platform = (typeof PLATFORMS)[number];
 type Format = (typeof FORMATS)[number];
 
+interface PlatformOption {
+  value: Platform;
+  label: string;
+  enabled: boolean;
+  note: string | null;
+}
+
+const PLATFORM_COMPAT: Record<Format, PlatformOption[]> = {
+  video: [
+    { value: "all",     label: "All",     enabled: true,  note: null },
+    { value: "Meta",    label: "Meta",    enabled: true,  note: null },
+    { value: "TikTok",  label: "TikTok",  enabled: true,  note: null },
+    { value: "Google",  label: "Google",  enabled: true,  note: null },
+    { value: "YouTube", label: "YouTube", enabled: true,  note: null },
+  ],
+  static: [
+    { value: "all",     label: "All",     enabled: true,  note: null },
+    { value: "Meta",    label: "Meta",    enabled: true,  note: null },
+    { value: "TikTok",  label: "TikTok",  enabled: false, note: "Carousel only — uncommon" },
+    { value: "Google",  label: "Google",  enabled: true,  note: null },
+    { value: "YouTube", label: "YouTube", enabled: false, note: "Not available for static ads" },
+  ],
+};
+
 const STATUS_COPY = {
   uploading: "Reading video...",
   processing: "Gemini is analyzing your creative...",
@@ -68,23 +92,26 @@ function IntentHeader({
       <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
         <span style={{ fontSize: 13, color: "#52525b", flexShrink: 0 }}>Analyzing for:</span>
 
-        {/* Platform pills — YouTube excluded for static */}
+        {/* Platform pills — from compatibility matrix */}
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-          {PLATFORMS.filter(p => !(format === "static" && p === "YouTube")).map((p) => (
+          {PLATFORM_COMPAT[format].map((opt) => (
             <button
-              key={p}
+              key={opt.value}
               type="button"
-              onClick={() => setPlatform(p)}
+              onClick={() => { if (opt.enabled) setPlatform(opt.value); }}
+              title={opt.note ?? undefined}
               style={{
-                height: 30, padding: "0 12px", borderRadius: 9999, fontSize: 13, cursor: "pointer",
-                background: platform === p ? "#6366f1" : "rgba(255,255,255,0.04)",
-                border: `1px solid ${platform === p ? "#6366f1" : "rgba(255,255,255,0.08)"}`,
-                color: platform === p ? "white" : "#71717a",
-                fontWeight: platform === p ? 500 : 400,
+                height: 30, padding: "0 12px", borderRadius: 9999, fontSize: 13,
+                cursor: opt.enabled ? "pointer" : "not-allowed",
+                opacity: opt.enabled ? 1 : 0.35,
+                background: platform === opt.value && opt.enabled ? "#6366f1" : "rgba(255,255,255,0.04)",
+                border: `1px solid ${platform === opt.value && opt.enabled ? "#6366f1" : "rgba(255,255,255,0.08)"}`,
+                color: platform === opt.value && opt.enabled ? "white" : "#71717a",
+                fontWeight: platform === opt.value && opt.enabled ? 500 : 400,
                 transition: "all 150ms",
               }}
             >
-              {p === "all" ? "All" : p}
+              {opt.label}
             </button>
           ))}
         </div>
@@ -100,7 +127,9 @@ function IntentHeader({
               type="button"
               onClick={() => {
                 setFormat(f);
-                if (f === "static" && platform === "YouTube") setPlatform("all");
+                if (f === "static" && (platform === "YouTube" || platform === "TikTok")) {
+                  setPlatform("all");
+                }
               }}
               style={{
                 height: 30, padding: "0 12px", borderRadius: 9999, fontSize: 13, cursor: "pointer",
