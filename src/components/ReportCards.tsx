@@ -14,12 +14,22 @@ interface ReportCardsProps {
 }
 
 function splitMarkdown(md: string): { title: string | null; content: string }[] {
-  const sections = md.split(/\n(?=## )/);
+  // Strip trailing JSON blocks (scenes data, raw objects) that Gemini sometimes appends
+  const cleaned = md.replace(/\n```(?:json)?\s*\n\{[\s\S]*?\}\s*\n```/g, '')
+    .replace(/\n\{[\s\S]*"scenes"[\s\S]*\}\s*$/, '');
+
+  const sections = cleaned.split(/\n(?=## )/);
   return sections.map(section => {
     const match = section.match(/^## (.+)\n([\s\S]*)$/);
     if (match) return { title: match[1], content: match[2].trim() };
     return { title: null, content: section.trim() };
-  }).filter(s => s.content);
+  }).filter(s => {
+    if (!s.content) return false;
+    // Filter out sections that are just raw JSON
+    const trimmed = s.content.trim();
+    if (trimmed.startsWith('{') && trimmed.endsWith('}')) return false;
+    return true;
+  });
 }
 
 export function ReportCards({ file, markdown, thumbnailDataUrl, onCopy, onExportPdf, onShare, copied, shareLoading }: ReportCardsProps) {
