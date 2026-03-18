@@ -256,3 +256,121 @@ Return JSON only — no prose, no preamble:
     throw new Error(`Second Eye: invalid JSON — ${(e as Error).message}`);
   }
 }
+
+// ─── PLATFORM SCORING ────────────────────────────────────────────────────────
+
+export interface PlatformScore {
+  platform: 'tiktok' | 'reels' | 'shorts'
+  score: number
+  verdict: string
+  improvements: string[]
+  signals: { label: string; pass: boolean }[]
+}
+
+const PLATFORM_PROMPTS: Record<'tiktok' | 'reels' | 'shorts', string> = {
+  tiktok: `You are a TikTok performance expert scoring a video ad for FYP performance.
+Platform context:
+- Hook window: 0-1.5 seconds. If hook is slower, FYP score drops hard.
+- Completion rate is the #1 algorithm signal. Anything that causes drop-off kills reach.
+- Native/raw aesthetic outperforms polished production on TikTok.
+- Trending sound compatibility matters for discovery.
+- CTAs that drive comments ('comment if this is you') beat click CTAs for organic reach.
+- Text overlays are mandatory for sound-off viewers (85% of feed).
+Analysis data: SUMMARY_PLACEHOLDER
+Score this video 1-10 for TikTok FYP performance specifically.
+Return JSON only:
+{
+  "score": number,
+  "verdict": "string (one sentence, honest, specific)",
+  "improvements": ["string", "string", "string"],
+  "signals": [
+    { "label": "Hook by 1.5s", "pass": boolean },
+    { "label": "Text overlay present", "pass": boolean },
+    { "label": "Native feel", "pass": boolean },
+    { "label": "Comment-driving CTA", "pass": boolean }
+  ]
+}`,
+  reels: `You are an Instagram Reels performance expert scoring a video for Reels reach.
+Platform context:
+- Hook window: 0-2 seconds.
+- Shares and saves are the top Reels signals — not likes.
+- Reels shared to Stories get a major reach multiplier.
+- High-contrast text overlays on lower third perform best.
+- 'Save this' and 'Share with someone who needs this' CTAs outperform all others.
+- 15-30 second length is the Reels sweet spot for completion.
+- Trending audio boosts discovery but less than TikTok.
+Analysis data: SUMMARY_PLACEHOLDER
+Score this video 1-10 for Instagram Reels performance specifically.
+Return JSON only:
+{
+  "score": number,
+  "verdict": "string (one sentence, honest, specific)",
+  "improvements": ["string", "string", "string"],
+  "signals": [
+    { "label": "Hook by 2s", "pass": boolean },
+    { "label": "Save/share CTA", "pass": boolean },
+    { "label": "Text overlay contrast", "pass": boolean },
+    { "label": "Optimal length (15-30s)", "pass": boolean }
+  ]
+}`,
+  shorts: `You are a YouTube Shorts performance expert scoring a video for Shorts reach.
+Platform context:
+- Hook window: 0-3 seconds. Most forgiving of the three platforms.
+- Viewers have higher intent — more willing to click through.
+- Verbal subscribe CTA at the end significantly boosts channel growth.
+- SEO matters — title and description keywords drive search discovery.
+- Retention curve is visible in YouTube analytics — front-load value.
+- End on a strong final frame — Shorts loops, so the last frame matters.
+- Thumbnail shown on some surfaces — strong final frame doubles as thumbnail.
+Analysis data: SUMMARY_PLACEHOLDER
+Score this video 1-10 for YouTube Shorts performance specifically.
+Return JSON only:
+{
+  "score": number,
+  "verdict": "string (one sentence, honest, specific)",
+  "improvements": ["string", "string", "string"],
+  "signals": [
+    { "label": "Hook by 3s", "pass": boolean },
+    { "label": "Subscribe CTA", "pass": boolean },
+    { "label": "Strong final frame", "pass": boolean },
+    { "label": "SEO-friendly concept", "pass": boolean }
+  ]
+}`,
+}
+
+export const generatePlatformScore = async (
+  platform: 'tiktok' | 'reels' | 'shorts',
+  analysisResult: { scores: { overall: number; hook: number; cta: number }; improvements: string[] },
+  fileName: string
+): Promise<PlatformScore> => {
+  const client = getClient()
+
+  const summary = `File: ${fileName}
+Overall score: ${analysisResult.scores.overall}/10
+Hook score: ${analysisResult.scores.hook}/10
+CTA score: ${analysisResult.scores.cta}/10
+Key improvements: ${analysisResult.improvements.slice(0, 3).join(', ')}`
+
+  const prompt = PLATFORM_PROMPTS[platform].replace('SUMMARY_PLACEHOLDER', summary)
+
+  const message = await client.messages.create({
+    model: CLAUDE_MODEL,
+    max_tokens: 1024,
+    system: 'You are a platform optimization expert. Return only valid JSON matching the exact schema requested. No markdown, no explanation.',
+    messages: [{ role: 'user', content: prompt }],
+  })
+
+  const text = message.content[0].type === 'text' ? message.content[0].text : ''
+  const cleaned = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
+  const parsed = JSON.parse(cleaned)
+
+  return {
+    platform,
+    score: Number(parsed.score),
+    verdict: String(parsed.verdict),
+    improvements: Array.isArray(parsed.improvements) ? parsed.improvements.slice(0, 3).map(String) : [],
+    signals: Array.isArray(parsed.signals)
+      ? parsed.signals.map((s: { label: unknown; pass: unknown }) => ({ label: String(s.label), pass: Boolean(s.pass) }))
+      : [],
+  }
+}
