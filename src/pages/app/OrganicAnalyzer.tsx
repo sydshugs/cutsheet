@@ -17,9 +17,11 @@ import {
 } from "../../services/analyzerService";
 import {
   generateBriefWithClaude, generateCTARewrites, generateSecondEyeReview,
+  generatePlatformScore, type PlatformScore,
   type SecondEyeResult,
 } from "../../services/claudeService";
 import { SecondEyePanel } from "../../components/SecondEyePanel";
+import PlatformScoreCard from "../../components/PlatformScoreCard";
 import { createShare } from "../../services/shareService";
 import { saveAnalysis } from "../../services/historyService";
 import type { AnalysisRecord } from "../../services/historyService";
@@ -27,6 +29,12 @@ import { checkShareLimit, incrementShareCount } from "../../utils/rateLimiter";
 import type { AppSharedContext } from "../../components/AppLayout";
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY ?? "";
+
+const PLATFORM_SERVICE_MAP = {
+  'TikTok': 'tiktok',
+  'Instagram Reels': 'reels',
+  'YouTube Shorts': 'shorts',
+} as const;
 
 const PLATFORMS = ["all", "TikTok", "Instagram Reels", "YouTube Shorts"] as const;
 type Platform = (typeof PLATFORMS)[number];
@@ -169,6 +177,8 @@ export default function OrganicAnalyzer() {
   const [infoToast, setInfoToast] = useState<string | null>(null);
   const [shareLoading, setShareLoading] = useState(false);
   const [rateLimitError, setRateLimitError] = useState<string | null>(null);
+  const [platformScores, setPlatformScores] = useState<PlatformScore[]>([]);
+  const [platformScoresLoading, setPlatformScoresLoading] = useState(false);
   const [analysisCompletedAt, setAnalysisCompletedAt] = useState<Date | null>(null);
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
   const [loadedFromHistory, setLoadedFromHistory] = useState<AnalysisRecord | null>(null);
@@ -197,6 +207,8 @@ export default function OrganicAnalyzer() {
     setRightTab("analysis");
     setSecondEyeOutput(null);
     setSecondEyeLoading(false);
+    setPlatformScores([]);
+    setPlatformScoresLoading(false);
   }, [reset]);
 
   useEffect(() => {
@@ -236,6 +248,37 @@ export default function OrganicAnalyzer() {
     }
   }, [status, result, secondEye]); // eslint-disable-line
 
+  // Platform scoring: fires after analysis completes
+  useEffect(() => {
+    if (status !== 'complete' || !result) return;
+    if (platformScoresLoading) return;
+
+    const run = async () => {
+      setPlatformScoresLoading(true);
+      setPlatformScores([]);
+      try {
+        if (platform === 'all') {
+          const [t, r, s] = await Promise.all([
+            generatePlatformScore('tiktok', result, result.fileName),
+            generatePlatformScore('reels', result, result.fileName),
+            generatePlatformScore('shorts', result, result.fileName),
+          ]);
+          setPlatformScores([t, r, s]);
+        } else {
+          const key = PLATFORM_SERVICE_MAP[platform as keyof typeof PLATFORM_SERVICE_MAP];
+          if (!key) return;
+          const score = await generatePlatformScore(key, result, result.fileName);
+          setPlatformScores([score]);
+        }
+      } catch (err) {
+        console.error('Platform scoring failed:', err);
+      } finally {
+        setPlatformScoresLoading(false);
+      }
+    };
+    run();
+  }, [status, result, platform]); // eslint-disable-line
+
   useEffect(() => {
     if (status === "complete" && result) {
       const key = `${result.fileName}-${result.timestamp.toISOString()}`;
@@ -273,6 +316,8 @@ export default function OrganicAnalyzer() {
       setBriefError(null);
       setRightTab("analysis");
       setSecondEyeOutput(null);
+      setPlatformScores([]);
+      setPlatformScoresLoading(false);
     }
   }, [status]);
 
@@ -483,6 +528,11 @@ export default function OrganicAnalyzer() {
             {secondEye && (
               <SecondEyePanel result={secondEyeOutput} loading={secondEyeLoading} />
             )}
+            <PlatformScoreCard
+              scores={platformScores}
+              loading={platformScoresLoading}
+              platform={platform}
+            />
           </>
         )}
 
