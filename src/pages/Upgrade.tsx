@@ -1,3 +1,4 @@
+import { Helmet } from 'react-helmet-async';
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { CheckCircle, ArrowRight } from "lucide-react";
@@ -28,6 +29,11 @@ export default function Upgrade() {
       className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden"
       style={{ background: "#09090b" }}
     >
+      <Helmet>
+        <title>Upgrade to Pro — Cutsheet</title>
+        <meta name="description" content="Unlock unlimited ad creative analyses for $29/month. No setup, cancel anytime." />
+        <link rel="canonical" href="https://cutsheet.xyz/upgrade" />
+      </Helmet>
       {/* Ambient glows */}
       <div
         className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full blur-[120px] pointer-events-none"

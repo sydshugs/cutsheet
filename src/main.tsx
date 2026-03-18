@@ -1,4 +1,5 @@
 import { StrictMode, lazy, Suspense, useEffect } from "react";
+import { HelmetProvider } from "react-helmet-async";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import AppLayout from "./components/AppLayout";
@@ -41,6 +42,7 @@ function ScrollToTop() {
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
+    <HelmetProvider>
     <BrowserRouter>
       <AuthProvider>
         <ScrollToTop />
@@ -97,5 +99,6 @@ createRoot(document.getElementById("root")!).render(
         </Routes>
       </AuthProvider>
     </BrowserRouter>
+    </HelmetProvider>
   </StrictMode>
 );

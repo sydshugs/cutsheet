@@ -1,5 +1,6 @@
 // BatchPage.tsx — Thin wrapper for BatchView with AppSharedContext
 
+import { Helmet } from 'react-helmet-async';
 import { useOutletContext } from "react-router-dom";
 import { BatchView } from "../../components/BatchView";
 import { themes } from "../../theme";
@@ -12,7 +13,13 @@ export default function BatchPage() {
     useOutletContext<AppSharedContext>();
 
   return (
-    <BatchView
+    <>
+      <Helmet>
+        <title>Batch Score — Cutsheet</title>
+        <meta name="description" content="Score up to 10 ad creatives at once. Rank and compare your entire creative library." />
+        <link rel="canonical" href="https://cutsheet.xyz/app/batch" />
+      </Helmet>
+      <BatchView
       isDark={true}
       apiKey={API_KEY}
       addHistoryEntry={addHistoryEntry}
@@ -22,5 +29,6 @@ export default function BatchPage() {
       increment={increment}
       FREE_LIMIT={FREE_LIMIT}
     />
+    </>
   );
 }

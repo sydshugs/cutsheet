@@ -1,3 +1,4 @@
+import { Helmet } from 'react-helmet-async';
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -137,6 +138,10 @@ export default function Signup() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden" style={{ background: "#09090b" }}>
+      <Helmet>
+        <title>Create Account — Cutsheet</title>
+        <link rel="canonical" href="https://cutsheet.xyz/signup" />
+      </Helmet>
       {/* Ambient glows */}
       <div className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full blur-[120px] pointer-events-none" style={{ background: "rgba(99,102,241,0.12)" }} />
       <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] rounded-full blur-[100px] pointer-events-none" style={{ background: "rgba(139,92,246,0.08)" }} />
