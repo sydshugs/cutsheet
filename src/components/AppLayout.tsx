@@ -27,7 +27,7 @@ export interface AppSharedContext {
   usageCount: number;
   onUpgradeRequired: () => void;
   registerCallbacks: (
-    cbs: { onNewAnalysis?: () => void; onHistoryOpen?: () => void } | null
+    cbs: { onNewAnalysis?: () => void; onHistoryOpen?: () => void; hasResult?: boolean } | null
   ) => void;
 }
 
@@ -45,21 +45,27 @@ export default function AppLayout() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
 
-  useKeyboardShortcuts(() => setShowShortcuts(true));
+  useKeyboardShortcuts(
+    () => setShowShortcuts(true),
+    () => onNewAnalysisRef.current()
+  );
 
   // TopBar delegates to whichever page is currently mounted
   const onNewAnalysisRef = useRef<() => void>(() => navigate("/app/paid"));
   const onHistoryOpenRef = useRef<() => void>(() => {});
+  const [hasAnalysisResult, setHasAnalysisResult] = useState(false);
 
   const registerCallbacks = useCallback(
-    (cbs: { onNewAnalysis?: () => void; onHistoryOpen?: () => void } | null) => {
+    (cbs: { onNewAnalysis?: () => void; onHistoryOpen?: () => void; hasResult?: boolean } | null) => {
       if (!cbs) {
         onNewAnalysisRef.current = () => navigate("/app/paid");
         onHistoryOpenRef.current = () => {};
+        setHasAnalysisResult(false);
         return;
       }
       if (cbs.onNewAnalysis) onNewAnalysisRef.current = cbs.onNewAnalysis;
       if (cbs.onHistoryOpen) onHistoryOpenRef.current = cbs.onHistoryOpen;
+      if (cbs.hasResult !== undefined) setHasAnalysisResult(cbs.hasResult);
     },
     [navigate]
   );
@@ -101,6 +107,7 @@ export default function AppLayout() {
           showMobileMenu={mobileOpen}
           userName={userEmail}
           userPlan={isPro ? "pro" : "free"}
+          hasResult={hasAnalysisResult}
         />
         <main className="flex-1 overflow-auto">
           <Outlet context={ctx} />
