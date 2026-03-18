@@ -116,16 +116,16 @@ function OrganicEmptyState({
       <h2 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>
         Score your organic content
       </h2>
-      <p style={{ fontSize: 14, color: "#71717a", textAlign: "center", maxWidth: 320, marginTop: 10, lineHeight: 1.6 }}>
-        Upload your TikTok, Reel, or YouTube Short. Get scored on retention, shareability, and algorithm signals.
-      </p>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 20 }}>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 14 }}>
         {PILLS.map((pill) => (
           <span key={pill} style={{ fontSize: 12, color: "#818cf8", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)", borderRadius: 9999, padding: "4px 12px" }}>
             {pill}
           </span>
         ))}
       </div>
+      <p style={{ fontSize: 14, color: "#71717a", textAlign: "center", maxWidth: 320, marginTop: 14, lineHeight: 1.6 }}>
+        Upload your TikTok, Reel, or YouTube Short. Get scored on retention, shareability, and algorithm signals.
+      </p>
       <div style={{ width: "100%", maxWidth: 520, marginTop: 32 }}>
         <VideoDropzone onFileSelect={onFileSelect} file={null} onUrlSubmit={onUrlSubmit} />
       </div>
@@ -470,6 +470,7 @@ export default function OrganicAnalyzer() {
                 improvements={activeResult.improvements}
                 budget={activeResult.budget}
                 hashtags={activeResult.hashtags}
+                scenes={activeResult.scenes}
                 fileName={activeResult.fileName}
                 analysisTime={analysisCompletedAt ?? undefined}
                 modelName="Gemini + Claude"
