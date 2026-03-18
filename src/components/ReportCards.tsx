@@ -36,27 +36,44 @@ function splitMarkdown(md: string): { title: string | null; content: string }[] 
 }
 
 export function ReportCards({ file, markdown, thumbnailDataUrl, onCopy, onExportPdf, onShare, copied, shareLoading }: ReportCardsProps) {
-  const videoUrl = useMemo(() => file ? URL.createObjectURL(file) : null, [file]);
+  const isImage = file?.type.startsWith("image/") ?? false;
+  const fileUrl = useMemo(() => file ? URL.createObjectURL(file) : null, [file]);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    return () => { if (videoUrl) URL.revokeObjectURL(videoUrl); };
-  }, [videoUrl]);
+    return () => { if (fileUrl) URL.revokeObjectURL(fileUrl); };
+  }, [fileUrl]);
 
   const sections = useMemo(() => splitMarkdown(markdown), [markdown]);
 
   return (
     <div className="flex flex-col">
-      {/* Video preview */}
-      {file && videoUrl && (
+      {/* Media preview — image or video */}
+      {file && fileUrl && (
         <div>
-          <video
-            ref={videoRef}
-            src={videoUrl}
-            poster={thumbnailDataUrl ?? undefined}
-            controls
-            className="rounded-2xl border border-white/5 overflow-hidden max-h-[320px] w-full object-contain bg-black"
-          />
+          {isImage ? (
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <img
+                src={fileUrl}
+                alt={file.name}
+                style={{
+                  maxWidth: "100%",
+                  maxHeight: 600,
+                  objectFit: "contain",
+                  borderRadius: 12,
+                  border: "1px solid rgba(255,255,255,0.06)",
+                }}
+              />
+            </div>
+          ) : (
+            <video
+              ref={videoRef}
+              src={fileUrl}
+              poster={thumbnailDataUrl ?? undefined}
+              controls
+              className="rounded-2xl border border-white/5 overflow-hidden max-h-[320px] w-full object-contain bg-black"
+            />
+          )}
           <p className="text-xs text-zinc-500 font-mono mt-2">
             {file.name} · {(file.size / 1024 / 1024).toFixed(1)} MB
           </p>
