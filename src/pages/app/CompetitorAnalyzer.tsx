@@ -147,6 +147,7 @@ function CompetitorSearchBox({
   file: File | null;
   onFileSelect: (f: File | null) => void;
 }) {
+  const [adTab, setAdTab] = useState<"meta" | "tiktok">("meta");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<MetaAd[]>([]);
   const [searching, setSearching] = useState(false);
@@ -234,151 +235,205 @@ function CompetitorSearchBox({
         </div>
       ) : (
         <>
-          {/* Missing token warning */}
-          {!META_TOKEN && (
-            <div style={{
-              background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)",
-              borderRadius: 8, padding: "10px 14px", marginBottom: 12,
-              display: "flex", alignItems: "center", gap: 8,
-            }}>
-              <AlertCircle size={14} color="#f59e0b" style={{ flexShrink: 0 }} />
-              <span style={{ fontSize: 12, color: "#f59e0b" }}>
-                Meta search requires VITE_META_ACCESS_TOKEN in Vercel env vars
-              </span>
-            </div>
-          )}
-
-          {/* Meta Ad Library search */}
-          {META_TOKEN && (
-            <div style={{ marginBottom: 12 }}>
-              <p style={{ fontSize: 11, color: "#52525b", marginBottom: 6 }}>Search a competitor on Meta & Instagram</p>
-              <div style={{ display: "flex", gap: 6 }}>
-                <input
-                  type="text"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }}
-                  placeholder="e.g. Nike, Cloaked, SKIMS..."
-                  style={{
-                    flex: 1, height: 34, padding: "0 10px", fontSize: 12,
-                    background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
-                    borderRadius: 8, color: "#f4f4f5", outline: "none",
-                  }}
-                />
-                <button type="button" onClick={handleSearch} disabled={searching || !query.trim()}
-                  style={{
-                    height: 34, padding: "0 12px", borderRadius: 8, border: "none",
-                    background: "#6366f1", color: "white", fontSize: 12, fontWeight: 500,
-                    cursor: searching || !query.trim() ? "not-allowed" : "pointer",
-                    opacity: searching || !query.trim() ? 0.5 : 1,
-                    display: "flex", alignItems: "center", gap: 4, transition: "all 150ms",
-                  }}>
-                  <Search size={12} />
-                  {searching ? "..." : "Search"}
-                </button>
-              </div>
-
-              {/* Search error */}
-              {searchError && (
-                <p style={{ fontSize: 11, color: "#ef4444", marginTop: 6 }}>{searchError}</p>
-              )}
-
-              {/* Shimmer loading */}
-              {searching && (
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 10 }}>
-                  {[0,1,2,3].map(i => (
-                    <div key={i} style={{
-                      height: 100, borderRadius: 10,
-                      background: "linear-gradient(90deg, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.02) 75%)",
-                      backgroundSize: "200% 100%",
-                      animation: "shimmer 1.5s infinite",
-                    }} />
-                  ))}
-                </div>
-              )}
-
-              {/* Results grid */}
-              {!searching && results.length > 0 && (
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 10, maxHeight: 280, overflowY: "auto" }}>
-                  {results.map((ad) => (
-                    <div key={ad.id} style={{
-                      background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
-                      borderRadius: 10, padding: 10, display: "flex", flexDirection: "column", gap: 6,
-                      cursor: "pointer", transition: "all 150ms",
-                    }}
-                    onClick={() => handleUseAd(ad)}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(99,102,241,0.3)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; }}
-                    >
-                      {ad.ad_snapshot_url && (
-                        <div style={{ width: "100%", height: 80, borderRadius: 6, overflow: "hidden", background: "#18181b" }}>
-                          <img src={ad.ad_snapshot_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                        </div>
-                      )}
-                      {ad.page_name && (
-                        <span style={{ fontSize: 11, color: "#818cf8", fontWeight: 500,
-                          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {ad.page_name}
-                        </span>
-                      )}
-                      {ad.ad_creative_bodies?.[0] && (
-                        <span style={{ fontSize: 11, color: "#71717a", lineHeight: 1.3,
-                          overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const }}>
-                          {ad.ad_creative_bodies[0].slice(0, 60)}{ad.ad_creative_bodies[0].length > 60 ? "..." : ""}
-                        </span>
-                      )}
-                      <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: "auto" }}>
-                        <ExternalLink size={10} color="#6366f1" />
-                        <span style={{ fontSize: 10, color: "#6366f1" }}>Use this ad</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Empty results */}
-              {!searching && hasSearched && results.length === 0 && !searchError && (
-                <p style={{ fontSize: 12, color: "#71717a", marginTop: 10, textAlign: "center" }}>
-                  No active ads found for "{query}"
-                </p>
-              )}
-
-              {/* Divider */}
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12 }}>
-                <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
-                <span style={{ fontSize: 11, color: "#52525b" }}>or upload manually</span>
-                <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
-              </div>
-            </div>
-          )}
-
-          {/* TikTok Creative Center banner */}
-          <div
-            style={{
-              background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
-              borderRadius: 10, padding: "12px 14px", marginBottom: 8,
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              cursor: "pointer", transition: "all 150ms",
-            }}
-            onClick={() => window.open("https://ads.tiktok.com/business/creativecenter/inspiration/topads", "_blank")}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(99,102,241,0.2)"; e.currentTarget.style.background = "rgba(99,102,241,0.04)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <Music2 size={14} color="#71717a" />
-              <span style={{ fontSize: 13, color: "#a1a1aa" }}>Find TikTok competitor ads</span>
-            </div>
-            <span style={{ fontSize: 12, color: "#6366f1" }}>TikTok Creative Center ↗</span>
+          {/* Tab pills: Meta | TikTok */}
+          <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
+            {(["meta", "tiktok"] as const).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setAdTab(tab)}
+                style={{
+                  height: 28, padding: "0 14px", borderRadius: 9999, fontSize: 12, cursor: "pointer",
+                  fontWeight: 500, transition: "all 150ms",
+                  background: adTab === tab ? "rgba(99,102,241,0.1)" : "rgba(255,255,255,0.03)",
+                  border: `1px solid ${adTab === tab ? "#6366f1" : "rgba(255,255,255,0.08)"}`,
+                  color: adTab === tab ? "#f4f4f5" : "#71717a",
+                }}
+              >
+                {tab === "meta" ? "Meta" : "TikTok"}
+              </button>
+            ))}
           </div>
-          <p style={{ fontSize: 11, color: "#52525b", textAlign: "center", marginBottom: 8 }}>
-            Download an ad from Creative Center then upload it below
-          </p>
+
+          {/* ── META TAB ─────────────────────────────────────────────────── */}
+          {adTab === "meta" && (
+            <>
+              {/* Missing token warning — only on Meta tab */}
+              {!META_TOKEN && (
+                <div style={{
+                  background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)",
+                  borderRadius: 8, padding: "10px 14px", marginBottom: 12,
+                  display: "flex", alignItems: "center", gap: 8,
+                }}>
+                  <AlertCircle size={14} color="#f59e0b" style={{ flexShrink: 0 }} />
+                  <span style={{ fontSize: 12, color: "#f59e0b" }}>
+                    Meta search requires VITE_META_ACCESS_TOKEN in Vercel env vars
+                  </span>
+                </div>
+              )}
+
+              {/* Meta Ad Library search */}
+              {META_TOKEN && (
+                <div style={{ marginBottom: 12 }}>
+                  <p style={{ fontSize: 11, color: "#52525b", marginBottom: 6 }}>Search a competitor on Meta & Instagram</p>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <input
+                      type="text"
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }}
+                      placeholder="e.g. Nike, Cloaked, SKIMS..."
+                      style={{
+                        flex: 1, height: 34, padding: "0 10px", fontSize: 12,
+                        background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
+                        borderRadius: 8, color: "#f4f4f5", outline: "none",
+                      }}
+                    />
+                    <button type="button" onClick={handleSearch} disabled={searching || !query.trim()}
+                      style={{
+                        height: 34, padding: "0 12px", borderRadius: 8, border: "none",
+                        background: "#6366f1", color: "white", fontSize: 12, fontWeight: 500,
+                        cursor: searching || !query.trim() ? "not-allowed" : "pointer",
+                        opacity: searching || !query.trim() ? 0.5 : 1,
+                        display: "flex", alignItems: "center", gap: 4, transition: "all 150ms",
+                      }}>
+                      <Search size={12} />
+                      {searching ? "..." : "Search"}
+                    </button>
+                  </div>
+
+                  {searchError && (
+                    <p style={{ fontSize: 11, color: "#ef4444", marginTop: 6 }}>{searchError}</p>
+                  )}
+
+                  {searching && (
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 10 }}>
+                      {[0,1,2,3].map(i => (
+                        <div key={i} style={{
+                          height: 100, borderRadius: 10,
+                          background: "linear-gradient(90deg, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.02) 75%)",
+                          backgroundSize: "200% 100%",
+                          animation: "shimmer 1.5s infinite",
+                        }} />
+                      ))}
+                    </div>
+                  )}
+
+                  {!searching && results.length > 0 && (
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 10, maxHeight: 280, overflowY: "auto" }}>
+                      {results.map((ad) => (
+                        <div key={ad.id} style={{
+                          background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+                          borderRadius: 10, padding: 10, display: "flex", flexDirection: "column", gap: 6,
+                          cursor: "pointer", transition: "all 150ms",
+                        }}
+                        onClick={() => handleUseAd(ad)}
+                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(99,102,241,0.3)"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; }}
+                        >
+                          {ad.ad_snapshot_url && (
+                            <div style={{ width: "100%", height: 80, borderRadius: 6, overflow: "hidden", background: "#18181b" }}>
+                              <img src={ad.ad_snapshot_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                            </div>
+                          )}
+                          {ad.page_name && (
+                            <span style={{ fontSize: 11, color: "#818cf8", fontWeight: 500,
+                              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {ad.page_name}
+                            </span>
+                          )}
+                          {ad.ad_creative_bodies?.[0] && (
+                            <span style={{ fontSize: 11, color: "#71717a", lineHeight: 1.3,
+                              overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const }}>
+                              {ad.ad_creative_bodies[0].slice(0, 60)}{ad.ad_creative_bodies[0].length > 60 ? "..." : ""}
+                            </span>
+                          )}
+                          <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: "auto" }}>
+                            <ExternalLink size={10} color="#6366f1" />
+                            <span style={{ fontSize: 10, color: "#6366f1" }}>Use this ad</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {!searching && hasSearched && results.length === 0 && !searchError && (
+                    <p style={{ fontSize: 12, color: "#71717a", marginTop: 10, textAlign: "center" }}>
+                      No active ads found for "{query}"
+                    </p>
+                  )}
+
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12 }}>
+                    <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
+                    <span style={{ fontSize: 11, color: "#52525b" }}>or upload manually</span>
+                    <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* ── TIKTOK TAB ───────────────────────────────────────────────── */}
+          {adTab === "tiktok" && (
+            <div style={{
+              background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+              borderRadius: 12, padding: 16, marginBottom: 12,
+            }}>
+              {/* Header */}
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                <Music2 size={14} color="#71717a" />
+                <span style={{ fontSize: 13, fontWeight: 600, color: "#f4f4f5" }}>Find TikTok competitor ads</span>
+              </div>
+              {/* Body */}
+              <p style={{ fontSize: 13, color: "#71717a", lineHeight: 1.6, margin: "0 0 12px" }}>
+                TikTok's Creative Center shows the top performing ads on the platform right now. Find a competitor's ad, download it, then upload it below.
+              </p>
+              {/* CTA button */}
+              <button
+                type="button"
+                onClick={() => window.open("https://ads.tiktok.com/business/creativecenter/inspiration/topads/pc/en", "_blank")}
+                style={{
+                  width: "100%", display: "flex", alignItems: "center", justifyContent: "center",
+                  background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.3)",
+                  color: "#818cf8", fontSize: 13, fontWeight: 500,
+                  borderRadius: 9999, padding: "8px 16px", cursor: "pointer", marginBottom: 10,
+                  transition: "all 150ms",
+                }}
+              >
+                Open TikTok Creative Center ↗
+              </button>
+              {/* Quick tip pills */}
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center" }}>
+                {["Search by brand", "Filter by industry", "Download video"].map((tip) => (
+                  <span key={tip} style={{
+                    fontSize: 11, color: "#52525b",
+                    background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
+                    borderRadius: 9999, padding: "3px 10px",
+                  }}>
+                    {tip}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Divider — TikTok: "then upload it here"; Meta no-token: "or upload manually".
+              Skipped when Meta+TOKEN because the search section renders its own "or upload manually". */}
+          {!(adTab === "meta" && !!META_TOKEN) && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
+              <span style={{ fontSize: 11, color: "#52525b" }}>
+                {adTab === "tiktok" ? "then upload it here" : "or upload manually"}
+              </span>
+              <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
+            </div>
+          )}
 
           {/* Manual upload dropzone */}
           <div
             style={{
-              height: META_TOKEN ? 100 : 200,
+              height: 100,
               border: "1px dashed rgba(255,255,255,0.08)",
               borderRadius: 12, background: "rgba(255,255,255,0.02)",
               display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
