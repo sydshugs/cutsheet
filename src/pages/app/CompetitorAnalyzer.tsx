@@ -3,7 +3,7 @@
 import { Helmet } from "react-helmet-async";
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useOutletContext } from "react-router-dom";
-import { Swords, Upload, Search, ExternalLink } from "lucide-react";
+import { Swords, Upload, Search, ExternalLink, Music2, AlertCircle } from "lucide-react";
 import { CompetitorResultPanel } from "../../components/CompetitorResult";
 import { analyzeCompetitor, type CompetitorResult } from "../../services/competitorService";
 import type { AppSharedContext } from "../../components/AppLayout";
@@ -234,6 +234,20 @@ function CompetitorSearchBox({
         </div>
       ) : (
         <>
+          {/* Missing token warning */}
+          {!META_TOKEN && (
+            <div style={{
+              background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)",
+              borderRadius: 8, padding: "10px 14px", marginBottom: 12,
+              display: "flex", alignItems: "center", gap: 8,
+            }}>
+              <AlertCircle size={14} color="#f59e0b" style={{ flexShrink: 0 }} />
+              <span style={{ fontSize: 12, color: "#f59e0b" }}>
+                Meta search requires VITE_META_ACCESS_TOKEN in Vercel env vars
+              </span>
+            </div>
+          )}
+
           {/* Meta Ad Library search */}
           {META_TOKEN && (
             <div style={{ marginBottom: 12 }}>
@@ -338,6 +352,28 @@ function CompetitorSearchBox({
               </div>
             </div>
           )}
+
+          {/* TikTok Creative Center banner */}
+          <div
+            style={{
+              background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+              borderRadius: 10, padding: "12px 14px", marginBottom: 8,
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              cursor: "pointer", transition: "all 150ms",
+            }}
+            onClick={() => window.open("https://ads.tiktok.com/business/creativecenter/inspiration/topads", "_blank")}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(99,102,241,0.2)"; e.currentTarget.style.background = "rgba(99,102,241,0.04)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <Music2 size={14} color="#71717a" />
+              <span style={{ fontSize: 13, color: "#a1a1aa" }}>Find TikTok competitor ads</span>
+            </div>
+            <span style={{ fontSize: 12, color: "#6366f1" }}>TikTok Creative Center ↗</span>
+          </div>
+          <p style={{ fontSize: 11, color: "#52525b", textAlign: "center", marginBottom: 8 }}>
+            Download an ad from Creative Center then upload it below
+          </p>
 
           {/* Manual upload dropzone */}
           <div
