@@ -158,9 +158,16 @@ onSelectHistory,
       lines.push(`CTA REWRITE: "${ctaRewrites[0]}"`);
     }
 
-    if (budget) {
+    if (engineBudget) {
       lines.push("");
-      lines.push(`BUDGET: ${budget.verdict} — ${budget.daily}/day on ${budget.platform} for ${budget.duration}`);
+      if (engineBudget.action === 'hold') {
+        lines.push("BUDGET: Hold — fix creative before spending");
+      } else if (engineBudget.dailyBudget) {
+        lines.push(`BUDGET: ${engineBudget.label} — $${engineBudget.dailyBudget.min}-${engineBudget.dailyBudget.max}/day on ${engineBudget.platform === 'all' ? 'All platforms' : engineBudget.platform}`);
+      }
+    } else if (budget) {
+      lines.push("");
+      lines.push(`BUDGET: ${budget.verdict} — ${budget.daily}/day on ${budget.platform}`);
     }
 
     lines.push("");

@@ -83,6 +83,7 @@ Three paragraphs written as a media buyer debriefing a creative team:
 1. What this ad does well and why it likely works (or doesn't)
 2. Who the target audience appears to be and whether the messaging matches them
 3. One specific, actionable recommendation to improve performance
+Do NOT mention the user's role, niche, or platform explicitly in the Creative Verdict. Use any provided context to inform your judgment but never reference it directly. The verdict should read as expert analysis, not as a personalized note.
 
 ---
 
@@ -110,21 +111,6 @@ Based on the ad's quality and likely performance, recommend a media buying strat
 - **Daily Budget:** [$X–$Y/day] — a specific daily budget range recommendation (e.g. "$50–$100/day").
 - **Duration:** [X days / X weeks] — how long to run at this budget before evaluating (e.g. "7 days", "2 weeks").
 - **Reason:** One sentence explaining why this budget and timeline make sense for this specific creative.
-
----
-
-## #️⃣ HASHTAGS
-Recommend platform-specific hashtags based on the creative content, theme, and audience. Format exactly as:
-TIKTOK: #hashtag1 #hashtag2 #hashtag3 #hashtag4 #hashtag5
-META: #hashtag1 #hashtag2 #hashtag3 #hashtag4 #hashtag5
-INSTAGRAM: #hashtag1 #hashtag2 #hashtag3 #hashtag4 #hashtag5
-
-Rules:
-- TikTok: trending, short, broad discovery tags (5 tags)
-- Meta: interest and demographic targeting tags (5 tags)
-- Instagram: niche community + aesthetic tags (5 tags)
-- All tags should be relevant to the actual creative content analyzed
-- No generic filler tags like #fyp #viral unless genuinely appropriate
 
 ---
 
@@ -208,6 +194,7 @@ Three paragraphs written as a media buyer debriefing a creative team:
 1. What this static ad does well visually and in messaging
 2. Who the target audience appears to be and whether the design speaks to them
 3. One specific, actionable recommendation to improve performance
+Do NOT mention the user's role, niche, or platform explicitly. The verdict should read as expert analysis.
 
 ---
 
