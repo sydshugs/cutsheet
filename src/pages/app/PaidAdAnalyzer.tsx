@@ -25,6 +25,7 @@ import { SecondEyePanel } from "../../components/SecondEyePanel";
 import { StaticSecondEyePanel } from "../../components/StaticSecondEyePanel";
 import { createShare } from "../../services/shareService";
 import { checkShareLimit, incrementShareCount } from "../../utils/rateLimiter";
+import { getUserContext, formatUserContextBlock } from "../../services/userContextService";
 import type { AppSharedContext } from "../../components/AppLayout";
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY ?? "";
@@ -225,6 +226,12 @@ export default function PaidAdAnalyzer() {
     onUpgradeRequired, registerCallbacks,
   } = useOutletContext<AppSharedContext>();
 
+  // ── User context for personalized AI ──────────────────────────────────────
+  const [userContext, setUserContext] = useState<string>('')
+  useEffect(() => {
+    getUserContext().then(ctx => setUserContext(formatUserContextBlock(ctx)))
+  }, [])
+
   // ── Platform / format / second eye state ───────────────────────────────────
   const [platform, setPlatform] = useState<Platform>("all");
   const [format, setFormat] = useState<Format>("video");
@@ -323,7 +330,8 @@ export default function PaidAdAnalyzer() {
             result.markdown,
             result.fileName,
             result.scores ? { hook: result.scores.hook, overall: result.scores.overall } : undefined,
-            result.improvements
+            result.improvements,
+            userContext || undefined
           );
           setSecondEyeOutput(output);
         } catch (err) {
@@ -349,7 +357,8 @@ export default function PaidAdAnalyzer() {
             result.markdown,
             result.fileName,
             result.scores ? { overall: result.scores.overall, cta: result.scores.cta } : undefined,
-            result.improvements
+            result.improvements,
+            userContext || undefined
           );
           setStaticSecondEyeResult(output);
         } catch (err) {
@@ -377,7 +386,7 @@ export default function PaidAdAnalyzer() {
   // ── Handlers ──────────────────────────────────────────────────────────────
   const handleAnalyze = useCallback(async () => {
     if (!file || isAnalyzing || !canAnalyze) return;
-    await analyze(file, API_KEY, contextPrefix);
+    await analyze(file, API_KEY, contextPrefix, userContext || undefined);
   }, [file, isAnalyzing, canAnalyze, analyze, contextPrefix]);
 
   useEffect(() => {
@@ -439,7 +448,7 @@ export default function PaidAdAnalyzer() {
     setBriefLoading(true);
     setBriefError(null);
     try {
-      const r = await generateBriefWithClaude(activeResult.markdown, activeResult.fileName);
+      const r = await generateBriefWithClaude(activeResult.markdown, activeResult.fileName, userContext || undefined);
       setBrief(r);
       setRightTab("brief");
     } catch {
@@ -458,7 +467,7 @@ export default function PaidAdAnalyzer() {
     setCtaLoading(true);
     try {
       const ctaSection = activeResult.markdown.match(/CTA[\s\S]*?(?=\n##|\n---)/i)?.[0] ?? "";
-      const rewrites = await generateCTARewrites(ctaSection, activeResult.fileName);
+      const rewrites = await generateCTARewrites(ctaSection, activeResult.fileName, userContext || undefined);
       setCtaRewrites(rewrites);
     } catch { /* silent */ }
     finally { setCtaLoading(false); }

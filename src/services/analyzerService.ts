@@ -366,7 +366,8 @@ export async function analyzeVideo(
   file: File,
   apiKey: string,
   onStatusChange?: (status: AnalysisStatus, message?: string) => void,
-  contextPrefix?: string
+  contextPrefix?: string,
+  userContext?: string
 ): Promise<AnalysisResult> {
   const emit = (status: AnalysisStatus, message?: string) => {
     onStatusChange?.(status, message);
@@ -401,7 +402,11 @@ For Hook Strength, assess the visual impact and scroll-stop potential.
 For Pacing & Retention, assess visual hierarchy and how the eye moves through the composition.
 All other metrics apply as normal.\n\n`;
     const basePrompt = isImage ? staticPrefix + ANALYSIS_PROMPT : ANALYSIS_PROMPT;
-    const prompt = contextPrefix ? `${contextPrefix}\n\n${basePrompt}` : basePrompt;
+    const parts: string[] = [];
+    if (contextPrefix) parts.push(contextPrefix);
+    if (userContext) parts.push(userContext);
+    parts.push(basePrompt);
+    const prompt = parts.join('\n\n');
 
     const result = await model.generateContent([
       {
@@ -435,7 +440,7 @@ All other metrics apply as normal.\n\n`;
 
     // 6b. Enhance improvements with Claude (silent fallback to Gemini)
     try {
-      const enhanced = await claudeImprovements(markdown, scores);
+      const enhanced = await claudeImprovements(markdown, scores, userContext);
       if (enhanced.length > 0) improvements = enhanced;
     } catch { /* silent fallback — keep Gemini improvements */ }
 
