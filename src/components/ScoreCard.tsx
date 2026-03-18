@@ -503,6 +503,13 @@ onSelectHistory,
               Set your niche in Settings for personalized budgets &rarr;
             </button>
           )}
+
+          {/* Static all-platforms footnote */}
+          {engineBudget.footnote && (
+            <p style={{ fontSize: 11, color: '#52525b', marginTop: 8 }}>
+              {engineBudget.footnote}
+            </p>
+          )}
         </div>
       )}
 

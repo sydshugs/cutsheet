@@ -7,6 +7,7 @@ const CPM_BENCHMARKS = {
   google:  { low: 2,  mid: 4,  high: 8,  unit: 'CPM' },
   youtube: { low: 6,  mid: 10, high: 15, unit: 'CPM' },
   all:     { low: 5,  mid: 9,  high: 14, unit: 'CPM' },
+  static_all: { low: 5, mid: 10, high: 18, unit: 'CPM' },
 } as const;
 
 const NICHE_MODIFIERS: Record<string, {
@@ -40,6 +41,7 @@ export interface EngineBudgetRecommendation {
   scaleSignal: string | null;
   testDuration: string;
   roasTarget: string;
+  footnote: string | null;
 }
 
 export function generateBudgetRecommendation(
@@ -52,8 +54,10 @@ export function generateBudgetRecommendation(
              : overallScore >= 5 ? SCORE_TIERS.average
              : SCORE_TIERS.weak;
 
-  const platformKey = platform.toLowerCase() as keyof typeof CPM_BENCHMARKS;
-  const cpm = CPM_BENCHMARKS[platformKey] || CPM_BENCHMARKS.all;
+  const platformKey = (format === 'static' && platform.toLowerCase() === 'all')
+    ? 'static_all'
+    : platform.toLowerCase() as keyof typeof CPM_BENCHMARKS;
+  const cpm = CPM_BENCHMARKS[platformKey as keyof typeof CPM_BENCHMARKS] || CPM_BENCHMARKS.all;
 
   const modifier = NICHE_MODIFIERS[niche] || NICHE_MODIFIERS['Other'];
 
@@ -74,6 +78,10 @@ export function generateBudgetRecommendation(
     };
   }
 
+  const footnote = (format === 'static' && platform.toLowerCase() === 'all')
+    ? "Static 'All platforms' = Meta + Google Display (TikTok/YouTube excluded)"
+    : null;
+
   return {
     action: tier.action,
     label: tier.label,
@@ -85,5 +93,6 @@ export function generateBudgetRecommendation(
     scaleSignal: tier.scaleSignal,
     testDuration: modifier.testDuration,
     roasTarget: modifier.roasTarget,
+    footnote,
   };
 }
