@@ -266,6 +266,7 @@ export default function CompetitorAnalyzer() {
   const [result, setResult] = useState<CompetitorResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showManualUpload, setShowManualUpload] = useState(false);
+  const [adTab, setAdTab] = useState<"meta" | "tiktok">("meta");
 
   const handleReset = useCallback(() => {
     setStep(0); setYourFile(null); setCompetitorFile(null);
@@ -364,29 +365,82 @@ export default function CompetitorAnalyzer() {
                   </>
                 ) : (
                   <>
-                    <MetaSearch onFileSelect={(f) => { setCompetitorFile(f); setStep(3); }} />
-
-                    {/* TikTok Creative Center */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "16px 0 12px" }}>
-                      <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
-                      <span style={{ fontSize: 11, color: "#52525b" }}>or</span>
-                      <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
+                    {/* Tab pills: Meta | TikTok */}
+                    <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
+                      {(["meta", "tiktok"] as const).map((tab) => (
+                        <button
+                          key={tab}
+                          type="button"
+                          onClick={() => setAdTab(tab)}
+                          style={{
+                            height: 28, padding: "0 14px", borderRadius: 9999, fontSize: 12,
+                            cursor: "pointer", fontWeight: 500, transition: "all 150ms",
+                            background: adTab === tab ? "rgba(99,102,241,0.1)" : "rgba(255,255,255,0.03)",
+                            border: `1px solid ${adTab === tab ? "#6366f1" : "rgba(255,255,255,0.08)"}`,
+                            color: adTab === tab ? "#f4f4f5" : "#71717a",
+                          }}
+                        >
+                          {tab === "meta" ? "Meta" : "TikTok"}
+                        </button>
+                      ))}
                     </div>
 
-                    <div onClick={() => window.open("https://ads.tiktok.com/business/creativecenter/inspiration/topads", "_blank")}
-                      style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "10px 14px", marginBottom: 10, display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", transition: "all 150ms" }}
-                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(99,102,241,0.2)"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <Music2 size={14} color="#71717a" /><span style={{ fontSize: 13, color: "#a1a1aa" }}>Find TikTok ads</span>
+                    {/* Meta tab */}
+                    {adTab === "meta" && (
+                      <MetaSearch onFileSelect={(f) => { setCompetitorFile(f); setStep(3); }} />
+                    )}
+
+                    {/* TikTok tab */}
+                    {adTab === "tiktok" && (
+                      <div style={{
+                        background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+                        borderRadius: 12, padding: 16, marginBottom: 12,
+                      }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                          <Music2 size={14} color="#71717a" />
+                          <span style={{ fontSize: 13, fontWeight: 600, color: "#f4f4f5" }}>Find TikTok competitor ads</span>
+                        </div>
+                        <p style={{ fontSize: 13, color: "#71717a", lineHeight: 1.6, margin: "0 0 12px" }}>
+                          TikTok's Creative Center shows the top performing ads on the platform right now. Find a competitor's ad, download it, then upload it below.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => window.open("https://ads.tiktok.com/business/creativecenter/inspiration/topads/pc/en", "_blank")}
+                          style={{
+                            width: "100%", display: "flex", alignItems: "center", justifyContent: "center",
+                            background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.3)",
+                            color: "#818cf8", fontSize: 13, fontWeight: 500,
+                            borderRadius: 9999, padding: "8px 16px", cursor: "pointer", marginBottom: 10,
+                            transition: "all 150ms",
+                          }}
+                        >
+                          Open TikTok Creative Center ↗
+                        </button>
+                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center" }}>
+                          {["Search by brand", "Filter by industry", "Download video"].map((tip) => (
+                            <span key={tip} style={{
+                              fontSize: 11, color: "#52525b",
+                              background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
+                              borderRadius: 9999, padding: "3px 10px",
+                            }}>
+                              {tip}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                      <span style={{ fontSize: 12, color: "#6366f1" }}>Creative Center ↗</span>
-                    </div>
+                    )}
 
-                    {/* Manual upload toggle */}
+                    {/* Manual upload toggle — shared across both tabs */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "12px 0 8px" }}>
+                      <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
+                      <span style={{ fontSize: 11, color: "#52525b" }}>
+                        {adTab === "tiktok" ? "then upload it here" : "or upload manually"}
+                      </span>
+                      <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
+                    </div>
                     <button type="button" onClick={() => setShowManualUpload(!showManualUpload)}
-                      style={{ background: "none", border: "none", color: "#52525b", fontSize: 12, cursor: "pointer", width: "100%", textAlign: "center", padding: "8px 0" }}>
-                      {showManualUpload ? "Hide manual upload" : "Upload manually instead"}
+                      style={{ background: "none", border: "none", color: "#52525b", fontSize: 12, cursor: "pointer", width: "100%", textAlign: "center", padding: "4px 0 8px" }}>
+                      {showManualUpload ? "Hide" : "Upload file"}
                     </button>
                     {showManualUpload && <DropZone onFileSelect={(f) => { setCompetitorFile(f); setStep(3); }} height={160} />}
                   </>
