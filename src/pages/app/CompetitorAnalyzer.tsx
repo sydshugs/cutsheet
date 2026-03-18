@@ -144,13 +144,18 @@ function MetaSearch({ onFileSelect }: { onFileSelect: (f: File) => void }) {
     setSearching(true); setSearchError(null); setResults([]); setHasSearched(true);
     try {
       const params = new URLSearchParams({
-        access_token: META_TOKEN, ad_reached_countries: '["US"]',
-        search_terms: query.trim(), ad_type: "ALL",
-        fields: "id,ad_creative_bodies,ad_snapshot_url,page_name", limit: "8",
+        access_token: META_TOKEN,
+        ad_reached_countries: JSON.stringify(["US"]),
+        search_terms: query.trim(),
+        ad_type: "ALL",
+        publisher_platforms: JSON.stringify(["FACEBOOK", "INSTAGRAM"]),
+        fields: "id,ad_creative_bodies,ad_creative_link_titles,ad_snapshot_url,page_name,ad_delivery_start_time",
+        limit: "12",
       });
-      const res = await fetch(`https://graph.facebook.com/v19.0/ads_archive?${params}`);
-      if (!res.ok) throw new Error(`API error ${res.status}`);
-      setResults((await res.json()).data || []);
+      const res = await fetch(`https://graph.facebook.com/v19.0/ads_archive?${params.toString()}`);
+      const data = await res.json();
+      if (data.error) { console.error("Meta API error:", data.error); throw new Error(data.error.message); }
+      setResults(data.data || []);
     } catch (err) { setSearchError(err instanceof Error ? err.message : "Search failed"); }
     finally { setSearching(false); }
   };
