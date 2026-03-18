@@ -59,13 +59,8 @@ function PlatformCard({ score, index }: { score: PlatformScore; index: number })
         <span style={{ fontSize: 13, fontWeight: 700, color }}>{score.score}/10</span>
       </div>
 
-      {/* Verdict */}
-      <p style={{ fontSize: 13, color: '#a1a1aa', fontStyle: 'italic', margin: '8px 0 12px' }}>
-        {score.verdict}
-      </p>
-
       {/* Signals */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, margin: '10px 0 10px' }}>
         {score.signals.map((sig) => (
           <span
             key={sig.label}
@@ -85,6 +80,11 @@ function PlatformCard({ score, index }: { score: PlatformScore; index: number })
           </span>
         ))}
       </div>
+
+      {/* Verdict */}
+      <p style={{ fontSize: 13, color: '#a1a1aa', fontStyle: 'italic', margin: '0 0 12px' }}>
+        {score.verdict}
+      </p>
 
       {/* Improvements */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
