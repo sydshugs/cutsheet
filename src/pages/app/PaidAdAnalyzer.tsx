@@ -1,4 +1,5 @@
 // src/pages/app/PaidAdAnalyzer.tsx
+import { Helmet } from 'react-helmet-async';
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useOutletContext } from "react-router-dom";
 import { Zap } from "lucide-react";
@@ -391,6 +392,11 @@ export default function PaidAdAnalyzer() {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="flex h-full overflow-hidden" style={{ minHeight: "calc(100vh - 56px)" }}>
+      <Helmet>
+        <title>Paid Ad Analyzer — Cutsheet</title>
+        <meta name="description" content="Score Meta, TikTok, Google, and YouTube ads. Get hook strength, CTA score, and budget recommendations in 30 seconds." />
+        <link rel="canonical" href="https://cutsheet.xyz/app/paid" />
+      </Helmet>
       {/* Main content */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <IntentHeader platform={platform} setPlatform={setPlatform} format={format} setFormat={setFormat} />
