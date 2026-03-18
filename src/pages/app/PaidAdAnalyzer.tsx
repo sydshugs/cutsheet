@@ -70,9 +70,9 @@ function IntentHeader({
       <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
         <span style={{ fontSize: 13, color: "#52525b", flexShrink: 0 }}>Analyzing for:</span>
 
-        {/* Platform pills */}
+        {/* Platform pills — YouTube excluded for static */}
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-          {PLATFORMS.map((p) => (
+          {PLATFORMS.filter(p => !(format === "static" && p === "YouTube")).map((p) => (
             <button
               key={p}
               type="button"
@@ -100,7 +100,10 @@ function IntentHeader({
             <button
               key={f}
               type="button"
-              onClick={() => setFormat(f)}
+              onClick={() => {
+                setFormat(f);
+                if (f === "static" && platform === "YouTube") setPlatform("all");
+              }}
               style={{
                 height: 30, padding: "0 12px", borderRadius: 9999, fontSize: 13, cursor: "pointer",
                 background: format === f ? "#6366f1" : "rgba(255,255,255,0.04)",
