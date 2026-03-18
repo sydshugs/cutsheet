@@ -152,6 +152,99 @@ Rules:
 - visual, working, improve are each one sentence
 - Do not add any text between the markdown and the JSON block other than the section header above`;
 
+// ─── STATIC AD ANALYSIS PROMPT ──────────────────────────────────────────────
+
+const STATIC_ANALYSIS_PROMPT = `Analyze this STATIC image ad and return a structured breakdown in this exact format.
+This is a single-frame visual creative — NOT a video. Do NOT use timestamps anywhere.
+
+---
+
+## 🎣 HOOK ANALYSIS
+- **Visual impact:** What is the first thing the eye is drawn to?
+- **Hook type:** [Bold visual / Typography-led / Color contrast / Product hero / Social proof / Pattern interrupt]
+- **Hook strength:** [Weak / Moderate / Strong] — one sentence explaining why
+- **Scroll-stop factor:** Would a thumb stop here in a feed? Why or why not?
+
+---
+
+## 👁️ VISUAL HIERARCHY
+Describe the eye flow through this ad:
+1. **First element** the eye lands on
+2. **Second element** the eye moves to
+3. **Third element**
+4. **Where the eye exits** or gets stuck
+- Is the hierarchy intentional and effective?
+- What visual element is competing with the CTA?
+
+---
+
+## 📝 VISUAL COPY INVENTORY
+List every piece of text visible in this ad in reading order.
+No timestamps. Format as a bulleted list.
+Label each: [Headline], [Subhead], [Body], [CTA], [Brand], [Legal], [Tagline]
+- [Headline] "..."
+- [Body] "..."
+- [CTA] "..."
+
+---
+
+## 📢 MESSAGING STRUCTURE
+- **Format:** [Product showcase / Comparison / Testimonial / Offer-driven / Lifestyle / Educational / Other]
+- **Core claim:** The single biggest promise this ad makes
+- **Proof points:** Evidence or credibility signals used
+- **CTA:** Exact CTA text and placement (if no CTA exists, flag this as a problem)
+
+---
+
+## 😮 EMOTIONAL IMPACT
+- **Primary emotion evoked:** [Curiosity / Trust / Urgency / FOMO / Aspiration / Relief / Other]
+- **Tone:** [Professional / Playful / Urgent / Minimal / Bold / Other]
+- **Does the emotion match the CTA?** Yes/No — one sentence explaining
+
+---
+
+## 🧠 CREATIVE VERDICT
+Three paragraphs written as a media buyer debriefing a creative team:
+1. What this static ad does well visually and in messaging
+2. Who the target audience appears to be and whether the design speaks to them
+3. One specific, actionable recommendation to improve performance
+
+---
+
+## 📊 QUICK SCORES
+- Hook Strength: X/10 (visual impact and scroll-stop potential)
+- Message Clarity: X/10
+- CTA Effectiveness: X/10
+- Production Quality: X/10 (design polish, typography, layout)
+- Overall Ad Strength: X/10
+
+---
+
+## 🔧 IMPROVEMENTS
+List exactly 3-5 specific, actionable suggestions to improve this static creative.
+Each suggestion should apply to the STATIC format as-is.
+Do NOT suggest adding animation or video as an improvement.
+Format as a numbered list.
+1. [Specific improvement for the static ad]
+2. [Specific improvement for the static ad]
+3. [Specific improvement for the static ad]
+
+---
+
+## 🎥 MOTION TEST IDEA
+If this static ad could work as a video or motion graphic, describe the concept in one sentence:
+MOTION TEST IDEA: [one sentence describing how to adapt this as a short video ad]
+
+---
+
+## 💰 BUDGET RECOMMENDATION
+Based on the ad's quality and likely performance, recommend a media buying strategy. Use this exact format:
+- **Verdict:** [Boost It / Test It / Fix First]
+- **Platform:** [Meta / TikTok / YouTube / Meta + TikTok / All platforms]
+- **Daily Budget:** [$X–$Y/day]
+- **Duration:** [X days / X weeks]
+- **Reason:** One sentence explaining why.`;
+
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
 export interface Scene {
@@ -393,15 +486,7 @@ export async function analyzeVideo(
     const isImage = file.type.startsWith("image/");
     emit("processing", isImage ? "Gemini is analyzing your static creative..." : "Gemini is analyzing your creative...");
 
-    const staticPrefix = `This is a STATIC image ad (not a video).
-Analyze as a single-frame visual creative.
-Do NOT provide scene breakdown, timestamps, or transcript.
-DO provide: visual hook strength, message clarity, CTA visibility, color/contrast assessment, text hierarchy, and brand visibility.
-Score and optimize for paid static ad performance.
-For Hook Strength, assess the visual impact and scroll-stop potential.
-For Pacing & Retention, assess visual hierarchy and how the eye moves through the composition.
-All other metrics apply as normal.\n\n`;
-    const basePrompt = isImage ? staticPrefix + ANALYSIS_PROMPT : ANALYSIS_PROMPT;
+    const basePrompt = isImage ? STATIC_ANALYSIS_PROMPT : ANALYSIS_PROMPT;
     const parts: string[] = [];
     if (contextPrefix) parts.push(contextPrefix);
     if (userContext) parts.push(userContext);

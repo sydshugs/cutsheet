@@ -24,13 +24,13 @@ export async function generateImprovements(
     .map(([key, val]) => `${key}: ${val}/10`)
     .join(", ");
 
-  const contextBlock = userContext ? `\n\n${userContext}\n\nEvery improvement must be specific to the user's niche and platform. Do NOT give generic advice.` : "";
+  const contextBlock = userContext ? `\n\n${userContext}\n\nUse the user context to inform the specificity, tone, and priorities of each improvement. Do NOT mention the user's role, niche, or platform explicitly in the improvement text. The improvements should feel naturally tailored — not like they're addressing the user directly. Do NOT give generic advice.` : "";
 
   const client = getClient();
   const message = await client.messages.create({
     model: CLAUDE_MODEL,
     max_tokens: 1024,
-    system: `You are a senior performance marketing creative strategist. You write short, specific, actionable improvement suggestions for video ads. Each suggestion should be 1-2 sentences max. Focus on the weakest scoring areas. No fluff, no preamble.${contextBlock}`,
+    system: `You are a senior performance marketing creative strategist. You write short, specific, actionable improvement suggestions for ads. Each suggestion should be 1-2 sentences max. Focus on the weakest scoring areas. No fluff, no preamble.${contextBlock}`,
     messages: [
       {
         role: "user",
