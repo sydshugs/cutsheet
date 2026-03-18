@@ -256,12 +256,21 @@ export default function OrganicAnalyzer() {
   // Second Eye trigger: fires when analysis completes and secondEye is on
   useEffect(() => {
     if (status === "complete" && result && secondEye) {
-      setSecondEyeLoading(true);
-      setSecondEyeOutput(null);
-      generateSecondEyeReview(result.markdown, result.fileName)
-        .then((output) => setSecondEyeOutput(output))
-        .catch(() => setSecondEyeOutput("Could not generate Second Eye review."))
-        .finally(() => setSecondEyeLoading(false));
+      if (secondEyeLoading) return; // guard: prevent concurrent calls
+      const run = async () => {
+        setSecondEyeLoading(true);
+        setSecondEyeOutput(null);
+        try {
+          const output = await generateSecondEyeReview(result.markdown, result.fileName);
+          setSecondEyeOutput(output);
+        } catch (err) {
+          console.error('Second Eye failed:', err);
+          setSecondEyeOutput("Could not generate Second Eye review.");
+        } finally {
+          setSecondEyeLoading(false);
+        }
+      };
+      run();
     }
   }, [status, result, secondEye]); // eslint-disable-line
 
