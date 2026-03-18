@@ -1,4 +1,5 @@
 // src/pages/app/OrganicAnalyzer.tsx
+import { Helmet } from 'react-helmet-async';
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useOutletContext } from "react-router-dom";
 import { TrendingUp, Eye } from "lucide-react";
@@ -413,6 +414,11 @@ export default function OrganicAnalyzer() {
 
   return (
     <div className="flex h-full overflow-hidden" style={{ minHeight: "calc(100vh - 56px)" }}>
+      <Helmet>
+        <title>Organic Content Analyzer — Cutsheet</title>
+        <meta name="description" content="Score TikTok, Instagram Reels, and YouTube Shorts for retention, shareability, and algorithm signals." />
+        <link rel="canonical" href="https://cutsheet.xyz/app/organic" />
+      </Helmet>
       {/* Main */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <IntentHeader platform={platform} setPlatform={setPlatform} secondEye={secondEye} setSecondEye={setSecondEye} />

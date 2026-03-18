@@ -1,3 +1,4 @@
+import { Helmet } from 'react-helmet-async';
 import { motion } from "framer-motion";
 import { Compass, Home } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -8,6 +9,10 @@ const PRIMARY_ORB_VERTICAL_OFFSET = 20;
 export default function NotFoundPage() {
   return (
     <div className="w-full relative flex min-h-screen items-center justify-center overflow-hidden bg-zinc-950 text-white">
+      <Helmet>
+        <title>Page Not Found — Cutsheet</title>
+        <link rel="canonical" href="https://cutsheet.xyz/404" />
+      </Helmet>
       {/* Ambient orbs matching landing page */}
       <div aria-hidden={true} className="-z-10 absolute inset-0 overflow-hidden">
         <motion.div
