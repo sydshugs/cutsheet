@@ -14,7 +14,8 @@ function getClient(): Anthropic {
 
 export async function generateImprovements(
   analysisMarkdown: string,
-  scores: { hook: number; clarity: number; cta: number; production: number; overall: number } | null
+  scores: { hook: number; clarity: number; cta: number; production: number; overall: number } | null,
+  userContext?: string
 ): Promise<string[]> {
   if (!scores) return [];
 
@@ -23,11 +24,13 @@ export async function generateImprovements(
     .map(([key, val]) => `${key}: ${val}/10`)
     .join(", ");
 
+  const contextBlock = userContext ? `\n\n${userContext}\n\nEvery improvement must be specific to the user's niche and platform. Do NOT give generic advice.` : "";
+
   const client = getClient();
   const message = await client.messages.create({
     model: CLAUDE_MODEL,
     max_tokens: 1024,
-    system: `You are a senior performance marketing creative strategist. You write short, specific, actionable improvement suggestions for video ads. Each suggestion should be 1-2 sentences max. Focus on the weakest scoring areas. No fluff, no preamble.`,
+    system: `You are a senior performance marketing creative strategist. You write short, specific, actionable improvement suggestions for video ads. Each suggestion should be 1-2 sentences max. Focus on the weakest scoring areas. No fluff, no preamble.${contextBlock}`,
     messages: [
       {
         role: "user",
@@ -47,13 +50,16 @@ export async function generateImprovements(
 
 export async function generateBriefWithClaude(
   analysisMarkdown: string,
-  filename: string
+  filename: string,
+  userContext?: string
 ): Promise<string> {
+  const contextBlock = userContext ? `\n\n${userContext}\n\nStructure this brief specifically for the user's niche and platform. Use relevant industry terminology and platform best practices.` : "";
+
   const client = getClient();
   const message = await client.messages.create({
     model: CLAUDE_MODEL,
     max_tokens: 2048,
-    system: `You are a senior creative strategist at a top performance marketing agency. You write tight, actionable creative briefs that creative teams can execute immediately. Your briefs are specific to the ad analyzed — not generic templates.`,
+    system: `You are a senior creative strategist at a top performance marketing agency. You write tight, actionable creative briefs that creative teams can execute immediately. Your briefs are specific to the ad analyzed — not generic templates.${contextBlock}`,
     messages: [
       {
         role: "user",
@@ -96,13 +102,16 @@ ${analysisMarkdown}`,
 
 export async function generateCTARewrites(
   currentCTA: string,
-  productContext: string
+  productContext: string,
+  userContext?: string
 ): Promise<string[]> {
+  const contextBlock = userContext ? `\n\n${userContext}\n\nOptimize CTAs specifically for the user's platform and niche. Match the tone and conversion patterns that work for their specific context.` : "";
+
   const client = getClient();
   const message = await client.messages.create({
     model: CLAUDE_MODEL,
     max_tokens: 512,
-    system: `You are a direct-response copywriter. You write short, punchy CTAs for paid social ads. Each CTA should be under 8 words. Focus on urgency, clarity, and conversion.`,
+    system: `You are a direct-response copywriter. You write short, punchy CTAs for paid social ads. Each CTA should be under 8 words. Focus on urgency, clarity, and conversion.${contextBlock}`,
     messages: [
       {
         role: "user",
@@ -140,7 +149,8 @@ export async function generateSecondEyeReview(
   analysisMarkdown: string,
   fileName: string,
   scores?: { hook: number; overall: number },
-  improvements?: string[]
+  improvements?: string[],
+  userContext?: string
 ): Promise<SecondEyeResult> {
   const client = getClient();
 
@@ -150,6 +160,8 @@ export async function generateSecondEyeReview(
     ? improvements.join("; ")
     : "none provided";
 
+  const contextBlock = userContext ? `\n\nAdditional context about who made this ad:\n${userContext}\nApply fresh-viewer expectations specific to how people actually scroll this platform. Your timestamped flags should reference what this niche's target customer would do at each moment.` : "";
+
   const message = await client.messages.create({
     model: CLAUDE_MODEL,
     max_tokens: 2048,
@@ -158,7 +170,7 @@ You are a slightly bored person scrolling through your feed on your phone.
 You have never seen this brand before. You have no loyalty to it.
 You will give this video about 2 seconds before deciding to scroll past.
 The creator has been staring at this video for days and is blind to its problems.
-Your job is to catch everything they can't see anymore.
+Your job is to catch everything they can't see anymore.${contextBlock}
 
 Do NOT give general advice. Be specific. Be honest. Be ruthless.
 Every flag must have a timestamp.
@@ -394,7 +406,8 @@ export async function generateStaticSecondEye(
   analysisMarkdown: string,
   fileName: string,
   scores?: { overall: number; cta: number },
-  improvements?: string[]
+  improvements?: string[],
+  userContext?: string
 ): Promise<StaticSecondEyeResult> {
   const client = getClient();
 
@@ -404,6 +417,8 @@ export async function generateStaticSecondEye(
     ? improvements.join(", ")
     : "none provided";
 
+  const contextBlock = userContext ? `\n\n${userContext}\nReview this design with the user's niche and platform context in mind. Design standards vary by industry — apply the right expectations.` : "";
+
   const message = await client.messages.create({
     model: CLAUDE_MODEL,
     max_tokens: 2048,
@@ -411,7 +426,7 @@ export async function generateStaticSecondEye(
 The creator has been staring at it for hours and is blind to the small things that make it look unpolished.
 Your job: find every design and typography issue.
 Be specific. Be technical. Be ruthless.
-Think like someone who notices bad kerning immediately.
+Think like someone who notices bad kerning immediately.${contextBlock}
 
 Review these areas:
 

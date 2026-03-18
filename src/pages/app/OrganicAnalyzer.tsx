@@ -26,6 +26,7 @@ import { createShare } from "../../services/shareService";
 import { saveAnalysis } from "../../services/historyService";
 import type { AnalysisRecord } from "../../services/historyService";
 import { checkShareLimit, incrementShareCount } from "../../utils/rateLimiter";
+import { getUserContext, formatUserContextBlock } from "../../services/userContextService";
 import type { AppSharedContext } from "../../components/AppLayout";
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY ?? "";
@@ -155,6 +156,12 @@ export default function OrganicAnalyzer() {
     onUpgradeRequired, registerCallbacks,
   } = useOutletContext<AppSharedContext>();
 
+  // ── User context for personalized AI ──────────────────────────────────────
+  const [userContext, setUserContext] = useState<string>('')
+  useEffect(() => {
+    getUserContext().then(ctx => setUserContext(formatUserContextBlock(ctx)))
+  }, [])
+
   const [platform, setPlatform] = useState<Platform>("all");
   const [secondEye, setSecondEye] = useState(false);
   const [secondEyeOutput, setSecondEyeOutput] = useState<SecondEyeResult | null>(null);
@@ -228,7 +235,8 @@ export default function OrganicAnalyzer() {
             result.markdown,
             result.fileName,
             result.scores ? { hook: result.scores.hook, overall: result.scores.overall } : undefined,
-            result.improvements
+            result.improvements,
+            userContext || undefined
           );
           setSecondEyeOutput(output);
         } catch (err) {
@@ -318,7 +326,7 @@ export default function OrganicAnalyzer() {
   // NOTE: handleAnalyze declared before the auto-analyze useEffect
   const handleAnalyze = useCallback(async () => {
     if (!file || isAnalyzing || !canAnalyze) return;
-    await analyze(file, API_KEY, contextPrefix);
+    await analyze(file, API_KEY, contextPrefix, userContext || undefined);
   }, [file, isAnalyzing, canAnalyze, analyze, contextPrefix]);
 
   useEffect(() => {
@@ -386,7 +394,7 @@ export default function OrganicAnalyzer() {
     if (!activeResult || briefLoading) return;
     setBriefLoading(true); setBriefError(null);
     try {
-      const r = await generateBriefWithClaude(activeResult.markdown, activeResult.fileName);
+      const r = await generateBriefWithClaude(activeResult.markdown, activeResult.fileName, userContext || undefined);
       setBrief(r); setRightTab("brief");
     } catch {
       try { const r = await generateBrief(activeResult.markdown, API_KEY); setBrief(r); setRightTab("brief"); }
@@ -399,7 +407,7 @@ export default function OrganicAnalyzer() {
     setCtaLoading(true);
     try {
       const ctaSection = activeResult.markdown.match(/CTA[\s\S]*?(?=\n##|\n---)/i)?.[0] ?? "";
-      setCtaRewrites(await generateCTARewrites(ctaSection, activeResult.fileName));
+      setCtaRewrites(await generateCTARewrites(ctaSection, activeResult.fileName, userContext || undefined));
     } catch (err) {
       console.error('CTA rewrite failed:', err);
       setRateLimitError('CTA rewrite failed. Please try again.');

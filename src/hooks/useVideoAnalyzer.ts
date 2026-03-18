@@ -18,7 +18,7 @@ interface UseVideoAnalyzerReturn {
   error: string | null;
 
   // Actions
-  analyze: (file: File, apiKey: string, contextPrefix?: string) => Promise<void>;
+  analyze: (file: File, apiKey: string, contextPrefix?: string, userContext?: string) => Promise<void>;
   download: () => void;
   copy: () => Promise<void>;
   reset: () => void;
@@ -30,7 +30,7 @@ export function useVideoAnalyzer(): UseVideoAnalyzerReturn {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const analyze = useCallback(async (file: File, apiKey: string, contextPrefix?: string) => {
+  const analyze = useCallback(async (file: File, apiKey: string, contextPrefix?: string, userContext?: string) => {
     setError(null);
     setResult(null);
 
@@ -38,7 +38,7 @@ export function useVideoAnalyzer(): UseVideoAnalyzerReturn {
       const analysis = await analyzeVideo(file, apiKey, (s, msg) => {
         setStatus(s);
         setStatusMessage(msg ?? "");
-      }, contextPrefix);
+      }, contextPrefix, userContext);
       setResult(analysis);
     } catch (err) {
       setStatus("error");
