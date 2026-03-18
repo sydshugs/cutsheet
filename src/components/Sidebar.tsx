@@ -38,7 +38,7 @@ const ANALYZE: NavItem[] = [
 
 const COMPARE: NavItem[] = [
   { label: "A/B Test",   sublabel: "Test variants",      path: "/app/ab-test",    icon: GitBranch },
-  { label: "Competitor", sublabel: "Your ad vs theirs",  path: "/app/competitor", icon: Swords, comingSoon: true },
+  { label: "Competitor", sublabel: "Your ad vs theirs",  path: "/app/competitor", icon: Swords },
   { label: "Batch",      sublabel: "Score up to 10",     path: "/app/batch",      icon: LayoutGrid },
 ];
 
