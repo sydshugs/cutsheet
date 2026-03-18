@@ -26,6 +26,7 @@ import OrganicAnalyzer from "./pages/app/OrganicAnalyzer.tsx";
 import ABTestPage from "./pages/app/ABTestPage.tsx";
 import BatchPage from "./pages/app/BatchPage.tsx";
 import SwipeFilePage from "./pages/app/SwipeFilePage.tsx";
+import CompetitorAnalyzer from "./pages/app/CompetitorAnalyzer.tsx";
 import ComingSoon from "./components/ComingSoon.tsx";
 import "./index.css";
 import { Monitor, Swords } from "lucide-react";
@@ -81,16 +82,7 @@ createRoot(document.getElementById("root")!).render(
               }
             />
             <Route path="/app/ab-test" element={<ABTestPage />} />
-            <Route
-              path="/app/competitor"
-              element={
-                <ComingSoon
-                  title="Competitor Analysis"
-                  description="Upload your ad alongside a competitor's. Get a scored gap analysis and action plan to outperform them."
-                  icon={Swords}
-                />
-              }
-            />
+            <Route path="/app/competitor" element={<CompetitorAnalyzer />} />
             <Route path="/app/batch" element={<BatchPage />} />
             <Route path="/app/swipe-file" element={<SwipeFilePage />} />
           </Route>
