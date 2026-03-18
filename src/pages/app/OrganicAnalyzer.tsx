@@ -192,7 +192,7 @@ export default function OrganicAnalyzer() {
 
   // ── Organic context prefix (always prepended) ─────────────────────────────
   const platformLabel = platform === "all" ? "all platforms" : platform;
-  const contextPrefix = `This is an ORGANIC content video (not a paid ad).\nScore for: entertainment value, native feel, retention curve, shareability, and algorithm signals for ${platformLabel}.\nDo NOT apply paid ad scoring criteria.\nScore as if a viewer found this organically on their feed.`;
+  const contextPrefix = `This is an ORGANIC content video (not a paid ad).\nScore for: entertainment value, native feel, retention curve, shareability, and algorithm signals for ${platformLabel}.\nDo NOT apply paid ad scoring criteria.\nScore as if a viewer found this organically on their feed.\nDo NOT include a budget recommendation. This is organic content — there is no ad spend.`;
 
   const handleReset = useCallback(() => {
     setFile(null);
@@ -504,7 +504,6 @@ export default function OrganicAnalyzer() {
               <ScoreCard
                 scores={activeResult.scores}
                 improvements={activeResult.improvements}
-                budget={activeResult.budget}
                 hashtags={activeResult.hashtags}
                 scenes={activeResult.scenes}
                 fileName={activeResult.fileName}
