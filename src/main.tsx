@@ -16,6 +16,7 @@ import Welcome from "./pages/Welcome.tsx";
 import Upgrade from "./pages/Upgrade.tsx";
 import CheckoutSuccess from "./pages/CheckoutSuccess.tsx";
 import CheckoutCancel from "./pages/CheckoutCancel.tsx";
+import Changelog from "./pages/Changelog.tsx";
 import { AuthProvider } from "./context/AuthContext.tsx";
 import { ProtectedRoute } from "./components/ProtectedRoute.tsx";
 import { Settings } from "./pages/Settings.tsx";
@@ -59,6 +60,7 @@ createRoot(document.getElementById("root")!).render(
           <Route path="/checkout/success" element={<CheckoutSuccess />} />
           <Route path="/checkout/cancel" element={<CheckoutCancel />} />
           <Route path="/demo" element={<Suspense fallback={null}><DemoPage /></Suspense>} />
+          <Route path="/changelog" element={<Changelog />} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
 
           {/* Protected /app/* layout */}

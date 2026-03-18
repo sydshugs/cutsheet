@@ -30,6 +30,12 @@ export default function CutsheetFooter() {
             >
               Terms
             </Link>
+            <Link
+              to="/changelog"
+              className="text-xs text-zinc-500 transition-colors hover:text-zinc-300"
+            >
+              Changelog
+            </Link>
             <a
               href="mailto:hello@cutsheet.ai"
               className="text-xs text-zinc-500 transition-colors hover:text-zinc-300"
