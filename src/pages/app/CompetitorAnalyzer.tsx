@@ -143,18 +143,21 @@ function MetaSearch({ onFileSelect }: { onFileSelect: (f: File) => void }) {
     if (!query.trim() || searching || !META_TOKEN) return;
     setSearching(true); setSearchError(null); setResults([]); setHasSearched(true);
     try {
-      const params = new URLSearchParams({
-        access_token: META_TOKEN,
-        ad_reached_countries: JSON.stringify(["US"]),
-        search_terms: query.trim(),
-        ad_type: "ALL",
-        publisher_platforms: JSON.stringify(["FACEBOOK", "INSTAGRAM"]),
-        fields: "id,ad_creative_bodies,ad_creative_link_titles,ad_snapshot_url,page_name,ad_delivery_start_time",
-        limit: "12",
-      });
-      const res = await fetch(`https://graph.facebook.com/v19.0/ads_archive?${params.toString()}`);
+      const url = new URL("https://graph.facebook.com/v19.0/ads_archive");
+      url.searchParams.append("access_token", META_TOKEN);
+      url.searchParams.append("ad_reached_countries", "US");
+      url.searchParams.append("search_terms", query.trim());
+      url.searchParams.append("ad_type", "ALL");
+      url.searchParams.append("publisher_platforms", "facebook");
+      url.searchParams.append("publisher_platforms", "instagram");
+      url.searchParams.append("fields", "id,ad_creative_bodies,ad_creative_link_titles,ad_snapshot_url,page_name");
+      url.searchParams.append("limit", "12");
+      const res = await fetch(url.toString());
       const data = await res.json();
-      if (data.error) { console.error("Meta API error:", data.error); throw new Error(data.error.message); }
+      if (!res.ok || data.error) {
+        console.error("Meta API error:", JSON.stringify(data.error, null, 2));
+        throw new Error(data.error?.message || "Meta API request failed");
+      }
       setResults(data.data || []);
     } catch (err) { setSearchError(err instanceof Error ? err.message : "Search failed"); }
     finally { setSearching(false); }
