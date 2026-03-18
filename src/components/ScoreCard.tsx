@@ -1,6 +1,7 @@
 // ScoreCard.tsx — Visual translation from #screen-results (prototype)
 
 import { useEffect, useState } from "react";
+import { Copy, CheckCircle } from "lucide-react";
 import type { BudgetRecommendation, Hashtags } from "../services/analyzerService";
 
 interface Scores {
@@ -116,6 +117,57 @@ export function ScoreCard({
     return () => clearInterval(interval);
   }, [analysisTime]);
 
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    const lines: string[] = [];
+    lines.push(`--- CUTSHEET ANALYSIS — ${fileName || "Ad Creative"} ---`);
+    lines.push(`Overall Score: ${scores.overall}/10 ⭐`);
+    lines.push("");
+    lines.push(`Hook Strength: ${scores.hook}/10`);
+    lines.push(`Message Clarity: ${scores.clarity}/10`);
+    lines.push(`CTA Effectiveness: ${scores.cta}/10`);
+    lines.push(`Production: ${scores.production}/10`);
+
+    if (improvements && improvements.length > 0) {
+      lines.push("");
+      lines.push("IMPROVEMENTS:");
+      improvements.forEach((imp) => lines.push(`• ${imp}`));
+    }
+
+    if (ctaRewrites && ctaRewrites.length > 0) {
+      lines.push("");
+      lines.push(`CTA REWRITE: "${ctaRewrites[0]}"`);
+    }
+
+    if (budget) {
+      lines.push("");
+      lines.push(`BUDGET: ${budget.verdict} — ${budget.daily}/day on ${budget.platform} for ${budget.duration}`);
+    }
+
+    lines.push("");
+    lines.push("Scored by Cutsheet — cutsheet.xyz");
+    lines.push("---");
+
+    const text = lines.join("\n");
+
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   const overallColor = getScoreColorByValue(scores.overall);
   const badgeClasses = getScoreBadgeClasses(scores.overall);
 
@@ -129,7 +181,35 @@ export function ScoreCard({
             <span className="text-xs text-zinc-600">{relativeTime}</span>
           )}
         </div>
-        <span className="text-xs text-zinc-600 font-mono">{modelName}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-zinc-600 font-mono">{modelName}</span>
+          <button
+            onClick={handleCopy}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 6,
+              background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: 8, padding: "6px 12px", fontSize: 12, cursor: "pointer",
+              color: copied ? "#10b981" : "#a1a1aa",
+              borderColor: copied ? "rgba(16,185,129,0.3)" : "rgba(255,255,255,0.08)",
+              transition: "all 0.15s ease",
+            }}
+            onMouseEnter={(e) => {
+              if (!copied) {
+                (e.currentTarget as HTMLButtonElement).style.color = "#f4f4f5";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.16)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!copied) {
+                (e.currentTarget as HTMLButtonElement).style.color = "#a1a1aa";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.08)";
+              }
+            }}
+          >
+            {copied ? <CheckCircle size={13} /> : <Copy size={13} />}
+            {copied ? "Copied!" : "Copy results"}
+          </button>
+        </div>
       </div>
 
       {/* Arc gauge */}
