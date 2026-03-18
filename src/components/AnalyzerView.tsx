@@ -96,11 +96,22 @@ export function AnalyzerView({
 
       {status === "complete" && result && (
         <div key="complete">
-          {/* Mini dropzone — drop a new creative to start over */}
+          <ReportCards
+            file={file}
+            markdown={result.markdown}
+            thumbnailDataUrl={thumbnailDataUrl}
+            onCopy={onCopy}
+            onExportPdf={onExportPdf}
+            onShare={onShare}
+            copied={copied}
+            shareLoading={shareLoading}
+          />
+
+          {/* Mini dropzone — below the media + report */}
           <div
             style={{
               margin: "16px 16px 0",
-              height: 80,
+              height: 64,
               border: "1px dashed rgba(255,255,255,0.1)",
               borderRadius: 10,
               display: "flex",
@@ -148,17 +159,6 @@ export function AnalyzerView({
               Drop new creative or click to browse
             </span>
           </div>
-
-          <ReportCards
-            file={file}
-            markdown={result.markdown}
-            thumbnailDataUrl={thumbnailDataUrl}
-            onCopy={onCopy}
-            onExportPdf={onExportPdf}
-            onShare={onShare}
-            copied={copied}
-            shareLoading={shareLoading}
-          />
         </div>
       )}
     </AnimatePresence>
