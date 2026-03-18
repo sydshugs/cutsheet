@@ -2,7 +2,7 @@
 import { Helmet } from 'react-helmet-async';
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useOutletContext } from "react-router-dom";
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, RotateCcw } from "lucide-react";
 import { AnalyzerView } from "../../components/AnalyzerView";
 import { ScoreCard } from "../../components/ScoreCard";
 import { VideoDropzone } from "../../components/VideoDropzone";
@@ -141,6 +141,7 @@ function OrganicEmptyState({
       <div style={{ width: "100%", maxWidth: 520, marginTop: 32 }}>
         <VideoDropzone onFileSelect={onFileSelect} file={null} onUrlSubmit={onUrlSubmit} acceptImages />
       </div>
+      <p style={{ fontSize: 11, color: "#52525b", marginTop: 12 }}>or press &#8984;K</p>
     </div>
   );
 }
@@ -210,13 +211,6 @@ export default function OrganicAnalyzer() {
     setPlatformScores([]);
     setPlatformScoresLoading(false);
   }, [reset]);
-
-  useEffect(() => {
-    registerCallbacks({
-      onNewAnalysis: handleReset,
-      onHistoryOpen: () => setHistoryOpen(true),
-    });
-  }, [registerCallbacks, handleReset]);
 
   useEffect(() => {
     if (status === "complete") setAnalysisCompletedAt(new Date());
@@ -363,6 +357,14 @@ export default function OrganicAnalyzer() {
 
   const effectiveStatus = (loadedEntry || loadedFromHistory) ? "complete" : status;
   const showRightPanel = effectiveStatus === "complete" && activeResult !== null;
+
+  useEffect(() => {
+    registerCallbacks({
+      onNewAnalysis: handleReset,
+      onHistoryOpen: () => setHistoryOpen(true),
+      hasResult: showRightPanel,
+    });
+  }, [registerCallbacks, handleReset, showRightPanel]);
 
   const handleCopy = async () => {
     if (loadedEntry) await copyToClipboard(loadedEntry.markdown); else await copy();
@@ -568,6 +570,44 @@ export default function OrganicAnalyzer() {
                 </div>
               </>
             )}
+          </div>
+        )}
+
+        {/* Analyze another — always at bottom of right panel */}
+        {showRightPanel && (
+          <div style={{ padding: "12px 16px 16px" }}>
+            <button
+              type="button"
+              onClick={handleReset}
+              style={{
+                width: "100%",
+                height: 44,
+                background: "transparent",
+                border: "1px solid rgba(255,255,255,0.08)",
+                borderRadius: 10,
+                color: "#71717a",
+                fontSize: 13,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 6,
+                transition: "all 150ms",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+                e.currentTarget.style.color = "#a1a1aa";
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.14)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "transparent";
+                e.currentTarget.style.color = "#71717a";
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
+              }}
+            >
+              <RotateCcw size={14} />
+              Analyze another creative
+            </button>
           </div>
         )}
       </div>

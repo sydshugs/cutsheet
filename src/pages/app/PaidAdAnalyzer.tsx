@@ -2,7 +2,7 @@
 import { Helmet } from 'react-helmet-async';
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useOutletContext } from "react-router-dom";
-import { Zap } from "lucide-react";
+import { Zap, RotateCcw } from "lucide-react";
 import { AnalyzerView } from "../../components/AnalyzerView";
 import { ScoreCard } from "../../components/ScoreCard";
 import { VideoDropzone } from "../../components/VideoDropzone";
@@ -213,6 +213,7 @@ function PaidEmptyState({
       <div style={{ width: "100%", maxWidth: 520, marginTop: 32 }}>
         <VideoDropzone onFileSelect={onFileSelect} file={null} onUrlSubmit={onUrlSubmit} acceptImages />
       </div>
+      <p style={{ fontSize: 11, color: "#52525b", marginTop: 12 }}>or press &#8984;K</p>
     </div>
   );
 }
@@ -285,12 +286,6 @@ export default function PaidAdAnalyzer() {
     setStaticSecondEyeLoading(false);
   }, [reset]);
 
-  useEffect(() => {
-    registerCallbacks({
-      onNewAnalysis: handleReset,
-      onHistoryOpen: () => setHistoryOpen(true),
-    });
-  }, [registerCallbacks, handleReset]);
 
   // ── Build context prefix for Gemini prompt ────────────────────────────────
   const contextPrefix =
@@ -446,6 +441,15 @@ export default function PaidAdAnalyzer() {
 
   const effectiveStatus = (loadedEntry || loadedFromHistory) ? ("complete" as const) : status;
   const showRightPanel = effectiveStatus === "complete" && activeResult !== null;
+
+  // Report hasResult to TopBar via AppLayout
+  useEffect(() => {
+    registerCallbacks({
+      onNewAnalysis: handleReset,
+      onHistoryOpen: () => setHistoryOpen(true),
+      hasResult: showRightPanel,
+    });
+  }, [registerCallbacks, handleReset, showRightPanel]);
 
   const handleCopy = async () => {
     if (activeResult) await copyToClipboard(activeResult.markdown);
@@ -718,6 +722,44 @@ export default function PaidAdAnalyzer() {
                 </div>
               </>
             )}
+          </div>
+        )}
+
+        {/* Analyze another — always at bottom of right panel */}
+        {showRightPanel && (
+          <div style={{ padding: "12px 16px 16px" }}>
+            <button
+              type="button"
+              onClick={handleReset}
+              style={{
+                width: "100%",
+                height: 44,
+                background: "transparent",
+                border: "1px solid rgba(255,255,255,0.08)",
+                borderRadius: 10,
+                color: "#71717a",
+                fontSize: 13,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 6,
+                transition: "all 150ms",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+                e.currentTarget.style.color = "#a1a1aa";
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.14)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "transparent";
+                e.currentTarget.style.color = "#71717a";
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
+              }}
+            >
+              <RotateCcw size={14} />
+              Analyze another creative
+            </button>
           </div>
         )}
       </div>

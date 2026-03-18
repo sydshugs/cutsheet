@@ -1,7 +1,8 @@
 // TopBar.tsx — top bar for the main content area
 
 import { useEffect, useRef, useState } from "react";
-import { Clock, Menu, Plus, Search } from "lucide-react";
+import { Clock, Menu, Plus, RotateCcw, Search } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface TopBarProps {
   onNewAnalysis: () => void;
@@ -10,6 +11,7 @@ interface TopBarProps {
   showMobileMenu?: boolean;
   userName?: string;
   userPlan?: string;
+  hasResult?: boolean;
 }
 
 export function TopBar({
@@ -18,6 +20,7 @@ export function TopBar({
   onMobileMenuToggle,
   userName,
   userPlan,
+  hasResult,
 }: TopBarProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -82,14 +85,57 @@ export function TopBar({
         <Clock size={18} />
       </button>
 
-      {/* New Analysis button */}
-      <button
-        className="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl px-4 py-2 flex items-center gap-1.5 transition-colors"
-        onClick={onNewAnalysis}
-      >
-        <Plus size={16} />
-        New Analysis
-      </button>
+      {/* New Analysis button — changes style when result exists */}
+      <AnimatePresence mode="wait">
+        {hasResult ? (
+          <motion.button
+            key="reset"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            onClick={onNewAnalysis}
+            style={{
+              background: "rgba(99,102,241,0.1)",
+              border: "1px solid rgba(99,102,241,0.3)",
+              color: "#818cf8",
+              fontSize: 13,
+              fontWeight: 500,
+              borderRadius: 9999,
+              padding: "6px 14px",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              cursor: "pointer",
+              transition: "all 150ms",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "rgba(99,102,241,0.2)";
+              e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "rgba(99,102,241,0.1)";
+              e.currentTarget.style.borderColor = "rgba(99,102,241,0.3)";
+            }}
+          >
+            <RotateCcw size={14} />
+            New Analysis
+          </motion.button>
+        ) : (
+          <motion.button
+            key="new"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl px-4 py-2 flex items-center gap-1.5 transition-colors cursor-pointer"
+            onClick={onNewAnalysis}
+          >
+            <Plus size={16} />
+            New Analysis
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       {/* Profile avatar + dropdown */}
       <div className="relative" ref={dropdownRef}>
