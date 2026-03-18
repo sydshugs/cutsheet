@@ -128,10 +128,10 @@ function OrganicEmptyState({
         ))}
       </div>
       <p style={{ fontSize: 14, color: "#71717a", textAlign: "center", maxWidth: 320, marginTop: 14, lineHeight: 1.6 }}>
-        Upload your TikTok, Reel, or YouTube Short. Get scored on retention, shareability, and algorithm signals.
+        Upload your TikTok, Reel, YouTube Short, or static post. Get scored on retention, shareability, and algorithm signals.
       </p>
       <div style={{ width: "100%", maxWidth: 520, marginTop: 32 }}>
-        <VideoDropzone onFileSelect={onFileSelect} file={null} onUrlSubmit={onUrlSubmit} />
+        <VideoDropzone onFileSelect={onFileSelect} file={null} onUrlSubmit={onUrlSubmit} acceptImages />
       </div>
     </div>
   );

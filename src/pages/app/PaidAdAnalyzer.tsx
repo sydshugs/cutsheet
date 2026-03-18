@@ -15,7 +15,11 @@ import {
   parseImprovements, parseBudget, parseHashtags,
   type AnalysisResult,
 } from "../../services/analyzerService";
-import { generateBriefWithClaude, generateCTARewrites } from "../../services/claudeService";
+import {
+  generateBriefWithClaude, generateCTARewrites, generateSecondEyeReview,
+  type SecondEyeResult,
+} from "../../services/claudeService";
+import { SecondEyePanel } from "../../components/SecondEyePanel";
 import { createShare } from "../../services/shareService";
 import { saveAnalysis } from "../../services/historyService";
 import type { AnalysisRecord } from "../../services/historyService";
@@ -40,10 +44,11 @@ const STATUS_COPY = {
 // ─── INTENT HEADER ────────────────────────────────────────────────────────────
 
 function IntentHeader({
-  platform, setPlatform, format, setFormat,
+  platform, setPlatform, format, setFormat, secondEye, setSecondEye,
 }: {
   platform: Platform; setPlatform: (p: Platform) => void;
   format: Format; setFormat: (f: Format) => void;
+  secondEye: boolean; setSecondEye: (v: boolean) => void;
 }) {
   return (
     <div
@@ -51,53 +56,84 @@ function IntentHeader({
         padding: "12px 24px",
         borderBottom: "1px solid rgba(255,255,255,0.06)",
         display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap",
+        justifyContent: "space-between",
       }}
     >
-      <span style={{ fontSize: 13, color: "#52525b", flexShrink: 0 }}>Analyzing for:</span>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+        <span style={{ fontSize: 13, color: "#52525b", flexShrink: 0 }}>Analyzing for:</span>
 
-      {/* Platform pills */}
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-        {PLATFORMS.map((p) => (
-          <button
-            key={p}
-            type="button"
-            onClick={() => setPlatform(p)}
-            style={{
-              height: 30, padding: "0 12px", borderRadius: 9999, fontSize: 13, cursor: "pointer",
-              background: platform === p ? "#6366f1" : "rgba(255,255,255,0.04)",
-              border: `1px solid ${platform === p ? "#6366f1" : "rgba(255,255,255,0.08)"}`,
-              color: platform === p ? "white" : "#71717a",
-              fontWeight: platform === p ? 500 : 400,
-              transition: "all 150ms",
-            }}
-          >
-            {p === "all" ? "All" : p}
-          </button>
-        ))}
+        {/* Platform pills */}
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          {PLATFORMS.map((p) => (
+            <button
+              key={p}
+              type="button"
+              onClick={() => setPlatform(p)}
+              style={{
+                height: 30, padding: "0 12px", borderRadius: 9999, fontSize: 13, cursor: "pointer",
+                background: platform === p ? "#6366f1" : "rgba(255,255,255,0.04)",
+                border: `1px solid ${platform === p ? "#6366f1" : "rgba(255,255,255,0.08)"}`,
+                color: platform === p ? "white" : "#71717a",
+                fontWeight: platform === p ? 500 : 400,
+                transition: "all 150ms",
+              }}
+            >
+              {p === "all" ? "All" : p}
+            </button>
+          ))}
+        </div>
+
+        {/* Divider */}
+        <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.08)", flexShrink: 0 }} />
+
+        {/* Format pills */}
+        <div style={{ display: "flex", gap: 6 }}>
+          {FORMATS.map((f) => (
+            <button
+              key={f}
+              type="button"
+              onClick={() => setFormat(f)}
+              style={{
+                height: 30, padding: "0 12px", borderRadius: 9999, fontSize: 13, cursor: "pointer",
+                background: format === f ? "#6366f1" : "rgba(255,255,255,0.04)",
+                border: `1px solid ${format === f ? "#6366f1" : "rgba(255,255,255,0.08)"}`,
+                color: format === f ? "white" : "#71717a",
+                fontWeight: format === f ? 500 : 400,
+                transition: "all 150ms",
+              }}
+            >
+              {f.charAt(0).toUpperCase() + f.slice(1)}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Divider */}
-      <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.08)", flexShrink: 0 }} />
-
-      {/* Format pills */}
-      <div style={{ display: "flex", gap: 6 }}>
-        {FORMATS.map((f) => (
-          <button
-            key={f}
-            type="button"
-            onClick={() => setFormat(f)}
+      {/* Second Eye toggle */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+          <span style={{ fontSize: 13, color: "#a1a1aa" }}>Second Eye</span>
+          {secondEye && (
+            <span style={{ fontSize: 11, color: "#52525b" }}>Fresh first-time viewer perspective</span>
+          )}
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={secondEye}
+          onClick={() => setSecondEye(!secondEye)}
+          style={{
+            width: 40, height: 22, borderRadius: 11, border: "none", cursor: "pointer",
+            background: secondEye ? "#6366f1" : "#27272a",
+            position: "relative", transition: "background 200ms", flexShrink: 0,
+          }}
+        >
+          <div
             style={{
-              height: 30, padding: "0 12px", borderRadius: 9999, fontSize: 13, cursor: "pointer",
-              background: format === f ? "#6366f1" : "rgba(255,255,255,0.04)",
-              border: `1px solid ${format === f ? "#6366f1" : "rgba(255,255,255,0.08)"}`,
-              color: format === f ? "white" : "#71717a",
-              fontWeight: format === f ? 500 : 400,
-              transition: "all 150ms",
+              position: "absolute", top: 2, width: 18, height: 18, borderRadius: "50%", background: "white",
+              left: secondEye ? 20 : 2, transition: "left 200ms cubic-bezier(0.16,1,0.3,1)",
             }}
-          >
-            {f.charAt(0).toUpperCase() + f.slice(1)}
-          </button>
-        ))}
+          />
+        </button>
       </div>
     </div>
   );
@@ -152,9 +188,12 @@ export default function PaidAdAnalyzer() {
     onUpgradeRequired, registerCallbacks,
   } = useOutletContext<AppSharedContext>();
 
-  // ── Platform / format state ────────────────────────────────────────────────
+  // ── Platform / format / second eye state ───────────────────────────────────
   const [platform, setPlatform] = useState<Platform>("all");
   const [format, setFormat] = useState<Format>("video");
+  const [secondEye, setSecondEye] = useState(false);
+  const [secondEyeOutput, setSecondEyeOutput] = useState<SecondEyeResult | null>(null);
+  const [secondEyeLoading, setSecondEyeLoading] = useState(false);
 
   // ── Local analyzer state ───────────────────────────────────────────────────
   const [file, setFile] = useState<File | null>(null);
@@ -199,6 +238,8 @@ export default function PaidAdAnalyzer() {
     setCtaRewrites(null);
     setCtaLoading(false);
     setRightTab("analysis");
+    setSecondEyeOutput(null);
+    setSecondEyeLoading(false);
   }, [reset]);
 
   useEffect(() => {
@@ -255,12 +296,39 @@ export default function PaidAdAnalyzer() {
     }
   }, [status, result, addHistoryEntry, increment, isPro, FREE_LIMIT, onUpgradeRequired, thumbnailDataUrl]); // eslint-disable-line
 
+  // Second Eye trigger: fires when analysis completes and secondEye is on
+  useEffect(() => {
+    if (status === "complete" && result && secondEye) {
+      if (secondEyeLoading) return;
+      const run = async () => {
+        setSecondEyeLoading(true);
+        setSecondEyeOutput(null);
+        try {
+          const output = await generateSecondEyeReview(
+            result.markdown,
+            result.fileName,
+            result.scores ? { hook: result.scores.hook, overall: result.scores.overall } : undefined,
+            result.improvements
+          );
+          setSecondEyeOutput(output);
+        } catch (err) {
+          console.error('Second Eye failed:', err);
+          setSecondEyeOutput(null);
+        } finally {
+          setSecondEyeLoading(false);
+        }
+      };
+      run();
+    }
+  }, [status, result, secondEye]); // eslint-disable-line
+
   useEffect(() => {
     if (status === "uploading") {
       setLoadedEntry(null);
       setBrief(null);
       setBriefError(null);
       setRightTab("analysis");
+      setSecondEyeOutput(null);
     }
   }, [status]);
 
@@ -434,7 +502,7 @@ export default function PaidAdAnalyzer() {
       </Helmet>
       {/* Main content */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        <IntentHeader platform={platform} setPlatform={setPlatform} format={format} setFormat={setFormat} />
+        <IntentHeader platform={platform} setPlatform={setPlatform} format={format} setFormat={setFormat} secondEye={secondEye} setSecondEye={setSecondEye} />
 
         <div className="flex-1 overflow-auto">
           {status === "idle" && !loadedEntry ? (
@@ -480,30 +548,37 @@ export default function PaidAdAnalyzer() {
         className={`shrink-0 bg-zinc-900/50 backdrop-blur-xl border-l border-white/5 overflow-y-auto overflow-x-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-white/5 ${showRightPanel ? "w-[340px] max-lg:w-full opacity-100" : "w-0 max-lg:w-0 opacity-0"}`}
       >
         {showRightPanel && activeResult?.scores && rightTab === "analysis" && (
-          <div ref={scorecardRef}>
-            <ScoreCard
-              scores={activeResult.scores}
-              improvements={activeResult.improvements}
-              budget={activeResult.budget}
-              hashtags={activeResult.hashtags}
-              scenes={activeResult.scenes}
-              fileName={activeResult.fileName}
-              analysisTime={analysisCompletedAt ?? undefined}
-              modelName="Gemini + Claude"
-              onGenerateBrief={handleGenerateBrief}
-              onAddToSwipeFile={handleAddToSwipeFile}
-              onCTARewrite={handleCTARewrite}
-              ctaRewrites={ctaRewrites}
-              ctaLoading={ctaLoading}
-              onShare={handleCopy}
-              isDark={true}
-              historyRefreshKey={historyRefreshKey}
-              onSelectHistory={(record) => {
-                setLoadedFromHistory(record);
-                setLoadedEntry(null);
-              }}
-            />
-          </div>
+          <>
+            <div ref={scorecardRef}>
+              <ScoreCard
+                scores={activeResult.scores}
+                improvements={activeResult.improvements}
+                budget={activeResult.budget}
+                hashtags={activeResult.hashtags}
+                scenes={activeResult.scenes}
+                fileName={activeResult.fileName}
+                analysisTime={analysisCompletedAt ?? undefined}
+                modelName="Gemini + Claude"
+                onGenerateBrief={handleGenerateBrief}
+                onAddToSwipeFile={handleAddToSwipeFile}
+                onCTARewrite={handleCTARewrite}
+                ctaRewrites={ctaRewrites}
+                ctaLoading={ctaLoading}
+                onShare={handleCopy}
+                isDark={true}
+                historyRefreshKey={historyRefreshKey}
+                onSelectHistory={(record) => {
+                  setLoadedFromHistory(record);
+                  setLoadedEntry(null);
+                }}
+              />
+            </div>
+            {/* Second Eye output below scorecard */}
+            {secondEye && (
+              <SecondEyePanel result={secondEyeOutput} loading={secondEyeLoading} />
+            )}
+          </>
+
         )}
 
         {showRightPanel && rightTab === "brief" && (
