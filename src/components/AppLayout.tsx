@@ -4,11 +4,13 @@ import { Outlet, useNavigate } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { UpgradeModal } from "./UpgradeModal";
+import KeyboardShortcutsModal from "./KeyboardShortcutsModal";
 import { useUsage } from "../hooks/useUsage";
 import { useHistory, type HistoryEntry } from "../hooks/useHistory";
 import { useSwipeFile, type SwipeItem } from "../hooks/useSwipeFile";
 import { useAuth } from "../context/AuthContext";
 import { themes } from "../theme";
+import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 
 // ─── OUTLET CONTEXT TYPE ─────────────────────────────────────────────────────
 
@@ -41,6 +43,9 @@ export default function AppLayout() {
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+
+  useKeyboardShortcuts(() => setShowShortcuts(true));
 
   // TopBar delegates to whichever page is currently mounted
   const onNewAnalysisRef = useRef<() => void>(() => navigate("/app/paid"));
@@ -85,6 +90,7 @@ export default function AppLayout() {
         isPro={isPro}
         usageCount={usageCount}
         FREE_LIMIT={FREE_LIMIT}
+        onShowShortcuts={() => setShowShortcuts(true)}
       />
 
       <div className="flex flex-col flex-1 min-w-0">
@@ -104,6 +110,7 @@ export default function AppLayout() {
       {showUpgradeModal && (
         <UpgradeModal onClose={() => setShowUpgradeModal(false)} t={themes.dark} />
       )}
+      <KeyboardShortcutsModal open={showShortcuts} onClose={() => setShowShortcuts(false)} />
     </div>
   );
 }

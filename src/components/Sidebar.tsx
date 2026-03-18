@@ -25,6 +25,7 @@ interface SidebarProps {
   isPro: boolean;
   usageCount: number;
   FREE_LIMIT: number;
+  onShowShortcuts?: () => void;
 }
 
 // ─── NAV CONFIG ───────────────────────────────────────────────────────────────
@@ -185,8 +186,8 @@ function NavItemRow({ item, collapsed }: { item: NavItem; collapsed: boolean }) 
 // ─── DESKTOP SIDEBAR ──────────────────────────────────────────────────────────
 
 function DesktopSidebar({
-  userEmail, isPro, usageCount, FREE_LIMIT,
-}: { userEmail: string; isPro: boolean; usageCount: number; FREE_LIMIT: number }) {
+  userEmail, isPro, usageCount, FREE_LIMIT, onShowShortcuts,
+}: { userEmail: string; isPro: boolean; usageCount: number; FREE_LIMIT: number; onShowShortcuts?: () => void }) {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -249,6 +250,25 @@ function DesktopSidebar({
       {/* Bottom */}
       <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "8px 0 12px", display: "flex", flexDirection: "column", gap: 2 }}>
         <UsageIndicator usageCount={usageCount} FREE_LIMIT={FREE_LIMIT} isPro={isPro} collapsed={collapsed} />
+
+        {/* Shortcuts hint — only visible when collapsed */}
+        {collapsed && onShowShortcuts && (
+          <div style={{ display: "flex", justifyContent: "center", margin: "0 8px 2px" }}>
+            <button
+              type="button"
+              onClick={onShowShortcuts}
+              aria-label="Keyboard shortcuts"
+              style={{
+                background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
+                borderRadius: 6, width: 28, height: 28, display: "flex", alignItems: "center",
+                justifyContent: "center", cursor: "pointer", color: "#71717a", fontSize: 12,
+                fontFamily: "monospace",
+              }}
+            >
+              ?
+            </button>
+          </div>
+        )}
 
         {/* Settings */}
         <button
@@ -380,11 +400,11 @@ function MobileMoreDrawer({ open, onClose }: { open: boolean; onClose: () => voi
 
 // ─── MAIN EXPORT ──────────────────────────────────────────────────────────────
 
-export function Sidebar({ mobileOpen: _mobileOpen, onMobileClose: _onMobileClose, userEmail, isPro, usageCount, FREE_LIMIT }: SidebarProps) {
+export function Sidebar({ mobileOpen: _mobileOpen, onMobileClose: _onMobileClose, userEmail, isPro, usageCount, FREE_LIMIT, onShowShortcuts }: SidebarProps) {
   const [moreOpen, setMoreOpen] = useState(false);
   return (
     <>
-      <DesktopSidebar userEmail={userEmail} isPro={isPro} usageCount={usageCount} FREE_LIMIT={FREE_LIMIT} />
+      <DesktopSidebar userEmail={userEmail} isPro={isPro} usageCount={usageCount} FREE_LIMIT={FREE_LIMIT} onShowShortcuts={onShowShortcuts} />
       <MobileTabBar onMoreClick={() => setMoreOpen(true)} />
       <MobileMoreDrawer open={moreOpen} onClose={() => setMoreOpen(false)} />
     </>
