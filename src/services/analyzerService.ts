@@ -88,6 +88,7 @@ Do NOT mention the user's role, niche, or platform explicitly in the Creative Ve
 ---
 
 ## 📊 QUICK SCORES
+Be consistent in your scoring. Apply the same rubric every time. A score of 8/10 means the same thing regardless of when you score it. Do not vary your scores based on phrasing variation.
 - Hook Strength: X/10
 - Message Clarity: X/10
 - CTA Effectiveness: X/10
@@ -199,6 +200,7 @@ Do NOT mention the user's role, niche, or platform explicitly. The verdict shoul
 ---
 
 ## 📊 QUICK SCORES
+Be consistent in your scoring. Apply the same rubric every time. A score of 8/10 means the same thing regardless of when you score it. Do not vary your scores based on phrasing variation.
 - Hook Strength: X/10 (visual impact and scroll-stop potential)
 - Message Clarity: X/10
 - CTA Effectiveness: X/10
@@ -461,7 +463,9 @@ export async function analyzeVideo(
       systemInstruction: SYSTEM_PROMPT,
       generationConfig: {
         maxOutputTokens: MAX_TOKENS,
-        temperature: 0.4, // low temp = consistent structured output
+        temperature: 0.1,
+        topP: 0.8,
+        topK: 40,
       },
     });
 
