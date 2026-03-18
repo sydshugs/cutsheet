@@ -79,16 +79,23 @@ Clean timestamped transcript of all spoken audio and on-screen text:
 ---
 
 ## 🧠 CREATIVE VERDICT
+IMPORTANT: Do not mention the user's role, niche, or platform in the Creative Verdict. Never say "as a designer", "for an agency", "for your YouTube audience" or any similar phrase. Write the verdict as expert analysis of the creative itself only.
 Three paragraphs written as a media buyer debriefing a creative team:
 1. What this ad does well and why it likely works (or doesn't)
 2. Who the target audience appears to be and whether the messaging matches them
 3. One specific, actionable recommendation to improve performance
-Do NOT mention the user's role, niche, or platform explicitly in the Creative Verdict. Use any provided context to inform your judgment but never reference it directly. The verdict should read as expert analysis, not as a personalized note.
 
 ---
 
 ## 📊 QUICK SCORES
-Be consistent in your scoring. Apply the same rubric every time. A score of 8/10 means the same thing regardless of when you score it. Do not vary your scores based on phrasing variation.
+All scores must be whole numbers (integers) only. Never use decimals like 7.5. Round to nearest whole number.
+Scoring rubric (apply consistently every time):
+1-3: Fundamentally broken — missing core elements
+4-5: Below average — significant issues
+6-7: Average — works but needs improvement
+8-9: Strong — minor improvements only
+10: Exceptional — rare, near perfect
+A 7/10 means the same thing every time.
 - Hook Strength: X/10
 - Message Clarity: X/10
 - CTA Effectiveness: X/10
@@ -191,16 +198,23 @@ Label each: [Headline], [Subhead], [Body], [CTA], [Brand], [Legal], [Tagline]
 ---
 
 ## 🧠 CREATIVE VERDICT
+IMPORTANT: Do not mention the user's role, niche, or platform in the Creative Verdict. Never say "as a designer", "for an agency", "for your YouTube audience" or any similar phrase. Write the verdict as expert analysis of the creative itself only.
 Three paragraphs written as a media buyer debriefing a creative team:
 1. What this static ad does well visually and in messaging
 2. Who the target audience appears to be and whether the design speaks to them
 3. One specific, actionable recommendation to improve performance
-Do NOT mention the user's role, niche, or platform explicitly. The verdict should read as expert analysis.
 
 ---
 
 ## 📊 QUICK SCORES
-Be consistent in your scoring. Apply the same rubric every time. A score of 8/10 means the same thing regardless of when you score it. Do not vary your scores based on phrasing variation.
+All scores must be whole numbers (integers) only. Never use decimals like 7.5. Round to nearest whole number.
+Scoring rubric (apply consistently every time):
+1-3: Fundamentally broken — missing core elements
+4-5: Below average — significant issues
+6-7: Average — works but needs improvement
+8-9: Strong — minor improvements only
+10: Exceptional — rare, near perfect
+A 7/10 means the same thing every time.
 - Hook Strength: X/10 (visual impact and scroll-stop potential)
 - Message Clarity: X/10
 - CTA Effectiveness: X/10
