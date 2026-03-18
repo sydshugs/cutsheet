@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { Copy, CheckCircle } from "lucide-react";
 import type { BudgetRecommendation, Hashtags, Scene } from "../services/analyzerService";
 import SceneBreakdown from "./SceneBreakdown";
+import HistoryPanel from "./HistoryPanel";
+import type { AnalysisRecord } from "../services/historyService";
 
 interface Scores {
   hook: number;
@@ -30,6 +32,8 @@ interface ScoreCardProps {
   ctaRewrites?: string[] | null;
   ctaLoading?: boolean;
   scenes?: Scene[];
+  onSelectHistory?: (record: AnalysisRecord) => void;
+  historyRefreshKey?: number;
 }
 
 const SCORE_LABELS: Record<keyof Scores, string> = {
@@ -102,10 +106,13 @@ export function ScoreCard({
   ctaRewrites,
   ctaLoading,
   scenes,
+  onSelectHistory,
+  historyRefreshKey,
 }: ScoreCardProps) {
   const { label: overallLabel } = getScoreLabel(scores.overall);
   const [mounted, setMounted] = useState(false);
   const [relativeTime, setRelativeTime] = useState<string>("");
+  const [activeTab, setActiveTab] = useState<'analysis' | 'history'>('analysis');
 
   useEffect(() => {
     setMounted(true);
@@ -214,6 +221,41 @@ export function ScoreCard({
           </button>
         </div>
       </div>
+
+      {/* Tab switcher */}
+      <div style={{ display: 'flex', gap: 4, padding: '12px 16px 0' }}>
+        {(['analysis', 'history'] as const).map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            style={{
+              padding: '5px 12px', fontSize: 12, borderRadius: 6, cursor: 'pointer',
+              background: activeTab === tab ? 'rgba(99,102,241,0.15)' : 'transparent',
+              border: `1px solid ${activeTab === tab ? 'rgba(99,102,241,0.3)' : 'rgba(255,255,255,0.08)'}`,
+              color: activeTab === tab ? '#818cf8' : '#71717a',
+              fontWeight: activeTab === tab ? 600 : 400,
+            }}
+          >
+            {tab === 'analysis' ? 'Analysis' : 'History'}
+          </button>
+        ))}
+      </div>
+
+      {/* History panel */}
+      {activeTab === 'history' && (
+        <div style={{ padding: '16px' }}>
+          <HistoryPanel
+            onSelect={(record) => {
+              if (onSelectHistory) onSelectHistory(record)
+              setActiveTab('analysis')
+            }}
+            refreshKey={historyRefreshKey}
+          />
+        </div>
+      )}
+
+      {/* Analysis content */}
+      {activeTab === 'analysis' && <>
 
       {/* Arc gauge */}
       <div className="px-5 pt-5 flex flex-col items-center">
@@ -456,6 +498,7 @@ export function ScoreCard({
           )}
         </div>
       )}
+      </>}
     </div>
   );
 }
