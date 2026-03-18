@@ -17,6 +17,8 @@ import {
 } from "../../services/analyzerService";
 import { generateBriefWithClaude, generateCTARewrites } from "../../services/claudeService";
 import { createShare } from "../../services/shareService";
+import { saveAnalysis } from "../../services/historyService";
+import type { AnalysisRecord } from "../../services/historyService";
 import { checkShareLimit, incrementShareCount } from "../../utils/rateLimiter";
 import type { AppSharedContext } from "../../components/AppLayout";
 
@@ -174,6 +176,8 @@ export default function PaidAdAnalyzer() {
   const [shareLoading, setShareLoading] = useState(false);
   const [rateLimitError, setRateLimitError] = useState<string | null>(null);
   const [analysisCompletedAt, setAnalysisCompletedAt] = useState<Date | null>(null);
+  const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
+  const [loadedFromHistory, setLoadedFromHistory] = useState<AnalysisRecord | null>(null);
 
   const scorecardRef = useRef<HTMLDivElement | null>(null);
   const lastSavedRef = useRef<string | null>(null);
@@ -187,6 +191,7 @@ export default function PaidAdAnalyzer() {
   const handleReset = useCallback(() => {
     setFile(null);
     setLoadedEntry(null);
+    setLoadedFromHistory(null);
     reset();
     setBrief(null);
     setBriefError(null);
@@ -228,9 +233,27 @@ export default function PaidAdAnalyzer() {
         });
         const newCount = increment();
         if (newCount >= FREE_LIMIT && !isPro) onUpgradeRequired();
+        // Fire and forget — do not await, do not block UI
+        saveAnalysis({
+          file_name: result.fileName,
+          file_type: format === 'video' ? 'video' : 'static',
+          mode: 'paid',
+          platform: platform || 'all',
+          overall_score: result.scores?.overall ?? 0,
+          scores: {
+            hook: result.scores?.hook ?? 0,
+            clarity: result.scores?.clarity ?? 0,
+            cta: result.scores?.cta ?? 0,
+            production: result.scores?.production ?? 0,
+          },
+          improvements: result.improvements ?? [],
+          cta_rewrite: Array.isArray(ctaRewrites) && ctaRewrites.length > 0 ? ctaRewrites[0] : undefined,
+          budget_recommendation: result.budget?.verdict ?? undefined,
+        });
+        setHistoryRefreshKey(k => k + 1);
       }
     }
-  }, [status, result, addHistoryEntry, increment, isPro, FREE_LIMIT, onUpgradeRequired, thumbnailDataUrl]);
+  }, [status, result, addHistoryEntry, increment, isPro, FREE_LIMIT, onUpgradeRequired, thumbnailDataUrl]); // eslint-disable-line
 
   useEffect(() => {
     if (status === "uploading") {
@@ -258,7 +281,19 @@ export default function PaidAdAnalyzer() {
     ? { ...result, thumbnailDataUrl: thumbnailDataUrl ?? result.thumbnailDataUrl }
     : result;
 
-  const activeResult: AnalysisResult | null = loadedEntry
+  const activeResult: AnalysisResult | null = loadedFromHistory
+    ? {
+        markdown: '',
+        scores: loadedFromHistory.scores as AnalysisResult['scores'],
+        improvements: loadedFromHistory.improvements ?? [],
+        budget: loadedFromHistory.budget_recommendation
+          ? { verdict: loadedFromHistory.budget_recommendation as import('../../services/analyzerService').BudgetRecommendation['verdict'], platform: '', daily: '', duration: '', reason: '' }
+          : null,
+        hashtags: undefined,
+        fileName: loadedFromHistory.file_name,
+        timestamp: loadedFromHistory.created_at ? new Date(loadedFromHistory.created_at) : new Date(),
+      }
+    : loadedEntry
     ? {
         markdown: loadedEntry.markdown,
         scores: loadedEntry.scores,
@@ -271,7 +306,7 @@ export default function PaidAdAnalyzer() {
       }
     : liveResult;
 
-  const effectiveStatus = loadedEntry ? ("complete" as const) : status;
+  const effectiveStatus = (loadedEntry || loadedFromHistory) ? ("complete" as const) : status;
   const showRightPanel = effectiveStatus === "complete" && activeResult !== null;
 
   const handleCopy = async () => {
@@ -461,6 +496,11 @@ export default function PaidAdAnalyzer() {
               ctaLoading={ctaLoading}
               onShare={handleCopy}
               isDark={true}
+              historyRefreshKey={historyRefreshKey}
+              onSelectHistory={(record) => {
+                setLoadedFromHistory(record);
+                setLoadedEntry(null);
+              }}
             />
           </div>
         )}

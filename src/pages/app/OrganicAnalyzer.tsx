@@ -19,6 +19,8 @@ import {
   generateBriefWithClaude, generateCTARewrites, generateSecondEyeReview,
 } from "../../services/claudeService";
 import { createShare } from "../../services/shareService";
+import { saveAnalysis } from "../../services/historyService";
+import type { AnalysisRecord } from "../../services/historyService";
 import { checkShareLimit, incrementShareCount } from "../../utils/rateLimiter";
 import type { AppSharedContext } from "../../components/AppLayout";
 
@@ -217,6 +219,8 @@ export default function OrganicAnalyzer() {
   const [shareLoading, setShareLoading] = useState(false);
   const [rateLimitError, setRateLimitError] = useState<string | null>(null);
   const [analysisCompletedAt, setAnalysisCompletedAt] = useState<Date | null>(null);
+  const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
+  const [loadedFromHistory, setLoadedFromHistory] = useState<AnalysisRecord | null>(null);
 
   const scorecardRef = useRef<HTMLDivElement | null>(null);
   const lastSavedRef = useRef<string | null>(null);
@@ -232,6 +236,7 @@ export default function OrganicAnalyzer() {
   const handleReset = useCallback(() => {
     setFile(null);
     setLoadedEntry(null);
+    setLoadedFromHistory(null);
     reset();
     setBrief(null);
     setBriefError(null);
@@ -283,9 +288,27 @@ export default function OrganicAnalyzer() {
         addHistoryEntry({ fileName: result.fileName, timestamp: result.timestamp.toISOString(), scores: result.scores, markdown: result.markdown, thumbnailDataUrl: thumbnailDataUrl ?? undefined });
         const newCount = increment();
         if (newCount >= FREE_LIMIT && !isPro) onUpgradeRequired();
+        // Fire and forget — do not await, do not block UI
+        saveAnalysis({
+          file_name: result.fileName,
+          file_type: 'video',
+          mode: 'organic',
+          platform: platform || 'all',
+          overall_score: result.scores?.overall ?? 0,
+          scores: {
+            hook: result.scores?.hook ?? 0,
+            clarity: result.scores?.clarity ?? 0,
+            cta: result.scores?.cta ?? 0,
+            production: result.scores?.production ?? 0,
+          },
+          improvements: result.improvements ?? [],
+          budget_recommendation: result.budget?.verdict ?? undefined,
+          second_eye_review: secondEyeOutput ?? undefined,
+        });
+        setHistoryRefreshKey(k => k + 1);
       }
     }
-  }, [status, result, addHistoryEntry, increment, isPro, FREE_LIMIT, onUpgradeRequired, thumbnailDataUrl]);
+  }, [status, result, addHistoryEntry, increment, isPro, FREE_LIMIT, onUpgradeRequired, thumbnailDataUrl]); // eslint-disable-line
 
   useEffect(() => {
     if (status === "uploading") {
@@ -312,7 +335,19 @@ export default function OrganicAnalyzer() {
     ? { ...result, thumbnailDataUrl: thumbnailDataUrl ?? result.thumbnailDataUrl }
     : null;
 
-  const activeResult: AnalysisResult | null = loadedEntry
+  const activeResult: AnalysisResult | null = loadedFromHistory
+    ? {
+        markdown: '',
+        scores: loadedFromHistory.scores as AnalysisResult['scores'],
+        improvements: loadedFromHistory.improvements ?? [],
+        budget: loadedFromHistory.budget_recommendation
+          ? { verdict: loadedFromHistory.budget_recommendation as import('../../services/analyzerService').BudgetRecommendation['verdict'], platform: '', daily: '', duration: '', reason: '' }
+          : null,
+        hashtags: undefined,
+        fileName: loadedFromHistory.file_name,
+        timestamp: loadedFromHistory.created_at ? new Date(loadedFromHistory.created_at) : new Date(),
+      }
+    : loadedEntry
     ? {
         markdown: loadedEntry.markdown,
         scores: loadedEntry.scores,
@@ -325,7 +360,7 @@ export default function OrganicAnalyzer() {
       }
     : liveResult;
 
-  const effectiveStatus = loadedEntry ? "complete" : status;
+  const effectiveStatus = (loadedEntry || loadedFromHistory) ? "complete" : status;
   const showRightPanel = effectiveStatus === "complete" && activeResult !== null;
 
   const handleCopy = async () => {
@@ -480,6 +515,11 @@ export default function OrganicAnalyzer() {
                 ctaLoading={ctaLoading}
                 onShare={handleCopy}
                 isDark={true}
+                historyRefreshKey={historyRefreshKey}
+                onSelectHistory={(record) => {
+                  setLoadedFromHistory(record);
+                  setLoadedEntry(null);
+                }}
               />
             </div>
             {/* Second Eye output below scorecard */}
