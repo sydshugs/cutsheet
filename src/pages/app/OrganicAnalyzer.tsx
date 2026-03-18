@@ -302,7 +302,7 @@ export default function OrganicAnalyzer() {
           },
           improvements: result.improvements ?? [],
           budget_recommendation: result.budget?.verdict ?? undefined,
-          second_eye_review: secondEyeOutput ?? undefined,
+          second_eye_review: secondEyeOutput ? JSON.stringify(secondEyeOutput) : undefined,
         });
         setHistoryRefreshKey(k => k + 1);
       }
@@ -517,11 +517,7 @@ export default function OrganicAnalyzer() {
                 ctaLoading={ctaLoading}
                 onShare={handleCopy}
                 isDark={true}
-                historyRefreshKey={historyRefreshKey}
-                onSelectHistory={(record) => {
-                  setLoadedFromHistory(record);
-                  setLoadedEntry(null);
-                }}
+                format="video"
               />
             </div>
             {/* Second Eye output below scorecard */}

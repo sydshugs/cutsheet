@@ -392,7 +392,14 @@ export async function analyzeVideo(
     const isImage = file.type.startsWith("image/");
     emit("processing", isImage ? "Gemini is analyzing your static creative..." : "Gemini is analyzing your creative...");
 
-    const staticPrefix = `This is a STATIC AD CREATIVE (image). Analyze it as a static advertisement. For Hook Strength, assess the visual impact and scroll-stop potential of the static image. For Pacing & Retention, assess visual hierarchy and how the eye moves through the composition instead. All other metrics apply as normal.\n\n`;
+    const staticPrefix = `This is a STATIC image ad (not a video).
+Analyze as a single-frame visual creative.
+Do NOT provide scene breakdown, timestamps, or transcript.
+DO provide: visual hook strength, message clarity, CTA visibility, color/contrast assessment, text hierarchy, and brand visibility.
+Score and optimize for paid static ad performance.
+For Hook Strength, assess the visual impact and scroll-stop potential.
+For Pacing & Retention, assess visual hierarchy and how the eye moves through the composition.
+All other metrics apply as normal.\n\n`;
     const basePrompt = isImage ? staticPrefix + ANALYSIS_PROMPT : ANALYSIS_PROMPT;
     const prompt = contextPrefix ? `${contextPrefix}\n\n${basePrompt}` : basePrompt;
 

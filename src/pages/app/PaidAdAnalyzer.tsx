@@ -17,9 +17,12 @@ import {
 } from "../../services/analyzerService";
 import {
   generateBriefWithClaude, generateCTARewrites, generateSecondEyeReview,
+  generateStaticSecondEye,
   type SecondEyeResult,
+  type StaticSecondEyeResult,
 } from "../../services/claudeService";
 import { SecondEyePanel } from "../../components/SecondEyePanel";
+import { StaticSecondEyePanel } from "../../components/StaticSecondEyePanel";
 import { createShare } from "../../services/shareService";
 import { saveAnalysis } from "../../services/historyService";
 import type { AnalysisRecord } from "../../services/historyService";
@@ -44,11 +47,14 @@ const STATUS_COPY = {
 // ─── INTENT HEADER ────────────────────────────────────────────────────────────
 
 function IntentHeader({
-  platform, setPlatform, format, setFormat, secondEye, setSecondEye,
+  platform, setPlatform, format, setFormat,
+  secondEye, setSecondEye,
+  staticSecondEye, setStaticSecondEye,
 }: {
   platform: Platform; setPlatform: (p: Platform) => void;
   format: Format; setFormat: (f: Format) => void;
   secondEye: boolean; setSecondEye: (v: boolean) => void;
+  staticSecondEye: boolean; setStaticSecondEye: (v: boolean) => void;
 }) {
   return (
     <div
@@ -108,33 +114,65 @@ function IntentHeader({
         </div>
       </div>
 
-      {/* Second Eye toggle */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-          <span style={{ fontSize: 13, color: "#a1a1aa" }}>Second Eye</span>
-          {secondEye && (
-            <span style={{ fontSize: 11, color: "#52525b" }}>Fresh first-time viewer perspective</span>
-          )}
-        </div>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={secondEye}
-          onClick={() => setSecondEye(!secondEye)}
-          style={{
-            width: 40, height: 22, borderRadius: 11, border: "none", cursor: "pointer",
-            background: secondEye ? "#6366f1" : "#27272a",
-            position: "relative", transition: "background 200ms", flexShrink: 0,
-          }}
-        >
-          <div
+      {/* Second Eye toggle — video only */}
+      {format === "video" && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+            <span style={{ fontSize: 13, color: "#a1a1aa" }}>Second Eye</span>
+            {secondEye && (
+              <span style={{ fontSize: 11, color: "#52525b" }}>Fresh first-time viewer perspective</span>
+            )}
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={secondEye}
+            onClick={() => setSecondEye(!secondEye)}
             style={{
-              position: "absolute", top: 2, width: 18, height: 18, borderRadius: "50%", background: "white",
-              left: secondEye ? 20 : 2, transition: "left 200ms cubic-bezier(0.16,1,0.3,1)",
+              width: 40, height: 22, borderRadius: 11, border: "none", cursor: "pointer",
+              background: secondEye ? "#6366f1" : "#27272a",
+              position: "relative", transition: "background 200ms", flexShrink: 0,
             }}
-          />
-        </button>
-      </div>
+          >
+            <div
+              style={{
+                position: "absolute", top: 2, width: 18, height: 18, borderRadius: "50%", background: "white",
+                left: secondEye ? 20 : 2, transition: "left 200ms cubic-bezier(0.16,1,0.3,1)",
+              }}
+            />
+          </button>
+        </div>
+      )}
+
+      {/* Design Review toggle — static only */}
+      {format === "static" && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+            <span style={{ fontSize: 13, color: "#a1a1aa" }}>Design Review</span>
+            {staticSecondEye && (
+              <span style={{ fontSize: 11, color: "#52525b" }}>Typography & layout check</span>
+            )}
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={staticSecondEye}
+            onClick={() => setStaticSecondEye(!staticSecondEye)}
+            style={{
+              width: 40, height: 22, borderRadius: 11, border: "none", cursor: "pointer",
+              background: staticSecondEye ? "#6366f1" : "#27272a",
+              position: "relative", transition: "background 200ms", flexShrink: 0,
+            }}
+          >
+            <div
+              style={{
+                position: "absolute", top: 2, width: 18, height: 18, borderRadius: "50%", background: "white",
+                left: staticSecondEye ? 20 : 2, transition: "left 200ms cubic-bezier(0.16,1,0.3,1)",
+              }}
+            />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -194,6 +232,9 @@ export default function PaidAdAnalyzer() {
   const [secondEye, setSecondEye] = useState(false);
   const [secondEyeOutput, setSecondEyeOutput] = useState<SecondEyeResult | null>(null);
   const [secondEyeLoading, setSecondEyeLoading] = useState(false);
+  const [staticSecondEye, setStaticSecondEye] = useState(false);
+  const [staticSecondEyeResult, setStaticSecondEyeResult] = useState<StaticSecondEyeResult | null>(null);
+  const [staticSecondEyeLoading, setStaticSecondEyeLoading] = useState(false);
 
   // ── Local analyzer state ───────────────────────────────────────────────────
   const [file, setFile] = useState<File | null>(null);
@@ -240,6 +281,8 @@ export default function PaidAdAnalyzer() {
     setRightTab("analysis");
     setSecondEyeOutput(null);
     setSecondEyeLoading(false);
+    setStaticSecondEyeResult(null);
+    setStaticSecondEyeLoading(false);
   }, [reset]);
 
   useEffect(() => {
@@ -322,6 +365,32 @@ export default function PaidAdAnalyzer() {
     }
   }, [status, result, secondEye]); // eslint-disable-line
 
+  // Static Second Eye trigger: fires when analysis completes and staticSecondEye is on
+  useEffect(() => {
+    if (status === "complete" && result && staticSecondEye && format === "static") {
+      if (staticSecondEyeLoading) return;
+      const run = async () => {
+        setStaticSecondEyeLoading(true);
+        setStaticSecondEyeResult(null);
+        try {
+          const output = await generateStaticSecondEye(
+            result.markdown,
+            result.fileName,
+            result.scores ? { overall: result.scores.overall, cta: result.scores.cta } : undefined,
+            result.improvements
+          );
+          setStaticSecondEyeResult(output);
+        } catch (err) {
+          console.error('Static Second Eye failed:', err);
+          setStaticSecondEyeResult(null);
+        } finally {
+          setStaticSecondEyeLoading(false);
+        }
+      };
+      run();
+    }
+  }, [status, result, staticSecondEye, format]); // eslint-disable-line
+
   useEffect(() => {
     if (status === "uploading") {
       setLoadedEntry(null);
@@ -329,6 +398,7 @@ export default function PaidAdAnalyzer() {
       setBriefError(null);
       setRightTab("analysis");
       setSecondEyeOutput(null);
+      setStaticSecondEyeResult(null);
     }
   }, [status]);
 
@@ -502,7 +572,7 @@ export default function PaidAdAnalyzer() {
       </Helmet>
       {/* Main content */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        <IntentHeader platform={platform} setPlatform={setPlatform} format={format} setFormat={setFormat} secondEye={secondEye} setSecondEye={setSecondEye} />
+        <IntentHeader platform={platform} setPlatform={setPlatform} format={format} setFormat={setFormat} secondEye={secondEye} setSecondEye={setSecondEye} staticSecondEye={staticSecondEye} setStaticSecondEye={setStaticSecondEye} />
 
         <div className="flex-1 overflow-auto">
           {status === "idle" && !loadedEntry ? (
@@ -566,16 +636,16 @@ export default function PaidAdAnalyzer() {
                 ctaLoading={ctaLoading}
                 onShare={handleCopy}
                 isDark={true}
-                historyRefreshKey={historyRefreshKey}
-                onSelectHistory={(record) => {
-                  setLoadedFromHistory(record);
-                  setLoadedEntry(null);
-                }}
+                format={format}
               />
             </div>
-            {/* Second Eye output below scorecard */}
-            {secondEye && (
+            {/* Second Eye output below scorecard — video only */}
+            {format === "video" && secondEye && (
               <SecondEyePanel result={secondEyeOutput} loading={secondEyeLoading} />
+            )}
+            {/* Static Design Review below scorecard — static only */}
+            {format === "static" && staticSecondEye && (
+              <StaticSecondEyePanel result={staticSecondEyeResult} loading={staticSecondEyeLoading} />
             )}
           </>
 

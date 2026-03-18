@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Copy, CheckCircle } from "lucide-react";
 import type { BudgetRecommendation, Hashtags, Scene } from "../services/analyzerService";
 import SceneBreakdown from "./SceneBreakdown";
+import { StaticAdChecks } from "./StaticAdChecks";
 import HistoryPanel from "./HistoryPanel";
 import type { AnalysisRecord } from "../services/historyService";
 
@@ -32,6 +33,7 @@ interface ScoreCardProps {
   ctaRewrites?: string[] | null;
   ctaLoading?: boolean;
   scenes?: Scene[];
+  format?: "video" | "static";
   onSelectHistory?: (record: AnalysisRecord) => void;
   historyRefreshKey?: number;
 }
@@ -106,6 +108,7 @@ export function ScoreCard({
   ctaRewrites,
   ctaLoading,
   scenes,
+  format = "video",
   onSelectHistory,
   historyRefreshKey,
 }: ScoreCardProps) {
@@ -375,10 +378,17 @@ export function ScoreCard({
         </div>
       )}
 
-      {/* Scene Breakdown */}
-      {scenes && scenes.length > 0 && (
+      {/* Scene Breakdown — video only */}
+      {format === "video" && scenes && scenes.length > 0 && (
         <div className="px-5">
           <SceneBreakdown scenes={scenes} />
+        </div>
+      )}
+
+      {/* Static Ad Checks — static only */}
+      {format === "static" && scores && (
+        <div className="px-5">
+          <StaticAdChecks scores={scores} />
         </div>
       )}
 
