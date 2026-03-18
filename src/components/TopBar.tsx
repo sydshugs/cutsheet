@@ -53,7 +53,7 @@ export function TopBar({
   }, []);
 
   return (
-    <div className="h-14 bg-zinc-950/80 backdrop-blur-xl border-b border-white/5 flex items-center px-4 gap-3">
+    <div className="h-14 bg-zinc-950/80 backdrop-blur-xl border-b border-white/5 flex items-center px-4 gap-3 relative z-20">
       {/* Mobile hamburger — visible below lg only */}
       <button
         className="lg:hidden text-zinc-400 hover:text-zinc-200 p-1"
