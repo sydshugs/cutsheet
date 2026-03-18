@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Copy, CheckCircle } from "lucide-react";
 import type { BudgetRecommendation, Hashtags, Scene } from "../services/analyzerService";
 import SceneBreakdown from "./SceneBreakdown";
+import { StaticAdChecks } from "./StaticAdChecks";
 
 interface Scores {
   hook: number;
@@ -30,6 +31,7 @@ interface ScoreCardProps {
   ctaRewrites?: string[] | null;
   ctaLoading?: boolean;
   scenes?: Scene[];
+  format?: "video" | "static";
 }
 
 const SCORE_LABELS: Record<keyof Scores, string> = {
@@ -102,6 +104,7 @@ export function ScoreCard({
   ctaRewrites,
   ctaLoading,
   scenes,
+  format = "video",
 }: ScoreCardProps) {
   const { label: overallLabel } = getScoreLabel(scores.overall);
   const [mounted, setMounted] = useState(false);
@@ -333,10 +336,17 @@ export function ScoreCard({
         </div>
       )}
 
-      {/* Scene Breakdown */}
-      {scenes && scenes.length > 0 && (
+      {/* Scene Breakdown — video only */}
+      {format === "video" && scenes && scenes.length > 0 && (
         <div className="px-5">
           <SceneBreakdown scenes={scenes} />
+        </div>
+      )}
+
+      {/* Static Ad Checks — static only */}
+      {format === "static" && scores && (
+        <div className="px-5">
+          <StaticAdChecks scores={scores} />
         </div>
       )}
 

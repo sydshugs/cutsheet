@@ -437,6 +437,7 @@ export default function OrganicAnalyzer() {
                 ctaLoading={ctaLoading}
                 onShare={handleCopy}
                 isDark={true}
+                format="video"
               />
             </div>
             {/* Second Eye output below scorecard */}

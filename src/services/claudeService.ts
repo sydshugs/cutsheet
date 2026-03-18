@@ -256,3 +256,132 @@ Return JSON only — no prose, no preamble:
     throw new Error(`Second Eye: invalid JSON — ${(e as Error).message}`);
   }
 }
+
+// ─── STATIC SECOND EYE (Design Review) ──────────────────────────────────────
+
+export interface StaticSecondEyeFlag {
+  area: "typography" | "layout" | "hierarchy" | "contrast";
+  severity: "critical" | "warning" | "note";
+  issue: string;
+  fix: string;
+}
+
+export interface StaticSecondEyeResult {
+  topIssue: string;
+  flags: StaticSecondEyeFlag[];
+  overallDesignVerdict: string;
+}
+
+export async function generateStaticSecondEye(
+  analysisMarkdown: string,
+  fileName: string,
+  scores?: { overall: number; cta: number },
+  improvements?: string[]
+): Promise<StaticSecondEyeResult> {
+  const client = getClient();
+
+  const overallScore = scores?.overall ?? "N/A";
+  const ctaScore = scores?.cta ?? "N/A";
+  const improvementsList = improvements?.length
+    ? improvements.join(", ")
+    : "none provided";
+
+  const message = await client.messages.create({
+    model: CLAUDE_MODEL,
+    max_tokens: 2048,
+    system: `You are a professional graphic designer and art director reviewing this static ad for the first time with fresh eyes.
+The creator has been staring at it for hours and is blind to the small things that make it look unpolished.
+Your job: find every design and typography issue.
+Be specific. Be technical. Be ruthless.
+Think like someone who notices bad kerning immediately.
+
+Review these areas:
+
+TYPOGRAPHY:
+- Kerning: Are letter pairs too tight or too loose? Flag specific words or headlines.
+- Leading: Is line spacing too tight (cramped) or too loose (disconnected)?
+- Hierarchy: Is there a clear type scale? (headline → subhead → body → CTA) Does the most important text read first?
+- Font weight: Is there enough contrast between bold and regular weights?
+- Legibility: Is any text too small to read comfortably? Minimum readable size for ad copy is 14px/10pt.
+- Widows/orphans: Any single words alone on a line?
+- Alignment: Is text consistently left, center, or right aligned? Mixed alignment without intention looks sloppy.
+
+LAYOUT & ALIGNMENT:
+- Grid alignment: Do elements snap to an invisible grid, or do things feel randomly placed?
+- Optical centering: Is the hero element truly centered or just mathematically centered (these are different)?
+- Margins: Are margins consistent? Too tight on any edge?
+- Element spacing: Is spacing between elements consistent or arbitrary? Inconsistent spacing reads as unfinished.
+- Breathing room: Is there enough whitespace or is it overcrowded?
+
+VISUAL HIERARCHY:
+- Where does the eye land first? Is that where it should?
+- Is there a clear primary, secondary, tertiary information order?
+- Does the CTA stand out from the background? Is it the most visually distinct element after the hero?
+
+COLOR & CONTRAST:
+- Does text meet contrast requirements against its background? (WCAG AA: 4.5:1 for body, 3:1 for large text)
+- Is the color palette cohesive or are there clashing hues?
+- Are brand colors used consistently?`,
+    messages: [
+      {
+        role: "user",
+        content: `Analysis context:
+File: ${fileName}
+Overall score: ${overallScore}/10
+CTA score: ${ctaScore}/10
+Existing improvements: ${improvementsList}
+
+Full analysis:
+${analysisMarkdown}
+
+Return JSON only — no prose, no preamble:
+{
+  "topIssue": "<the single most critical design problem, one sentence>",
+  "flags": [
+    {
+      "area": "typography | layout | hierarchy | contrast",
+      "severity": "critical | warning | note",
+      "issue": "<specific, technical, one sentence>",
+      "fix": "<specific, actionable, one sentence>"
+    }
+  ],
+  "overallDesignVerdict": "<one honest sentence about the overall design quality>"
+}`,
+      },
+    ],
+  });
+
+  const text = message.content[0].type === "text" ? message.content[0].text : "";
+  if (!text.trim()) throw new Error("Claude returned empty Static Second Eye review");
+
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error("Static Second Eye: could not parse JSON from response");
+
+  try {
+    const parsed = JSON.parse(jsonMatch[0]) as StaticSecondEyeResult;
+
+    return {
+      topIssue: String(parsed.topIssue ?? ""),
+      flags: Array.isArray(parsed.flags)
+        ? parsed.flags
+            .map((f) => ({
+              area: (["typography", "layout", "hierarchy", "contrast"].includes(f.area)
+                ? f.area
+                : "layout") as StaticSecondEyeFlag["area"],
+              severity: (["critical", "warning", "note"].includes(f.severity)
+                ? f.severity
+                : "note") as StaticSecondEyeFlag["severity"],
+              issue: String(f.issue ?? ""),
+              fix: String(f.fix ?? ""),
+            }))
+            .sort((a, b) => {
+              const order = { critical: 0, warning: 1, note: 2 };
+              return order[a.severity] - order[b.severity];
+            })
+        : [],
+      overallDesignVerdict: String(parsed.overallDesignVerdict ?? ""),
+    };
+  } catch (e) {
+    throw new Error(`Static Second Eye: invalid JSON — ${(e as Error).message}`);
+  }
+}
