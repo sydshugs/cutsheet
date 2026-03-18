@@ -1,7 +1,7 @@
 // src/pages/app/PaidAdAnalyzer.tsx
 import { Helmet } from 'react-helmet-async';
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useOutletContext, useNavigate } from "react-router-dom";
 import { Zap, RotateCcw } from "lucide-react";
 import { AnalyzerView } from "../../components/AnalyzerView";
 import { ScoreCard } from "../../components/ScoreCard";
@@ -26,6 +26,7 @@ import { StaticSecondEyePanel } from "../../components/StaticSecondEyePanel";
 import { createShare } from "../../services/shareService";
 import { checkShareLimit, incrementShareCount } from "../../utils/rateLimiter";
 import { getUserContext, formatUserContextBlock } from "../../services/userContextService";
+import { generateBudgetRecommendation, type EngineBudgetRecommendation } from "../../services/budgetService";
 import type { AppSharedContext } from "../../components/AppLayout";
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY ?? "";
@@ -225,6 +226,7 @@ export default function PaidAdAnalyzer() {
     addSwipeItem, canAnalyze, isPro, increment, FREE_LIMIT,
     onUpgradeRequired, registerCallbacks,
   } = useOutletContext<AppSharedContext>();
+  const navigate = useNavigate();
 
   // ── User context for personalized AI ──────────────────────────────────────
   const [userContext, setUserContext] = useState<string>('')
@@ -241,6 +243,7 @@ export default function PaidAdAnalyzer() {
   const [staticSecondEye, setStaticSecondEye] = useState(false);
   const [staticSecondEyeResult, setStaticSecondEyeResult] = useState<StaticSecondEyeResult | null>(null);
   const [staticSecondEyeLoading, setStaticSecondEyeLoading] = useState(false);
+  const [engineBudget, setEngineBudget] = useState<EngineBudgetRecommendation | null>(null);
 
   // ── Local analyzer state ───────────────────────────────────────────────────
   const [file, setFile] = useState<File | null>(null);
@@ -286,6 +289,7 @@ export default function PaidAdAnalyzer() {
     setSecondEyeLoading(false);
     setStaticSecondEyeResult(null);
     setStaticSecondEyeLoading(false);
+    setEngineBudget(null);
   }, [reset]);
 
 
@@ -299,6 +303,20 @@ export default function PaidAdAnalyzer() {
   useEffect(() => {
     if (status === "complete") setAnalysisCompletedAt(new Date());
   }, [status]);
+
+  // Compute budget recommendation from engine when analysis completes
+  useEffect(() => {
+    if (status === "complete" && result?.scores) {
+      const niche = userContext.match(/Niche:\s*(.+)/)?.[1]?.trim() || 'Other';
+      const budget = generateBudgetRecommendation(
+        result.scores.overall,
+        platform,
+        niche,
+        format
+      );
+      setEngineBudget(budget);
+    }
+  }, [status, result, platform, format, userContext]);
 
   useEffect(() => {
     if (status === "complete" && result) {
@@ -615,6 +633,8 @@ export default function PaidAdAnalyzer() {
                 onShare={handleCopy}
                 isDark={true}
                 format={format}
+                engineBudget={engineBudget}
+                onNavigateSettings={() => navigate('/settings')}
               />
             </div>
             {/* Second Eye output below scorecard — video only */}

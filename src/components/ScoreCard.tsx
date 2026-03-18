@@ -1,8 +1,9 @@
 // ScoreCard.tsx — Visual translation from #screen-results (prototype)
 
 import { useEffect, useState } from "react";
-import { Copy, CheckCircle } from "lucide-react";
+import { Copy, CheckCircle, AlertTriangle, AlertCircle, TrendingUp, ArrowUpRight } from "lucide-react";
 import type { BudgetRecommendation, Hashtags, Scene } from "../services/analyzerService";
+import type { EngineBudgetRecommendation } from "../services/budgetService";
 import SceneBreakdown from "./SceneBreakdown";
 import { StaticAdChecks } from "./StaticAdChecks";
 
@@ -32,6 +33,8 @@ interface ScoreCardProps {
   ctaLoading?: boolean;
   scenes?: Scene[];
   format?: "video" | "static";
+  engineBudget?: EngineBudgetRecommendation | null;
+  onNavigateSettings?: () => void;
 }
 
 const SCORE_LABELS: Record<keyof Scores, string> = {
@@ -105,6 +108,8 @@ export function ScoreCard({
   ctaLoading,
   scenes,
   format = "video",
+  engineBudget,
+  onNavigateSettings,
 }: ScoreCardProps) {
   const { label: overallLabel } = getScoreLabel(scores.overall);
   const [mounted, setMounted] = useState(false);
@@ -350,51 +355,115 @@ export function ScoreCard({
         </div>
       )}
 
-      {/* Budget Recommendation */}
-      {budget && (
+      {/* Budget Recommendation — engine-based */}
+      {engineBudget && (
         <div className="px-5 border-t border-white/5 mt-4 pt-4">
           <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-3">
             Budget Recommendation
           </p>
 
-          {/* Verdict badge */}
-          <div className="mb-3">
-            <span
-              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold font-mono ${
-                budget.verdict === "Boost It"
-                  ? "bg-emerald-500/15 text-emerald-400"
-                  : budget.verdict === "Test It"
-                  ? "bg-amber-500/15 text-amber-400"
-                  : "bg-red-500/15 text-red-400"
-              }`}
-            >
-              {budget.verdict === "Boost It" && "🚀"}
-              {budget.verdict === "Test It" && "🧪"}
-              {budget.verdict === "Fix First" && "🔧"}
-              {budget.verdict}
+          {/* Main card */}
+          <div
+            style={{
+              padding: 12,
+              borderRadius: 10,
+              border: `1px solid ${engineBudget.action === 'hold' ? 'rgba(239,68,68,0.2)' : engineBudget.action === 'limited' ? 'rgba(245,158,11,0.2)' : 'rgba(16,185,129,0.2)'}`,
+              background: engineBudget.action === 'hold' ? 'rgba(239,68,68,0.06)' : engineBudget.action === 'limited' ? 'rgba(245,158,11,0.06)' : 'rgba(16,185,129,0.06)',
+            }}
+          >
+            {/* Header row: icon + label + budget range */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {engineBudget.action === 'hold' && <AlertTriangle size={16} color="#ef4444" />}
+              {engineBudget.action === 'limited' && <AlertCircle size={16} color="#f59e0b" />}
+              {engineBudget.action === 'test' && <TrendingUp size={16} color="#10b981" />}
+              <span style={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: engineBudget.action === 'hold' ? '#ef4444' : engineBudget.action === 'limited' ? '#f59e0b' : '#10b981',
+              }}>
+                {engineBudget.label}
+                {engineBudget.dailyBudget && ` · $${engineBudget.dailyBudget.min}–$${engineBudget.dailyBudget.max}/day`}
+              </span>
+            </div>
+
+            {/* Platform CPM */}
+            {engineBudget.action !== 'hold' && (
+              <p style={{ fontSize: 11, color: '#71717a', marginTop: 6 }}>
+                Platform CPM: {engineBudget.platformCPM}
+              </p>
+            )}
+
+            {/* Advice */}
+            <p style={{ fontSize: 12, color: '#a1a1aa', marginTop: 8, lineHeight: 1.5 }}>
+              {engineBudget.advice}
+            </p>
+
+            {/* Scale signal */}
+            {engineBudget.scaleSignal && (
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 4, marginTop: 8 }}>
+                <ArrowUpRight size={12} color="#818cf8" style={{ marginTop: 2, flexShrink: 0 }} />
+                <span style={{ fontSize: 11, color: '#818cf8', fontStyle: 'italic', lineHeight: 1.4 }}>
+                  {engineBudget.scaleSignal}
+                </span>
+              </div>
+            )}
+
+            {/* Test duration + ROAS target */}
+            {engineBudget.action !== 'hold' && (
+              <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
+                <span style={{ fontSize: 11, color: '#52525b' }}>
+                  Test: {engineBudget.testDuration}
+                </span>
+                <span style={{ fontSize: 11, color: '#52525b' }}>
+                  ROAS: {engineBudget.roasTarget}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Niche + platform pill */}
+          <div style={{ marginTop: 8, display: 'flex', gap: 6 }}>
+            <span style={{
+              fontSize: 10,
+              color: '#71717a',
+              background: 'rgba(255,255,255,0.04)',
+              borderRadius: 9999,
+              padding: '2px 8px',
+            }}>
+              {engineBudget.niche} · {engineBudget.platform === 'all' ? 'All platforms' : engineBudget.platform}
             </span>
           </div>
 
-          {/* Details grid */}
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-3">
-            <div>
-              <span className="text-[10px] uppercase tracking-wider text-zinc-600">Platform</span>
-              <p className="text-xs text-zinc-300 font-mono mt-0.5">{budget.platform}</p>
-            </div>
-            <div>
-              <span className="text-[10px] uppercase tracking-wider text-zinc-600">Daily</span>
-              <p className="text-xs text-zinc-300 font-mono mt-0.5">{budget.daily}</p>
-            </div>
-            <div className="col-span-2">
-              <span className="text-[10px] uppercase tracking-wider text-zinc-600">Duration</span>
-              <p className="text-xs text-zinc-300 font-mono mt-0.5">{budget.duration}</p>
-            </div>
-          </div>
-
-          {/* Reason */}
-          {budget.reason && (
-            <p className="text-xs text-zinc-500 italic leading-relaxed">{budget.reason}</p>
+          {/* Missing profile hint */}
+          {engineBudget.niche === 'Other' && onNavigateSettings && (
+            <button
+              type="button"
+              onClick={onNavigateSettings}
+              style={{
+                marginTop: 8,
+                fontSize: 11,
+                color: '#6366f1',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+                textDecoration: 'underline',
+                textDecorationColor: 'rgba(99,102,241,0.3)',
+              }}
+            >
+              Set your niche in Settings for personalized budgets &rarr;
+            </button>
           )}
+        </div>
+      )}
+
+      {/* Legacy budget fallback (from Gemini) */}
+      {!engineBudget && budget && (
+        <div className="px-5 border-t border-white/5 mt-4 pt-4">
+          <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-3">
+            Budget Recommendation
+          </p>
+          <p className="text-xs text-zinc-400 leading-relaxed">{budget.reason || `${budget.verdict} — ${budget.daily}/day`}</p>
         </div>
       )}
 
