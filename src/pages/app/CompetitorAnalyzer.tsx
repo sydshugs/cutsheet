@@ -3,12 +3,13 @@
 import { Helmet } from "react-helmet-async";
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useOutletContext } from "react-router-dom";
-import { Swords, Upload } from "lucide-react";
+import { Swords, Upload, Search, ExternalLink } from "lucide-react";
 import { CompetitorResultPanel } from "../../components/CompetitorResult";
 import { analyzeCompetitor, type CompetitorResult } from "../../services/competitorService";
 import type { AppSharedContext } from "../../components/AppLayout";
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY ?? "";
+const META_TOKEN = import.meta.env.VITE_META_ACCESS_TOKEN ?? "";
 
 const PLATFORMS = ["all", "Meta", "TikTok", "Google", "YouTube"] as const;
 const FORMATS = ["video", "static"] as const;
@@ -123,6 +124,248 @@ function UploadBox({
           <Upload size={24} color="#52525b" />
           <span style={{ fontSize: 13, color: "#52525b" }}>Drop video or image</span>
         </div>
+      )}
+    </div>
+  );
+}
+
+// ─── META AD SEARCH ─────────────────────────────────────────────────────────
+
+interface MetaAd {
+  id: string;
+  page_name?: string;
+  ad_creative_bodies?: string[];
+  ad_creative_link_titles?: string[];
+  ad_snapshot_url?: string;
+  ad_delivery_start_time?: string;
+}
+
+function CompetitorSearchBox({
+  file,
+  onFileSelect,
+}: {
+  file: File | null;
+  onFileSelect: (f: File | null) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<MetaAd[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [hasSearched, setHasSearched] = useState(false);
+
+  const previewUrl = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
+  useEffect(() => {
+    return () => { if (previewUrl) URL.revokeObjectURL(previewUrl); };
+  }, [previewUrl]);
+
+  const isImage = file?.type.startsWith("image/");
+
+  const handleSearch = async () => {
+    if (!query.trim() || searching) return;
+    if (!META_TOKEN) { setSearchError("Meta API token not configured"); return; }
+    setSearching(true);
+    setSearchError(null);
+    setResults([]);
+    setHasSearched(true);
+    try {
+      const params = new URLSearchParams({
+        access_token: META_TOKEN,
+        ad_reached_countries: '["US"]',
+        search_terms: query.trim(),
+        ad_type: "ALL",
+        fields: "id,ad_creative_bodies,ad_creative_link_titles,ad_snapshot_url,page_name,ad_delivery_start_time",
+        limit: "12",
+      });
+      const res = await fetch(`https://graph.facebook.com/v19.0/ads_archive?${params}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error?.message || `API error ${res.status}`);
+      }
+      const json = await res.json();
+      setResults(json.data || []);
+    } catch (err) {
+      setSearchError(err instanceof Error ? err.message : "Search failed");
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleUseAd = async (ad: MetaAd) => {
+    if (!ad.ad_snapshot_url) return;
+    try {
+      const res = await fetch(ad.ad_snapshot_url);
+      const blob = await res.blob();
+      const ext = blob.type.includes("video") ? "mp4" : "png";
+      const name = `${ad.page_name || "competitor"}-ad.${ext}`;
+      onFileSelect(new File([blob], name, { type: blob.type || "image/png" }));
+    } catch {
+      // Fallback: open snapshot URL in new tab for manual download
+      window.open(ad.ad_snapshot_url, "_blank");
+    }
+  };
+
+  return (
+    <div style={{ flex: 1, minWidth: 200 }}>
+      <p style={{ fontSize: 13, fontWeight: 600, color: "#a1a1aa", marginBottom: 8 }}>Competitor's Ad</p>
+
+      {/* If file is already selected, show preview */}
+      {file && previewUrl ? (
+        <div style={{ position: "relative" }}>
+          <div style={{
+            borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)",
+            overflow: "hidden", background: "#09090b",
+            display: "flex", justifyContent: "center", maxHeight: 200,
+          }}>
+            {isImage ? (
+              <img src={previewUrl} alt={file.name} style={{ maxWidth: "100%", maxHeight: 200, objectFit: "contain" }} />
+            ) : (
+              <video src={previewUrl} style={{ maxWidth: "100%", maxHeight: 200, objectFit: "contain" }} />
+            )}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 6 }}>
+            <span style={{ fontSize: 11, color: "#52525b", fontFamily: "var(--font-mono, monospace)" }}>
+              {file.name.length > 25 ? file.name.slice(0, 22) + "..." : file.name}
+            </span>
+            <button type="button" onClick={() => onFileSelect(null)}
+              style={{ fontSize: 11, color: "#71717a", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
+              Remove
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Meta Ad Library search */}
+          {META_TOKEN && (
+            <div style={{ marginBottom: 12 }}>
+              <p style={{ fontSize: 11, color: "#52525b", marginBottom: 6 }}>Search a competitor on Meta & Instagram</p>
+              <div style={{ display: "flex", gap: 6 }}>
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }}
+                  placeholder="e.g. Nike, Cloaked, SKIMS..."
+                  style={{
+                    flex: 1, height: 34, padding: "0 10px", fontSize: 12,
+                    background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
+                    borderRadius: 8, color: "#f4f4f5", outline: "none",
+                  }}
+                />
+                <button type="button" onClick={handleSearch} disabled={searching || !query.trim()}
+                  style={{
+                    height: 34, padding: "0 12px", borderRadius: 8, border: "none",
+                    background: "#6366f1", color: "white", fontSize: 12, fontWeight: 500,
+                    cursor: searching || !query.trim() ? "not-allowed" : "pointer",
+                    opacity: searching || !query.trim() ? 0.5 : 1,
+                    display: "flex", alignItems: "center", gap: 4, transition: "all 150ms",
+                  }}>
+                  <Search size={12} />
+                  {searching ? "..." : "Search"}
+                </button>
+              </div>
+
+              {/* Search error */}
+              {searchError && (
+                <p style={{ fontSize: 11, color: "#ef4444", marginTop: 6 }}>{searchError}</p>
+              )}
+
+              {/* Shimmer loading */}
+              {searching && (
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 10 }}>
+                  {[0,1,2,3].map(i => (
+                    <div key={i} style={{
+                      height: 100, borderRadius: 10,
+                      background: "linear-gradient(90deg, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.02) 75%)",
+                      backgroundSize: "200% 100%",
+                      animation: "shimmer 1.5s infinite",
+                    }} />
+                  ))}
+                </div>
+              )}
+
+              {/* Results grid */}
+              {!searching && results.length > 0 && (
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 10, maxHeight: 280, overflowY: "auto" }}>
+                  {results.map((ad) => (
+                    <div key={ad.id} style={{
+                      background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+                      borderRadius: 10, padding: 10, display: "flex", flexDirection: "column", gap: 6,
+                      cursor: "pointer", transition: "all 150ms",
+                    }}
+                    onClick={() => handleUseAd(ad)}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(99,102,241,0.3)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; }}
+                    >
+                      {ad.ad_snapshot_url && (
+                        <div style={{ width: "100%", height: 80, borderRadius: 6, overflow: "hidden", background: "#18181b" }}>
+                          <img src={ad.ad_snapshot_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                        </div>
+                      )}
+                      {ad.page_name && (
+                        <span style={{ fontSize: 11, color: "#818cf8", fontWeight: 500,
+                          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {ad.page_name}
+                        </span>
+                      )}
+                      {ad.ad_creative_bodies?.[0] && (
+                        <span style={{ fontSize: 11, color: "#71717a", lineHeight: 1.3,
+                          overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const }}>
+                          {ad.ad_creative_bodies[0].slice(0, 60)}{ad.ad_creative_bodies[0].length > 60 ? "..." : ""}
+                        </span>
+                      )}
+                      <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: "auto" }}>
+                        <ExternalLink size={10} color="#6366f1" />
+                        <span style={{ fontSize: 10, color: "#6366f1" }}>Use this ad</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Empty results */}
+              {!searching && hasSearched && results.length === 0 && !searchError && (
+                <p style={{ fontSize: 12, color: "#71717a", marginTop: 10, textAlign: "center" }}>
+                  No active ads found for "{query}"
+                </p>
+              )}
+
+              {/* Divider */}
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12 }}>
+                <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
+                <span style={{ fontSize: 11, color: "#52525b" }}>or upload manually</span>
+                <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
+              </div>
+            </div>
+          )}
+
+          {/* Manual upload dropzone */}
+          <div
+            style={{
+              height: META_TOKEN ? 100 : 200,
+              border: "1px dashed rgba(255,255,255,0.08)",
+              borderRadius: 12, background: "rgba(255,255,255,0.02)",
+              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+              gap: 6, cursor: "pointer", transition: "all 150ms",
+            }}
+            onClick={() => {
+              const input = document.createElement("input");
+              input.type = "file";
+              input.accept = "video/*,image/*";
+              input.onchange = (e) => {
+                const f = (e.target as HTMLInputElement).files?.[0];
+                if (f) onFileSelect(f);
+              };
+              input.click();
+            }}
+            onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)"; e.currentTarget.style.background = "rgba(99,102,241,0.05)"; }}
+            onDragLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
+            onDrop={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; const f = e.dataTransfer.files[0]; if (f) onFileSelect(f); }}
+          >
+            <Upload size={20} color="#52525b" />
+            <span style={{ fontSize: 12, color: "#52525b" }}>Drop video or image</span>
+          </div>
+        </>
       )}
     </div>
   );
@@ -260,7 +503,7 @@ export default function CompetitorAnalyzer() {
               <div style={{ flex: 1, width: 1, background: "rgba(255,255,255,0.06)" }} />
             </div>
 
-            <UploadBox label="Competitor's Ad" file={competitorFile} onFileSelect={setCompetitorFile} />
+            <CompetitorSearchBox file={competitorFile} onFileSelect={setCompetitorFile} />
           </div>
 
           {/* Analyze button */}
@@ -328,7 +571,7 @@ export default function CompetitorAnalyzer() {
       </div>
 
       {/* Spin keyframe */}
-      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+      <style>{`@keyframes spin { to { transform: rotate(360deg) } } @keyframes shimmer { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }`}</style>
     </div>
   );
 }
