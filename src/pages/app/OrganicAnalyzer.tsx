@@ -2,7 +2,7 @@
 import { Helmet } from 'react-helmet-async';
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useOutletContext } from "react-router-dom";
-import { TrendingUp, Eye } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 import { AnalyzerView } from "../../components/AnalyzerView";
 import { ScoreCard } from "../../components/ScoreCard";
 import { VideoDropzone } from "../../components/VideoDropzone";
@@ -17,7 +17,9 @@ import {
 } from "../../services/analyzerService";
 import {
   generateBriefWithClaude, generateCTARewrites, generateSecondEyeReview,
+  type SecondEyeResult,
 } from "../../services/claudeService";
+import { SecondEyePanel } from "../../components/SecondEyePanel";
 import { createShare } from "../../services/shareService";
 import { checkShareLimit, incrementShareCount } from "../../utils/rateLimiter";
 import type { AppSharedContext } from "../../components/AppLayout";
@@ -133,57 +135,6 @@ function OrganicEmptyState({
   );
 }
 
-// ─── SECOND EYE SECTION ───────────────────────────────────────────────────────
-
-function SecondEyeSection({ content, loading }: { content: string | null; loading: boolean }) {
-  if (!loading && !content) return null;
-  return (
-    <div
-      style={{
-        margin: "0 16px 16px",
-        borderRadius: 12,
-        background: "rgba(255,255,255,0.02)",
-        border: "1px solid rgba(255,255,255,0.06)",
-        overflow: "hidden",
-      }}
-    >
-      {/* Header */}
-      <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 8 }}>
-        <Eye size={14} color="#818cf8" />
-        <span style={{ fontSize: 13, fontWeight: 600, color: "#f4f4f5" }}>Second Eye Review</span>
-      </div>
-
-      {/* Content */}
-      <div style={{ padding: "12px 16px" }}>
-        {loading && !content && (
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div className="w-4 h-4 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
-            <span style={{ fontSize: 12, color: "#71717a" }}>Analyzing from a fresh viewer perspective...</span>
-          </div>
-        )}
-        {content && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {content.split("\n").map((line, i) => {
-              const t = line.trim();
-              if (!t) return null;
-              const boldMatch = t.match(/^\*\*(.+?)\*\*\s*[—–-]\s*(.*)/);
-              if (boldMatch) {
-                return (
-                  <div key={i} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: "#f4f4f5" }}>{boldMatch[1]}</span>
-                    <span style={{ fontSize: 12, color: "#a1a1aa", lineHeight: 1.5 }}>{boldMatch[2]}</span>
-                  </div>
-                );
-              }
-              return <p key={i} style={{ fontSize: 12, color: "#a1a1aa", lineHeight: 1.5, margin: 0 }}>{t}</p>;
-            })}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 
 export default function OrganicAnalyzer() {
@@ -195,7 +146,7 @@ export default function OrganicAnalyzer() {
 
   const [platform, setPlatform] = useState<Platform>("all");
   const [secondEye, setSecondEye] = useState(false);
-  const [secondEyeOutput, setSecondEyeOutput] = useState<string | null>(null);
+  const [secondEyeOutput, setSecondEyeOutput] = useState<SecondEyeResult | null>(null);
   const [secondEyeLoading, setSecondEyeLoading] = useState(false);
 
   const [file, setFile] = useState<File | null>(null);
@@ -262,11 +213,16 @@ export default function OrganicAnalyzer() {
         setSecondEyeLoading(true);
         setSecondEyeOutput(null);
         try {
-          const output = await generateSecondEyeReview(result.markdown, result.fileName);
+          const output = await generateSecondEyeReview(
+            result.markdown,
+            result.fileName,
+            result.scores ? { hook: result.scores.hook, overall: result.scores.overall } : undefined,
+            result.improvements
+          );
           setSecondEyeOutput(output);
         } catch (err) {
           console.error('Second Eye failed:', err);
-          setSecondEyeOutput("Could not generate Second Eye review.");
+          setSecondEyeOutput(null);
         } finally {
           setSecondEyeLoading(false);
         }
@@ -484,7 +440,9 @@ export default function OrganicAnalyzer() {
               />
             </div>
             {/* Second Eye output below scorecard */}
-            <SecondEyeSection content={secondEyeOutput} loading={secondEyeLoading} />
+            {secondEye && (
+              <SecondEyePanel result={secondEyeOutput} loading={secondEyeLoading} />
+            )}
           </>
         )}
 

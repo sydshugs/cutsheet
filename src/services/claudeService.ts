@@ -121,31 +121,138 @@ export async function generateCTARewrites(
 
 // ─── SECOND EYE REVIEW ───────────────────────────────────────────────────────
 
+export interface SecondEyeFlag {
+  timestamp: string;
+  category: "scroll_trigger" | "sound_off" | "pacing" | "clarity";
+  severity: "critical" | "warning" | "note";
+  issue: string;
+  fix: string;
+}
+
+export interface SecondEyeResult {
+  scrollMoment: string | null;
+  flags: SecondEyeFlag[];
+  whatItCommunicates: string;
+  whatItFails: string;
+}
+
 export async function generateSecondEyeReview(
   analysisMarkdown: string,
-  fileName: string
-): Promise<string> {
+  fileName: string,
+  scores?: { hook: number; overall: number },
+  improvements?: string[]
+): Promise<SecondEyeResult> {
   const client = getClient();
+
+  const overallScore = scores?.overall ?? "N/A";
+  const hookScore = scores?.hook ?? "N/A";
+  const improvementsList = improvements?.length
+    ? improvements.join("; ")
+    : "none provided";
+
   const message = await client.messages.create({
     model: CLAUDE_MODEL,
-    max_tokens: 1024,
-    system: `You are a first-time viewer watching organic social content. You have never seen this video. You scroll fast, your attention span is short, and you are brutally honest about when you would stop watching and why. Provide specific, timestamped feedback — not vague observations.`,
+    max_tokens: 2048,
+    system: `You are watching this video ad for the very first time.
+You are a slightly bored person scrolling through your feed on your phone.
+You have never seen this brand before. You have no loyalty to it.
+You will give this video about 2 seconds before deciding to scroll past.
+The creator has been staring at this video for days and is blind to its problems.
+Your job is to catch everything they can't see anymore.
+
+Do NOT give general advice. Be specific. Be honest. Be ruthless.
+Every flag must have a timestamp.
+
+Look for these specific problems:
+
+SCROLL TRIGGERS — moments you would have scrolled past:
+- Hook too slow (key phrase or visual hook after 2 seconds)
+- Energy drop (cut, pause, or transition with no new information)
+- Confusing opening (first-time viewer has no context)
+- Overlong section (same visual/point held too long)
+
+SOUND-OFF FAILURES — what a viewer watching without sound misses:
+- Offer mentioned verbally but never shown as text
+- Brand/product name spoken but not on screen
+- Key benefit only communicated through audio
+- Dead air — no text overlay for 3+ seconds
+
+PACING ISSUES — timing problems:
+- Hook phrase delivered too fast (viewer can't process it)
+- CTA on screen too briefly (under 2 seconds = unreadable)
+- Transition too fast or too slow
+- Energy builds then drops before the CTA
+
+CLARITY GAPS — things a new viewer won't understand:
+- What is being sold? Not clear in first 5 seconds.
+- Why should I care? Problem never stated before the solution.
+- Who is this for? No indication of target audience.`,
     messages: [
       {
         role: "user",
-        content: `Based on this analysis of "${fileName}", act as a first-time viewer. List timestamped moments where a new viewer would stop watching and why.
+        content: `Analysis context:
+File: ${fileName}
+Overall score: ${overallScore}/10
+Hook score: ${hookScore}/10
+Existing improvements: ${improvementsList}
 
-Format: **[Timestamp]** — [What happens] → [Why a viewer stops here]
+Full analysis:
+${analysisMarkdown}
 
-Be specific. Be brutal. Focus on the first 30 seconds. 3–6 moments maximum.
-
-Analysis:
-${analysisMarkdown}`,
+Return JSON only — no prose, no preamble:
+{
+  "scrollMoment": "<timestamp + one sentence — when would you scroll, or null>",
+  "flags": [
+    {
+      "timestamp": "<MM:SS or MM:SS-MM:SS range>",
+      "category": "scroll_trigger | sound_off | pacing | clarity",
+      "severity": "critical | warning | note",
+      "issue": "<one sentence, specific>",
+      "fix": "<one sentence, actionable>"
+    }
+  ],
+  "whatItCommunicates": "<one sentence — what the video actually communicates to a new viewer>",
+  "whatItFails": "<one sentence — the biggest thing it fails to communicate>"
+}`,
       },
     ],
   });
 
   const text = message.content[0].type === "text" ? message.content[0].text : "";
   if (!text.trim()) throw new Error("Claude returned empty Second Eye review");
-  return text;
+
+  // Extract JSON from response (handle markdown code blocks)
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error("Second Eye: could not parse JSON from response");
+
+  try {
+    const parsed = JSON.parse(jsonMatch[0]) as SecondEyeResult;
+
+    // Validate and normalize
+    return {
+      scrollMoment: parsed.scrollMoment ?? null,
+      flags: Array.isArray(parsed.flags)
+        ? parsed.flags
+            .map((f) => ({
+              timestamp: String(f.timestamp ?? ""),
+              category: (["scroll_trigger", "sound_off", "pacing", "clarity"].includes(f.category)
+                ? f.category
+                : "clarity") as SecondEyeFlag["category"],
+              severity: (["critical", "warning", "note"].includes(f.severity)
+                ? f.severity
+                : "note") as SecondEyeFlag["severity"],
+              issue: String(f.issue ?? ""),
+              fix: String(f.fix ?? ""),
+            }))
+            .sort((a, b) => {
+              const order = { critical: 0, warning: 1, note: 2 };
+              return order[a.severity] - order[b.severity];
+            })
+        : [],
+      whatItCommunicates: String(parsed.whatItCommunicates ?? ""),
+      whatItFails: String(parsed.whatItFails ?? ""),
+    };
+  } catch (e) {
+    throw new Error(`Second Eye: invalid JSON — ${(e as Error).message}`);
+  }
 }
