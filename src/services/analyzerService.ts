@@ -124,9 +124,43 @@ Rules:
 - Meta: interest and demographic targeting tags (5 tags)
 - Instagram: niche community + aesthetic tags (5 tags)
 - All tags should be relevant to the actual creative content analyzed
-- No generic filler tags like #fyp #viral unless genuinely appropriate`;
+- No generic filler tags like #fyp #viral unless genuinely appropriate
+
+---
+
+## 🎬 SCENE JSON
+After the markdown analysis above, append a JSON block with a scene-by-scene breakdown (3–6 scenes maximum). Wrap it in a fenced code block tagged exactly as \`\`\`json:
+
+\`\`\`json
+{
+  "scenes": [
+    {
+      "timestamp": "0:00 — 0:05",
+      "title": "Opening hook",
+      "visual": "What is happening visually in this scene",
+      "working": "What is working about this scene",
+      "improve": "What could be improved"
+    }
+  ]
+}
+\`\`\`
+
+Rules:
+- Include 3–6 scenes that cover the full duration of the creative
+- Timestamps use the format "M:SS — M:SS"
+- title is 3–5 words, plain text, no punctuation
+- visual, working, improve are each one sentence
+- Do not add any text between the markdown and the JSON block other than the section header above`;
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
+
+export interface Scene {
+  timestamp: string;   // e.g. "0:00 — 0:05"
+  title: string;       // 3-5 words
+  visual: string;      // what's happening visually
+  working: string;     // what's working
+  improve: string;     // what could be improved
+}
 
 export interface BudgetRecommendation {
   verdict: "Boost It" | "Test It" | "Fix First";
@@ -154,6 +188,7 @@ export interface AnalysisResult {
   improvements: string[];
   budget: BudgetRecommendation | null;
   hashtags?: Hashtags;
+  scenes?: Scene[];
   thumbnailDataUrl?: string;
   timestamp: Date;
   fileName: string;
@@ -284,6 +319,20 @@ export function parseHashtags(markdown: string): Hashtags | undefined {
   }
 }
 
+export function parseScenes(markdown: string): Scene[] | undefined {
+  try {
+    // Look for a fenced ```json block containing a "scenes" array
+    const jsonBlockMatch = markdown.match(/```json\s*([\s\S]*?)```/i);
+    if (!jsonBlockMatch) return undefined;
+    const parsed = JSON.parse(jsonBlockMatch[1].trim());
+    const scenes = parsed?.scenes;
+    if (!Array.isArray(scenes) || scenes.length === 0) return undefined;
+    return scenes as Scene[];
+  } catch {
+    return undefined;
+  }
+}
+
 // Recalculate overall score when Gemini returns zero values
 // If overall is 0 or any metric is 0, recompute overall as the
 // average of only the non-zero component scores.
@@ -389,6 +438,9 @@ export async function analyzeVideo(
     // 8. Parse hashtag recommendations from markdown
     const hashtags = parseHashtags(markdown);
 
+    // 9. Parse scene-by-scene breakdown from markdown (graceful — never throws)
+    const scenes = parseScenes(markdown);
+
     emit("complete");
 
     return {
@@ -397,6 +449,7 @@ export async function analyzeVideo(
       improvements,
       budget,
       hashtags,
+      scenes,
       timestamp: new Date(),
       fileName: file.name,
     };

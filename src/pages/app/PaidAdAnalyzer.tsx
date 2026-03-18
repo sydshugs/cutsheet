@@ -445,6 +445,7 @@ export default function PaidAdAnalyzer() {
               improvements={activeResult.improvements}
               budget={activeResult.budget}
               hashtags={activeResult.hashtags}
+              scenes={activeResult.scenes}
               fileName={activeResult.fileName}
               analysisTime={analysisCompletedAt ?? undefined}
               modelName="Gemini + Claude"

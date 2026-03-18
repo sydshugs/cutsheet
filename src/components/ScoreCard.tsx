@@ -1,7 +1,8 @@
 // ScoreCard.tsx — Visual translation from #screen-results (prototype)
 
 import { useEffect, useState } from "react";
-import type { BudgetRecommendation, Hashtags } from "../services/analyzerService";
+import type { BudgetRecommendation, Hashtags, Scene } from "../services/analyzerService";
+import SceneBreakdown from "./SceneBreakdown";
 
 interface Scores {
   hook: number;
@@ -27,6 +28,7 @@ interface ScoreCardProps {
   onCTARewrite?: () => void;
   ctaRewrites?: string[] | null;
   ctaLoading?: boolean;
+  scenes?: Scene[];
 }
 
 const SCORE_LABELS: Record<keyof Scores, string> = {
@@ -98,6 +100,7 @@ export function ScoreCard({
   onCTARewrite,
   ctaRewrites,
   ctaLoading,
+  scenes,
 }: ScoreCardProps) {
   const { label: overallLabel } = getScoreLabel(scores.overall);
   const [mounted, setMounted] = useState(false);
@@ -247,6 +250,13 @@ export function ScoreCard({
               </li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {/* Scene Breakdown */}
+      {scenes && scenes.length > 0 && (
+        <div className="px-5">
+          <SceneBreakdown scenes={scenes} />
         </div>
       )}
 
