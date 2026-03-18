@@ -11,6 +11,8 @@ interface ReportCardsProps {
   onShare: () => void;
   copied?: boolean;
   shareLoading?: boolean;
+  onReset?: () => void;
+  onFileSelect?: (file: File | null) => void;
 }
 
 const JSON_TITLE_RE = /json|scene|raw\s*data/i;
@@ -35,7 +37,7 @@ function splitMarkdown(md: string): { title: string | null; content: string }[] 
   });
 }
 
-export function ReportCards({ file, markdown, thumbnailDataUrl, onCopy, onExportPdf, onShare, copied, shareLoading }: ReportCardsProps) {
+export function ReportCards({ file, markdown, thumbnailDataUrl, onCopy, onExportPdf, onShare, copied, shareLoading, onReset, onFileSelect }: ReportCardsProps) {
   const isImage = file?.type.startsWith("image/") ?? false;
   const fileUrl = useMemo(() => file ? URL.createObjectURL(file) : null, [file]);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -77,6 +79,40 @@ export function ReportCards({ file, markdown, thumbnailDataUrl, onCopy, onExport
           <p className="text-xs text-zinc-500 font-mono mt-2">
             {file.name} · {(file.size / 1024 / 1024).toFixed(1)} MB
           </p>
+        </div>
+      )}
+
+      {/* Mini dropzone — between media and analysis */}
+      {onReset && onFileSelect && (
+        <div
+          style={{
+            marginTop: 12,
+            height: 52,
+            border: "1px dashed rgba(255,255,255,0.08)",
+            borderRadius: 10,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            transition: "all 150ms",
+          }}
+          onClick={() => {
+            const input = document.createElement("input");
+            input.type = "file";
+            input.accept = "video/*,image/*";
+            input.onchange = (e) => {
+              const f = (e.target as HTMLInputElement).files?.[0];
+              if (f) { onReset(); setTimeout(() => onFileSelect(f), 50); }
+            };
+            input.click();
+          }}
+          onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)"; e.currentTarget.style.background = "rgba(99,102,241,0.05)"; }}
+          onDragLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "transparent"; }}
+          onDrop={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "transparent"; const f = e.dataTransfer.files[0]; if (f) { onReset(); setTimeout(() => onFileSelect(f), 50); } }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "transparent"; }}
+        >
+          <span style={{ fontSize: 11, color: "#52525b" }}>Drop new creative or click to browse</span>
         </div>
       )}
 
