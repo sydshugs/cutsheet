@@ -48,17 +48,19 @@ function IntentHeader({
   return (
     <div style={{ padding: "12px 24px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", justifyContent: "space-between" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-        <span style={{ fontSize: 13, color: "#52525b", flexShrink: 0 }}>Platform:</span>
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        <span style={{ fontSize: 13, color: "#71717a", flexShrink: 0 }}>Platform:</span>
+        <div role="radiogroup" aria-label="Platform selector" style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           {PLATFORMS.map((p) => (
             <button
               key={p}
               type="button"
+              role="radio"
+              aria-checked={platform === p}
               onClick={() => setPlatform(p)}
               style={{
                 height: 30, padding: "0 12px", borderRadius: 9999, fontSize: 13, cursor: "pointer",
-                background: platform === p ? "#10b981" : "rgba(255,255,255,0.04)",
-                border: `1px solid ${platform === p ? "#10b981" : "rgba(255,255,255,0.08)"}`,
+                background: platform === p ? "#059669" : "rgba(255,255,255,0.04)",
+                border: `1px solid ${platform === p ? "#059669" : "rgba(255,255,255,0.08)"}`,
                 color: platform === p ? "white" : "#71717a",
                 fontWeight: platform === p ? 500 : 400,
                 transition: "all 150ms",
