@@ -39,6 +39,7 @@ onSelectHistory?: (record: AnalysisRecord) => void;
   historyRefreshKey?: number;
   engineBudget?: EngineBudgetRecommendation | null;
   onNavigateSettings?: () => void;
+  improvementsLoading?: boolean;
 }
 
 const SCORE_LABELS: Record<keyof Scores, string> = {
@@ -116,6 +117,7 @@ onSelectHistory,
   historyRefreshKey,
   engineBudget,
   onNavigateSettings,
+  improvementsLoading,
 }: ScoreCardProps) {
   const { label: overallLabel } = getScoreLabel(scores.overall);
   const [mounted, setMounted] = useState(false);
@@ -375,10 +377,15 @@ onSelectHistory,
 
       {/* Improve This Ad */}
       {improvements && improvements.length > 0 && (
-        <div className="px-5 border-t border-white/5 mt-4 pt-4">
-          <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-3">
-            Improve This Ad
-          </p>
+        <div className="px-5 border-t border-white/5 mt-4 pt-4" style={{ transition: "opacity 200ms", opacity: improvementsLoading ? 0.4 : 1 }}>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider m-0">
+              Improve This Ad
+            </p>
+            {improvementsLoading && (
+              <div style={{ width: 12, height: 12, border: "2px solid rgba(99,102,241,0.2)", borderTopColor: "#6366f1", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+            )}
+          </div>
           <ul className="flex flex-col gap-1">
             {improvements.map((item, i) => (
               <li key={i} className="flex gap-2 items-start py-1.5">

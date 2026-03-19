@@ -15,7 +15,8 @@ function getClient(): Anthropic {
 export async function generateImprovements(
   analysisMarkdown: string,
   scores: { hook: number; clarity: number; cta: number; production: number; overall: number } | null,
-  userContext?: string
+  userContext?: string,
+  platform?: string
 ): Promise<string[]> {
   if (!scores) return [];
 
@@ -25,16 +26,17 @@ export async function generateImprovements(
     .join(", ");
 
   const contextBlock = userContext ? `\n\n${userContext}\n\nUse the user context to inform the specificity, tone, and priorities of each improvement. Do NOT mention the user's role, niche, or platform explicitly in the improvement text. The improvements should feel naturally tailored — not like they're addressing the user directly. Do NOT give generic advice.` : "";
+  const platformBlock = platform && platform !== "all" ? `\nOptimize all suggestions specifically for ${platform}. Consider ${platform}-specific best practices, audience behavior, and format requirements.` : "";
 
   const client = getClient();
   const message = await client.messages.create({
     model: CLAUDE_MODEL,
     max_tokens: 1024,
-    system: `You are a senior performance marketing creative strategist. You write short, specific, actionable improvement suggestions for ads. Each suggestion should be 1-2 sentences max. Focus on the weakest scoring areas. No fluff, no preamble.${contextBlock}`,
+    system: `You are a senior performance marketing creative strategist. You write short, specific, actionable improvement suggestions for ads. Each suggestion should be 1-2 sentences max. Focus on the weakest scoring areas. No fluff, no preamble.${contextBlock}${platformBlock}`,
     messages: [
       {
         role: "user",
-        content: `Here is a video ad analysis:\n\n${analysisMarkdown}\n\nWeakest areas: ${weakAreas || "none particularly weak"}\n\nWrite exactly 4-6 bullet-point improvements. Return ONLY the bullet points, one per line, starting with "- ". No headers, no numbering, no extra text.`,
+        content: `Here is a video ad analysis:\n\n${analysisMarkdown}\n\nWeakest areas: ${weakAreas || "none particularly weak"}${platform && platform !== "all" ? `\nTarget platform: ${platform}` : ""}\n\nWrite exactly 4-6 bullet-point improvements. Return ONLY the bullet points, one per line, starting with "- ". No headers, no numbering, no extra text.`,
       },
     ],
   });
