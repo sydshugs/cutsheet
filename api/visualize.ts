@@ -122,7 +122,7 @@ Return JSON only — no prose, no preamble:
   let visualBrief: string | undefined;
 
   try {
-    const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+    const genAI = new GoogleGenAI({ apiKey: (process.env.GEMINI_API_KEY ?? process.env.VITE_GEMINI_API_KEY)! });
 
     const imageResponse = await genAI.models.generateContent({
       model: GEMINI_IMAGE_MODEL,
