@@ -21,7 +21,7 @@ export function UsageIndicator({
 
   if (collapsed) {
     return (
-      <div className="flex items-center justify-center" style={{ width: 40, height: 40, margin: "0 auto" }}>
+      <div className="flex items-center justify-center" style={{ width: 40, height: 40, margin: "0 auto" }} aria-label={`${usageCount} of ${FREE_LIMIT} free analyses used`} role="status">
         <div
           style={{ width: 8, height: 8, borderRadius: "50%", background: barColor }}
           title={`${remaining} analyses remaining`}
@@ -32,6 +32,8 @@ export function UsageIndicator({
 
   return (
     <div
+      role="status"
+      aria-label={`${usageCount} of ${FREE_LIMIT} free analyses used`}
       style={{
         margin: "0 8px 4px",
         padding: "10px 12px",

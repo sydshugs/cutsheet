@@ -261,6 +261,8 @@ export default function Signup() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showPassword}
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 transition-colors hover:text-white"
                   style={{ color: "#71717a" }}
                 >
@@ -301,6 +303,8 @@ export default function Signup() {
                 <button
                   type="button"
                   onClick={() => setShowConfirm(!showConfirm)}
+                  aria-label={showConfirm ? "Hide confirm password" : "Show confirm password"}
+                  aria-pressed={showConfirm}
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 transition-colors hover:text-white"
                   style={{ color: "#71717a" }}
                 >

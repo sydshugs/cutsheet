@@ -96,12 +96,17 @@ function IntentHeader({
       <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
         <span style={{ fontSize: 13, color: "#52525b", flexShrink: 0 }}>Analyzing for:</span>
 
-        {/* Platform pills — from compatibility matrix */}
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        {/* Platform pills — radio group with accessibility */}
+        <div role="radiogroup" aria-label="Platform selector" style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           {PLATFORM_COMPAT[format].map((opt) => (
             <button
               key={opt.value}
               type="button"
+              role="radio"
+              aria-checked={platform === opt.value && opt.enabled}
+              aria-disabled={!opt.enabled || undefined}
+              aria-label={!opt.enabled && opt.note ? `${opt.label} — ${opt.note}` : opt.label}
+              tabIndex={!opt.enabled ? -1 : undefined}
               onClick={() => { if (opt.enabled) setPlatform(opt.value); }}
               title={opt.note ?? undefined}
               style={{
@@ -109,7 +114,7 @@ function IntentHeader({
                 cursor: opt.enabled ? "pointer" : "not-allowed",
                 opacity: opt.enabled ? 1 : 0.35,
                 background: platform === opt.value && opt.enabled ? "#4f46e5" : "rgba(255,255,255,0.04)",
-                border: `1px solid ${platform === opt.value && opt.enabled ? "#6366f1" : "rgba(255,255,255,0.08)"}`,
+                border: `1px solid ${platform === opt.value && opt.enabled ? "#4f46e5" : "rgba(255,255,255,0.08)"}`,
                 color: platform === opt.value && opt.enabled ? "white" : "#71717a",
                 fontWeight: platform === opt.value && opt.enabled ? 500 : 400,
                 transition: "all 150ms",

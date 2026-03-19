@@ -388,9 +388,9 @@ onSelectHistory,
       {improvements && improvements.length > 0 && (
         <div className="px-5 border-t border-white/5 mt-4 pt-4" style={{ transition: "opacity 200ms", opacity: improvementsLoading ? 0.4 : 1 }}>
           <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider m-0">
+            <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wider m-0">
               Improve This Ad
-            </p>
+            </h3>
             {improvementsLoading && (
               <div style={{ width: 12, height: 12, border: "2px solid rgba(99,102,241,0.2)", borderTopColor: "#6366f1", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
             )}
