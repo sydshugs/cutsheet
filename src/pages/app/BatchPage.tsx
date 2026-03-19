@@ -15,8 +15,8 @@ export default function BatchPage() {
   return (
     <>
       <Helmet>
-        <title>Batch Score — Cutsheet</title>
-        <meta name="description" content="Score up to 10 ad creatives at once. Rank and compare your entire creative library." />
+        <title>Rank Creatives — Cutsheet</title>
+        <meta name="description" content="Upload up to 10 ad variations. Get them ranked by AI so you know which 2-3 to test before spending." />
         <link rel="canonical" href="https://cutsheet.xyz/app/batch" />
       </Helmet>
       <BatchView

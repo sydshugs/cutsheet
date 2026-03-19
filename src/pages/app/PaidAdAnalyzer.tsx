@@ -127,11 +127,13 @@ function IntentHeader({
         <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.08)", flexShrink: 0 }} />
 
         {/* Format pills */}
-        <div style={{ display: "flex", gap: 6 }}>
+        <div role="radiogroup" aria-label="Format selector" style={{ display: "flex", gap: 6 }}>
           {FORMATS.map((f) => (
             <button
               key={f}
               type="button"
+              role="radio"
+              aria-checked={format === f}
               onClick={() => {
                 setFormat(f);
                 if (f === "static" && (platform === "YouTube" || platform === "TikTok")) {
@@ -140,8 +142,8 @@ function IntentHeader({
               }}
               style={{
                 height: 30, padding: "0 12px", borderRadius: 9999, fontSize: 13, cursor: "pointer",
-                background: format === f ? "#6366f1" : "rgba(255,255,255,0.04)",
-                border: `1px solid ${format === f ? "#6366f1" : "rgba(255,255,255,0.08)"}`,
+                background: format === f ? "#4f46e5" : "rgba(255,255,255,0.04)",
+                border: `1px solid ${format === f ? "#4f46e5" : "rgba(255,255,255,0.08)"}`,
                 color: format === f ? "white" : "#71717a",
                 fontWeight: format === f ? 500 : 400,
                 transition: "all 150ms",

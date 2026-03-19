@@ -565,6 +565,23 @@ export function ScoreCard({
           )}
         </div>
       )}
+
+      {/* Compare against competitor link */}
+      <div className="px-5 pb-4">
+        <a
+          href="/app/competitor"
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+            fontSize: 12, color: "#71717a", textDecoration: "none",
+            padding: "8px 0", borderRadius: 8,
+            transition: "color 150ms",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = "#818cf8"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = "#71717a"; }}
+        >
+          Compare against a competitor →
+        </a>
+      </div>
     </div>
   );
 }
