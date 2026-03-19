@@ -7,7 +7,7 @@ export const maxDuration = 60; // seconds — image gen takes 15-20s
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Anthropic from "@anthropic-ai/sdk";
 import { GoogleGenAI, Modality } from "@google/genai";
-import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth.js";
+import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
 
 const CLAUDE_MODEL = "claude-sonnet-4-20250514";
 const GEMINI_IMAGE_MODEL = "gemini-2.0-flash-preview-image-generation";

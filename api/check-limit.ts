@@ -2,7 +2,7 @@
 // Browser calls this BEFORE starting any Gemini analysis.
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth.js";
+import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
 import { createClient } from "@supabase/supabase-js";
 
 const FREE_ANALYSES_LIMIT = 3;

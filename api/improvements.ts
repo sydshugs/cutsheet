@@ -2,8 +2,8 @@
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Anthropic from "@anthropic-ai/sdk";
-import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth.js";
-import { sanitizeSessionMemory } from "./_lib/sanitizeMemory.js";
+import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
+import { sanitizeSessionMemory } from "./_lib/sanitizeMemory";
 
 export const maxDuration = 60;
 
