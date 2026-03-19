@@ -536,9 +536,9 @@ Return JSON only — no prose:
 
                 {/* Suite results */}
                 {suiteStatus === "complete" && (
-                  <div style={{ display: "flex", gap: 24, alignItems: "flex-start" }} className="max-lg:flex-col">
-                    {/* LEFT — Suite mockup */}
-                    <div style={{ flex: "0 0 42%", minWidth: 0 }} className="max-lg:w-full">
+                  <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+                    {/* Suite mockup — full width */}
+                    <div>
                       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
                         <Eye size={14} color="#71717a" />
                         <span style={{ fontSize: 13, fontWeight: 600, color: "#f4f4f5" }}>Suite placement preview</span>
@@ -573,8 +573,8 @@ Return JSON only — no prose:
                       </div>
                     </div>
 
-                    {/* RIGHT — Suite cohesion results */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
+                    {/* Suite cohesion results */}
+                    <div>
                       {suiteCohesion && (
                         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                           {/* Suite score card */}
