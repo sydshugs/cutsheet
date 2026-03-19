@@ -37,6 +37,48 @@ function resizeImageToDataUrl(file: File, maxDim: number, quality: number): Prom
   });
 }
 
+/** Extract a single frame (at 1s or 0s) from a video file as a JPEG data URL. */
+function extractVideoFrame(file: File, maxDim: number, quality: number): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    video.muted = true;
+    video.playsInline = true;
+    const url = URL.createObjectURL(file);
+    video.src = url;
+
+    video.onloadeddata = () => {
+      // Seek to 1s or 0 if shorter
+      video.currentTime = Math.min(1, video.duration || 0);
+    };
+
+    video.onseeked = () => {
+      let { videoWidth: width, videoHeight: height } = video;
+      if (width > maxDim || height > maxDim) {
+        const scale = maxDim / Math.max(width, height);
+        width = Math.round(width * scale);
+        height = Math.round(height * scale);
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { URL.revokeObjectURL(url); return reject(new Error("Canvas not supported")); }
+      ctx.drawImage(video, 0, 0, width, height);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+
+    video.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Failed to load video")); };
+  });
+}
+
+/** Convert any media file (image or video) to a resized JPEG data URL. */
+function fileToMediaDataUrl(file: File, maxDim = 1200, quality = 0.8): Promise<string> {
+  if (file.type.startsWith("video/")) return extractVideoFrame(file, maxDim, quality);
+  return resizeImageToDataUrl(file, maxDim, quality);
+}
+
 // ─── EMPTY STATE ──────────────────────────────────────────────────────────────
 
 function EmptyState({
@@ -173,7 +215,7 @@ export default function PolicyCheck() {
       // Convert file to base64 data URL, resized to fit serverless body limit
       let mediaDataUrl: string | undefined;
       if (file) {
-        mediaDataUrl = await resizeImageToDataUrl(file, 1200, 0.8);
+        mediaDataUrl = await fileToMediaDataUrl(file, 1200, 0.8);
       }
 
       const params: PolicyCheckParams = {
