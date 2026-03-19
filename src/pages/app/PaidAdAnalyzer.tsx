@@ -2,7 +2,7 @@
 import { Helmet } from 'react-helmet-async';
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useOutletContext, useNavigate } from "react-router-dom";
-import { Zap, RotateCcw } from "lucide-react";
+import { Zap, RotateCcw, Upload } from "lucide-react";
 import { AnalyzerView } from "../../components/AnalyzerView";
 import { ScoreCard } from "../../components/ScoreCard";
 import { VideoDropzone } from "../../components/VideoDropzone";
@@ -23,6 +23,8 @@ import {
 } from "../../services/claudeService";
 import { SecondEyePanel } from "../../components/SecondEyePanel";
 import { StaticSecondEyePanel } from "../../components/StaticSecondEyePanel";
+import { BeforeAfterComparison } from "../../components/BeforeAfterComparison";
+import { generateComparison, type ComparisonResult } from "../../services/claudeService";
 import { createShare } from "../../services/shareService";
 import { checkShareLimit, incrementShareCount } from "../../utils/rateLimiter";
 import { getUserContext, formatUserContextBlock } from "../../services/userContextService";
@@ -276,6 +278,12 @@ export default function PaidAdAnalyzer() {
   const [staticSecondEyeResult, setStaticSecondEyeResult] = useState<StaticSecondEyeResult | null>(null);
   const [staticSecondEyeLoading, setStaticSecondEyeLoading] = useState(false);
   const [engineBudget, setEngineBudget] = useState<EngineBudgetRecommendation | null>(null);
+  // ── Before/After re-analysis state
+  const [reanalyzeMode, setReanalyzeMode] = useState(false);
+  const [comparisonResult, setComparisonResult] = useState<ComparisonResult | null>(null);
+  const [comparisonLoading, setComparisonLoading] = useState(false);
+  const [originalScoresSnapshot, setOriginalScoresSnapshot] = useState<{ overall: number; hook: number; cta: number; clarity: number; production: number } | null>(null);
+  const [originalImprovementsSnapshot, setOriginalImprovementsSnapshot] = useState<string[]>([]);
 
   // ── Local analyzer state ───────────────────────────────────────────────────
   const [file, setFile] = useState<File | null>(null);
@@ -322,7 +330,41 @@ export default function PaidAdAnalyzer() {
     setStaticSecondEyeResult(null);
     setStaticSecondEyeLoading(false);
     setEngineBudget(null);
+    setReanalyzeMode(false);
+    setComparisonResult(null);
+    setComparisonLoading(false);
+    setOriginalScoresSnapshot(null);
+    setOriginalImprovementsSnapshot([]);
   }, [reset]);
+
+  // Re-analyze handler: upload improved version, score, compare
+  const handleReanalyze = async (improvedFile: File) => {
+    if (!activeResult?.scores) return;
+    // Snapshot original scores before overwriting
+    if (!originalScoresSnapshot) {
+      setOriginalScoresSnapshot({ ...activeResult.scores });
+      setOriginalImprovementsSnapshot(activeResult.improvements ?? []);
+    }
+    setComparisonLoading(true);
+    setComparisonResult(null);
+    try {
+      const improvedResult = await analyze(improvedFile, API_KEY, contextPrefix, userContext || undefined);
+      // Now generate comparison
+      if (improvedResult?.scores && originalScoresSnapshot) {
+        const comp = await generateComparison(
+          originalScoresSnapshot,
+          improvedResult.scores,
+          originalImprovementsSnapshot,
+          userContext || undefined
+        );
+        setComparisonResult(comp);
+      }
+    } catch (err) {
+      console.error("Re-analysis failed:", err);
+    } finally {
+      setComparisonLoading(false);
+    }
+  };
 
 
   // ── Build context prefix for Gemini prompt ────────────────────────────────
@@ -752,8 +794,70 @@ export default function PaidAdAnalyzer() {
           </div>
         )}
 
+        {/* Before/After re-analysis section */}
+        {showRightPanel && rightTab === "analysis" && !comparisonResult && (
+          <div style={{ padding: "0 16px 12px" }}>
+            {!reanalyzeMode ? (
+              <button type="button" onClick={() => setReanalyzeMode(true)}
+                style={{
+                  width: "100%", height: 40, background: "rgba(99,102,241,0.1)",
+                  border: "1px solid rgba(99,102,241,0.3)", borderRadius: 9999,
+                  color: "#818cf8", fontSize: 13, fontWeight: 500, cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                }}>
+                <RotateCcw size={14} /> Re-analyze improved version →
+              </button>
+            ) : (
+              <div style={{ background: "rgba(99,102,241,0.04)", border: "1px dashed rgba(99,102,241,0.3)", borderRadius: 12, padding: 16 }}>
+                <p style={{ fontSize: 13, fontWeight: 600, color: "#f4f4f5", margin: "0 0 4px" }}>Upload your improved version</p>
+                <p style={{ fontSize: 12, color: "#71717a", margin: "0 0 12px" }}>We'll score it and compare against your original.</p>
+                {comparisonLoading ? (
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "16px 0" }}>
+                    <div style={{ width: 14, height: 14, border: "2px solid rgba(99,102,241,0.3)", borderTopColor: "#6366f1", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+                    <span style={{ fontSize: 12, color: "#71717a" }}>Analyzing improved version...</span>
+                  </div>
+                ) : (
+                  <div
+                    style={{ height: 64, border: "1px dashed rgba(99,102,241,0.2)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, cursor: "pointer", transition: "all 150ms" }}
+                    onClick={() => {
+                      const input = document.createElement("input");
+                      input.type = "file"; input.accept = "video/*,image/*";
+                      input.onchange = (e) => { const f = (e.target as HTMLInputElement).files?.[0]; if (f) handleReanalyze(f); };
+                      input.click();
+                    }}
+                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)"; }}
+                    onDragLeave={(e) => { e.currentTarget.style.borderColor = "rgba(99,102,241,0.2)"; }}
+                    onDrop={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(99,102,241,0.2)"; const f = e.dataTransfer.files[0]; if (f) handleReanalyze(f); }}
+                  >
+                    <Upload size={14} color="#6366f1" />
+                    <span style={{ fontSize: 12, color: "#6366f1" }}>Drop improved version here</span>
+                  </div>
+                )}
+                <button type="button" onClick={() => setReanalyzeMode(false)}
+                  style={{ fontSize: 11, color: "#52525b", background: "none", border: "none", cursor: "pointer", marginTop: 8, width: "100%", textAlign: "center" }}>
+                  ← Keep original
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Before/After comparison result */}
+        {showRightPanel && comparisonResult && originalScoresSnapshot && activeResult?.scores && (
+          <div style={{ padding: "0 16px 12px" }}>
+            <BeforeAfterComparison
+              originalScores={originalScoresSnapshot}
+              improvedScores={activeResult.scores}
+              comparison={comparisonResult}
+              fileName={activeResult.fileName}
+              onReanalyzeAgain={() => { setComparisonResult(null); setReanalyzeMode(true); }}
+              onStartFresh={handleReset}
+            />
+          </div>
+        )}
+
         {/* Analyze another — sticky at bottom of right panel */}
-        {showRightPanel && (
+        {showRightPanel && !comparisonResult && (
           <div style={{ position: "sticky", bottom: 0, padding: "0 16px 16px", background: "linear-gradient(transparent, rgba(9,9,11,0.95) 8px)" }}>
             <button
               type="button"
