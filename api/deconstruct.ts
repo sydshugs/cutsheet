@@ -245,31 +245,44 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     .join("\n");
 
   // ── Claude teardown ────────────────────────────────────────────────────────
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
-  const message = await client.messages.create({
-    model: CLAUDE_MODEL,
-    max_tokens: 3000,
-    messages: [
-      {
-        role: "user",
-        content: buildClaudePrompt(adContext, geminiContext),
-      },
-    ],
-  });
+  try {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      console.error("[deconstruct] ANTHROPIC_API_KEY is not set");
+      return res.status(500).json({ error: "Server configuration error — please contact support." });
+    }
 
-  const teardown =
-    message.content[0].type === "text" ? message.content[0].text : "";
-  if (!teardown.trim()) {
-    return res
-      .status(500)
-      .json({ error: "Analysis failed — please try again." });
+    const client = new Anthropic({ apiKey });
+    const message = await client.messages.create({
+      model: CLAUDE_MODEL,
+      max_tokens: 3000,
+      messages: [
+        {
+          role: "user",
+          content: buildClaudePrompt(adContext, geminiContext),
+        },
+      ],
+    });
+
+    const teardown =
+      message.content[0].type === "text" ? message.content[0].text : "";
+    if (!teardown.trim()) {
+      return res
+        .status(500)
+        .json({ error: "Analysis failed — please try again." });
+    }
+
+    return res.status(200).json({
+      teardown,
+      adTitle: adTitle || url,
+      thumbnailUrl: resolvedMediaUrl || "",
+      sourceType,
+      gemini: geminiParsed,
+    });
+  } catch (err) {
+    console.error("[deconstruct] Claude error:", err);
+    const message = err instanceof Error ? err.message : "Deconstruction failed";
+    const status = message.includes("rate_limit") || message.includes("429") ? 429 : 500;
+    return res.status(status).json({ error: message });
   }
-
-  return res.status(200).json({
-    teardown,
-    adTitle: adTitle || url,
-    thumbnailUrl: resolvedMediaUrl || "",
-    sourceType,
-    gemini: geminiParsed,
-  });
 }
