@@ -46,8 +46,21 @@ export interface PolicyCheckResult {
 // ─── HANDLER ─────────────────────────────────────────────────────────────────
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  console.log('[debug] policy-check env check', {
+    hasGeminiKey: !!process.env.GEMINI_API_KEY,
+    hasViteGeminiKey: !!process.env.VITE_GEMINI_API_KEY,
+    hasAnthropicKey: !!process.env.ANTHROPIC_API_KEY,
+    hasViteAnthropicKey: !!process.env.VITE_ANTHROPIC_API_KEY,
+    hasUpstashUrl: !!process.env.UPSTASH_REDIS_REST_URL,
+    hasUpstashToken: !!process.env.UPSTASH_REDIS_REST_TOKEN,
+    hasSupabaseUrl: !!process.env.SUPABASE_URL,
+    hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+  });
+
   if (handlePreflight(req, res)) return;
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
+  try {
 
   const user = await verifyAuth(req);
   if (!user) return res.status(401).json({ error: "Unauthorized" });
@@ -271,6 +284,14 @@ Return only the complete JSON. No preamble, no explanation outside the JSON.`;
     console.error("[policy-check] Error:", err);
     return res.status(500).json({
       error: err instanceof Error ? err.message : "Policy check failed",
+    });
+  }
+
+  } catch (err: unknown) {
+    console.error('[policy-check] Unhandled error:', err instanceof Error ? err.message : err, err instanceof Error ? err.stack : '');
+    return res.status(500).json({
+      error: 'Internal server error',
+      message: err instanceof Error ? err.message : 'Unknown error',
     });
   }
 }

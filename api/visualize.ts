@@ -16,8 +16,21 @@ const GEMINI_IMAGE_MODEL = "gemini-2.0-flash-preview-image-generation";
 const RATE = { freeLimit: 2, proLimit: 200, windowSeconds: 86400 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  console.log('[debug] visualize env check', {
+    hasGeminiKey: !!process.env.GEMINI_API_KEY,
+    hasViteGeminiKey: !!process.env.VITE_GEMINI_API_KEY,
+    hasAnthropicKey: !!process.env.ANTHROPIC_API_KEY,
+    hasViteAnthropicKey: !!process.env.VITE_ANTHROPIC_API_KEY,
+    hasUpstashUrl: !!process.env.UPSTASH_REDIS_REST_URL,
+    hasUpstashToken: !!process.env.UPSTASH_REDIS_REST_TOKEN,
+    hasSupabaseUrl: !!process.env.SUPABASE_URL,
+    hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+  });
+
   if (handlePreflight(req, res)) return;
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
+  try {
 
   // ── Auth ──────────────────────────────────────────────────────────────────
   const user = await verifyAuth(req);
@@ -161,4 +174,12 @@ Return JSON only — no prose, no preamble:
     improvementSummary,
     changesApplied,
   });
+
+  } catch (err: unknown) {
+    console.error('[visualize] Unhandled error:', err instanceof Error ? err.message : err, err instanceof Error ? err.stack : '');
+    return res.status(500).json({
+      error: 'Internal server error',
+      message: err instanceof Error ? err.message : 'Unknown error',
+    });
+  }
 }

@@ -171,9 +171,24 @@ A ready-to-use creative brief for making your own version of this ad:
 // ─── HANDLER ─────────────────────────────────────────────────────────────────
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  console.log('[debug] deconstruct env check', {
+    hasGeminiKey: !!process.env.GEMINI_API_KEY,
+    hasViteGeminiKey: !!process.env.VITE_GEMINI_API_KEY,
+    hasAnthropicKey: !!process.env.ANTHROPIC_API_KEY,
+    hasViteAnthropicKey: !!process.env.VITE_ANTHROPIC_API_KEY,
+    hasMetaToken: !!process.env.META_ACCESS_TOKEN,
+    hasViteMetaToken: !!process.env.VITE_META_ACCESS_TOKEN,
+    hasUpstashUrl: !!process.env.UPSTASH_REDIS_REST_URL,
+    hasUpstashToken: !!process.env.UPSTASH_REDIS_REST_TOKEN,
+    hasSupabaseUrl: !!process.env.SUPABASE_URL,
+    hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+  });
+
   if (handlePreflight(req, res)) return;
   if (req.method !== "POST")
     return res.status(405).json({ error: "Method not allowed" });
+
+  try {
 
   const user = await verifyAuth(req);
   if (!user) return res.status(401).json({ error: "Unauthorized" });
@@ -286,5 +301,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const message = err instanceof Error ? err.message : "Deconstruction failed";
     const status = message.includes("rate_limit") || message.includes("429") ? 429 : 500;
     return res.status(status).json({ error: message });
+  }
+
+  } catch (err: unknown) {
+    console.error('[deconstruct] Unhandled error:', err instanceof Error ? err.message : err, err instanceof Error ? err.stack : '');
+    return res.status(500).json({
+      error: 'Internal server error',
+      message: err instanceof Error ? err.message : 'Unknown error',
+    });
   }
 }
