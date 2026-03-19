@@ -115,7 +115,7 @@ function OrganicEmptyState({
         Upload your TikTok, Reel, YouTube Short, or static post. Get scored on retention, shareability, and algorithm signals.
       </p>
       <div style={{ width: "100%", maxWidth: 520, marginTop: 32 }}>
-        <VideoDropzone onFileSelect={onFileSelect} file={null} onUrlSubmit={onUrlSubmit} acceptImages />
+        <VideoDropzone onFileSelect={onFileSelect} file={null} onUrlSubmit={onUrlSubmit} />
       </div>
       <p style={{ fontSize: 11, color: "#52525b", marginTop: 12 }} className="hidden md:block">or press &#8984;K</p>
     </div>
