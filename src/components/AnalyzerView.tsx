@@ -1,6 +1,7 @@
 import { AnimatePresence } from "framer-motion";
 import { AnalysisStatus, AnalysisResult } from "../services/analyzerService";
 import { HistoryEntry } from "../hooks/useHistory";
+import type { AnalysisError } from "../hooks/useVideoAnalyzer";
 import { VideoDropzone } from "./VideoDropzone";
 import { ProgressCard } from "./ProgressCard";
 import { ErrorCard } from "./ErrorCard";
@@ -12,6 +13,7 @@ interface AnalyzerViewProps {
   statusMessage: string;
   result: AnalysisResult | null;
   error: string | null;
+  analysisError?: AnalysisError | null;
   thumbnailDataUrl?: string;
   onFileSelect: (file: File | null) => void;
   onUrlSubmit?: (url: string) => void;
@@ -35,6 +37,7 @@ export function AnalyzerView({
   statusMessage,
   result,
   error,
+  analysisError,
   thumbnailDataUrl,
   onFileSelect,
   onUrlSubmit,
@@ -88,6 +91,7 @@ export function AnalyzerView({
         <div key="error" className="flex-1 flex items-center justify-center p-4 md:p-8">
           <ErrorCard
             error={error}
+            analysisError={analysisError}
             onRetry={onAnalyze}
             onReset={onReset}
           />
