@@ -36,6 +36,7 @@ import { saveAnalysis } from "../../services/historyService";
 import type { AnalysisRecord } from "../../services/historyService";
 import { checkShareLimit, incrementShareCount } from "../../utils/rateLimiter";
 import { getUserContext, formatUserContextBlock } from "../../services/userContextService";
+import { getSessionMemory } from "@/src/lib/userMemoryService";
 import { generateBudgetRecommendation, type EngineBudgetRecommendation } from "../../services/budgetService";
 import type { AppSharedContext } from "../../components/AppLayout";
 
@@ -342,6 +343,7 @@ export default function PaidAdAnalyzer() {
   const scorecardRef = useRef<HTMLDivElement | null>(null);
   const lastSavedRef = useRef<string | null>(null);
   const prevPlatformRef = useRef<Platform>(platform);
+  const sessionMemoryRef = useRef<string>('');
 
   const { status, statusMessage, result, error, analysisError, analyze, download, copy, reset } = useVideoAnalyzer();
   const thumbnailDataUrl = useThumbnail(file);
@@ -397,7 +399,8 @@ export default function PaidAdAnalyzer() {
           originalScoresSnapshot,
           improvedResult.scores,
           originalImprovementsSnapshot,
-          userContext || undefined
+          userContext || undefined,
+          sessionMemoryRef.current
         );
         setComparisonResult(comp);
       }
@@ -483,7 +486,8 @@ export default function PaidAdAnalyzer() {
             result.fileName,
             result.scores ? { hook: result.scores.hook, overall: result.scores.overall } : undefined,
             result.improvements,
-            userContext || undefined
+            userContext || undefined,
+            sessionMemoryRef.current
           );
           setSecondEyeOutput(output);
         } catch (err) {
@@ -510,7 +514,8 @@ export default function PaidAdAnalyzer() {
             result.fileName,
             result.scores ? { overall: result.scores.overall, cta: result.scores.cta } : undefined,
             result.improvements,
-            userContext || undefined
+            userContext || undefined,
+            sessionMemoryRef.current
           );
           setStaticSecondEyeResult(output);
         } catch (err) {
@@ -531,7 +536,7 @@ export default function PaidAdAnalyzer() {
     if (status !== "complete" || !result?.markdown || !result?.scores) return;
 
     setImprovementsLoading(true);
-    generateImprovements(result.markdown, result.scores, userContext || undefined, platform)
+    generateImprovements(result.markdown, result.scores, userContext || undefined, platform, sessionMemoryRef.current)
       .then((imps) => { setPlatformImprovements(imps); })
       .catch(() => { setPlatformImprovements(null); })
       .finally(() => setImprovementsLoading(false));
@@ -591,6 +596,8 @@ export default function PaidAdAnalyzer() {
   // ── Handlers ──────────────────────────────────────────────────────────────
   const handleAnalyze = useCallback(async () => {
     if (!file || isAnalyzing || !canAnalyze) return;
+    const { text: sessionMemory } = await getSessionMemory();
+    sessionMemoryRef.current = sessionMemory;
     await analyze(file, API_KEY, contextPrefix, userContext || undefined);
   }, [file, isAnalyzing, canAnalyze, analyze, contextPrefix]);
 
@@ -665,7 +672,7 @@ export default function PaidAdAnalyzer() {
     setBriefLoading(true);
     setBriefError(null);
     try {
-      const r = await generateBriefWithClaude(activeResult.markdown, activeResult.fileName, userContext || undefined);
+      const r = await generateBriefWithClaude(activeResult.markdown, activeResult.fileName, userContext || undefined, sessionMemoryRef.current);
       setBrief(r);
       setRightTab("brief");
     } catch {
@@ -684,7 +691,7 @@ export default function PaidAdAnalyzer() {
     setCtaLoading(true);
     try {
       const ctaSection = activeResult.markdown.match(/CTA[\s\S]*?(?=\n##|\n---)/i)?.[0] ?? "";
-      const rewrites = await generateCTARewrites(ctaSection, activeResult.fileName, userContext || undefined);
+      const rewrites = await generateCTARewrites(ctaSection, activeResult.fileName, userContext || undefined, sessionMemoryRef.current);
       setCtaRewrites(rewrites);
     } catch { /* silent */ }
     finally { setCtaLoading(false); }
