@@ -1,7 +1,7 @@
 // ScoreCard.tsx — Visual translation from #screen-results (prototype)
 
 import { useEffect, useState } from "react";
-import { Copy, CheckCircle, AlertTriangle, AlertCircle, TrendingUp, ArrowUpRight, Share2, RotateCcw, Send } from "lucide-react";
+import { Copy, CheckCircle, AlertTriangle, AlertCircle, TrendingUp, ArrowUpRight, Share2, RotateCcw, Send, ShieldCheck } from "lucide-react";
 import type { BudgetRecommendation, Hashtags, Scene } from "../services/analyzerService";
 import type { EngineBudgetRecommendation } from "../services/budgetService";
 import SceneBreakdown from "./SceneBreakdown";
@@ -41,6 +41,8 @@ onSelectHistory?: (record: AnalysisRecord) => void;
   onNavigateSettings?: () => void;
   improvementsLoading?: boolean;
   onReanalyze?: () => void;
+  onCheckPolicies?: () => void;
+  policyLoading?: boolean;
 }
 
 const SCORE_LABELS: Record<keyof Scores, string> = {
@@ -136,6 +138,8 @@ onSelectHistory,
   onNavigateSettings,
   improvementsLoading,
   onReanalyze,
+  onCheckPolicies,
+  policyLoading,
 }: ScoreCardProps) {
   const { label: overallLabel } = getScoreLabel(scores.overall);
   const [mounted, setMounted] = useState(false);
@@ -658,8 +662,38 @@ onSelectHistory,
       )}
 
       {/* Quick actions */}
-      {(onGenerateBrief || onAddToSwipeFile) && (
+      {(onGenerateBrief || onAddToSwipeFile || onCheckPolicies) && (
         <div className="mt-auto p-5 border-t border-white/5 flex flex-col gap-2">
+          {onCheckPolicies && (
+            <button
+              type="button"
+              onClick={onCheckPolicies}
+              disabled={policyLoading}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.25)",
+                color: "#f59e0b", fontSize: 14, fontWeight: 500,
+                borderRadius: 12, width: "100%", padding: "10px 0",
+                cursor: policyLoading ? "default" : "pointer",
+                opacity: policyLoading ? 0.7 : 1,
+                transition: "all 150ms",
+              }}
+              onMouseEnter={(e) => { if (!policyLoading) { e.currentTarget.style.background = "rgba(245,158,11,0.18)"; } }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(245,158,11,0.1)"; }}
+            >
+              {policyLoading ? (
+                <>
+                  <div style={{ width: 14, height: 14, border: "2px solid rgba(245,158,11,0.3)", borderTopColor: "#f59e0b", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+                  Checking policies...
+                </>
+              ) : (
+                <>
+                  <ShieldCheck size={15} />
+                  Check Policies
+                </>
+              )}
+            </button>
+          )}
           {onGenerateBrief && (
             <button
               type="button"

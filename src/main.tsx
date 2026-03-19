@@ -29,6 +29,7 @@ import SwipeFilePage from "./pages/app/SwipeFilePage.tsx";
 import CompetitorAnalyzer from "./pages/app/CompetitorAnalyzer.tsx";
 import DisplayAnalyzer from "./pages/app/DisplayAnalyzer.tsx";
 import Deconstructor from "./pages/app/Deconstructor.tsx";
+import PolicyCheck from "./pages/app/PolicyCheck.tsx";
 import ComingSoon from "./components/ComingSoon.tsx";
 import "./index.css";
 import { Monitor, Swords } from "lucide-react";
@@ -79,6 +80,7 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/app/batch" element={<BatchPage />} />
             <Route path="/app/swipe-file" element={<SwipeFilePage />} />
             <Route path="/app/deconstructor" element={<Deconstructor />} />
+            <Route path="/app/policy-check" element={<PolicyCheck />} />
           </Route>
 
           <Route path="*" element={<NotFoundPage />} />

@@ -24,6 +24,8 @@ import {
 } from "../../services/claudeService";
 import { SecondEyePanel } from "../../components/SecondEyePanel";
 import { StaticSecondEyePanel } from "../../components/StaticSecondEyePanel";
+import { PolicyCheckPanel } from "../../components/PolicyCheckPanel";
+import { runPolicyCheck, type PolicyCheckResult } from "../../lib/policyCheckService";
 import { BeforeAfterComparison } from "../../components/BeforeAfterComparison";
 import { generateComparison, type ComparisonResult } from "../../services/claudeService";
 import { createShare } from "../../services/shareService";
@@ -308,13 +310,16 @@ export default function PaidAdAnalyzer() {
   const [isImporting, setIsImporting] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [loadedEntry, setLoadedEntry] = useState<HistoryEntry | null>(null);
-  const [rightTab, setRightTab] = useState<"analysis" | "brief">("analysis");
+  const [rightTab, setRightTab] = useState<"analysis" | "brief" | "policy">("analysis");
   const [brief, setBrief] = useState<string | null>(null);
   const [briefLoading, setBriefLoading] = useState(false);
   const [briefError, setBriefError] = useState<string | null>(null);
   const [briefCopied, setBriefCopied] = useState(false);
   const [ctaRewrites, setCtaRewrites] = useState<string[] | null>(null);
   const [ctaLoading, setCtaLoading] = useState(false);
+  const [policyResult, setPolicyResult] = useState<PolicyCheckResult | null>(null);
+  const [policyLoading, setPolicyLoading] = useState(false);
+  const [policyError, setPolicyError] = useState<string | null>(null);
   const [shareToast, setShareToast] = useState(false);
   const [infoToast, setInfoToast] = useState<string | null>(null);
   const [shareLoading, setShareLoading] = useState(false);
@@ -357,6 +362,9 @@ export default function PaidAdAnalyzer() {
     setComparisonLoading(false);
     setOriginalScoresSnapshot(null);
     setOriginalImprovementsSnapshot([]);
+    setPolicyResult(null);
+    setPolicyLoading(false);
+    setPolicyError(null);
   }, [reset]);
 
   // Re-analyze handler: upload improved version, score, compare
@@ -670,6 +678,39 @@ export default function PaidAdAnalyzer() {
     finally { setCtaLoading(false); }
   };
 
+  const handleCheckPolicies = async () => {
+    if (!activeResult || policyLoading) return;
+    setPolicyLoading(true);
+    setPolicyError(null);
+    setRightTab("policy");
+    try {
+      // Determine policy platform from current platform selection
+      const policyPlatform =
+        platform === "Meta" ? "meta"
+        : platform === "TikTok" ? "tiktok"
+        : "both";
+
+      const r = await runPolicyCheck({
+        platform: policyPlatform,
+        adType: format,
+        niche: userContext ? "from user context" : "unknown",
+        adCopy: activeResult.markdown,
+        existingAnalysis: activeResult.scores as unknown as object,
+      });
+      setPolicyResult(r);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Policy check failed";
+      if (msg.startsWith("RATE_LIMITED")) {
+        const time = msg.split(":")[1] ?? "24h";
+        setPolicyError(`Daily limit reached. Resets in ${time}. Upgrade to Pro for unlimited checks.`);
+      } else {
+        setPolicyError(msg);
+      }
+    } finally {
+      setPolicyLoading(false);
+    }
+  };
+
   const handleBriefCopy = async () => {
     if (!brief) return;
     await copyToClipboard(brief);
@@ -875,6 +916,8 @@ export default function PaidAdAnalyzer() {
                 engineBudget={engineBudget}
                 onNavigateSettings={() => navigate('/settings')}
                 onReanalyze={() => setReanalyzeMode(true)}
+                onCheckPolicies={handleCheckPolicies}
+                policyLoading={policyLoading}
               />
             </div>
             {/* Second Eye output below scorecard — video only */}
@@ -956,6 +999,39 @@ export default function PaidAdAnalyzer() {
                 </div>
               </>
             )}
+          </div>
+        )}
+
+        {/* Policy Check panel */}
+        {showRightPanel && rightTab === "policy" && (
+          <div className="flex flex-col h-full">
+            <div className="p-4 border-b border-white/5 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setRightTab("analysis")}
+                className="text-xs text-amber-400 hover:text-amber-300 transition-colors cursor-pointer flex items-center gap-1"
+              >
+                ← Back to Scores
+              </button>
+              <span className="text-xs text-zinc-600 font-mono">Claude Sonnet</span>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              {policyLoading && !policyResult && (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 0", gap: 12 }}>
+                  <div style={{ width: 20, height: 20, border: "2px solid rgba(245,158,11,0.3)", borderTopColor: "#f59e0b", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+                  <span style={{ fontSize: 13, color: "#71717a" }}>Checking policies...</span>
+                  <span style={{ fontSize: 11, color: "#52525b" }}>Evaluating Meta & TikTok compliance</span>
+                </div>
+              )}
+              {policyError && (
+                <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", fontSize: 13, color: "#ef4444" }}>
+                  {policyError}
+                </div>
+              )}
+              {policyResult && !policyLoading && (
+                <PolicyCheckPanel result={policyResult} onClose={() => setRightTab("analysis")} />
+              )}
+            </div>
           </div>
         )}
 
