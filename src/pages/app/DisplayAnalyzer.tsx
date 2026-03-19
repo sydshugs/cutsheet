@@ -1,7 +1,7 @@
 // src/pages/app/DisplayAnalyzer.tsx — Display & Banner Ad Analyzer
 
 import { Helmet } from "react-helmet-async";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useOutletContext } from "react-router-dom";
 import { Monitor, Upload, Eye, Download, X, Plus, CheckCircle, ShieldCheck, Sparkles } from "lucide-react";
 import { sanitizeFileName } from "../../utils/sanitize";
@@ -17,6 +17,7 @@ import { getUserContext, formatUserContextBlock } from "../../services/userConte
 import { VisualizePanel } from "../../components/VisualizePanel";
 import { visualizeAd, fileToBase64, getMediaType } from "../../lib/visualizeService";
 import type { VisualizeResult, VisualizeStatus } from "../../types/visualize";
+import { getSessionMemory } from "@/src/lib/userMemoryService";
 import type { AppSharedContext } from "../../components/AppLayout";
 
 type Mode = "single" | "suite";
@@ -104,6 +105,7 @@ export default function DisplayAnalyzer() {
   const [policyResult, setPolicyResult] = useState<PolicyCheckResult | null>(null);
   const [policyLoading, setPolicyLoading] = useState(false);
   const [policyError, setPolicyError] = useState<string | null>(null);
+  const sessionMemoryRef = useRef<string>('');
   // ── Suite state
   const [suiteBanners, setSuiteBanners] = useState<SuiteBanner[]>([]);
   const [suiteStatus, setSuiteStatus] = useState<"idle" | "analyzing" | "complete" | "error">("idle");
@@ -155,6 +157,8 @@ export default function DisplayAnalyzer() {
 
   const handleSuiteAnalyze = async () => {
     if (suiteBanners.length < 2 || !canAnalyze) return;
+    const { text: sessionMemory } = await getSessionMemory();
+    sessionMemoryRef.current = sessionMemory;
     setSuiteStatus("analyzing");
     setSuiteCohesion(null);
     setSuiteMockupUrl(null);
@@ -222,7 +226,7 @@ Return JSON only:
     if (completedBanners.length >= 2) {
       try {
         setSuiteCohesionError(false);
-        const cohesion = await analyzeSuiteCohesion(completedBanners, userContext);
+        const cohesion = await analyzeSuiteCohesion(completedBanners, userContext, sessionMemoryRef.current);
         setSuiteCohesion(cohesion);
       } catch (e) {
         console.error("Suite cohesion failed:", e);
@@ -675,7 +679,7 @@ Return JSON only — no prose:
                                 overallScore: b.result!.overallScore,
                                 improvements: b.result!.improvements,
                               }));
-                              const cohesion = await analyzeSuiteCohesion(bannerData, userContext);
+                              const cohesion = await analyzeSuiteCohesion(bannerData, userContext, sessionMemoryRef.current);
                               setSuiteCohesion(cohesion);
                             } catch { setSuiteCohesionError(true); }
                           }} style={{ fontSize: 11, color: "#6366f1", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
