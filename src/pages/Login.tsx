@@ -184,9 +184,13 @@ export default function Login() {
             <motion.div custom={1} variants={fieldVariants} initial="hidden" animate="visible">
               <div className="relative">
                 <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "#71717a" }} />
+                <label htmlFor="login-email" className="sr-only">Email address</label>
                 <input
+                  id="login-email"
                   type="email"
                   placeholder="Email address"
+                  aria-label="Email address"
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -212,9 +216,14 @@ export default function Login() {
             <motion.div custom={2} variants={fieldVariants} initial="hidden" animate="visible">
               <div className="relative">
                 <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "#71717a" }} />
+                <label htmlFor="login-password" className="sr-only">Password</label>
                 <input
+                  id="login-password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Password"
+                  aria-label="Password"
+                  aria-describedby="login-error"
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -275,11 +284,9 @@ export default function Login() {
             </motion.div>
 
             {/* Error message */}
-            {error && (
-              <p style={{ fontSize: 13, color: "#ef4444", textAlign: "center" }}>
-                {error}
-              </p>
-            )}
+            <p id="login-error" aria-live="assertive" role="alert" style={{ fontSize: 13, color: "#ef4444", textAlign: "center", minHeight: 20 }}>
+              {error || ""}
+            </p>
 
             {/* Sign In button */}
             <motion.div custom={4} variants={fieldVariants} initial="hidden" animate="visible">

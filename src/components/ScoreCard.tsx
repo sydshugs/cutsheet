@@ -54,6 +54,14 @@ export function getScoreColorByValue(score: number): string {
   return "#EF4444";
 }
 
+function getScoreQualityText(score: number): string {
+  if (score >= 9) return "Exceptional";
+  if (score >= 8) return "Strong";
+  if (score >= 6) return "Average";
+  if (score >= 4) return "Below avg";
+  return "Needs work";
+}
+
 function getScoreLabel(score: number, isCTA?: boolean): { label: string; color: string } {
   if (isCTA && score === 0) return { label: "No CTA Detected", color: "#EF4444" };
   if (score >= 9) return { label: "Excellent", color: "#10B981" };
@@ -235,7 +243,8 @@ export function ScoreCard({
       {/* Arc gauge */}
       <div className="px-5 pt-5 flex flex-col items-center">
         <div className="relative w-40 h-24 flex-shrink-0">
-          <svg viewBox="0 0 120 70" className="w-full h-full">
+          <svg viewBox="0 0 120 70" className="w-full h-full" role="img" aria-label={`Overall score: ${scores.overall} out of 10`}>
+            <title>Overall score: {scores.overall} out of 10</title>
             {/* Background arc */}
             <path
               d="M 10 60 A 50 50 0 0 1 110 60"
@@ -291,9 +300,9 @@ export function ScoreCard({
             <div key={key}>
               <div className="flex justify-between text-xs mb-1.5">
                 <span className="text-zinc-400">{SCORE_LABELS[key]}</span>
-                <span className="font-mono text-white">{value}</span>
+                <span className="font-mono" style={{ color: barColor }}>{value} <span style={{ fontFamily: "var(--font-sans, sans-serif)", fontSize: 10, opacity: 0.8 }}>— {getScoreQualityText(value)}</span></span>
               </div>
-              <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+              <div className="h-1.5 rounded-full bg-white/5 overflow-hidden" role="progressbar" aria-valuenow={value} aria-valuemin={0} aria-valuemax={10} aria-label={`${SCORE_LABELS[key]}: ${value} out of 10, ${getScoreQualityText(value)}`}>
                 <div
                   className="h-full rounded-full"
                   style={{

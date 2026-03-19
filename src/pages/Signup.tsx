@@ -200,9 +200,13 @@ export default function Signup() {
             <motion.div custom={1} variants={fieldVariants} initial="hidden" animate="visible">
               <div className="relative">
                 <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "#71717a" }} />
+                <label htmlFor="signup-email" className="sr-only">Email address</label>
                 <input
+                  id="signup-email"
                   type="email"
                   placeholder="Email address"
+                  aria-label="Email address"
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -228,9 +232,14 @@ export default function Signup() {
             <motion.div custom={2} variants={fieldVariants} initial="hidden" animate="visible">
               <div className="relative">
                 <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "#71717a" }} />
+                <label htmlFor="signup-password" className="sr-only">Password</label>
                 <input
+                  id="signup-password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Password"
+                  aria-label="Password"
+                  aria-describedby="signup-error"
+                  autoComplete="new-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -264,9 +273,13 @@ export default function Signup() {
             <motion.div custom={3} variants={fieldVariants} initial="hidden" animate="visible">
               <div className="relative">
                 <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "#71717a" }} />
+                <label htmlFor="signup-confirm" className="sr-only">Confirm password</label>
                 <input
+                  id="signup-confirm"
                   type={showConfirm ? "text" : "password"}
                   placeholder="Confirm password"
+                  aria-label="Confirm password"
+                  autoComplete="new-password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
@@ -297,11 +310,9 @@ export default function Signup() {
             </motion.div>
 
             {/* Error message */}
-            {error && (
-              <p style={{ fontSize: 13, color: "#ef4444", textAlign: "center" }}>
-                {error}
-              </p>
-            )}
+            <p id="signup-error" aria-live="assertive" role="alert" style={{ fontSize: 13, color: "#ef4444", textAlign: "center", minHeight: 20 }}>
+              {error || ""}
+            </p>
 
             {/* Create Account button */}
             <motion.div custom={4} variants={fieldVariants} initial="hidden" animate="visible">

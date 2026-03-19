@@ -106,7 +106,7 @@ function IntentHeader({
                 height: 30, padding: "0 12px", borderRadius: 9999, fontSize: 13,
                 cursor: opt.enabled ? "pointer" : "not-allowed",
                 opacity: opt.enabled ? 1 : 0.35,
-                background: platform === opt.value && opt.enabled ? "#6366f1" : "rgba(255,255,255,0.04)",
+                background: platform === opt.value && opt.enabled ? "#4f46e5" : "rgba(255,255,255,0.04)",
                 border: `1px solid ${platform === opt.value && opt.enabled ? "#6366f1" : "rgba(255,255,255,0.08)"}`,
                 color: platform === opt.value && opt.enabled ? "white" : "#71717a",
                 fontWeight: platform === opt.value && opt.enabled ? 500 : 400,
@@ -698,6 +698,11 @@ export default function PaidAdAnalyzer() {
         <meta name="description" content="Score Meta, TikTok, Google, and YouTube ads. Get hook strength, CTA score, and budget recommendations in 30 seconds." />
         <link rel="canonical" href="https://cutsheet.xyz/app/paid" />
       </Helmet>
+      {/* Accessibility: screen reader announcements */}
+      <p className="sr-only" aria-live="polite" aria-atomic="true">{statusMessage}</p>
+      <div className="sr-only" aria-live="assertive">
+        {status === "complete" && result?.scores ? `Analysis complete. Your ad scored ${result.scores.overall} out of 10.` : ""}
+      </div>
       {/* Main content */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <IntentHeader platform={platform} setPlatform={setPlatform} format={format} setFormat={setFormat} secondEye={secondEye} setSecondEye={setSecondEye} staticSecondEye={staticSecondEye} setStaticSecondEye={setStaticSecondEye} />
