@@ -1,8 +1,8 @@
 // competitorService.ts — Competitor gap analysis: two ads head-to-head
 
-import Anthropic from "@anthropic-ai/sdk";
 import { analyzeVideo, type AnalysisResult } from "./analyzerService";
 import { getUserContext, formatUserContextBlock } from "./userContextService";
+import { supabase } from "../lib/supabase";
 
 // ─── TYPES ──────────────────────────────────────────────────────────────────
 
@@ -89,110 +89,43 @@ async function generateGapAnalysis(
   yourFileName: string,
   competitorFileName: string
 ): Promise<GapAnalysis> {
-  const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error("Missing VITE_ANTHROPIC_API_KEY");
-
-  const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) throw new Error("Not authenticated");
 
   const yourScores = your.scores ?? { overall: 0, hook: 0, clarity: 0, cta: 0, production: 0 };
   const compScores = competitor.scores ?? { overall: 0, hook: 0, clarity: 0, cta: 0, production: 0 };
 
-  const prompt = `You are a senior performance marketing strategist.
-You have just scored two ad creatives head-to-head.
-
-${userContext}
-
-YOUR AD: ${yourFileName}
-Overall: ${yourScores.overall}/10
-Hook: ${yourScores.hook}/10
-Clarity: ${yourScores.clarity}/10
-CTA: ${yourScores.cta}/10
-Production: ${yourScores.production}/10
-Key issues: ${your.improvements?.slice(0, 3).join(", ") || "none flagged"}
-
-COMPETITOR AD: ${competitorFileName}
-Overall: ${compScores.overall}/10
-Hook: ${compScores.hook}/10
-Clarity: ${compScores.clarity}/10
-CTA: ${compScores.cta}/10
-Production: ${compScores.production}/10
-Key issues: ${competitor.improvements?.slice(0, 3).join(", ") || "none flagged"}
-
-Platform: ${platform}
-Format: ${format}
-
-IMPORTANT: Do not mention the user's role, niche, or platform explicitly.
-Use the context to inform your analysis but never reference it directly.
-
-Return JSON only — no prose, no preamble:
-{
-  "verdict": "winning" | "losing" | "tied",
-  "scoreDiff": <your overall minus competitor overall>,
-  "winProbability": <0-100, honest probability your ad outperforms>,
-  "summary": "<one paragraph honest assessment, mention specific scores>",
-  "strengths": [
-    {
-      "metric": "<Hook | CTA | Clarity | Production>",
-      "yourScore": <number>,
-      "competitorScore": <number>,
-      "diff": <positive number>,
-      "insight": "<one sentence, specific, why this matters>"
-    }
-  ],
-  "weaknesses": [
-    {
-      "metric": "<Hook | CTA | Clarity | Production>",
-      "yourScore": <number>,
-      "competitorScore": <number>,
-      "diff": <negative number>,
-      "insight": "<one sentence, specific, what competitor does better>"
-    }
-  ],
-  "actionPlan": [
-    {
-      "priority": 1 | 2 | 3,
-      "action": "<specific, actionable, one sentence — not generic>",
-      "impact": "high" | "medium" | "low",
-      "effort": "quick" | "medium" | "heavy",
-      "metric": "<which score this improves>"
-    }
-  ]
-}
-
-Rules:
-- strengths: only metrics where your score > competitor score
-- weaknesses: only metrics where competitor score > your score
-- tied metrics: omit from both arrays
-- actionPlan: 3-5 items, ordered by priority (1 = most important)
-- winProbability: honest, not flattering
-- summary: mention specific scores, be direct about the gap`;
-
-  const response = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 1500,
-    messages: [{ role: "user", content: prompt }],
+  const response = await fetch("/api/gap-analysis", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${session.access_token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      yourScores,
+      competitorScores: compScores,
+      yourImprovements: your.improvements,
+      competitorImprovements: competitor.improvements,
+      yourFileName,
+      competitorFileName,
+      platform,
+      format,
+      userContext,
+    }),
   });
 
-  const text = response.content
-    .filter((b) => b.type === "text")
-    .map((b) => b.text)
-    .join("");
+  if (response.status === 429) {
+    const data = await response.json().catch(() => ({}));
+    const secs = (data as { resetAt?: string }).resetAt
+      ? Math.ceil((new Date((data as { resetAt: string }).resetAt).getTime() - Date.now()) / 1000)
+      : 60;
+    throw new Error(`RATE_LIMITED:${secs}`);
+  }
 
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) throw new Error("Invalid gap analysis response");
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error((data as { error?: string }).error ?? `API error ${response.status}`);
+  }
 
-  const parsed = JSON.parse(jsonMatch[0]) as GapAnalysis;
-
-  // Normalize
-  return {
-    verdict: (["winning", "losing", "tied"].includes(parsed.verdict) ? parsed.verdict : "tied") as GapAnalysis["verdict"],
-    scoreDiff: Number(parsed.scoreDiff) || 0,
-    winProbability: Math.min(100, Math.max(0, Number(parsed.winProbability) || 50)),
-    summary: String(parsed.summary || ""),
-    strengths: Array.isArray(parsed.strengths) ? parsed.strengths : [],
-    weaknesses: Array.isArray(parsed.weaknesses) ? parsed.weaknesses : [],
-    actionPlan: Array.isArray(parsed.actionPlan)
-      ? parsed.actionPlan.sort((a, b) => (a.priority ?? 3) - (b.priority ?? 3))
-      : [],
-  };
+  return response.json() as Promise<GapAnalysis>;
 }
