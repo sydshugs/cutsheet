@@ -2,7 +2,7 @@
 // Browser calls this BEFORE starting any Gemini analysis.
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
+import { verifyAuth, checkRateLimit, handlePreflight, isProOrTeam } from "./_lib/auth";
 import { createClient } from "@supabase/supabase-js";
 
 const FREE_ANALYSES_LIMIT = 3;
@@ -21,7 +21,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!user) return res.status(401).json({ error: "Unauthorized" });
 
   // 2. Rate limit
-  const rl = await checkRateLimit("check-limit", user.id, user.isPro, RATE);
+  const rl = await checkRateLimit("check-limit", user.id, user.tier, RATE);
   if (!rl.allowed) {
     return res.status(429).json({
       error: "RATE_LIMITED",
@@ -32,7 +32,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   // 3. Usage limit (free tier only)
-  if (!user.isPro) {
+  if (!isProOrTeam(user.tier)) {
     const supabase = createClient(
       (process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL)!,
       (process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.VITE_SUPABASE_SERVICE_ROLE_KEY)!,

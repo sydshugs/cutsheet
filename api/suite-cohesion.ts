@@ -17,7 +17,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const user = await verifyAuth(req);
   if (!user) return res.status(401).json({ error: "Unauthorized" });
 
-  const rl = await checkRateLimit("suite-cohesion", user.id, user.isPro, RATE);
+  const rl = await checkRateLimit("suite-cohesion", user.id, user.tier, RATE);
   if (!rl.allowed) {
     return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
   }
