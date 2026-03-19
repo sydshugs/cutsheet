@@ -26,9 +26,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     yourScores, competitorScores,
     yourImprovements, competitorImprovements,
     yourFileName, competitorFileName,
-    platform, format, userContext, sessionMemory: rawMemory,
+    platform, format, userContext: rawContext, sessionMemory: rawMemory,
   } = req.body ?? {};
   const sessionMemory = sanitizeSessionMemory(rawMemory);
+  const userContext = sanitizeSessionMemory(rawContext);
 
   if (!yourScores || !competitorScores) {
     return res.status(400).json({ error: "yourScores and competitorScores are required" });

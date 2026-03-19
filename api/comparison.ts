@@ -22,8 +22,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
   }
 
-  const { originalScores, improvedScores, originalImprovements, userContext, sessionMemory: rawMemory } = req.body ?? {};
+  const { originalScores, improvedScores, originalImprovements, userContext: rawContext, sessionMemory: rawMemory } = req.body ?? {};
   const sessionMemory = sanitizeSessionMemory(rawMemory);
+  const userContext = sanitizeSessionMemory(rawContext);
   if (!originalScores || !improvedScores) {
     return res.status(400).json({ error: "originalScores and improvedScores are required" });
   }

@@ -22,8 +22,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
   }
 
-  const { analysisMarkdown, fileName, scores, improvements, userContext, sessionMemory: rawMemory } = req.body ?? {};
+  const { analysisMarkdown, fileName, scores, improvements, userContext: rawContext, sessionMemory: rawMemory } = req.body ?? {};
   const sessionMemory = sanitizeSessionMemory(rawMemory);
+  const userContext = sanitizeSessionMemory(rawContext);
   if (!analysisMarkdown) return res.status(400).json({ error: "analysisMarkdown is required" });
 
   const overallScore = scores?.overall ?? "N/A";

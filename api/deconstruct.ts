@@ -4,6 +4,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Anthropic from "@anthropic-ai/sdk";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
+import { validateFetchUrl } from "./_lib/validateUrl";
 
 export const maxDuration = 60; // seconds — Claude + Gemini can take 15-30s
 
@@ -171,19 +172,6 @@ A ready-to-use creative brief for making your own version of this ad:
 // ─── HANDLER ─────────────────────────────────────────────────────────────────
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  console.log('[debug] deconstruct env check', {
-    hasGeminiKey: !!process.env.GEMINI_API_KEY,
-    hasViteGeminiKey: !!process.env.VITE_GEMINI_API_KEY,
-    hasAnthropicKey: !!process.env.ANTHROPIC_API_KEY,
-    hasViteAnthropicKey: !!process.env.VITE_ANTHROPIC_API_KEY,
-    hasMetaToken: !!process.env.META_ACCESS_TOKEN,
-    hasViteMetaToken: !!process.env.VITE_META_ACCESS_TOKEN,
-    hasUpstashUrl: !!process.env.UPSTASH_REDIS_REST_URL,
-    hasUpstashToken: !!process.env.UPSTASH_REDIS_REST_TOKEN,
-    hasSupabaseUrl: !!process.env.SUPABASE_URL,
-    hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-  });
-
   if (handlePreflight(req, res)) return;
   if (req.method !== "POST")
     return res.status(405).json({ error: "Method not allowed" });
@@ -213,6 +201,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res
       .status(400)
       .json({ error: "sourceType must be meta, tiktok, or youtube" });
+  }
+
+  // ── SSRF protection: validate user-provided URLs ───────────────────────────
+  const urlError = validateFetchUrl(url);
+  if (urlError) return res.status(400).json({ error: urlError });
+  if (mediaUrl) {
+    const mediaUrlError = validateFetchUrl(mediaUrl);
+    if (mediaUrlError) return res.status(400).json({ error: mediaUrlError });
   }
 
   // ── Fetch ad metadata and resolve media URL ────────────────────────────────

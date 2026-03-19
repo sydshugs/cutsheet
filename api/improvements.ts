@@ -29,8 +29,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { action, payload } = req.body ?? {};
 
   if (action === "improvements") {
-    const { analysisMarkdown, scores, userContext, platform, sessionMemory: rawMemory } = payload ?? {};
+    const { analysisMarkdown, scores, userContext: rawContext, platform, sessionMemory: rawMemory } = payload ?? {};
     const sessionMemory = sanitizeSessionMemory(rawMemory);
+    const userContext = sanitizeSessionMemory(rawContext);
     if (!scores) return res.status(200).json({ improvements: [] });
 
     const weakAreas = Object.entries(scores as Record<string, number>)
@@ -71,8 +72,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (action === "cta-rewrites") {
-    const { currentCTA, productContext, userContext, sessionMemory: rawMemory } = payload ?? {};
+    const { currentCTA, productContext, userContext: rawContext, sessionMemory: rawMemory } = payload ?? {};
     const sessionMemory = sanitizeSessionMemory(rawMemory);
+    const userContext = sanitizeSessionMemory(rawContext);
     if (!currentCTA) return res.status(200).json({ rewrites: [] });
 
     const contextBlock = userContext
@@ -111,8 +113,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (action === "brief") {
-    const { analysisMarkdown, filename, userContext, sessionMemory: rawMemory } = payload ?? {};
+    const { analysisMarkdown, filename, userContext: rawContext, sessionMemory: rawMemory } = payload ?? {};
     const sessionMemory = sanitizeSessionMemory(rawMemory);
+    const userContext = sanitizeSessionMemory(rawContext);
     if (!analysisMarkdown) return res.status(400).json({ error: "analysisMarkdown is required" });
 
     const contextBlock = userContext

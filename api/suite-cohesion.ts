@@ -22,8 +22,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
   }
 
-  const { banners, userContext, sessionMemory: rawMemory } = req.body ?? {};
+  const { banners, userContext: rawContext, sessionMemory: rawMemory } = req.body ?? {};
   const sessionMemory = sanitizeSessionMemory(rawMemory);
+  const userContext = sanitizeSessionMemory(rawContext);
   if (!Array.isArray(banners) || banners.length < 2) {
     return res.status(400).json({ error: "At least 2 banners are required" });
   }

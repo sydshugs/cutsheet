@@ -8,6 +8,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Anthropic from "@anthropic-ai/sdk";
 import { GoogleGenAI, Modality } from "@google/genai";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
+import { safePlatform, safeAdType, safeNiche, validateBase64Size } from "./_lib/validateInput";
 
 const CLAUDE_MODEL = "claude-sonnet-4-20250514";
 const GEMINI_IMAGE_MODEL = "gemini-2.0-flash-preview-image-generation";
@@ -16,17 +17,6 @@ const GEMINI_IMAGE_MODEL = "gemini-2.0-flash-preview-image-generation";
 const RATE = { freeLimit: 2, proLimit: 200, windowSeconds: 86400 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  console.log('[debug] visualize env check', {
-    hasGeminiKey: !!process.env.GEMINI_API_KEY,
-    hasViteGeminiKey: !!process.env.VITE_GEMINI_API_KEY,
-    hasAnthropicKey: !!process.env.ANTHROPIC_API_KEY,
-    hasViteAnthropicKey: !!process.env.VITE_ANTHROPIC_API_KEY,
-    hasUpstashUrl: !!process.env.UPSTASH_REDIS_REST_URL,
-    hasUpstashToken: !!process.env.UPSTASH_REDIS_REST_TOKEN,
-    hasSupabaseUrl: !!process.env.SUPABASE_URL,
-    hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-  });
-
   if (handlePreflight(req, res)) return;
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
@@ -48,9 +38,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!imageBase64) return res.status(400).json({ error: "imageBase64 is required" });
   if (!analysisResult) return res.status(400).json({ error: "analysisResult is required" });
 
-  const safePlatform = String(platform || "general");
-  const safeNiche = String(niche || "general");
-  const safeAdType = adType === "display" ? "display" : "static";
+  const b64Err = validateBase64Size(imageBase64, "imageBase64");
+  if (b64Err) return res.status(413).json({ error: b64Err });
+
+  const cleanPlatform = safePlatform(platform);
+  const cleanNiche = safeNiche(niche);
+  const cleanAdType = safeAdType(adType);
   const safeMediaType: string = imageMediaType || "image/jpeg";
 
   // ── Format scorecard for Claude ───────────────────────────────────────────
@@ -89,7 +82,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             },
             {
               type: "text",
-              text: `You are a world-class performance creative director. A user's ${safeAdType} ad received this scorecard:
+              text: `You are a world-class performance creative director. A user's ${cleanAdType} ad received this scorecard:
 
 SCORES:
 ${scoresBlock}
@@ -97,7 +90,7 @@ ${scoresBlock}
 KEY IMPROVEMENTS NEEDED:
 ${improvementsBlock}
 
-Platform: ${safePlatform} | Niche: ${safeNiche} | Format: ${safeAdType}
+Platform: ${cleanPlatform} | Niche: ${cleanNiche} | Format: ${cleanAdType}
 
 Generate a detailed visual description of an IMPROVED version of this ad that directly fixes every weakness in the scorecard. This description will be used to generate an image.
 
@@ -105,7 +98,7 @@ Your description must be:
 - Specific and visual — describe exactly what to see, not concepts
 - Structured for image generation — layout, colors, typography, imagery, hierarchy
 - Grounded in the original ad's brand/product (don't invent a new product)
-- Optimized for ${safePlatform} ad specs and best practices
+- Optimized for ${cleanPlatform} ad specs and best practices
 
 Return JSON only — no prose, no preamble:
 {

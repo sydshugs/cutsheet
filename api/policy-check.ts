@@ -4,6 +4,8 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Anthropic from "@anthropic-ai/sdk";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
+import { validateFetchUrl } from "./_lib/validateUrl";
+import { safePlatform, safeAdType, safeNiche, validateBase64Size } from "./_lib/validateInput";
 
 export const maxDuration = 60;
 
@@ -46,17 +48,6 @@ export interface PolicyCheckResult {
 // ─── HANDLER ─────────────────────────────────────────────────────────────────
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  console.log('[debug] policy-check env check', {
-    hasGeminiKey: !!process.env.GEMINI_API_KEY,
-    hasViteGeminiKey: !!process.env.VITE_GEMINI_API_KEY,
-    hasAnthropicKey: !!process.env.ANTHROPIC_API_KEY,
-    hasViteAnthropicKey: !!process.env.VITE_ANTHROPIC_API_KEY,
-    hasUpstashUrl: !!process.env.UPSTASH_REDIS_REST_URL,
-    hasUpstashToken: !!process.env.UPSTASH_REDIS_REST_TOKEN,
-    hasSupabaseUrl: !!process.env.SUPABASE_URL,
-    hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-  });
-
   if (handlePreflight(req, res)) return;
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
@@ -70,11 +61,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
   }
 
-  const { mediaUrl, mediaDataUrl, adCopy, platform, adType, niche, existingAnalysis } =
+  const { mediaUrl, mediaDataUrl, adCopy, platform: rawPlatform, adType: rawAdType, niche: rawNiche, existingAnalysis } =
     (req.body ?? {}) as PolicyCheckRequest;
 
-  if (!platform || !adType || !niche) {
+  if (!rawPlatform || !rawAdType || !rawNiche) {
     return res.status(400).json({ error: "platform, adType, and niche are required" });
+  }
+
+  // Sanitize prompt-interpolated fields
+  const platform = safePlatform(rawPlatform) as "meta" | "tiktok" | "both";
+  const adType = safeAdType(rawAdType);
+  const niche = safeNiche(rawNiche);
+
+  // Validate base64 size if client sent a data URL
+  if (mediaDataUrl) {
+    const b64Err = validateBase64Size(mediaDataUrl, "mediaDataUrl");
+    if (b64Err) return res.status(413).json({ error: b64Err });
   }
 
   // ── Step 1: Gemini visual scan (only if no existing analysis and media provided)
@@ -129,7 +131,9 @@ Return findings as structured JSON:
           contentType = match[1];
           base64 = match[2];
         } else {
-          // Fetch from remote URL
+          // Fetch from remote URL — validate against SSRF
+          const urlErr = validateFetchUrl(mediaUrl!);
+          if (urlErr) throw new Error(urlErr);
           const imageResp = await fetch(mediaUrl!);
           if (!imageResp.ok) throw new Error(`Failed to fetch media: ${imageResp.status}`);
           const imageBuffer = await imageResp.arrayBuffer();
