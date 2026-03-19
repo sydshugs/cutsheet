@@ -201,6 +201,50 @@ function drawGenericMockup(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
   drawTextLines(ctx, 40, by + h + 30, canvas.width - 80, 6, 18);
 }
 
+/** Draw a banner image preserving its natural aspect ratio, centered within the placement slot. Returns actual drawn bounds. */
+function drawBannerPreserveRatio(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  maxX: number,
+  maxY: number,
+  maxW: number,
+  maxH: number
+): { x: number; y: number; w: number; h: number } {
+  const ratio = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight);
+  const w = img.naturalWidth * ratio;
+  const h = img.naturalHeight * ratio;
+  const x = maxX + (maxW - w) / 2;
+  const y = maxY + (maxH - h) / 2;
+  ctx.drawImage(img, x, y, w, h);
+  return { x, y, w, h };
+}
+
+/** "Ad" pill with dark background + white text, drawn just above the given coords. */
+function drawAdLabelSuite(ctx: CanvasRenderingContext2D, x: number, y: number) {
+  const label = "Ad";
+  ctx.font = "10px sans-serif";
+  const lw = ctx.measureText(label).width + 6;
+  const lh = 14;
+  const lx = x;
+  const ly = y - lh - 2;
+  const r = 3;
+  ctx.fillStyle = "rgba(0,0,0,0.6)";
+  ctx.beginPath();
+  ctx.moveTo(lx + r, ly);
+  ctx.lineTo(lx + lw - r, ly);
+  ctx.quadraticCurveTo(lx + lw, ly, lx + lw, ly + r);
+  ctx.lineTo(lx + lw, ly + lh - r);
+  ctx.quadraticCurveTo(lx + lw, ly + lh, lx + lw - r, ly + lh);
+  ctx.lineTo(lx + r, ly + lh);
+  ctx.quadraticCurveTo(lx, ly + lh, lx, ly + lh - r);
+  ctx.lineTo(lx, ly + r);
+  ctx.quadraticCurveTo(lx, ly, lx + r, ly);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = "#ffffff";
+  ctx.fillText(label, lx + 3, ly + lh - 3);
+}
+
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   ctx.beginPath();
   ctx.moveTo(x + r, y);
@@ -329,44 +373,52 @@ export async function generateSuiteMockup(
   ctx.fillStyle = "#e9ecef";
   ctx.fillRect(1040, 56, 1, 844);
 
-  // Placed formats (keyed set)
+  // Load all banner images in parallel before drawing anything
+  const loaded = await Promise.all(
+    banners.map(async (banner) => {
+      const key = banner.format?.key ?? "";
+      const placement = SUITE_PLACEMENTS[key];
+      if (!placement) return null;
+      const img = await loadImage(URL.createObjectURL(banner.file));
+      return { banner, key, placement, img };
+    })
+  );
+  const validLoaded = loaded.filter((x): x is NonNullable<typeof x> => x !== null);
+
+  // Pass 1: draw all banner images (preserving aspect ratio), record actual drawn bounds
   const placedKeys = new Set<string>();
+  const drawnBounds: { x: number; y: number; w: number; h: number }[] = [];
+  for (const { key, placement, img } of validLoaded) {
+    const bounds = drawBannerPreserveRatio(ctx, img, placement.x, placement.y, placement.w, placement.h);
+    drawnBounds.push(bounds);
+    placedKeys.add(key);
+  }
 
-  // Draw each banner
-  let idx = 1;
-  for (const banner of banners) {
-    const key = banner.format?.key ?? "";
-    const placement = SUITE_PLACEMENTS[key];
-    if (!placement) continue;
+  // Pass 2: draw borders, "Ad" labels, and numbered circles on top of all images
+  for (let i = 0; i < validLoaded.length; i++) {
+    const bounds = drawnBounds[i];
+    const idx = i + 1;
 
-    const img = await loadImage(URL.createObjectURL(banner.file));
-    ctx.drawImage(img, placement.x, placement.y, placement.w, placement.h);
+    // "Ad" label with dark bg + white text
+    drawAdLabelSuite(ctx, bounds.x, bounds.y);
 
-    // Red dashed border
-    ctx.strokeStyle = "rgba(239,68,68,0.5)";
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([5, 3]);
-    ctx.strokeRect(placement.x, placement.y, placement.w, placement.h);
+    // Red dashed border using actual drawn bounds
+    ctx.strokeStyle = "rgba(255, 50, 50, 0.8)";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 3]);
+    ctx.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
     ctx.setLineDash([]);
-
-    // "Ad" label
-    ctx.fillStyle = "#adb5bd";
-    ctx.font = "10px sans-serif";
-    ctx.fillText("Ad", placement.x + 2, placement.y - 3);
 
     // Numbered circle
     ctx.fillStyle = "#6366f1";
     ctx.beginPath();
-    ctx.arc(placement.x + placement.w - 10, placement.y + 10, 10, 0, Math.PI * 2);
+    ctx.arc(bounds.x + bounds.w - 10, bounds.y + 10, 10, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = "#ffffff";
     ctx.font = "bold 10px sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText(String(idx), placement.x + placement.w - 10, placement.y + 14);
+    ctx.fillText(String(idx), bounds.x + bounds.w - 10, bounds.y + 14);
     ctx.textAlign = "start";
-
-    placedKeys.add(key);
-    idx++;
   }
 
   // Draw missing format placeholders
