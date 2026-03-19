@@ -6,11 +6,17 @@ interface Props {
   onClose: () => void
 }
 
+const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.userAgent)
+const mod = isMac ? '⌘' : 'Ctrl'
+
 const shortcuts = [
   { keys: ['⌘', 'K'], label: 'New analysis' },
   { keys: ['⌘', '1'], label: 'Paid Ad' },
   { keys: ['⌘', '2'], label: 'Organic' },
   { keys: ['⌘', '3'], label: 'A/B Test' },
+  { keys: [mod, '↵'], label: 'Run analysis' },
+  { keys: [mod, 'H'], label: 'Open history' },
+  { keys: [mod, 'S'], label: 'Save to swipe file' },
   { keys: ['Esc'], label: 'Clear analysis' },
   { keys: ['?'], label: 'Show shortcuts' },
 ]

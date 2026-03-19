@@ -1,4 +1,7 @@
+import { useState, useCallback, useRef, useEffect } from "react";
 import { type HistoryEntry } from "../hooks/useHistory";
+import { AlertDialog } from "@/src/components/ui/AlertDialog";
+import { Toast } from "@/src/components/Toast";
 
 interface HistoryDrawerProps {
   open: boolean;
@@ -47,6 +50,56 @@ export function HistoryDrawer({
   const hoverBg = "var(--surface-el)";
   const deleteBg = "var(--surface-el)";
   const deleteColor = "var(--ink-faint)";
+
+  // Clear All confirmation dialog
+  const [clearDialogOpen, setClearDialogOpen] = useState(false);
+
+  // Undo toast for single delete
+  const [pendingDelete, setPendingDelete] = useState<{
+    entry: HistoryEntry;
+    timer: ReturnType<typeof setTimeout>;
+  } | null>(null);
+  const pendingDeleteRef = useRef(pendingDelete);
+  pendingDeleteRef.current = pendingDelete;
+
+  // Clean up timer on unmount
+  useEffect(() => {
+    return () => {
+      if (pendingDeleteRef.current) {
+        clearTimeout(pendingDeleteRef.current.timer);
+      }
+    };
+  }, []);
+
+  const handleSingleDelete = useCallback(
+    (entry: HistoryEntry) => {
+      // If there's already a pending delete, commit it immediately
+      if (pendingDeleteRef.current) {
+        clearTimeout(pendingDeleteRef.current.timer);
+        onDelete(pendingDeleteRef.current.entry.id);
+      }
+
+      const timer = setTimeout(() => {
+        onDelete(entry.id);
+        setPendingDelete(null);
+      }, 5000);
+
+      setPendingDelete({ entry, timer });
+    },
+    [onDelete],
+  );
+
+  const handleUndoDelete = useCallback(() => {
+    if (pendingDelete) {
+      clearTimeout(pendingDelete.timer);
+      setPendingDelete(null);
+    }
+  }, [pendingDelete]);
+
+  // Filter out the pending-delete entry from displayed list
+  const displayedEntries = pendingDelete
+    ? entries.filter((e) => e.id !== pendingDelete.entry.id)
+    : entries;
 
   return (
     <>
@@ -125,11 +178,7 @@ export function HistoryDrawer({
           <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
             {entries.length > 0 && (
               <button
-                onClick={() => {
-                  if (window.confirm("Delete all analysis history? This can't be undone.")) {
-                    onClearAll();
-                  }
-                }}
+                onClick={() => setClearDialogOpen(true)}
                 style={{
                   padding: "4px 8px",
                   background: "transparent",
@@ -171,7 +220,7 @@ export function HistoryDrawer({
 
         {/* Entry list */}
         <div style={{ flex: 1, overflowY: "auto", padding: "8px" }}>
-          {entries.length === 0 ? (
+          {displayedEntries.length === 0 ? (
             <div
               style={{
                 padding: "48px 16px",
@@ -187,7 +236,7 @@ export function HistoryDrawer({
               Run your first one to start building history.
             </div>
           ) : (
-            entries.map((entry) => {
+            displayedEntries.map((entry) => {
               const color = entry.scores ? scoreColor(entry.scores.overall) : "var(--ink-faint)";
               return (
                 <div
@@ -254,7 +303,7 @@ export function HistoryDrawer({
 
                   {/* Delete button */}
                   <button
-                    onClick={(e) => { e.stopPropagation(); onDelete(entry.id); }}
+                    onClick={(e) => { e.stopPropagation(); handleSingleDelete(entry); }}
                     title="Delete"
                     style={{
                       width: "24px",
@@ -282,6 +331,31 @@ export function HistoryDrawer({
           )}
         </div>
       </div>
+
+      {/* Clear All confirmation dialog */}
+      <AlertDialog
+        open={clearDialogOpen}
+        onClose={() => setClearDialogOpen(false)}
+        onConfirm={onClearAll}
+        title="Clear all history?"
+        description={`This will delete all ${entries.length} analysis records. This can't be undone.`}
+        confirmLabel="Delete All"
+        variant="destructive"
+      />
+
+      {/* Undo toast for single entry delete */}
+      {pendingDelete && (
+        <Toast
+          variant="info"
+          message="Analysis removed"
+          duration={5000}
+          onClose={() => {
+            // Toast expired — deletion already committed by timer
+            setPendingDelete(null);
+          }}
+          action={{ label: "Undo", onClick: handleUndoDelete }}
+        />
+      )}
     </>
   );
 }

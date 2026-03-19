@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, CheckCircle, XCircle, X } from "lucide-react";
+import { ArrowLeft, CheckCircle, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getUsageInfo } from "../services/usageService";
@@ -84,7 +84,8 @@ export function Settings() {
   const [weeklyDigest, setWeeklyDigest] = useState(true);
   const [passwordResetSent, setPasswordResetSent] = useState(false);
   const [passwordResetLoading, setPasswordResetLoading] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [passwordResetError, setPasswordResetError] = useState(false);
+  const [prefSaved, setPrefSaved] = useState(false);
 
   // Usage + billing state
   const [usage, setUsage] = useState<{ used: number; limit: number; isPro: boolean } | null>(null);
@@ -122,16 +123,23 @@ export function Settings() {
   const handlePasswordReset = async () => {
     if (!user?.email) return;
     setPasswordResetLoading(true);
+    setPasswordResetError(false);
     try {
       await supabase.auth.resetPasswordForEmail(user.email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
       setPasswordResetSent(true);
     } catch {
-      // silent fail — user can retry
+      setPasswordResetError(true);
     } finally {
       setPasswordResetLoading(false);
     }
+  };
+
+  const handlePrefChange = (setter: (v: boolean) => void, value: boolean) => {
+    setter(value);
+    setPrefSaved(true);
+    setTimeout(() => setPrefSaved(false), 2000);
   };
 
   const tabs: { id: Tab; label: string }[] = [
@@ -235,27 +243,7 @@ export function Settings() {
               >
                 Manage plan
               </button>
-              <button
-                type="button"
-                onClick={() => window.open("https://billing.stripe.com", "_blank")}
-                className="flex-1 py-2.5 rounded-full text-sm font-medium transition-all"
-                style={{
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  color: "#a1a1aa",
-                  background: "transparent",
-                  cursor: "pointer",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(99,102,241,0.4)";
-                  e.currentTarget.style.color = "#818cf8";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
-                  e.currentTarget.style.color = "#a1a1aa";
-                }}
-              >
-                View invoices
-              </button>
+              {/* TODO: implement Stripe portal session */}
             </>
           ) : (
             <motion.button
@@ -335,53 +323,8 @@ export function Settings() {
 
         <div style={DIVIDER} />
 
+        {/* TODO: implement Stripe portal session for Update payment method and View invoices */}
         <div className="mt-5 flex flex-col gap-3">
-          {/* Update payment */}
-          <button
-            type="button"
-            // TODO: /api/create-portal-session → redirect to Stripe portal
-            onClick={() => window.open("https://billing.stripe.com", "_blank")}
-            className="w-full flex items-center justify-between py-3 px-4 rounded-xl transition-all"
-            style={{
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.06)",
-              cursor: "pointer",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(255,255,255,0.05)";
-              e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(255,255,255,0.03)";
-              e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
-            }}
-          >
-            <span style={{ fontSize: 14, color: "#f4f4f5" }}>Update payment method</span>
-            <span style={{ fontSize: 12, color: "#52525b" }}>→</span>
-          </button>
-
-          {/* View invoices */}
-          <button
-            type="button"
-            onClick={() => window.open("https://billing.stripe.com", "_blank")}
-            className="w-full flex items-center justify-between py-3 px-4 rounded-xl transition-all"
-            style={{
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.06)",
-              cursor: "pointer",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(255,255,255,0.05)";
-              e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(255,255,255,0.03)";
-              e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
-            }}
-          >
-            <span style={{ fontSize: 14, color: "#f4f4f5" }}>View invoices</span>
-            <span style={{ fontSize: 12, color: "#52525b" }}>→</span>
-          </button>
         </div>
 
         {/* Downgrade to free */}
@@ -743,35 +686,42 @@ export function Settings() {
                   </div>
                   <div className="flex flex-col items-end gap-1 shrink-0">
                     {passwordResetSent ? (
-                      <span style={{ fontSize: 12, color: "#10b981" }}>Reset link sent</span>
+                      <span style={{ fontSize: 12, color: "var(--success)" }}>Reset link sent</span>
                     ) : (
-                      <button
-                        type="button"
-                        onClick={handlePasswordReset}
-                        disabled={passwordResetLoading}
-                        className="px-3 py-1.5 rounded-full transition-all"
-                        style={{
-                          border: "1px solid rgba(255,255,255,0.08)",
-                          color: "#a1a1aa",
-                          background: "transparent",
-                          fontSize: 13,
-                          cursor: passwordResetLoading ? "default" : "pointer",
-                          whiteSpace: "nowrap",
-                          opacity: passwordResetLoading ? 0.6 : 1,
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!passwordResetLoading) {
-                            e.currentTarget.style.borderColor = "rgba(99,102,241,0.4)";
-                            e.currentTarget.style.color = "#818cf8";
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
-                          e.currentTarget.style.color = "#a1a1aa";
-                        }}
-                      >
-                        {passwordResetLoading ? "Sending..." : "Change password"}
-                      </button>
+                      <>
+                        <button
+                          type="button"
+                          onClick={handlePasswordReset}
+                          disabled={passwordResetLoading}
+                          className="px-3 py-1.5 rounded-full transition-all"
+                          style={{
+                            border: "1px solid rgba(255,255,255,0.08)",
+                            color: "#a1a1aa",
+                            background: "transparent",
+                            fontSize: 13,
+                            cursor: passwordResetLoading ? "default" : "pointer",
+                            whiteSpace: "nowrap",
+                            opacity: passwordResetLoading ? 0.6 : 1,
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!passwordResetLoading) {
+                              e.currentTarget.style.borderColor = "rgba(99,102,241,0.4)";
+                              e.currentTarget.style.color = "#818cf8";
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
+                            e.currentTarget.style.color = "#a1a1aa";
+                          }}
+                        >
+                          {passwordResetLoading ? "Sending..." : "Change password"}
+                        </button>
+                        {passwordResetError && (
+                          <span style={{ fontSize: 12, color: "var(--error)" }}>
+                            Couldn't send reset link. Check your connection and try again.
+                          </span>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
@@ -791,7 +741,7 @@ export function Settings() {
                       New features and improvements
                     </p>
                   </div>
-                  <Switch checked={productUpdates} onCheckedChange={setProductUpdates} />
+                  <Switch checked={productUpdates} onCheckedChange={(v) => handlePrefChange(setProductUpdates, v)} />
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -801,55 +751,14 @@ export function Settings() {
                       Your usage summary every Monday
                     </p>
                   </div>
-                  <Switch checked={weeklyDigest} onCheckedChange={setWeeklyDigest} />
+                  <Switch checked={weeklyDigest} onCheckedChange={(v) => handlePrefChange(setWeeklyDigest, v)} />
                 </div>
 
-                <div className="mt-6 pt-4" style={DIVIDER}>
-                  {!showDeleteConfirm ? (
-                    <button
-                      type="button"
-                      onClick={() => setShowDeleteConfirm(true)}
-                      style={{
-                        fontSize: 13,
-                        color: "#ef4444",
-                        cursor: "pointer",
-                        background: "none",
-                        border: "none",
-                        padding: 0,
-                      }}
-                    >
-                      Delete account
-                    </button>
-                  ) : (
-                    <div className="flex flex-col gap-3">
-                      <p style={{ fontSize: 13, color: "#a1a1aa" }}>
-                        This will permanently delete your account and all data.
-                      </p>
-                      <button
-                        type="button"
-                        // TODO: Implement account deletion via Supabase
-                        className="w-full py-2 rounded-full text-sm font-medium"
-                        style={{ background: "#ef4444", color: "white", border: "none", cursor: "pointer" }}
-                      >
-                        Yes, delete my account
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setShowDeleteConfirm(false)}
-                        style={{
-                          fontSize: 13,
-                          color: "#71717a",
-                          cursor: "pointer",
-                          background: "none",
-                          border: "none",
-                          padding: 0,
-                        }}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  )}
-                </div>
+                {prefSaved && (
+                  <p style={{ fontSize: 12, color: "var(--success)", marginTop: 8 }}>
+                    Saved
+                  </p>
+                )}
               </motion.div>
             </motion.div>
           )}

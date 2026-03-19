@@ -1,8 +1,9 @@
 // src/pages/app/PaidAdAnalyzer.tsx
 import { Helmet } from 'react-helmet-async';
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useOutletContext, useNavigate } from "react-router-dom";
+import { useOutletContext, useNavigate, Link } from "react-router-dom";
 import { Zap, RotateCcw, Upload, AlertCircle } from "lucide-react";
+import { Toast } from "../../components/Toast";
 import { AnalyzerView } from "../../components/AnalyzerView";
 import { ScoreCard } from "../../components/ScoreCard";
 import { VideoDropzone } from "../../components/VideoDropzone";
@@ -78,11 +79,13 @@ function IntentHeader({
   platform, setPlatform, format, setFormat,
   secondEye, setSecondEye,
   staticSecondEye, setStaticSecondEye,
+  onPlatformReset,
 }: {
   platform: Platform; setPlatform: (p: Platform) => void;
   format: Format; setFormat: (f: Format) => void;
   secondEye: boolean; setSecondEye: (v: boolean) => void;
   staticSecondEye: boolean; setStaticSecondEye: (v: boolean) => void;
+  onPlatformReset?: (oldPlatform: string) => void;
 }) {
   return (
     <div
@@ -140,7 +143,11 @@ function IntentHeader({
               onClick={() => {
                 setFormat(f);
                 const currentPlatformEnabled = PLATFORM_COMPAT[f].find(o => o.value === platform)?.enabled;
-                if (!currentPlatformEnabled) setPlatform("all");
+                if (!currentPlatformEnabled) {
+                  const oldPlatform = platform;
+                  setPlatform("all");
+                  onPlatformReset?.(oldPlatform);
+                }
               }}
               style={{
                 height: 30, padding: "0 12px", borderRadius: 9999, fontSize: 13, cursor: "pointer",
@@ -162,9 +169,7 @@ function IntentHeader({
         <div style={{ display: "flex", alignItems: "center", gap: 8 }} title="Get a fresh first-impression review from a separate AI model">
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
             <span style={{ fontSize: 13, color: "#a1a1aa" }}>Second Eye</span>
-            {secondEye && (
-              <span style={{ fontSize: 11, color: "#52525b" }}>Fresh first-time viewer perspective</span>
-            )}
+            <span style={{ fontSize: 11, color: "#52525b" }}>Fresh first-time viewer perspective</span>
           </div>
           <button
             type="button"
@@ -192,9 +197,7 @@ function IntentHeader({
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
             <span style={{ fontSize: 13, color: "#a1a1aa" }}>Design Review</span>
-            {staticSecondEye && (
-              <span style={{ fontSize: 11, color: "#52525b" }}>Typography & layout check</span>
-            )}
+            <span style={{ fontSize: 11, color: "#52525b" }}>Typography & layout check</span>
           </div>
           <button
             type="button"
@@ -319,6 +322,7 @@ export default function PaidAdAnalyzer() {
   const [analysisCompletedAt, setAnalysisCompletedAt] = useState<Date | null>(null);
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
   const [loadedFromHistory, setLoadedFromHistory] = useState<AnalysisRecord | null>(null);
+  const [platformResetToast, setPlatformResetToast] = useState<string | null>(null);
 
   const [improvementsLoading, setImprovementsLoading] = useState(false);
   const [platformImprovements, setPlatformImprovements] = useState<string[] | null>(null);
@@ -750,7 +754,7 @@ export default function PaidAdAnalyzer() {
       </div>
       {/* Main content */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        <IntentHeader platform={platform} setPlatform={setPlatform} format={format} setFormat={setFormat} secondEye={secondEye} setSecondEye={setSecondEye} staticSecondEye={staticSecondEye} setStaticSecondEye={setStaticSecondEye} />
+        <IntentHeader platform={platform} setPlatform={setPlatform} format={format} setFormat={setFormat} secondEye={secondEye} setSecondEye={setSecondEye} staticSecondEye={staticSecondEye} setStaticSecondEye={setStaticSecondEye} onPlatformReset={(oldPlatform) => setPlatformResetToast(`Platform reset to All — ${oldPlatform} isn't available for static ads`)} />
 
         <div className="flex-1 overflow-auto">
           {/* Format mismatch error */}
@@ -786,6 +790,22 @@ export default function PaidAdAnalyzer() {
               {!isPro && (
                 <div style={{ textAlign: "center", fontSize: 12, color: "#52525b", marginTop: 12, marginBottom: -24 }}>
                   {usageCount} of {FREE_LIMIT} free analyses used
+                </div>
+              )}
+              {!isPro && canAnalyze && usageCount === FREE_LIMIT - 1 && (
+                <div style={{
+                  maxWidth: 520, margin: "16px auto 0", padding: "10px 16px",
+                  background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)",
+                  borderRadius: 8, display: "flex", alignItems: "center", gap: 8,
+                  fontSize: 12, fontFamily: "var(--mono)", color: "var(--warn)",
+                }}>
+                  <span>⚠</span>
+                  <span style={{ flex: 1 }}>
+                    Last free analysis —{" "}
+                    <Link to="/upgrade" style={{ color: "var(--accent)", textDecoration: "underline", textUnderlineOffset: 2 }}>
+                      upgrade for unlimited
+                    </Link>
+                  </span>
                 </div>
               )}
               <PaidEmptyState
@@ -1057,6 +1077,14 @@ export default function PaidAdAnalyzer() {
         <div role="status" aria-live="polite" className="fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-3 bg-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-xl text-xs font-mono text-zinc-300 shadow-lg z-[100]">
           {infoToast}
         </div>
+      )}
+      {platformResetToast && (
+        <Toast
+          message={platformResetToast}
+          variant="info"
+          onClose={() => setPlatformResetToast(null)}
+          duration={3500}
+        />
       )}
     </div>
   );
