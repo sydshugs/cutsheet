@@ -99,6 +99,7 @@ export default function DisplayAnalyzer() {
   const [suiteBanners, setSuiteBanners] = useState<SuiteBanner[]>([]);
   const [suiteStatus, setSuiteStatus] = useState<"idle" | "analyzing" | "complete" | "error">("idle");
   const [suiteCohesion, setSuiteCohesion] = useState<SuiteCohesionResult | null>(null);
+  const [suiteCohesionError, setSuiteCohesionError] = useState(false);
   const [suiteMockupUrl, setSuiteMockupUrl] = useState<string | null>(null);
   const [suiteMockupLoading, setSuiteMockupLoading] = useState(false);
 
@@ -111,7 +112,7 @@ export default function DisplayAnalyzer() {
     setFile(null); setDimensions(null); setDetectedFormat(null);
     setStatus("idle"); setStatusMsg(""); setResult(null); setError(null);
     setMockupUrl(null); setMockupLoading(false);
-    setSuiteBanners([]); setSuiteStatus("idle"); setSuiteCohesion(null);
+    setSuiteBanners([]); setSuiteStatus("idle"); setSuiteCohesion(null); setSuiteCohesionError(false);
     setSuiteMockupUrl(null); setSuiteMockupLoading(false);
   }, []);
 
@@ -203,11 +204,15 @@ Return JSON only:
 
     if (completedBanners.length >= 2) {
       try {
+        setSuiteCohesionError(false);
         const cohesion = await analyzeSuiteCohesion(completedBanners, userContext);
         setSuiteCohesion(cohesion);
       } catch (e) {
         console.error("Suite cohesion failed:", e);
+        setSuiteCohesionError(true);
       }
+    } else {
+      setSuiteCohesionError(true);
     }
 
     setSuiteStatus("complete");
@@ -576,7 +581,27 @@ Return JSON only — no prose:
 
                     {/* Suite cohesion results */}
                     <div>
-                      <SuiteCohesionCard result={suiteCohesion} loading={suiteStatus === "analyzing" || (suiteStatus === "complete" && !suiteCohesion)} />
+                      <SuiteCohesionCard result={suiteCohesion} loading={suiteStatus === "analyzing" || (suiteStatus === "complete" && !suiteCohesion && !suiteCohesionError)} />
+                      {suiteCohesionError && !suiteCohesion && (
+                        <div style={{ padding: "12px 16px", borderRadius: 10, background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)", marginTop: 12, display: "flex", alignItems: "center", gap: 8 }}>
+                          <span style={{ fontSize: 12, color: "#f59e0b" }}>Suite cohesion analysis couldn't be generated</span>
+                          <button type="button" onClick={async () => {
+                            setSuiteCohesionError(false);
+                            try {
+                              const bannerData = suiteBanners.filter(b => b.result).map(b => ({
+                                format: b.format?.name ?? "Custom",
+                                fileName: b.file.name,
+                                overallScore: b.result!.overallScore,
+                                improvements: b.result!.improvements,
+                              }));
+                              const cohesion = await analyzeSuiteCohesion(bannerData, userContext);
+                              setSuiteCohesion(cohesion);
+                            } catch { setSuiteCohesionError(true); }
+                          }} style={{ fontSize: 11, color: "#6366f1", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
+                            Retry
+                          </button>
+                        </div>
+                      )}
 
                       {suiteCohesion && (
                         <button type="button" onClick={handleReset}
