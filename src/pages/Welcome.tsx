@@ -165,15 +165,15 @@ export default function Welcome() {
     });
   };
 
-  const handleFinish = (nicheVal?: string, platformVal?: string) => {
-    saveProfile(nicheVal || niche, platformVal || platform);
+  const handleFinish = async (nicheVal?: string, platformVal?: string) => {
+    await saveProfile(nicheVal || niche, platformVal || platform);
     setCompleted(true);
     const target = intent === "organic" ? "/app/organic" : intent === "display" ? "/app/display" : "/app/paid";
     setTimeout(() => navigate(target), 2000);
   };
 
-  const handleSkip = () => {
-    saveProfile(niche, platform);
+  const handleSkip = async () => {
+    await saveProfile(niche, platform);
     navigate("/app/paid");
   };
 
