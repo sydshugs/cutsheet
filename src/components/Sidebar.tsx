@@ -52,7 +52,7 @@ const MORE_ITEMS = [...COMPARE.slice(1), ...LIBRARY]; // Competitor, Batch, Swip
 
 function SectionLabel({ label }: { label: string }) {
   return (
-    <div style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "#52525b", padding: "0 12px", marginTop: 24, marginBottom: 2 }}>
+    <div role="heading" aria-level={2} style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "#71717a", padding: "0 12px", marginTop: 24, marginBottom: 2 }}>
       {label}
     </div>
   );
@@ -196,6 +196,7 @@ function DesktopSidebar({
 
   return (
     <nav
+      aria-label="Main navigation"
       className="sidebar-desktop hidden md:flex flex-col flex-shrink-0 relative z-40"
       style={{
         width, minWidth: width,
@@ -317,6 +318,7 @@ const MOBILE_TABS = [
 function MobileTabBar({ onMoreClick }: { onMoreClick: () => void }) {
   return (
     <nav
+      aria-label="Mobile navigation"
       className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex"
       style={{ height: 60, background: "#111113", borderTop: "1px solid rgba(255,255,255,0.06)", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
