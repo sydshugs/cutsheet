@@ -423,12 +423,13 @@ export async function generateSuiteMockup(
     ctx.textAlign = "start";
   }
 
-  // Legend bar at bottom
+  // Legend bar at very bottom of canvas
+  const legendY = canvas.height - 50;
   ctx.fillStyle = "#18181b";
-  ctx.fillRect(0, 860, 1400, 40);
+  ctx.fillRect(0, legendY, 1400, 50);
   ctx.fillStyle = "#a1a1aa";
   ctx.font = "12px sans-serif";
-  ctx.fillText(`${banners.length} banner${banners.length > 1 ? "s" : ""} in suite`, 20, 884);
+  ctx.fillText(`${banners.length} banner${banners.length > 1 ? "s" : ""} in suite`, 20, legendY + 24);
 
   let lx = 220;
   for (const banner of banners) {
@@ -436,7 +437,7 @@ export async function generateSuiteMockup(
     const sc = banner.score != null ? ` ${banner.score}/10` : "";
     ctx.fillStyle = "#52525b";
     ctx.font = "11px sans-serif";
-    ctx.fillText(`${label}${sc}`, lx, 884);
+    ctx.fillText(`${label}${sc}`, lx, legendY + 24);
     lx += ctx.measureText(`${label}${sc}`).width + 20;
   }
 
