@@ -231,32 +231,6 @@ export interface ComparisonResult {
   remainingWork: string[];
 }
 
-// ─── PLATFORM SCORING (Organic Analyzer) ─────────────────────────────────────
-
-export interface PlatformScore {
-  platform: 'tiktok' | 'reels' | 'shorts';
-  score: number;
-  signals: { label: string; pass: boolean }[];
-  verdict: string;
-  improvements: string[];
-}
-
-/** Placeholder — platform scoring endpoint not yet implemented */
-export async function generatePlatformScore(
-  _platform: 'tiktok' | 'reels' | 'shorts',
-  _result: unknown,
-  _fileName: string,
-): Promise<PlatformScore> {
-  // TODO: implement /api/platform-score endpoint
-  return {
-    platform: _platform,
-    score: 0,
-    signals: [],
-    verdict: '',
-    improvements: [],
-  };
-}
-
 export async function generateComparison(
   originalScores: { overall: number; hook: number; cta: number; clarity: number; production: number },
   improvedScores: { overall: number; hook: number; cta: number; clarity: number; production: number },
