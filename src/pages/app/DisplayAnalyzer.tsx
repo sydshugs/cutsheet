@@ -3,7 +3,7 @@
 import { Helmet } from "react-helmet-async";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useOutletContext } from "react-router-dom";
-import { Monitor, Upload } from "lucide-react";
+import { Monitor, Upload, Eye, Download } from "lucide-react";
 import { DisplayScoreCard, type DisplayResult } from "../../components/DisplayScoreCard";
 import { getImageDimensions, detectDisplayFormat, getFormatGuidance, type DisplayFormat } from "../../utils/displayAdUtils";
 import { generateDisplayMockup } from "../../services/mockupService";
@@ -361,28 +361,92 @@ Return JSON only — no prose:
                   </button>
                 </div>
               )}
+
+              {/* ── RESULTS: Two-column layout ─────────────────────── */}
+              {status === "complete" && result && dimensions && (
+                <div style={{ display: "flex", gap: 24, marginTop: 8, alignItems: "flex-start" }} className="max-lg:flex-col">
+                  {/* LEFT — Mockup (hero) */}
+                  <div style={{ flex: "0 0 42%", minWidth: 0 }} className="max-lg:w-full">
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                      <Eye size={14} color="#71717a" />
+                      <span style={{ fontSize: 13, fontWeight: 600, color: "#f4f4f5" }}>Real-life placement preview</span>
+                    </div>
+
+                    {detectedFormat && (
+                      <span style={{ fontSize: 11, color: "#818cf8", background: "rgba(99,102,241,0.1)", borderRadius: 9999, padding: "3px 10px", display: "inline-block", marginBottom: 10 }}>
+                        {detectedFormat.key} · {detectedFormat.name}
+                      </span>
+                    )}
+
+                    {mockupLoading && (
+                      <div style={{ height: 240, borderRadius: 12, background: "linear-gradient(90deg, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.02) 75%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <span style={{ fontSize: 12, color: "#52525b" }}>Generating placement preview...</span>
+                      </div>
+                    )}
+
+                    {!mockupLoading && mockupUrl && (
+                      <>
+                        <img src={mockupUrl} alt="Placement mockup" style={{ width: "100%", borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)" }} />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const a = document.createElement("a");
+                            a.href = mockupUrl;
+                            a.download = `cutsheet-mockup-${detectedFormat?.key ?? "display"}.png`;
+                            a.click();
+                          }}
+                          style={{
+                            marginTop: 8, width: "100%", height: 36, background: "transparent",
+                            border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8,
+                            color: "#71717a", fontSize: 12, cursor: "pointer",
+                            display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                            transition: "all 150ms",
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; e.currentTarget.style.color = "#a1a1aa"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#71717a"; }}
+                        >
+                          <Download size={12} /> Download mockup
+                        </button>
+                      </>
+                    )}
+
+                    {/* Actual banner below mockup */}
+                    {previewUrl && (
+                      <div style={{ marginTop: 20 }}>
+                        <p style={{ fontSize: 11, color: "#52525b", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Your ad</p>
+                        <div style={{ display: "flex", justifyContent: "center", background: "#09090b", borderRadius: 10, border: "1px solid rgba(255,255,255,0.06)", padding: 10 }}>
+                          <img src={previewUrl} alt={file?.name} style={{ maxWidth: "100%", maxHeight: 160, objectFit: "contain" }} />
+                        </div>
+                      </div>
+                    )}
+
+                    <p style={{ fontSize: 11, color: "#52525b", textAlign: "center", marginTop: 10 }}>
+                      Editorial content shown in gray. Real websites may look different.
+                    </p>
+                  </div>
+
+                  {/* RIGHT — Scores */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <DisplayScoreCard
+                      result={result}
+                      format={detectedFormat}
+                      network={network}
+                      mockupUrl={null}
+                      mockupLoading={false}
+                      dimensions={dimensions}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Right panel — DisplayScoreCard */}
-      <div
-        className={`shrink-0 bg-zinc-900/50 backdrop-blur-xl border-l border-white/5 overflow-y-auto overflow-x-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-white/5 ${status === "complete" && result ? "w-[340px] max-lg:w-full opacity-100" : "w-0 max-lg:w-0 opacity-0"}`}
-      >
-        {status === "complete" && result && dimensions && (
-          <DisplayScoreCard
-            result={result}
-            format={detectedFormat}
-            network={network}
-            mockupUrl={mockupUrl}
-            mockupLoading={mockupLoading}
-            dimensions={dimensions}
-          />
-        )}
-      </div>
-
-      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg) } }
+        @keyframes shimmer { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
+      `}</style>
     </div>
   );
 }
