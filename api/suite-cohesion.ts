@@ -71,7 +71,7 @@ Return JSON only — no prose:
   "missingFormats": ["<standard formats not present>"]
 }`;
 
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+  const client = new Anthropic({ apiKey: (process.env.ANTHROPIC_API_KEY ?? process.env.VITE_ANTHROPIC_API_KEY)! });
   const response = await client.messages.create({
     model: CLAUDE_MODEL,
     max_tokens: 1200,

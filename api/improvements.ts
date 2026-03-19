@@ -9,7 +9,7 @@ const CLAUDE_MODEL = "claude-sonnet-4-20250514";
 const RATE = { freeLimit: 30, proLimit: 120, windowSeconds: 60 };
 
 function getClient() {
-  return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+  return new Anthropic({ apiKey: (process.env.ANTHROPIC_API_KEY ?? process.env.VITE_ANTHROPIC_API_KEY)! });
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {

@@ -132,8 +132,9 @@ Return findings as structured JSON:
           geminiFindings = `\n\nGEMINI VISUAL SCAN FINDINGS:\n${jsonMatch[0]}`;
         }
       }
-    } catch {
+    } catch (geminiErr) {
       // Visual scan is best-effort — continue without it
+      console.error("[policy-check] Gemini visual scan failed:", geminiErr);
       geminiFindings = "\n\n[Visual scan unavailable — analysis based on ad copy and metadata only]";
     }
   } else if (existingAnalysis) {
@@ -141,7 +142,12 @@ Return findings as structured JSON:
   }
 
   // ── Step 2: Claude policy evaluation
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+  const apiKey = process.env.ANTHROPIC_API_KEY ?? process.env.VITE_ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    console.error("[policy-check] ANTHROPIC_API_KEY is not set");
+    return res.status(500).json({ error: "Server configuration error — please contact support." });
+  }
+  const client = new Anthropic({ apiKey });
 
   const platformSection =
     platform === "both"

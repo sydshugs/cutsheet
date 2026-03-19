@@ -37,7 +37,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     ? `\n\n${sessionMemory}\nIf this user has recurring scroll-trigger or clarity issues across prior ads, call that out as a PATTERN — it's more impactful than a one-off flag.`
     : "";
 
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+  const client = new Anthropic({ apiKey: (process.env.ANTHROPIC_API_KEY ?? process.env.VITE_ANTHROPIC_API_KEY)! });
 
   const message = await client.messages.create({
     model: CLAUDE_MODEL,
