@@ -27,7 +27,7 @@ export interface AppSharedContext {
   increment: () => number;
   FREE_LIMIT: number;
   usageCount: number;
-  onUpgradeRequired: () => void;
+  onUpgradeRequired: (feature?: string) => void;
   registerCallbacks: (
     cbs: { onNewAnalysis?: () => void; onHistoryOpen?: () => void; hasResult?: boolean } | null
   ) => void;
@@ -39,12 +39,13 @@ export default function AppLayout() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const { usageCount, isPro, canAnalyze, increment, FREE_LIMIT } = useUsage();
+  const { usageCount, isPro, isTeam, tier, canAnalyze, increment, FREE_LIMIT } = useUsage();
   const { entries: historyEntries, addEntry: addHistoryEntry, deleteEntry: deleteHistoryEntry, clearAll: clearAllHistory } = useHistory();
   const { addItem: addSwipeItem } = useSwipeFile();
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeFeatureKey, setUpgradeFeatureKey] = useState<string | undefined>(undefined);
   const [showShortcuts, setShowShortcuts] = useState(false);
 
   useKeyboardShortcuts(
@@ -83,7 +84,10 @@ export default function AppLayout() {
     increment,
     FREE_LIMIT,
     usageCount,
-    onUpgradeRequired: () => setShowUpgradeModal(true),
+    onUpgradeRequired: (feature?: string) => {
+      setUpgradeFeatureKey(feature);
+      setShowUpgradeModal(true);
+    },
     registerCallbacks,
   };
 
@@ -109,7 +113,7 @@ export default function AppLayout() {
           onMobileMenuToggle={() => setMobileOpen((p) => !p)}
           showMobileMenu={mobileOpen}
           userName={userEmail}
-          userPlan={isPro ? "pro" : "free"}
+          userPlan={tier}
           hasResult={hasAnalysisResult}
           onLogout={async () => { await supabase.auth.signOut(); navigate("/login"); }}
         />
@@ -119,7 +123,13 @@ export default function AppLayout() {
       </div>
 
       {showUpgradeModal && (
-        <UpgradeModal onClose={() => setShowUpgradeModal(false)} t={themes.dark} />
+        <UpgradeModal
+          featureKey={upgradeFeatureKey}
+          onClose={() => {
+            setShowUpgradeModal(false);
+            setUpgradeFeatureKey(undefined);
+          }}
+        />
       )}
       <KeyboardShortcutsModal open={showShortcuts} onClose={() => setShowShortcuts(false)} />
     </div>
