@@ -724,9 +724,9 @@ export default function PaidAdAnalyzer() {
               <button
                 type="button"
                 onClick={() => setRightTab("analysis")}
-                className="text-xs text-zinc-500 hover:text-white transition-colors cursor-pointer"
+                className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer flex items-center gap-1"
               >
-                ← Back to Scorecard
+                ← Back to Scores
               </button>
               <span className="text-xs text-zinc-600 font-mono">Claude Sonnet</span>
             </div>

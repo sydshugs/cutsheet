@@ -546,7 +546,7 @@ export default function OrganicAnalyzer() {
         {showRightPanel && rightTab === "brief" && (
           <div className="flex flex-col h-full">
             <div className="p-5 border-b border-white/5 flex items-center justify-between">
-              <button type="button" onClick={() => setRightTab("analysis")} className="text-xs text-zinc-500 hover:text-white transition-colors cursor-pointer">← Back to Scorecard</button>
+              <button type="button" onClick={() => setRightTab("analysis")} className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer">← Back to Scores</button>
               <span className="text-xs text-zinc-600 font-mono">Claude Sonnet</span>
             </div>
             {briefLoading && !brief && (
