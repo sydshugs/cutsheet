@@ -3,6 +3,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Anthropic from "@anthropic-ai/sdk";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
+import { sanitizeSessionMemory } from "./_lib/sanitizeMemory";
 
 const CLAUDE_MODEL = "claude-sonnet-4-20250514";
 const RATE = { freeLimit: 5, proLimit: 20, windowSeconds: 60 };
@@ -19,7 +20,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
   }
 
-  const { banners, userContext } = req.body ?? {};
+  const { banners, userContext, sessionMemory: rawMemory } = req.body ?? {};
+  const sessionMemory = sanitizeSessionMemory(rawMemory);
   if (!Array.isArray(banners) || banners.length < 2) {
     return res.status(400).json({ error: "At least 2 banners are required" });
   }
@@ -34,7 +36,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const prompt = `You are a display advertising expert reviewing a full banner ad suite for campaign consistency.
 
 ${userContext || ""}
-
+${sessionMemory ? `\n${sessionMemory}\nIf this user's prior ads share consistency issues with this suite, flag the pattern.\n` : ""}
 A display ad suite must be consistent across all sizes: same brand identity, same headline/offer, same CTA, same visual style.
 
 BANNERS IN THIS SUITE:

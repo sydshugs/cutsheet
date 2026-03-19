@@ -3,6 +3,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Anthropic from "@anthropic-ai/sdk";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
+import { sanitizeSessionMemory } from "./_lib/sanitizeMemory";
 
 const CLAUDE_MODEL = "claude-sonnet-4-20250514";
 const RATE = { freeLimit: 5, proLimit: 30, windowSeconds: 60 };
@@ -23,8 +24,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     yourScores, competitorScores,
     yourImprovements, competitorImprovements,
     yourFileName, competitorFileName,
-    platform, format, userContext,
+    platform, format, userContext, sessionMemory: rawMemory,
   } = req.body ?? {};
+  const sessionMemory = sanitizeSessionMemory(rawMemory);
 
   if (!yourScores || !competitorScores) {
     return res.status(400).json({ error: "yourScores and competitorScores are required" });
@@ -34,7 +36,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 You have just scored two ad creatives head-to-head.
 
 ${userContext || ""}
-
+${sessionMemory ? `\n${sessionMemory}\nFactor in the user's historical score trends when assessing competitive position.\n` : ""}
 YOUR AD: ${yourFileName ?? "Your Ad"}
 Overall: ${yourScores.overall}/10
 Hook: ${yourScores.hook}/10

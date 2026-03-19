@@ -3,6 +3,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Anthropic from "@anthropic-ai/sdk";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
+import { sanitizeSessionMemory } from "./_lib/sanitizeMemory";
 
 const CLAUDE_MODEL = "claude-sonnet-4-20250514";
 const RATE = { freeLimit: 10, proLimit: 60, windowSeconds: 60 };
@@ -19,7 +20,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
   }
 
-  const { analysisMarkdown, fileName, scores, improvements, userContext } = req.body ?? {};
+  const { analysisMarkdown, fileName, scores, improvements, userContext, sessionMemory: rawMemory } = req.body ?? {};
+  const sessionMemory = sanitizeSessionMemory(rawMemory);
   if (!analysisMarkdown) return res.status(400).json({ error: "analysisMarkdown is required" });
 
   const overallScore = scores?.overall ?? "N/A";
@@ -30,6 +32,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const contextBlock = userContext
     ? `\n\nAdditional context about who made this ad:\n${userContext}\nApply fresh-viewer expectations specific to how people actually scroll this platform. Your timestamped flags should reference what this niche's target customer would do at each moment.`
+    : "";
+  const memoryBlock = sessionMemory
+    ? `\n\n${sessionMemory}\nIf this user has recurring scroll-trigger or clarity issues across prior ads, call that out as a PATTERN — it's more impactful than a one-off flag.`
     : "";
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
@@ -42,7 +47,7 @@ You are a slightly bored person scrolling through your feed on your phone.
 You have never seen this brand before. You have no loyalty to it.
 You will give this video about 2 seconds before deciding to scroll past.
 The creator has been staring at this video for days and is blind to its problems.
-Your job is to catch everything they can't see anymore.${contextBlock}
+Your job is to catch everything they can't see anymore.${contextBlock}${memoryBlock}
 
 Do NOT give general advice. Be specific. Be honest. Be ruthless.
 Every flag must have a timestamp.
