@@ -5,6 +5,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
 
+export const maxDuration = 60; // seconds — Claude + Gemini can take 15-30s
+
 const CLAUDE_MODEL = "claude-sonnet-4-20250514";
 // 3 deconstructions/day free, 20/day pro (86400s = 24h window)
 const RATE = { freeLimit: 3, proLimit: 20, windowSeconds: 86400 };

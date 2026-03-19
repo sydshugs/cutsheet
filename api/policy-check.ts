@@ -5,6 +5,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
 
+export const maxDuration = 60;
+
 const CLAUDE_MODEL = "claude-sonnet-4-20250514";
 // 3 checks / day free (86400s window), unlimited pro
 const RATE = { freeLimit: 3, proLimit: 9999, windowSeconds: 86400 };

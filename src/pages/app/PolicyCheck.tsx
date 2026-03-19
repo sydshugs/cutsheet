@@ -13,6 +13,30 @@ type AdType = "video" | "static" | "display";
 
 const PILLS = ["Meta policy", "TikTok policy", "Rejection prevention", "Appeal language"];
 
+/** Resize image client-side to stay under Vercel's 4.5MB body limit */
+function resizeImageToDataUrl(file: File, maxDim: number, quality: number): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      let { width, height } = img;
+      if (width > maxDim || height > maxDim) {
+        const scale = maxDim / Math.max(width, height);
+        width = Math.round(width * scale);
+        height = Math.round(height * scale);
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return reject(new Error("Canvas not supported"));
+      ctx.drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+    img.onerror = () => reject(new Error("Failed to load image"));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
 // ─── EMPTY STATE ──────────────────────────────────────────────────────────────
 
 function EmptyState({
@@ -146,15 +170,10 @@ export default function PolicyCheck() {
     setResult(null);
 
     try {
-      // Convert file to base64 data URL so the server can run visual scan
+      // Convert file to base64 data URL, resized to fit serverless body limit
       let mediaDataUrl: string | undefined;
       if (file) {
-        mediaDataUrl = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        });
+        mediaDataUrl = await resizeImageToDataUrl(file, 1200, 0.8);
       }
 
       const params: PolicyCheckParams = {
