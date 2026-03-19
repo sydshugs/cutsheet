@@ -27,6 +27,7 @@ import { saveAnalysis } from "../../services/historyService";
 import type { AnalysisRecord } from "../../services/historyService";
 import { checkShareLimit, incrementShareCount } from "../../utils/rateLimiter";
 import { getUserContext, formatUserContextBlock } from "../../services/userContextService";
+import { getSessionMemory } from "@/src/lib/userMemoryService";
 import type { AppSharedContext } from "../../components/AppLayout";
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY ?? "";
@@ -170,6 +171,7 @@ export default function OrganicAnalyzer() {
 
   const scorecardRef = useRef<HTMLDivElement | null>(null);
   const lastSavedRef = useRef<string | null>(null);
+  const sessionMemoryRef = useRef<string>('');
 
   const { status, statusMessage, result, error, analysisError, analyze, download, copy, reset } = useVideoAnalyzer();
   const thumbnailDataUrl = useThumbnail(file);
@@ -222,7 +224,8 @@ export default function OrganicAnalyzer() {
             result.fileName,
             result.scores ? { hook: result.scores.hook, overall: result.scores.overall } : undefined,
             result.improvements,
-            userContext || undefined
+            userContext || undefined,
+            sessionMemoryRef.current
           );
           setSecondEyeOutput(output);
         } catch (err) {
@@ -312,6 +315,8 @@ export default function OrganicAnalyzer() {
   // NOTE: handleAnalyze declared before the auto-analyze useEffect
   const handleAnalyze = useCallback(async () => {
     if (!file || isAnalyzing || !canAnalyze) return;
+    const { text: sessionMemory } = await getSessionMemory();
+    sessionMemoryRef.current = sessionMemory;
     await analyze(file, API_KEY, contextPrefix, userContext || undefined);
   }, [file, isAnalyzing, canAnalyze, analyze, contextPrefix]);
 
@@ -380,7 +385,7 @@ export default function OrganicAnalyzer() {
     if (!activeResult || briefLoading) return;
     setBriefLoading(true); setBriefError(null);
     try {
-      const r = await generateBriefWithClaude(activeResult.markdown, activeResult.fileName, userContext || undefined);
+      const r = await generateBriefWithClaude(activeResult.markdown, activeResult.fileName, userContext || undefined, sessionMemoryRef.current);
       setBrief(r); setRightTab("brief");
     } catch {
       try { const r = await generateBrief(activeResult.markdown, API_KEY); setBrief(r); setRightTab("brief"); }
@@ -393,7 +398,7 @@ export default function OrganicAnalyzer() {
     setCtaLoading(true);
     try {
       const ctaSection = activeResult.markdown.match(/CTA[\s\S]*?(?=\n##|\n---)/i)?.[0] ?? "";
-      setCtaRewrites(await generateCTARewrites(ctaSection, activeResult.fileName, userContext || undefined));
+      setCtaRewrites(await generateCTARewrites(ctaSection, activeResult.fileName, userContext || undefined, sessionMemoryRef.current));
     } catch (err) {
       console.error('CTA rewrite failed:', err);
       setRateLimitError('CTA rewrite failed. Please try again.');
