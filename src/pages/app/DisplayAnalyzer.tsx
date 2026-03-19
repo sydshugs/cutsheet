@@ -3,7 +3,8 @@
 import { Helmet } from "react-helmet-async";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useOutletContext } from "react-router-dom";
-import { Monitor, Upload, Eye, Download, X, Plus, AlertTriangle, CheckCircle } from "lucide-react";
+import { Monitor, Upload, Eye, Download, X, Plus, CheckCircle } from "lucide-react";
+import { SuiteCohesionCard } from "../../components/SuiteCohesionCard";
 import { DisplayScoreCard, type DisplayResult } from "../../components/DisplayScoreCard";
 import { getImageDimensions, detectDisplayFormat, getFormatGuidance, type DisplayFormat } from "../../utils/displayAdUtils";
 import { generateDisplayMockup, generateSuiteMockup } from "../../services/mockupService";
@@ -575,86 +576,13 @@ Return JSON only — no prose:
 
                     {/* Suite cohesion results */}
                     <div>
+                      <SuiteCohesionCard result={suiteCohesion} loading={suiteStatus === "analyzing" || (suiteStatus === "complete" && !suiteCohesion)} />
+
                       {suiteCohesion && (
-                        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                          {/* Suite score card */}
-                          <div style={{ padding: 16, background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.2)", borderRadius: 12 }}>
-                            <p style={{ fontSize: 16, fontWeight: 600, color: "#f4f4f5", margin: "0 0 12px" }}>
-                              Suite Score: <span style={{ color: suiteCohesion.suiteScore >= 7 ? "#10b981" : suiteCohesion.suiteScore >= 5 ? "#f59e0b" : "#ef4444", fontFamily: "var(--font-mono, monospace)" }}>{suiteCohesion.suiteScore}/10</span>
-                            </p>
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                              {([["Brand", suiteCohesion.brandConsistency], ["Message", suiteCohesion.messageConsistency], ["Visual", suiteCohesion.visualConsistency], ["CTA", suiteCohesion.ctaConsistency]] as [string, number][]).map(([label, score]) => (
-                                <div key={label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                  <span style={{ fontSize: 12, color: "#71717a", width: 60 }}>{label}</span>
-                                  <div style={{ flex: 1, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
-                                    <div style={{ width: `${score * 10}%`, height: "100%", borderRadius: 2, background: score >= 7 ? "#10b981" : score >= 5 ? "#f59e0b" : "#ef4444" }} />
-                                  </div>
-                                  <span style={{ fontSize: 11, fontFamily: "var(--font-mono, monospace)", color: "#a1a1aa", width: 18, textAlign: "right" }}>{score}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Missing formats */}
-                          {suiteCohesion.missingFormats.length > 0 && (
-                            <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)", display: "flex", alignItems: "flex-start", gap: 8 }}>
-                              <AlertTriangle size={14} color="#f59e0b" style={{ flexShrink: 0, marginTop: 2 }} />
-                              <div>
-                                <span style={{ fontSize: 12, color: "#f59e0b", fontWeight: 500 }}>Missing: {suiteCohesion.missingFormats.join(", ")}</span>
-                                <p style={{ fontSize: 11, color: "#71717a", margin: "4px 0 0" }}>Complete suites improve campaign reach by up to 40%</p>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Issues */}
-                          {suiteCohesion.issues.length > 0 && (
-                            <div>
-                              <p style={{ fontSize: 12, fontWeight: 600, color: "#a1a1aa", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Issues</p>
-                              {suiteCohesion.issues.map((issue, i) => (
-                                <div key={i} style={{
-                                  padding: "10px 14px", borderRadius: 10, marginBottom: 6,
-                                  borderLeft: `2px solid ${issue.severity === "critical" ? "#ef4444" : issue.severity === "warning" ? "#f59e0b" : "#71717a"}`,
-                                  background: issue.severity === "critical" ? "rgba(239,68,68,0.04)" : issue.severity === "warning" ? "rgba(245,158,11,0.04)" : "rgba(255,255,255,0.02)",
-                                }}>
-                                  <p style={{ fontSize: 12, color: "#a1a1aa", margin: 0 }}>{issue.issue}</p>
-                                  <p style={{ fontSize: 11, color: "#52525b", margin: "4px 0 0" }}>Affects: {issue.affectedFormats.join(", ")} · Fix: {issue.fix}</p>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          {/* Strengths */}
-                          {suiteCohesion.strengths.length > 0 && (
-                            <div>
-                              <p style={{ fontSize: 12, fontWeight: 600, color: "#10b981", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Strengths</p>
-                              {suiteCohesion.strengths.map((s, i) => (
-                                <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 4 }}>
-                                  <CheckCircle size={12} color="#10b981" style={{ flexShrink: 0, marginTop: 2 }} />
-                                  <span style={{ fontSize: 12, color: "#a1a1aa" }}>{s}</span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          {/* Recommendations */}
-                          {suiteCohesion.recommendations.length > 0 && (
-                            <div>
-                              <p style={{ fontSize: 12, fontWeight: 600, color: "#a1a1aa", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Recommendations</p>
-                              {suiteCohesion.recommendations.map((r, i) => (
-                                <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 6 }}>
-                                  <span style={{ fontSize: 12, fontWeight: 700, color: "#6366f1", width: 16, flexShrink: 0 }}>{i + 1}</span>
-                                  <span style={{ fontSize: 12, color: "#a1a1aa", lineHeight: 1.5 }}>{r}</span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          {/* Reset */}
-                          <button type="button" onClick={handleReset}
-                            style={{ width: "100%", height: 40, background: "transparent", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, color: "#71717a", fontSize: 12, cursor: "pointer", marginTop: 8 }}>
-                            Analyze another suite
-                          </button>
-                        </div>
+                        <button type="button" onClick={handleReset}
+                          style={{ width: "100%", height: 40, background: "transparent", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, color: "#71717a", fontSize: 12, cursor: "pointer", marginTop: 14 }}>
+                          Analyze another suite
+                        </button>
                       )}
                     </div>
                   </div>
