@@ -119,7 +119,16 @@ export default function Signup() {
     });
 
     if (error) {
-      setError(error.message);
+      const msg = error.message.toLowerCase();
+      if (msg.includes("already registered") || msg.includes("already been registered")) {
+        setError("That email already has an account — sign in instead");
+      } else if (msg.includes("password") && (msg.includes("short") || msg.includes("weak") || msg.includes("least"))) {
+        setError("Choose a stronger password — at least 8 characters");
+      } else if (msg.includes("valid email") || msg.includes("invalid email")) {
+        setError("Enter a valid email address");
+      } else {
+        setError("Something went wrong — please try again");
+      }
       setIsLoading(false);
     } else {
       setSubmitted(true);
