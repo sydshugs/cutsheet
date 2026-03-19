@@ -93,22 +93,23 @@ function drawLeaderboardMockup(ctx: CanvasRenderingContext2D, canvas: HTMLCanvas
   drawTextLines(ctx, cx, by + 420, 660, 4, 22);
 }
 
-function drawRectangleMockup(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, banner: HTMLImageElement) {
+function drawRectangleMockup(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, banner: HTMLImageElement, adW = 300, adH = 250) {
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   drawNavBar(ctx, canvas.width);
 
-  // Two-column: content left (60%), sidebar right (300px)
-  const sidebarW = 320;
+  // Two-column: content left, sidebar right (sized to fit the ad)
+  const sidebarW = Math.max(adW + 40, 320);
   const contentX = 50;
   const contentW = canvas.width - sidebarW - 80;
-  const sidebarX = canvas.width - sidebarW - 20;
+  const sidebarX = canvas.width - sidebarW + 10;
 
   // Content column — article
   drawHeadline(ctx, contentX, 76, contentW);
   ctx.fillStyle = "#868e96";
   ctx.fillRect(contentX, 118, 160, 8);
-  drawTextLines(ctx, contentX, 148, contentW, 6, 22);
+  const textLineCount = Math.max(12, Math.floor((canvas.height - 200) / 22));
+  drawTextLines(ctx, contentX, 148, contentW, textLineCount, 22);
   // Image placeholder in article
   ctx.fillStyle = "#f1f3f5";
   ctx.fillRect(contentX, 296, contentW, 140);
@@ -117,8 +118,6 @@ function drawRectangleMockup(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasEl
   ctx.textAlign = "center";
   ctx.fillText("Article image", contentX + contentW / 2, 374);
   ctx.textAlign = "start";
-  // More text below image
-  drawTextLines(ctx, contentX, 460, contentW, 8, 22);
 
   // Sidebar separator
   ctx.fillStyle = "#f1f3f5";
@@ -128,19 +127,22 @@ function drawRectangleMockup(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasEl
   ctx.fillStyle = "#868e96";
   ctx.font = "bold 11px sans-serif";
   ctx.fillText("TRENDING", sidebarX, 80);
-  drawTextLines(ctx, sidebarX, 98, sidebarW - 20, 3, 16);
+  drawTextLines(ctx, sidebarX, 98, adW, 3, 16);
 
-  // Banner in sidebar
-  const by = 170;
+  // Banner in sidebar — uses actual ad dimensions
+  const by = 165;
   drawAdLabel(ctx, sidebarX, by);
-  ctx.drawImage(banner, sidebarX, by, 300, 250);
-  drawAnnotation(ctx, sidebarX, by, 300, 250);
+  ctx.drawImage(banner, sidebarX, by, adW, adH);
+  drawAnnotation(ctx, sidebarX, by, adW, adH);
 
-  // Sidebar widgets below ad
-  ctx.fillStyle = "#868e96";
-  ctx.font = "bold 11px sans-serif";
-  ctx.fillText("RECOMMENDED", sidebarX, by + 280);
-  drawTextLines(ctx, sidebarX, by + 298, sidebarW - 20, 4, 16);
+  // Sidebar widgets below ad (only if space remains)
+  const belowAdY = by + adH + 20;
+  if (belowAdY + 80 < canvas.height) {
+    ctx.fillStyle = "#868e96";
+    ctx.font = "bold 11px sans-serif";
+    ctx.fillText("RECOMMENDED", sidebarX, belowAdY);
+    drawTextLines(ctx, sidebarX, belowAdY + 18, adW, 4, 16);
+  }
 }
 
 function drawSkyscraperMockup(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, banner: HTMLImageElement) {
@@ -265,19 +267,19 @@ export async function generateDisplayMockup(
   } else if (key === "300x250" || key === "336x280" || key === "250x250") {
     canvas.width = 1000;
     canvas.height = 650;
-    drawRectangleMockup(ctx, canvas, bannerImg);
+    drawRectangleMockup(ctx, canvas, bannerImg, width, height);
   } else if (key === "160x600") {
     canvas.width = 1000;
-    canvas.height = 750;
-    drawSkyscraperMockup(ctx, canvas, bannerImg);
+    canvas.height = 850;
+    drawRectangleMockup(ctx, canvas, bannerImg, 160, 600);
   } else if (key === "320x50" || key === "320x100") {
     canvas.width = 390;
     canvas.height = 844;
     drawMobileMockup(ctx, canvas, bannerImg, height);
   } else if (key === "300x600") {
     canvas.width = 1000;
-    canvas.height = 750;
-    drawRectangleMockup(ctx, canvas, bannerImg); // reuse sidebar layout
+    canvas.height = 900;
+    drawRectangleMockup(ctx, canvas, bannerImg, 300, 600);
   } else if (key === "970x250") {
     canvas.width = 1100;
     canvas.height = 600;
