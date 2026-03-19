@@ -9,6 +9,7 @@ import { useUsage } from "../hooks/useUsage";
 import { useHistory, type HistoryEntry } from "../hooks/useHistory";
 import { useSwipeFile, type SwipeItem } from "../hooks/useSwipeFile";
 import { useAuth } from "../context/AuthContext";
+import { supabase } from "../lib/supabase";
 import { themes } from "../theme";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 
@@ -108,6 +109,7 @@ export default function AppLayout() {
           userName={userEmail}
           userPlan={isPro ? "pro" : "free"}
           hasResult={hasAnalysisResult}
+          onLogout={async () => { await supabase.auth.signOut(); navigate("/login"); }}
         />
         <main className="flex-1 overflow-auto">
           <Outlet context={ctx} />

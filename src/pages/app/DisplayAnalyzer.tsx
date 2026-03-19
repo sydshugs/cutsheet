@@ -33,21 +33,43 @@ const NETWORKS = [
 
 // ─── EMPTY STATE ─────────────────────────────────────────────────────────────
 
-function EmptyState() {
+function EmptyState({ onFileSelect }: { onFileSelect: (f: File) => void }) {
   const PILLS = ["Format detection", "Placement scoring", "Real-life mockup"];
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 24px", gap: 16 }}>
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px", minHeight: "calc(100vh - 120px)" }}>
       <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <Monitor size={28} color="#6366f1" />
       </div>
-      <h2 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", margin: 0 }}>Display & Banner Analysis</h2>
-      <p style={{ fontSize: 14, color: "#71717a", textAlign: "center", maxWidth: 380, lineHeight: 1.6, margin: 0 }}>
-        Upload a Google Display or affiliate banner ad. Auto-detects format. Scored against display-specific criteria. See how it competes in a real website context.
+      <h2 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>Display & Banner Analysis</h2>
+      <p style={{ fontSize: 14, color: "#71717a", textAlign: "center", maxWidth: 380, lineHeight: 1.6, marginTop: 10 }}>
+        Upload a Google Display or affiliate banner ad. Auto-detects format. Scored against display-specific criteria.
       </p>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 16 }}>
         {PILLS.map((p) => (
           <span key={p} style={{ fontSize: 12, color: "#818cf8", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)", borderRadius: 9999, padding: "4px 12px" }}>{p}</span>
         ))}
+      </div>
+      <div style={{ width: "100%", maxWidth: 520, marginTop: 32 }}>
+        <div
+          style={{
+            height: 200, border: "2px dashed rgba(255,255,255,0.08)", borderRadius: 16,
+            background: "rgba(255,255,255,0.02)", display: "flex", flexDirection: "column",
+            alignItems: "center", justifyContent: "center", gap: 10, cursor: "pointer", transition: "all 150ms",
+          }}
+          onClick={() => {
+            const input = document.createElement("input");
+            input.type = "file"; input.accept = "image/jpeg,image/png,image/webp,image/gif";
+            input.onchange = (e) => { const f = (e.target as HTMLInputElement).files?.[0]; if (f) onFileSelect(f); };
+            input.click();
+          }}
+          onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)"; e.currentTarget.style.background = "rgba(99,102,241,0.05)"; }}
+          onDragLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
+          onDrop={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; const f = e.dataTransfer.files[0]; if (f) onFileSelect(f); }}
+        >
+          <Upload size={28} color="#52525b" />
+          <span style={{ fontSize: 14, color: "#71717a" }}>Drop your banner ad or click to browse</span>
+          <span style={{ fontSize: 11, color: "#52525b" }}>JPG, PNG, WEBP, or GIF</span>
+        </div>
       </div>
     </div>
   );
@@ -642,7 +664,7 @@ Return JSON only — no prose:
           )}
 
           {/* ── SINGLE MODE ─────────────────────────────────────────── */}
-          {mode === "single" && status === "idle" && !file && <EmptyState />}
+          {mode === "single" && status === "idle" && !file && <EmptyState onFileSelect={handleFileSelect} />}
 
           {mode === "single" && (
           /* Upload + preview area */
