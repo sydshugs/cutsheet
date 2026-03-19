@@ -1,7 +1,7 @@
 // src/pages/app/DisplayAnalyzer.tsx — Display & Banner Ad Analyzer
 
 import { Helmet } from "react-helmet-async";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useOutletContext } from "react-router-dom";
 import { Monitor, Upload, Eye, Download, X, Plus, CheckCircle } from "lucide-react";
 import { sanitizeFileName } from "../../utils/sanitize";
@@ -12,6 +12,7 @@ import { generateDisplayMockup, generateSuiteMockup } from "../../services/mocku
 import { analyzeVideo } from "../../services/analyzerService";
 import { analyzeSuiteCohesion, type SuiteCohesionResult } from "../../services/claudeService";
 import { getUserContext, formatUserContextBlock } from "../../services/userContextService";
+import { getSessionMemory } from "@/src/lib/userMemoryService";
 import type { AppSharedContext } from "../../components/AppLayout";
 
 type Mode = "single" | "suite";
@@ -96,6 +97,7 @@ export default function DisplayAnalyzer() {
   const [mockupUrl, setMockupUrl] = useState<string | null>(null);
   const [mockupLoading, setMockupLoading] = useState(false);
   const [userContext, setUserContext] = useState("");
+  const sessionMemoryRef = useRef<string>('');
   // ── Suite state
   const [suiteBanners, setSuiteBanners] = useState<SuiteBanner[]>([]);
   const [suiteStatus, setSuiteStatus] = useState<"idle" | "analyzing" | "complete" | "error">("idle");
@@ -139,6 +141,8 @@ export default function DisplayAnalyzer() {
 
   const handleSuiteAnalyze = async () => {
     if (suiteBanners.length < 2 || !canAnalyze) return;
+    const { text: sessionMemory } = await getSessionMemory();
+    sessionMemoryRef.current = sessionMemory;
     setSuiteStatus("analyzing");
     setSuiteCohesion(null);
     setSuiteMockupUrl(null);
@@ -206,7 +210,7 @@ Return JSON only:
     if (completedBanners.length >= 2) {
       try {
         setSuiteCohesionError(false);
-        const cohesion = await analyzeSuiteCohesion(completedBanners, userContext);
+        const cohesion = await analyzeSuiteCohesion(completedBanners, userContext, sessionMemoryRef.current);
         setSuiteCohesion(cohesion);
       } catch (e) {
         console.error("Suite cohesion failed:", e);
@@ -595,7 +599,7 @@ Return JSON only — no prose:
                                 overallScore: b.result!.overallScore,
                                 improvements: b.result!.improvements,
                               }));
-                              const cohesion = await analyzeSuiteCohesion(bannerData, userContext);
+                              const cohesion = await analyzeSuiteCohesion(bannerData, userContext, sessionMemoryRef.current);
                               setSuiteCohesion(cohesion);
                             } catch { setSuiteCohesionError(true); }
                           }} style={{ fontSize: 11, color: "#6366f1", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
