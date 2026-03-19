@@ -155,14 +155,13 @@ export default function Welcome() {
     // Sanitize before writing to DB — prevents prompt injection if data is later read into AI prompts
     const finalNiche    = sanitizeForAI(rawNiche).slice(0, 100) || "Other";
     const finalPlatform = sanitizeText(platformVal).slice(0, 50);
-    const finalIntent   = sanitizeText(intent).slice(0, 50);
-    await supabase.from("profiles").upsert({
+    const { error } = await supabase.from("profiles").upsert({
       id: u.id,
-      intent: finalIntent,
       niche: finalNiche,
       platform: finalPlatform,
       onboarding_completed: true,
     });
+    if (error) console.error("[Welcome] saveProfile failed:", JSON.stringify(error));
   };
 
   const handleFinish = async (nicheVal?: string, platformVal?: string) => {
