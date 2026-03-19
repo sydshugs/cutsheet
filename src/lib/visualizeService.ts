@@ -9,18 +9,29 @@ async function getAuthToken(): Promise<string> {
   return session.access_token;
 }
 
-/** Convert a File object to a base64 string (without the data URL prefix). */
-export async function fileToBase64(file: File): Promise<string> {
+/** Resize image to maxDim and convert to base64 string (no data URL prefix). */
+export async function fileToBase64(file: File, maxDim = 1200, quality = 0.8): Promise<string> {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
+    const img = new Image();
+    img.onload = () => {
+      let { width, height } = img;
+      if (width > maxDim || height > maxDim) {
+        const scale = maxDim / Math.max(width, height);
+        width = Math.round(width * scale);
+        height = Math.round(height * scale);
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return reject(new Error("Canvas not supported"));
+      ctx.drawImage(img, 0, 0, width, height);
+      const dataUrl = canvas.toDataURL("image/jpeg", quality);
       // Strip the data URL prefix (e.g. "data:image/jpeg;base64,")
-      const base64 = result.split(",")[1];
-      resolve(base64);
+      resolve(dataUrl.split(",")[1]);
     };
-    reader.onerror = () => reject(new Error("Failed to read file"));
-    reader.readAsDataURL(file);
+    img.onerror = () => reject(new Error("Failed to read file"));
+    img.src = URL.createObjectURL(file);
   });
 }
 
