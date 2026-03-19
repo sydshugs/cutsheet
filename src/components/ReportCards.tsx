@@ -15,7 +15,7 @@ interface ReportCardsProps {
   onFileSelect?: (file: File | null) => void;
 }
 
-const JSON_TITLE_RE = /json|scene|raw\s*data/i;
+const JSON_TITLE_RE = /json|scene|raw\s*data|budget\s*recommend/i;
 const JSON_CONTENT_RE = /^\s*[\[{]/;
 
 function splitMarkdown(md: string): { title: string | null; content: string }[] {
