@@ -3,7 +3,7 @@
 import { Helmet } from "react-helmet-async";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useOutletContext } from "react-router-dom";
-import { Monitor, Upload, Eye, Download, X, Plus, CheckCircle, ShieldCheck } from "lucide-react";
+import { Monitor, Upload, Eye, Download, X, Plus, CheckCircle, ShieldCheck, Sparkles } from "lucide-react";
 import { sanitizeFileName } from "../../utils/sanitize";
 import { SuiteCohesionCard } from "../../components/SuiteCohesionCard";
 import { DisplayScoreCard, type DisplayResult } from "../../components/DisplayScoreCard";
@@ -14,6 +14,9 @@ import { generateDisplayMockup, generateSuiteMockup } from "../../services/mocku
 import { analyzeVideo } from "../../services/analyzerService";
 import { analyzeSuiteCohesion, type SuiteCohesionResult } from "../../services/claudeService";
 import { getUserContext, formatUserContextBlock } from "../../services/userContextService";
+import { VisualizePanel } from "../../components/VisualizePanel";
+import { visualizeAd, fileToBase64, getMediaType } from "../../lib/visualizeService";
+import type { VisualizeResult, VisualizeStatus } from "../../types/visualize";
 import type { AppSharedContext } from "../../components/AppLayout";
 
 type Mode = "single" | "suite";
@@ -109,6 +112,12 @@ export default function DisplayAnalyzer() {
   const [suiteMockupUrl, setSuiteMockupUrl] = useState<string | null>(null);
   const [suiteMockupLoading, setSuiteMockupLoading] = useState(false);
 
+  // ── Visualize It state (single mode only)
+  const [visualizeOpen, setVisualizeOpen] = useState(false);
+  const [visualizeStatus, setVisualizeStatus] = useState<VisualizeStatus>("idle");
+  const [visualizeResult, setVisualizeResult] = useState<VisualizeResult | null>(null);
+  const [visualizeError, setVisualizeError] = useState<string | null>(null);
+
   const previewUrl = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
   useEffect(() => { return () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }; }, [previewUrl]);
 
@@ -121,6 +130,7 @@ export default function DisplayAnalyzer() {
     setSuiteBanners([]); setSuiteStatus("idle"); setSuiteCohesion(null); setSuiteCohesionError(false);
     setSuiteMockupUrl(null); setSuiteMockupLoading(false);
     setPolicyResult(null); setPolicyLoading(false); setPolicyError(null);
+    setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null);
   }, []);
 
   const isComplete = mode === "single" ? status === "complete" : suiteStatus === "complete";
@@ -357,6 +367,36 @@ Return JSON only — no prose:
     } catch (err) {
       setStatus("error");
       setError(err instanceof Error ? err.message : "Analysis failed");
+    }
+  };
+
+  const handleVisualize = async () => {
+    if (!result || !file) return;
+    setVisualizeOpen(true);
+    setVisualizeStatus("loading");
+    setVisualizeResult(null);
+    setVisualizeError(null);
+    try {
+      const imageBase64 = await fileToBase64(file);
+      const mediaType = getMediaType(file);
+      const niche = userContext.match(/Niche:\s*(.+)/)?.[1]?.trim() || "general";
+      const vizResult = await visualizeAd({
+        imageBase64,
+        imageMediaType: mediaType,
+        analysisResult: {
+          scores: result.scores as unknown as Record<string, number>,
+          improvements: result.improvements ?? [],
+        },
+        platform: network === "google" ? "Google Display" : network === "affiliate" ? "Affiliate" : "general",
+        niche,
+        adType: "display",
+      });
+      setVisualizeResult(vizResult);
+      setVisualizeStatus("complete");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      setVisualizeError(msg.includes("RATE_LIMITED") ? "RATE_LIMITED" : msg);
+      setVisualizeStatus("error");
     }
   };
 
@@ -837,6 +877,41 @@ Return JSON only — no prose:
                       dimensions={dimensions}
                     />
 
+                    {/* Visualize It button — single mode, after analysis */}
+                    {mode === "single" && !visualizeOpen && (
+                      <button
+                        type="button"
+                        onClick={handleVisualize}
+                        style={{
+                          width: "100%", height: 48,
+                          background: "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15))",
+                          border: "1px solid rgba(99,102,241,0.35)",
+                          borderRadius: 12,
+                          color: "#818cf8", cursor: "pointer",
+                          display: "flex", flexDirection: "column",
+                          alignItems: "center", justifyContent: "center", gap: 2,
+                          transition: "all 150ms",
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(99,102,241,0.25), rgba(139,92,246,0.2))"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15))"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.35)"; }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <Sparkles size={15} />
+                          <span style={{ fontSize: 14, fontWeight: 600 }}>Visualize It</span>
+                        </div>
+                        <span style={{ fontSize: 11, color: "#6366f1", opacity: 0.75 }}>See what your improved ad could look like</span>
+                      </button>
+                    )}
+                    {/* Visualize Panel */}
+                    {mode === "single" && (visualizeOpen || visualizeStatus !== "idle") && (
+                      <VisualizePanel
+                        status={visualizeStatus}
+                        result={visualizeResult}
+                        originalImageUrl={previewUrl}
+                        error={visualizeError}
+                        onClose={() => { setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); }}
+                      />
+                    )}
                     {/* Check Policies button */}
                     {!policyResult && (
                       <button
