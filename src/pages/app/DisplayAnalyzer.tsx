@@ -3,10 +3,12 @@
 import { Helmet } from "react-helmet-async";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useOutletContext } from "react-router-dom";
-import { Monitor, Upload, Eye, Download, X, Plus, CheckCircle } from "lucide-react";
+import { Monitor, Upload, Eye, Download, X, Plus, CheckCircle, ShieldCheck } from "lucide-react";
 import { sanitizeFileName } from "../../utils/sanitize";
 import { SuiteCohesionCard } from "../../components/SuiteCohesionCard";
 import { DisplayScoreCard, type DisplayResult } from "../../components/DisplayScoreCard";
+import { PolicyCheckPanel } from "../../components/PolicyCheckPanel";
+import { runPolicyCheck, type PolicyCheckResult } from "../../lib/policyCheckService";
 import { getImageDimensions, detectDisplayFormat, getFormatGuidance, type DisplayFormat } from "../../utils/displayAdUtils";
 import { generateDisplayMockup, generateSuiteMockup } from "../../services/mockupService";
 import { analyzeVideo } from "../../services/analyzerService";
@@ -96,6 +98,9 @@ export default function DisplayAnalyzer() {
   const [mockupUrl, setMockupUrl] = useState<string | null>(null);
   const [mockupLoading, setMockupLoading] = useState(false);
   const [userContext, setUserContext] = useState("");
+  const [policyResult, setPolicyResult] = useState<PolicyCheckResult | null>(null);
+  const [policyLoading, setPolicyLoading] = useState(false);
+  const [policyError, setPolicyError] = useState<string | null>(null);
   // ── Suite state
   const [suiteBanners, setSuiteBanners] = useState<SuiteBanner[]>([]);
   const [suiteStatus, setSuiteStatus] = useState<"idle" | "analyzing" | "complete" | "error">("idle");
@@ -115,6 +120,7 @@ export default function DisplayAnalyzer() {
     setMockupUrl(null); setMockupLoading(false);
     setSuiteBanners([]); setSuiteStatus("idle"); setSuiteCohesion(null); setSuiteCohesionError(false);
     setSuiteMockupUrl(null); setSuiteMockupLoading(false);
+    setPolicyResult(null); setPolicyLoading(false); setPolicyError(null);
   }, []);
 
   const isComplete = mode === "single" ? status === "complete" : suiteStatus === "complete";
@@ -351,6 +357,33 @@ Return JSON only — no prose:
     } catch (err) {
       setStatus("error");
       setError(err instanceof Error ? err.message : "Analysis failed");
+    }
+  };
+
+  const handleCheckPolicies = async () => {
+    if (!result || policyLoading) return;
+    setPolicyLoading(true);
+    setPolicyError(null);
+    setPolicyResult(null);
+    try {
+      const r = await runPolicyCheck({
+        platform: "both",
+        adType: "display",
+        niche: "display advertising",
+        adCopy: result.improvements?.join(". ") ?? "",
+        existingAnalysis: result as unknown as object,
+      });
+      setPolicyResult(r);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Policy check failed";
+      if (msg.startsWith("RATE_LIMITED")) {
+        const time = msg.split(":")[1] ?? "24h";
+        setPolicyError(`Daily limit reached. Resets in ${time}. Upgrade to Pro for unlimited checks.`);
+      } else {
+        setPolicyError(msg);
+      }
+    } finally {
+      setPolicyLoading(false);
     }
   };
 
@@ -793,8 +826,8 @@ Return JSON only — no prose:
                     </p>
                   </div>
 
-                  {/* RIGHT — Scores */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                  {/* RIGHT — Scores + Policy */}
+                  <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 12 }}>
                     <DisplayScoreCard
                       result={result}
                       format={detectedFormat}
@@ -803,6 +836,48 @@ Return JSON only — no prose:
                       mockupLoading={false}
                       dimensions={dimensions}
                     />
+
+                    {/* Check Policies button */}
+                    {!policyResult && (
+                      <button
+                        type="button"
+                        onClick={handleCheckPolicies}
+                        disabled={policyLoading}
+                        style={{
+                          display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                          width: "100%", height: 44, borderRadius: 12,
+                          background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.25)",
+                          color: "#f59e0b", fontSize: 14, fontWeight: 500,
+                          cursor: policyLoading ? "default" : "pointer",
+                          opacity: policyLoading ? 0.7 : 1, transition: "all 150ms",
+                        }}
+                        onMouseEnter={(e) => { if (!policyLoading) e.currentTarget.style.background = "rgba(245,158,11,0.18)"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(245,158,11,0.1)"; }}
+                      >
+                        {policyLoading ? (
+                          <>
+                            <div style={{ width: 14, height: 14, border: "2px solid rgba(245,158,11,0.3)", borderTopColor: "#f59e0b", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+                            Checking policies...
+                          </>
+                        ) : (
+                          <>
+                            <ShieldCheck size={15} /> Check Policies
+                          </>
+                        )}
+                      </button>
+                    )}
+
+                    {/* Policy error */}
+                    {policyError && (
+                      <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", fontSize: 13, color: "#ef4444" }}>
+                        {policyError}
+                      </div>
+                    )}
+
+                    {/* Policy results */}
+                    {policyResult && (
+                      <PolicyCheckPanel result={policyResult} onClose={() => setPolicyResult(null)} />
+                    )}
                   </div>
                 </div>
               )}

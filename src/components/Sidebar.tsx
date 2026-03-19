@@ -4,7 +4,11 @@ import { NavLink, useNavigate } from "react-router-dom";
 import {
   Zap, TrendingUp, Monitor, GitBranch, Swords, Trophy,
   Bookmark, Settings, ChevronLeft, ChevronRight, MoreHorizontal, X, HelpCircle,
+ claude/review-refactor-doiJU
+  ScanSearch, ShieldCheck,
+=======
   ScanSearch,
+main
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { UsageIndicator } from "./UsageIndicator";
@@ -36,6 +40,10 @@ const ANALYZE: NavItem[] = [
   { label: "Organic",       sublabel: "TikTok, Reels, Shorts", path: "/app/organic",       icon: TrendingUp },
   { label: "Display",       sublabel: "Google, affiliate",     path: "/app/display",       icon: Monitor },
   { label: "Deconstructor", sublabel: "Teardown any ad URL",   path: "/app/deconstructor", icon: ScanSearch },
+ claude/review-refactor-doiJU
+  { label: "Policy Checker", sublabel: "Pre-launch policy scan", path: "/app/policy-check", icon: ShieldCheck },
+=======
+ main
 ];
 
 const COMPARE: NavItem[] = [
@@ -48,7 +56,8 @@ const LIBRARY: NavItem[] = [
   { label: "Saved Ads", sublabel: "Your reference library", path: "/app/swipe-file", icon: Bookmark },
 ];
 
-const MORE_ITEMS = [...COMPARE.slice(1), ...LIBRARY]; // Competitor, Batch, Swipe File
+// Mobile "More" drawer: extra ANALYZE items + COMPARE (minus A/B Test) + LIBRARY
+const MORE_ITEMS = [...ANALYZE.slice(3), ...COMPARE.slice(1), ...LIBRARY];
 
 // ─── SECTION LABEL ────────────────────────────────────────────────────────────
 
