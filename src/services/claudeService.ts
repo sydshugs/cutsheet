@@ -43,12 +43,13 @@ export async function generateImprovements(
   analysisMarkdown: string,
   scores: { hook: number; clarity: number; cta: number; production: number; overall: number } | null,
   userContext?: string,
-  platform?: string
+  platform?: string,
+  sessionMemory?: string
 ): Promise<string[]> {
   if (!scores) return [];
   const data = await callApi<{ improvements: string[] }>("/api/improvements", {
     action: "improvements",
-    payload: { analysisMarkdown, scores, userContext, platform },
+    payload: { analysisMarkdown, scores, userContext, platform, sessionMemory },
   });
   return data.improvements ?? [];
 }
@@ -58,11 +59,12 @@ export async function generateImprovements(
 export async function generateBriefWithClaude(
   analysisMarkdown: string,
   filename: string,
-  userContext?: string
+  userContext?: string,
+  sessionMemory?: string
 ): Promise<string> {
   const data = await callApi<{ brief: string }>("/api/improvements", {
     action: "brief",
-    payload: { analysisMarkdown, filename, userContext },
+    payload: { analysisMarkdown, filename, userContext, sessionMemory },
   });
   if (!data.brief) throw new Error("Empty brief response");
   return data.brief;
@@ -73,11 +75,12 @@ export async function generateBriefWithClaude(
 export async function generateCTARewrites(
   currentCTA: string,
   productContext: string,
-  userContext?: string
+  userContext?: string,
+  sessionMemory?: string
 ): Promise<string[]> {
   const data = await callApi<{ rewrites: string[] }>("/api/improvements", {
     action: "cta-rewrites",
-    payload: { currentCTA, productContext, userContext },
+    payload: { currentCTA, productContext, userContext, sessionMemory },
   });
   return data.rewrites ?? [];
 }
@@ -104,7 +107,8 @@ export async function generateSecondEyeReview(
   fileName: string,
   scores?: { hook: number; overall: number },
   improvements?: string[],
-  userContext?: string
+  userContext?: string,
+  sessionMemory?: string
 ): Promise<SecondEyeResult> {
   return callApi<SecondEyeResult>("/api/second-eye", {
     analysisMarkdown,
@@ -112,6 +116,7 @@ export async function generateSecondEyeReview(
     scores,
     improvements,
     userContext,
+    sessionMemory,
   });
 }
 
@@ -135,7 +140,8 @@ export async function generateStaticSecondEye(
   fileName: string,
   scores?: { overall: number; cta: number },
   improvements?: string[],
-  userContext?: string
+  userContext?: string,
+  sessionMemory?: string
 ): Promise<StaticSecondEyeResult> {
   return callApi<StaticSecondEyeResult>("/api/design-review", {
     analysisMarkdown,
@@ -143,6 +149,7 @@ export async function generateStaticSecondEye(
     scores,
     improvements,
     userContext,
+    sessionMemory,
   });
 }
 
@@ -172,9 +179,10 @@ export interface SuiteCohesionResult {
 
 export async function analyzeSuiteCohesion(
   banners: Array<{ format: string; fileName: string; overallScore: number; improvements?: string[] }>,
-  userContext?: string
+  userContext?: string,
+  sessionMemory?: string
 ): Promise<SuiteCohesionResult> {
-  return callApi<SuiteCohesionResult>("/api/suite-cohesion", { banners, userContext });
+  return callApi<SuiteCohesionResult>("/api/suite-cohesion", { banners, userContext, sessionMemory });
 }
 
 // ─── BEFORE/AFTER COMPARISON ────────────────────────────────────────────────
@@ -200,12 +208,14 @@ export async function generateComparison(
   originalScores: { overall: number; hook: number; cta: number; clarity: number; production: number },
   improvedScores: { overall: number; hook: number; cta: number; clarity: number; production: number },
   originalImprovements: string[],
-  userContext?: string
+  userContext?: string,
+  sessionMemory?: string
 ): Promise<ComparisonResult> {
   return callApi<ComparisonResult>("/api/comparison", {
     originalScores,
     improvedScores,
     originalImprovements,
     userContext,
+    sessionMemory,
   });
 }
