@@ -113,7 +113,17 @@ export default function Login() {
     });
 
     if (error) {
-      setError(error.message);
+      // Map Supabase errors to user-friendly messages
+      const msg = error.message.toLowerCase();
+      if (msg.includes("invalid login") || msg.includes("invalid credentials")) {
+        setError("That email and password combination didn't work");
+      } else if (msg.includes("email not confirmed")) {
+        setError("Check your inbox — your email isn't confirmed yet");
+      } else if (msg.includes("user not found")) {
+        setError("We don't have an account with that email");
+      } else {
+        setError("Something went wrong — please try again");
+      }
       setIsLoading(false);
     } else {
       navigate(from, { replace: true });

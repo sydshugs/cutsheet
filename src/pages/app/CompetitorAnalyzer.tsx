@@ -156,10 +156,29 @@ function MetaSearch({ onFileSelect }: { onFileSelect: (f: File) => void }) {
       const data = await res.json();
       if (!res.ok || data.error) {
         console.error("Meta API error:", JSON.stringify(data.error, null, 2));
-        throw new Error(data.error?.message || "Meta API request failed");
+        const code = data.error?.code ?? res.status;
+        const errMsg = data.error?.message ?? "";
+        if (code === 190 || errMsg.includes("expired") || errMsg.includes("session")) {
+          throw new Error("token_expired");
+        } else if (code === 429 || errMsg.includes("limit")) {
+          throw new Error("rate_limit");
+        } else if (code === 10 || errMsg.includes("permission")) {
+          throw new Error("permission_denied");
+        } else {
+          throw new Error("unavailable");
+        }
       }
       setResults(data.data || []);
-    } catch (err) { setSearchError(err instanceof Error ? err.message : "Search failed"); }
+    } catch (err) {
+      const errKey = err instanceof Error ? err.message : "unavailable";
+      const errorMap: Record<string, string> = {
+        token_expired: "Meta search needs to be reconnected — your access token expired",
+        rate_limit: "Too many searches — wait a minute, then try again. Or upload manually below",
+        permission_denied: "Meta search doesn't have the right permissions — check ads_read in your Facebook app",
+        unavailable: "Meta Ad Library search is temporarily unavailable — upload a competitor ad manually",
+      };
+      setSearchError(errorMap[errKey] ?? errorMap.unavailable);
+    }
     finally { setSearching(false); }
   };
 

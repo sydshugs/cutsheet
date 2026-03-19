@@ -12,6 +12,7 @@ import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
 import { themes } from "../theme";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
+import { OfflineBanner } from "./OfflineBanner";
 
 // ─── OUTLET CONTEXT TYPE ─────────────────────────────────────────────────────
 
@@ -101,6 +102,7 @@ export default function AppLayout() {
       />
 
       <div className="flex flex-col flex-1 min-w-0">
+        <OfflineBanner />
         <TopBar
           onNewAnalysis={() => onNewAnalysisRef.current()}
           onHistoryOpen={() => onHistoryOpenRef.current()}

@@ -54,12 +54,14 @@ export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, 
   }, []);
 
   const validate = (f: File): string | null => {
+    // Get extension for clearer error messages
+    const ext = f.name.split(".").pop()?.toLowerCase() ?? "";
     if (!acceptedTypes.includes(f.type)) {
-      return acceptImages
-        ? "Unsupported format. Use MP4, WebM, MOV, PNG, JPEG, or WebP."
-        : "Unsupported format. Use MP4, WebM, or MOV.";
+      return `We can't read .${ext} files — upload as ${acceptImages ? "MP4, MOV, WEBM, JPG, PNG, or WEBP" : "MP4, MOV, or WEBM"}`;
     }
-    if (f.size > MAX_SIZE_MB * 1024 * 1024) return `File too large. Max ${MAX_SIZE_MB}MB.`;
+    if (f.size > MAX_SIZE_MB * 1024 * 1024) {
+      return `This file is too large — ${MAX_SIZE_MB}MB max. Compress your video or trim it to under 30 seconds`;
+    }
     return null;
   };
 
