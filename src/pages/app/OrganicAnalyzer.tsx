@@ -58,8 +58,8 @@ function IntentHeader({
               onClick={() => setPlatform(p)}
               style={{
                 height: 30, padding: "0 12px", borderRadius: 9999, fontSize: 13, cursor: "pointer",
-                background: platform === p ? "#6366f1" : "rgba(255,255,255,0.04)",
-                border: `1px solid ${platform === p ? "#6366f1" : "rgba(255,255,255,0.08)"}`,
+                background: platform === p ? "#10b981" : "rgba(255,255,255,0.04)",
+                border: `1px solid ${platform === p ? "#10b981" : "rgba(255,255,255,0.08)"}`,
                 color: platform === p ? "white" : "#71717a",
                 fontWeight: platform === p ? 500 : 400,
                 transition: "all 150ms",
@@ -86,7 +86,7 @@ function IntentHeader({
           onClick={() => setSecondEye(!secondEye)}
           style={{
             width: 40, height: 22, borderRadius: 11, border: "none", cursor: "pointer",
-            background: secondEye ? "#6366f1" : "#27272a",
+            background: secondEye ? "#10b981" : "#27272a",
             position: "relative", transition: "background 200ms", flexShrink: 0,
           }}
         >
@@ -113,15 +113,15 @@ function OrganicEmptyState({
   const PILLS = ["Retention score", "Platform fit", "Shareability"];
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px", minHeight: "calc(100vh - 120px)" }}>
-      <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <TrendingUp size={28} color="#6366f1" />
+      <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <TrendingUp size={28} color="#10b981" />
       </div>
       <h2 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>
         Score your organic content
       </h2>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 14 }}>
         {PILLS.map((pill) => (
-          <span key={pill} style={{ fontSize: 12, color: "#818cf8", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)", borderRadius: 9999, padding: "4px 12px" }}>
+          <span key={pill} style={{ fontSize: 12, color: "#34d399", background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.15)", borderRadius: 9999, padding: "4px 12px" }}>
             {pill}
           </span>
         ))}
@@ -398,7 +398,7 @@ export default function OrganicAnalyzer() {
             />
           ) : (
             <div className="relative px-4 py-6 md:px-8 min-h-full flex flex-col">
-              <div className="pointer-events-none absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-indigo-600/10 blur-[120px]" />
+              <div className="pointer-events-none absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-emerald-600/10 blur-[120px]" />
               <div className="pointer-events-none absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-violet-600/[0.08] blur-[100px]" />
               <div className="relative flex flex-col flex-1">
                 <AnalyzerView
