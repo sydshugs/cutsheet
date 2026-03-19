@@ -615,3 +615,95 @@ Return JSON only — no prose:
     missingFormats: Array.isArray(parsed.missingFormats) ? parsed.missingFormats : [],
   };
 }
+
+// ─── BEFORE/AFTER COMPARISON ────────────────────────────────────────────────
+
+export interface AddressedImprovement {
+  improvement: string;
+  addressed: boolean;
+  confidence: "high" | "medium" | "low";
+  note: string;
+}
+
+export interface ComparisonResult {
+  scoreChange: number;
+  metricChanges: { hook: number; cta: number; clarity: number; production: number };
+  improvementsAddressed: AddressedImprovement[];
+  verdict: "significantly_better" | "better" | "same" | "worse";
+  verdictText: string;
+  topWin: string;
+  remainingWork: string[];
+}
+
+export async function generateComparison(
+  originalScores: { overall: number; hook: number; cta: number; clarity: number; production: number },
+  improvedScores: { overall: number; hook: number; cta: number; clarity: number; production: number },
+  originalImprovements: string[],
+  userContext?: string
+): Promise<ComparisonResult> {
+  const client = getClient();
+
+  const prompt = `You are comparing two versions of the same ad creative.
+The creator received feedback and made improvements.
+
+${userContext || ""}
+
+ORIGINAL VERSION SCORES:
+Overall: ${originalScores.overall}/10
+Hook: ${originalScores.hook}/10
+CTA: ${originalScores.cta}/10
+Clarity: ${originalScores.clarity}/10
+Production: ${originalScores.production}/10
+
+IMPROVED VERSION SCORES:
+Overall: ${improvedScores.overall}/10
+Hook: ${improvedScores.hook}/10
+CTA: ${improvedScores.cta}/10
+Clarity: ${improvedScores.clarity}/10
+Production: ${improvedScores.production}/10
+
+IMPROVEMENTS THAT WERE SUGGESTED:
+${originalImprovements.map((imp, i) => `${i + 1}. ${imp}`).join("\n")}
+
+Based on the score changes, assess which improvements were addressed.
+Be honest. If scores dropped, say so.
+
+Return JSON only:
+{
+  "scoreChange": ${improvedScores.overall - originalScores.overall},
+  "metricChanges": { "hook": ${improvedScores.hook - originalScores.hook}, "cta": ${improvedScores.cta - originalScores.cta}, "clarity": ${improvedScores.clarity - originalScores.clarity}, "production": ${improvedScores.production - originalScores.production} },
+  "verdict": "significantly_better" | "better" | "same" | "worse",
+  "verdictText": "<one honest sentence>",
+  "topWin": "<single biggest improvement>",
+  "improvementsAddressed": [
+    { "improvement": "<original text>", "addressed": true|false, "confidence": "high"|"medium"|"low", "note": "<what changed>" }
+  ],
+  "remainingWork": ["<what still needs fixing>"]
+}`;
+
+  const response = await client.messages.create({
+    model: CLAUDE_MODEL,
+    max_tokens: 1200,
+    messages: [{ role: "user", content: prompt }],
+  });
+
+  const text = response.content.filter((b) => b.type === "text").map((b) => b.text).join("");
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error("Comparison: invalid response");
+
+  const parsed = JSON.parse(jsonMatch[0]);
+  return {
+    scoreChange: Number(parsed.scoreChange) || 0,
+    metricChanges: {
+      hook: Number(parsed.metricChanges?.hook) || 0,
+      cta: Number(parsed.metricChanges?.cta) || 0,
+      clarity: Number(parsed.metricChanges?.clarity) || 0,
+      production: Number(parsed.metricChanges?.production) || 0,
+    },
+    verdict: (["significantly_better", "better", "same", "worse"].includes(parsed.verdict) ? parsed.verdict : "same") as ComparisonResult["verdict"],
+    verdictText: String(parsed.verdictText || ""),
+    topWin: String(parsed.topWin || ""),
+    improvementsAddressed: Array.isArray(parsed.improvementsAddressed) ? parsed.improvementsAddressed : [],
+    remainingWork: Array.isArray(parsed.remainingWork) ? parsed.remainingWork : [],
+  };
+}
