@@ -410,7 +410,7 @@ export default function OrganicAnalyzer() {
   const handleAddToSwipeFile = () => {
     if (!activeResult) return;
     addSwipeItem({ fileName: activeResult.fileName, timestamp: activeResult.timestamp.toISOString(), scores: activeResult.scores, markdown: activeResult.markdown, brand: "", format: "", niche: "", platform: "", tags: [], notes: "" });
-    setInfoToast("Saved to Swipe File");
+    setInfoToast("Saved to your library");
     setTimeout(() => setInfoToast(null), 2500);
   };
 

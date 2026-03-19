@@ -37,13 +37,13 @@ const ANALYZE: NavItem[] = [
 ];
 
 const COMPARE: NavItem[] = [
-  { label: "A/B Test",   sublabel: "Test variants",      path: "/app/ab-test",    icon: GitBranch },
+  { label: "A/B Test",   sublabel: "Quick compare 2–5 variants",      path: "/app/ab-test",    icon: GitBranch },
   { label: "Competitor", sublabel: "Your ad vs theirs",  path: "/app/competitor", icon: Swords },
-  { label: "Rank Creatives", sublabel: "Find your best",  path: "/app/batch",      icon: Trophy },
+  { label: "Rank Creatives", sublabel: "Score & rank up to 10",  path: "/app/batch",      icon: Trophy },
 ];
 
 const LIBRARY: NavItem[] = [
-  { label: "Swipe File", sublabel: "Saved winners", path: "/app/swipe-file", icon: Bookmark },
+  { label: "Saved Ads", sublabel: "Your reference library", path: "/app/swipe-file", icon: Bookmark },
 ];
 
 const MORE_ITEMS = [...COMPARE.slice(1), ...LIBRARY]; // Competitor, Batch, Swipe File

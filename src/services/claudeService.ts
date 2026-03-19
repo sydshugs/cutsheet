@@ -37,6 +37,33 @@ async function callApi<T>(endpoint: string, body: unknown): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+// ─── PLATFORM SCORING ────────────────────────────────────────────────────────
+
+export interface PlatformScore {
+  platform: "tiktok" | "reels" | "shorts";
+  score: number;
+  strengths: string[];
+  weaknesses: string[];
+  tips: string[];
+}
+
+export async function generatePlatformScore(
+  platform: string,
+  result: { markdown: string; scores: { overall: number } },
+  fileName: string,
+): Promise<PlatformScore> {
+  const res = await callClaude(
+    `You are a platform-specific ad scoring expert. Score this creative for ${platform}. Return JSON with: platform, score (1-10), strengths (string[]), weaknesses (string[]), tips (string[]).`,
+    `File: ${fileName}\nOverall score: ${result.scores.overall}/10\n\n${result.markdown}`,
+  );
+  try {
+    const json = res.replace(/```json\n?|\n?```/g, "").trim();
+    return JSON.parse(json);
+  } catch {
+    return { platform: platform as PlatformScore["platform"], score: result.scores.overall, strengths: [], weaknesses: [], tips: [] };
+  }
+}
+
 // ─── IMPROVEMENTS ────────────────────────────────────────────────────────────
 
 export async function generateImprovements(

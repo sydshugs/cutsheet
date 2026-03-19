@@ -674,12 +674,12 @@ onSelectHistory,
               type="button"
               onClick={() => {
                 onAddToSwipeFile();
-                setToast("Added to Swipe File");
+                setToast("Saved to your library");
                 setTimeout(() => setToast(null), 2500);
               }}
               className="bg-white/5 hover:bg-white/10 text-white text-sm rounded-xl w-full py-2.5 text-center transition-colors duration-150 cursor-pointer"
             >
-              Add to Swipe File
+              Save Ad
             </button>
           )}
         </div>
