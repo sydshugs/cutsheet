@@ -1,99 +1,77 @@
+// Welcome.tsx — Onboarding: intent → niche → platform (adaptive) → completion
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ShoppingBag, Layers, Store, Video, Users, MoreHorizontal,
-  Music2, LayoutGrid, Camera, Youtube, Search, Globe,
-  Rocket, TrendingUp, PenTool, BarChart2, Briefcase,
+  Megaphone, Smartphone, Monitor, BarChart2,
+  ShoppingBag, Layers, Video, Users, Package,
+  Music2, Camera, Youtube, Search, Globe,
   CheckCircle, ArrowRight,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 
-// ─── STEP DATA ───────────────────────────────────────────────────────────────
+// ─── STEP DATA ──────────────────────────────────────────────────────────────
+
+type Intent = "paid" | "organic" | "display" | "both" | "";
+
+const INTENT_OPTIONS = [
+  { label: "Paid ads", sublabel: "Meta, TikTok, Google, YouTube ads", value: "paid" as Intent, icon: Megaphone },
+  { label: "Organic content", sublabel: "TikToks, Reels, Shorts, organic posts", value: "organic" as Intent, icon: Smartphone },
+  { label: "Display banners", sublabel: "Google Display, affiliate banners", value: "display" as Intent, icon: Monitor },
+  { label: "Both paid & organic", sublabel: "I do a mix of everything", value: "both" as Intent, icon: BarChart2 },
+];
 
 const NICHE_OPTIONS = [
-  { label: "DTC Brand", value: "dtc_brand", icon: ShoppingBag },
-  { label: "SaaS", value: "saas", icon: Layers },
-  { label: "Ecommerce", value: "ecommerce", icon: Store },
-  { label: "Creator / UGC", value: "creator_ugc", icon: Video },
-  { label: "Agency", value: "agency", icon: Users },
-  { label: "Other", value: "other", icon: MoreHorizontal },
+  { label: "Ecommerce / DTC", sublabel: "Physical products, online stores", value: "Ecommerce / DTC", icon: ShoppingBag },
+  { label: "SaaS / Software", sublabel: "Apps, tools, digital products", value: "SaaS", icon: Layers },
+  { label: "Creator / Content", sublabel: "UGC, influencer, personal brand", value: "Creator / Content", icon: Video },
+  { label: "Agency", sublabel: "Managing ads for clients", value: "Agency", icon: Users },
+  { label: "Other", sublabel: "Something else entirely", value: "Other", icon: Package, dimmed: true },
 ];
 
-const PLATFORM_OPTIONS = [
-  { label: "TikTok", value: "tiktok", icon: Music2 },
-  { label: "Meta", value: "meta", icon: LayoutGrid },
-  { label: "Instagram", value: "instagram", icon: Camera },
-  { label: "YouTube", value: "youtube", icon: Youtube },
-  { label: "Google", value: "google", icon: Search },
-  { label: "All platforms", value: "all", icon: Globe },
+const PAID_PLATFORM_OPTIONS = [
+  { label: "Meta", sublabel: "Facebook + Instagram", value: "Meta", icon: Camera },
+  { label: "TikTok", sublabel: "", value: "TikTok", icon: Music2 },
+  { label: "Google", sublabel: "Search + Display + YouTube", value: "Google", icon: Search },
+  { label: "Multiple platforms", sublabel: "", value: "All platforms", icon: Globe },
 ];
 
-const ROLE_OPTIONS = [
-  { label: "Founder / Operator", value: "founder", icon: Rocket },
-  { label: "Performance Marketer", value: "performance_marketer", icon: TrendingUp },
-  { label: "Designer", value: "designer", icon: PenTool },
-  { label: "Media Buyer", value: "media_buyer", icon: BarChart2 },
-  { label: "UGC Creator", value: "ugc_creator", icon: Video },
-  { label: "Agency / Freelancer", value: "agency_freelancer", icon: Briefcase },
+const ORGANIC_PLATFORM_OPTIONS = [
+  { label: "TikTok", sublabel: "", value: "TikTok", icon: Music2 },
+  { label: "Instagram Reels", sublabel: "", value: "Instagram Reels", icon: Camera },
+  { label: "YouTube Shorts", sublabel: "", value: "YouTube Shorts", icon: Youtube },
+  { label: "Multiple platforms", sublabel: "", value: "All platforms", icon: Globe },
 ];
 
-const STEPS = [
-  {
-    question: "What are you working on?",
-    subtext: "We'll tailor your scoring benchmarks to your niche.",
-    options: NICHE_OPTIONS,
-  },
-  {
-    question: "Where do you run ads?",
-    subtext: "We'll benchmark your scores against your platform.",
-    options: PLATFORM_OPTIONS,
-  },
-  {
-    question: "What's your role?",
-    subtext: "We'll focus your insights on what matters most.",
-    options: ROLE_OPTIONS,
-  },
-];
-
-// ─── PROGRESS DOTS ───────────────────────────────────────────────────────────
+// ─── PROGRESS DOTS ──────────────────────────────────────────────────────────
 
 function ProgressDots({ step, total }: { step: number; total: number }) {
   return (
     <div className="flex items-center justify-center gap-2">
-      {Array.from({ length: total }).map((_, i) => {
-        const isActive = i + 1 <= step;
-        return (
-          <motion.div
-            key={i}
-            className="h-2 rounded-full"
-            animate={{
-              width: i + 1 === step ? 24 : 8,
-              backgroundColor: isActive ? "#6366f1" : "#27272a",
-            }}
-            transition={{ type: "spring", stiffness: 400, damping: 30 }}
-          />
-        );
-      })}
+      {Array.from({ length: total }).map((_, i) => (
+        <motion.div
+          key={i}
+          className="h-2 rounded-full"
+          animate={{
+            width: i + 1 === step ? 24 : 8,
+            backgroundColor: i + 1 <= step ? "#6366f1" : "#27272a",
+          }}
+          transition={{ type: "spring", stiffness: 400, damping: 30 }}
+        />
+      ))}
     </div>
   );
 }
 
-// ─── OPTION CARD ─────────────────────────────────────────────────────────────
+// ─── OPTION CARD ────────────────────────────────────────────────────────────
 
 function OptionCard({
-  label,
-  icon: Icon,
-  selected,
-  onClick,
-  index,
+  label, sublabel, icon: Icon, selected, onClick, index, dimmed,
 }: {
-  label: string;
-  icon: React.ElementType;
-  selected: boolean;
-  onClick: () => void;
-  index: number;
+  label: string; sublabel?: string; icon: React.ElementType;
+  selected: boolean; onClick: () => void; index: number; dimmed?: boolean;
 }) {
   return (
     <motion.button
@@ -103,48 +81,26 @@ function OptionCard({
       animate={{ opacity: 1, scale: 1 }}
       transition={{ type: "spring", stiffness: 300, damping: 24, delay: index * 0.06 }}
       whileTap={{ scale: 0.96 }}
-      className="relative flex flex-col items-center gap-2.5 rounded-[14px] px-5 py-4 w-[160px] cursor-pointer transition-colors"
+      className="relative flex flex-col items-center gap-2 rounded-[14px] px-5 py-4 w-[160px] cursor-pointer transition-colors"
       style={{
         background: selected ? "rgba(99,102,241,0.1)" : "rgba(255,255,255,0.03)",
-        border: selected
-          ? "1px solid #6366f1"
-          : "1px solid rgba(255,255,255,0.06)",
+        border: selected ? "1px solid #6366f1" : "1px solid rgba(255,255,255,0.06)",
+        opacity: dimmed && !selected ? 0.6 : 1,
       }}
-      onMouseEnter={(e) => {
-        if (!selected) {
-          e.currentTarget.style.background = "rgba(99,102,241,0.06)";
-          e.currentTarget.style.borderColor = "rgba(99,102,241,0.3)";
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!selected) {
-          e.currentTarget.style.background = "rgba(255,255,255,0.03)";
-          e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
-        }
-      }}
+      onMouseEnter={(e) => { if (!selected) { e.currentTarget.style.background = "rgba(99,102,241,0.06)"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.3)"; } }}
+      onMouseLeave={(e) => { if (!selected) { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; } }}
     >
       {selected && (
-        <motion.div
-          className="absolute top-2 right-2"
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: "spring", stiffness: 500, damping: 25 }}
-        >
-          <CheckCircle size={14} style={{ color: "#6366f1" }} />
+        <motion.div className="absolute top-2 right-2" initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 500, damping: 25 }}>
+          <CheckCircle size={14} color="#6366f1" />
         </motion.div>
       )}
-      <Icon size={20} style={{ color: selected ? "#818cf8" : "#71717a" }} />
-      <span
-        className="text-sm font-medium"
-        style={{ color: selected ? "#f4f4f5" : "#a1a1aa" }}
-      >
-        {label}
-      </span>
+      <Icon size={20} color={selected ? "#818cf8" : "#71717a"} />
+      <span className="text-sm font-medium" style={{ color: selected ? "#f4f4f5" : "#a1a1aa" }}>{label}</span>
+      {sublabel && <span style={{ fontSize: 11, color: "#52525b", marginTop: -4, textAlign: "center", lineHeight: 1.3 }}>{sublabel}</span>}
     </motion.button>
   );
 }
-
-// ─── STEP CONTENT ────────────────────────────────────────────────────────────
 
 const slideVariants = {
   enter: { opacity: 0, x: 40 },
@@ -152,93 +108,109 @@ const slideVariants = {
   exit: { opacity: 0, x: -40 },
 };
 
-// ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
+// ─── MAIN ───────────────────────────────────────────────────────────────────
 
 export default function Welcome() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
   const [step, setStep] = useState(1);
-  const [selectedNiche, setSelectedNiche] = useState("");
-  const [selectedPlatform, setSelectedPlatform] = useState("");
-  const [selectedRole, setSelectedRole] = useState("");
+  const [intent, setIntent] = useState<Intent>("");
+  const [niche, setNiche] = useState("");
+  const [nicheCustom, setNicheCustom] = useState("");
+  const [platform, setPlatform] = useState("");
   const [completed, setCompleted] = useState(false);
 
-  // Redirect to login if no user
-  useEffect(() => {
-    if (!user) navigate("/login");
-  }, [user]);
+  // Total steps depends on intent (display skips platform step)
+  const totalSteps = intent === "display" ? 2 : 3;
 
-  const handleSelect = (stepNum: number, value: string) => {
-    if (stepNum === 1) {
-      setSelectedNiche(value);
-      setTimeout(() => setStep(2), 300);
-    } else if (stepNum === 2) {
-      setSelectedPlatform(value);
+  useEffect(() => { if (!user) navigate("/login"); }, [user]);
+
+  const handleIntentSelect = (value: Intent) => {
+    setIntent(value);
+    setTimeout(() => setStep(2), 300);
+  };
+
+  const handleNicheSelect = (value: string) => {
+    setNiche(value);
+    if (value === "Other") return; // Don't auto-advance — let them type custom
+    if (intent === "display") {
+      // Skip platform, go straight to finish
+      setPlatform("Google Display");
+      setTimeout(() => handleFinish(value, "Google Display"), 300);
+    } else {
       setTimeout(() => setStep(3), 300);
-    } else if (stepNum === 3) {
-      setSelectedRole(value);
     }
   };
 
-  const saveProfile = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    await supabase
-      .from("profiles")
-      .upsert({
-        id: user.id,
-        niche: selectedNiche,
-        platform: selectedPlatform,
-        role: selectedRole,
-        onboarding_completed: true,
-      });
+  const handlePlatformSelect = (value: string) => {
+    setPlatform(value);
   };
 
-  const handleFinish = () => {
-    // Fire and forget
-    saveProfile();
+  const saveProfile = async (nicheVal: string, platformVal: string) => {
+    const { data: { user: u } } = await supabase.auth.getUser();
+    if (!u) return;
+    const finalNiche = nicheVal === "Other" && nicheCustom.trim() ? nicheCustom.trim() : nicheVal;
+    await supabase.from("profiles").upsert({
+      id: u.id,
+      intent,
+      niche: finalNiche,
+      platform: platformVal,
+      onboarding_completed: true,
+    });
+  };
+
+  const handleFinish = (nicheVal?: string, platformVal?: string) => {
+    saveProfile(nicheVal || niche, platformVal || platform);
     setCompleted(true);
-    setTimeout(() => navigate("/app"), 1500);
+    const target = intent === "organic" ? "/app/organic" : intent === "display" ? "/app/display" : "/app/paid";
+    setTimeout(() => navigate(target), 2000);
   };
 
-  const currentStepData = STEPS[step - 1];
-  const currentSelection =
-    step === 1 ? selectedNiche : step === 2 ? selectedPlatform : selectedRole;
+  const handleSkip = () => {
+    saveProfile(niche, platform);
+    navigate("/app/paid");
+  };
+
+  // Completion summary text
+  const getSummary = () => {
+    const n = niche === "Other" && nicheCustom.trim() ? nicheCustom.trim() : niche;
+    if (n && platform && platform !== "Google Display") return `Scoring as ${n} on ${platform}`;
+    if (n) return `Scoring as ${n}`;
+    return "Your recommendations are personalized";
+  };
+
+  // Platform options based on intent
+  const platformOptions = intent === "organic" ? ORGANIC_PLATFORM_OPTIONS : PAID_PLATFORM_OPTIONS;
+  const platformHeading = intent === "organic" ? "Where do you post?" : "Where do you advertise?";
+  const platformSubtext = intent === "organic" ? "Hook windows and audience behavior vary by platform" : "We'll optimize suggestions for your primary platform";
 
   return (
-    <div
-      className="min-h-screen flex flex-col relative overflow-hidden"
-      style={{ background: "#09090b" }}
-    >
+    <div className="min-h-screen flex flex-col relative overflow-hidden" style={{ background: "#09090b" }}>
       {/* Ambient glows */}
-      <div
-        className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full blur-[120px] pointer-events-none"
-        style={{ background: "rgba(99,102,241,0.12)" }}
-      />
-      <div
-        className="absolute bottom-0 right-1/4 w-[400px] h-[400px] rounded-full blur-[100px] pointer-events-none"
-        style={{ background: "rgba(139,92,246,0.08)" }}
-      />
+      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full blur-[120px] pointer-events-none" style={{ background: "rgba(99,102,241,0.12)" }} />
+      <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] rounded-full blur-[100px] pointer-events-none" style={{ background: "rgba(139,92,246,0.08)" }} />
 
       {/* Top bar */}
       <div className="relative z-10 flex items-center justify-between px-8 pt-8">
-        {/* Logo */}
         <div className="flex items-center gap-2.5">
           <img src="/cutsheet-logo-full.png" alt="Cutsheet" className="w-8 h-8" />
-          <span className="text-[15px] font-semibold" style={{ color: "#f4f4f5" }}>
-            Cutsheet
-          </span>
+          <span className="text-[15px] font-semibold" style={{ color: "#f4f4f5" }}>Cutsheet</span>
         </div>
-
-        {/* Progress dots */}
         <div className="absolute left-1/2 -translate-x-1/2">
-          <ProgressDots step={completed ? 4 : step} total={3} />
+          <ProgressDots step={completed ? totalSteps + 1 : step} total={totalSteps} />
         </div>
-
-        {/* Spacer for layout balance */}
         <div className="w-[100px]" />
       </div>
+
+      {/* Promise header */}
+      {!completed && (
+        <div className="relative z-10 text-center mt-6">
+          <p style={{ fontSize: 12, color: "#52525b" }}>
+            Quick setup — 10 seconds · <CheckCircle size={10} color="#10b981" style={{ display: "inline", verticalAlign: "middle" }} /> No generic advice
+          </p>
+        </div>
+      )}
 
       {/* Main content */}
       <div className="relative z-10 flex-1 flex items-center justify-center px-4">
@@ -251,122 +223,103 @@ export default function Welcome() {
               animate="center"
               exit="exit"
               transition={{ duration: step === 1 ? 0.3 : 0.25 }}
-              className="flex flex-col items-center gap-10 w-full max-w-[500px]"
+              className="flex flex-col items-center gap-8 w-full max-w-[500px]"
             >
-              {/* Question */}
-              <motion.div
-                className="text-center"
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, ease: "easeOut" }}
-              >
-                <h1
-                  className="text-[28px] font-semibold"
-                  style={{ color: "#f4f4f5" }}
-                >
-                  {currentStepData.question}
-                </h1>
-                <p
-                  className="text-sm mt-2"
-                  style={{ color: "#71717a" }}
-                >
-                  {currentStepData.subtext}
-                </p>
-              </motion.div>
+              {/* Step 1: Intent */}
+              {step === 1 && (
+                <>
+                  <div className="text-center">
+                    <h1 className="text-[28px] font-semibold" style={{ color: "#f4f4f5" }}>What do you want to score?</h1>
+                    <p className="text-sm mt-2" style={{ color: "#71717a" }}>This determines how we analyze and what benchmarks we use</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 justify-items-center">
+                    {INTENT_OPTIONS.map((opt, i) => (
+                      <OptionCard key={opt.value} label={opt.label} sublabel={opt.sublabel} icon={opt.icon} selected={intent === opt.value} onClick={() => handleIntentSelect(opt.value)} index={i} />
+                    ))}
+                  </div>
+                </>
+              )}
 
-              {/* Option grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 justify-items-center">
-                {currentStepData.options.map((opt, i) => (
-                  <OptionCard
-                    key={opt.value}
-                    label={opt.label}
-                    icon={opt.icon}
-                    selected={currentSelection === opt.value}
-                    onClick={() => handleSelect(step, opt.value)}
-                    index={i}
-                  />
-                ))}
-              </div>
+              {/* Step 2: Niche */}
+              {step === 2 && (
+                <>
+                  <div className="text-center">
+                    <h1 className="text-[28px] font-semibold" style={{ color: "#f4f4f5" }}>What's your niche?</h1>
+                    <p className="text-sm mt-2" style={{ color: "#71717a" }}>We use different benchmarks and language for each industry</p>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 justify-items-center">
+                    {NICHE_OPTIONS.map((opt, i) => (
+                      <OptionCard key={opt.value} label={opt.label} sublabel={opt.sublabel} icon={opt.icon} selected={niche === opt.value} onClick={() => handleNicheSelect(opt.value)} index={i} dimmed={opt.dimmed} />
+                    ))}
+                  </div>
+                  {/* Custom niche input for "Other" */}
+                  {niche === "Other" && (
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="w-full max-w-[360px] flex flex-col gap-2">
+                      <input
+                        type="text" value={nicheCustom} onChange={(e) => setNicheCustom(e.target.value)}
+                        placeholder="Tell us what you do (optional)"
+                        className="w-full h-10 px-4 rounded-xl text-sm outline-none"
+                        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#f4f4f5" }}
+                        autoFocus
+                      />
+                      <button type="button" onClick={() => { if (intent === "display") { setPlatform("Google Display"); handleFinish("Other", "Google Display"); } else { setStep(3); } }}
+                        className="w-full h-10 rounded-full text-sm font-medium" style={{ background: "#6366f1", color: "white", border: "none", cursor: "pointer" }}>
+                        Continue <ArrowRight size={14} style={{ display: "inline", verticalAlign: "middle" }} />
+                      </button>
+                    </motion.div>
+                  )}
+                </>
+              )}
 
-              {/* "Let's go" button — only on step 3 after selection */}
-              {step === 3 && selectedRole && (
-                <motion.button
-                  type="button"
-                  onClick={handleFinish}
-                  initial={{ opacity: 0, y: 12, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
-                  className="w-full max-w-[360px] h-[52px] rounded-full text-white font-semibold text-[15px] flex items-center justify-center gap-2 transition-all"
-                  style={{ background: "#6366f1" }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "#4f46e5";
-                    e.currentTarget.style.boxShadow = "0 0 24px rgba(99,102,241,0.3)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "#6366f1";
-                    e.currentTarget.style.boxShadow = "none";
-                  }}
-                >
-                  Let's go <ArrowRight size={16} />
-                </motion.button>
+              {/* Step 3: Platform (adaptive) */}
+              {step === 3 && (
+                <>
+                  <div className="text-center">
+                    <h1 className="text-[28px] font-semibold" style={{ color: "#f4f4f5" }}>{platformHeading}</h1>
+                    <p className="text-sm mt-2" style={{ color: "#71717a" }}>{platformSubtext}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 justify-items-center">
+                    {platformOptions.map((opt, i) => (
+                      <OptionCard key={opt.value} label={opt.label} sublabel={opt.sublabel} icon={opt.icon} selected={platform === opt.value} onClick={() => handlePlatformSelect(opt.value)} index={i} />
+                    ))}
+                  </div>
+                  {platform && (
+                    <motion.button
+                      type="button" onClick={() => handleFinish()}
+                      initial={{ opacity: 0, y: 12, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                      whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+                      className="w-full max-w-[360px] h-[52px] rounded-full text-white font-semibold text-[15px] flex items-center justify-center gap-2"
+                      style={{ background: "#6366f1", cursor: "pointer", border: "none" }}
+                    >
+                      Let's go <ArrowRight size={16} />
+                    </motion.button>
+                  )}
+                </>
               )}
             </motion.div>
           ) : (
-            /* Completion state */
-            <motion.div
-              key="complete"
-              variants={slideVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{ duration: 0.3 }}
-              className="flex flex-col items-center gap-4"
-            >
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 400, damping: 20 }}
-              >
-                <CheckCircle size={48} style={{ color: "#10b981" }} />
+            /* Completion */
+            <motion.div key="complete" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }} className="flex flex-col items-center gap-4">
+              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 400, damping: 20 }}>
+                <CheckCircle size={48} color="#10b981" />
               </motion.div>
-              <motion.h2
-                className="text-[22px] font-semibold"
-                style={{ color: "#f4f4f5" }}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15, duration: 0.3 }}
-              >
-                You're all set.
+              <motion.h2 className="text-[22px] font-semibold" style={{ color: "#f4f4f5" }} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.3 }}>
+                You're all set
               </motion.h2>
-              <motion.p
-                className="text-sm"
-                style={{ color: "#71717a" }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3, duration: 0.3 }}
-              >
-                Taking you to Cutsheet...
+              <motion.p className="text-sm text-center" style={{ color: "#71717a" }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3, duration: 0.3 }}>
+                {getSummary()} — every recommendation is tailored to you
               </motion.p>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      {/* Bottom — Skip link */}
+      {/* Skip link */}
       {!completed && (
         <div className="relative z-10 flex justify-end px-8 pb-8">
-          <button
-            type="button"
-            onClick={() => {
-              // Save partial profile and skip
-              saveProfile();
-              navigate("/app");
-            }}
-            className="text-xs transition-colors hover:text-zinc-400"
-            style={{ color: "#52525b" }}
-          >
+          <button type="button" onClick={handleSkip} className="text-xs transition-colors hover:text-zinc-400" style={{ color: "#52525b", background: "none", border: "none", cursor: "pointer" }}>
             Skip for now
           </button>
         </div>

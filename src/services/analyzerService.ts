@@ -112,13 +112,7 @@ After your analysis, list exactly 3-5 specific, actionable suggestions to improv
 
 ---
 
-## 💰 BUDGET RECOMMENDATION
-Based on the ad's quality and likely performance, recommend a media buying strategy. Use this exact format:
-- **Verdict:** [Boost It / Test It / Fix First] — "Boost It" means the ad is strong enough to scale spend immediately, "Test It" means it has potential but should be tested with a small budget first, "Fix First" means the creative needs improvement before any spend.
-- **Platform:** [Meta / TikTok / YouTube / Meta + TikTok / All platforms] — the best-fit platform(s) for this creative style and audience.
-- **Daily Budget:** [$X–$Y/day] — a specific daily budget range recommendation (e.g. "$50–$100/day").
-- **Duration:** [X days / X weeks] — how long to run at this budget before evaluating (e.g. "7 days", "2 weeks").
-- **Reason:** One sentence explaining why this budget and timeline make sense for this specific creative.
+Do NOT include a budget recommendation section. Budget guidance is handled separately.
 
 ---
 
@@ -240,13 +234,7 @@ MOTION TEST IDEA: [one sentence describing how to adapt this as a short video ad
 
 ---
 
-## 💰 BUDGET RECOMMENDATION
-Based on the ad's quality and likely performance, recommend a media buying strategy. Use this exact format:
-- **Verdict:** [Boost It / Test It / Fix First]
-- **Platform:** [Meta / TikTok / YouTube / Meta + TikTok / All platforms]
-- **Daily Budget:** [$X–$Y/day]
-- **Duration:** [X days / X weeks]
-- **Reason:** One sentence explaining why.`;
+Do NOT include a budget recommendation section. Budget guidance is handled separately.`;
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
