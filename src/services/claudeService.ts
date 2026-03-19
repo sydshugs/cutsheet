@@ -536,6 +536,9 @@ export interface SuiteCohesionResult {
   messageConsistency: number;
   visualConsistency: number;
   ctaConsistency: number;
+  verdict: string;
+  strongestBanner: string;
+  weakestBanner: string;
   strengths: string[];
   issues: SuiteIssue[];
   recommendations: string[];
@@ -582,11 +585,14 @@ Return JSON only — no prose:
   "messageConsistency": <1-10>,
   "visualConsistency": <1-10>,
   "ctaConsistency": <1-10>,
+  "verdict": "<one honest sentence about the suite overall>",
+  "strongestBanner": "<format name of best performer, e.g. '300x250 Medium Rectangle'>",
+  "weakestBanner": "<format name of worst performer>",
   "strengths": ["<2-3 things the suite does well>"],
   "issues": [
-    { "severity": "critical" | "warning" | "note", "issue": "<specific>", "affectedFormats": ["<format>"], "fix": "<action>" }
+    { "severity": "critical" | "warning" | "note", "issue": "<specific, name formats>", "affectedFormats": ["<format>"], "fix": "<specific, actionable>" }
   ],
-  "recommendations": ["<3 specific improvements>"],
+  "recommendations": ["<3 prioritized actions>"],
   "missingFormats": ["<standard formats not present>"]
 }`;
 
@@ -611,6 +617,9 @@ Return JSON only — no prose:
     messageConsistency: Number(parsed.messageConsistency) || 5,
     visualConsistency: Number(parsed.visualConsistency) || 5,
     ctaConsistency: Number(parsed.ctaConsistency) || 5,
+    verdict: String(parsed.verdict ?? ""),
+    strongestBanner: String(parsed.strongestBanner ?? ""),
+    weakestBanner: String(parsed.weakestBanner ?? ""),
     strengths: Array.isArray(parsed.strengths) ? parsed.strengths : [],
     issues: Array.isArray(parsed.issues) ? parsed.issues : [],
     recommendations: Array.isArray(parsed.recommendations) ? parsed.recommendations : [],
