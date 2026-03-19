@@ -158,8 +158,9 @@ export default function Login() {
         <div
           className="relative rounded-3xl backdrop-blur-xl p-8"
           style={{
-            background: "rgba(17,17,24,0.6)",
-            border: "1px solid rgba(255,255,255,0.06)",
+            background: "rgba(24,24,32,0.95)",
+            boxShadow: "0 0 100px rgba(99,102,241,0.12), 0 8px 40px rgba(0,0,0,0.5)",
+            border: "1px solid rgba(255,255,255,0.12)",
           }}
         >
           <TravelingBeams />

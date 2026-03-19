@@ -49,7 +49,7 @@ const CARDS = [
 
 export default function CutsheetWhy() {
   return (
-    <section className="relative overflow-hidden border-t border-white/5 bg-zinc-950 py-24 sm:py-32">
+    <section className="relative overflow-hidden border-t border-white/5 bg-zinc-950 py-20 sm:py-24">
       {/* Ambient glow */}
       <div
         className="pointer-events-none absolute left-1/2 top-1/3 -translate-x-1/2 -translate-y-1/2 h-[400px] w-[600px] rounded-full opacity-10 blur-[140px]"

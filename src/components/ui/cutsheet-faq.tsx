@@ -83,7 +83,7 @@ export default function CutsheetFAQ() {
   const [openIdx, setOpenIdx] = useState<number | null>(null);
 
   return (
-    <section className="border-t border-white/5 bg-zinc-950 py-24 sm:py-32">
+    <section className="border-t border-white/5 bg-zinc-950 py-20 sm:py-24">
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <FadeIn className="mb-14 text-center">

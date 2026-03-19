@@ -51,6 +51,14 @@ const SCORE_LABELS: Record<keyof Scores, string> = {
   overall: "Overall Ad Strength",
 };
 
+const SCORE_TOOLTIPS: Record<keyof Scores, string> = {
+  hook: "How effectively the first 3 seconds grab attention and stop the scroll",
+  clarity: "How clearly the core message and value proposition come through",
+  cta: "How compelling and clear the call-to-action is",
+  production: "Visual quality, pacing, audio mix, and overall polish",
+  overall: "Weighted composite of all scoring dimensions",
+};
+
 /** Score band color for chips/overlays: 9-10 green, 7-8 indigo, 5-6 amber, 1-4 red (scores 0-10). */
 export function getScoreColorByValue(score: number): string {
   if (score >= 9) return "#10B981";
@@ -148,6 +156,7 @@ onSelectHistory,
   }, [analysisTime]);
 
   const [copied, setCopied] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
 
   const handleCopy = async () => {
     const lines: string[] = [];
@@ -314,7 +323,7 @@ onSelectHistory,
         </div>
 
         {/* Score number */}
-        <div className="flex items-baseline gap-1 -mt-4">
+        <div className="flex items-baseline gap-1 -mt-4" title={SCORE_TOOLTIPS.overall} style={{ cursor: "help" }}>
           <span className="text-4xl font-bold font-mono text-white leading-none">
             {scores.overall}
           </span>
@@ -343,7 +352,7 @@ onSelectHistory,
           return (
             <div key={key}>
               <div className="flex justify-between text-xs mb-1.5">
-                <span className="text-zinc-400">{SCORE_LABELS[key]}</span>
+                <span className="text-zinc-400" title={SCORE_TOOLTIPS[key]} style={{ cursor: "help" }}>{SCORE_LABELS[key]}</span>
                 <span className="font-mono" style={{ color: barColor }}>{value} <span style={{ fontFamily: "var(--font-sans, sans-serif)", fontSize: 10, opacity: 0.8 }}>— {getScoreQualityText(value)}</span></span>
               </div>
               <div className="h-1.5 rounded-full bg-white/5 overflow-hidden" role="progressbar" aria-valuenow={value} aria-valuemin={0} aria-valuemax={10} aria-label={`${SCORE_LABELS[key]}: ${value} out of 10, ${getScoreQualityText(value)}`}>
@@ -663,7 +672,11 @@ onSelectHistory,
           {onAddToSwipeFile && (
             <button
               type="button"
-              onClick={onAddToSwipeFile}
+              onClick={() => {
+                onAddToSwipeFile();
+                setToast("Added to Swipe File");
+                setTimeout(() => setToast(null), 2500);
+              }}
               className="bg-white/5 hover:bg-white/10 text-white text-sm rounded-xl w-full py-2.5 text-center transition-colors duration-150 cursor-pointer"
             >
               Add to Swipe File
@@ -672,6 +685,18 @@ onSelectHistory,
         </div>
       )}
       </>}
+
+      {/* Toast notification */}
+      {toast && (
+        <div style={{
+          position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)",
+          background: "#10B981", color: "white", padding: "8px 20px", borderRadius: 10,
+          fontSize: 13, fontWeight: 500, zIndex: 9999, boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
+          animation: "fadeIn 200ms ease-out",
+        }}>
+          {toast}
+        </div>
+      )}
 
       {/* Compare against competitor link */}
       <div className="px-5 pb-4">

@@ -5,7 +5,7 @@ const WAITLIST_INITIALS = ["S", "M", "E", "J"];
 
 export default function CutsheetCTA() {
   return (
-    <section className="relative overflow-hidden border-t border-white/5 bg-zinc-950 py-28 sm:py-36">
+    <section className="relative overflow-hidden border-t border-white/5 bg-zinc-950 py-20 sm:py-24">
       {/* Ambient glow */}
       <div
         className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[420px] w-[420px] rounded-full opacity-20 blur-[120px]"
