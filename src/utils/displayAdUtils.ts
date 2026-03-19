@@ -4,6 +4,7 @@ export interface DisplayFormat {
   key: string;
   name: string;
   placement: string;
+  note?: string; // set when fuzzy-matched (e.g. "actual: 316×266")
 }
 
 const DISPLAY_FORMATS: Record<string, { name: string; placement: string }> = {
@@ -19,12 +20,30 @@ const DISPLAY_FORMATS: Record<string, { name: string; placement: string }> = {
   "250x250":  { name: "Square",              placement: "Right sidebar" },
 };
 
-/** Detect standard display ad format from image dimensions */
+/** Detect standard display ad format from image dimensions (exact + 10% fuzzy) */
 export function detectDisplayFormat(width: number, height: number): DisplayFormat | null {
-  const key = `${width}x${height}`;
-  const format = DISPLAY_FORMATS[key];
-  if (!format) return null;
-  return { key, ...format };
+  // Exact match first
+  const exactKey = `${width}x${height}`;
+  if (DISPLAY_FORMATS[exactKey]) {
+    return { key: exactKey, ...DISPLAY_FORMATS[exactKey] };
+  }
+
+  // Fuzzy match — within 10% of standard dimensions
+  const TOLERANCE = 0.10;
+  for (const [key, format] of Object.entries(DISPLAY_FORMATS)) {
+    const [stdW, stdH] = key.split("x").map(Number);
+    const withinWidth = Math.abs(width - stdW) / stdW <= TOLERANCE;
+    const withinHeight = Math.abs(height - stdH) / stdH <= TOLERANCE;
+    if (withinWidth && withinHeight) {
+      return {
+        key,
+        ...format,
+        note: `Matched to ${key} (actual: ${width}×${height})`,
+      };
+    }
+  }
+
+  return null;
 }
 
 /** Get image dimensions from a File object */

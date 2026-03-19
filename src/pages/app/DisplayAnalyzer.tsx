@@ -233,7 +233,7 @@ Return JSON only — no prose:
             <>
               <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.08)" }} />
               <span style={{ fontSize: 12, color: "#818cf8", background: "rgba(99,102,241,0.1)", borderRadius: 9999, padding: "3px 10px" }}>
-                {detectedFormat.key} · {detectedFormat.name}
+                {detectedFormat.key} · {detectedFormat.name}{detectedFormat.note ? ` (${detectedFormat.note.replace(/^Matched to \S+ /, '')})` : ''}
               </span>
             </>
           )}
@@ -311,7 +311,7 @@ Return JSON only — no prose:
                     <div style={{ marginTop: 10, padding: "8px 14px", borderRadius: 10, background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.2)", display: "flex", alignItems: "center", gap: 8 }}>
                       <Monitor size={14} color="#818cf8" />
                       <span style={{ fontSize: 13, color: "#818cf8" }}>
-                        {detectedFormat.key} · {detectedFormat.name} · {detectedFormat.placement}
+                        {detectedFormat.key} · {detectedFormat.name} · {detectedFormat.placement}{detectedFormat.note ? ` · ${detectedFormat.note.replace(/^Matched to \S+ /, '')}` : ''}
                       </span>
                     </div>
                   )}
