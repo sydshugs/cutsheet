@@ -51,10 +51,9 @@ const STATUS_COPY = {
 // ─── INTENT HEADER ────────────────────────────────────────────────────────────
 
 function IntentHeader({
-  platform, setPlatform, secondEye, setSecondEye,
+  platform, setPlatform,
 }: {
   platform: Platform; setPlatform: (p: Platform) => void;
-  secondEye: boolean; setSecondEye: (v: boolean) => void;
 }) {
   return (
     <div style={{ padding: "12px 24px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", justifyContent: "space-between" }}>
@@ -81,33 +80,7 @@ function IntentHeader({
         </div>
       </div>
 
-      {/* Second Eye toggle */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-          <span style={{ fontSize: 13, color: "#a1a1aa" }}>Second Eye</span>
-          {secondEye && (
-            <span style={{ fontSize: 11, color: "#52525b" }}>Fresh first-time viewer perspective</span>
-          )}
-        </div>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={secondEye}
-          onClick={() => setSecondEye(!secondEye)}
-          style={{
-            width: 40, height: 22, borderRadius: 11, border: "none", cursor: "pointer",
-            background: secondEye ? "#10b981" : "#27272a",
-            position: "relative", transition: "background 200ms", flexShrink: 0,
-          }}
-        >
-          <div
-            style={{
-              position: "absolute", top: 2, width: 18, height: 18, borderRadius: "50%", background: "white",
-              left: secondEye ? 20 : 2, transition: "left 200ms cubic-bezier(0.16,1,0.3,1)",
-            }}
-          />
-        </button>
-      </div>
+      {/* Fresh Viewer Review runs automatically — no toggle needed */}
     </div>
   );
 }
@@ -166,7 +139,6 @@ export default function OrganicAnalyzer() {
   }, [])
 
   const [platform, setPlatform] = useState<Platform>("all");
-  const [secondEye, setSecondEye] = useState(false);
   const [secondEyeOutput, setSecondEyeOutput] = useState<SecondEyeResult | null>(null);
   const [secondEyeLoading, setSecondEyeLoading] = useState(false);
 
@@ -235,9 +207,9 @@ export default function OrganicAnalyzer() {
     if (status === "complete") setAnalysisCompletedAt(new Date());
   }, [status]);
 
-  // Second Eye trigger: fires when analysis completes and secondEye is on
+  // Fresh Viewer Review: fires automatically when analysis completes
   useEffect(() => {
-    if (status === "complete" && result && secondEye) {
+    if (status === "complete" && result) {
       if (secondEyeLoading) return; // guard: prevent concurrent calls
       const run = async () => {
         setSecondEyeLoading(true);
@@ -260,7 +232,7 @@ export default function OrganicAnalyzer() {
       };
       run();
     }
-  }, [status, result, secondEye]); // eslint-disable-line
+  }, [status, result]); // eslint-disable-line
 
   // Platform scoring: fires after analysis completes
   useEffect(() => {
@@ -481,7 +453,7 @@ export default function OrganicAnalyzer() {
       </Helmet>
       {/* Main */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        <IntentHeader platform={platform} setPlatform={setPlatform} secondEye={secondEye} setSecondEye={setSecondEye} />
+        <IntentHeader platform={platform} setPlatform={setPlatform} />
         <div className="flex-1 overflow-auto">
           {/* Image mismatch error */}
           {imageMismatch && (
@@ -568,7 +540,7 @@ export default function OrganicAnalyzer() {
               />
             </div>
             {/* Second Eye output below scorecard */}
-            {secondEye && (
+            {(secondEyeOutput || secondEyeLoading) && (
               <SecondEyePanel result={secondEyeOutput} loading={secondEyeLoading} />
             )}
             <PlatformScoreCard
