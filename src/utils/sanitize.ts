@@ -17,11 +17,9 @@ export const sanitizeText = (input: string): string => {
 // OWASP LLM01: strip patterns commonly used in prompt injection attacks
 // before user-supplied strings are interpolated into AI prompts.
 
-/** Sanitize a string for safe injection into an AI prompt */
-export const sanitizeForAI = (input: string): string => {
-  if (!input || typeof input !== 'string') return ''
-
-  const cleaned = input
+/** Strip common prompt injection patterns (shared by all AI sanitizers) */
+function stripInjectionPatterns(input: string): string {
+  return input
     // Common override commands
     .replace(/ignore\s+(previous|above|all)\s+instructions?/gi, '')
     .replace(/disregard\s+(previous|above|all)\s+instructions?/gi, '')
@@ -41,35 +39,19 @@ export const sanitizeForAI = (input: string): string => {
     .replace(/```[\s\S]*?```/g, '')
     // Strip backtick inline code
     .replace(/`[^`]*`/g, '')
-    .trim()
-    .slice(0, 200) // strict limit for user-profile fields
+}
 
-  return sanitizeText(cleaned)
+/** Sanitize a string for safe injection into an AI prompt */
+export const sanitizeForAI = (input: string): string => {
+  if (!input || typeof input !== 'string') return ''
+  return sanitizeText(stripInjectionPatterns(input).trim().slice(0, 200))
 }
 
 /** Sanitize longer AI-injected strings (improvements, summaries).
  *  Same injection-prevention rules as sanitizeForAI but with 500-char limit. */
 export const sanitizeForAILong = (input: string): string => {
   if (!input || typeof input !== 'string') return ''
-
-  const cleaned = input
-    .replace(/ignore\s+(previous|above|all)\s+instructions?/gi, '')
-    .replace(/disregard\s+(previous|above|all)\s+instructions?/gi, '')
-    .replace(/forget\s+(everything|all|previous|prior)/gi, '')
-    .replace(/you\s+are\s+(now|a|an)/gi, '')
-    .replace(/act\s+as\s+(a|an|if)/gi, '')
-    .replace(/pretend\s+(to\s+be|you\s+are)/gi, '')
-    .replace(/system\s*prompt/gi, '')
-    .replace(/###\s*(instruction|system|human|assistant)/gi, '')
-    .replace(/\[INST\]|\[\/INST\]/g, '')
-    .replace(/<\|im_start\|>|<\|im_end\|>/g, '')
-    .replace(/<\|system\|>|<\|user\|>|<\|assistant\|>/g, '')
-    .replace(/```[\s\S]*?```/g, '')
-    .replace(/`[^`]*`/g, '')
-    .trim()
-    .slice(0, 500)
-
-  return sanitizeText(cleaned)
+  return sanitizeText(stripInjectionPatterns(input).trim().slice(0, 500))
 }
 
 // ─── FILE NAME SANITIZATION ──────────────────────────────────────────────────

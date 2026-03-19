@@ -3,7 +3,6 @@
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { generateImprovements as claudeImprovements } from "./claudeService";
-import { getSessionMemory } from "../lib/userMemoryService";
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 
@@ -452,7 +451,8 @@ export async function analyzeVideo(
   apiKey: string,
   onStatusChange?: (status: AnalysisStatus, message?: string) => void,
   contextPrefix?: string,
-  userContext?: string
+  userContext?: string,
+  sessionMemory?: string
 ): Promise<AnalysisResult> {
   const emit = (status: AnalysisStatus, message?: string) => {
     onStatusChange?.(status, message);
@@ -519,7 +519,6 @@ export async function analyzeVideo(
 
     // 6b. Enhance improvements with Claude (silent fallback to Gemini)
     try {
-      const { text: sessionMemory } = await getSessionMemory();
       const enhanced = await claudeImprovements(markdown, scores, userContext, undefined, sessionMemory);
       if (enhanced.length > 0) improvements = enhanced;
     } catch { /* silent fallback — keep Gemini improvements */ }
