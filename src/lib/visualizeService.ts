@@ -35,11 +35,8 @@ export async function fileToBase64(file: File, maxDim = 1200, quality = 0.8): Pr
   });
 }
 
-/** Determine the media type from a File object. */
-export function getMediaType(file: File): VisualizeRequest["imageMediaType"] {
-  const mime = file.type.toLowerCase();
-  if (mime === "image/png") return "image/png";
-  if (mime === "image/webp") return "image/webp";
+/** Determine the media type. Always returns image/jpeg because fileToBase64 converts via canvas.toDataURL("image/jpeg"). */
+export function getMediaType(_file: File): VisualizeRequest["imageMediaType"] {
   return "image/jpeg";
 }
 
