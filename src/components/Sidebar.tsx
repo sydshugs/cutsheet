@@ -3,7 +3,7 @@ import { useState, useRef } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   Zap, TrendingUp, Monitor, GitBranch, Swords, Trophy,
-  Bookmark, Settings, ChevronLeft, ChevronRight, MoreHorizontal, X,
+  Bookmark, Settings, ChevronLeft, ChevronRight, MoreHorizontal, X, HelpCircle,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { UsageIndicator } from "./UsageIndicator";
@@ -33,12 +33,12 @@ interface SidebarProps {
 const ANALYZE: NavItem[] = [
   { label: "Paid Ad",  sublabel: "Meta, TikTok, Google",  path: "/app/paid",     icon: Zap },
   { label: "Organic",  sublabel: "TikTok, Reels, Shorts", path: "/app/organic",  icon: TrendingUp },
-  { label: "Display",  sublabel: "Google, affiliate",     path: "/app/display",  icon: Monitor },
+  { label: "Display",  sublabel: "Google, affiliate",     path: "/app/display",  icon: Monitor, comingSoon: true },
 ];
 
 const COMPARE: NavItem[] = [
   { label: "A/B Test",   sublabel: "Test variants",      path: "/app/ab-test",    icon: GitBranch },
-  { label: "Competitor", sublabel: "Your ad vs theirs",  path: "/app/competitor", icon: Swords },
+  { label: "Competitor", sublabel: "Your ad vs theirs",  path: "/app/competitor", icon: Swords, comingSoon: true },
   { label: "Rank Creatives", sublabel: "Find your best",  path: "/app/batch",      icon: Trophy },
 ];
 
@@ -100,6 +100,9 @@ function NavItemRow({ item, collapsed }: { item: NavItem; collapsed: boolean }) 
           <span style={{ fontSize: 11, color: "#52525b", lineHeight: 1.3, whiteSpace: "nowrap" }}>
             {item.sublabel}
           </span>
+          {item.comingSoon && !collapsed && (
+            <span style={{ fontSize: 9, padding: "1px 5px", borderRadius: 4, background: "rgba(99,102,241,0.15)", color: "#818cf8", fontWeight: 500, marginLeft: 6, lineHeight: 1, letterSpacing: "0.04em", alignSelf: "flex-start", marginTop: 2 }}>SOON</span>
+          )}
         </div>
       )}
 
@@ -149,6 +152,7 @@ function NavItemRow({ item, collapsed }: { item: NavItem; collapsed: boolean }) 
     return (
       <div
         className="group"
+        title={collapsed ? item.label : undefined}
         style={{ ...baseStyle, margin: collapsed ? "2px auto" : "2px 8px", width: collapsed ? 40 : "auto", borderRadius: 10, padding: collapsed ? 0 : "0 10px", cursor: "default", justifyContent: collapsed ? "center" : "flex-start" }}
         onClick={handleCSClick}
       >
@@ -160,6 +164,7 @@ function NavItemRow({ item, collapsed }: { item: NavItem; collapsed: boolean }) 
   return (
     <NavLink
       to={item.path}
+      title={collapsed ? item.label : undefined}
       className={({ isActive }) =>
         `group relative flex items-center transition-colors ${
           collapsed
@@ -270,6 +275,12 @@ function DesktopSidebar({
             </button>
           </div>
         )}
+
+        {/* Help & Support */}
+        <a href="mailto:support@cutsheet.xyz" style={{ display: "flex", alignItems: "center", gap: 10, padding: collapsed ? "8px 0" : "8px 12px", justifyContent: collapsed ? "center" : "flex-start", color: "#52525b", fontSize: 12, textDecoration: "none", transition: "color 150ms", margin: "0 8px" }} title={collapsed ? "Help & Support" : undefined} onMouseEnter={e => (e.currentTarget.style.color = "#a1a1aa")} onMouseLeave={e => (e.currentTarget.style.color = "#52525b")}>
+          <HelpCircle size={16} />
+          {!collapsed && <span>Help &amp; Support</span>}
+        </a>
 
         {/* Settings */}
         <button

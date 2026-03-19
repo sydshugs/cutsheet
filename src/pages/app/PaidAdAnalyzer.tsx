@@ -111,6 +111,7 @@ function IntentHeader({
                 height: 30, padding: "0 12px", borderRadius: 9999, fontSize: 13,
                 cursor: opt.enabled ? "pointer" : "not-allowed",
                 opacity: opt.enabled ? 1 : 0.35,
+                textDecoration: opt.enabled ? "none" : "line-through",
                 background: platform === opt.value && opt.enabled ? "#4f46e5" : "rgba(255,255,255,0.04)",
                 border: `1px solid ${platform === opt.value && opt.enabled ? "#4f46e5" : "rgba(255,255,255,0.08)"}`,
                 color: platform === opt.value && opt.enabled ? "white" : "#71717a",
@@ -136,9 +137,8 @@ function IntentHeader({
               aria-checked={format === f}
               onClick={() => {
                 setFormat(f);
-                if (f === "static" && (platform === "YouTube" || platform === "TikTok")) {
-                  setPlatform("all");
-                }
+                const currentPlatformEnabled = PLATFORM_COMPAT[f].find(o => o.value === platform)?.enabled;
+                if (!currentPlatformEnabled) setPlatform("all");
               }}
               style={{
                 height: 30, padding: "0 12px", borderRadius: 9999, fontSize: 13, cursor: "pointer",
@@ -157,7 +157,7 @@ function IntentHeader({
 
       {/* Second Eye toggle — video only */}
       {format === "video" && (
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }} title="Get a fresh first-impression review from a separate AI model">
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
             <span style={{ fontSize: 13, color: "#a1a1aa" }}>Second Eye</span>
             {secondEye && (
@@ -253,6 +253,9 @@ function PaidEmptyState({
       {/* Dropzone */}
       <div style={{ width: "100%", maxWidth: 520, marginTop: 32 }}>
         <VideoDropzone onFileSelect={onFileSelect} file={null} onUrlSubmit={onUrlSubmit} acceptImages />
+        <p style={{ textAlign: "center", fontSize: 11, color: "#3f3f46", marginTop: 6 }}>
+          Tip: paste any video URL (Cmd+V) to analyze it
+        </p>
       </div>
       <p style={{ fontSize: 11, color: "#52525b", marginTop: 12 }} className="hidden md:block">or press &#8984;K</p>
     </div>
@@ -264,7 +267,7 @@ function PaidEmptyState({
 export default function PaidAdAnalyzer() {
   const {
     addHistoryEntry, historyEntries, deleteHistoryEntry, clearAllHistory,
-    addSwipeItem, canAnalyze, isPro, increment, FREE_LIMIT,
+    addSwipeItem, canAnalyze, isPro, increment, FREE_LIMIT, usageCount,
     onUpgradeRequired, registerCallbacks,
   } = useOutletContext<AppSharedContext>();
   const navigate = useNavigate();
@@ -744,10 +747,17 @@ export default function PaidAdAnalyzer() {
             </div>
           )}
           {!formatMismatch && status === "idle" && !loadedEntry ? (
-            <PaidEmptyState
-              onFileSelect={(f) => handleFileWithFormatCheck(f)}
-              onUrlSubmit={async (u) => { setUrlInput(u); await importFromUrl(u); }}
-            />
+            <>
+              {!isPro && (
+                <div style={{ textAlign: "center", fontSize: 12, color: "#52525b", marginTop: 12, marginBottom: -24 }}>
+                  {usageCount} of {FREE_LIMIT} free analyses used
+                </div>
+              )}
+              <PaidEmptyState
+                onFileSelect={(f) => handleFileWithFormatCheck(f)}
+                onUrlSubmit={async (u) => { setUrlInput(u); await importFromUrl(u); }}
+              />
+            </>
           ) : !formatMismatch && (status !== "idle" || loadedEntry) ? (
             <div className="relative px-4 py-6 md:px-8 min-h-full flex flex-col">
               {/* Ambient glow */}

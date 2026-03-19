@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { type HistoryEntry } from "../hooks/useHistory";
 
 interface HistoryDrawerProps {
@@ -40,9 +39,6 @@ export function HistoryDrawer({
   onClearAll,
   isDark,
 }: HistoryDrawerProps) {
-  const [confirmClear, setConfirmClear] = useState(false);
-  // Reset confirm state when drawer closes
-  if (!open && confirmClear) setConfirmClear(false);
   const bg = "var(--surface)";
   const border = "var(--border)";
   const text = "var(--ink)";
@@ -130,13 +126,14 @@ export function HistoryDrawer({
             {entries.length > 0 && (
               <button
                 onClick={() => {
-                  if (confirmClear) { onClearAll(); setConfirmClear(false); }
-                  else { setConfirmClear(true); setTimeout(() => setConfirmClear(false), 3000); }
+                  if (window.confirm("Delete all analysis history? This can't be undone.")) {
+                    onClearAll();
+                  }
                 }}
                 style={{
                   padding: "4px 8px",
-                  background: confirmClear ? "rgba(239,68,68,0.1)" : "transparent",
-                  border: `1px solid ${confirmClear ? "rgba(239,68,68,0.3)" : border}`,
+                  background: "transparent",
+                  border: `1px solid ${border}`,
                   borderRadius: "var(--radius-sm)",
                   color: muted,
                   fontSize: "10px",
@@ -145,7 +142,7 @@ export function HistoryDrawer({
                   cursor: "pointer",
                 }}
               >
-                {confirmClear ? "Confirm?" : "Clear All"}
+                Clear All
               </button>
             )}
             <button

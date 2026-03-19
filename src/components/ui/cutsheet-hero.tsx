@@ -213,7 +213,7 @@ export default function CutsheetHero() {
                   </div>
                   <div>
                     <div className="text-3xl font-bold tracking-tight text-white">
-                      87<span className="text-indigo-400">/100</span>
+                      8.7<span className="text-indigo-400">/10</span>
                     </div>
                     <div className="text-sm text-zinc-400">Average Ad Score</div>
                   </div>
@@ -222,9 +222,9 @@ export default function CutsheetHero() {
                 {/* Score bars */}
                 <div className="space-y-3 mb-7">
                   {[
-                    { label: "Hook Strength", score: 92, color: "from-indigo-500 to-indigo-400", delay: 0 },
-                    { label: "CTA Clarity", score: 78, color: "from-violet-500 to-violet-400", delay: 100 },
-                    { label: "Pacing", score: 85, color: "from-cyan-500 to-cyan-400", delay: 200 },
+                    { label: "Hook Strength", score: 9.2, color: "from-indigo-500 to-indigo-400", delay: 0 },
+                    { label: "CTA Clarity", score: 7.8, color: "from-violet-500 to-violet-400", delay: 100 },
+                    { label: "Pacing", score: 8.5, color: "from-cyan-500 to-cyan-400", delay: 200 },
                   ].map(({ label, score, color, delay }) => (
                     <div key={label}>
                       <div className="flex justify-between text-xs mb-1.5">
@@ -235,7 +235,7 @@ export default function CutsheetHero() {
                         <div
                           className={`h-full rounded-full bg-gradient-to-r ${color} hero-bar`}
                           style={{
-                            ['--bar-width' as string]: `${score}%`,
+                            ['--bar-width' as string]: `${score * 10}%`,
                             animationDelay: `${delay}ms`,
                           }}
                         />
