@@ -3,7 +3,8 @@
 import { Helmet } from "react-helmet-async";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useOutletContext } from "react-router-dom";
-import { Monitor, Upload, Eye, Download, X, Plus, AlertTriangle, CheckCircle } from "lucide-react";
+import { Monitor, Upload, Eye, Download, X, Plus, CheckCircle } from "lucide-react";
+import { SuiteCohesionCard } from "../../components/SuiteCohesionCard";
 import { DisplayScoreCard, type DisplayResult } from "../../components/DisplayScoreCard";
 import { getImageDimensions, detectDisplayFormat, getFormatGuidance, type DisplayFormat } from "../../utils/displayAdUtils";
 import { generateDisplayMockup, generateSuiteMockup } from "../../services/mockupService";
@@ -33,21 +34,43 @@ const NETWORKS = [
 
 // ─── EMPTY STATE ─────────────────────────────────────────────────────────────
 
-function EmptyState() {
+function EmptyState({ onFileSelect }: { onFileSelect: (f: File) => void }) {
   const PILLS = ["Format detection", "Placement scoring", "Real-life mockup"];
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 24px", gap: 16 }}>
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px", minHeight: "calc(100vh - 120px)" }}>
       <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <Monitor size={28} color="#6366f1" />
       </div>
-      <h2 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", margin: 0 }}>Display & Banner Analysis</h2>
-      <p style={{ fontSize: 14, color: "#71717a", textAlign: "center", maxWidth: 380, lineHeight: 1.6, margin: 0 }}>
-        Upload a Google Display or affiliate banner ad. Auto-detects format. Scored against display-specific criteria. See how it competes in a real website context.
+      <h2 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>Display & Banner Analysis</h2>
+      <p style={{ fontSize: 14, color: "#71717a", textAlign: "center", maxWidth: 380, lineHeight: 1.6, marginTop: 10 }}>
+        Upload a Google Display or affiliate banner ad. Auto-detects format. Scored against display-specific criteria.
       </p>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 16 }}>
         {PILLS.map((p) => (
           <span key={p} style={{ fontSize: 12, color: "#818cf8", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)", borderRadius: 9999, padding: "4px 12px" }}>{p}</span>
         ))}
+      </div>
+      <div style={{ width: "100%", maxWidth: 520, marginTop: 32 }}>
+        <div
+          style={{
+            height: 200, border: "2px dashed rgba(255,255,255,0.08)", borderRadius: 16,
+            background: "rgba(255,255,255,0.02)", display: "flex", flexDirection: "column",
+            alignItems: "center", justifyContent: "center", gap: 10, cursor: "pointer", transition: "all 150ms",
+          }}
+          onClick={() => {
+            const input = document.createElement("input");
+            input.type = "file"; input.accept = "image/jpeg,image/png,image/webp,image/gif";
+            input.onchange = (e) => { const f = (e.target as HTMLInputElement).files?.[0]; if (f) onFileSelect(f); };
+            input.click();
+          }}
+          onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)"; e.currentTarget.style.background = "rgba(99,102,241,0.05)"; }}
+          onDragLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
+          onDrop={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; const f = e.dataTransfer.files[0]; if (f) onFileSelect(f); }}
+        >
+          <Upload size={28} color="#52525b" />
+          <span style={{ fontSize: 14, color: "#71717a" }}>Drop your banner ad or click to browse</span>
+          <span style={{ fontSize: 11, color: "#52525b" }}>JPG, PNG, WEBP, or GIF</span>
+        </div>
       </div>
     </div>
   );
@@ -76,6 +99,7 @@ export default function DisplayAnalyzer() {
   const [suiteBanners, setSuiteBanners] = useState<SuiteBanner[]>([]);
   const [suiteStatus, setSuiteStatus] = useState<"idle" | "analyzing" | "complete" | "error">("idle");
   const [suiteCohesion, setSuiteCohesion] = useState<SuiteCohesionResult | null>(null);
+  const [suiteCohesionError, setSuiteCohesionError] = useState(false);
   const [suiteMockupUrl, setSuiteMockupUrl] = useState<string | null>(null);
   const [suiteMockupLoading, setSuiteMockupLoading] = useState(false);
 
@@ -88,7 +112,7 @@ export default function DisplayAnalyzer() {
     setFile(null); setDimensions(null); setDetectedFormat(null);
     setStatus("idle"); setStatusMsg(""); setResult(null); setError(null);
     setMockupUrl(null); setMockupLoading(false);
-    setSuiteBanners([]); setSuiteStatus("idle"); setSuiteCohesion(null);
+    setSuiteBanners([]); setSuiteStatus("idle"); setSuiteCohesion(null); setSuiteCohesionError(false);
     setSuiteMockupUrl(null); setSuiteMockupLoading(false);
   }, []);
 
@@ -180,11 +204,15 @@ Return JSON only:
 
     if (completedBanners.length >= 2) {
       try {
+        setSuiteCohesionError(false);
         const cohesion = await analyzeSuiteCohesion(completedBanners, userContext);
         setSuiteCohesion(cohesion);
       } catch (e) {
         console.error("Suite cohesion failed:", e);
+        setSuiteCohesionError(true);
       }
+    } else {
+      setSuiteCohesionError(true);
     }
 
     setSuiteStatus("complete");
@@ -514,9 +542,9 @@ Return JSON only — no prose:
 
                 {/* Suite results */}
                 {suiteStatus === "complete" && (
-                  <div style={{ display: "flex", gap: 24, alignItems: "flex-start" }} className="max-lg:flex-col">
-                    {/* LEFT — Suite mockup */}
-                    <div style={{ flex: "0 0 42%", minWidth: 0 }} className="max-lg:w-full">
+                  <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+                    {/* Suite mockup — full width */}
+                    <div>
                       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
                         <Eye size={14} color="#71717a" />
                         <span style={{ fontSize: 13, fontWeight: 600, color: "#f4f4f5" }}>Suite placement preview</span>
@@ -551,88 +579,35 @@ Return JSON only — no prose:
                       </div>
                     </div>
 
-                    {/* RIGHT — Suite cohesion results */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      {suiteCohesion && (
-                        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                          {/* Suite score card */}
-                          <div style={{ padding: 16, background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.2)", borderRadius: 12 }}>
-                            <p style={{ fontSize: 16, fontWeight: 600, color: "#f4f4f5", margin: "0 0 12px" }}>
-                              Suite Score: <span style={{ color: suiteCohesion.suiteScore >= 7 ? "#10b981" : suiteCohesion.suiteScore >= 5 ? "#f59e0b" : "#ef4444", fontFamily: "var(--font-mono, monospace)" }}>{suiteCohesion.suiteScore}/10</span>
-                            </p>
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                              {([["Brand", suiteCohesion.brandConsistency], ["Message", suiteCohesion.messageConsistency], ["Visual", suiteCohesion.visualConsistency], ["CTA", suiteCohesion.ctaConsistency]] as [string, number][]).map(([label, score]) => (
-                                <div key={label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                  <span style={{ fontSize: 12, color: "#71717a", width: 60 }}>{label}</span>
-                                  <div style={{ flex: 1, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
-                                    <div style={{ width: `${score * 10}%`, height: "100%", borderRadius: 2, background: score >= 7 ? "#10b981" : score >= 5 ? "#f59e0b" : "#ef4444" }} />
-                                  </div>
-                                  <span style={{ fontSize: 11, fontFamily: "var(--font-mono, monospace)", color: "#a1a1aa", width: 18, textAlign: "right" }}>{score}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Missing formats */}
-                          {suiteCohesion.missingFormats.length > 0 && (
-                            <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)", display: "flex", alignItems: "flex-start", gap: 8 }}>
-                              <AlertTriangle size={14} color="#f59e0b" style={{ flexShrink: 0, marginTop: 2 }} />
-                              <div>
-                                <span style={{ fontSize: 12, color: "#f59e0b", fontWeight: 500 }}>Missing: {suiteCohesion.missingFormats.join(", ")}</span>
-                                <p style={{ fontSize: 11, color: "#71717a", margin: "4px 0 0" }}>Complete suites improve campaign reach by up to 40%</p>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Issues */}
-                          {suiteCohesion.issues.length > 0 && (
-                            <div>
-                              <p style={{ fontSize: 12, fontWeight: 600, color: "#a1a1aa", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Issues</p>
-                              {suiteCohesion.issues.map((issue, i) => (
-                                <div key={i} style={{
-                                  padding: "10px 14px", borderRadius: 10, marginBottom: 6,
-                                  borderLeft: `2px solid ${issue.severity === "critical" ? "#ef4444" : issue.severity === "warning" ? "#f59e0b" : "#71717a"}`,
-                                  background: issue.severity === "critical" ? "rgba(239,68,68,0.04)" : issue.severity === "warning" ? "rgba(245,158,11,0.04)" : "rgba(255,255,255,0.02)",
-                                }}>
-                                  <p style={{ fontSize: 12, color: "#a1a1aa", margin: 0 }}>{issue.issue}</p>
-                                  <p style={{ fontSize: 11, color: "#52525b", margin: "4px 0 0" }}>Affects: {issue.affectedFormats.join(", ")} · Fix: {issue.fix}</p>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          {/* Strengths */}
-                          {suiteCohesion.strengths.length > 0 && (
-                            <div>
-                              <p style={{ fontSize: 12, fontWeight: 600, color: "#10b981", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Strengths</p>
-                              {suiteCohesion.strengths.map((s, i) => (
-                                <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 4 }}>
-                                  <CheckCircle size={12} color="#10b981" style={{ flexShrink: 0, marginTop: 2 }} />
-                                  <span style={{ fontSize: 12, color: "#a1a1aa" }}>{s}</span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          {/* Recommendations */}
-                          {suiteCohesion.recommendations.length > 0 && (
-                            <div>
-                              <p style={{ fontSize: 12, fontWeight: 600, color: "#a1a1aa", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Recommendations</p>
-                              {suiteCohesion.recommendations.map((r, i) => (
-                                <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 6 }}>
-                                  <span style={{ fontSize: 12, fontWeight: 700, color: "#6366f1", width: 16, flexShrink: 0 }}>{i + 1}</span>
-                                  <span style={{ fontSize: 12, color: "#a1a1aa", lineHeight: 1.5 }}>{r}</span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          {/* Reset */}
-                          <button type="button" onClick={handleReset}
-                            style={{ width: "100%", height: 40, background: "transparent", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, color: "#71717a", fontSize: 12, cursor: "pointer", marginTop: 8 }}>
-                            Analyze another suite
+                    {/* Suite cohesion results */}
+                    <div>
+                      <SuiteCohesionCard result={suiteCohesion} loading={suiteStatus === "analyzing" || (suiteStatus === "complete" && !suiteCohesion && !suiteCohesionError)} />
+                      {suiteCohesionError && !suiteCohesion && (
+                        <div style={{ padding: "12px 16px", borderRadius: 10, background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)", marginTop: 12, display: "flex", alignItems: "center", gap: 8 }}>
+                          <span style={{ fontSize: 12, color: "#f59e0b" }}>Suite cohesion analysis couldn't be generated</span>
+                          <button type="button" onClick={async () => {
+                            setSuiteCohesionError(false);
+                            try {
+                              const bannerData = suiteBanners.filter(b => b.result).map(b => ({
+                                format: b.format?.name ?? "Custom",
+                                fileName: b.file.name,
+                                overallScore: b.result!.overallScore,
+                                improvements: b.result!.improvements,
+                              }));
+                              const cohesion = await analyzeSuiteCohesion(bannerData, userContext);
+                              setSuiteCohesion(cohesion);
+                            } catch { setSuiteCohesionError(true); }
+                          }} style={{ fontSize: 11, color: "#6366f1", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
+                            Retry
                           </button>
                         </div>
+                      )}
+
+                      {suiteCohesion && (
+                        <button type="button" onClick={handleReset}
+                          style={{ width: "100%", height: 40, background: "transparent", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, color: "#71717a", fontSize: 12, cursor: "pointer", marginTop: 14 }}>
+                          Analyze another suite
+                        </button>
                       )}
                     </div>
                   </div>
@@ -642,7 +617,7 @@ Return JSON only — no prose:
           )}
 
           {/* ── SINGLE MODE ─────────────────────────────────────────── */}
-          {mode === "single" && status === "idle" && !file && <EmptyState />}
+          {mode === "single" && status === "idle" && !file && <EmptyState onFileSelect={handleFileSelect} />}
 
           {mode === "single" && (
           /* Upload + preview area */
@@ -682,7 +657,7 @@ Return JSON only — no prose:
                 </div>
               )}
 
-              {file && previewUrl && (
+              {file && previewUrl && status !== "complete" && (
                 <div style={{ marginBottom: 16 }}>
                   <div style={{ display: "flex", justifyContent: "center", background: "#09090b", borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)", padding: 16 }}>
                     <img src={previewUrl} alt={file.name} style={{ maxWidth: "100%", maxHeight: 400, objectFit: "contain" }} />
@@ -761,7 +736,7 @@ Return JSON only — no prose:
               {status === "complete" && result && dimensions && (
                 <div style={{ display: "flex", gap: 24, marginTop: 8, alignItems: "flex-start" }} className="max-lg:flex-col">
                   {/* LEFT — Mockup (hero) */}
-                  <div style={{ flex: "0 0 42%", minWidth: 0 }} className="max-lg:w-full">
+                  <div style={{ flex: "0 0 50%", minWidth: 0 }} className="max-lg:w-full">
                     <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
                       <Eye size={14} color="#71717a" />
                       <span style={{ fontSize: 13, fontWeight: 600, color: "#f4f4f5" }}>Real-life placement preview</span>
@@ -803,16 +778,6 @@ Return JSON only — no prose:
                           <Download size={12} /> Download mockup
                         </button>
                       </>
-                    )}
-
-                    {/* Actual banner below mockup */}
-                    {previewUrl && (
-                      <div style={{ marginTop: 20 }}>
-                        <p style={{ fontSize: 11, color: "#52525b", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Your ad</p>
-                        <div style={{ display: "flex", justifyContent: "center", background: "#09090b", borderRadius: 10, border: "1px solid rgba(255,255,255,0.06)", padding: 10 }}>
-                          <img src={previewUrl} alt={file?.name} style={{ maxWidth: "100%", maxHeight: 160, objectFit: "contain" }} />
-                        </div>
-                      </div>
                     )}
 
                     <p style={{ fontSize: 11, color: "#52525b", textAlign: "center", marginTop: 10 }}>

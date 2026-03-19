@@ -64,55 +64,85 @@ function drawAnnotation(ctx: CanvasRenderingContext2D, x: number, y: number, w: 
 // ─── LAYOUT GENERATORS ──────────────────────────────────────────────────────
 
 function drawLeaderboardMockup(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, banner: HTMLImageElement) {
-  // White bg
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   drawNavBar(ctx, canvas.width);
 
-  // Banner centered below nav
-  const bx = (canvas.width - 728) / 2;
-  const by = 56;
+  // Leaderboard centered below nav
+  const bw = Math.min(728, canvas.width - 40);
+  const bx = (canvas.width - bw) / 2;
+  const by = 58;
   drawAdLabel(ctx, bx, by);
-  ctx.drawImage(banner, bx, by, 728, 90);
-  drawAnnotation(ctx, bx, by, 728, 90);
+  ctx.drawImage(banner, bx, by, bw, 90);
+  drawAnnotation(ctx, bx, by, bw, 90);
 
-  // Article content below
+  // Article below leaderboard
   const cx = (canvas.width - 660) / 2;
-  drawHeadline(ctx, cx, by + 120, 660);
+  drawHeadline(ctx, cx, by + 116, 660);
   ctx.fillStyle = "#868e96";
-  ctx.fillRect(cx, by + 162, 140, 8);
-  drawTextLines(ctx, cx, by + 190, 660, 15, 22);
+  ctx.fillRect(cx, by + 158, 160, 8);
+  drawTextLines(ctx, cx, by + 184, 660, 5, 22);
+  // Image placeholder
+  ctx.fillStyle = "#f1f3f5";
+  ctx.fillRect(cx, by + 304, 660, 100);
+  ctx.fillStyle = "#ced4da";
+  ctx.font = "12px sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("Article image", cx + 330, by + 360);
+  ctx.textAlign = "start";
+  drawTextLines(ctx, cx, by + 420, 660, 4, 22);
 }
 
-function drawRectangleMockup(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, banner: HTMLImageElement) {
+function drawRectangleMockup(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, banner: HTMLImageElement, adW = 300, adH = 250) {
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   drawNavBar(ctx, canvas.width);
 
-  // Two-column: content left (620px), sidebar right (300px)
-  const contentX = 40;
-  const sidebarX = canvas.width - 340;
+  // Two-column: content left, sidebar right (sized to fit the ad)
+  const sidebarW = Math.max(adW + 40, 320);
+  const contentX = 50;
+  const contentW = canvas.width - sidebarW - 80;
+  const sidebarX = canvas.width - sidebarW + 10;
 
-  // Content column
-  drawHeadline(ctx, contentX, 70, 580);
+  // Content column — article
+  drawHeadline(ctx, contentX, 76, contentW);
   ctx.fillStyle = "#868e96";
-  ctx.fillRect(contentX, 112, 140, 8);
-  drawTextLines(ctx, contentX, 140, 580, 22, 22);
+  ctx.fillRect(contentX, 118, 160, 8);
+  const textLineCount = Math.max(12, Math.floor((canvas.height - 200) / 22));
+  drawTextLines(ctx, contentX, 148, contentW, textLineCount, 22);
+  // Image placeholder in article
+  ctx.fillStyle = "#f1f3f5";
+  ctx.fillRect(contentX, 296, contentW, 140);
+  ctx.fillStyle = "#ced4da";
+  ctx.font = "12px sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("Article image", contentX + contentW / 2, 374);
+  ctx.textAlign = "start";
 
-  // Sidebar
-  ctx.fillStyle = "#f8f9fa";
-  ctx.fillRect(sidebarX - 20, 56, 340, canvas.height - 56);
-  ctx.fillStyle = "#e9ecef";
-  ctx.fillRect(sidebarX - 20, 56, 1, canvas.height - 56);
+  // Sidebar separator
+  ctx.fillStyle = "#f1f3f5";
+  ctx.fillRect(sidebarX - 16, 56, 1, canvas.height - 56);
 
-  // Banner in sidebar
-  const by = 80;
+  // Sidebar widgets above ad
+  ctx.fillStyle = "#868e96";
+  ctx.font = "bold 11px sans-serif";
+  ctx.fillText("TRENDING", sidebarX, 80);
+  drawTextLines(ctx, sidebarX, 98, adW, 3, 16);
+
+  // Banner in sidebar — uses actual ad dimensions
+  const by = 165;
   drawAdLabel(ctx, sidebarX, by);
-  ctx.drawImage(banner, sidebarX, by, 300, 250);
-  drawAnnotation(ctx, sidebarX, by, 300, 250);
+  ctx.drawImage(banner, sidebarX, by, adW, adH);
+  drawAnnotation(ctx, sidebarX, by, adW, adH);
 
-  // Sidebar content below ad
-  drawTextLines(ctx, sidebarX, by + 280, 280, 6, 18);
+  // Sidebar widgets below ad (only if space remains)
+  const belowAdY = by + adH + 20;
+  if (belowAdY + 80 < canvas.height) {
+    ctx.fillStyle = "#868e96";
+    ctx.font = "bold 11px sans-serif";
+    ctx.fillText("RECOMMENDED", sidebarX, belowAdY);
+    drawTextLines(ctx, sidebarX, belowAdY + 18, adW, 4, 16);
+  }
 }
 
 function drawSkyscraperMockup(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, banner: HTMLImageElement) {
@@ -201,50 +231,6 @@ function drawGenericMockup(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElem
   drawTextLines(ctx, 40, by + h + 30, canvas.width - 80, 6, 18);
 }
 
-/** Draw a banner image preserving its natural aspect ratio, centered within the placement slot. Returns actual drawn bounds. */
-function drawBannerPreserveRatio(
-  ctx: CanvasRenderingContext2D,
-  img: HTMLImageElement,
-  maxX: number,
-  maxY: number,
-  maxW: number,
-  maxH: number
-): { x: number; y: number; w: number; h: number } {
-  const ratio = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight);
-  const w = img.naturalWidth * ratio;
-  const h = img.naturalHeight * ratio;
-  const x = maxX + (maxW - w) / 2;
-  const y = maxY + (maxH - h) / 2;
-  ctx.drawImage(img, x, y, w, h);
-  return { x, y, w, h };
-}
-
-/** "Ad" pill with dark background + white text, drawn just above the given coords. */
-function drawAdLabelSuite(ctx: CanvasRenderingContext2D, x: number, y: number) {
-  const label = "Ad";
-  ctx.font = "10px sans-serif";
-  const lw = ctx.measureText(label).width + 6;
-  const lh = 14;
-  const lx = x;
-  const ly = y - lh - 2;
-  const r = 3;
-  ctx.fillStyle = "rgba(0,0,0,0.6)";
-  ctx.beginPath();
-  ctx.moveTo(lx + r, ly);
-  ctx.lineTo(lx + lw - r, ly);
-  ctx.quadraticCurveTo(lx + lw, ly, lx + lw, ly + r);
-  ctx.lineTo(lx + lw, ly + lh - r);
-  ctx.quadraticCurveTo(lx + lw, ly + lh, lx + lw - r, ly + lh);
-  ctx.lineTo(lx + r, ly + lh);
-  ctx.quadraticCurveTo(lx, ly + lh, lx, ly + lh - r);
-  ctx.lineTo(lx, ly + r);
-  ctx.quadraticCurveTo(lx, ly, lx + r, ly);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = "#ffffff";
-  ctx.fillText(label, lx + 3, ly + lh - 3);
-}
-
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   ctx.beginPath();
   ctx.moveTo(x + r, y);
@@ -281,19 +267,19 @@ export async function generateDisplayMockup(
   } else if (key === "300x250" || key === "336x280" || key === "250x250") {
     canvas.width = 1000;
     canvas.height = 650;
-    drawRectangleMockup(ctx, canvas, bannerImg);
+    drawRectangleMockup(ctx, canvas, bannerImg, width, height);
   } else if (key === "160x600") {
     canvas.width = 1000;
-    canvas.height = 750;
-    drawSkyscraperMockup(ctx, canvas, bannerImg);
+    canvas.height = 850;
+    drawRectangleMockup(ctx, canvas, bannerImg, 160, 600);
   } else if (key === "320x50" || key === "320x100") {
     canvas.width = 390;
     canvas.height = 844;
     drawMobileMockup(ctx, canvas, bannerImg, height);
   } else if (key === "300x600") {
     canvas.width = 1000;
-    canvas.height = 750;
-    drawRectangleMockup(ctx, canvas, bannerImg); // reuse sidebar layout
+    canvas.height = 900;
+    drawRectangleMockup(ctx, canvas, bannerImg, 300, 600);
   } else if (key === "970x250") {
     canvas.width = 1100;
     canvas.height = 600;
@@ -315,18 +301,18 @@ interface SuiteBanner {
   score?: number;
 }
 
-/** Placement positions for standard formats on a combined news site mockup */
+/** Placement positions — designed for a 1400x1200 canvas so nothing clips */
 const SUITE_PLACEMENTS: Record<string, { x: number; y: number; w: number; h: number; label: string }> = {
-  "728x90":  { x: 336, y: 56,  w: 728, h: 90,  label: "Leaderboard" },
-  "468x60":  { x: 466, y: 56,  w: 468, h: 60,  label: "Full Banner" },
-  "970x250": { x: 215, y: 56,  w: 970, h: 250, label: "Billboard" },
-  "300x250": { x: 1060, y: 170, w: 300, h: 250, label: "Rectangle" },
-  "336x280": { x: 1060, y: 170, w: 336, h: 280, label: "Lg Rectangle" },
-  "160x600": { x: 1220, y: 170, w: 160, h: 600, label: "Skyscraper" },
-  "300x600": { x: 1060, y: 450, w: 300, h: 600, label: "Half Page" },
-  "320x50":  { x: 40,  y: 780, w: 320, h: 50,  label: "Mobile Banner" },
-  "320x100": { x: 40,  y: 760, w: 320, h: 100, label: "Lg Mobile" },
-  "250x250": { x: 1060, y: 170, w: 250, h: 250, label: "Square" },
+  "728x90":  { x: 136, y: 58,   w: 728, h: 90,  label: "Leaderboard" },
+  "468x60":  { x: 266, y: 58,   w: 468, h: 60,  label: "Full Banner" },
+  "970x250": { x: 15,  y: 58,   w: 970, h: 250, label: "Billboard" },
+  "300x250": { x: 1040, y: 180, w: 300, h: 250, label: "Rectangle" },
+  "336x280": { x: 1040, y: 180, w: 336, h: 280, label: "Lg Rectangle" },
+  "160x600": { x: 1040, y: 460, w: 160, h: 600, label: "Skyscraper" },
+  "300x600": { x: 1040, y: 460, w: 300, h: 600, label: "Half Page" },
+  "320x50":  { x: 140, y: 1080, w: 320, h: 50,  label: "Mobile Banner" },
+  "320x100": { x: 140, y: 1060, w: 320, h: 100, label: "Lg Mobile" },
+  "250x250": { x: 1040, y: 180, w: 250, h: 250, label: "Square" },
 };
 
 const STANDARD_FORMATS = ["728x90", "300x250", "160x600", "320x50"];
@@ -334,14 +320,19 @@ const STANDARD_FORMATS = ["728x90", "300x250", "160x600", "320x50"];
 export async function generateSuiteMockup(
   banners: SuiteBanner[]
 ): Promise<string> {
+  // Calculate required height based on what's in the suite
+  const placedKeys = banners.map((b) => b.format?.key ?? "").filter(Boolean);
+  const hasTallRight = placedKeys.some((k) => ["160x600", "300x600"].includes(k));
+  const canvasH = hasTallRight ? 1120 : 950;
+
   const canvas = document.createElement("canvas");
   canvas.width = 1400;
-  canvas.height = 900;
+  canvas.height = canvasH + 50; // +50 for legend bar
   const ctx = canvas.getContext("2d")!;
 
   // White page bg
   ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, 1400, 900);
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   // Nav bar
   ctx.fillStyle = "#f8f9fa";
@@ -373,57 +364,49 @@ export async function generateSuiteMockup(
   ctx.fillStyle = "#e9ecef";
   ctx.fillRect(1040, 56, 1, 844);
 
-  // Load all banner images in parallel before drawing anything
-  const loaded = await Promise.all(
-    banners.map(async (banner) => {
-      const key = banner.format?.key ?? "";
-      const placement = SUITE_PLACEMENTS[key];
-      if (!placement) return null;
-      const img = await loadImage(URL.createObjectURL(banner.file));
-      return { banner, key, placement, img };
-    })
-  );
-  const validLoaded = loaded.filter((x): x is NonNullable<typeof x> => x !== null);
+  // Placed formats (keyed set)
+  const placedKeySet = new Set<string>();
 
-  // Pass 1: draw all banner images (preserving aspect ratio), record actual drawn bounds
-  const placedKeys = new Set<string>();
-  const drawnBounds: { x: number; y: number; w: number; h: number }[] = [];
-  for (const { key, placement, img } of validLoaded) {
-    const bounds = drawBannerPreserveRatio(ctx, img, placement.x, placement.y, placement.w, placement.h);
-    drawnBounds.push(bounds);
-    placedKeys.add(key);
-  }
+  // Draw each banner
+  let idx = 1;
+  for (const banner of banners) {
+    const key = banner.format?.key ?? "";
+    const placement = SUITE_PLACEMENTS[key];
+    if (!placement) continue;
 
-  // Pass 2: draw borders, "Ad" labels, and numbered circles on top of all images
-  for (let i = 0; i < validLoaded.length; i++) {
-    const bounds = drawnBounds[i];
-    const idx = i + 1;
+    const img = await loadImage(URL.createObjectURL(banner.file));
+    ctx.drawImage(img, placement.x, placement.y, placement.w, placement.h);
 
-    // "Ad" label with dark bg + white text
-    drawAdLabelSuite(ctx, bounds.x, bounds.y);
-
-    // Red dashed border using actual drawn bounds
-    ctx.strokeStyle = "rgba(255, 50, 50, 0.8)";
-    ctx.lineWidth = 2;
-    ctx.setLineDash([4, 3]);
-    ctx.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
+    // Red dashed border
+    ctx.strokeStyle = "rgba(239,68,68,0.5)";
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([5, 3]);
+    ctx.strokeRect(placement.x, placement.y, placement.w, placement.h);
     ctx.setLineDash([]);
+
+    // "Ad" label
+    ctx.fillStyle = "#adb5bd";
+    ctx.font = "10px sans-serif";
+    ctx.fillText("Ad", placement.x + 2, placement.y - 3);
 
     // Numbered circle
     ctx.fillStyle = "#6366f1";
     ctx.beginPath();
-    ctx.arc(bounds.x + bounds.w - 10, bounds.y + 10, 10, 0, Math.PI * 2);
+    ctx.arc(placement.x + placement.w - 10, placement.y + 10, 10, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = "#ffffff";
     ctx.font = "bold 10px sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText(String(idx), bounds.x + bounds.w - 10, bounds.y + 14);
+    ctx.fillText(String(idx), placement.x + placement.w - 10, placement.y + 14);
     ctx.textAlign = "start";
+
+    placedKeySet.add(key);
+    idx++;
   }
 
   // Draw missing format placeholders
   for (const stdKey of STANDARD_FORMATS) {
-    if (placedKeys.has(stdKey)) continue;
+    if (placedKeySet.has(stdKey)) continue;
     const placement = SUITE_PLACEMENTS[stdKey];
     if (!placement) continue;
 
@@ -440,12 +423,13 @@ export async function generateSuiteMockup(
     ctx.textAlign = "start";
   }
 
-  // Legend bar at bottom
+  // Legend bar at very bottom of canvas
+  const legendY = canvas.height - 50;
   ctx.fillStyle = "#18181b";
-  ctx.fillRect(0, 860, 1400, 40);
+  ctx.fillRect(0, legendY, 1400, 50);
   ctx.fillStyle = "#a1a1aa";
   ctx.font = "12px sans-serif";
-  ctx.fillText(`${banners.length} banner${banners.length > 1 ? "s" : ""} in suite`, 20, 884);
+  ctx.fillText(`${banners.length} banner${banners.length > 1 ? "s" : ""} in suite`, 20, legendY + 24);
 
   let lx = 220;
   for (const banner of banners) {
@@ -453,7 +437,7 @@ export async function generateSuiteMockup(
     const sc = banner.score != null ? ` ${banner.score}/10` : "";
     ctx.fillStyle = "#52525b";
     ctx.font = "11px sans-serif";
-    ctx.fillText(`${label}${sc}`, lx, 884);
+    ctx.fillText(`${label}${sc}`, lx, legendY + 24);
     lx += ctx.measureText(`${label}${sc}`).width + 20;
   }
 
