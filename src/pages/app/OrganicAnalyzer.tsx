@@ -1,8 +1,8 @@
 // src/pages/app/OrganicAnalyzer.tsx
 import { Helmet } from 'react-helmet-async';
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useOutletContext } from "react-router-dom";
-import { TrendingUp, RotateCcw } from "lucide-react";
+import { useOutletContext, useNavigate } from "react-router-dom";
+import { TrendingUp, RotateCcw, AlertCircle } from "lucide-react";
 import { AnalyzerView } from "../../components/AnalyzerView";
 import { ScoreCard } from "../../components/ScoreCard";
 import { VideoDropzone } from "../../components/VideoDropzone";
@@ -145,6 +145,9 @@ export default function OrganicAnalyzer() {
     addSwipeItem, canAnalyze, isPro, increment, FREE_LIMIT,
     onUpgradeRequired, registerCallbacks,
   } = useOutletContext<AppSharedContext>();
+  const navigate = useNavigate();
+
+  const [imageMismatch, setImageMismatch] = useState(false);
 
   // ── User context for personalized AI ──────────────────────────────────────
   const [userContext, setUserContext] = useState<string>('')
@@ -200,7 +203,16 @@ export default function OrganicAnalyzer() {
     setRightTab("analysis");
     setSecondEyeOutput(null);
     setSecondEyeLoading(false);
+    setImageMismatch(false);
   }, [reset]);
+
+  const handleFileWithCheck = useCallback((f: File | null) => {
+    if (!f) { handleReset(); return; }
+    setImageMismatch(false);
+    const isImage = f.type.startsWith("image/") || [".jpg", ".jpeg", ".png", ".webp"].some(e => f.name.toLowerCase().endsWith(e));
+    if (isImage) { setImageMismatch(true); return; }
+    setFile(f); reset();
+  }, [handleReset, reset]);
 
   useEffect(() => {
     if (status === "complete") setAnalysisCompletedAt(new Date());
@@ -391,12 +403,36 @@ export default function OrganicAnalyzer() {
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <IntentHeader platform={platform} setPlatform={setPlatform} secondEye={secondEye} setSecondEye={setSecondEye} />
         <div className="flex-1 overflow-auto">
-          {status === "idle" && !loadedEntry ? (
+          {/* Image mismatch error */}
+          {imageMismatch && (
+            <div style={{ display: "flex", justifyContent: "center", padding: "80px 24px" }}>
+              <div style={{ maxWidth: 420, padding: 20, borderRadius: 12, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                  <AlertCircle size={16} color="#ef4444" />
+                  <span style={{ fontSize: 14, fontWeight: 600, color: "#f4f4f5" }}>Organic analysis is for video content</span>
+                </div>
+                <p style={{ fontSize: 13, color: "#a1a1aa", margin: "0 0 16px", lineHeight: 1.5 }}>
+                  Static images can't be analyzed for retention curves, algorithm signals, or platform performance. Use the Paid Ad analyzer for static images.
+                </p>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button type="button" onClick={() => { setImageMismatch(false); navigate("/app/paid"); }}
+                    style={{ flex: 1, height: 40, borderRadius: 9999, border: "none", background: "#6366f1", color: "white", fontSize: 13, fontWeight: 500, cursor: "pointer" }}>
+                    Go to Paid Ad
+                  </button>
+                  <button type="button" onClick={() => setImageMismatch(false)}
+                    style={{ height: 40, padding: "0 16px", borderRadius: 9999, border: "1px solid rgba(255,255,255,0.08)", background: "transparent", color: "#71717a", fontSize: 13, cursor: "pointer" }}>
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          {!imageMismatch && status === "idle" && !loadedEntry ? (
             <OrganicEmptyState
-              onFileSelect={(f) => { if (!f) { handleReset(); return; } setFile(f); reset(); }}
+              onFileSelect={(f) => handleFileWithCheck(f)}
               onUrlSubmit={async (u) => { setUrlInput(u); await importFromUrl(u); }}
             />
-          ) : (
+          ) : !imageMismatch ? (
             <div className="relative px-4 py-6 md:px-8 min-h-full flex flex-col">
               <div className="pointer-events-none absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-emerald-600/10 blur-[120px]" />
               <div className="pointer-events-none absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-violet-600/[0.08] blur-[100px]" />
@@ -408,7 +444,7 @@ export default function OrganicAnalyzer() {
                   result={activeResult}
                   error={error}
                   thumbnailDataUrl={activeResult?.thumbnailDataUrl}
-                  onFileSelect={(f) => { if (!f) { handleReset(); return; } setFile(f); reset(); }}
+                  onFileSelect={(f) => handleFileWithCheck(f)}
                   onUrlSubmit={async (u) => { setUrlInput(u); await importFromUrl(u); }}
                   onAnalyze={handleAnalyze}
                   onReset={handleReset}
@@ -424,7 +460,7 @@ export default function OrganicAnalyzer() {
                 />
               </div>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
 
