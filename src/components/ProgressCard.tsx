@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useThumbnail } from "../hooks/useThumbnail";
+import { sanitizeFileName } from "../utils/sanitize";
 
 interface ProgressCardProps {
   file: File;
@@ -65,9 +66,9 @@ export function ProgressCard({ file, status, onCancel }: ProgressCardProps) {
               transition={{ duration: 0.4 }}
             >
               {isImage ? (
-                <img src={displayUrl} alt={file.name} style={{ width: "100%", maxHeight: 440, objectFit: "contain", display: "block" }} />
+                <img src={displayUrl} alt={sanitizeFileName(file.name)} style={{ width: "100%", maxHeight: 440, objectFit: "contain", display: "block" }} />
               ) : (
-                <img src={displayUrl} alt={file.name} style={{ width: "100%", maxHeight: 440, objectFit: "cover", display: "block" }} />
+                <img src={displayUrl} alt={sanitizeFileName(file.name)} style={{ width: "100%", maxHeight: 440, objectFit: "cover", display: "block" }} />
               )}
             </motion.div>
           ) : (
@@ -93,7 +94,7 @@ export function ProgressCard({ file, status, onCancel }: ProgressCardProps) {
         {/* File info */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 10, padding: "0 4px" }}>
           <span style={{ fontSize: 12, color: "#52525b", fontFamily: "var(--font-mono, monospace)" }}>
-            {file.name.length > 30 ? file.name.slice(0, 27) + "..." : file.name} · {(file.size / 1024 / 1024).toFixed(1)} MB
+            {(() => { const n = sanitizeFileName(file.name); return n.length > 30 ? n.slice(0, 27) + "..." : n; })()} · {(file.size / 1024 / 1024).toFixed(1)} MB
           </span>
           <button onClick={onCancel} style={{ fontSize: 11, color: "#52525b", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
             Cancel

@@ -1,5 +1,6 @@
 import { useMemo, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
+import { sanitizeFileName } from "../utils/sanitize";
 import { Copy, FileDown, Share2 } from "lucide-react";
 
 interface ReportCardsProps {
@@ -57,7 +58,7 @@ export function ReportCards({ file, markdown, thumbnailDataUrl, onCopy, onExport
             <div style={{ display: "flex", justifyContent: "center" }}>
               <img
                 src={fileUrl}
-                alt={file.name}
+                alt={sanitizeFileName(file.name)}
                 style={{
                   maxWidth: "100%",
                   maxHeight: 600,
@@ -77,7 +78,7 @@ export function ReportCards({ file, markdown, thumbnailDataUrl, onCopy, onExport
             />
           )}
           <p className="text-xs text-zinc-500 font-mono mt-2">
-            {file.name} · {(file.size / 1024 / 1024).toFixed(1)} MB
+            {sanitizeFileName(file.name)} · {(file.size / 1024 / 1024).toFixed(1)} MB
           </p>
         </div>
       )}

@@ -1,5 +1,6 @@
 import { useRef, useState, useCallback, useEffect, type RefObject } from "react";
 import { Upload, Video, Image } from "lucide-react";
+import { sanitizeFileName } from "../utils/sanitize";
 
 interface VideoDropzoneProps {
   onFileSelect: (file: File | null) => void;
@@ -221,7 +222,7 @@ export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, 
         {fileIsImage ? (
           <img
             src={videoUrl ?? undefined}
-            alt={file.name}
+            alt={sanitizeFileName(file.name)}
             className="w-full block max-h-[320px] object-contain"
           />
         ) : (
@@ -241,7 +242,7 @@ export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, 
         <div className="flex items-center justify-between px-3 py-2 bg-white/5 rounded-xl border border-white/5">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-            <span className="text-xs font-mono text-zinc-400 truncate">{file.name}</span>
+            <span className="text-xs font-mono text-zinc-400 truncate">{sanitizeFileName(file.name)}</span>
           </div>
           <div className="flex gap-3 shrink-0 ml-3">
             {!fileIsImage && duration !== null && (

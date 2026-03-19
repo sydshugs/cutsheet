@@ -12,6 +12,8 @@ import { CompetitorResultPanel } from "../../components/CompetitorResult";
 import { analyzeCompetitor, type CompetitorResult } from "../../services/competitorService";
 import type { AppSharedContext } from "../../components/AppLayout";
 
+import { sanitizeSearchQuery, sanitizeFileName } from "../../utils/sanitize";
+
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY ?? "";
 const META_TOKEN = import.meta.env.VITE_META_ACCESS_TOKEN ?? "";
 
@@ -77,14 +79,14 @@ function FilePreview({ file, onRemove }: { file: File; onRemove: () => void }) {
     <div>
       <div style={{ borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)", overflow: "hidden", background: "#09090b", display: "flex", justifyContent: "center", maxHeight: 240 }}>
         {isImage
-          ? <img src={url} alt={file.name} style={{ maxWidth: "100%", maxHeight: 240, objectFit: "contain" }} />
+          ? <img src={url} alt={sanitizeFileName(file.name)} style={{ maxWidth: "100%", maxHeight: 240, objectFit: "contain" }} />
           : <video src={url} style={{ maxWidth: "100%", maxHeight: 240, objectFit: "contain" }} />
         }
       </div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <span style={{ fontSize: 12, color: "#a1a1aa", fontFamily: "var(--font-mono, monospace)" }}>
-            {file.name.length > 30 ? file.name.slice(0, 27) + "..." : file.name}
+            {(() => { const n = sanitizeFileName(file.name); return n.length > 30 ? n.slice(0, 27) + "..." : n; })()}
           </span>
           <span style={{ fontSize: 10, color: "#52525b", background: "rgba(255,255,255,0.04)", borderRadius: 9999, padding: "2px 8px" }}>
             {file.type.startsWith("video/") ? "Video" : "Static"}
@@ -140,13 +142,18 @@ function MetaSearch({ onFileSelect }: { onFileSelect: (f: File) => void }) {
   const [hasSearched, setHasSearched] = useState(false);
 
   const handleSearch = async () => {
-    if (!query.trim() || searching || !META_TOKEN) return;
+    const cleanQuery = sanitizeSearchQuery(query);
+    if (!cleanQuery || cleanQuery.length < 2) {
+      setSearchError("Enter at least 2 characters to search");
+      return;
+    }
+    if (searching || !META_TOKEN) return;
     setSearching(true); setSearchError(null); setResults([]); setHasSearched(true);
     try {
       const url = new URL("https://graph.facebook.com/v19.0/ads_archive");
       url.searchParams.append("access_token", META_TOKEN);
       url.searchParams.append("ad_reached_countries", "US");
-      url.searchParams.append("search_terms", query.trim());
+      url.searchParams.append("search_terms", cleanQuery);
       url.searchParams.append("ad_type", "ALL");
       url.searchParams.append("publisher_platforms", "facebook");
       url.searchParams.append("publisher_platforms", "instagram");
@@ -201,11 +208,20 @@ function MetaSearch({ onFileSelect }: { onFileSelect: (f: File) => void }) {
   return (
     <div>
       <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
-        <input type="text" value={query} onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }}
-          placeholder="Search a brand — e.g. Nike, Cloaked, SKIMS..."
-          style={{ flex: 1, height: 40, padding: "0 14px", fontSize: 13, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, color: "#f4f4f5", outline: "none" }}
-        />
+        <div style={{ position: "relative", flex: 1 }}>
+          <input type="text" value={query}
+            onChange={(e) => setQuery(e.target.value.slice(0, 100))}
+            onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }}
+            maxLength={100}
+            placeholder="Search a brand — e.g. Nike, Cloaked, SKIMS..."
+            style={{ width: "100%", height: 40, padding: "0 14px", paddingRight: query.length >= 80 ? 52 : 14, fontSize: 13, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, color: "#f4f4f5", outline: "none", boxSizing: "border-box" }}
+          />
+          {query.length >= 80 && (
+            <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", fontSize: 10, color: query.length >= 95 ? "#f59e0b" : "#52525b", pointerEvents: "none" }}>
+              {query.length}/100
+            </span>
+          )}
+        </div>
         <button type="button" onClick={handleSearch} disabled={searching || !query.trim()}
           style={{ height: 40, padding: "0 16px", borderRadius: 10, border: "none", background: "#6366f1", color: "white", fontSize: 13, fontWeight: 500, cursor: searching ? "wait" : "pointer", opacity: !query.trim() ? 0.5 : 1, display: "flex", alignItems: "center", gap: 6 }}>
           <Search size={14} />{searching ? "Searching..." : "Search"}
@@ -288,7 +304,6 @@ export default function CompetitorAnalyzer() {
   const [result, setResult] = useState<CompetitorResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showManualUpload, setShowManualUpload] = useState(false);
-  const [adTab, setAdTab] = useState<"meta" | "tiktok">("meta");
 
   const handleReset = useCallback(() => {
     setStep(0); setYourFile(null); setCompetitorFile(null);
@@ -387,82 +402,29 @@ export default function CompetitorAnalyzer() {
                   </>
                 ) : (
                   <>
-                    {/* Tab pills: Meta | TikTok */}
-                    <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
-                      {(["meta", "tiktok"] as const).map((tab) => (
-                        <button
-                          key={tab}
-                          type="button"
-                          onClick={() => setAdTab(tab)}
-                          style={{
-                            height: 28, padding: "0 14px", borderRadius: 9999, fontSize: 12,
-                            cursor: "pointer", fontWeight: 500, transition: "all 150ms",
-                            background: adTab === tab ? "rgba(99,102,241,0.1)" : "rgba(255,255,255,0.03)",
-                            border: `1px solid ${adTab === tab ? "#6366f1" : "rgba(255,255,255,0.08)"}`,
-                            color: adTab === tab ? "#f4f4f5" : "#71717a",
-                          }}
-                        >
-                          {tab === "meta" ? "Meta" : "TikTok"}
-                        </button>
-                      ))}
+                    <MetaSearch onFileSelect={(f) => { setCompetitorFile(f); setStep(3); }} />
+
+                    {/* TikTok Creative Center */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "16px 0 12px" }}>
+                      <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
+                      <span style={{ fontSize: 11, color: "#52525b" }}>or</span>
+                      <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
                     </div>
 
-                    {/* Meta tab */}
-                    {adTab === "meta" && (
-                      <MetaSearch onFileSelect={(f) => { setCompetitorFile(f); setStep(3); }} />
-                    )}
-
-                    {/* TikTok tab */}
-                    {adTab === "tiktok" && (
-                      <div style={{
-                        background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
-                        borderRadius: 12, padding: 16, marginBottom: 12,
-                      }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-                          <Music2 size={14} color="#71717a" />
-                          <span style={{ fontSize: 13, fontWeight: 600, color: "#f4f4f5" }}>Find TikTok competitor ads</span>
-                        </div>
-                        <p style={{ fontSize: 13, color: "#71717a", lineHeight: 1.6, margin: "0 0 12px" }}>
-                          TikTok's Creative Center shows the top performing ads on the platform right now. Find a competitor's ad, download it, then upload it below.
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => window.open("https://ads.tiktok.com/business/creativecenter/inspiration/topads/pc/en", "_blank")}
-                          style={{
-                            width: "100%", display: "flex", alignItems: "center", justifyContent: "center",
-                            background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.3)",
-                            color: "#818cf8", fontSize: 13, fontWeight: 500,
-                            borderRadius: 9999, padding: "8px 16px", cursor: "pointer", marginBottom: 10,
-                            transition: "all 150ms",
-                          }}
-                        >
-                          Open TikTok Creative Center ↗
-                        </button>
-                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center" }}>
-                          {["Search by brand", "Filter by industry", "Download video"].map((tip) => (
-                            <span key={tip} style={{
-                              fontSize: 11, color: "#52525b",
-                              background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
-                              borderRadius: 9999, padding: "3px 10px",
-                            }}>
-                              {tip}
-                            </span>
-                          ))}
-                        </div>
+                    <div onClick={() => window.open("https://ads.tiktok.com/business/creativecenter/inspiration/topads", "_blank")}
+                      style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "10px 14px", marginBottom: 10, display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", transition: "all 150ms" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(99,102,241,0.2)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <Music2 size={14} color="#71717a" /><span style={{ fontSize: 13, color: "#a1a1aa" }}>Find TikTok ads</span>
                       </div>
-                    )}
-
-                    {/* Manual upload toggle — shared across both tabs */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "12px 0 8px" }}>
-                      <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
-                      <span style={{ fontSize: 11, color: "#52525b" }}>
-                        {adTab === "tiktok" ? "then upload it here" : "or upload manually"}
-                      </span>
-                      <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
+                      <span style={{ fontSize: 12, color: "#6366f1" }}>Creative Center ↗</span>
                     </div>
+
+                    {/* Manual upload toggle */}
                     <button type="button" onClick={() => setShowManualUpload(!showManualUpload)}
-                      style={{ background: "none", border: "none", color: "#52525b", fontSize: 12, cursor: "pointer", width: "100%", textAlign: "center", padding: "4px 0 8px" }}>
-                      {showManualUpload ? "Hide" : "Upload file"}
+                      style={{ background: "none", border: "none", color: "#52525b", fontSize: 12, cursor: "pointer", width: "100%", textAlign: "center", padding: "8px 0" }}>
+                      {showManualUpload ? "Hide manual upload" : "Upload manually instead"}
                     </button>
                     {showManualUpload && <DropZone onFileSelect={(f) => { setCompetitorFile(f); setStep(3); }} height={160} />}
                   </>

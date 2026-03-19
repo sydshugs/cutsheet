@@ -4,6 +4,7 @@ import { Helmet } from "react-helmet-async";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useOutletContext } from "react-router-dom";
 import { Monitor, Upload, Eye, Download, X, Plus, CheckCircle } from "lucide-react";
+import { sanitizeFileName } from "../../utils/sanitize";
 import { SuiteCohesionCard } from "../../components/SuiteCohesionCard";
 import { DisplayScoreCard, type DisplayResult } from "../../components/DisplayScoreCard";
 import { getImageDimensions, detectDisplayFormat, getFormatGuidance, type DisplayFormat } from "../../utils/displayAdUtils";
@@ -450,7 +451,7 @@ Return JSON only — no prose:
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <span style={{ fontSize: 12, color: "#a1a1aa", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                {b.file.name.length > 24 ? b.file.name.slice(0, 21) + "..." : b.file.name}
+                                {(() => { const n = sanitizeFileName(b.file.name); return n.length > 24 ? n.slice(0, 21) + "..." : n; })()}
                               </span>
                               <span style={{
                                 fontSize: 10,
@@ -660,12 +661,12 @@ Return JSON only — no prose:
               {file && previewUrl && status !== "complete" && (
                 <div style={{ marginBottom: 16 }}>
                   <div style={{ display: "flex", justifyContent: "center", background: "#09090b", borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)", padding: 16 }}>
-                    <img src={previewUrl} alt={file.name} style={{ maxWidth: "100%", maxHeight: 400, objectFit: "contain" }} />
+                    <img src={previewUrl} alt={sanitizeFileName(file.name)} style={{ maxWidth: "100%", maxHeight: 400, objectFit: "contain" }} />
                   </div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span style={{ fontSize: 12, color: "#a1a1aa", fontFamily: "var(--font-mono, monospace)" }}>
-                        {file.name.length > 35 ? file.name.slice(0, 32) + "..." : file.name}
+                        {(() => { const n = sanitizeFileName(file.name); return n.length > 35 ? n.slice(0, 32) + "..." : n; })()}
                       </span>
                       {dimensions && (
                         <span style={{ fontSize: 10, color: "#52525b" }}>{dimensions.width}×{dimensions.height}</span>

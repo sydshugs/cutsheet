@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
+import { sanitizeForAI, sanitizeText } from "../utils/sanitize";
 
 // ─── STEP DATA ──────────────────────────────────────────────────────────────
 
@@ -150,12 +151,16 @@ export default function Welcome() {
   const saveProfile = async (nicheVal: string, platformVal: string) => {
     const { data: { user: u } } = await supabase.auth.getUser();
     if (!u) return;
-    const finalNiche = nicheVal === "Other" && nicheCustom.trim() ? nicheCustom.trim() : nicheVal;
+    const rawNiche = nicheVal === "Other" && nicheCustom.trim() ? nicheCustom.trim() : nicheVal;
+    // Sanitize before writing to DB — prevents prompt injection if data is later read into AI prompts
+    const finalNiche    = sanitizeForAI(rawNiche).slice(0, 100) || "Other";
+    const finalPlatform = sanitizeText(platformVal).slice(0, 50);
+    const finalIntent   = sanitizeText(intent).slice(0, 50);
     await supabase.from("profiles").upsert({
       id: u.id,
-      intent,
+      intent: finalIntent,
       niche: finalNiche,
-      platform: platformVal,
+      platform: finalPlatform,
       onboarding_completed: true,
     });
   };
@@ -255,13 +260,20 @@ export default function Welcome() {
                   {/* Custom niche input for "Other" */}
                   {niche === "Other" && (
                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="w-full max-w-[360px] flex flex-col gap-2">
-                      <input
-                        type="text" value={nicheCustom} onChange={(e) => setNicheCustom(e.target.value)}
-                        placeholder="Tell us what you do (optional)"
-                        className="w-full h-10 px-4 rounded-xl text-sm outline-none"
-                        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#f4f4f5" }}
-                        autoFocus
-                      />
+                      <div style={{ position: "relative" }}>
+                        <input
+                          type="text" value={nicheCustom}
+                          onChange={(e) => setNicheCustom(e.target.value.slice(0, 100))}
+                          maxLength={100}
+                          placeholder="Tell us what you do (optional)"
+                          className="w-full h-10 px-4 rounded-xl text-sm outline-none"
+                          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#f4f4f5", paddingRight: 48 }}
+                          autoFocus
+                        />
+                        <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", fontSize: 11, color: nicheCustom.length >= 90 ? "#f59e0b" : "#52525b", pointerEvents: "none" }}>
+                          {nicheCustom.length}/100
+                        </span>
+                      </div>
                       <button type="button" onClick={() => { if (intent === "display") { setPlatform("Google Display"); handleFinish("Other", "Google Display"); } else { setStep(3); } }}
                         className="w-full h-10 rounded-full text-sm font-medium" style={{ background: "#6366f1", color: "white", border: "none", cursor: "pointer" }}>
                         Continue <ArrowRight size={14} style={{ display: "inline", verticalAlign: "middle" }} />

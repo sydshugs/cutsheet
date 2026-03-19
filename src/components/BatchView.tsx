@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import { Trophy, Upload, Zap, X, ChevronDown } from "lucide-react";
+import { sanitizeFileName } from "../utils/sanitize";
 import { AnimatePresence, motion } from "framer-motion";
 import { analyzeVideo, recalculateOverallScore, type AnalysisResult } from "../services/analyzerService";
 import { ScoreCard } from "./ScoreCard";
@@ -222,7 +223,7 @@ export function BatchView({ apiKey, addHistoryEntry, t, canAnalyze, isPro, incre
                     }
                   </div>
                   <span style={{ fontSize: 12, color: "#a1a1aa", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {item.file.name.length > 28 ? item.file.name.slice(0, 25) + "..." : item.file.name}
+                    {(() => { const n = sanitizeFileName(item.file.name); return n.length > 28 ? n.slice(0, 25) + "..." : n; })()}
                   </span>
                   <span style={{ fontSize: 10, color: item.format === "video" ? "#818cf8" : "#f59e0b", background: item.format === "video" ? "rgba(99,102,241,0.1)" : "rgba(245,158,11,0.1)", borderRadius: 9999, padding: "1px 6px" }}>
                     {item.format === "video" ? "Video" : "Static"}
