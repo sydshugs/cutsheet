@@ -1,8 +1,13 @@
-// usage.ts — Free tier usage count and Pro status (localStorage)
+// usage.ts — Subscription tier and free-tier usage count (localStorage)
 
 export const USAGE_KEY = "cutsheet-usage-count";
-export const PRO_KEY = "cutsheet-pro";
+export const PRO_KEY = "cutsheet-pro";   // legacy — kept for backwards compat reads
+export const TIER_KEY = "cutsheet-tier";
 const FREE_LIMIT = 3;
+
+export type SubscriptionTier = 'free' | 'pro' | 'team';
+
+// ─── USAGE COUNT (free tier) ──────────────────────────────────────────────────
 
 export function getUsageCount(): number {
   try {
@@ -23,23 +28,48 @@ export function incrementUsage(): number {
   return next;
 }
 
-export function isPro(): boolean {
+// ─── SUBSCRIPTION TIER ───────────────────────────────────────────────────────
+
+export function getSubscriptionTier(): SubscriptionTier {
   try {
-    if (typeof import.meta !== "undefined" && import.meta.env?.DEV) return true;
-    return localStorage.getItem(PRO_KEY) === "true";
+    // DEV bypass — treat as Pro so all features work locally
+    if (typeof import.meta !== "undefined" && import.meta.env?.DEV) return 'pro';
+    const stored = localStorage.getItem(TIER_KEY) as SubscriptionTier | null;
+    if (stored === 'pro' || stored === 'team') return stored;
+    // Backwards compat: legacy PRO_KEY
+    if (localStorage.getItem(PRO_KEY) === 'true') return 'pro';
+    return 'free';
   } catch {
-    return false;
+    return 'free';
   }
 }
 
-export function setPro(value: boolean): void {
+export function setSubscriptionTier(tier: SubscriptionTier): void {
   try {
-    if (value) {
-      localStorage.setItem(PRO_KEY, "true");
+    localStorage.setItem(TIER_KEY, tier);
+    // Keep legacy PRO_KEY in sync
+    if (tier === 'pro' || tier === 'team') {
+      localStorage.setItem(PRO_KEY, 'true');
     } else {
       localStorage.removeItem(PRO_KEY);
     }
   } catch {}
+}
+
+/** @deprecated Use setSubscriptionTier */
+export function setPro(value: boolean): void {
+  setSubscriptionTier(value ? 'pro' : 'free');
+}
+
+// ─── DERIVED HELPERS ─────────────────────────────────────────────────────────
+
+export function isPro(): boolean {
+  const t = getSubscriptionTier();
+  return t === 'pro' || t === 'team';
+}
+
+export function isTeam(): boolean {
+  return getSubscriptionTier() === 'team';
 }
 
 export function canAnalyze(): boolean {
