@@ -2,6 +2,8 @@
 // Step 1: Claude Sonnet → image generation prompt
 // Step 2: Gemini imagen → generated ad image (fallback: Claude visual brief)
 
+export const maxDuration = 60; // seconds — image gen takes 15-20s
+
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Anthropic from "@anthropic-ai/sdk";
 import { GoogleGenAI } from "@google/genai";
