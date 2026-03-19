@@ -26,6 +26,7 @@ export interface PolicyCheckResult {
 
 export interface PolicyCheckParams {
   mediaUrl?: string;
+  mediaDataUrl?: string;
   adCopy?: string;
   platform: "meta" | "tiktok" | "both";
   adType: "video" | "static" | "display";

@@ -146,15 +146,25 @@ export default function PolicyCheck() {
     setResult(null);
 
     try {
+      // Convert file to base64 data URL so the server can run visual scan
+      let mediaDataUrl: string | undefined;
+      if (file) {
+        mediaDataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      }
+
       const params: PolicyCheckParams = {
         platform,
         adType,
         niche: niche.trim(),
         adCopy: adCopy.trim() || undefined,
+        mediaDataUrl,
       };
 
-      // If file is provided, we'd ideally upload to a temp URL; for now pass copy only
-      // (Gemini visual scan runs server-side only when mediaUrl is present)
       if (!file && !adCopy.trim()) {
         setError("Upload a creative or paste your ad copy for a text-only check");
         setLoading(false);

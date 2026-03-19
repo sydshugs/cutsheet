@@ -13,6 +13,7 @@ const RATE = { freeLimit: 3, proLimit: 9999, windowSeconds: 86400 };
 
 interface PolicyCheckRequest {
   mediaUrl?: string;
+  mediaDataUrl?: string;
   adCopy?: string;
   platform: "meta" | "tiktok" | "both";
   adType: "video" | "static" | "display";
@@ -54,17 +55,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
   }
 
-  const { mediaUrl, adCopy, platform, adType, niche, existingAnalysis } =
+  const { mediaUrl, mediaDataUrl, adCopy, platform, adType, niche, existingAnalysis } =
     (req.body ?? {}) as PolicyCheckRequest;
 
   if (!platform || !adType || !niche) {
     return res.status(400).json({ error: "platform, adType, and niche are required" });
   }
 
-  // ── Step 1: Gemini visual scan (only if no existing analysis and media URL provided)
+  // ── Step 1: Gemini visual scan (only if no existing analysis and media provided)
   let geminiFindings = "";
 
-  if (!existingAnalysis && mediaUrl) {
+  // Resolve image data: either from data URL (client upload) or remote URL
+  const hasMedia = !existingAnalysis && (mediaDataUrl || mediaUrl);
+
+  if (hasMedia) {
     try {
       const geminiKey = process.env.GEMINI_API_KEY ?? process.env.VITE_GEMINI_API_KEY;
       if (geminiKey) {
@@ -100,22 +104,32 @@ Return findings as structured JSON:
   "overallRisk": "low" | "medium" | "high"
 }`;
 
-        // For URL-based media, use the fetch part approach
-        const imageResp = await fetch(mediaUrl);
-        if (imageResp.ok) {
-          const imageBuffer = await imageResp.arrayBuffer();
-          const base64 = Buffer.from(imageBuffer).toString("base64");
-          const contentType = imageResp.headers.get("content-type") || "image/jpeg";
+        let base64: string;
+        let contentType: string;
 
-          const geminiResult = await model.generateContent([
-            { inlineData: { mimeType: contentType, data: base64 } },
-            visualScanPrompt,
-          ]);
-          const raw = geminiResult.response.text();
-          const jsonMatch = raw.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            geminiFindings = `\n\nGEMINI VISUAL SCAN FINDINGS:\n${jsonMatch[0]}`;
-          }
+        if (mediaDataUrl) {
+          // Client sent base64 data URL: "data:image/png;base64,iVBOR..."
+          const match = mediaDataUrl.match(/^data:([^;]+);base64,(.+)$/);
+          if (!match) throw new Error("Invalid data URL format");
+          contentType = match[1];
+          base64 = match[2];
+        } else {
+          // Fetch from remote URL
+          const imageResp = await fetch(mediaUrl!);
+          if (!imageResp.ok) throw new Error(`Failed to fetch media: ${imageResp.status}`);
+          const imageBuffer = await imageResp.arrayBuffer();
+          base64 = Buffer.from(imageBuffer).toString("base64");
+          contentType = imageResp.headers.get("content-type") || "image/jpeg";
+        }
+
+        const geminiResult = await model.generateContent([
+          { inlineData: { mimeType: contentType, data: base64 } },
+          visualScanPrompt,
+        ]);
+        const raw = geminiResult.response.text();
+        const jsonMatch = raw.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          geminiFindings = `\n\nGEMINI VISUAL SCAN FINDINGS:\n${jsonMatch[0]}`;
         }
       }
     } catch {
