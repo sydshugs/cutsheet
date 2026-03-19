@@ -315,9 +315,12 @@ export default function OrganicAnalyzer() {
   // NOTE: handleAnalyze declared before the auto-analyze useEffect
   const handleAnalyze = useCallback(async () => {
     if (!file || isAnalyzing || !canAnalyze) return;
-    const { text: sessionMemory } = await getSessionMemory();
+    let sessionMemory = '';
+    try {
+      ({ text: sessionMemory } = await getSessionMemory());
+    } catch { /* non-critical — proceed without memory */ }
     sessionMemoryRef.current = sessionMemory;
-    await analyze(file, API_KEY, contextPrefix, userContext || undefined);
+    await analyze(file, API_KEY, contextPrefix, userContext || undefined, sessionMemory);
   }, [file, isAnalyzing, canAnalyze, analyze, contextPrefix]);
 
   useEffect(() => {

@@ -28,7 +28,7 @@ export async function getSessionMemory(): Promise<SessionMemorySummary> {
 
 function formatMemoryBlock(analyses: AnalysisRecord[]): string {
   const entries = analyses.map((a, i) => {
-    const scores = a.scores as Record<string, number>
+    const scores = (a.scores ?? {}) as Record<string, number>
     const weakAreas = Object.entries(scores)
       .filter(([key, val]) => key !== 'overall' && val <= 6)
       .map(([key, val]) => `${key}(${val})`)
@@ -67,8 +67,9 @@ function formatMemoryBlock(analyses: AnalysisRecord[]): string {
 function findRecurringWeaknesses(analyses: AnalysisRecord[]): string[] {
   const weakCounts: Record<string, number> = {}
   for (const a of analyses) {
-    const scores = a.scores as Record<string, number>
+    const scores = (a.scores ?? {}) as Record<string, number>
     for (const [key, val] of Object.entries(scores)) {
+      if (typeof val !== 'number') continue
       if (key !== 'overall' && val <= 6) {
         weakCounts[key] = (weakCounts[key] ?? 0) + 1
       }

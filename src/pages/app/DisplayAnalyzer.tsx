@@ -141,7 +141,10 @@ export default function DisplayAnalyzer() {
 
   const handleSuiteAnalyze = async () => {
     if (suiteBanners.length < 2 || !canAnalyze) return;
-    const { text: sessionMemory } = await getSessionMemory();
+    let sessionMemory = '';
+    try {
+      ({ text: sessionMemory } = await getSessionMemory());
+    } catch { /* non-critical — proceed without memory */ }
     sessionMemoryRef.current = sessionMemory;
     setSuiteStatus("analyzing");
     setSuiteCohesion(null);

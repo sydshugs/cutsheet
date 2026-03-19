@@ -1,5 +1,9 @@
 // api/_lib/sanitizeMemory.ts — Server-side sanitization for sessionMemory before prompt injection
 // Defense-in-depth: client sanitizes during assembly, server sanitizes before injection.
+//
+// NOTE: These regex patterns mirror src/utils/sanitize.ts::stripInjectionPatterns().
+// Server-side copy is intentional (different runtime: Node.js serverless vs browser).
+// If you add a new pattern, update BOTH locations.
 
 const MAX_MEMORY_LENGTH = 2000 // ~350 tokens, 3 analyses max
 
@@ -26,6 +30,8 @@ export function sanitizeSessionMemory(raw: unknown): string {
     // Strip fenced code blocks
     .replace(/```[\s\S]*?```/g, '')
     .replace(/`[^`]*`/g, '')
+    // Strip HTML tags
+    .replace(/<[^>]*>/g, '')
     .trim()
     .slice(0, MAX_MEMORY_LENGTH)
 
