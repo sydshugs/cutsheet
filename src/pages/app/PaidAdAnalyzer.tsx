@@ -312,7 +312,7 @@ export default function PaidAdAnalyzer() {
   const lastSavedRef = useRef<string | null>(null);
   const prevPlatformRef = useRef<Platform>(platform);
 
-  const { status, statusMessage, result, error, analyze, download, copy, reset } = useVideoAnalyzer();
+  const { status, statusMessage, result, error, analysisError, analyze, download, copy, reset } = useVideoAnalyzer();
   const thumbnailDataUrl = useThumbnail(file);
 
   const isAnalyzing = status === "uploading" || status === "processing";
@@ -748,6 +748,7 @@ export default function PaidAdAnalyzer() {
                   statusMessage={statusMessage || STATUS_COPY[status]}
                   result={activeResult}
                   error={error}
+                  analysisError={analysisError}
                   thumbnailDataUrl={activeResult?.thumbnailDataUrl}
                   onFileSelect={(f) => handleFileWithFormatCheck(f)}
                   onUrlSubmit={async (u) => { setUrlInput(u); await importFromUrl(u); }}

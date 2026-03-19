@@ -155,7 +155,7 @@ export default function OrganicAnalyzer() {
   const scorecardRef = useRef<HTMLDivElement | null>(null);
   const lastSavedRef = useRef<string | null>(null);
 
-  const { status, statusMessage, result, error, analyze, download, copy, reset } = useVideoAnalyzer();
+  const { status, statusMessage, result, error, analysisError, analyze, download, copy, reset } = useVideoAnalyzer();
   const thumbnailDataUrl = useThumbnail(file);
   const isAnalyzing = status === "uploading" || status === "processing";
 
@@ -415,6 +415,7 @@ export default function OrganicAnalyzer() {
                   statusMessage={statusMessage || STATUS_COPY[status]}
                   result={activeResult}
                   error={error}
+                  analysisError={analysisError}
                   thumbnailDataUrl={activeResult?.thumbnailDataUrl}
                   onFileSelect={(f) => handleFileWithCheck(f)}
                   onUrlSubmit={async (u) => { setUrlInput(u); await importFromUrl(u); }}
