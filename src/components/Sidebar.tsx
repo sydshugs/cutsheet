@@ -33,7 +33,7 @@ interface SidebarProps {
 const ANALYZE: NavItem[] = [
   { label: "Paid Ad",  sublabel: "Meta, TikTok, Google",  path: "/app/paid",     icon: Zap },
   { label: "Organic",  sublabel: "TikTok, Reels, Shorts", path: "/app/organic",  icon: TrendingUp },
-  { label: "Display",  sublabel: "Google, affiliate",     path: "/app/display",  icon: Monitor, comingSoon: true },
+  { label: "Display",  sublabel: "Google, affiliate",     path: "/app/display",  icon: Monitor },
 ];
 
 const COMPARE: NavItem[] = [

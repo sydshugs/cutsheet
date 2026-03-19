@@ -27,6 +27,7 @@ import ABTestPage from "./pages/app/ABTestPage.tsx";
 import BatchPage from "./pages/app/BatchPage.tsx";
 import SwipeFilePage from "./pages/app/SwipeFilePage.tsx";
 import CompetitorAnalyzer from "./pages/app/CompetitorAnalyzer.tsx";
+import DisplayAnalyzer from "./pages/app/DisplayAnalyzer.tsx";
 import ComingSoon from "./components/ComingSoon.tsx";
 import "./index.css";
 import { Monitor, Swords } from "lucide-react";
@@ -71,16 +72,7 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/app" element={<Navigate to="/app/paid" replace />} />
             <Route path="/app/paid" element={<PaidAdAnalyzer />} />
             <Route path="/app/organic" element={<OrganicAnalyzer />} />
-            <Route
-              path="/app/display"
-              element={
-                <ComingSoon
-                  title="Display & Banner Analysis"
-                  description="Score Google Display and affiliate banner ads. See how your creative competes in real website contexts."
-                  icon={Monitor}
-                />
-              }
-            />
+            <Route path="/app/display" element={<DisplayAnalyzer />} />
             <Route path="/app/ab-test" element={<ABTestPage />} />
             <Route path="/app/competitor" element={<CompetitorAnalyzer />} />
             <Route path="/app/batch" element={<BatchPage />} />
