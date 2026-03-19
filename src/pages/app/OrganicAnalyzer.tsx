@@ -30,7 +30,7 @@ import { getUserContext, formatUserContextBlock } from "../../services/userConte
 import { getSessionMemory } from "@/src/lib/userMemoryService";
 import type { AppSharedContext } from "../../components/AppLayout";
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY ?? "";
+const API_KEY = ""; // Gemini calls are now server-side via /api/analyze
 
 const PLATFORM_SERVICE_MAP = {
   'TikTok': 'tiktok',

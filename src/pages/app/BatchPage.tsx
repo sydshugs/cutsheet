@@ -6,7 +6,7 @@ import { BatchView } from "../../components/BatchView";
 import { themes } from "../../theme";
 import type { AppSharedContext } from "../../components/AppLayout";
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY ?? "";
+const API_KEY = ""; // Gemini calls are now server-side via /api/analyze
 
 export default function BatchPage() {
   const { canAnalyze, isPro, increment, FREE_LIMIT, addHistoryEntry } =

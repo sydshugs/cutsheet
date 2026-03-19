@@ -40,7 +40,7 @@ import { getSessionMemory } from "@/src/lib/userMemoryService";
 import { generateBudgetRecommendation, type EngineBudgetRecommendation } from "../../services/budgetService";
 import type { AppSharedContext } from "../../components/AppLayout";
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY ?? "";
+const API_KEY = ""; // Gemini calls are now server-side via /api/analyze
 
 const PLATFORMS = ["all", "Meta", "TikTok", "Google", "YouTube"] as const;
 const FORMATS = ["video", "static"] as const;

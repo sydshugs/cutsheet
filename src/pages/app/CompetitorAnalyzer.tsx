@@ -14,7 +14,7 @@ import type { AppSharedContext } from "../../components/AppLayout";
 
 import { sanitizeSearchQuery, sanitizeFileName } from "../../utils/sanitize";
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY ?? "";
+const API_KEY = ""; // Gemini calls are now server-side via /api/analyze
 const META_TOKEN = import.meta.env.VITE_META_ACCESS_TOKEN ?? "";
 
 const PLATFORMS = ["all", "Meta", "TikTok", "Google", "YouTube"] as const;

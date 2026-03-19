@@ -31,7 +31,7 @@ interface SuiteBanner {
   result: DisplayResult | null;
 }
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY ?? "";
+const API_KEY = ""; // Gemini calls are now server-side via /api/analyze
 
 const NETWORKS = [
   { value: "google", label: "Google Display" },
