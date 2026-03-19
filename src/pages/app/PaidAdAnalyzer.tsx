@@ -2,7 +2,7 @@
 import { Helmet } from 'react-helmet-async';
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useOutletContext, useNavigate, Link } from "react-router-dom";
-import { Zap, RotateCcw, Upload, AlertCircle } from "lucide-react";
+import { Zap, RotateCcw, Upload, AlertCircle, Sparkles } from "lucide-react";
 import { Toast } from "../../components/Toast";
 import { AnalyzerView } from "../../components/AnalyzerView";
 import { ScoreCard } from "../../components/ScoreCard";
@@ -23,6 +23,9 @@ import {
   type StaticSecondEyeResult,
 } from "../../services/claudeService";
 import { SecondEyePanel } from "../../components/SecondEyePanel";
+import { VisualizePanel } from "../../components/VisualizePanel";
+import { visualizeAd, fileToBase64, getMediaType } from "../../lib/visualizeService";
+import type { VisualizeResult, VisualizeStatus } from "../../types/visualize";
 import { StaticSecondEyePanel } from "../../components/StaticSecondEyePanel";
 import { PolicyCheckPanel } from "../../components/PolicyCheckPanel";
 import { runPolicyCheck, type PolicyCheckResult } from "../../lib/policyCheckService";
@@ -301,6 +304,11 @@ export default function PaidAdAnalyzer() {
   const [comparisonLoading, setComparisonLoading] = useState(false);
   const [originalScoresSnapshot, setOriginalScoresSnapshot] = useState<{ overall: number; hook: number; cta: number; clarity: number; production: number } | null>(null);
   const [originalImprovementsSnapshot, setOriginalImprovementsSnapshot] = useState<string[]>([]);
+  // ── Visualize It state
+  const [visualizeOpen, setVisualizeOpen] = useState(false);
+  const [visualizeStatus, setVisualizeStatus] = useState<VisualizeStatus>("idle");
+  const [visualizeResult, setVisualizeResult] = useState<VisualizeResult | null>(null);
+  const [visualizeError, setVisualizeError] = useState<string | null>(null);
 
   // ── Local analyzer state ───────────────────────────────────────────────────
   const [file, setFile] = useState<File | null>(null);
@@ -365,6 +373,10 @@ export default function PaidAdAnalyzer() {
     setPolicyResult(null);
     setPolicyLoading(false);
     setPolicyError(null);
+    setVisualizeOpen(false);
+    setVisualizeStatus("idle");
+    setVisualizeResult(null);
+    setVisualizeError(null);
   }, [reset]);
 
   // Re-analyze handler: upload improved version, score, compare
@@ -711,6 +723,37 @@ export default function PaidAdAnalyzer() {
     }
   };
 
+  const handleVisualize = async () => {
+    if (!activeResult?.scores || !file) return;
+    setVisualizeOpen(true);
+    setVisualizeStatus("loading");
+    setVisualizeResult(null);
+    setVisualizeError(null);
+    try {
+      const imageBase64 = await fileToBase64(file);
+      const mediaType = getMediaType(file);
+      const niche = userContext.match(/Niche:\s*(.+)/)?.[1]?.trim() || "general";
+      const result = await visualizeAd({
+        imageBase64,
+        imageMediaType: mediaType,
+        analysisResult: {
+          scores: activeResult.scores as Record<string, number>,
+          improvements: activeResult.improvements ?? [],
+          markdown: activeResult.markdown,
+        },
+        platform: platform === "all" ? "general" : platform,
+        niche,
+        adType: "static",
+      });
+      setVisualizeResult(result);
+      setVisualizeStatus("complete");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      setVisualizeError(msg.includes("RATE_LIMITED") ? "RATE_LIMITED" : msg);
+      setVisualizeStatus("error");
+    }
+  };
+
   const handleBriefCopy = async () => {
     if (!brief) return;
     await copyToClipboard(brief);
@@ -927,6 +970,43 @@ export default function PaidAdAnalyzer() {
             {/* Static Design Review below scorecard — static only */}
             {format === "static" && staticSecondEye && (
               <StaticSecondEyePanel result={staticSecondEyeResult} loading={staticSecondEyeLoading} />
+            )}
+            {/* Visualize It button — static ads only, requires original file */}
+            {format === "static" && file && !visualizeOpen && (
+              <div style={{ padding: "0 16px 12px" }}>
+                <button
+                  type="button"
+                  onClick={handleVisualize}
+                  style={{
+                    width: "100%", height: 44,
+                    background: "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15))",
+                    border: "1px solid rgba(99,102,241,0.35)",
+                    borderRadius: 10,
+                    color: "#818cf8", cursor: "pointer",
+                    display: "flex", flexDirection: "column",
+                    alignItems: "center", justifyContent: "center", gap: 2,
+                    transition: "all 150ms",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(99,102,241,0.25), rgba(139,92,246,0.2))"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15))"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.35)"; }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <Sparkles size={14} />
+                    <span style={{ fontSize: 13, fontWeight: 600 }}>Visualize It</span>
+                  </div>
+                  <span style={{ fontSize: 10, color: "#6366f1", opacity: 0.75 }}>See what your improved ad could look like</span>
+                </button>
+              </div>
+            )}
+            {/* Visualize Panel — slides in below scorecard */}
+            {format === "static" && (visualizeOpen || visualizeStatus !== "idle") && (
+              <VisualizePanel
+                status={visualizeStatus}
+                result={visualizeResult}
+                originalImageUrl={thumbnailDataUrl ?? null}
+                error={visualizeError}
+                onClose={() => { setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); }}
+              />
             )}
           </>
 
