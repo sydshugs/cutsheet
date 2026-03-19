@@ -17,7 +17,7 @@ import {
 } from "../../services/analyzerService";
 import {
   generateBriefWithClaude, generateCTARewrites, generateSecondEyeReview,
-  generateStaticSecondEye,
+  generateStaticSecondEye, generateImprovements,
   type SecondEyeResult,
   type StaticSecondEyeResult,
 } from "../../services/claudeService";
@@ -306,8 +306,11 @@ export default function PaidAdAnalyzer() {
   const [rateLimitError, setRateLimitError] = useState<string | null>(null);
   const [analysisCompletedAt, setAnalysisCompletedAt] = useState<Date | null>(null);
 
+  const [improvementsLoading, setImprovementsLoading] = useState(false);
+  const [platformImprovements, setPlatformImprovements] = useState<string[] | null>(null);
   const scorecardRef = useRef<HTMLDivElement | null>(null);
   const lastSavedRef = useRef<string | null>(null);
+  const prevPlatformRef = useRef<Platform>(platform);
 
   const { status, statusMessage, result, error, analyze, download, copy, reset } = useVideoAnalyzer();
   const thumbnailDataUrl = useThumbnail(file);
@@ -464,9 +467,23 @@ export default function PaidAdAnalyzer() {
     }
   }, [status, result, staticSecondEye, format]); // eslint-disable-line
 
+  // Platform switch: re-generate improvements when platform changes after analysis
+  useEffect(() => {
+    if (prevPlatformRef.current === platform) return;
+    prevPlatformRef.current = platform;
+    if (status !== "complete" || !result?.markdown || !result?.scores) return;
+
+    setImprovementsLoading(true);
+    generateImprovements(result.markdown, result.scores, userContext || undefined, platform)
+      .then((imps) => { setPlatformImprovements(imps); })
+      .catch(() => { setPlatformImprovements(null); })
+      .finally(() => setImprovementsLoading(false));
+  }, [platform]); // eslint-disable-line
+
   useEffect(() => {
     if (status === "uploading") {
       setLoadedEntry(null);
+      setPlatformImprovements(null);
       setBrief(null);
       setBriefError(null);
       setRightTab("analysis");
@@ -694,7 +711,8 @@ export default function PaidAdAnalyzer() {
             <div ref={scorecardRef}>
               <ScoreCard
                 scores={activeResult.scores}
-                improvements={activeResult.improvements}
+                improvements={platformImprovements ?? activeResult.improvements}
+                improvementsLoading={improvementsLoading}
                 budget={activeResult.budget}
                 hashtags={activeResult.hashtags}
                 scenes={activeResult.scenes}
