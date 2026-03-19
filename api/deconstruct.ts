@@ -3,7 +3,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Anthropic from "@anthropic-ai/sdk";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
+import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth.js";
 
 export const maxDuration = 60; // seconds — Claude + Gemini can take 15-30s
 
