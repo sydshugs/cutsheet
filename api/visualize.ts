@@ -2,11 +2,17 @@
 // Step 1: Claude Sonnet → image generation prompt
 // Step 2: Gemini imagen → generated ad image (fallback: Claude visual brief)
 
+claude/review-refactor-doiJU
 export const maxDuration = 60; // seconds — image gen takes 15-20s
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Anthropic from "@anthropic-ai/sdk";
 import { GoogleGenAI } from "@google/genai";
+=======
+import type { VercelRequest, VercelResponse } from "@vercel/node";
+import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenAI, Modality } from "@google/genai";
+main
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
 
 const CLAUDE_MODEL = "claude-sonnet-4-20250514";
@@ -124,13 +130,21 @@ Return JSON only — no prose, no preamble:
   let visualBrief: string | undefined;
 
   try {
+claude/review-refactor-doiJU
     const genAI = new GoogleGenAI({ apiKey: (process.env.GEMINI_API_KEY ?? process.env.VITE_GEMINI_API_KEY)! });
+=======
+    const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+main
 
     const imageResponse = await genAI.models.generateContent({
       model: GEMINI_IMAGE_MODEL,
       contents: [{ role: "user", parts: [{ text: imageGenPrompt }] }],
       config: {
+claude/review-refactor-doiJU
         responseModalities: ["IMAGE", "TEXT"],
+=======
+        responseModalities: [Modality.IMAGE, Modality.TEXT],
+ main
         numberOfImages: 1,
       } as Record<string, unknown>,
     });
