@@ -262,7 +262,7 @@ export function Settings() {
 
       {/* Features included */}
       <div style={CARD_STYLE}>
-        <p style={{ fontSize: 13, fontWeight: 600, color: "#71717a", marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.06em", fontSize: 11 }}>
+        <p style={{ fontSize: 11, fontWeight: 600, color: "#71717a", marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.06em" }}>
           {isPro ? "Everything included" : "Free plan includes"}
         </p>
         <div className="flex flex-col gap-3">
