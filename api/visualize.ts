@@ -4,7 +4,7 @@
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Anthropic from "@anthropic-ai/sdk";
-import { GoogleGenAI, Modality } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
 
 const CLAUDE_MODEL = "claude-sonnet-4-20250514";
@@ -128,7 +128,7 @@ Return JSON only — no prose, no preamble:
       model: GEMINI_IMAGE_MODEL,
       contents: [{ role: "user", parts: [{ text: imageGenPrompt }] }],
       config: {
-        responseModalities: [Modality.IMAGE, Modality.TEXT],
+        responseModalities: ["IMAGE", "TEXT"],
         numberOfImages: 1,
       } as Record<string, unknown>,
     });
