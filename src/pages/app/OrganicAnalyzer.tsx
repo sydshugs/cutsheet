@@ -142,7 +142,7 @@ function OrganicEmptyState({
       <div style={{ width: "100%", maxWidth: 520, marginTop: 32 }}>
         <VideoDropzone onFileSelect={onFileSelect} file={null} onUrlSubmit={onUrlSubmit} acceptImages />
       </div>
-      <p style={{ fontSize: 11, color: "#52525b", marginTop: 12 }}>or press &#8984;K</p>
+      <p style={{ fontSize: 11, color: "#52525b", marginTop: 12 }} className="hidden md:block">or press &#8984;K</p>
     </div>
   );
 }
@@ -424,6 +424,8 @@ export default function OrganicAnalyzer() {
   const handleAddToSwipeFile = () => {
     if (!activeResult) return;
     addSwipeItem({ fileName: activeResult.fileName, timestamp: activeResult.timestamp.toISOString(), scores: activeResult.scores, markdown: activeResult.markdown, brand: "", format: "", niche: "", platform: "", tags: [], notes: "" });
+    setInfoToast("Saved to Swipe File");
+    setTimeout(() => setInfoToast(null), 2500);
   };
 
   const handleShareLink = async () => {
@@ -581,37 +583,20 @@ export default function OrganicAnalyzer() {
           </div>
         )}
 
-        {/* Analyze another — always at bottom of right panel */}
+        {/* Analyze another — sticky at bottom of right panel */}
         {showRightPanel && (
-          <div style={{ padding: "12px 16px 16px" }}>
+          <div style={{ position: "sticky", bottom: 0, padding: "0 16px 16px", background: "linear-gradient(transparent, rgba(9,9,11,0.95) 8px)" }}>
             <button
               type="button"
               onClick={handleReset}
               style={{
-                width: "100%",
-                height: 44,
-                background: "transparent",
-                border: "1px solid rgba(255,255,255,0.08)",
-                borderRadius: 10,
-                color: "#71717a",
-                fontSize: 13,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 6,
-                transition: "all 150ms",
+                width: "100%", height: 44, background: "rgba(9,9,11,0.8)", backdropFilter: "blur(8px)",
+                border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10,
+                color: "#71717a", fontSize: 13, cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "all 150ms",
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(255,255,255,0.04)";
-                e.currentTarget.style.color = "#a1a1aa";
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.14)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "transparent";
-                e.currentTarget.style.color = "#71717a";
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
-              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.color = "#a1a1aa"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(9,9,11,0.8)"; e.currentTarget.style.color = "#71717a"; }}
             >
               <RotateCcw size={14} />
               Analyze another creative

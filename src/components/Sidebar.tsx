@@ -311,14 +311,14 @@ function DesktopSidebar({
 const MOBILE_TABS = [
   { label: "Paid",     path: "/app/paid",     icon: Zap },
   { label: "Organic",  path: "/app/organic",  icon: TrendingUp },
-  { label: "A/B Test", path: "/app/ab-test",  icon: GitBranch },
+  { label: "Display",  path: "/app/display",  icon: Monitor },
 ];
 
 function MobileTabBar({ onMoreClick }: { onMoreClick: () => void }) {
   return (
     <nav
       className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex"
-      style={{ height: 60, background: "#111113", borderTop: "1px solid rgba(255,255,255,0.06)" }}
+      style={{ height: 60, background: "#111113", borderTop: "1px solid rgba(255,255,255,0.06)", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
       {MOBILE_TABS.map((tab) => {
         const Icon = tab.icon;

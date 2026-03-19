@@ -1,7 +1,7 @@
 // TopBar.tsx — top bar for the main content area
 
 import { useEffect, useRef, useState } from "react";
-import { Clock, Menu, Plus, RotateCcw, Search } from "lucide-react";
+import { Clock, Menu, Plus, RotateCcw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface TopBarProps {
@@ -12,6 +12,7 @@ interface TopBarProps {
   userName?: string;
   userPlan?: string;
   hasResult?: boolean;
+  onLogout?: () => void;
 }
 
 export function TopBar({
@@ -21,6 +22,7 @@ export function TopBar({
   userName,
   userPlan,
   hasResult,
+  onLogout,
 }: TopBarProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -65,16 +67,6 @@ export function TopBar({
 
       {/* Spacer */}
       <div className="flex-1" />
-
-      {/* Search pill — UI stub only */}
-      <div className="bg-white/5 rounded-full flex items-center gap-2 px-3 py-1.5">
-        <Search size={14} className="text-zinc-500 shrink-0" />
-        <input
-          type="text"
-          placeholder="Search analyses..."
-          className="text-sm text-zinc-400 bg-transparent outline-none placeholder-zinc-500 w-60"
-        />
-      </div>
 
       {/* History button */}
       <button
@@ -161,7 +153,10 @@ export function TopBar({
             <div className="text-xs text-indigo-400 px-3 py-1">{planLabel}</div>
 
             {/* Log out */}
-            <div className="text-sm text-zinc-400 hover:text-white px-3 py-2 rounded-lg hover:bg-white/5 cursor-pointer transition-colors">
+            <div
+              className="text-sm text-zinc-400 hover:text-white px-3 py-2 rounded-lg hover:bg-white/5 cursor-pointer transition-colors"
+              onClick={() => { setDropdownOpen(false); onLogout?.(); }}
+            >
               Log out
             </div>
           </div>
