@@ -46,14 +46,25 @@ function rankStyle(rank: number): { bg: string; color: string } {
 
 // ─── EMPTY STATE ──────────────────────────────────────────────────────────────
 
-function RankEmptyState({ onStart }: { onStart: () => void }) {
+function RankEmptyState({ onStart, onFileDrop }: { onStart: () => void; onFileDrop: (files: FileList) => void }) {
+  const [isDragOver, setIsDragOver] = useState(false);
   const steps = [
     { icon: Upload, label: "Upload 5-10 creative variations" },
     { icon: Zap, label: "Cutsheet scores them all in parallel" },
     { icon: Trophy, label: "Get a ranked list — test the top 2-3" },
   ];
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 24px", gap: 16, minHeight: "calc(100vh - 120px)" }}>
+    <div
+      onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+      onDragLeave={(e) => { if (e.currentTarget.contains(e.relatedTarget as Node)) return; setIsDragOver(false); }}
+      onDrop={(e) => { e.preventDefault(); setIsDragOver(false); if (e.dataTransfer.files.length > 0) onFileDrop(e.dataTransfer.files); }}
+      style={{
+        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 24px", gap: 16, minHeight: "calc(100vh - 120px)",
+        border: isDragOver ? "2px dashed var(--accent, #6366f1)" : "2px dashed transparent",
+        background: isDragOver ? "rgba(99,102,241,0.04)" : "transparent",
+        borderRadius: 16, transition: "border-color 150ms, background 150ms",
+      }}
+    >
       <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <Trophy size={28} color="#6366f1" />
       </div>
@@ -211,7 +222,7 @@ export function BatchView({ apiKey, addHistoryEntry, t, canAnalyze, isPro, incre
   if (items.length === 0 && !showUpload) {
     return (
       <>
-        <RankEmptyState onStart={() => setShowUpload(true)} />
+        <RankEmptyState onStart={() => setShowUpload(true)} onFileDrop={(files) => { addFiles(files); setShowUpload(true); }} />
         {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} t={t} />}
       </>
     );
@@ -228,6 +239,17 @@ export function BatchView({ apiKey, addHistoryEntry, t, canAnalyze, isPro, incre
           <p style={{ fontSize: 13, color: "#71717a", margin: "0 0 20px" }}>
             {items.length === 0 ? "Drop up to 10 video or static ad files." : isRunning ? `Analyzing ${items.filter((i) => i.status === "analyzing").length > 0 ? items.findIndex((i) => i.status === "analyzing") + 1 : ""}...` : "Add more or start analysis."}
           </p>
+
+          {/* Batch progress counter */}
+          {isRunning && (() => {
+            const analyzingIdx = items.findIndex((i) => i.status === "analyzing");
+            const currentNum = analyzingIdx >= 0 ? analyzingIdx + 1 : items.filter((i) => i.status === "complete" || i.status === "error").length;
+            return (
+              <p style={{ fontSize: 13, color: "var(--ink-muted, #71717a)", margin: "0 0 8px" }}>
+                Analyzing {currentNum} of {items.length}...
+              </p>
+            );
+          })()}
 
           {/* File list */}
           {items.length > 0 && (

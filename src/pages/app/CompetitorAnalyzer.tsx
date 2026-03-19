@@ -308,12 +308,9 @@ export default function CompetitorAnalyzer() {
   const [statusMsg, setStatusMsg] = useState("");
   const [result, setResult] = useState<CompetitorResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [showManualUpload, setShowManualUpload] = useState(false);
-
   const handleReset = useCallback(() => {
     setStep(0); setYourFile(null); setCompetitorFile(null);
     setStatus("idle"); setStatusMsg(""); setResult(null); setError(null);
-    setShowManualUpload(false);
   }, []);
 
   useEffect(() => {
@@ -378,7 +375,7 @@ export default function CompetitorAnalyzer() {
                   <ChevronLeft size={14} /> Back
                 </button>
                 <h3 style={{ fontSize: 18, fontWeight: 600, color: "#f4f4f5", margin: "0 0 4px" }}>Find a competitor's ad</h3>
-                <p style={{ fontSize: 13, color: "#71717a", margin: "0 0 20px" }}>Search the Meta Ad Library or upload directly.</p>
+                <p style={{ fontSize: 13, color: "#71717a", margin: "0 0 20px" }}>Upload a competitor's ad to compare against yours.</p>
 
                 {competitorFile ? (
                   <>
@@ -390,17 +387,12 @@ export default function CompetitorAnalyzer() {
                   </>
                 ) : (
                   <>
-                    <MetaSearch onFileSelect={(f) => { setCompetitorFile(f); setStep(3); }} />
+                    {/* Upload dropzone — always visible */}
+                    <DropZone onFileSelect={(f) => { setCompetitorFile(f); setStep(2); }} height={180} />
 
                     {/* TikTok Creative Center */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "16px 0 12px" }}>
-                      <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
-                      <span style={{ fontSize: 11, color: "#52525b" }}>or</span>
-                      <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
-                    </div>
-
                     <div onClick={() => window.open("https://ads.tiktok.com/business/creativecenter/inspiration/topads", "_blank")}
-                      style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "10px 14px", marginBottom: 10, display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", transition: "all 150ms" }}
+                      style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "10px 14px", marginTop: 12, display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", transition: "all 150ms" }}
                       onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(99,102,241,0.2)"; }}
                       onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -408,13 +400,19 @@ export default function CompetitorAnalyzer() {
                       </div>
                       <span style={{ fontSize: 12, color: "#6366f1" }}>Creative Center ↗</span>
                     </div>
+                    <p style={{ fontSize: 11, color: "#52525b", margin: "6px 0 0 0" }}>Download from TikTok Creative Center, then upload above</p>
 
-                    {/* Manual upload toggle */}
-                    <button type="button" onClick={() => setShowManualUpload(!showManualUpload)}
-                      style={{ background: "none", border: "none", color: "#52525b", fontSize: 12, cursor: "pointer", width: "100%", textAlign: "center", padding: "8px 0" }}>
-                      {showManualUpload ? "Hide manual upload" : "Upload manually instead"}
-                    </button>
-                    {showManualUpload && <DropZone onFileSelect={(f) => { setCompetitorFile(f); setStep(2); }} height={160} />}
+                    {/* Meta Ad Library search — only when token is available */}
+                    {META_TOKEN && (
+                      <>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "16px 0 12px" }}>
+                          <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
+                          <span style={{ fontSize: 11, color: "#52525b" }}>or search Meta Ad Library</span>
+                          <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
+                        </div>
+                        <MetaSearch onFileSelect={(f) => { setCompetitorFile(f); setStep(3); }} />
+                      </>
+                    )}
                   </>
                 )}
               </motion.div>

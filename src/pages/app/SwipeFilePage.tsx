@@ -7,7 +7,7 @@ export default function SwipeFilePage() {
   return (
     <>
       <Helmet>
-        <title>Swipe File — Cutsheet</title>
+        <title>Saved Ads — Cutsheet</title>
         <meta name="description" content="Your saved winning ad creatives. Build a reference library of high-scoring ads." />
         <link rel="canonical" href="https://cutsheet.xyz/app/swipe-file" />
       </Helmet>

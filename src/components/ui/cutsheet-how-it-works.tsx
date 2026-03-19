@@ -31,7 +31,7 @@ const STEPS = [
     number: "04",
     title: "Export & iterate",
     description:
-      "Generate a creative brief, save winners to your swipe file, or compare variants side-by-side before spending on media.",
+      "Generate a creative brief, save winners to your ad library, or compare variants side-by-side before spending on media.",
     icon: FileText,
     spotlightColor: "rgba(16, 185, 129, 0.15)",
   },
@@ -109,10 +109,7 @@ export default function CutsheetHowItWorks() {
           <div className="flex flex-wrap justify-center gap-3">
             <div className="inline-flex items-center gap-2 rounded-full border border-white/8 bg-white/5 px-4 py-2 text-sm text-zinc-300">
               <Bookmark size={16} className="text-zinc-400" />
-              Swipe File
-              <span className="bg-white/10 text-zinc-500 text-xs rounded-full px-2 py-0.5 ml-1.5 whitespace-nowrap">
-                Coming soon
-              </span>
+              Saved Ads
             </div>
           </div>
         </FadeIn>

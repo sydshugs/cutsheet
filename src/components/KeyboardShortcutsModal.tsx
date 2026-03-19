@@ -16,7 +16,7 @@ const shortcuts = [
   { keys: ['⌘', '3'], label: 'A/B Test' },
   { keys: [mod, '↵'], label: 'Run analysis' },
   { keys: [mod, 'H'], label: 'Open history' },
-  { keys: [mod, 'S'], label: 'Save to swipe file' },
+  { keys: [mod, 'S'], label: 'Save to Saved Ads' },
   { keys: ['Esc'], label: 'Clear analysis' },
   { keys: ['?'], label: 'Show shortcuts' },
 ]

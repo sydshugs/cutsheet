@@ -50,14 +50,14 @@ interface PlatformOption {
 
 const PLATFORM_COMPAT: Record<Format, PlatformOption[]> = {
   video: [
-    { value: "all",     label: "All",     enabled: true,  note: null },
+    { value: "all",     label: "General",  enabled: true,  note: null },
     { value: "Meta",    label: "Meta",    enabled: true,  note: null },
     { value: "TikTok",  label: "TikTok",  enabled: true,  note: null },
     { value: "Google",  label: "Google",  enabled: true,  note: null },
     { value: "YouTube", label: "YouTube", enabled: true,  note: null },
   ],
   static: [
-    { value: "all",     label: "All",     enabled: true,  note: null },
+    { value: "all",     label: "General",  enabled: true,  note: null },
     { value: "Meta",    label: "Meta",    enabled: true,  note: null },
     { value: "TikTok",  label: "TikTok",  enabled: false, note: "Carousel only — uncommon" },
     { value: "Google",  label: "Google",  enabled: true,  note: null },
@@ -686,7 +686,7 @@ export default function PaidAdAnalyzer() {
       markdown: activeResult.markdown,
       brand: "", format: "", niche: "", platform: "", tags: [], notes: "",
     });
-    setInfoToast("Saved to Swipe File");
+    setInfoToast("Saved to your library");
     setTimeout(() => setInfoToast(null), 2500);
   };
 
