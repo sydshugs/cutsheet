@@ -809,6 +809,7 @@ export default function PaidAdAnalyzer() {
                 format={format}
                 engineBudget={engineBudget}
                 onNavigateSettings={() => navigate('/settings')}
+                onReanalyze={() => setReanalyzeMode(true)}
               />
             </div>
             {/* Second Eye output below scorecard — video only */}

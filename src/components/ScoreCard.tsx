@@ -1,7 +1,7 @@
 // ScoreCard.tsx — Visual translation from #screen-results (prototype)
 
 import { useEffect, useState } from "react";
-import { Copy, CheckCircle, AlertTriangle, AlertCircle, TrendingUp, ArrowUpRight } from "lucide-react";
+import { Copy, CheckCircle, AlertTriangle, AlertCircle, TrendingUp, ArrowUpRight, Share2, RotateCcw, Send } from "lucide-react";
 import type { BudgetRecommendation, Hashtags, Scene } from "../services/analyzerService";
 import type { EngineBudgetRecommendation } from "../services/budgetService";
 import SceneBreakdown from "./SceneBreakdown";
@@ -36,6 +36,7 @@ interface ScoreCardProps {
   engineBudget?: EngineBudgetRecommendation | null;
   onNavigateSettings?: () => void;
   improvementsLoading?: boolean;
+  onReanalyze?: () => void;
 }
 
 const SCORE_LABELS: Record<keyof Scores, string> = {
@@ -120,6 +121,7 @@ export function ScoreCard({
   engineBudget,
   onNavigateSettings,
   improvementsLoading,
+  onReanalyze,
 }: ScoreCardProps) {
   const { label: overallLabel } = getScoreLabel(scores.overall);
   const [mounted, setMounted] = useState(false);
@@ -528,6 +530,68 @@ export function ScoreCard({
           {formatFileName(fileName)}
         </div>
       )}
+
+      {/* Score-adaptive primary CTA */}
+      <div className="px-5 pb-3">
+        {scores.overall >= 8 ? (
+          <button
+            type="button"
+            onClick={() => {
+              const text = `CUTSHEET SCORECARD\n${fileName ?? "Ad"}\nOverall: ${scores.overall}/10\nHook: ${scores.hook} | CTA: ${scores.cta} | Clarity: ${scores.clarity} | Production: ${scores.production}\n\nScored by Cutsheet — cutsheet.xyz`;
+              navigator.clipboard.writeText(text);
+              const el = document.getElementById("adaptive-cta-toast");
+              if (el) { el.textContent = "Copied — ready to share"; el.style.opacity = "1"; setTimeout(() => { el.style.opacity = "0"; }, 2500); }
+            }}
+            style={{
+              width: "100%", height: 44, borderRadius: 9999, border: "none",
+              background: "#4f46e5", color: "white", fontSize: 13, fontWeight: 600,
+              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+            }}
+          >
+            <Share2 size={14} /> Share this scorecard
+          </button>
+        ) : scores.overall >= 5 ? (
+          <>
+            <button
+              type="button"
+              onClick={() => {
+                const impSection = document.querySelector("h3");
+                if (impSection) impSection.scrollIntoView({ behavior: "smooth" });
+                onReanalyze?.();
+              }}
+              style={{
+                width: "100%", height: 44, borderRadius: 9999, border: "none",
+                background: "#4f46e5", color: "white", fontSize: 13, fontWeight: 600,
+                cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+              }}
+            >
+              <RotateCcw size={14} /> Fix and re-score →
+            </button>
+            <p style={{ fontSize: 11, color: "#52525b", textAlign: "center", marginTop: 6 }}>
+              Make the changes above, then upload your improved version
+            </p>
+          </>
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              const impList = improvements?.map((imp, i) => `${i + 1}. ${imp}`).join("\n") ?? "";
+              const text = `CREATIVE BRIEF — ${fileName ?? "Ad"}\nScore: ${scores.overall}/10 — needs significant revision\n\nIMPROVEMENTS NEEDED:\n${impList}\n\nScored by Cutsheet — cutsheet.xyz`;
+              navigator.clipboard.writeText(text);
+              const el = document.getElementById("adaptive-cta-toast");
+              if (el) { el.textContent = "Brief copied — paste it to your editor"; el.style.opacity = "1"; setTimeout(() => { el.style.opacity = "0"; }, 2500); }
+            }}
+            style={{
+              width: "100%", height: 44, borderRadius: 9999, border: "none",
+              background: "#4f46e5", color: "white", fontSize: 13, fontWeight: 600,
+              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+            }}
+          >
+            <Send size={14} /> Send improvements to your editor
+          </button>
+        )}
+        <p id="adaptive-cta-toast" style={{ fontSize: 11, color: "#10b981", textAlign: "center", marginTop: 6, opacity: 0, transition: "opacity 300ms", minHeight: 16 }} />
+      </div>
 
       {/* Share button (backward compat) */}
       {onShare && (
