@@ -3,6 +3,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Anthropic from "@anthropic-ai/sdk";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
+import { sanitizeSessionMemory } from "./_lib/sanitizeMemory";
 
 const CLAUDE_MODEL = "claude-sonnet-4-20250514";
 const RATE = { freeLimit: 10, proLimit: 60, windowSeconds: 60 };
@@ -19,7 +20,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
   }
 
-  const { originalScores, improvedScores, originalImprovements, userContext } = req.body ?? {};
+  const { originalScores, improvedScores, originalImprovements, userContext, sessionMemory: rawMemory } = req.body ?? {};
+  const sessionMemory = sanitizeSessionMemory(rawMemory);
   if (!originalScores || !improvedScores) {
     return res.status(400).json({ error: "originalScores and improvedScores are required" });
   }
@@ -28,7 +30,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 The creator received feedback and made improvements.
 
 ${userContext || ""}
-
+${sessionMemory ? `\n${sessionMemory}\nConsider whether improvement trends are consistent with this user's prior ad performance.\n` : ""}
 ORIGINAL VERSION SCORES:
 Overall: ${originalScores.overall}/10
 Hook: ${originalScores.hook}/10

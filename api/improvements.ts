@@ -3,6 +3,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Anthropic from "@anthropic-ai/sdk";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
+import { sanitizeSessionMemory } from "./_lib/sanitizeMemory";
 
 const CLAUDE_MODEL = "claude-sonnet-4-20250514";
 const RATE = { freeLimit: 30, proLimit: 120, windowSeconds: 60 };
@@ -26,7 +27,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { action, payload } = req.body ?? {};
 
   if (action === "improvements") {
-    const { analysisMarkdown, scores, userContext, platform } = payload ?? {};
+    const { analysisMarkdown, scores, userContext, platform, sessionMemory: rawMemory } = payload ?? {};
+    const sessionMemory = sanitizeSessionMemory(rawMemory);
     if (!scores) return res.status(200).json({ improvements: [] });
 
     const weakAreas = Object.entries(scores as Record<string, number>)
@@ -41,11 +43,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       platform && platform !== "all"
         ? `\nOptimize all suggestions specifically for ${platform}. Consider ${platform}-specific best practices, audience behavior, and format requirements.`
         : "";
+    const memoryBlock = sessionMemory
+      ? `\n\nSESSION HISTORY:\n${sessionMemory}\nDo NOT repeat improvements already given in prior analyses. Prioritize NEW or RECURRING weaknesses.`
+      : "";
 
     const message = await getClient().messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 1024,
-      system: `You are a senior performance marketing creative strategist. You write short, specific, actionable improvement suggestions for ads. Each suggestion should be 1-2 sentences max. Focus on the weakest scoring areas. No fluff, no preamble.${contextBlock}${platformBlock}`,
+      system: `You are a senior performance marketing creative strategist. You write short, specific, actionable improvement suggestions for ads. Each suggestion should be 1-2 sentences max. Focus on the weakest scoring areas. No fluff, no preamble.${contextBlock}${platformBlock}${memoryBlock}`,
       messages: [
         {
           role: "user",
@@ -64,17 +69,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (action === "cta-rewrites") {
-    const { currentCTA, productContext, userContext } = payload ?? {};
+    const { currentCTA, productContext, userContext, sessionMemory: rawMemory } = payload ?? {};
+    const sessionMemory = sanitizeSessionMemory(rawMemory);
     if (!currentCTA) return res.status(200).json({ rewrites: [] });
 
     const contextBlock = userContext
       ? `\n\n${userContext}\n\nOptimize CTAs specifically for the user's platform and niche. Match the tone and conversion patterns that work for their specific context.`
       : "";
+    const memoryBlock = sessionMemory
+      ? `\n\n${sessionMemory}\nReference the user's prior ads when crafting CTAs — maintain voice consistency.`
+      : "";
 
     const message = await getClient().messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 512,
-      system: `You are a direct-response copywriter. You write short, punchy CTAs for paid social ads. Each CTA should be under 8 words. Focus on urgency, clarity, and conversion.${contextBlock}`,
+      system: `You are a direct-response copywriter. You write short, punchy CTAs for paid social ads. Each CTA should be under 8 words. Focus on urgency, clarity, and conversion.${contextBlock}${memoryBlock}`,
       messages: [
         {
           role: "user",
@@ -100,17 +109,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (action === "brief") {
-    const { analysisMarkdown, filename, userContext } = payload ?? {};
+    const { analysisMarkdown, filename, userContext, sessionMemory: rawMemory } = payload ?? {};
+    const sessionMemory = sanitizeSessionMemory(rawMemory);
     if (!analysisMarkdown) return res.status(400).json({ error: "analysisMarkdown is required" });
 
     const contextBlock = userContext
       ? `\n\n${userContext}\n\nStructure this brief specifically for the user's niche and platform. Use relevant industry terminology and platform best practices.`
       : "";
+    const memoryBlock = sessionMemory
+      ? `\n\n${sessionMemory}\nReference learnings from prior analyses when structuring this brief. Avoid recommending approaches that already scored poorly.`
+      : "";
 
     const message = await getClient().messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 2048,
-      system: `You are a senior creative strategist at a top performance marketing agency. You write tight, actionable creative briefs that creative teams can execute immediately. Your briefs are specific to the ad analyzed — not generic templates.${contextBlock}`,
+      system: `You are a senior creative strategist at a top performance marketing agency. You write tight, actionable creative briefs that creative teams can execute immediately. Your briefs are specific to the ad analyzed — not generic templates.${contextBlock}${memoryBlock}`,
       messages: [
         {
           role: "user",
