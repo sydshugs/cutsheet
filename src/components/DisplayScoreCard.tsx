@@ -1,7 +1,7 @@
 // DisplayScoreCard.tsx — Display ad scorecard with placement mockup
 
 import {
-  AlertTriangle, CheckCircle, XCircle, AlertCircle, Eye, Download,
+  AlertTriangle, CheckCircle, XCircle, AlertCircle,
 } from "lucide-react";
 import type { DisplayFormat } from "../utils/displayAdUtils";
 
@@ -181,51 +181,7 @@ export function DisplayScoreCard({
         </div>
       )}
 
-      {/* Real-life mockup */}
-      <div>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-          <Eye size={14} color="#71717a" />
-          <span style={{ fontSize: 13, fontWeight: 600, color: "#f4f4f5" }}>Real-life placement preview</span>
-        </div>
-        <p style={{ fontSize: 11, color: "#52525b", margin: "0 0 10px" }}>
-          How your ad competes for attention in a {format?.name ?? "display"} placement
-        </p>
-        {mockupLoading && (
-          <div style={{ height: 200, borderRadius: 12, background: "linear-gradient(90deg, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.02) 75%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <span style={{ fontSize: 12, color: "#52525b" }}>Generating placement preview...</span>
-          </div>
-        )}
-        {!mockupLoading && mockupUrl && (
-          <>
-            <img src={mockupUrl} alt="Placement mockup" style={{ width: "100%", borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)" }} />
-            <p style={{ fontSize: 11, color: "#52525b", textAlign: "center", marginTop: 8 }}>
-              Editorial content shown in gray. Real websites may look different.
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                const a = document.createElement("a");
-                a.href = mockupUrl;
-                a.download = `cutsheet-mockup-${format?.key ?? "display"}.png`;
-                a.click();
-              }}
-              style={{
-                marginTop: 8, width: "100%", height: 36, background: "transparent",
-                border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8,
-                color: "#71717a", fontSize: 12, cursor: "pointer",
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                transition: "all 150ms",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; e.currentTarget.style.color = "#a1a1aa"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#71717a"; }}
-            >
-              <Download size={12} /> Download mockup
-            </button>
-          </>
-        )}
-      </div>
-
-      <style>{`@keyframes shimmer { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }`}</style>
+      {/* Mockup is rendered in the main layout, not here */}
     </div>
   );
 }
