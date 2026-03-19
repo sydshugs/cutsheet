@@ -262,3 +262,148 @@ export async function generateDisplayMockup(
 
   return canvas.toDataURL("image/png");
 }
+
+// ─── SUITE MOCKUP ───────────────────────────────────────────────────────────
+
+interface SuiteBanner {
+  file: File;
+  format: DisplayFormat | null;
+  score?: number;
+}
+
+/** Placement positions for standard formats on a combined news site mockup */
+const SUITE_PLACEMENTS: Record<string, { x: number; y: number; w: number; h: number; label: string }> = {
+  "728x90":  { x: 336, y: 56,  w: 728, h: 90,  label: "Leaderboard" },
+  "468x60":  { x: 466, y: 56,  w: 468, h: 60,  label: "Full Banner" },
+  "970x250": { x: 215, y: 56,  w: 970, h: 250, label: "Billboard" },
+  "300x250": { x: 1060, y: 170, w: 300, h: 250, label: "Rectangle" },
+  "336x280": { x: 1060, y: 170, w: 336, h: 280, label: "Lg Rectangle" },
+  "160x600": { x: 1220, y: 170, w: 160, h: 600, label: "Skyscraper" },
+  "300x600": { x: 1060, y: 450, w: 300, h: 600, label: "Half Page" },
+  "320x50":  { x: 40,  y: 780, w: 320, h: 50,  label: "Mobile Banner" },
+  "320x100": { x: 40,  y: 760, w: 320, h: 100, label: "Lg Mobile" },
+  "250x250": { x: 1060, y: 170, w: 250, h: 250, label: "Square" },
+};
+
+const STANDARD_FORMATS = ["728x90", "300x250", "160x600", "320x50"];
+
+export async function generateSuiteMockup(
+  banners: SuiteBanner[]
+): Promise<string> {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1400;
+  canvas.height = 900;
+  const ctx = canvas.getContext("2d")!;
+
+  // White page bg
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, 1400, 900);
+
+  // Nav bar
+  ctx.fillStyle = "#f8f9fa";
+  ctx.fillRect(0, 0, 1400, 50);
+  ctx.fillStyle = "#e9ecef";
+  ctx.fillRect(0, 49, 1400, 1);
+  ctx.fillStyle = "#adb5bd";
+  ctx.fillRect(20, 15, 100, 20);
+  for (let i = 0; i < 5; i++) {
+    ctx.fillStyle = "#ced4da";
+    ctx.fillRect(180 + i * 80, 18, 56, 12);
+  }
+
+  // Content area (center column)
+  const cx = 40;
+  const cy = 170;
+  drawHeadline(ctx, cx, cy, 700);
+  ctx.fillStyle = "#868e96";
+  ctx.fillRect(cx, cy + 44, 160, 8);
+  drawTextLines(ctx, cx, cy + 72, 700, 8, 22);
+  // Second content block
+  ctx.fillStyle = "#e9ecef";
+  ctx.fillRect(cx, cy + 280, 700, 200); // image placeholder
+  drawTextLines(ctx, cx, cy + 500, 700, 6, 22);
+
+  // Sidebar bg
+  ctx.fillStyle = "#f8f9fa";
+  ctx.fillRect(1040, 56, 360, 844);
+  ctx.fillStyle = "#e9ecef";
+  ctx.fillRect(1040, 56, 1, 844);
+
+  // Placed formats (keyed set)
+  const placedKeys = new Set<string>();
+
+  // Draw each banner
+  let idx = 1;
+  for (const banner of banners) {
+    const key = banner.format?.key ?? "";
+    const placement = SUITE_PLACEMENTS[key];
+    if (!placement) continue;
+
+    const img = await loadImage(URL.createObjectURL(banner.file));
+    ctx.drawImage(img, placement.x, placement.y, placement.w, placement.h);
+
+    // Red dashed border
+    ctx.strokeStyle = "rgba(239,68,68,0.5)";
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([5, 3]);
+    ctx.strokeRect(placement.x, placement.y, placement.w, placement.h);
+    ctx.setLineDash([]);
+
+    // "Ad" label
+    ctx.fillStyle = "#adb5bd";
+    ctx.font = "10px sans-serif";
+    ctx.fillText("Ad", placement.x + 2, placement.y - 3);
+
+    // Numbered circle
+    ctx.fillStyle = "#6366f1";
+    ctx.beginPath();
+    ctx.arc(placement.x + placement.w - 10, placement.y + 10, 10, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 10px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(String(idx), placement.x + placement.w - 10, placement.y + 14);
+    ctx.textAlign = "start";
+
+    placedKeys.add(key);
+    idx++;
+  }
+
+  // Draw missing format placeholders
+  for (const stdKey of STANDARD_FORMATS) {
+    if (placedKeys.has(stdKey)) continue;
+    const placement = SUITE_PLACEMENTS[stdKey];
+    if (!placement) continue;
+
+    ctx.strokeStyle = "rgba(245,158,11,0.4)";
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6, 4]);
+    ctx.strokeRect(placement.x, placement.y, placement.w, placement.h);
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = "#f59e0b";
+    ctx.font = "11px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(`Missing: ${placement.label}`, placement.x + placement.w / 2, placement.y + placement.h / 2 + 4);
+    ctx.textAlign = "start";
+  }
+
+  // Legend bar at bottom
+  ctx.fillStyle = "#18181b";
+  ctx.fillRect(0, 860, 1400, 40);
+  ctx.fillStyle = "#a1a1aa";
+  ctx.font = "12px sans-serif";
+  ctx.fillText(`${banners.length} banner${banners.length > 1 ? "s" : ""} in suite`, 20, 884);
+
+  let lx = 220;
+  for (const banner of banners) {
+    const label = banner.format?.name ?? "Custom";
+    const sc = banner.score != null ? ` ${banner.score}/10` : "";
+    ctx.fillStyle = "#52525b";
+    ctx.font = "11px sans-serif";
+    ctx.fillText(`${label}${sc}`, lx, 884);
+    lx += ctx.measureText(`${label}${sc}`).width + 20;
+  }
+
+  return canvas.toDataURL("image/png");
+}
