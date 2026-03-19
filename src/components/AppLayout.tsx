@@ -100,6 +100,7 @@ export default function AppLayout() {
         onMobileClose={() => setMobileOpen(false)}
         userEmail={userEmail}
         isPro={isPro}
+        isTeam={isTeam}
         usageCount={usageCount}
         FREE_LIMIT={FREE_LIMIT}
         onShowShortcuts={() => setShowShortcuts(true)}
