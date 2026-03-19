@@ -507,6 +507,13 @@ Return JSON only — no prose:
                       </div>
                     )}
 
+                    {/* Suite cohesion threshold hint */}
+                    {suiteBanners.filter((b) => b.status === "complete").length < 3 && suiteBanners.length > 0 && suiteStatus === "idle" && (
+                      <p style={{ fontSize: 12, color: "var(--ink-muted, #71717a)", margin: "0 0 12px", textAlign: "center" }}>
+                        Add {3 - suiteBanners.filter((b) => b.status === "complete").length} more banner{3 - suiteBanners.filter((b) => b.status === "complete").length === 1 ? "" : "s"} to unlock suite cohesion analysis.
+                      </p>
+                    )}
+
                     {/* Analyze suite button */}
                     <button type="button" onClick={handleSuiteAnalyze}
                       disabled={suiteBanners.length < 2 || !canAnalyze}
@@ -582,10 +589,10 @@ Return JSON only — no prose:
 
                     {/* Suite cohesion results */}
                     <div>
-                      <SuiteCohesionCard result={suiteCohesion} loading={suiteStatus === "analyzing" || (suiteStatus === "complete" && !suiteCohesion && !suiteCohesionError)} />
+                      <SuiteCohesionCard result={suiteCohesion} loading={!suiteCohesion && !suiteCohesionError} />
                       {suiteCohesionError && !suiteCohesion && (
                         <div style={{ padding: "12px 16px", borderRadius: 10, background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)", marginTop: 12, display: "flex", alignItems: "center", gap: 8 }}>
-                          <span style={{ fontSize: 12, color: "#f59e0b" }}>Suite cohesion analysis couldn't be generated</span>
+                          <span style={{ fontSize: 12, color: "#f59e0b" }}>Couldn't analyze suite consistency. This usually means the banners are too different in style. Try uploading banners from the same campaign.</span>
                           <button type="button" onClick={async () => {
                             setSuiteCohesionError(false);
                             try {

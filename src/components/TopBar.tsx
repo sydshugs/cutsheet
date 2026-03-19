@@ -12,6 +12,7 @@ interface TopBarProps {
   userName?: string;
   userPlan?: string;
   hasResult?: boolean;
+  historyCount?: number;
   onLogout?: () => void;
 }
 
@@ -22,6 +23,7 @@ export function TopBar({
   userName,
   userPlan,
   hasResult,
+  historyCount,
   onLogout,
 }: TopBarProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -70,11 +72,33 @@ export function TopBar({
 
       {/* History button */}
       <button
-        className="text-zinc-500 hover:text-zinc-300 p-1.5 transition-colors"
+        className="relative text-zinc-500 hover:text-zinc-300 p-1.5 transition-colors"
         onClick={onHistoryOpen}
         aria-label="Open history"
       >
         <Clock size={18} />
+        {historyCount != null && historyCount > 0 && (
+          <span
+            style={{
+              position: "absolute",
+              top: 0,
+              right: 0,
+              width: 16,
+              height: 16,
+              borderRadius: "50%",
+              background: "var(--accent)",
+              color: "#fff",
+              fontSize: 10,
+              fontWeight: 600,
+              lineHeight: "16px",
+              textAlign: "center",
+              fontFamily: "var(--mono)",
+              pointerEvents: "none",
+            }}
+          >
+            {historyCount > 99 ? "99+" : historyCount}
+          </span>
+        )}
       </button>
 
       {/* New Analysis button — changes style when result exists */}
@@ -111,7 +135,7 @@ export function TopBar({
             }}
           >
             <RotateCcw size={14} />
-            New Analysis
+            Start Over
           </motion.button>
         ) : (
           <motion.button

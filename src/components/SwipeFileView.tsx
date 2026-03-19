@@ -3,6 +3,9 @@
 import { useMemo, useState } from "react";
 import { useSwipeFile, type SwipeItem } from "../hooks/useSwipeFile";
 import { getScoreColorByValue } from "./ScoreCard";
+import { AlertDialog } from "@/src/components/ui/AlertDialog";
+
+type SortOption = "newest" | "highest" | "lowest" | "az";
 
 interface SwipeFileViewProps {
   isDark: boolean;
@@ -11,10 +14,12 @@ interface SwipeFileViewProps {
 export function SwipeFileView({ isDark }: SwipeFileViewProps) {
   const { items, deleteItem, clearAll } = useSwipeFile();
   const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<SortOption>("newest");
+  const [confirmClearOpen, setConfirmClearOpen] = useState(false);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return items.filter((item) => {
+    let result = items.filter((item) => {
       if (!q) return true;
       const haystack = [
         item.fileName,
@@ -29,7 +34,26 @@ export function SwipeFileView({ isDark }: SwipeFileViewProps) {
         .toLowerCase();
       return haystack.includes(q);
     });
-  }, [items, search]);
+
+    // Sort
+    switch (sort) {
+      case "highest":
+        result = [...result].sort((a, b) => (b.scores?.overall ?? 0) - (a.scores?.overall ?? 0));
+        break;
+      case "lowest":
+        result = [...result].sort((a, b) => (a.scores?.overall ?? 0) - (b.scores?.overall ?? 0));
+        break;
+      case "az":
+        result = [...result].sort((a, b) => a.fileName.localeCompare(b.fileName));
+        break;
+      case "newest":
+      default:
+        // Assume items are already newest-first from the hook
+        break;
+    }
+
+    return result;
+  }, [items, search, sort]);
 
   const avgScore = items.length > 0
     ? (items.reduce((acc, i) => acc + (i.scores?.overall ?? 0), 0) / items.length).toFixed(1)
@@ -41,7 +65,7 @@ export function SwipeFileView({ isDark }: SwipeFileViewProps) {
         Swipe File
       </div>
 
-      {/* Filter bar — prototype filter-bar */}
+      {/* Filter bar */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <div style={{ position: "relative", flex: 1, minWidth: 200, maxWidth: 320 }}>
           <svg style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--ink-muted)", width: 14, height: 14 }} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5}><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
@@ -66,7 +90,35 @@ export function SwipeFileView({ isDark }: SwipeFileViewProps) {
             onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
           />
         </div>
-        {/* Filters coming soon */}
+        <select
+          value={sort}
+          onChange={(e) => setSort(e.target.value as SortOption)}
+          style={{
+            background: "var(--surface)",
+            border: "1px solid var(--border)",
+            borderRadius: "var(--radius-sm)",
+            padding: "9px 12px",
+            fontSize: 13,
+            color: "var(--ink)",
+            fontFamily: "var(--sans)",
+            outline: "none",
+            cursor: "pointer",
+            appearance: "none",
+            WebkitAppearance: "none",
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='rgba(255,255,255,0.5)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "right 10px center",
+            paddingRight: 30,
+            transition: "border-color var(--duration-fast) var(--ease-out)",
+          }}
+          onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(99,102,241,0.4)"; }}
+          onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
+        >
+          <option value="newest">Newest first</option>
+          <option value="highest">Highest score</option>
+          <option value="lowest">Lowest score</option>
+          <option value="az">A–Z</option>
+        </select>
       </div>
 
       {/* Stats row */}
@@ -75,9 +127,20 @@ export function SwipeFileView({ isDark }: SwipeFileViewProps) {
           {items.length} creatives · Avg score: <span style={{ color: "var(--accent)" }}>{avgScore}</span>
         </span>
         {items.length > 0 && (
-          <button type="button" onClick={clearAll} style={{ padding: "7px 12px", fontSize: 12, background: "transparent", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", color: "var(--ink-muted)", cursor: "pointer", fontFamily: "var(--sans)" }}>Clear all</button>
+          <button type="button" onClick={() => setConfirmClearOpen(true)} style={{ padding: "7px 12px", fontSize: 12, background: "transparent", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", color: "var(--ink-muted)", cursor: "pointer", fontFamily: "var(--sans)" }}>Clear all</button>
         )}
       </div>
+
+      {/* Clear all confirmation dialog */}
+      <AlertDialog
+        open={confirmClearOpen}
+        onClose={() => setConfirmClearOpen(false)}
+        onConfirm={clearAll}
+        title="Delete all saved creatives?"
+        description={`This will remove ${items.length} items from your swipe file. This can't be undone.`}
+        confirmLabel="Delete All"
+        variant="destructive"
+      />
 
       {/* Enhanced empty state v2 */}
       {items.length === 0 && (
@@ -114,12 +177,12 @@ export function SwipeFileView({ isDark }: SwipeFileViewProps) {
             No saved creatives yet
           </div>
           <div style={{ fontSize: 13, color: "var(--ink-muted)", maxWidth: 320, lineHeight: 1.5 }}>
-            Analyze a video in Analyzer mode and save it to your Swipe File to start building your reference library.
+            Score any ad in Paid, Organic, or Display — then save it here to build your reference library.
           </div>
         </div>
       )}
 
-      {/* Card grid — prototype swipe-grid */}
+      {/* Card grid */}
       {items.length > 0 && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 16 }}>
           {filtered.map((item) => {
@@ -135,20 +198,8 @@ export function SwipeFileView({ isDark }: SwipeFileViewProps) {
                   border: "1px solid var(--border)",
                   borderRadius: "var(--radius-lg)",
                   overflow: "hidden",
-                  cursor: "pointer",
-                  transition: "transform var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out)",
                   backdropFilter: "blur(16px)",
                   WebkitBackdropFilter: "blur(16px)",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
-                  e.currentTarget.style.boxShadow = "var(--shadow-md)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.borderColor = "var(--border)";
-                  e.currentTarget.style.boxShadow = "none";
                 }}
               >
                 <div style={{ width: "100%", aspectRatio: "9/16", maxHeight: 200, background: "var(--surface-el)", position: "relative", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>

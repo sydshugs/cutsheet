@@ -276,6 +276,25 @@ function DesktopSidebar({
           </div>
         )}
 
+        {/* Keyboard shortcuts — expanded mode */}
+        {!collapsed && onShowShortcuts && (
+          <button
+            type="button"
+            onClick={onShowShortcuts}
+            style={{
+              display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
+              margin: "0 8px", background: "transparent", border: "none", cursor: "pointer",
+              color: "#52525b", fontSize: 12, textDecoration: "none", transition: "color 150ms",
+              justifyContent: "flex-start",
+            }}
+            onMouseEnter={e => (e.currentTarget.style.color = "#a1a1aa")}
+            onMouseLeave={e => (e.currentTarget.style.color = "#52525b")}
+          >
+            <span style={{ fontFamily: "monospace", fontSize: 11, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 4, padding: "1px 5px", lineHeight: 1 }}>?</span>
+            <span>Keyboard shortcuts</span>
+          </button>
+        )}
+
         {/* Help & Support */}
         <a href="mailto:support@cutsheet.xyz" style={{ display: "flex", alignItems: "center", gap: 10, padding: collapsed ? "8px 0" : "8px 12px", justifyContent: collapsed ? "center" : "flex-start", color: "#52525b", fontSize: 12, textDecoration: "none", transition: "color 150ms", margin: "0 8px" }} title={collapsed ? "Help & Support" : undefined} onMouseEnter={e => (e.currentTarget.style.color = "#a1a1aa")} onMouseLeave={e => (e.currentTarget.style.color = "#52525b")}>
           <HelpCircle size={16} />

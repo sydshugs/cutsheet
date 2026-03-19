@@ -204,6 +204,14 @@ export function DashboardIdleView({
           className="hidden"
         />
 
+        {/* Secondary features preview */}
+        <div className="w-full mt-6 flex flex-col items-center gap-3">
+          <div style={{ width: "80%", borderTop: "1px dotted rgba(255,255,255,0.08)" }} />
+          <p style={{ fontSize: 12, color: "var(--ink-faint, #3f3f46)", margin: 0, textAlign: "center" }}>
+            After analysis: AI brief &middot; CTA rewrites &middot; share link &middot; PDF export
+          </p>
+        </div>
+
         {/* Quick-start cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full mt-8">
           {QUICK_STARTS.map((card) => (
