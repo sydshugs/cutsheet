@@ -3,13 +3,25 @@
 import { Helmet } from "react-helmet-async";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useOutletContext } from "react-router-dom";
-import { Monitor, Upload, Eye, Download } from "lucide-react";
+import { Monitor, Upload, Eye, Download, X, Plus, AlertTriangle, CheckCircle } from "lucide-react";
 import { DisplayScoreCard, type DisplayResult } from "../../components/DisplayScoreCard";
 import { getImageDimensions, detectDisplayFormat, getFormatGuidance, type DisplayFormat } from "../../utils/displayAdUtils";
-import { generateDisplayMockup } from "../../services/mockupService";
+import { generateDisplayMockup, generateSuiteMockup } from "../../services/mockupService";
 import { analyzeVideo } from "../../services/analyzerService";
+import { analyzeSuiteCohesion, type SuiteCohesionResult } from "../../services/claudeService";
 import { getUserContext, formatUserContextBlock } from "../../services/userContextService";
 import type { AppSharedContext } from "../../components/AppLayout";
+
+type Mode = "single" | "suite";
+
+interface SuiteBanner {
+  id: string;
+  file: File;
+  format: DisplayFormat | null;
+  dimensions: { width: number; height: number };
+  status: "pending" | "analyzing" | "complete" | "error";
+  result: DisplayResult | null;
+}
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY ?? "";
 
@@ -47,7 +59,9 @@ export default function DisplayAnalyzer() {
   const { canAnalyze, isPro, increment, FREE_LIMIT, onUpgradeRequired, registerCallbacks } =
     useOutletContext<AppSharedContext>();
 
+  const [mode, setMode] = useState<Mode>("single");
   const [network, setNetwork] = useState<string>("google");
+  // ── Single ad state
   const [file, setFile] = useState<File | null>(null);
   const [dimensions, setDimensions] = useState<{ width: number; height: number } | null>(null);
   const [detectedFormat, setDetectedFormat] = useState<DisplayFormat | null>(null);
@@ -58,6 +72,12 @@ export default function DisplayAnalyzer() {
   const [mockupUrl, setMockupUrl] = useState<string | null>(null);
   const [mockupLoading, setMockupLoading] = useState(false);
   const [userContext, setUserContext] = useState("");
+  // ── Suite state
+  const [suiteBanners, setSuiteBanners] = useState<SuiteBanner[]>([]);
+  const [suiteStatus, setSuiteStatus] = useState<"idle" | "analyzing" | "complete" | "error">("idle");
+  const [suiteCohesion, setSuiteCohesion] = useState<SuiteCohesionResult | null>(null);
+  const [suiteMockupUrl, setSuiteMockupUrl] = useState<string | null>(null);
+  const [suiteMockupLoading, setSuiteMockupLoading] = useState(false);
 
   const previewUrl = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
   useEffect(() => { return () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }; }, [previewUrl]);
@@ -68,11 +88,123 @@ export default function DisplayAnalyzer() {
     setFile(null); setDimensions(null); setDetectedFormat(null);
     setStatus("idle"); setStatusMsg(""); setResult(null); setError(null);
     setMockupUrl(null); setMockupLoading(false);
+    setSuiteBanners([]); setSuiteStatus("idle"); setSuiteCohesion(null);
+    setSuiteMockupUrl(null); setSuiteMockupLoading(false);
   }, []);
 
+  const isComplete = mode === "single" ? status === "complete" : suiteStatus === "complete";
   useEffect(() => {
-    registerCallbacks({ onNewAnalysis: handleReset, onHistoryOpen: () => {}, hasResult: status === "complete" });
-  }, [registerCallbacks, handleReset, status]);
+    registerCallbacks({ onNewAnalysis: handleReset, onHistoryOpen: () => {}, hasResult: isComplete });
+  }, [registerCallbacks, handleReset, isComplete]);
+
+  // ── Suite handlers
+  const addSuiteBanner = async (f: File) => {
+    if (suiteBanners.length >= 8) return;
+    const dims = await getImageDimensions(f);
+    const fmt = detectDisplayFormat(dims.width, dims.height);
+    setSuiteBanners((prev) => [...prev, {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      file: f, format: fmt, dimensions: dims, status: "pending", result: null,
+    }]);
+  };
+
+  const removeSuiteBanner = (id: string) => {
+    setSuiteBanners((prev) => prev.filter((b) => b.id !== id));
+  };
+
+  const handleSuiteAnalyze = async () => {
+    if (suiteBanners.length < 2 || !canAnalyze) return;
+    setSuiteStatus("analyzing");
+    setSuiteCohesion(null);
+    setSuiteMockupUrl(null);
+
+    // Analyze each banner in parallel
+    const updated = [...suiteBanners].map((b) => ({ ...b, status: "analyzing" as const }));
+    setSuiteBanners(updated);
+
+    const results = await Promise.allSettled(
+      updated.map(async (banner) => {
+        const formatName = banner.format?.name ?? "Custom";
+        const formatKey = banner.format?.key ?? `${banner.dimensions.width}x${banner.dimensions.height}`;
+        const placement = banner.format?.placement ?? "Unknown";
+        const guidance = banner.format ? getFormatGuidance(banner.format) : "Non-standard format.";
+
+        const displayPrompt = `You are a display advertising expert scoring a ${formatName} banner ad (${formatKey}).
+FORMAT-SPECIFIC: ${guidance}
+Placement: ${placement}
+Score on: VISUAL HIERARCHY, CTA VISIBILITY, BRAND CLARITY, MESSAGE CLARITY, VISUAL CONTRAST (each 0-10, whole numbers).
+Estimate TEXT-TO-IMAGE RATIO. Flag if over 30%.
+Return JSON only:
+{"overallScore":<n>,"scores":{"hierarchy":<n>,"ctaVisibility":<n>,"brandClarity":<n>,"messageClarity":<n>,"visualContrast":<n>},"textToImageRatio":"<str>","textRatioFlag":<bool>,"improvements":["<5 items>"],"formatNotes":"<str>","verdict":"<str>","placementRisk":"low"|"medium"|"high","placementRiskNote":"<str>"}`;
+
+        const rawResult = await analyzeVideo(banner.file, API_KEY, undefined, displayPrompt, userContext);
+        const jsonMatch = rawResult.markdown.match(/\{[\s\S]*"overallScore"[\s\S]*\}/);
+        let displayResult: DisplayResult | null = null;
+        if (jsonMatch) { try { displayResult = JSON.parse(jsonMatch[0]); } catch { /* fallback */ } }
+        if (!displayResult) {
+          displayResult = {
+            overallScore: rawResult.scores?.overall ?? 5,
+            scores: { hierarchy: 5, ctaVisibility: 5, brandClarity: 5, messageClarity: 5, visualContrast: 5 },
+            textToImageRatio: "~Unknown", textRatioFlag: false,
+            improvements: rawResult.improvements ?? [], formatNotes: "", verdict: "Fallback scoring.",
+            placementRisk: "medium", placementRiskNote: "Could not determine.",
+          };
+        }
+        return { id: banner.id, result: displayResult };
+      })
+    );
+
+    // Update banners with results
+    setSuiteBanners((prev) =>
+      prev.map((b) => {
+        const settled = results.find((r) => r.status === "fulfilled" && r.value.id === b.id);
+        if (settled?.status === "fulfilled") {
+          return { ...b, status: "complete" as const, result: settled.value.result };
+        }
+        return { ...b, status: "error" as const };
+      })
+    );
+
+    // Run suite cohesion analysis
+    const completedBanners = results
+      .filter((r): r is PromiseFulfilledResult<{ id: string; result: DisplayResult }> => r.status === "fulfilled")
+      .map((r) => {
+        const banner = updated.find((b) => b.id === r.value.id)!;
+        return {
+          format: banner.format?.name ?? `${banner.dimensions.width}x${banner.dimensions.height}`,
+          fileName: banner.file.name,
+          overallScore: r.value.result.overallScore,
+          improvements: r.value.result.improvements,
+        };
+      });
+
+    if (completedBanners.length >= 2) {
+      try {
+        const cohesion = await analyzeSuiteCohesion(completedBanners, userContext);
+        setSuiteCohesion(cohesion);
+      } catch (e) {
+        console.error("Suite cohesion failed:", e);
+      }
+    }
+
+    setSuiteStatus("complete");
+    const c = increment();
+    if (c >= FREE_LIMIT && !isPro) onUpgradeRequired();
+
+    // Generate suite mockup
+    setSuiteMockupLoading(true);
+    const bannersWithResults = suiteBanners.map((b) => {
+      const settled = results.find((r) => r.status === "fulfilled" && (r as PromiseFulfilledResult<{ id: string; result: DisplayResult }>).value.id === b.id);
+      return {
+        file: b.file,
+        format: b.format,
+        score: settled?.status === "fulfilled" ? (settled as PromiseFulfilledResult<{ id: string; result: DisplayResult }>).value.result.overallScore : undefined,
+      };
+    });
+    generateSuiteMockup(bannersWithResults)
+      .then((url) => { setSuiteMockupUrl(url); setSuiteMockupLoading(false); })
+      .catch(() => setSuiteMockupLoading(false));
+  };
 
   // Format detection on file drop
   const handleFileSelect = async (f: File) => {
@@ -209,7 +341,23 @@ Return JSON only — no prose:
           borderBottom: "1px solid rgba(255,255,255,0.06)",
           display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap",
         }}>
-          <span style={{ fontSize: 13, color: "#52525b", flexShrink: 0 }}>Analyzing for:</span>
+          {/* Mode toggle */}
+          <div style={{ display: "flex", gap: 4 }}>
+            {(["single", "suite"] as Mode[]).map((m) => (
+              <button key={m} type="button" onClick={() => setMode(m)}
+                style={{
+                  height: 30, padding: "0 12px", borderRadius: 9999, fontSize: 13, cursor: "pointer",
+                  background: mode === m ? "#6366f1" : "rgba(255,255,255,0.04)",
+                  border: `1px solid ${mode === m ? "#6366f1" : "rgba(255,255,255,0.08)"}`,
+                  color: mode === m ? "white" : "#71717a",
+                  fontWeight: mode === m ? 500 : 400, transition: "all 150ms",
+                }}>
+                {m === "single" ? "Single Ad" : "Ad Suite"}
+              </button>
+            ))}
+          </div>
+          <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.08)", flexShrink: 0 }} />
+          <span style={{ fontSize: 13, color: "#52525b", flexShrink: 0 }}>Network:</span>
           <div style={{ display: "flex", gap: 6 }}>
             {NETWORKS.map((n) => (
               <button
@@ -248,9 +396,256 @@ Return JSON only — no prose:
         </div>
 
         <div className="flex-1 overflow-auto">
-          {status === "idle" && !file && <EmptyState />}
+          {/* ── SUITE MODE ──────────────────────────────────────────── */}
+          {mode === "suite" && (
+            <div className="relative px-4 py-6 md:px-8 min-h-full flex flex-col">
+              <div className="pointer-events-none absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-indigo-600/10 blur-[120px]" />
+              <div className="pointer-events-none absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-violet-600/[0.08] blur-[100px]" />
+              <div className="relative flex flex-col flex-1" style={{ maxWidth: 900, margin: "0 auto", width: "100%" }}>
 
-          {/* Upload + preview area */}
+                {suiteStatus === "idle" && (
+                  <>
+                    <h3 style={{ fontSize: 18, fontWeight: 600, color: "#f4f4f5", margin: "0 0 4px" }}>Ad Suite Analysis</h3>
+                    <p style={{ fontSize: 13, color: "#71717a", margin: "0 0 20px" }}>Upload 2-8 banners from the same campaign. Get individual scores + suite consistency analysis.</p>
+
+                    {/* Banner list */}
+                    {suiteBanners.length > 0 && (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16 }}>
+                        {suiteBanners.map((b) => (
+                          <div key={b.id} style={{
+                            display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
+                            background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+                            borderRadius: 10,
+                          }}>
+                            <div style={{ width: 60, height: 40, borderRadius: 6, overflow: "hidden", background: "#09090b", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                              <img src={URL.createObjectURL(b.file)} alt="" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <span style={{ fontSize: 12, color: "#a1a1aa", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                {b.file.name.length > 24 ? b.file.name.slice(0, 21) + "..." : b.file.name}
+                              </span>
+                              <span style={{
+                                fontSize: 10,
+                                color: b.format ? "#818cf8" : "#f59e0b",
+                                background: b.format ? "rgba(99,102,241,0.1)" : "rgba(245,158,11,0.1)",
+                                borderRadius: 9999, padding: "1px 6px",
+                              }}>
+                                {b.format ? `${b.format.key} ${b.format.name}` : `${b.dimensions.width}×${b.dimensions.height} Custom`}
+                              </span>
+                            </div>
+                            {b.status === "analyzing" && (
+                              <div style={{ width: 14, height: 14, border: "2px solid rgba(99,102,241,0.3)", borderTopColor: "#6366f1", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+                            )}
+                            {b.status === "complete" && b.result && (
+                              <span style={{ fontSize: 13, fontWeight: 600, fontFamily: "var(--font-mono, monospace)", color: b.result.overallScore >= 7 ? "#10b981" : b.result.overallScore >= 5 ? "#f59e0b" : "#ef4444" }}>
+                                {b.result.overallScore}/10
+                              </span>
+                            )}
+                            <button type="button" onClick={() => removeSuiteBanner(b.id)}
+                              style={{ background: "none", border: "none", color: "#52525b", cursor: "pointer", padding: 2 }}>
+                              <X size={14} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Add more / dropzone */}
+                    {suiteBanners.length < 8 && (
+                      <div
+                        style={{
+                          height: 100, border: "1px dashed rgba(255,255,255,0.08)", borderRadius: 12,
+                          background: "rgba(255,255,255,0.02)", display: "flex", alignItems: "center",
+                          justifyContent: "center", gap: 8, cursor: "pointer", transition: "all 150ms", marginBottom: 16,
+                        }}
+                        onClick={() => {
+                          const input = document.createElement("input");
+                          input.type = "file"; input.accept = "image/*"; input.multiple = true;
+                          input.onchange = (e) => {
+                            const files = (e.target as HTMLInputElement).files;
+                            if (files) Array.from(files).forEach((f) => addSuiteBanner(f));
+                          };
+                          input.click();
+                        }}
+                        onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)"; }}
+                        onDragLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
+                        onDrop={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; Array.from(e.dataTransfer.files).forEach((f) => addSuiteBanner(f)); }}
+                      >
+                        <Plus size={16} color="#52525b" />
+                        <span style={{ fontSize: 13, color: "#71717a" }}>
+                          {suiteBanners.length === 0 ? "Drop banner ads or click to browse" : "Add more banners"}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Analyze suite button */}
+                    <button type="button" onClick={handleSuiteAnalyze}
+                      disabled={suiteBanners.length < 2 || !canAnalyze}
+                      style={{
+                        width: "100%", height: 52, borderRadius: 9999, border: "none",
+                        background: suiteBanners.length >= 2 ? "#6366f1" : "rgba(99,102,241,0.3)",
+                        color: "white", fontSize: 15, fontWeight: 600,
+                        cursor: suiteBanners.length >= 2 ? "pointer" : "not-allowed",
+                        opacity: suiteBanners.length >= 2 ? 1 : 0.4,
+                        display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                      }}>
+                      <Monitor size={18} /> Analyze Suite ({suiteBanners.length} banners)
+                    </button>
+                  </>
+                )}
+
+                {/* Suite analyzing */}
+                {suiteStatus === "analyzing" && (
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 24px", gap: 16 }}>
+                    <div style={{ width: 24, height: 24, border: "2px solid rgba(99,102,241,0.3)", borderTopColor: "#6366f1", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+                    <span style={{ fontSize: 13, color: "#71717a" }}>Analyzing {suiteBanners.length} banners...</span>
+                    {/* Per-banner status */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 8 }}>
+                      {suiteBanners.map((b) => (
+                        <div key={b.id} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          {b.status === "analyzing" && <div style={{ width: 10, height: 10, border: "1.5px solid rgba(99,102,241,0.3)", borderTopColor: "#6366f1", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />}
+                          {b.status === "complete" && <CheckCircle size={10} color="#10b981" />}
+                          <span style={{ fontSize: 11, color: "#52525b" }}>{b.format?.name ?? "Custom"}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Suite results */}
+                {suiteStatus === "complete" && (
+                  <div style={{ display: "flex", gap: 24, alignItems: "flex-start" }} className="max-lg:flex-col">
+                    {/* LEFT — Suite mockup */}
+                    <div style={{ flex: "0 0 42%", minWidth: 0 }} className="max-lg:w-full">
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                        <Eye size={14} color="#71717a" />
+                        <span style={{ fontSize: 13, fontWeight: 600, color: "#f4f4f5" }}>Suite placement preview</span>
+                      </div>
+                      {suiteMockupLoading && (
+                        <div style={{ height: 240, borderRadius: 12, background: "linear-gradient(90deg, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.02) 75%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <span style={{ fontSize: 12, color: "#52525b" }}>Generating suite mockup...</span>
+                        </div>
+                      )}
+                      {!suiteMockupLoading && suiteMockupUrl && (
+                        <>
+                          <img src={suiteMockupUrl} alt="Suite mockup" style={{ width: "100%", borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)" }} />
+                          <button type="button"
+                            onClick={() => { const a = document.createElement("a"); a.href = suiteMockupUrl; a.download = "cutsheet-suite-mockup.png"; a.click(); }}
+                            style={{ marginTop: 8, width: "100%", height: 36, background: "transparent", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, color: "#71717a", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                            <Download size={12} /> Download suite mockup
+                          </button>
+                        </>
+                      )}
+                      {/* Individual banner scores list */}
+                      <div style={{ marginTop: 16 }}>
+                        <p style={{ fontSize: 11, color: "#52525b", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Individual scores</p>
+                        {suiteBanners.filter((b) => b.result).map((b, i) => (
+                          <div key={b.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: i < suiteBanners.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
+                            <span style={{ fontSize: 11, color: "#818cf8", fontWeight: 600, width: 16 }}>{i + 1}</span>
+                            <span style={{ fontSize: 12, color: "#a1a1aa", flex: 1 }}>{b.format?.name ?? "Custom"}</span>
+                            <span style={{ fontSize: 13, fontWeight: 600, fontFamily: "var(--font-mono, monospace)", color: (b.result?.overallScore ?? 0) >= 7 ? "#10b981" : (b.result?.overallScore ?? 0) >= 5 ? "#f59e0b" : "#ef4444" }}>
+                              {b.result?.overallScore}/10
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* RIGHT — Suite cohesion results */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      {suiteCohesion && (
+                        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                          {/* Suite score card */}
+                          <div style={{ padding: 16, background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.2)", borderRadius: 12 }}>
+                            <p style={{ fontSize: 16, fontWeight: 600, color: "#f4f4f5", margin: "0 0 12px" }}>
+                              Suite Score: <span style={{ color: suiteCohesion.suiteScore >= 7 ? "#10b981" : suiteCohesion.suiteScore >= 5 ? "#f59e0b" : "#ef4444", fontFamily: "var(--font-mono, monospace)" }}>{suiteCohesion.suiteScore}/10</span>
+                            </p>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                              {([["Brand", suiteCohesion.brandConsistency], ["Message", suiteCohesion.messageConsistency], ["Visual", suiteCohesion.visualConsistency], ["CTA", suiteCohesion.ctaConsistency]] as [string, number][]).map(([label, score]) => (
+                                <div key={label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                  <span style={{ fontSize: 12, color: "#71717a", width: 60 }}>{label}</span>
+                                  <div style={{ flex: 1, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
+                                    <div style={{ width: `${score * 10}%`, height: "100%", borderRadius: 2, background: score >= 7 ? "#10b981" : score >= 5 ? "#f59e0b" : "#ef4444" }} />
+                                  </div>
+                                  <span style={{ fontSize: 11, fontFamily: "var(--font-mono, monospace)", color: "#a1a1aa", width: 18, textAlign: "right" }}>{score}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Missing formats */}
+                          {suiteCohesion.missingFormats.length > 0 && (
+                            <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)", display: "flex", alignItems: "flex-start", gap: 8 }}>
+                              <AlertTriangle size={14} color="#f59e0b" style={{ flexShrink: 0, marginTop: 2 }} />
+                              <div>
+                                <span style={{ fontSize: 12, color: "#f59e0b", fontWeight: 500 }}>Missing: {suiteCohesion.missingFormats.join(", ")}</span>
+                                <p style={{ fontSize: 11, color: "#71717a", margin: "4px 0 0" }}>Complete suites improve campaign reach by up to 40%</p>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Issues */}
+                          {suiteCohesion.issues.length > 0 && (
+                            <div>
+                              <p style={{ fontSize: 12, fontWeight: 600, color: "#a1a1aa", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Issues</p>
+                              {suiteCohesion.issues.map((issue, i) => (
+                                <div key={i} style={{
+                                  padding: "10px 14px", borderRadius: 10, marginBottom: 6,
+                                  borderLeft: `2px solid ${issue.severity === "critical" ? "#ef4444" : issue.severity === "warning" ? "#f59e0b" : "#71717a"}`,
+                                  background: issue.severity === "critical" ? "rgba(239,68,68,0.04)" : issue.severity === "warning" ? "rgba(245,158,11,0.04)" : "rgba(255,255,255,0.02)",
+                                }}>
+                                  <p style={{ fontSize: 12, color: "#a1a1aa", margin: 0 }}>{issue.issue}</p>
+                                  <p style={{ fontSize: 11, color: "#52525b", margin: "4px 0 0" }}>Affects: {issue.affectedFormats.join(", ")} · Fix: {issue.fix}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Strengths */}
+                          {suiteCohesion.strengths.length > 0 && (
+                            <div>
+                              <p style={{ fontSize: 12, fontWeight: 600, color: "#10b981", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Strengths</p>
+                              {suiteCohesion.strengths.map((s, i) => (
+                                <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 4 }}>
+                                  <CheckCircle size={12} color="#10b981" style={{ flexShrink: 0, marginTop: 2 }} />
+                                  <span style={{ fontSize: 12, color: "#a1a1aa" }}>{s}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Recommendations */}
+                          {suiteCohesion.recommendations.length > 0 && (
+                            <div>
+                              <p style={{ fontSize: 12, fontWeight: 600, color: "#a1a1aa", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Recommendations</p>
+                              {suiteCohesion.recommendations.map((r, i) => (
+                                <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 6 }}>
+                                  <span style={{ fontSize: 12, fontWeight: 700, color: "#6366f1", width: 16, flexShrink: 0 }}>{i + 1}</span>
+                                  <span style={{ fontSize: 12, color: "#a1a1aa", lineHeight: 1.5 }}>{r}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Reset */}
+                          <button type="button" onClick={handleReset}
+                            style={{ width: "100%", height: 40, background: "transparent", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, color: "#71717a", fontSize: 12, cursor: "pointer", marginTop: 8 }}>
+                            Analyze another suite
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── SINGLE MODE ─────────────────────────────────────────── */}
+          {mode === "single" && status === "idle" && !file && <EmptyState />}
+
+          {mode === "single" && (
+          /* Upload + preview area */
           <div className="relative px-4 py-6 md:px-8 min-h-full flex flex-col">
             <div className="pointer-events-none absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-indigo-600/10 blur-[120px]" />
             <div className="pointer-events-none absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-violet-600/[0.08] blur-[100px]" />
@@ -440,6 +835,7 @@ Return JSON only — no prose:
               )}
             </div>
           </div>
+          )}
         </div>
       </div>
 

@@ -518,3 +518,100 @@ Return JSON only — no prose, no preamble:
     throw new Error(`Static Second Eye: invalid JSON — ${(e as Error).message}`);
   }
 }
+
+// ─── DISPLAY AD SUITE COHESION ──────────────────────────────────────────────
+
+export interface SuiteIssue {
+  severity: "critical" | "warning" | "note";
+  issue: string;
+  affectedFormats: string[];
+  fix: string;
+}
+
+export interface SuiteCohesionResult {
+  suiteScore: number;
+  brandConsistency: number;
+  messageConsistency: number;
+  visualConsistency: number;
+  ctaConsistency: number;
+  strengths: string[];
+  issues: SuiteIssue[];
+  recommendations: string[];
+  missingFormats: string[];
+}
+
+export async function analyzeSuiteCohesion(
+  banners: Array<{ format: string; fileName: string; overallScore: number; improvements?: string[] }>,
+  userContext?: string
+): Promise<SuiteCohesionResult> {
+  const client = getClient();
+
+  const bannerList = banners
+    .map(
+      (b, i) =>
+        `${i + 1}. ${b.format} — ${b.fileName} — Score: ${b.overallScore}/10\n   Issues: ${b.improvements?.slice(0, 3).join(", ") || "none"}`
+    )
+    .join("\n");
+
+  const prompt = `You are a display advertising expert reviewing a full banner ad suite for campaign consistency.
+
+${userContext || ""}
+
+A display ad suite must be consistent across all sizes: same brand identity, same headline/offer, same CTA, same visual style.
+
+BANNERS IN THIS SUITE:
+${bannerList}
+
+Analyze for:
+1. Brand consistency — same logo/colors/fonts across sizes?
+2. Message consistency — same headline/offer across sizes?
+3. Visual consistency — do all sizes feel like the same campaign?
+4. CTA consistency — same call to action everywhere?
+5. Format coverage — key standard formats missing?
+
+Standard IAB suite: 728x90, 300x250, 160x600, 320x50. Missing formats should be flagged.
+
+IMPORTANT: Do not mention the user's role, niche, or platform explicitly.
+
+Return JSON only — no prose:
+{
+  "suiteScore": <1-10>,
+  "brandConsistency": <1-10>,
+  "messageConsistency": <1-10>,
+  "visualConsistency": <1-10>,
+  "ctaConsistency": <1-10>,
+  "strengths": ["<2-3 things the suite does well>"],
+  "issues": [
+    { "severity": "critical" | "warning" | "note", "issue": "<specific>", "affectedFormats": ["<format>"], "fix": "<action>" }
+  ],
+  "recommendations": ["<3 specific improvements>"],
+  "missingFormats": ["<standard formats not present>"]
+}`;
+
+  const response = await client.messages.create({
+    model: CLAUDE_MODEL,
+    max_tokens: 1200,
+    messages: [{ role: "user", content: prompt }],
+  });
+
+  const text = response.content
+    .filter((b) => b.type === "text")
+    .map((b) => b.text)
+    .join("");
+
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error("Suite cohesion: invalid response");
+
+  const parsed = JSON.parse(jsonMatch[0]);
+  return {
+    suiteScore: Number(parsed.suiteScore) || 5,
+    brandConsistency: Number(parsed.brandConsistency) || 5,
+    messageConsistency: Number(parsed.messageConsistency) || 5,
+    visualConsistency: Number(parsed.visualConsistency) || 5,
+    ctaConsistency: Number(parsed.ctaConsistency) || 5,
+    strengths: Array.isArray(parsed.strengths) ? parsed.strengths : [],
+    issues: Array.isArray(parsed.issues) ? parsed.issues : [],
+    recommendations: Array.isArray(parsed.recommendations) ? parsed.recommendations : [],
+    missingFormats: Array.isArray(parsed.missingFormats) ? parsed.missingFormats : [],
+  };
+}
