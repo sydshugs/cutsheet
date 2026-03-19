@@ -4,6 +4,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import {
   Zap, TrendingUp, Monitor, GitBranch, Swords, Trophy,
   Bookmark, Settings, ChevronLeft, ChevronRight, MoreHorizontal, X, HelpCircle,
+  ScanSearch,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { UsageIndicator } from "./UsageIndicator";
@@ -31,9 +32,10 @@ interface SidebarProps {
 // ─── NAV CONFIG ───────────────────────────────────────────────────────────────
 
 const ANALYZE: NavItem[] = [
-  { label: "Paid Ad",  sublabel: "Meta, TikTok, Google",  path: "/app/paid",     icon: Zap },
-  { label: "Organic",  sublabel: "TikTok, Reels, Shorts", path: "/app/organic",  icon: TrendingUp },
-  { label: "Display",  sublabel: "Google, affiliate",     path: "/app/display",  icon: Monitor },
+  { label: "Paid Ad",       sublabel: "Meta, TikTok, Google",  path: "/app/paid",          icon: Zap },
+  { label: "Organic",       sublabel: "TikTok, Reels, Shorts", path: "/app/organic",       icon: TrendingUp },
+  { label: "Display",       sublabel: "Google, affiliate",     path: "/app/display",       icon: Monitor },
+  { label: "Deconstructor", sublabel: "Teardown any ad URL",   path: "/app/deconstructor", icon: ScanSearch },
 ];
 
 const COMPARE: NavItem[] = [
