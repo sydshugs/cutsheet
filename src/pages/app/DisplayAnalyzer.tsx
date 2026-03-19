@@ -704,7 +704,7 @@ Return JSON only — no prose:
                 </div>
               )}
 
-              {file && previewUrl && (
+              {file && previewUrl && status !== "complete" && (
                 <div style={{ marginBottom: 16 }}>
                   <div style={{ display: "flex", justifyContent: "center", background: "#09090b", borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)", padding: 16 }}>
                     <img src={previewUrl} alt={file.name} style={{ maxWidth: "100%", maxHeight: 400, objectFit: "contain" }} />
@@ -783,7 +783,7 @@ Return JSON only — no prose:
               {status === "complete" && result && dimensions && (
                 <div style={{ display: "flex", gap: 24, marginTop: 8, alignItems: "flex-start" }} className="max-lg:flex-col">
                   {/* LEFT — Mockup (hero) */}
-                  <div style={{ flex: "0 0 42%", minWidth: 0 }} className="max-lg:w-full">
+                  <div style={{ flex: "0 0 50%", minWidth: 0 }} className="max-lg:w-full">
                     <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
                       <Eye size={14} color="#71717a" />
                       <span style={{ fontSize: 13, fontWeight: 600, color: "#f4f4f5" }}>Real-life placement preview</span>
@@ -825,16 +825,6 @@ Return JSON only — no prose:
                           <Download size={12} /> Download mockup
                         </button>
                       </>
-                    )}
-
-                    {/* Actual banner below mockup */}
-                    {previewUrl && (
-                      <div style={{ marginTop: 20 }}>
-                        <p style={{ fontSize: 11, color: "#52525b", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Your ad</p>
-                        <div style={{ display: "flex", justifyContent: "center", background: "#09090b", borderRadius: 10, border: "1px solid rgba(255,255,255,0.06)", padding: 10 }}>
-                          <img src={previewUrl} alt={file?.name} style={{ maxWidth: "100%", maxHeight: 160, objectFit: "contain" }} />
-                        </div>
-                      </div>
                     )}
 
                     <p style={{ fontSize: 11, color: "#52525b", textAlign: "center", marginTop: 10 }}>
