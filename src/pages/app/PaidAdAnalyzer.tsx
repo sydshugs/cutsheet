@@ -298,7 +298,7 @@ export default function PaidAdAnalyzer() {
   }, [])
 
   // ── Platform / format / second eye state ───────────────────────────────────
-  const [platform, setPlatform] = useState<Platform>("all");
+  const [platform, setPlatform] = useState<Platform>("Meta");
   const [format, setFormat] = useState<Format>("video");
   const [secondEye, setSecondEye] = useState(false);
   const [secondEyeOutput, setSecondEyeOutput] = useState<SecondEyeResult | null>(null);
@@ -1090,6 +1090,7 @@ export default function PaidAdAnalyzer() {
                 engineBudget={engineBudget}
                 onNavigateSettings={() => navigate('/settings')}
                 onReanalyze={() => setReanalyzeMode(true)}
+                onStartOver={handleReset}
                 onCheckPolicies={handleCheckPolicies}
                 policyLoading={policyLoading}
                 niche={rawUserContext?.niche}
@@ -1341,26 +1342,6 @@ export default function PaidAdAnalyzer() {
           </div>
         )}
 
-        {/* Analyze another — sticky at bottom of right panel */}
-        {showRightPanel && !comparisonResult && (
-          <div style={{ position: "sticky", bottom: 0, padding: "0 16px 16px", background: "linear-gradient(transparent, rgba(9,9,11,0.95) 8px)" }}>
-            <button
-              type="button"
-              onClick={handleReset}
-              style={{
-                width: "100%", height: 44, background: "rgba(9,9,11,0.8)", backdropFilter: "blur(8px)",
-                border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10,
-                color: "#71717a", fontSize: 13, cursor: "pointer",
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "all 150ms",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.color = "#a1a1aa"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(9,9,11,0.8)"; e.currentTarget.style.color = "#71717a"; }}
-            >
-              <RotateCcw size={14} />
-              Analyze another creative
-            </button>
-          </div>
-        )}
       </div>
 
       {/* History drawer */}

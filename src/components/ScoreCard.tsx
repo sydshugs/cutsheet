@@ -1,9 +1,9 @@
 // ScoreCard.tsx — Orchestrator component composing scorecard sub-components
-// Refactored from 883-line monolith into focused sub-components.
+// Refactored from monolith into focused sub-components. Glass card wrapper with ambient glow.
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Copy, CheckCircle, Wand2, Loader2, FileText, Bookmark } from "lucide-react";
+import { Copy, CheckCircle, Wand2, Loader2, AlertTriangle, AlertCircle, TrendingUp, ArrowUpRight, Share2, RotateCcw, Send, ShieldCheck, FileText, Bookmark, Lightbulb, DollarSign, Film, Hash, Heart, AlignLeft } from "lucide-react";
 import type { BudgetRecommendation, Hashtags, Scene, HookDetail } from "../services/analyzerService";
 import type { EngineBudgetRecommendation } from "../services/budgetService";
 import { getBenchmark, type BenchmarkResult } from "../lib/benchmarks";
@@ -16,6 +16,8 @@ import FixItPanel, { type FixItResult } from "./FixItPanel";
 import PredictedPerformanceCard, { type PredictionResult } from "./PredictedPerformanceCard";
 import { CollapsibleSection } from "./ui/CollapsibleSection";
 import { OverflowMenu, type OverflowMenuItem } from "./ui/OverflowMenu";
+import { SlideSheet } from "./ui/SlideSheet";
+import { DeepDiveTabGroup, type Tab } from "./DeepDiveTabGroup";
 
 // Sub-components
 import { MetricBars } from "./scorecard/MetricBars";
@@ -49,12 +51,13 @@ interface ScoreCardProps {
   ctaLoading?: boolean;
   scenes?: Scene[];
   format?: "video" | "static";
-onSelectHistory?: (record: AnalysisRecord) => void;
+  onSelectHistory?: (record: AnalysisRecord) => void;
   historyRefreshKey?: number;
   engineBudget?: EngineBudgetRecommendation | null;
   onNavigateSettings?: () => void;
   improvementsLoading?: boolean;
   onReanalyze?: () => void;
+  onStartOver?: () => void;
   onCheckPolicies?: () => void;
   policyLoading?: boolean;
   hookDetail?: HookDetail;
@@ -170,12 +173,13 @@ export function ScoreCard({
   ctaLoading,
   scenes,
   format = "video",
-onSelectHistory,
+  onSelectHistory,
   historyRefreshKey,
   engineBudget,
   onNavigateSettings,
   improvementsLoading,
   onReanalyze,
+  onStartOver,
   onCheckPolicies,
   policyLoading,
   hookDetail,
@@ -186,11 +190,14 @@ onSelectHistory,
   fixItLoading,
   prediction,
 }: ScoreCardProps) {
-  const { label: overallLabel } = getScoreLabel(scores.overall);
+  const { label: overallLabel, color: overallLabelColor } = getScoreLabel(scores.overall);
   const [mounted, setMounted] = useState(false);
   const benchmark: BenchmarkResult = getBenchmark(niche ?? '', platform ?? '', format === 'video' ? 'video' : 'static');
   const [relativeTime, setRelativeTime] = useState<string>("");
   const [activeTab, setActiveTab] = useState<'analysis' | 'history'>('analysis');
+  const [slideSheetOpen, setSlideSheetOpen] = useState(false);
+  const [deepDiveTab, setDeepDiveTab] = useState<string>("scenes");
+  const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -266,6 +273,23 @@ onSelectHistory,
   const overallColor = getScoreColorByValue(scores.overall);
   const badgeClasses = getScoreBadgeClasses(scores.overall);
 
+  // Build deep dive tabs based on format and available data
+  const deepDiveTabs = useMemo<Tab[]>(() => {
+    const tabs: Tab[] = [];
+    if (format === "video" && scenes && scenes.length > 0) {
+      tabs.push({ id: "scenes", label: "Scenes" });
+    }
+    if (hashtags && (hashtags.tiktok.length > 0 || hashtags.meta.length > 0 || hashtags.instagram.length > 0)) {
+      tabs.push({ id: "hashtags", label: "Hashtags" });
+    }
+    if (format === "static") {
+      tabs.push({ id: "adchecks", label: "Ad Checks" });
+    }
+    tabs.push({ id: "copy", label: "Copy Breakdown" });
+    tabs.push({ id: "emotional", label: "Emotional Tone" });
+    return tabs;
+  }, [format, scenes, hashtags]);
+
   return (
     <div className="scorecard flex flex-col h-full">
       {/* Header */}
@@ -339,208 +363,339 @@ onSelectHistory,
         </div>
       )}
 
-      {/* Analysis content */}
+      {/* Analysis content — Glass card */}
       {activeTab === 'analysis' && <>
 
-      {/* Arc gauge */}
-      <div className="px-5 pt-5 flex flex-col items-center">
-        <div className="relative w-40 h-24 flex-shrink-0">
-          <svg viewBox="0 0 120 70" className="w-full h-full" role="img" aria-label={`Overall score: ${scores.overall} out of 10`}>
-            <title>Overall score: {scores.overall} out of 10</title>
-            {/* Background arc */}
-            <path
-              d="M 10 60 A 50 50 0 0 1 110 60"
-              fill="none"
-              stroke="rgba(255,255,255,0.05)"
-              strokeWidth="8"
-              strokeLinecap="round"
-            />
-            {/* Filled arc */}
-            <path
-              d="M 10 60 A 50 50 0 0 1 110 60"
-              fill="none"
-              stroke={overallColor}
-              strokeWidth="8"
-              strokeLinecap="round"
-              strokeDasharray={`${mounted ? (scores.overall / 10) * 157 : 0} 157`}
-              style={{
-                transition: "stroke-dasharray 0.8s cubic-bezier(0.16, 1, 0.3, 1)",
-                filter: `drop-shadow(0 0 4px ${overallColor}60)`,
-              }}
-            />
-          </svg>
-        </div>
+      <div style={{
+        background: "var(--glass-card-bg)",
+        backdropFilter: "var(--glass-card-blur)",
+        WebkitBackdropFilter: "var(--glass-card-blur)",
+        border: "1px solid var(--glass-card-border)",
+        boxShadow: "var(--glass-card-shadow)",
+        borderRadius: "var(--radius-lg)",
+        overflow: "hidden",
+        position: "relative",
+        margin: "12px 12px 0",
+      }}>
+        {/* Ambient glow */}
+        <div style={{
+          position: "absolute",
+          inset: 0,
+          background: "var(--ambient-glow)",
+          pointerEvents: "none",
+          zIndex: 0,
+        }} />
 
-        {/* Score number */}
-        <div className="flex items-baseline gap-1 -mt-4" title={SCORE_TOOLTIPS.overall} style={{ cursor: "help" }}>
-          <span className="text-4xl font-bold font-mono text-white leading-none">
-            {scores.overall}
-          </span>
-          <span className="text-zinc-500 font-mono">/10</span>
-        </div>
+        {/* Card content */}
+        <div style={{ position: "relative", zIndex: 1 }}>
 
-        {/* Status badge */}
-        <div className={`mt-3 px-3 py-1 rounded-full text-xs font-semibold font-mono ${badgeClasses}`}>
-          {overallLabel}
-        </div>
+          {/* Arc gauge */}
+          <div className="px-5 pt-5 flex flex-col items-center">
+            <div className="relative w-40 h-24 flex-shrink-0">
+              <svg viewBox="0 0 120 70" className="w-full h-full" role="img" aria-label={`Overall score: ${scores.overall} out of 10`}>
+                <title>Overall score: {scores.overall} out of 10</title>
+                {/* Background arc */}
+                <path
+                  d="M 10 60 A 50 50 0 0 1 110 60"
+                  fill="none"
+                  stroke="rgba(255,255,255,0.05)"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                />
+                {/* Filled arc */}
+                <path
+                  d="M 10 60 A 50 50 0 0 1 110 60"
+                  fill="none"
+                  stroke={overallColor}
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeDasharray={`${mounted ? (scores.overall / 10) * 157 : 0} 157`}
+                  style={{
+                    transition: "stroke-dasharray 0.8s cubic-bezier(0.16, 1, 0.3, 1)",
+                  }}
+                />
+              </svg>
+            </div>
 
-        {/* Benchmark context */}
-        <div className="mt-2">
-          <BenchmarkBadge userScore={scores.overall} benchmark={benchmark} />
-        </div>
-
-        {/* Winner badge */}
-        {winner && (
-          <div className="mt-2 px-3 py-1 rounded-full text-xs font-semibold font-mono bg-amber-500/10 text-amber-400 border border-amber-500/25">
-            ★ Winner
-          </div>
-        )}
-      </div>
-
-      {/* ── Metric bars (extracted) ── */}
-      <MetricBars
-        scores={scores}
-        mounted={mounted}
-        onCTARewrite={onCTARewrite}
-        ctaRewrites={ctaRewrites}
-        ctaLoading={ctaLoading}
-      />
-
-      {/* ── Hook detail (extracted) ── */}
-      {hookDetail && (
-        <HookDetailCard hookDetail={hookDetail} format={format} />
-      )}
-
-      {/* Improve This Ad — limited to 3, expandable */}
-      {improvements && improvements.length > 0 && (
-        <ImprovementsList improvements={improvements} loading={improvementsLoading} />
-      )}
-
-      {/* Fix It For Me */}
-      {onFixIt && (
-        <div className="px-5 mt-3">
-          {fixItResult ? (
-            <FixItPanel result={fixItResult} />
-          ) : (
-            <button
-              type="button"
-              onClick={onFixIt}
-              disabled={fixItLoading}
-              className="w-full h-11 rounded-xl text-[13px] font-semibold cursor-pointer flex items-center justify-center gap-2 transition-all duration-150"
-              style={{
-                background: fixItLoading ? "rgba(99,102,241,0.08)" : "linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.12))",
-                border: "1px solid rgba(99,102,241,0.25)",
-                color: "#818cf8",
-                cursor: fixItLoading ? "default" : "pointer",
-                opacity: fixItLoading ? 0.7 : 1,
-              }}
-              onMouseEnter={(e) => { if (!fixItLoading) { e.currentTarget.style.background = "linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.2))"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.4)"; } }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.12))"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.25)"; }}
-            >
-              {fixItLoading ? (
-                <>
-                  <Loader2 size={14} className="animate-spin" />
-                  Rewriting your ad...
-                </>
-              ) : (
-                <>
-                  <Wand2 size={14} />
-                  {scores.overall >= 8 ? "Polish It" : "Fix It For Me"}
-                </>
-              )}
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* Scene Breakdown — video only, collapsed by default */}
-      {format === "video" && scenes && scenes.length > 0 && (
-        <div className="px-5 border-t border-white/5 mt-4 pt-4">
-          <CollapsibleSection
-            title="Scene Breakdown"
-            trailing={<span className="text-[10px] text-zinc-500">{scenes.length} scenes</span>}
-          >
-            <SceneBreakdown scenes={scenes} />
-          </CollapsibleSection>
-        </div>
-      )}
-
-      {/* Static Ad Checks — static only, collapsed by default */}
-      {format === "static" && scores && (
-        <div className="px-5 border-t border-white/5 mt-4 pt-4">
-          <CollapsibleSection title="Ad Quality Checks">
-            <StaticAdChecks scores={scores} />
-          </CollapsibleSection>
-        </div>
-      )}
-
-      {/* ── Budget recommendation (extracted) ── */}
-      <BudgetCard
-        engineBudget={engineBudget}
-        budget={budget}
-        onNavigateSettings={onNavigateSettings}
-      />
-
-      {/* Predicted Performance */}
-      {prediction && (
-        <div className="px-5 border-t border-white/5 mt-4 pt-4">
-          <PredictedPerformanceCard prediction={prediction} platform={platform} niche={niche} />
-        </div>
-      )}
-
-      {/* Recommended Hashtags — collapsed by default */}
-      {hashtags && (hashtags.tiktok.length > 0 || hashtags.meta.length > 0 || hashtags.instagram.length > 0) && (
-        <div className="px-5 border-t border-white/5 mt-4 pt-4">
-          <CollapsibleSection
-            title="Recommended Hashtags"
-            trailing={
-              <span className="text-[10px] text-zinc-500">
-                {[hashtags.tiktok, hashtags.meta, hashtags.instagram].reduce((n, t) => n + t.length, 0)} tags
+            {/* Score number — 72px mono in score-band color */}
+            <div className="flex items-baseline gap-1 -mt-4" title={SCORE_TOOLTIPS.overall} style={{ cursor: "help" }}>
+              <span style={{ fontSize: 72, fontFamily: "var(--mono)", fontWeight: 700, color: overallColor, lineHeight: 1 }}>
+                {scores.overall}
               </span>
-            }
-          >
-            {([["TikTok", hashtags.tiktok], ["Meta", hashtags.meta], ["Instagram", hashtags.instagram]] as const).map(
-              ([platform, tags]) =>
-                tags.length > 0 && (
-                  <div key={platform} className="flex items-center gap-1.5 flex-wrap mb-2">
-                    <span className="text-xs text-zinc-500 w-16 flex-shrink-0">{platform}</span>
-                    {tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="bg-zinc-800 text-zinc-300 text-xs px-2 py-0.5 rounded-md font-mono"
-                      >
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
-                )
+              <span style={{ fontSize: 14, fontFamily: "var(--mono)", color: "var(--ink-faint)" }}>/10</span>
+            </div>
+
+            {/* Score label — 13px, font-weight 500, score-band color */}
+            <span style={{ fontSize: 13, fontWeight: 500, color: overallLabelColor, marginTop: 4 }}>
+              {overallLabel}
+            </span>
+
+            {/* Benchmark context */}
+            <div className="mt-2">
+              <BenchmarkBadge userScore={scores.overall} benchmark={benchmark} />
+            </div>
+
+            {/* Winner badge */}
+            {winner && (
+              <div className="mt-2 px-3 py-1 rounded-full text-xs font-semibold font-mono bg-amber-500/10 text-amber-400 border border-amber-500/25">
+                ★ Winner
+              </div>
             )}
-          </CollapsibleSection>
-        </div>
-      )}
+          </div>
 
-      {/* File name */}
-      {fileName && (
-        <div className="px-5 pb-2 text-xs font-mono text-zinc-500 truncate">
-          {formatFileName(fileName)}
-        </div>
-      )}
+          {/* ── Metric bars (extracted) ── */}
+          <MetricBars
+            scores={scores}
+            mounted={mounted}
+            onCTARewrite={onCTARewrite}
+            ctaRewrites={ctaRewrites}
+            ctaLoading={ctaLoading}
+          />
 
-      {/* ── Score-adaptive CTA (extracted) ── */}
-      <ScoreAdaptiveCTA
-        overallScore={scores.overall}
-        onShare={onShare}
-        onGenerateBrief={onGenerateBrief}
-      />
+          {/* ── Hook detail (extracted) ── */}
+          {hookDetail && (
+            <HookDetailCard hookDetail={hookDetail} format={format} />
+          )}
+
+          {/* Improve This Ad — limited to 3, expandable */}
+          {improvements && improvements.length > 0 && (
+            <ImprovementsList improvements={improvements} loading={improvementsLoading} />
+          )}
+
+          {/* Fix It For Me */}
+          {onFixIt && (
+            <div className="px-5 mt-3">
+              {fixItResult ? (
+                <FixItPanel result={fixItResult} />
+              ) : (
+                <button
+                  type="button"
+                  onClick={onFixIt}
+                  disabled={fixItLoading}
+                  className="w-full h-11 rounded-xl text-[13px] font-semibold cursor-pointer flex items-center justify-center gap-2 transition-all duration-150"
+                  style={{
+                    background: fixItLoading ? "rgba(99,102,241,0.08)" : "linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.12))",
+                    border: "1px solid rgba(99,102,241,0.25)",
+                    color: "#818cf8",
+                    cursor: fixItLoading ? "default" : "pointer",
+                    opacity: fixItLoading ? 0.7 : 1,
+                  }}
+                  onMouseEnter={(e) => { if (!fixItLoading) { e.currentTarget.style.background = "linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.2))"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.4)"; } }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.12))"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.25)"; }}
+                >
+                  {fixItLoading ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      Rewriting your ad...
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 size={14} />
+                      {scores.overall >= 8 ? "Polish It" : "Fix It For Me"}
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Scene Breakdown — video only, collapsed by default */}
+          {format === "video" && scenes && scenes.length > 0 && (
+            <div className="px-5 border-t border-white/5 mt-4 pt-4">
+              <CollapsibleSection
+                title="Scene Breakdown"
+                trailing={<span className="text-[10px] text-zinc-500">{scenes.length} scenes</span>}
+              >
+                <SceneBreakdown scenes={scenes} />
+              </CollapsibleSection>
+            </div>
+          )}
+
+          {/* Static Ad Checks — static only, collapsed by default */}
+          {format === "static" && scores && (
+            <div className="px-5 border-t border-white/5 mt-4 pt-4">
+              <CollapsibleSection title="Ad Quality Checks">
+                <StaticAdChecks scores={scores} />
+              </CollapsibleSection>
+            </div>
+          )}
+
+          {/* ── Budget recommendation (extracted) ── */}
+          <BudgetCard
+            engineBudget={engineBudget}
+            budget={budget}
+            onNavigateSettings={onNavigateSettings}
+          />
+
+          {/* Predicted Performance */}
+          {prediction && (
+            <div className="px-5 border-t border-white/5 mt-4 pt-4">
+              <PredictedPerformanceCard prediction={prediction} platform={platform} niche={niche} />
+            </div>
+          )}
+
+          {/* Recommended Hashtags — collapsed by default */}
+          {hashtags && (hashtags.tiktok.length > 0 || hashtags.meta.length > 0 || hashtags.instagram.length > 0) && (
+            <div className="px-5 border-t border-white/5 mt-4 pt-4">
+              <CollapsibleSection
+                title="Recommended Hashtags"
+                trailing={
+                  <span className="text-[10px] text-zinc-500">
+                    {[hashtags.tiktok, hashtags.meta, hashtags.instagram].reduce((n, t) => n + t.length, 0)} tags
+                  </span>
+                }
+              >
+                {([["TikTok", hashtags.tiktok], ["Meta", hashtags.meta], ["Instagram", hashtags.instagram]] as const).map(
+                  ([plat, tags]) =>
+                    tags.length > 0 && (
+                      <div key={plat} className="flex items-center gap-1.5 flex-wrap mb-2">
+                        <span className="text-xs text-zinc-500 w-16 flex-shrink-0">{plat}</span>
+                        {tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="bg-zinc-800 text-zinc-300 text-xs px-2 py-0.5 rounded-md font-mono"
+                          >
+                            #{tag}
+                          </span>
+                        ))}
+                      </div>
+                    )
+                )}
+              </CollapsibleSection>
+            </div>
+          )}
+
+          {/* File name */}
+          {fileName && (
+            <div className="px-5 pb-2 text-xs font-mono text-zinc-500 truncate">
+              {formatFileName(fileName)}
+            </div>
+          )}
+
+          {/* ── Score-adaptive CTA (extracted) ── */}
+          <ScoreAdaptiveCTA
+            overallScore={scores.overall}
+            onShare={onShare}
+            onGenerateBrief={onGenerateBrief}
+          />
+
+          {/* ═══════════════════════════════════════════════════
+              TIER 3 — On Demand (Deep Dive → SlideSheet)
+              ═══════════════════════════════════════════════════ */}
+
+          {deepDiveTabs.length > 0 && (
+            <div style={{ padding: "0 16px 16px" }}>
+              {/* Section label */}
+              <span style={{
+                fontSize: 10,
+                textTransform: "uppercase",
+                color: "#3f3f46",
+                letterSpacing: "0.08em",
+                fontWeight: 500,
+                display: "block",
+                marginBottom: 8,
+              }}>
+                Deep Dive
+              </span>
+
+              {/* Ghost pill buttons */}
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {format === "video" && scenes && scenes.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => { setDeepDiveTab("scenes"); setSlideSheetOpen(true); }}
+                    style={{
+                      display: "inline-flex", alignItems: "center", gap: 5,
+                      padding: "6px 12px", fontSize: 11, borderRadius: 9999,
+                      border: "1px solid rgba(255,255,255,0.06)", background: "transparent",
+                      color: "#52525b", cursor: "pointer", fontWeight: 500,
+                      transition: "all 150ms ease",
+                    }}
+                  >
+                    <Film size={12} /> Scenes
+                  </button>
+                )}
+
+                {hashtags && (hashtags.tiktok.length > 0 || hashtags.meta.length > 0 || hashtags.instagram.length > 0) && (
+                  <button
+                    type="button"
+                    onClick={() => { setDeepDiveTab("hashtags"); setSlideSheetOpen(true); }}
+                    style={{
+                      display: "inline-flex", alignItems: "center", gap: 5,
+                      padding: "6px 12px", fontSize: 11, borderRadius: 9999,
+                      border: "1px solid rgba(255,255,255,0.06)", background: "transparent",
+                      color: "#52525b", cursor: "pointer", fontWeight: 500,
+                      transition: "all 150ms ease",
+                    }}
+                  >
+                    <Hash size={12} /> Hashtags
+                  </button>
+                )}
+
+                {format === "static" && (
+                  <button
+                    type="button"
+                    onClick={() => { setDeepDiveTab("adchecks"); setSlideSheetOpen(true); }}
+                    style={{
+                      display: "inline-flex", alignItems: "center", gap: 5,
+                      padding: "6px 12px", fontSize: 11, borderRadius: 9999,
+                      border: "1px solid rgba(255,255,255,0.06)", background: "transparent",
+                      color: "#52525b", cursor: "pointer", fontWeight: 500,
+                      transition: "all 150ms ease",
+                    }}
+                  >
+                    <ShieldCheck size={12} /> Ad Checks
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => { setDeepDiveTab("copy"); setSlideSheetOpen(true); }}
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 5,
+                    padding: "6px 12px", fontSize: 11, borderRadius: 9999,
+                    border: "1px solid rgba(255,255,255,0.06)", background: "transparent",
+                    color: "#52525b", cursor: "pointer", fontWeight: 500,
+                    transition: "all 150ms ease",
+                  }}
+                >
+                  <AlignLeft size={12} /> Copy Breakdown
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => { setDeepDiveTab("emotional"); setSlideSheetOpen(true); }}
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 5,
+                    padding: "6px 12px", fontSize: 11, borderRadius: 9999,
+                    border: "1px solid rgba(255,255,255,0.06)", background: "transparent",
+                    color: "#52525b", cursor: "pointer", fontWeight: 500,
+                    transition: "all 150ms ease",
+                  }}
+                >
+                  <Heart size={12} /> Emotional Tone
+                </button>
+              </div>
+            </div>
+          )}
+
+        </div>{/* end card content */}
+      </div>{/* end glass card */}
+
 
       {/* Quick actions — overflow menu */}
-      {(onGenerateBrief || onAddToSwipeFile || onCheckPolicies) && (
+      {(onGenerateBrief || onAddToSwipeFile || onStartOver || onCheckPolicies) && (
         <div className="mt-auto px-5 pb-3 flex justify-end">
           <OverflowMenu
             items={[
               ...(onGenerateBrief ? [{ label: "Generate Brief", onClick: onGenerateBrief, icon: <FileText size={14} /> }] : []),
-              ...(onAddToSwipeFile ? [{ label: "Add to Swipe File", onClick: onAddToSwipeFile, icon: <Bookmark size={14} /> }] : []),
+              ...(onAddToSwipeFile ? [{
+                label: "Add to Swipe File",
+                onClick: () => { onAddToSwipeFile(); setToast("Added to Swipe File"); setTimeout(() => setToast(null), 2500); },
+                icon: <Bookmark size={14} />,
+              }] : []),
               ...(onCheckPolicies ? [{ label: "Check Policies", onClick: onCheckPolicies, loading: policyLoading, loadingLabel: "Checking..." }] : []),
+              ...(onStartOver ? [{ label: "Start Over", onClick: onStartOver, icon: <RotateCcw size={14} />, destructive: true }] : []),
             ] satisfies OverflowMenuItem[]}
           />
         </div>
@@ -563,6 +718,77 @@ onSelectHistory,
           Compare against a competitor →
         </Link>
       </div>
+
+      {/* Toast notification */}
+      {toast && (
+        <div style={{
+          position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)",
+          background: "#10B981", color: "white", padding: "8px 20px", borderRadius: 10,
+          fontSize: 13, fontWeight: 500, zIndex: 9999, boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
+          animation: "fadeIn 200ms ease-out",
+        }}>
+          {toast}
+        </div>
+      )}
+
+      {/* SlideSheet — Deep Dive content */}
+      <SlideSheet
+        open={slideSheetOpen}
+        onClose={() => setSlideSheetOpen(false)}
+        title="Deep Dive"
+      >
+        <DeepDiveTabGroup
+          tabs={deepDiveTabs}
+          activeTab={deepDiveTab}
+          onTabChange={setDeepDiveTab}
+        />
+
+        {/* Scenes panel */}
+        {deepDiveTab === "scenes" && scenes && scenes.length > 0 && (
+          <SceneBreakdown scenes={scenes} />
+        )}
+
+        {/* Hashtags panel */}
+        {deepDiveTab === "hashtags" && hashtags && (
+          <div>
+            {([["TikTok", hashtags.tiktok], ["Meta", hashtags.meta], ["Instagram", hashtags.instagram]] as const).map(
+              ([plat, tags]) =>
+                tags.length > 0 && (
+                  <div key={plat} className="flex items-center gap-1.5 flex-wrap mb-3">
+                    <span className="text-xs text-zinc-500 w-16 flex-shrink-0">{plat}</span>
+                    {tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="bg-zinc-800 text-zinc-300 text-xs px-2 py-0.5 rounded-md font-mono"
+                      >
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                )
+            )}
+          </div>
+        )}
+
+        {/* Ad Checks panel */}
+        {deepDiveTab === "adchecks" && format === "static" && scores && (
+          <StaticAdChecks scores={scores} />
+        )}
+
+        {/* Copy Breakdown panel — placeholder */}
+        {deepDiveTab === "copy" && (
+          <div style={{ padding: "12px 0", fontSize: 13, color: "#71717a", lineHeight: 1.6 }}>
+            <p>Copy breakdown analysis will appear here once the analysis is complete.</p>
+          </div>
+        )}
+
+        {/* Emotional Tone panel — placeholder */}
+        {deepDiveTab === "emotional" && (
+          <div style={{ padding: "12px 0", fontSize: 13, color: "#71717a", lineHeight: 1.6 }}>
+            <p>Emotional tone analysis will appear here once the analysis is complete.</p>
+          </div>
+        )}
+      </SlideSheet>
     </div>
   );
 }

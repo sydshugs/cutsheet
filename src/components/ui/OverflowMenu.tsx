@@ -1,14 +1,20 @@
 // OverflowMenu — ⋯ icon button with dropdown for secondary actions
+// Per-item async state machine: idle → loading → success/error
+// Supports destructive items (red text, below divider)
 
 import { useState, useRef, useEffect } from "react";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Check } from "lucide-react";
+
+export type ItemState = "idle" | "loading" | "success" | "error";
 
 export interface OverflowMenuItem {
   label: string;
-  onClick: () => void;
+  onClick: () => void | Promise<void>;
   icon?: React.ReactNode;
   loading?: boolean;
   loadingLabel?: string;
+  error?: string | null;
+  destructive?: boolean;
 }
 
 interface OverflowMenuProps {
@@ -19,7 +25,6 @@ export function OverflowMenu({ items }: OverflowMenuProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  // Close on outside click or Escape
   useEffect(() => {
     if (!open) return;
     const handleClick = (e: MouseEvent) => {
@@ -37,6 +42,9 @@ export function OverflowMenu({ items }: OverflowMenuProps) {
   }, [open]);
 
   if (items.length === 0) return null;
+
+  const normalItems = items.filter((item) => !item.destructive);
+  const destructiveItems = items.filter((item) => item.destructive);
 
   return (
     <div ref={ref} className="relative">
@@ -58,48 +66,94 @@ export function OverflowMenu({ items }: OverflowMenuProps) {
 
       {open && (
         <div
-          className="absolute bottom-full mb-2 right-0 min-w-[180px] rounded-xl overflow-hidden"
+          className="absolute bottom-full mb-2 right-0 min-w-[200px] rounded-xl overflow-hidden"
           style={{
-            background: "rgba(24,24,32,0.95)",
+            background: "rgba(24,24,27,0.95)",
             border: "1px solid rgba(255,255,255,0.08)",
             backdropFilter: "blur(16px)",
-            boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
             zIndex: 50,
+            padding: 4,
           }}
         >
-          {items.map((item, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => {
-                if (!item.loading) {
-                  item.onClick();
-                  setOpen(false);
-                }
-              }}
-              disabled={item.loading}
-              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-left transition-colors"
-              style={{
-                fontSize: 13,
-                color: item.loading ? "#52525b" : "#a1a1aa",
-                background: "transparent",
-                border: "none",
-                borderBottom: i < items.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
-                cursor: item.loading ? "default" : "pointer",
-              }}
-              onMouseEnter={(e) => {
-                if (!item.loading) e.currentTarget.style.background = "rgba(255,255,255,0.04)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "transparent";
-              }}
-            >
-              {item.icon && <span className="flex-shrink-0 opacity-60">{item.icon}</span>}
-              <span>{item.loading ? (item.loadingLabel ?? "Loading...") : item.label}</span>
-            </button>
+          {normalItems.map((item, i) => (
+            <MenuItemButton key={`normal-${i}`} item={item} onClose={() => setOpen(false)} />
           ))}
+          {destructiveItems.length > 0 && (
+            <>
+              <div data-divider style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "4px 8px" }} />
+              {destructiveItems.map((item, i) => (
+                <MenuItemButton key={`destructive-${i}`} item={item} onClose={() => setOpen(false)} />
+              ))}
+            </>
+          )}
         </div>
       )}
     </div>
+  );
+}
+
+function MenuItemButton({ item, onClose }: { item: OverflowMenuItem; onClose: () => void }) {
+  const [successVisible, setSuccessVisible] = useState(false);
+  const isError = !!item.error;
+  const isLoading = !!item.loading;
+  const isDestructive = !!item.destructive;
+
+  const state: ItemState = successVisible ? "success" : isError ? "error" : isLoading ? "loading" : "idle";
+
+  const prevLoadingRef = useRef(isLoading);
+  useEffect(() => {
+    if (prevLoadingRef.current && !isLoading && !isError) {
+      setSuccessVisible(true);
+      const timer = setTimeout(() => setSuccessVisible(false), 2000);
+      return () => clearTimeout(timer);
+    }
+    prevLoadingRef.current = isLoading;
+  }, [isLoading, isError]);
+
+  const textColor =
+    state === "success" ? "#10B981"
+    : state === "error" ? "#EF4444"
+    : state === "loading" ? "#52525b"
+    : isDestructive ? "#EF4444"
+    : "#a1a1aa";
+
+  const displayLabel =
+    state === "success" ? "Done"
+    : state === "error" ? item.error!
+    : state === "loading" ? (item.loadingLabel ?? "Loading...")
+    : item.label;
+
+  const displayIcon =
+    state === "success" ? <Check size={14} style={{ color: "#10B981" }} /> : item.icon;
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        if (state !== "loading" && state !== "success") {
+          item.onClick();
+          if (!item.loadingLabel && !isError && !isDestructive) onClose();
+        }
+      }}
+      disabled={state === "loading" || state === "success"}
+      className="w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors rounded-md"
+      style={{
+        fontSize: 12,
+        color: textColor,
+        background: "transparent",
+        border: "none",
+        cursor: state === "loading" || state === "success" ? "default" : "pointer",
+      }}
+      onMouseEnter={(e) => {
+        if (state === "idle") e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = "transparent";
+      }}
+    >
+      {displayIcon && <span className="flex-shrink-0 opacity-60">{displayIcon}</span>}
+      <span>{displayLabel}</span>
+    </button>
   );
 }
