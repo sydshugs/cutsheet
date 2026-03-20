@@ -295,7 +295,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   } catch (err) {
     console.error("[deconstruct] Claude error:", err);
     const message = err instanceof Error ? err.message : "Deconstruction failed";
-    const status = message.includes("rate_limit") || message.includes("429") ? 429 : 500;
+    const status = message.includes("RATE_LIMITED") || message.includes("429") || message.includes("resource exhausted") || message.includes("quota") ? 429 : 500;
     return res.status(status).json({ error: message });
   }
 

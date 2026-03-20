@@ -43,7 +43,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const user = await verifyAuth(req);
     if (!user) return res.status(401).json({ error: "Unauthorized" });
 
-    const rl = await checkRateLimit("analyze", user.id, user.isPro, RATE);
+    const rl = await checkRateLimit("analyze", user.id, user.tier, RATE);
     if (!rl.allowed) {
       return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
     }
@@ -116,7 +116,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   } catch (err: unknown) {
     console.error("[analyze] Error:", err instanceof Error ? err.message : err);
     const message = err instanceof Error ? err.message : "Analysis failed";
-    const status = message.includes("429") || message.includes("rate") ? 429 : 500;
+    // Only return 429 for actual rate limit errors — not any error containing "rate"
+    const status = message.includes("429") || message.includes("RATE_LIMITED") || message.includes("resource exhausted") || message.includes("quota") ? 429 : 500;
     return res.status(status).json({ error: message });
   }
 }

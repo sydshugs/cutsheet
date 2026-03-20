@@ -60,7 +60,7 @@ function categorizeError(err: unknown): AnalysisError {
   }
   if (err instanceof Error) {
     const msg = err.message.toLowerCase();
-    if (msg.includes("429") || msg.includes("rate") || msg.includes("quota") || msg.includes("resource exhausted")) {
+    if (msg.includes("429") || msg.includes("rate_limited") || msg.includes("quota") || msg.includes("resource exhausted")) {
       return { type: "rate_limit", ...ERROR_MAP.rate_limit };
     }
     if (msg.includes("500") || msg.includes("503") || msg.includes("unavailable") || msg.includes("internal")) {
