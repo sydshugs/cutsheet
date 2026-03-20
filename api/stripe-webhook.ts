@@ -5,8 +5,8 @@
 //   customer.subscription.deleted   → revert to 'free'
 //   customer.subscription.updated   → sync past_due / paused states
 //
-// IMPORTANT: vercel.json sets bodyParser: false for this route so we receive
-// the raw body buffer needed for Stripe signature verification.
+// Raw body is read directly from the stream (Vercel does not auto-parse bodies
+// for plain serverless functions), which is required for Stripe signature verification.
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Stripe from "stripe";
@@ -27,11 +27,13 @@ function getSupabaseAdmin() {
   return createClient(url, key, { auth: { persistSession: false } });
 }
 
-function getRawBody(req: VercelRequest): string {
-  if (typeof req.body === "string") return req.body;
-  if (Buffer.isBuffer(req.body)) return req.body.toString("utf-8");
-  // Fallback: re-serialise parsed JSON (signature will fail, but returns a useful error)
-  return JSON.stringify(req.body ?? "");
+function getRawBody(req: VercelRequest): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    req.on("data", (chunk: Buffer | string) => chunks.push(Buffer.from(chunk)));
+    req.on("end", () => resolve(Buffer.concat(chunks)));
+    req.on("error", reject);
+  });
 }
 
 export default async function handler(
@@ -53,7 +55,7 @@ export default async function handler(
 
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(getRawBody(req), sig, webhookSecret);
+    event = stripe.webhooks.constructEvent(await getRawBody(req), sig, webhookSecret);
   } catch (err) {
     console.error("[stripe-webhook] Signature verification failed:", err);
     return res.status(400).json({ error: "Invalid signature" });
