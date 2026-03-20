@@ -7,31 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getUsageInfo } from "../services/usageService";
 import { supabase } from "../lib/supabase";
-
-// ─── INLINE SWITCH ────────────────────────────────────────────────────────────
-function Switch({
-  checked,
-  onCheckedChange,
-}: {
-  checked: boolean;
-  onCheckedChange: (v: boolean) => void;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onCheckedChange(!checked)}
-      className="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50"
-      style={{ background: checked ? "#6366f1" : "rgba(255,255,255,0.1)" }}
-    >
-      <span
-        className="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform duration-200"
-        style={{ transform: checked ? "translateX(18px)" : "translateX(2px)" }}
-      />
-    </button>
-  );
-}
+import { Switch } from "../components/ui/Switch";
 
 // ─── SHARED STYLES ────────────────────────────────────────────────────────────
 const CARD_STYLE: React.CSSProperties = {
@@ -274,7 +250,7 @@ export function Settings() {
 
       {/* Features included */}
       <div style={CARD_STYLE}>
-        <p style={{ fontSize: 13, fontWeight: 600, color: "#71717a", marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.06em", fontSize: 11 }}>
+        <p style={{ fontSize: 11, fontWeight: 600, color: "#71717a", marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.06em" }}>
           {isPro ? "Everything included" : "Free plan includes"}
         </p>
         <div className="flex flex-col gap-3">
@@ -779,29 +755,34 @@ export function Settings() {
 
               {/* Preferences card */}
               <motion.div style={CARD_STYLE} {...cardAnim(0.08)}>
-                <h2 style={{ fontSize: 14, fontWeight: 600, color: "#f4f4f5" }}>Preferences</h2>
-                <p style={{ fontSize: 12, color: "#71717a", marginTop: 4, marginBottom: 20 }}>
-                  Control what reaches your inbox.
+                <div className="flex items-center justify-between">
+                  <h2 style={{ fontSize: 14, fontWeight: 600, color: "#f4f4f5" }}>Preferences</h2>
+                  <span style={{ fontSize: 10, color: "#52525b", background: "rgba(255,255,255,0.04)", borderRadius: 9999, padding: "2px 8px" }}>
+                    Coming soon
+                  </span>
+                </div>
+                <p style={{ fontSize: 12, color: "#52525b", marginTop: 4, marginBottom: 20 }}>
+                  Email preferences are not yet available.
                 </p>
 
-                <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center justify-between mb-5 opacity-40 pointer-events-none">
                   <div>
                     <p style={{ fontSize: 13, fontWeight: 600, color: "#f4f4f5" }}>Product updates</p>
                     <p style={{ fontSize: 12, color: "#71717a", marginTop: 2 }}>
                       New features and improvements
                     </p>
                   </div>
-                  <Switch checked={productUpdates} onCheckedChange={setProductUpdates} />
+                  <Switch checked={productUpdates} onCheckedChange={setProductUpdates} disabled />
                 </div>
 
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between opacity-40 pointer-events-none">
                   <div>
                     <p style={{ fontSize: 13, fontWeight: 600, color: "#f4f4f5" }}>Weekly digest</p>
                     <p style={{ fontSize: 12, color: "#71717a", marginTop: 2 }}>
                       Your usage summary every Monday
                     </p>
                   </div>
-                  <Switch checked={weeklyDigest} onCheckedChange={setWeeklyDigest} />
+                  <Switch checked={weeklyDigest} onCheckedChange={setWeeklyDigest} disabled />
                 </div>
 
                 <div className="mt-6 pt-4" style={DIVIDER}>

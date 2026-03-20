@@ -1,7 +1,9 @@
 // ScoreCard.tsx — Visual translation from #screen-results (prototype)
 
-import { useEffect, useState } from "react";
-import { Copy, CheckCircle, AlertTriangle, AlertCircle, TrendingUp, ArrowUpRight, Share2, RotateCcw, Send } from "lucide-react";
+import { useEffect, useState, useMemo } from "react";
+import { Copy, CheckCircle, AlertTriangle, AlertCircle, TrendingUp, ArrowUpRight, Share2, RotateCcw, Send, ShieldCheck, FileText, Bookmark } from "lucide-react";
+import { CollapsibleSection } from "./ui/CollapsibleSection";
+import { OverflowMenu, type OverflowMenuItem } from "./ui/OverflowMenu";
 import type { BudgetRecommendation, Hashtags, Scene } from "../services/analyzerService";
 import type { EngineBudgetRecommendation } from "../services/budgetService";
 import SceneBreakdown from "./SceneBreakdown";
@@ -111,6 +113,45 @@ function formatRelativeTime(date: Date): string {
 }
 
 const scoreKeys = ["hook", "clarity", "cta", "production"] as const;
+
+const MAX_VISIBLE_IMPROVEMENTS = 3;
+
+function ImprovementsList({ improvements, loading }: { improvements: string[]; loading?: boolean }) {
+  const [expanded, setExpanded] = useState(false);
+  const hasMore = improvements.length > MAX_VISIBLE_IMPROVEMENTS;
+  const visible = expanded ? improvements : improvements.slice(0, MAX_VISIBLE_IMPROVEMENTS);
+
+  return (
+    <div className="px-5 border-t border-white/5 mt-4 pt-4" style={{ transition: "opacity 200ms", opacity: loading ? 0.4 : 1 }}>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wider m-0">
+          Improve This Ad
+        </h3>
+        {loading && (
+          <div style={{ width: 12, height: 12, border: "2px solid rgba(99,102,241,0.2)", borderTopColor: "#6366f1", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+        )}
+      </div>
+      <ul className="flex flex-col gap-1">
+        {visible.map((item, i) => (
+          <li key={i} className="flex gap-2 items-start py-1.5">
+            <span className="w-1 h-1 rounded-full bg-indigo-400 mt-2 flex-shrink-0" />
+            <span className="text-xs text-zinc-400 leading-relaxed">{item}</span>
+          </li>
+        ))}
+      </ul>
+      {hasMore && (
+        <button
+          type="button"
+          onClick={() => setExpanded((p) => !p)}
+          className="text-[11px] text-indigo-400 hover:text-indigo-300 font-mono mt-2 transition-colors"
+          style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
+        >
+          {expanded ? "Show less" : `Show all ${improvements.length} →`}
+        </button>
+      )}
+    </div>
+  );
+}
 
 export function ScoreCard({
   scores,
@@ -228,7 +269,9 @@ onSelectHistory,
           )}
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-zinc-600 font-mono">{modelName}</span>
+          <span className="text-xs text-zinc-600 font-mono truncate max-w-[120px]" title={fileName ? formatFileName(fileName) : undefined}>
+            {fileName ? formatFileName(fileName) : modelName}
+          </span>
           <button
             onClick={handleCopy}
             style={{
@@ -395,192 +438,162 @@ onSelectHistory,
         })}
       </div>
 
-      {/* Improve This Ad */}
+      {/* Improve This Ad — limited to 3, expandable */}
       {improvements && improvements.length > 0 && (
-        <div className="px-5 border-t border-white/5 mt-4 pt-4" style={{ transition: "opacity 200ms", opacity: improvementsLoading ? 0.4 : 1 }}>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wider m-0">
-              Improve This Ad
-            </h3>
-            {improvementsLoading && (
-              <div style={{ width: 12, height: 12, border: "2px solid rgba(99,102,241,0.2)", borderTopColor: "#6366f1", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
-            )}
-          </div>
-          <ul className="flex flex-col gap-1">
-            {improvements.map((item, i) => (
-              <li key={i} className="flex gap-2 items-start py-1.5">
-                <span className="w-1 h-1 rounded-full bg-indigo-400 mt-2 flex-shrink-0" />
-                <span className="text-xs text-zinc-400 leading-relaxed">{item}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <ImprovementsList
+          improvements={improvements}
+          loading={improvementsLoading}
+        />
       )}
 
-      {/* Scene Breakdown — video only */}
+      {/* Scene Breakdown — video only, collapsed by default */}
       {format === "video" && scenes && scenes.length > 0 && (
-        <div className="px-5">
-          <SceneBreakdown scenes={scenes} />
-        </div>
-      )}
-
-      {/* Static Ad Checks — static only */}
-      {format === "static" && scores && (
-        <div className="px-5">
-          <StaticAdChecks scores={scores} />
-        </div>
-      )}
-
-      {/* Budget Recommendation — engine-based */}
-      {engineBudget && (
         <div className="px-5 border-t border-white/5 mt-4 pt-4">
-          <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-3">
-            Budget Recommendation
-          </p>
-
-          {/* Main card */}
-          <div
-            style={{
-              padding: 12,
-              borderRadius: 10,
-              border: `1px solid ${engineBudget.action === 'hold' ? 'rgba(239,68,68,0.2)' : engineBudget.action === 'limited' ? 'rgba(245,158,11,0.2)' : 'rgba(16,185,129,0.2)'}`,
-              background: engineBudget.action === 'hold' ? 'rgba(239,68,68,0.06)' : engineBudget.action === 'limited' ? 'rgba(245,158,11,0.06)' : 'rgba(16,185,129,0.06)',
-            }}
+          <CollapsibleSection
+            title="Scene Breakdown"
+            trailing={<span className="text-[10px] text-zinc-500">{scenes.length} scenes</span>}
           >
-            {/* Header row: icon + label + budget range */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {engineBudget.action === 'hold' && <AlertTriangle size={16} color="#ef4444" />}
-              {engineBudget.action === 'limited' && <AlertCircle size={16} color="#f59e0b" />}
-              {engineBudget.action === 'test' && <TrendingUp size={16} color="#10b981" />}
+            <SceneBreakdown scenes={scenes} />
+          </CollapsibleSection>
+        </div>
+      )}
+
+      {/* Static Ad Checks — static only, collapsed by default */}
+      {format === "static" && scores && (
+        <div className="px-5 border-t border-white/5 mt-4 pt-4">
+          <CollapsibleSection title="Ad Quality Checks">
+            <StaticAdChecks scores={scores} />
+          </CollapsibleSection>
+        </div>
+      )}
+
+      {/* Budget Recommendation — collapsed by default, verdict always visible */}
+      {(engineBudget || budget) && (
+        <div className="px-5 border-t border-white/5 mt-4 pt-4">
+          <CollapsibleSection
+            title="Budget Recommendation"
+            defaultOpen={false}
+            trailing={engineBudget ? (
               <span style={{
-                fontSize: 13,
+                fontSize: 11,
                 fontWeight: 600,
                 color: engineBudget.action === 'hold' ? '#ef4444' : engineBudget.action === 'limited' ? '#f59e0b' : '#10b981',
               }}>
                 {engineBudget.label}
                 {engineBudget.dailyBudget && ` · $${engineBudget.dailyBudget.min}–$${engineBudget.dailyBudget.max}/day`}
               </span>
-            </div>
+            ) : budget ? (
+              <span className="text-[11px] text-zinc-400">{budget.verdict}</span>
+            ) : null}
+          >
+            {engineBudget ? (
+              <>
+                <div
+                  style={{
+                    padding: 12,
+                    borderRadius: 10,
+                    border: `1px solid ${engineBudget.action === 'hold' ? 'rgba(239,68,68,0.2)' : engineBudget.action === 'limited' ? 'rgba(245,158,11,0.2)' : 'rgba(16,185,129,0.2)'}`,
+                    background: engineBudget.action === 'hold' ? 'rgba(239,68,68,0.06)' : engineBudget.action === 'limited' ? 'rgba(245,158,11,0.06)' : 'rgba(16,185,129,0.06)',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {engineBudget.action === 'hold' && <AlertTriangle size={16} color="#ef4444" />}
+                    {engineBudget.action === 'limited' && <AlertCircle size={16} color="#f59e0b" />}
+                    {engineBudget.action === 'test' && <TrendingUp size={16} color="#10b981" />}
+                    <span style={{
+                      fontSize: 13, fontWeight: 600,
+                      color: engineBudget.action === 'hold' ? '#ef4444' : engineBudget.action === 'limited' ? '#f59e0b' : '#10b981',
+                    }}>
+                      {engineBudget.label}
+                      {engineBudget.dailyBudget && ` · $${engineBudget.dailyBudget.min}–$${engineBudget.dailyBudget.max}/day`}
+                    </span>
+                  </div>
 
-            {/* Platform CPM */}
-            {engineBudget.action !== 'hold' && (
-              <p style={{ fontSize: 11, color: '#71717a', marginTop: 6 }}>
-                Platform CPM: {engineBudget.platformCPM}
-              </p>
-            )}
+                  {engineBudget.action !== 'hold' && (
+                    <p style={{ fontSize: 11, color: '#71717a', marginTop: 6 }}>
+                      Platform CPM: {engineBudget.platformCPM}
+                    </p>
+                  )}
 
-            {/* Advice */}
-            <p style={{ fontSize: 12, color: '#a1a1aa', marginTop: 8, lineHeight: 1.5 }}>
-              {engineBudget.advice}
-            </p>
+                  <p style={{ fontSize: 12, color: '#a1a1aa', marginTop: 8, lineHeight: 1.5 }}>
+                    {engineBudget.advice}
+                  </p>
 
-            {/* Scale signal */}
-            {engineBudget.scaleSignal && (
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 4, marginTop: 8 }}>
-                <ArrowUpRight size={12} color="#818cf8" style={{ marginTop: 2, flexShrink: 0 }} />
-                <span style={{ fontSize: 11, color: '#818cf8', fontStyle: 'italic', lineHeight: 1.4 }}>
-                  {engineBudget.scaleSignal}
-                </span>
-              </div>
-            )}
+                  {engineBudget.scaleSignal && (
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 4, marginTop: 8 }}>
+                      <ArrowUpRight size={12} color="#818cf8" style={{ marginTop: 2, flexShrink: 0 }} />
+                      <span style={{ fontSize: 11, color: '#818cf8', fontStyle: 'italic', lineHeight: 1.4 }}>
+                        {engineBudget.scaleSignal}
+                      </span>
+                    </div>
+                  )}
 
-            {/* Test duration + ROAS target */}
-            {engineBudget.action !== 'hold' && (
-              <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
-                <span style={{ fontSize: 11, color: '#52525b' }}>
-                  Test: {engineBudget.testDuration}
-                </span>
-                <span style={{ fontSize: 11, color: '#52525b' }}>
-                  ROAS: {engineBudget.roasTarget}
-                </span>
-              </div>
-            )}
-          </div>
+                  {engineBudget.action !== 'hold' && (
+                    <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
+                      <span style={{ fontSize: 11, color: '#52525b' }}>Test: {engineBudget.testDuration}</span>
+                      <span style={{ fontSize: 11, color: '#52525b' }}>ROAS: {engineBudget.roasTarget}</span>
+                    </div>
+                  )}
+                </div>
 
-          {/* Niche + platform pill */}
-          <div style={{ marginTop: 8, display: 'flex', gap: 6 }}>
-            <span style={{
-              fontSize: 10,
-              color: '#71717a',
-              background: 'rgba(255,255,255,0.04)',
-              borderRadius: 9999,
-              padding: '2px 8px',
-            }}>
-              {engineBudget.niche} · {engineBudget.platform === 'all' ? 'All platforms' : engineBudget.platform}
-            </span>
-          </div>
+                <div style={{ marginTop: 8, display: 'flex', gap: 6 }}>
+                  <span style={{ fontSize: 10, color: '#71717a', background: 'rgba(255,255,255,0.04)', borderRadius: 9999, padding: '2px 8px' }}>
+                    {engineBudget.niche} · {engineBudget.platform === 'all' ? 'All platforms' : engineBudget.platform}
+                  </span>
+                </div>
 
-          {/* Missing profile hint */}
-          {engineBudget.niche === 'Other' && onNavigateSettings && (
-            <button
-              type="button"
-              onClick={onNavigateSettings}
-              style={{
-                marginTop: 8,
-                fontSize: 11,
-                color: '#6366f1',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: 0,
-                textDecoration: 'underline',
-                textDecorationColor: 'rgba(99,102,241,0.3)',
-              }}
-            >
-              Set your niche in Settings for personalized budgets &rarr;
-            </button>
-          )}
+                {engineBudget.niche === 'Other' && onNavigateSettings && (
+                  <button
+                    type="button"
+                    onClick={onNavigateSettings}
+                    style={{ marginTop: 8, fontSize: 11, color: '#6366f1', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline', textDecorationColor: 'rgba(99,102,241,0.3)' }}
+                  >
+                    Set your niche in Settings for personalized budgets &rarr;
+                  </button>
+                )}
 
-          {/* Static all-platforms footnote */}
-          {engineBudget.footnote && (
-            <p style={{ fontSize: 11, color: '#52525b', marginTop: 8 }}>
-              {engineBudget.footnote}
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Legacy budget fallback (from Gemini) */}
-      {!engineBudget && budget && (
-        <div className="px-5 border-t border-white/5 mt-4 pt-4">
-          <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-3">
-            Budget Recommendation
-          </p>
-          <p className="text-xs text-zinc-400 leading-relaxed">{budget.reason || `${budget.verdict} — ${budget.daily}/day`}</p>
+                {engineBudget.footnote && (
+                  <p style={{ fontSize: 11, color: '#52525b', marginTop: 8 }}>{engineBudget.footnote}</p>
+                )}
+              </>
+            ) : budget ? (
+              <p className="text-xs text-zinc-400 leading-relaxed">{budget.reason || `${budget.verdict} — ${budget.daily}/day`}</p>
+            ) : null}
+          </CollapsibleSection>
         </div>
       )}
 
       {/* Recommended Hashtags */}
       {hashtags && (hashtags.tiktok.length > 0 || hashtags.meta.length > 0 || hashtags.instagram.length > 0) && (
         <div className="px-5 border-t border-white/5 mt-4 pt-4">
-          <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-3">
-            Recommended Hashtags
-          </p>
-          {([["TikTok", hashtags.tiktok], ["Meta", hashtags.meta], ["Instagram", hashtags.instagram]] as const).map(
-            ([platform, tags]) =>
-              tags.length > 0 && (
-                <div key={platform} className="flex items-center gap-1.5 flex-wrap mb-2">
-                  <span className="text-xs text-zinc-500 w-16 flex-shrink-0">{platform}</span>
-                  {tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="bg-zinc-800 text-zinc-300 text-xs px-2 py-0.5 rounded-md font-mono"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              )
-          )}
+          <CollapsibleSection
+            title="Recommended Hashtags"
+            trailing={
+              <span className="text-[10px] text-zinc-500">
+                {[hashtags.tiktok, hashtags.meta, hashtags.instagram].reduce((n, t) => n + t.length, 0)} tags
+              </span>
+            }
+          >
+            {([["TikTok", hashtags.tiktok], ["Meta", hashtags.meta], ["Instagram", hashtags.instagram]] as const).map(
+              ([platform, tags]) =>
+                tags.length > 0 && (
+                  <div key={platform} className="flex items-center gap-1.5 flex-wrap mb-2">
+                    <span className="text-xs text-zinc-500 w-16 flex-shrink-0">{platform}</span>
+                    {tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="bg-zinc-800 text-zinc-300 text-xs px-2 py-0.5 rounded-md font-mono"
+                      >
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                )
+            )}
+          </CollapsibleSection>
         </div>
       )}
 
-      {/* File name */}
-      {fileName && (
-        <div className="px-5 pb-2 text-xs font-mono text-zinc-600 truncate">
-          {formatFileName(fileName)}
-        </div>
-      )}
 
       {/* Score-adaptive primary CTA */}
       <div className="px-5 pb-3">
@@ -644,44 +657,20 @@ onSelectHistory,
         <p id="adaptive-cta-toast" style={{ fontSize: 11, color: "#10b981", textAlign: "center", marginTop: 6, opacity: 0, transition: "opacity 300ms", minHeight: 16 }} />
       </div>
 
-      {/* Share button (backward compat) */}
-      {onShare && (
-        <div className="px-5 pb-2" data-html2canvas-ignore="true">
-          <button
-            type="button"
-            onClick={onShare}
-            className="w-full py-2 px-3 bg-transparent border border-white/10 rounded-lg text-zinc-400 text-xs font-medium hover:bg-white/5 hover:text-white hover:border-white/20 transition-all duration-150 cursor-pointer"
-          >
-            Copy Scorecard
-          </button>
-        </div>
-      )}
 
-      {/* Quick actions */}
+      {/* Quick actions — overflow menu */}
       {(onGenerateBrief || onAddToSwipeFile) && (
-        <div className="mt-auto p-5 border-t border-white/5 flex flex-col gap-2">
-          {onGenerateBrief && (
-            <button
-              type="button"
-              onClick={onGenerateBrief}
-              className="bg-white/5 hover:bg-white/10 text-white text-sm rounded-xl w-full py-2.5 text-center transition-colors duration-150 cursor-pointer"
-            >
-              Generate Brief
-            </button>
-          )}
-          {onAddToSwipeFile && (
-            <button
-              type="button"
-              onClick={() => {
-                onAddToSwipeFile();
-                setToast("Added to Swipe File");
-                setTimeout(() => setToast(null), 2500);
-              }}
-              className="bg-white/5 hover:bg-white/10 text-white text-sm rounded-xl w-full py-2.5 text-center transition-colors duration-150 cursor-pointer"
-            >
-              Add to Swipe File
-            </button>
-          )}
+        <div className="mt-auto px-5 pb-3 flex justify-end">
+          <OverflowMenu
+            items={[
+              ...(onGenerateBrief ? [{ label: "Generate Brief", onClick: onGenerateBrief, icon: <FileText size={14} /> }] : []),
+              ...(onAddToSwipeFile ? [{
+                label: "Add to Swipe File",
+                onClick: () => { onAddToSwipeFile(); setToast("Added to Swipe File"); setTimeout(() => setToast(null), 2500); },
+                icon: <Bookmark size={14} />,
+              }] : []),
+            ] satisfies OverflowMenuItem[]}
+          />
         </div>
       )}
       </>}
