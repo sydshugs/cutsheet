@@ -55,7 +55,7 @@ interface ScoreCardProps {
   historyRefreshKey?: number;
   engineBudget?: EngineBudgetRecommendation | null;
   onNavigateSettings?: () => void;
-  improvementsLoading?: boolean;
+  improvementsLoading?: boolean; // kept for API compat, no longer rendered
   onReanalyze?: () => void;
   onStartOver?: () => void;
   onCheckPolicies?: () => void;
@@ -95,45 +95,6 @@ function getScoreBadgeClasses(score: number): string {
   if (score >= 7) return "bg-indigo-500/15 text-indigo-400";
   if (score >= 5) return "bg-amber-500/15 text-amber-400";
   return "bg-red-500/15 text-red-400";
-}
-
-// ─── Improvements list with "Show all" expander ─────────────────────────────
-const MAX_VISIBLE_IMPROVEMENTS = 3;
-
-function ImprovementsList({ improvements, loading }: { improvements: string[]; loading?: boolean }) {
-  const [expanded, setExpanded] = useState(false);
-  const hasMore = improvements.length > MAX_VISIBLE_IMPROVEMENTS;
-  const visible = expanded ? improvements : improvements.slice(0, MAX_VISIBLE_IMPROVEMENTS);
-
-  return (
-    <div id="improvements-section" className="px-5 border-t border-white/5 mt-4 pt-4" style={{ transition: "opacity 200ms", opacity: loading ? 0.4 : 1 }}>
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wider m-0">
-          Improve This Ad
-        </h3>
-        {loading && (
-          <div style={{ width: 12, height: 12, border: "2px solid rgba(99,102,241,0.2)", borderTopColor: "#6366f1", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
-        )}
-      </div>
-      <ul className="flex flex-col gap-1">
-        {visible.map((item, i) => (
-          <li key={i} className="flex gap-2 items-start py-1.5">
-            <span className="w-1 h-1 rounded-full bg-indigo-400 mt-2 flex-shrink-0" />
-            <span className="text-xs text-zinc-400 leading-relaxed">{item}</span>
-          </li>
-        ))}
-      </ul>
-      {hasMore && (
-        <button
-          type="button"
-          onClick={() => setExpanded(!expanded)}
-          className="text-[11px] text-indigo-400 hover:text-indigo-300 mt-2 cursor-pointer bg-transparent border-none p-0 font-medium transition-colors"
-        >
-          {expanded ? "Show less" : `Show all ${improvements.length} →`}
-        </button>
-      )}
-    </div>
-  );
 }
 
 function formatFileName(fileName: string): string {
@@ -177,7 +138,6 @@ export function ScoreCard({
   historyRefreshKey,
   engineBudget,
   onNavigateSettings,
-  improvementsLoading,
   onReanalyze,
   onStartOver,
   onCheckPolicies,
@@ -455,11 +415,6 @@ export function ScoreCard({
           {/* ── Hook detail (extracted) ── */}
           {hookDetail && (
             <HookDetailCard hookDetail={hookDetail} format={format} />
-          )}
-
-          {/* Improve This Ad — limited to 3, expandable */}
-          {improvements && improvements.length > 0 && (
-            <ImprovementsList improvements={improvements} loading={improvementsLoading} />
           )}
 
           {/* Fix It For Me */}
