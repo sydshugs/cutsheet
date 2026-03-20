@@ -1,7 +1,7 @@
 // ScoreCard.tsx — 3-tier glass card restructure per DESIGN-SPEC.md
 
 import { useEffect, useState, useMemo } from "react";
-import { Copy, CheckCircle, AlertTriangle, AlertCircle, TrendingUp, ArrowUpRight, Share2, RotateCcw, Send, ShieldCheck, FileText, Bookmark, Lightbulb, DollarSign, Film, Hash, Zap } from "lucide-react";
+import { Copy, CheckCircle, AlertTriangle, AlertCircle, TrendingUp, ArrowUpRight, Share2, RotateCcw, Send, ShieldCheck, FileText, Bookmark, Lightbulb, DollarSign, Film, Hash, Heart, AlignLeft } from "lucide-react";
 import { CollapsibleSection } from "./ui/CollapsibleSection";
 import { OverflowMenu, type OverflowMenuItem } from "./ui/OverflowMenu";
 import { BenchmarkBadge } from "./ui/BenchmarkBadge";
@@ -274,6 +274,8 @@ onSelectHistory,
     if (format === "static") {
       tabs.push({ id: "adchecks", label: "Ad Checks" });
     }
+    tabs.push({ id: "copy", label: "Copy Breakdown" });
+    tabs.push({ id: "emotional", label: "Emotional Tone" });
     return tabs;
   }, [format, scenes, hashtags]);
 
@@ -792,6 +794,34 @@ onSelectHistory,
                     <ShieldCheck size={12} /> Ad Checks
                   </button>
                 )}
+
+                <button
+                  type="button"
+                  onClick={() => { setDeepDiveTab("copy"); setSlideSheetOpen(true); }}
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 5,
+                    padding: "6px 12px", fontSize: 11, borderRadius: 9999,
+                    border: "1px solid rgba(255,255,255,0.06)", background: "transparent",
+                    color: "#52525b", cursor: "pointer", fontWeight: 500,
+                    transition: "all 150ms ease",
+                  }}
+                >
+                  <AlignLeft size={12} /> Copy Breakdown
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => { setDeepDiveTab("emotional"); setSlideSheetOpen(true); }}
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 5,
+                    padding: "6px 12px", fontSize: 11, borderRadius: 9999,
+                    border: "1px solid rgba(255,255,255,0.06)", background: "transparent",
+                    color: "#52525b", cursor: "pointer", fontWeight: 500,
+                    transition: "all 150ms ease",
+                  }}
+                >
+                  <Heart size={12} /> Emotional Tone
+                </button>
               </div>
             </div>
           )}
@@ -889,6 +919,20 @@ onSelectHistory,
         {/* Ad Checks panel */}
         {deepDiveTab === "adchecks" && format === "static" && scores && (
           <StaticAdChecks scores={scores} />
+        )}
+
+        {/* Copy Breakdown panel — placeholder */}
+        {deepDiveTab === "copy" && (
+          <div style={{ padding: "12px 0", fontSize: 13, color: "#71717a", lineHeight: 1.6 }}>
+            <p>Copy breakdown analysis will appear here once the analysis is complete.</p>
+          </div>
+        )}
+
+        {/* Emotional Tone panel — placeholder */}
+        {deepDiveTab === "emotional" && (
+          <div style={{ padding: "12px 0", fontSize: 13, color: "#71717a", lineHeight: 1.6 }}>
+            <p>Emotional tone analysis will appear here once the analysis is complete.</p>
+          </div>
         )}
       </SlideSheet>
     </div>
