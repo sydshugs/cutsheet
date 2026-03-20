@@ -9,6 +9,7 @@ interface CollapsibleSectionProps {
   title: string;
   defaultOpen?: boolean;
   children: React.ReactNode;
+  icon?: React.ReactNode;
   /** Optional trailing element shown in the header row (e.g. a badge) */
   trailing?: React.ReactNode;
   className?: string;
@@ -18,6 +19,7 @@ export function CollapsibleSection({
   title,
   defaultOpen = false,
   children,
+  icon,
   trailing,
   className = "",
 }: CollapsibleSectionProps) {
@@ -31,9 +33,22 @@ export function CollapsibleSection({
         className="w-full flex items-center justify-between gap-2 group"
         style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
       >
-        <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
-          {title}
-        </span>
+        <div className="flex items-center gap-2">
+          {icon && (
+            <span
+              className="flex-shrink-0 transition-colors"
+              style={{ color: open ? "var(--accent)" : "#52525b" }}
+            >
+              {icon}
+            </span>
+          )}
+          <span
+            className="text-[13px] tracking-normal"
+            style={{ fontWeight: open ? 600 : 500, color: open ? "var(--ink)" : "rgba(255,255,255,0.5)" }}
+          >
+            {title}
+          </span>
+        </div>
         <div className="flex items-center gap-2">
           {trailing}
           <motion.span
