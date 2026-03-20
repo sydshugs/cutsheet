@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { cn } from "../../lib/utils";
+import { useFocusTrap } from "../../hooks/useFocusTrap";
 
 interface AlertDialogProps {
   open: boolean;
@@ -23,6 +24,7 @@ export function AlertDialog({
   variant = "default",
 }: AlertDialogProps) {
   const confirmRef = useRef<HTMLButtonElement>(null);
+  const trapRef = useFocusTrap(open);
 
   useEffect(() => {
     if (!open) return;
@@ -60,6 +62,10 @@ export function AlertDialog({
       />
       {/* Dialog */}
       <div
+        ref={trapRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="alert-dialog-title"
         onClick={(e) => e.stopPropagation()}
         style={{
           position: "relative",
@@ -72,6 +78,7 @@ export function AlertDialog({
         }}
       >
         <h3
+          id="alert-dialog-title"
           style={{
             margin: 0,
             fontSize: "16px",

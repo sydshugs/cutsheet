@@ -1,20 +1,39 @@
-// SwipeFileView.tsx — Enhanced empty state with structured layout
+// SwipeFileView.tsx — Enhanced empty state with structured layout + filter bar
 
 import { useMemo, useState, useEffect, useCallback } from "react";
-import { useSwipeFile, type SwipeItem } from "../hooks/useSwipeFile";
+import type { SwipeItem } from "../hooks/useSwipeFile";
+import type { SwipeFileFilters } from "@/src/lib/swipeFileFilters";
 import { getScoreColorByValue } from "./ScoreCard";
 import { AlertDialog } from "@/src/components/ui/AlertDialog";
-
-type SortOption = "newest" | "highest" | "lowest" | "az";
+import { SwipeFileFilterBar } from "./SwipeFileFilterBar";
 
 interface SwipeFileViewProps {
   isDark: boolean;
+  items: SwipeItem[];
+  deleteItem: (id: string) => void;
+  clearAll: () => void;
+  filteredItems: SwipeItem[];
+  filters: SwipeFileFilters;
+  setFilters: (f: SwipeFileFilters) => void;
+  resetFilters: () => void;
+  filterOptions: { platforms: string[]; formats: string[] };
+  filteredCount: number;
+  totalCount: number;
 }
 
-export function SwipeFileView({ isDark }: SwipeFileViewProps) {
-  const { items, deleteItem, clearAll } = useSwipeFile();
+export function SwipeFileView({
+  items,
+  deleteItem,
+  clearAll,
+  filteredItems,
+  filters,
+  setFilters,
+  resetFilters,
+  filterOptions,
+  filteredCount,
+  totalCount,
+}: SwipeFileViewProps) {
   const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<SortOption>("newest");
   const [confirmClearOpen, setConfirmClearOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<SwipeItem | null>(null);
 
@@ -34,10 +53,11 @@ export function SwipeFileView({ isDark }: SwipeFileViewProps) {
     }
   }, [selectedItem, handleEscKey]);
 
-  const filtered = useMemo(() => {
+  // Search applies on top of already-filtered items
+  const displayed = useMemo(() => {
     const q = search.trim().toLowerCase();
-    let result = items.filter((item) => {
-      if (!q) return true;
+    if (!q) return filteredItems;
+    return filteredItems.filter((item) => {
       const haystack = [
         item.fileName,
         item.brand,
@@ -51,30 +71,11 @@ export function SwipeFileView({ isDark }: SwipeFileViewProps) {
         .toLowerCase();
       return haystack.includes(q);
     });
-
-    // Sort
-    switch (sort) {
-      case "highest":
-        result = [...result].sort((a, b) => (b.scores?.overall ?? 0) - (a.scores?.overall ?? 0));
-        break;
-      case "lowest":
-        result = [...result].sort((a, b) => (a.scores?.overall ?? 0) - (b.scores?.overall ?? 0));
-        break;
-      case "az":
-        result = [...result].sort((a, b) => a.fileName.localeCompare(b.fileName));
-        break;
-      case "newest":
-      default:
-        // Assume items are already newest-first from the hook
-        break;
-    }
-
-    return result;
-  }, [items, search, sort]);
+  }, [filteredItems, search]);
 
   const avgScore = items.length > 0
     ? (items.reduce((acc, i) => acc + (i.scores?.overall ?? 0), 0) / items.length).toFixed(1)
-    : "—";
+    : "\u2014";
 
   return (
     <div style={{ padding: "28px 32px", display: "flex", flexDirection: "column", gap: 24 }}>
@@ -82,7 +83,7 @@ export function SwipeFileView({ isDark }: SwipeFileViewProps) {
         Saved Ads
       </div>
 
-      {/* Filter bar */}
+      {/* Search bar */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <div style={{ position: "relative", flex: 1, minWidth: 200, maxWidth: 320 }}>
           <svg style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--ink-muted)", width: 14, height: 14 }} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5}><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
@@ -107,36 +108,19 @@ export function SwipeFileView({ isDark }: SwipeFileViewProps) {
             onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
           />
         </div>
-        <select
-          value={sort}
-          onChange={(e) => setSort(e.target.value as SortOption)}
-          style={{
-            background: "var(--surface)",
-            border: "1px solid var(--border)",
-            borderRadius: "var(--radius-sm)",
-            padding: "9px 12px",
-            fontSize: 13,
-            color: "var(--ink)",
-            fontFamily: "var(--sans)",
-            outline: "none",
-            cursor: "pointer",
-            appearance: "none",
-            WebkitAppearance: "none",
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='rgba(255,255,255,0.5)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
-            backgroundRepeat: "no-repeat",
-            backgroundPosition: "right 10px center",
-            paddingRight: 30,
-            transition: "border-color var(--duration-fast) var(--ease-out)",
-          }}
-          onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(99,102,241,0.4)"; }}
-          onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
-        >
-          <option value="newest">Newest first</option>
-          <option value="highest">Highest score</option>
-          <option value="lowest">Lowest score</option>
-          <option value="az">A–Z</option>
-        </select>
       </div>
+
+      {/* Filter bar — only show when there are items */}
+      {items.length > 0 && (
+        <SwipeFileFilterBar
+          filters={filters}
+          options={filterOptions}
+          totalCount={totalCount}
+          filteredCount={filteredCount}
+          onChange={setFilters}
+          onReset={resetFilters}
+        />
+      )}
 
       {/* Stats row */}
       <div style={{ display: "flex", gap: 24, alignItems: "center", flexWrap: "wrap", justifyContent: "space-between" }}>
@@ -159,7 +143,7 @@ export function SwipeFileView({ isDark }: SwipeFileViewProps) {
         variant="destructive"
       />
 
-      {/* Enhanced empty state v2 */}
+      {/* Empty state — no items at all */}
       {items.length === 0 && (
         <div style={{
           padding: "48px 24px",
@@ -199,14 +183,61 @@ export function SwipeFileView({ isDark }: SwipeFileViewProps) {
         </div>
       )}
 
+      {/* Empty filter state — items exist but filters match nothing */}
+      {items.length > 0 && displayed.length === 0 && (
+        <div style={{
+          padding: "40px 24px",
+          borderRadius: "var(--radius-lg)",
+          border: "1px dashed var(--border)",
+          background: "var(--surface)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 10,
+          textAlign: "center",
+        }}>
+          <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8" />
+            <path d="M21 21l-4.35-4.35" />
+          </svg>
+          <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink-muted)" }}>
+            No ads match your filters
+          </div>
+          <div style={{ fontSize: 13, color: "var(--ink-faint)", maxWidth: 280, lineHeight: 1.5 }}>
+            Try adjusting the score range, platform, or format filters.
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              resetFilters();
+              setSearch("");
+            }}
+            style={{
+              marginTop: 4,
+              fontSize: 12,
+              fontFamily: "var(--sans)",
+              color: "var(--accent)",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: 0,
+              textDecoration: "underline",
+              textUnderlineOffset: 2,
+            }}
+          >
+            Clear all filters
+          </button>
+        </div>
+      )}
+
       {/* Card grid */}
-      {items.length > 0 && (
+      {displayed.length > 0 && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 16 }}>
-          {filtered.map((item) => {
+          {displayed.map((item) => {
             const overall = item.scores?.overall ?? 0;
             const scoreColor = getScoreColorByValue(overall);
             const displayName = item.fileName.replace(/\.[^/.]+$/, "").replace(/[_-]/g, " ");
-            const brandLabel = item.brand || "—";
+            const brandLabel = item.brand || "\u2014";
             return (
               <div
                 key={item.id}

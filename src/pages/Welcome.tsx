@@ -265,7 +265,7 @@ export default function Welcome() {
                           onChange={(e) => setNicheCustom(e.target.value.slice(0, 100))}
                           maxLength={100}
                           placeholder="Tell us what you do (optional)"
-                          className="w-full h-10 px-4 rounded-xl text-sm outline-none"
+                          className="w-full h-10 px-4 rounded-xl text-sm outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
                           style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#f4f4f5", paddingRight: 48 }}
                           autoFocus
                         />
@@ -311,17 +311,55 @@ export default function Welcome() {
               )}
             </motion.div>
           ) : (
-            /* Completion */
-            <motion.div key="complete" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }} className="flex flex-col items-center gap-4">
+            /* Completion — show sample scorecard preview as aha moment */
+            <motion.div key="complete" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }} className="flex flex-col items-center gap-5 w-full max-w-[420px]">
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 400, damping: 20 }}>
                 <CheckCircle size={48} color="#10b981" />
               </motion.div>
               <motion.h2 className="text-[22px] font-semibold" style={{ color: "#f4f4f5" }} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.3 }}>
-                You're all set
+                You're ready to score
               </motion.h2>
               <motion.p className="text-sm text-center" style={{ color: "#71717a" }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3, duration: 0.3 }}>
-                {getSummary()} — every recommendation is tailored to you
+                {getSummary()}
               </motion.p>
+
+              {/* Sample scorecard preview — shows what they'll get */}
+              <motion.div
+                className="w-full rounded-2xl overflow-hidden"
+                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4, duration: 0.4 }}
+              >
+                <div className="px-4 py-3 flex items-center gap-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                  <div className="w-2 h-2 rounded-full" style={{ background: "#10b981" }} />
+                  <span className="text-[12px] font-medium" style={{ color: "#a1a1aa" }}>Sample Score Preview</span>
+                </div>
+                <div className="px-4 py-3 grid grid-cols-4 gap-3">
+                  {[
+                    { label: "Hook", score: 8.5, color: "#10b981" },
+                    { label: "Clarity", score: 7.2, color: "#6366f1" },
+                    { label: "CTA", score: 6.8, color: "#f59e0b" },
+                    { label: "Overall", score: 7.5, color: "#6366f1" },
+                  ].map((item, i) => (
+                    <motion.div
+                      key={item.label}
+                      className="flex flex-col items-center gap-1"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.5 + i * 0.1, type: "spring", stiffness: 300, damping: 20 }}
+                    >
+                      <span className="text-[20px] font-bold" style={{ color: item.color }}>{item.score}</span>
+                      <span className="text-[10px] uppercase tracking-wider" style={{ color: "#52525b" }}>{item.label}</span>
+                    </motion.div>
+                  ))}
+                </div>
+                <div className="px-4 py-2" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+                  <p className="text-[11px] text-center" style={{ color: "#52525b" }}>
+                    Upload your first creative to get your real scores
+                  </p>
+                </div>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>

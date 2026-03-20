@@ -22,6 +22,8 @@ import {
 } from "../../services/claudeService";
 import { SecondEyePanel } from "../../components/SecondEyePanel";
 import PlatformScoreCard from "../../components/PlatformScoreCard";
+import { generateFixIt, type FixItResult } from "../../services/fixItService";
+import { generatePrediction, type PredictionResult } from "../../services/predictionService";
 import { createShare } from "../../services/shareService";
 import { saveAnalysis } from "../../services/historyService";
 import type { AnalysisRecord } from "../../services/historyService";
@@ -137,8 +139,12 @@ export default function OrganicAnalyzer() {
 
   // ── User context for personalized AI ──────────────────────────────────────
   const [userContext, setUserContext] = useState<string>('')
+  const [rawUserContext, setRawUserContext] = useState<{ niche: string; platform: string } | null>(null)
   useEffect(() => {
-    getUserContext().then(ctx => setUserContext(formatUserContextBlock(ctx)))
+    getUserContext().then(ctx => {
+      setUserContext(formatUserContextBlock(ctx))
+      setRawUserContext({ niche: ctx.niche, platform: ctx.platform })
+    })
   }, [])
 
   const [platform, setPlatform] = useState<Platform>("all");
@@ -168,6 +174,9 @@ export default function OrganicAnalyzer() {
   const [analysisCompletedAt, setAnalysisCompletedAt] = useState<Date | null>(null);
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
   const [loadedFromHistory, setLoadedFromHistory] = useState<AnalysisRecord | null>(null);
+  const [fixItResult, setFixItResult] = useState<FixItResult | null>(null);
+  const [fixItLoading, setFixItLoading] = useState(false);
+  const [prediction, setPrediction] = useState<PredictionResult | null>(null);
 
   const scorecardRef = useRef<HTMLDivElement | null>(null);
   const lastSavedRef = useRef<string | null>(null);
@@ -197,6 +206,9 @@ export default function OrganicAnalyzer() {
     setPlatformScores([]);
     setPlatformScoresLoading(false);
     setImageMismatch(false);
+    setFixItResult(null);
+    setFixItLoading(false);
+    setPrediction(null);
   }, [reset]);
 
   const handleFileWithCheck = useCallback((f: File | null) => {
@@ -277,7 +289,7 @@ export default function OrganicAnalyzer() {
         lastSavedRef.current = key;
         addHistoryEntry({ fileName: result.fileName, timestamp: result.timestamp.toISOString(), scores: result.scores, markdown: result.markdown, thumbnailDataUrl: thumbnailDataUrl ?? undefined });
         const newCount = increment();
-        if (newCount >= FREE_LIMIT && !isPro) onUpgradeRequired();
+        if (newCount >= FREE_LIMIT && !isPro) onUpgradeRequired("analyze");
         // Fire and forget — do not await, do not block UI
         saveAnalysis({
           file_name: result.fileName,
@@ -422,6 +434,41 @@ export default function OrganicAnalyzer() {
     setTimeout(() => setInfoToast(null), 2500);
   };
 
+  const handleFixIt = async () => {
+    if (!activeResult?.markdown || !activeResult?.scores || fixItLoading) return;
+    setFixItLoading(true);
+    try {
+      const result = await generateFixIt(
+        activeResult.markdown,
+        activeResult.scores,
+        platform === "all" ? rawUserContext?.platform : platform,
+        rawUserContext?.niche,
+        undefined,
+        "video",
+      );
+      setFixItResult(result);
+    } catch (err) {
+      console.error("Fix It failed:", err);
+      setRateLimitError(err instanceof Error ? err.message : "Fix It failed. Please try again.");
+      setTimeout(() => setRateLimitError(null), 5000);
+    } finally {
+      setFixItLoading(false);
+    }
+  };
+
+  // Auto-fire prediction when analysis completes
+  useEffect(() => {
+    if (status === "complete" && result?.markdown && result?.scores && !prediction) {
+      generatePrediction(
+        result.markdown,
+        result.scores,
+        platform === "all" ? rawUserContext?.platform : platform,
+        "video",
+        rawUserContext?.niche,
+      ).then(setPrediction).catch(console.error);
+    }
+  }, [status, result, prediction, platform, rawUserContext]);
+
   const handleShareLink = async () => {
     if (!activeResult || shareLoading) return;
     const { allowed, resetAt } = checkShareLimit();
@@ -440,6 +487,15 @@ export default function OrganicAnalyzer() {
     if (!trimmed || isAnalyzing || isImporting) return;
     let parsed: URL;
     try { parsed = new URL(trimmed); } catch { setUrlError("Enter a valid URL."); return; }
+    // SSRF protection: only allow https and block private/internal IPs
+    if (parsed.protocol !== "https:") { setUrlError("Only HTTPS URLs are allowed."); return; }
+    const host = parsed.hostname.toLowerCase();
+    if (
+      host === "localhost" || host === "127.0.0.1" || host === "[::1]" ||
+      host.endsWith(".local") || host.endsWith(".internal") ||
+      /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|0\.)/.test(host) ||
+      host === "metadata.google.internal" || host === "169.254.169.254"
+    ) { setUrlError("This URL is not allowed."); return; }
     setIsImporting(true); setUrlError(null);
     try {
       const res = await fetch(trimmed);
@@ -534,6 +590,7 @@ export default function OrganicAnalyzer() {
             <div ref={scorecardRef}>
               <ScoreCard
                 scores={activeResult.scores}
+                hookDetail={activeResult.hookDetail}
                 improvements={activeResult.improvements}
                 hashtags={activeResult.hashtags}
                 scenes={activeResult.scenes}
@@ -548,6 +605,12 @@ export default function OrganicAnalyzer() {
                 onShare={handleCopy}
                 isDark={true}
                 format="video"
+                niche={rawUserContext?.niche}
+                platform={rawUserContext?.platform}
+                onFixIt={handleFixIt}
+                fixItResult={fixItResult}
+                fixItLoading={fixItLoading}
+                prediction={prediction}
               />
             </div>
             {/* Second Eye output below scorecard */}

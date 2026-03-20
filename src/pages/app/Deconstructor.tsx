@@ -91,7 +91,7 @@ function UrlInput({
           }}
           onKeyDown={handleKeyDown}
           placeholder="Paste a Meta Ad Library, TikTok Creative Center, or YouTube URL"
-          className="flex-1 bg-transparent text-sm text-white placeholder:text-zinc-600 outline-none py-2.5 min-w-0"
+          className="flex-1 bg-transparent text-sm text-white placeholder:text-zinc-500 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 py-2.5 min-w-0"
           disabled={loading}
           autoFocus
         />
@@ -132,7 +132,7 @@ function UrlInput({
         {(["meta", "youtube", "tiktok"] as SourceType[]).map((s) => (
           <span
             key={s}
-            className="text-xs text-zinc-600 font-mono"
+            className="text-xs text-zinc-500 font-mono"
             style={{ color: SOURCE_COLORS[s] + "99" }}
           >
             {getSourceLabel(s)}
@@ -174,7 +174,7 @@ function TikTokFallback({
           value={embedUrl}
           onChange={(e) => setEmbedUrl(e.target.value)}
           placeholder="Paste embed/direct image URL (optional)"
-          className="flex-1 bg-white/5 border border-white/10 rounded-lg text-xs text-white placeholder:text-zinc-600 px-3 py-2 outline-none focus:border-white/20"
+          className="flex-1 bg-white/5 border border-white/10 rounded-lg text-xs text-white placeholder:text-zinc-500 px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus:border-white/20"
         />
         <button
           type="button"
@@ -261,7 +261,7 @@ function DeconstructingState({ sourceType }: { sourceType: SourceType }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.2 }}
-            className="text-xs text-zinc-600"
+            className="text-xs text-zinc-500"
           >
             {STAGES[stageIdx]}
           </motion.p>
@@ -361,7 +361,7 @@ function TeardownSectionCard({
           )}
           <ChevronDown
             size={15}
-            className="text-zinc-600 transition-transform duration-200"
+            className="text-zinc-500 transition-transform duration-200"
             style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
           />
         </div>
@@ -473,7 +473,7 @@ function AdMetaHeader({
       <button
         type="button"
         onClick={onReset}
-        className="shrink-0 flex items-center gap-1.5 text-xs text-zinc-600 hover:text-zinc-400 transition-colors"
+        className="shrink-0 flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-400 transition-colors"
         title="Analyze another ad"
       >
         <RotateCcw size={13} />
@@ -604,7 +604,7 @@ export default function Deconstructor() {
               ? `Rate limit reached — try again in ${wait}.`
               : `You've used all 3 free deconstructions today. Try again in ${wait} or upgrade to Pro for unlimited.`
           );
-          if (!isPro) onUpgradeRequired();
+          if (!isPro) onUpgradeRequired("deconstruct");
         } else {
           setError(msg);
         }
@@ -739,7 +739,7 @@ export default function Deconstructor() {
         {/* Result: show URL input below for new analysis */}
         {result && !loading && (
           <div className="w-full max-w-2xl mx-auto mt-8 pt-8 border-t border-white/[0.04]">
-            <p className="text-xs text-zinc-600 text-center mb-4">
+            <p className="text-xs text-zinc-500 text-center mb-4">
               Deconstruct another ad
             </p>
             <UrlInput

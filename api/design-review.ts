@@ -40,7 +40,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     ? `\n\n${sessionMemory}\nIf this user has recurring typography or layout issues across prior ads, flag this as a systemic design habit — not just a one-off.`
     : "";
 
-  const client = new Anthropic({ apiKey: (process.env.ANTHROPIC_API_KEY ?? process.env.VITE_ANTHROPIC_API_KEY)! });
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
   const message = await client.messages.create({
     model: CLAUDE_MODEL,
@@ -113,7 +113,12 @@ Return JSON only — no prose, no preamble:
   const jsonMatch = text.match(/\{[\s\S]*\}/);
   if (!jsonMatch) return res.status(500).json({ error: "Could not parse Claude response" });
 
-  const parsed = JSON.parse(jsonMatch[0]);
+  let parsed;
+  try {
+    parsed = JSON.parse(jsonMatch[0]);
+  } catch {
+    return res.status(500).json({ error: "Failed to parse AI response — please try again" });
+  }
   const result = {
     topIssue: String(parsed.topIssue ?? ""),
     flags: Array.isArray(parsed.flags)

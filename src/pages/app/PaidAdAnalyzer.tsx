@@ -2,7 +2,7 @@
 import { Helmet } from 'react-helmet-async';
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useOutletContext, useNavigate, Link } from "react-router-dom";
-import { Zap, RotateCcw, Upload, AlertCircle, Sparkles } from "lucide-react";
+import { Zap, RotateCcw, Upload, AlertCircle, Sparkles, Lock } from "lucide-react";
 import { Toast } from "../../components/Toast";
 import { AnalyzerView } from "../../components/AnalyzerView";
 import { ScoreCard } from "../../components/ScoreCard";
@@ -18,10 +18,14 @@ import {
 } from "../../services/analyzerService";
 import {
   generateBriefWithClaude, generateCTARewrites, generateSecondEyeReview,
-  generateStaticSecondEye, generateImprovements,
+  generateStaticSecondEye, generateImprovements, generatePlatformScore,
   type SecondEyeResult,
   type StaticSecondEyeResult,
+  type PlatformScore,
 } from "../../services/claudeService";
+import { PlatformSwitcher, PAID_AD_PLATFORMS } from "../../components/PlatformSwitcher";
+import { generateFixIt, type FixItResult } from "../../services/fixItService";
+import { generatePrediction, type PredictionResult } from "../../services/predictionService";
 import { SecondEyePanel } from "../../components/SecondEyePanel";
 import { VisualizePanel } from "../../components/VisualizePanel";
 import { visualizeAd, fileToBase64, getMediaType } from "../../lib/visualizeService";
@@ -285,8 +289,12 @@ export default function PaidAdAnalyzer() {
 
   // ── User context for personalized AI ──────────────────────────────────────
   const [userContext, setUserContext] = useState<string>('')
+  const [rawUserContext, setRawUserContext] = useState<{ niche: string; platform: string } | null>(null)
   useEffect(() => {
-    getUserContext().then(ctx => setUserContext(formatUserContextBlock(ctx)))
+    getUserContext().then(ctx => {
+      setUserContext(formatUserContextBlock(ctx))
+      setRawUserContext({ niche: ctx.niche, platform: ctx.platform })
+    })
   }, [])
 
   // ── Platform / format / second eye state ───────────────────────────────────
@@ -340,6 +348,16 @@ export default function PaidAdAnalyzer() {
 
   const [improvementsLoading, setImprovementsLoading] = useState(false);
   const [platformImprovements, setPlatformImprovements] = useState<string[] | null>(null);
+  const [platformScoreResult, setPlatformScoreResult] = useState<PlatformScore | null>(null);
+  const [isPlatformSwitching, setIsPlatformSwitching] = useState(false);
+  const platformAbortRef = useRef<AbortController | null>(null);
+
+  // ── Fix It For Me state ──────────────────────────────────────────────────
+  const [fixItResult, setFixItResult] = useState<FixItResult | null>(null);
+  const [fixItLoading, setFixItLoading] = useState(false);
+
+  // ── Predicted Performance state ──────────────────────────────────────────
+  const [prediction, setPrediction] = useState<PredictionResult | null>(null);
   const scorecardRef = useRef<HTMLDivElement | null>(null);
   const lastSavedRef = useRef<string | null>(null);
   const prevPlatformRef = useRef<Platform>(platform);
@@ -379,6 +397,9 @@ export default function PaidAdAnalyzer() {
     setVisualizeStatus("idle");
     setVisualizeResult(null);
     setVisualizeError(null);
+    setFixItResult(null);
+    setFixItLoading(false);
+    setPrediction(null);
   }, [reset]);
 
   // Re-analyze handler: upload improved version, score, compare
@@ -450,7 +471,7 @@ export default function PaidAdAnalyzer() {
           thumbnailDataUrl: thumbnailDataUrl ?? undefined,
         });
         const newCount = increment();
-        if (newCount >= FREE_LIMIT && !isPro) onUpgradeRequired();
+        if (newCount >= FREE_LIMIT && !isPro) onUpgradeRequired("analyze");
         // Fire and forget — do not await, do not block UI
         saveAnalysis({
           file_name: result.fileName,
@@ -529,18 +550,38 @@ export default function PaidAdAnalyzer() {
     }
   }, [status, result, staticSecondEye, format]); // eslint-disable-line
 
-  // Platform switch: re-generate improvements when platform changes after analysis
-  useEffect(() => {
-    if (prevPlatformRef.current === platform) return;
-    prevPlatformRef.current = platform;
+  // Platform switch: re-generate improvements + platform score when platform changes
+  const handlePlatformSwitch = useCallback(async (newPlatform: string) => {
+    setPlatform(newPlatform as Platform);
     if (status !== "complete" || !result?.markdown || !result?.scores) return;
+    if (newPlatform === "all") {
+      setPlatformScoreResult(null);
+      setPlatformImprovements(null);
+      return;
+    }
 
+    // Cancel any in-flight platform score request
+    platformAbortRef.current?.abort();
+    platformAbortRef.current = new AbortController();
+
+    setIsPlatformSwitching(true);
     setImprovementsLoading(true);
-    generateImprovements(result.markdown, result.scores, userContext || undefined, platform, sessionMemoryRef.current)
-      .then((imps) => { setPlatformImprovements(imps); })
-      .catch(() => { setPlatformImprovements(null); })
-      .finally(() => setImprovementsLoading(false));
-  }, [platform]); // eslint-disable-line
+
+    try {
+      const [imps, pScore] = await Promise.all([
+        generateImprovements(result.markdown, result.scores, userContext || undefined, newPlatform, sessionMemoryRef.current),
+        generatePlatformScore(newPlatform, result, result.fileName, format as 'video' | 'static', userContext || undefined),
+      ]);
+      setPlatformImprovements(imps);
+      setPlatformScoreResult(pScore);
+    } catch {
+      setPlatformImprovements(null);
+      // Keep existing platform score on error
+    } finally {
+      setIsPlatformSwitching(false);
+      setImprovementsLoading(false);
+    }
+  }, [status, result, userContext, format]); // eslint-disable-line
 
   useEffect(() => {
     if (status === "uploading") {
@@ -733,6 +774,48 @@ export default function PaidAdAnalyzer() {
     }
   };
 
+  // ── Fix It For Me handler ──────────────────────────────────────────────────
+  const handleFixIt = async () => {
+    if (!activeResult?.markdown || !activeResult?.scores || fixItLoading) return;
+    setFixItLoading(true);
+    try {
+      const result = await generateFixIt(
+        activeResult.markdown,
+        activeResult.scores,
+        platform === "all" ? rawUserContext?.platform : platform,
+        rawUserContext?.niche,
+        undefined, // intent
+        format as 'video' | 'static',
+      );
+      setFixItResult(result);
+    } catch (err) {
+      console.error('Fix It failed:', err);
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.startsWith('RATE_LIMITED')) {
+        setInfoToast('Fix It limit reached. Try again later.');
+        setTimeout(() => setInfoToast(null), 3000);
+      }
+    } finally {
+      setFixItLoading(false);
+    }
+  };
+
+  // ── Predicted Performance — auto-fire on analysis complete ────────────────
+  useEffect(() => {
+    if (status === "complete" && result?.markdown && result?.scores && !prediction) {
+      generatePrediction(
+        result.markdown,
+        result.scores,
+        platform === "all" ? rawUserContext?.platform : platform,
+        format as 'video' | 'static',
+        rawUserContext?.niche,
+      ).then(setPrediction).catch((err) => {
+        console.error('Prediction failed (silent):', err);
+        // Silently omit — spec says never show error for this
+      });
+    }
+  }, [status, result]); // eslint-disable-line
+
   const handleVisualize = async () => {
     if (!activeResult?.scores || !file) return;
     setVisualizeOpen(true);
@@ -759,6 +842,12 @@ export default function PaidAdAnalyzer() {
       setVisualizeStatus("complete");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
+      if (msg === "PRO_REQUIRED") {
+        setVisualizeOpen(false);
+        setVisualizeStatus("idle");
+        onUpgradeRequired("visualize");
+        return;
+      }
       setVisualizeError(msg.includes("RATE_LIMITED") ? "RATE_LIMITED" : msg);
       setVisualizeStatus("error");
     }
@@ -815,6 +904,15 @@ export default function PaidAdAnalyzer() {
     if (!trimmed || isAnalyzing || isImporting) return;
     let parsed: URL;
     try { parsed = new URL(trimmed); } catch { setUrlError("Enter a valid URL."); return; }
+    // SSRF protection: only allow https and block private/internal IPs
+    if (parsed.protocol !== "https:") { setUrlError("Only HTTPS URLs are allowed."); return; }
+    const host = parsed.hostname.toLowerCase();
+    if (
+      host === "localhost" || host === "127.0.0.1" || host === "[::1]" ||
+      host.endsWith(".local") || host.endsWith(".internal") ||
+      /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|0\.)/.test(host) ||
+      host === "metadata.google.internal" || host === "169.254.169.254"
+    ) { setUrlError("This URL is not allowed."); return; }
     setIsImporting(true);
     setUrlError(null);
     try {
@@ -947,10 +1045,33 @@ export default function PaidAdAnalyzer() {
       >
         {showRightPanel && activeResult?.scores && rightTab === "analysis" && (
           <>
+            {/* Platform Switcher */}
+            <div className="px-4 pt-3 pb-1">
+              <PlatformSwitcher
+                platforms={PAID_AD_PLATFORMS}
+                selected={platform}
+                onChange={handlePlatformSwitch}
+                isSwitching={isPlatformSwitching}
+                disabled={status !== "complete"}
+              />
+            </div>
+            {/* Platform score verdict badge */}
+            {platformScoreResult && platform !== "all" && (
+              <div className="px-4 pb-2">
+                <div
+                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs"
+                  style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)" }}
+                >
+                  <span className="font-mono font-bold text-indigo-400">{platformScoreResult.score}/10</span>
+                  <span className="text-zinc-400">{platformScoreResult.verdict}</span>
+                </div>
+              </div>
+            )}
             <div ref={scorecardRef}>
               <ScoreCard
                 scores={activeResult.scores}
-                improvements={platformImprovements ?? activeResult.improvements}
+                hookDetail={activeResult.hookDetail}
+                improvements={platformScoreResult?.improvements ?? platformImprovements ?? activeResult.improvements}
                 improvementsLoading={improvementsLoading}
                 budget={activeResult.budget}
                 hashtags={activeResult.hashtags}
@@ -971,6 +1092,12 @@ export default function PaidAdAnalyzer() {
                 onReanalyze={() => setReanalyzeMode(true)}
                 onCheckPolicies={handleCheckPolicies}
                 policyLoading={policyLoading}
+                niche={rawUserContext?.niche}
+                platform={rawUserContext?.platform}
+                onFixIt={handleFixIt}
+                fixItResult={fixItResult}
+                fixItLoading={fixItLoading}
+                prediction={prediction}
               />
             </div>
             {/* Second Eye output below scorecard — video only */}
@@ -984,28 +1111,54 @@ export default function PaidAdAnalyzer() {
             {/* Visualize It button — static ads only, requires original file */}
             {format === "static" && file && !visualizeOpen && (
               <div style={{ padding: "0 16px 12px" }}>
-                <button
-                  type="button"
-                  onClick={handleVisualize}
-                  style={{
-                    width: "100%", height: 44,
-                    background: "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15))",
-                    border: "1px solid rgba(99,102,241,0.35)",
-                    borderRadius: 10,
-                    color: "#818cf8", cursor: "pointer",
-                    display: "flex", flexDirection: "column",
-                    alignItems: "center", justifyContent: "center", gap: 2,
-                    transition: "all 150ms",
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(99,102,241,0.25), rgba(139,92,246,0.2))"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15))"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.35)"; }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <Sparkles size={14} />
-                    <span style={{ fontSize: 13, fontWeight: 600 }}>Visualize It</span>
-                  </div>
-                  <span style={{ fontSize: 10, color: "#6366f1", opacity: 0.75 }}>See what your improved ad could look like</span>
-                </button>
+                {isPro ? (
+                  <button
+                    type="button"
+                    onClick={handleVisualize}
+                    style={{
+                      width: "100%", height: 44,
+                      background: "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15))",
+                      border: "1px solid rgba(99,102,241,0.35)",
+                      borderRadius: 10,
+                      color: "#818cf8", cursor: "pointer",
+                      display: "flex", flexDirection: "column",
+                      alignItems: "center", justifyContent: "center", gap: 2,
+                      transition: "all 150ms",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(99,102,241,0.25), rgba(139,92,246,0.2))"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15))"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.35)"; }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <Sparkles size={14} />
+                      <span style={{ fontSize: 13, fontWeight: 600 }}>Visualize It</span>
+                    </div>
+                    <span style={{ fontSize: 10, color: "#6366f1", opacity: 0.75 }}>See what your improved ad could look like</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => onUpgradeRequired("visualize")}
+                    style={{
+                      width: "100%", height: 44,
+                      background: "rgba(255,255,255,0.02)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      borderRadius: 10,
+                      color: "#52525b", cursor: "pointer",
+                      display: "flex", flexDirection: "column",
+                      alignItems: "center", justifyContent: "center", gap: 2,
+                      transition: "all 150ms",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(99,102,241,0.3)"; e.currentTarget.style.color = "#71717a"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#52525b"; }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <Lock size={13} />
+                      <span style={{ fontSize: 13, fontWeight: 600 }}>Visualize It</span>
+                      <span style={{ fontSize: 9, fontWeight: 600, padding: "1px 5px", borderRadius: 4, background: "rgba(99,102,241,0.12)", color: "#818cf8" }}>PRO</span>
+                    </div>
+                    <span style={{ fontSize: 10, opacity: 0.6 }}>Upgrade to see your improved ad</span>
+                  </button>
+                )}
               </div>
             )}
             {/* Visualize Panel — slides in below scorecard */}
@@ -1016,6 +1169,7 @@ export default function PaidAdAnalyzer() {
                 originalImageUrl={thumbnailDataUrl ?? null}
                 error={visualizeError}
                 onClose={() => { setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); }}
+                onAnalyzeVersion={handleReanalyze}
               />
             )}
           </>
@@ -1032,7 +1186,7 @@ export default function PaidAdAnalyzer() {
               >
                 ← Back to Scores
               </button>
-              <span className="text-xs text-zinc-600 font-mono">Claude Sonnet</span>
+              <span className="text-xs text-zinc-500 font-mono">Claude Sonnet</span>
             </div>
             {briefLoading && !brief && (
               <div className="flex-1 flex flex-col items-center justify-center gap-3 px-5">
@@ -1103,7 +1257,7 @@ export default function PaidAdAnalyzer() {
               >
                 ← Back to Scores
               </button>
-              <span className="text-xs text-zinc-600 font-mono">Claude Sonnet</span>
+              <span className="text-xs text-zinc-500 font-mono">Claude Sonnet</span>
             </div>
             <div className="flex-1 overflow-y-auto p-4">
               {policyLoading && !policyResult && (

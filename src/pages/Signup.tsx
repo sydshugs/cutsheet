@@ -94,17 +94,15 @@ export default function Signup() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters");
       return;
     }
     setIsLoading(true);
@@ -146,13 +144,13 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden" style={{ background: "#09090b" }}>
+    <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden" style={{ background: "var(--bg)" }}>
       <Helmet>
         <title>Create Account — Cutsheet</title>
         <link rel="canonical" href="https://cutsheet.xyz/signup" />
       </Helmet>
       {/* Ambient glows */}
-      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full blur-[120px] pointer-events-none" style={{ background: "rgba(99,102,241,0.12)" }} />
+      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full blur-[120px] pointer-events-none" style={{ background: "rgba(var(--accent-rgb),0.12)" }} />
       <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] rounded-full blur-[100px] pointer-events-none" style={{ background: "rgba(139,92,246,0.08)" }} />
 
       <motion.div
@@ -165,8 +163,8 @@ export default function Signup() {
           className="relative rounded-3xl backdrop-blur-xl p-8"
           style={{
             background: "rgba(24,24,32,0.95)",
-            boxShadow: "0 0 100px rgba(99,102,241,0.12), 0 8px 40px rgba(0,0,0,0.5)",
-            border: "1px solid rgba(255,255,255,0.12)",
+            boxShadow: "0 0 100px rgba(var(--accent-rgb),0.12), 0 8px 40px rgba(0,0,0,0.5)",
+            border: "1px solid var(--border)",
           }}
         >
           <TravelingBeams />
@@ -193,14 +191,63 @@ export default function Signup() {
               initial="hidden"
               animate="visible"
             >
-              <h1 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5" }}>Create your account</h1>
-              <p style={{ fontSize: 13, color: "#71717a", marginTop: 4 }}>Start analyzing ads for free</p>
+              <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--ink)" }}>Create your account</h1>
+              <p style={{ fontSize: 13, color: "var(--ink-muted)", marginTop: 4 }}>Start analyzing ads for free</p>
+            </motion.div>
+
+            {/* Feature pills — above form for immediate value prop */}
+            <motion.div custom={1} variants={fieldVariants} initial="hidden" animate="visible" className="flex items-center justify-center gap-2 flex-wrap">
+              {FEATURE_PILLS.map((pill) => (
+                <span
+                  key={pill}
+                  className="rounded-full px-3 py-1 text-[11px] font-medium"
+                  style={{
+                    background: "var(--score-good-bg)",
+                    border: "1px solid rgba(var(--accent-rgb),0.2)",
+                    color: "var(--label)",
+                  }}
+                >
+                  {pill}
+                </span>
+              ))}
+            </motion.div>
+
+            {/* Google button — primary CTA, highest conversion */}
+            <motion.div custom={2} variants={fieldVariants} initial="hidden" animate="visible">
+              <motion.button
+                type="button"
+                onClick={handleGoogleSignUp}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
+                className="w-full h-[44px] rounded-full text-white font-medium text-sm flex items-center justify-center gap-2.5 transition-all"
+                style={{
+                  background: "var(--surface-el)",
+                  border: "1px solid var(--border)",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--border)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "var(--surface-el)"; }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                </svg>
+                Continue with Google
+              </motion.button>
+            </motion.div>
+
+            {/* Divider */}
+            <motion.div custom={3} variants={fieldVariants} initial="hidden" animate="visible" className="flex items-center gap-3">
+              <div className="flex-1 h-px" style={{ background: "var(--surface-el)" }} />
+              <span className="text-xs" style={{ color: "var(--ink-faint)" }}>or continue with email</span>
+              <div className="flex-1 h-px" style={{ background: "var(--surface-el)" }} />
             </motion.div>
 
             {/* Email */}
-            <motion.div custom={1} variants={fieldVariants} initial="hidden" animate="visible">
+            <motion.div custom={4} variants={fieldVariants} initial="hidden" animate="visible">
               <div className="relative">
-                <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "#71717a" }} />
+                <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "var(--ink-muted)" }} />
                 <label htmlFor="signup-email" className="sr-only">Email address</label>
                 <input
                   id="signup-email"
@@ -211,52 +258,53 @@ export default function Signup() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full h-[44px] rounded-[10px] pl-10 pr-4 text-sm outline-none transition-all"
+                  className="w-full h-[44px] rounded-[10px] pl-10 pr-4 text-sm outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 transition-all"
                   style={{
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    color: "#f4f4f5",
+                    background: "var(--surface-dim)",
+                    border: "1px solid var(--border)",
+                    color: "var(--ink)",
                   }}
                   onFocus={(e) => {
-                    e.target.style.borderColor = "rgba(99,102,241,0.5)";
-                    e.target.style.background = "rgba(99,102,241,0.06)";
+                    e.target.style.borderColor = "var(--border-accent)";
+                    e.target.style.background = "var(--accent-subtle)";
                   }}
                   onBlur={(e) => {
-                    e.target.style.borderColor = "rgba(255,255,255,0.08)";
-                    e.target.style.background = "rgba(255,255,255,0.04)";
+                    e.target.style.borderColor = "var(--border)";
+                    e.target.style.background = "var(--surface-dim)";
                   }}
                 />
               </div>
             </motion.div>
 
             {/* Password */}
-            <motion.div custom={2} variants={fieldVariants} initial="hidden" animate="visible">
+            <motion.div custom={5} variants={fieldVariants} initial="hidden" animate="visible">
               <div className="relative">
-                <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "#71717a" }} />
+                <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "var(--ink-muted)" }} />
                 <label htmlFor="signup-password" className="sr-only">Password</label>
                 <input
                   id="signup-password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Password"
+                  placeholder="Password (8+ characters)"
                   aria-label="Password"
                   aria-describedby="signup-error"
                   autoComplete="new-password"
+                  minLength={8}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full h-[44px] rounded-[10px] pl-10 pr-11 text-sm outline-none transition-all"
+                  className="w-full h-[44px] rounded-[10px] pl-10 pr-11 text-sm outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 transition-all"
                   style={{
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    color: "#f4f4f5",
+                    background: "var(--surface-dim)",
+                    border: "1px solid var(--border)",
+                    color: "var(--ink)",
                   }}
                   onFocus={(e) => {
-                    e.target.style.borderColor = "rgba(99,102,241,0.5)";
-                    e.target.style.background = "rgba(99,102,241,0.06)";
+                    e.target.style.borderColor = "var(--border-accent)";
+                    e.target.style.background = "var(--accent-subtle)";
                   }}
                   onBlur={(e) => {
-                    e.target.style.borderColor = "rgba(255,255,255,0.08)";
-                    e.target.style.background = "rgba(255,255,255,0.04)";
+                    e.target.style.borderColor = "var(--border)";
+                    e.target.style.background = "var(--surface-dim)";
                   }}
                 />
                 <button
@@ -265,62 +313,20 @@ export default function Signup() {
                   aria-label={showPassword ? "Hide password" : "Show password"}
                   aria-pressed={showPassword}
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 transition-colors hover:text-white"
-                  style={{ color: "#71717a" }}
+                  style={{ color: "var(--ink-muted)" }}
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
             </motion.div>
 
-            {/* Confirm Password */}
-            <motion.div custom={3} variants={fieldVariants} initial="hidden" animate="visible">
-              <div className="relative">
-                <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "#71717a" }} />
-                <label htmlFor="signup-confirm" className="sr-only">Confirm password</label>
-                <input
-                  id="signup-confirm"
-                  type={showConfirm ? "text" : "password"}
-                  placeholder="Confirm password"
-                  aria-label="Confirm password"
-                  autoComplete="new-password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  className="w-full h-[44px] rounded-[10px] pl-10 pr-11 text-sm outline-none transition-all"
-                  style={{
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    color: "#f4f4f5",
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = "rgba(99,102,241,0.5)";
-                    e.target.style.background = "rgba(99,102,241,0.06)";
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = "rgba(255,255,255,0.08)";
-                    e.target.style.background = "rgba(255,255,255,0.04)";
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirm(!showConfirm)}
-                  aria-label={showConfirm ? "Hide confirm password" : "Show confirm password"}
-                  aria-pressed={showConfirm}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 transition-colors hover:text-white"
-                  style={{ color: "#71717a" }}
-                >
-                  {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-            </motion.div>
-
             {/* Error message */}
-            <p id="signup-error" aria-live="assertive" role="alert" style={{ fontSize: 13, color: "#ef4444", textAlign: "center", minHeight: 20 }}>
+            <p id="signup-error" aria-live="assertive" role="alert" style={{ fontSize: 13, color: "var(--error)", textAlign: "center", minHeight: 20 }}>
               {error || ""}
             </p>
 
             {/* Create Account button */}
-            <motion.div custom={4} variants={fieldVariants} initial="hidden" animate="visible">
+            <motion.div custom={6} variants={fieldVariants} initial="hidden" animate="visible">
               <motion.button
                 type="submit"
                 disabled={isLoading}
@@ -328,14 +334,14 @@ export default function Signup() {
                 whileTap={{ scale: 0.97 }}
                 className="w-full h-[44px] rounded-full text-white font-semibold text-[15px] flex items-center justify-center gap-2 transition-all disabled:opacity-70"
                 style={{
-                  background: "#6366f1",
+                  background: "var(--accent)",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "#4f46e5";
-                  e.currentTarget.style.boxShadow = "0 0 24px rgba(99,102,241,0.3)";
+                  e.currentTarget.style.background = "var(--accent-hover)";
+                  e.currentTarget.style.boxShadow = "0 0 24px rgba(var(--accent-rgb),0.3)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "#6366f1";
+                  e.currentTarget.style.background = "var(--accent)";
                   e.currentTarget.style.boxShadow = "none";
                 }}
               >
@@ -353,66 +359,17 @@ export default function Signup() {
               </motion.button>
             </motion.div>
 
-            {/* Feature pills */}
-            <motion.div custom={5} variants={fieldVariants} initial="hidden" animate="visible" className="flex items-center justify-center gap-2 flex-wrap">
-              {FEATURE_PILLS.map((pill) => (
-                <span
-                  key={pill}
-                  className="rounded-full px-3 py-1 text-[11px] font-medium"
-                  style={{
-                    background: "rgba(99,102,241,0.1)",
-                    border: "1px solid rgba(99,102,241,0.2)",
-                    color: "#818cf8",
-                  }}
-                >
-                  {pill}
-                </span>
-              ))}
-            </motion.div>
-
-            {/* Divider */}
-            <motion.div custom={6} variants={fieldVariants} initial="hidden" animate="visible" className="flex items-center gap-3">
-              <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.06)" }} />
-              <span className="text-xs" style={{ color: "#52525b" }}>or</span>
-              <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.06)" }} />
-            </motion.div>
-
-            {/* Google button */}
-            <motion.div custom={7} variants={fieldVariants} initial="hidden" animate="visible">
-              <motion.button
-                type="button"
-                onClick={handleGoogleSignUp}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.97 }}
-                className="w-full h-[44px] rounded-full text-white font-medium text-sm flex items-center justify-center gap-2.5 transition-all"
-                style={{
-                  background: "transparent",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24">
-                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
-                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-                </svg>
-                Continue with Google
-              </motion.button>
-            </motion.div>
-
             {/* Bottom link */}
             <motion.p
-              custom={8}
+              custom={7}
               variants={fieldVariants}
               initial="hidden"
               animate="visible"
               className="text-center text-sm"
-              style={{ color: "#71717a" }}
+              style={{ color: "var(--ink-muted)" }}
             >
               Already have an account?{" "}
-              <Link to="/login" className="font-medium transition-colors hover:underline" style={{ color: "#6366f1" }}>
+              <Link to="/login" className="font-medium transition-colors hover:underline" style={{ color: "var(--accent)" }}>
                 Sign in
               </Link>
             </motion.p>
@@ -428,23 +385,23 @@ export default function Signup() {
                 <div
                   className="w-12 h-12 rounded-full flex items-center justify-center"
                   style={{
-                    background: "rgba(16,185,129,0.15)",
-                    border: "1px solid rgba(16,185,129,0.2)",
+                    background: "var(--score-excellent-bg)",
+                    border: "1px solid var(--score-excellent-border)",
                   }}
                 >
-                  <CheckCircle size={24} style={{ color: "#10b981" }} />
+                  <CheckCircle size={24} style={{ color: "var(--success)" }} />
                 </div>
-                <h2 style={{ fontSize: 18, fontWeight: 600, color: "#f4f4f5", textAlign: "center" }}>
+                <h2 style={{ fontSize: 18, fontWeight: 600, color: "var(--ink)", textAlign: "center" }}>
                   Check your email
                 </h2>
-                <p style={{ fontSize: 13, color: "#71717a", textAlign: "center" }}>
+                <p style={{ fontSize: 13, color: "var(--ink-muted)", textAlign: "center" }}>
                   We sent a confirmation link to {email}
                 </p>
                 <button
                   type="button"
                   onClick={() => setSubmitted(false)}
                   className="text-[13px] font-medium transition-colors hover:underline"
-                  style={{ color: "#6366f1" }}
+                  style={{ color: "var(--accent)" }}
                 >
                   Wrong email?
                 </button>

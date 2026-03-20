@@ -105,7 +105,7 @@ Rules:
 - winProbability: honest, not flattering
 - summary: mention specific scores, be direct about the gap`;
 
-  const client = new Anthropic({ apiKey: (process.env.ANTHROPIC_API_KEY ?? process.env.VITE_ANTHROPIC_API_KEY)! });
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
   const response = await client.messages.create({
     model: CLAUDE_MODEL,
     max_tokens: 1500,
@@ -116,7 +116,12 @@ Rules:
   const jsonMatch = text.match(/\{[\s\S]*\}/);
   if (!jsonMatch) return res.status(500).json({ error: "Could not parse Claude response" });
 
-  const parsed = JSON.parse(jsonMatch[0]);
+  let parsed;
+  try {
+    parsed = JSON.parse(jsonMatch[0]);
+  } catch {
+    return res.status(500).json({ error: "Failed to parse AI response — please try again" });
+  }
   return res.status(200).json({
     verdict: (["winning", "losing", "tied"].includes(parsed.verdict) ? parsed.verdict : "tied"),
     scoreDiff: Number(parsed.scoreDiff) || 0,

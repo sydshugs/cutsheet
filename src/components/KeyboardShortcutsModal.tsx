@@ -1,5 +1,6 @@
 import { X } from 'lucide-react'
 import { useEffect } from 'react'
+import { useFocusTrap } from '../hooks/useFocusTrap'
 
 interface Props {
   open: boolean
@@ -22,6 +23,8 @@ const shortcuts = [
 ]
 
 export default function KeyboardShortcutsModal({ open, onClose }: Props) {
+  const trapRef = useFocusTrap(open)
+
   useEffect(() => {
     if (!open) return
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -41,6 +44,10 @@ export default function KeyboardShortcutsModal({ open, onClose }: Props) {
       onClick={onClose}
     >
       <div
+        ref={trapRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="shortcuts-modal-title"
         style={{
           background: '#18181b', border: '1px solid rgba(255,255,255,0.08)',
           borderRadius: 16, padding: 24, maxWidth: 400, width: '100%', margin: '0 16px',
@@ -48,7 +55,7 @@ export default function KeyboardShortcutsModal({ open, onClose }: Props) {
         onClick={e => e.stopPropagation()}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <span style={{ fontSize: 16, fontWeight: 600, color: '#f4f4f5' }}>Keyboard shortcuts</span>
+          <span id="shortcuts-modal-title" style={{ fontSize: 16, fontWeight: 600, color: '#f4f4f5' }}>Keyboard shortcuts</span>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#71717a', padding: 4 }}>
             <X size={16} />
           </button>

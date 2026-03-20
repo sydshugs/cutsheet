@@ -161,7 +161,7 @@ Return findings as structured JSON:
   }
 
   // ── Step 2: Claude policy evaluation
-  const apiKey = process.env.ANTHROPIC_API_KEY ?? process.env.VITE_ANTHROPIC_API_KEY;
+  const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     console.error("[policy-check] ANTHROPIC_API_KEY is not set");
     return res.status(500).json({ error: "Server configuration error — please contact support." });

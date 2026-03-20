@@ -148,6 +148,15 @@ A 7/10 means the same thing every time.
 
 ---
 
+## 🪝 HOOK DETAIL
+Evaluate ONLY the first 3 seconds. Does it create a pattern interrupt? Does it earn the next 5 seconds of attention? Score strictly — a generic product shot opening is a 2, not a 6.
+- Hook Type: [Pattern Interrupt | Curiosity Gap | Bold Claim | Social Proof | Problem-Agitate | Question Hook | None detected]
+- Hook Verdict: [Scroll-Stopper | Needs Work | Weak Open]
+- First 3 Seconds: [one sentence describing exactly what happens in the first 3 seconds]
+- Hook Fix: [one sentence actionable fix if Hook Strength < 8, or "None needed" if >= 8]
+
+---
+
 ## 🔧 IMPROVEMENTS
 After your analysis, list exactly 3-5 specific, actionable suggestions to improve this creative. Each suggestion should be one sentence, direct, and specific to what you observed in this creative. Format as a numbered list.
 1. [Specific improvement based on what you observed]
@@ -261,6 +270,15 @@ A 7/10 means the same thing every time.
 
 ---
 
+## 🪝 HOOK DETAIL
+Evaluate the above-the-fold visual impact. Does it stop the scroll? Score strictly — a generic stock photo with small text is a 2, not a 6.
+- Hook Type: [Pattern Interrupt | Curiosity Gap | Bold Claim | Social Proof | Problem-Agitate | Question Hook | None detected]
+- Hook Verdict: [Scroll-Stopper | Needs Work | Weak Open]
+- First Glance: [one sentence describing the immediate visual impression above the fold]
+- Hook Fix: [one sentence actionable fix if Hook Strength < 8, or "None needed" if >= 8]
+
+---
+
 ## 🔧 IMPROVEMENTS
 List exactly 3-5 specific, actionable suggestions to improve this static creative.
 Each suggestion should apply to the STATIC format as-is.
@@ -304,6 +322,16 @@ export interface Hashtags {
   instagram: string[];
 }
 
+export type HookType = "Pattern Interrupt" | "Curiosity Gap" | "Bold Claim" | "Social Proof" | "Problem-Agitate" | "Question Hook" | "None detected";
+export type HookVerdict = "Scroll-Stopper" | "Needs Work" | "Weak Open";
+
+export interface HookDetail {
+  hookType: HookType;
+  verdict: HookVerdict;
+  firstImpression: string;  // "First 3 Seconds" for video, "First Glance" for static
+  hookFix: string | null;   // null if score >= 8
+}
+
 export interface AnalysisResult {
   markdown: string;
   scores: {
@@ -313,6 +341,7 @@ export interface AnalysisResult {
     production: number;
     overall: number;
   } | null;
+  hookDetail?: HookDetail;
   improvements: string[];
   budget: BudgetRecommendation | null;
   hashtags?: Hashtags;
@@ -364,6 +393,35 @@ function parseScores(markdown: string): AnalysisResult["scores"] {
     };
   } catch {
     return null;
+  }
+}
+
+const VALID_HOOK_TYPES: HookType[] = ["Pattern Interrupt", "Curiosity Gap", "Bold Claim", "Social Proof", "Problem-Agitate", "Question Hook", "None detected"];
+const VALID_HOOK_VERDICTS: HookVerdict[] = ["Scroll-Stopper", "Needs Work", "Weak Open"];
+
+export function parseHookDetail(markdown: string): HookDetail | undefined {
+  try {
+    const typeMatch = markdown.match(/Hook Type:\s*\[?([^\]\n]+)\]?/);
+    const verdictMatch = markdown.match(/Hook Verdict:\s*\[?([^\]\n]+)\]?/);
+    const impressionMatch = markdown.match(/(?:First 3 Seconds|First Glance):\s*\[?([^\]\n]+)\]?/);
+    const fixMatch = markdown.match(/Hook Fix:\s*\[?([^\]\n]+)\]?/);
+
+    if (!typeMatch || !verdictMatch || !impressionMatch) return undefined;
+
+    const rawType = typeMatch[1].trim();
+    const rawVerdict = verdictMatch[1].trim();
+    const hookType = VALID_HOOK_TYPES.find(t => rawType.includes(t)) ?? "None detected";
+    const verdict = VALID_HOOK_VERDICTS.find(v => rawVerdict.includes(v)) ?? "Needs Work";
+    const fixText = fixMatch?.[1]?.trim() ?? null;
+
+    return {
+      hookType,
+      verdict,
+      firstImpression: impressionMatch[1].trim(),
+      hookFix: fixText === "None needed" ? null : fixText,
+    };
+  } catch {
+    return undefined;
   }
 }
 
@@ -555,11 +613,15 @@ export async function analyzeVideo(
     // 9. Parse scene-by-scene breakdown from markdown (graceful — never throws)
     const scenes = parseScenes(markdown);
 
+    // 10. Parse hook detail from markdown (graceful — never throws)
+    const hookDetail = parseHookDetail(markdown);
+
     emit("complete");
 
     return {
       markdown,
       scores,
+      hookDetail,
       improvements,
       budget,
       hashtags,

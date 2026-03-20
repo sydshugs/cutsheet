@@ -54,6 +54,7 @@ export async function visualizeAd(payload: VisualizeRequest): Promise<VisualizeR
 
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
+    if (response.status === 403 && body?.error === "PRO_REQUIRED") throw new Error("PRO_REQUIRED");
     if (response.status === 429) throw new Error("RATE_LIMITED");
     throw new Error(body?.error ?? `API error ${response.status}`);
   }

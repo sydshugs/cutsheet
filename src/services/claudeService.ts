@@ -40,28 +40,29 @@ async function callApi<T>(endpoint: string, body: unknown): Promise<T> {
 // ─── PLATFORM SCORING ────────────────────────────────────────────────────────
 
 export interface PlatformScore {
-  platform: "tiktok" | "reels" | "shorts";
+  platform: string;
   score: number;
+  platformFit: number;
   strengths: string[];
   weaknesses: string[];
+  improvements: string[];
   tips: string[];
+  verdict: string;
 }
 
 export async function generatePlatformScore(
   platform: string,
   result: { markdown: string; scores: { overall: number } },
-  fileName: string,
+  _fileName: string,
+  adType?: 'video' | 'static',
+  userContext?: string,
 ): Promise<PlatformScore> {
-  const res = await callClaude(
-    `You are a platform-specific ad scoring expert. Score this creative for ${platform}. Return JSON with: platform, score (1-10), strengths (string[]), weaknesses (string[]), tips (string[]).`,
-    `File: ${fileName}\nOverall score: ${result.scores.overall}/10\n\n${result.markdown}`,
-  );
-  try {
-    const json = res.replace(/```json\n?|\n?```/g, "").trim();
-    return JSON.parse(json);
-  } catch {
-    return { platform: platform as PlatformScore["platform"], score: result.scores.overall, strengths: [], weaknesses: [], tips: [] };
-  }
+  return callApi<PlatformScore>("/api/platform-score", {
+    analysisMarkdown: result.markdown,
+    platform,
+    adType: adType ?? 'video',
+    userContext,
+  });
 }
 
 // ─── IMPROVEMENTS ────────────────────────────────────────────────────────────

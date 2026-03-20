@@ -1,6 +1,8 @@
 // UpgradeModal.tsx — Feature-specific upgrade prompt overlay
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { X, Sparkles } from "lucide-react";
+import { useFocusTrap } from "../hooks/useFocusTrap";
 
 interface UpgradeModalProps {
   onClose: () => void;
@@ -69,6 +71,13 @@ function CellValue({ value }: { value: boolean | string }) {
 export function UpgradeModal({ onClose, featureKey }: UpgradeModalProps) {
   const navigate = useNavigate();
   const msg = (featureKey && UPGRADE_MESSAGES[featureKey]) ?? DEFAULT_MESSAGE;
+  const trapRef = useFocusTrap(true);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose]);
 
   return (
     <div
@@ -77,6 +86,10 @@ export function UpgradeModal({ onClose, featureKey }: UpgradeModalProps) {
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
+        ref={trapRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="upgrade-modal-title"
         className="relative rounded-3xl p-8 max-w-[460px] w-full flex flex-col gap-5"
         style={{
           background: "#111118",
@@ -110,7 +123,7 @@ export function UpgradeModal({ onClose, featureKey }: UpgradeModalProps) {
               <Sparkles size={22} style={{ color: "#818cf8" }} />
             </div>
           )}
-          <h2 className="text-[18px] font-semibold" style={{ color: "#f4f4f5" }}>
+          <h2 id="upgrade-modal-title" className="text-[18px] font-semibold" style={{ color: "#f4f4f5" }}>
             {msg.headline}
           </h2>
           <p className="text-sm leading-relaxed" style={{ color: "#71717a" }}>

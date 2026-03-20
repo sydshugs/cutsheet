@@ -3,7 +3,7 @@
 import { Helmet } from "react-helmet-async";
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useOutletContext } from "react-router-dom";
-import { Monitor, Upload, Eye, Download, X, Plus, CheckCircle, ShieldCheck, Sparkles } from "lucide-react";
+import { Monitor, Upload, Eye, Download, X, Plus, CheckCircle, ShieldCheck, Sparkles, Lock } from "lucide-react";
 import { sanitizeFileName } from "../../utils/sanitize";
 import { SuiteCohesionCard } from "../../components/SuiteCohesionCard";
 import { DisplayScoreCard, type DisplayResult } from "../../components/DisplayScoreCard";
@@ -241,7 +241,7 @@ Return JSON only:
 
     setSuiteStatus("complete");
     const c = increment();
-    if (c >= FREE_LIMIT && !isPro) onUpgradeRequired();
+    if (c >= FREE_LIMIT && !isPro) onUpgradeRequired("analyze");
 
     // Generate suite mockup
     setSuiteMockupLoading(true);
@@ -363,7 +363,7 @@ Return JSON only — no prose:
       setResult(displayResult);
       setStatus("complete");
       const c = increment();
-      if (c >= FREE_LIMIT && !isPro) onUpgradeRequired();
+      if (c >= FREE_LIMIT && !isPro) onUpgradeRequired("analyze");
 
       // Generate mockup (async, non-blocking)
       setMockupLoading(true);
@@ -402,6 +402,12 @@ Return JSON only — no prose:
       setVisualizeStatus("complete");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
+      if (msg === "PRO_REQUIRED") {
+        setVisualizeOpen(false);
+        setVisualizeStatus("idle");
+        onUpgradeRequired("visualize");
+        return;
+      }
       setVisualizeError(msg.includes("RATE_LIMITED") ? "RATE_LIMITED" : msg);
       setVisualizeStatus("error");
     }
@@ -886,28 +892,54 @@ Return JSON only — no prose:
 
                     {/* Visualize It button — single mode, after analysis */}
                     {mode === "single" && !visualizeOpen && (
-                      <button
-                        type="button"
-                        onClick={handleVisualize}
-                        style={{
-                          width: "100%", height: 48,
-                          background: "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15))",
-                          border: "1px solid rgba(99,102,241,0.35)",
-                          borderRadius: 12,
-                          color: "#818cf8", cursor: "pointer",
-                          display: "flex", flexDirection: "column",
-                          alignItems: "center", justifyContent: "center", gap: 2,
-                          transition: "all 150ms",
-                        }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(99,102,241,0.25), rgba(139,92,246,0.2))"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15))"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.35)"; }}
-                      >
-                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                          <Sparkles size={15} />
-                          <span style={{ fontSize: 14, fontWeight: 600 }}>Visualize It</span>
-                        </div>
-                        <span style={{ fontSize: 11, color: "#6366f1", opacity: 0.75 }}>See what your improved ad could look like</span>
-                      </button>
+                      isPro ? (
+                        <button
+                          type="button"
+                          onClick={handleVisualize}
+                          style={{
+                            width: "100%", height: 48,
+                            background: "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15))",
+                            border: "1px solid rgba(99,102,241,0.35)",
+                            borderRadius: 12,
+                            color: "#818cf8", cursor: "pointer",
+                            display: "flex", flexDirection: "column",
+                            alignItems: "center", justifyContent: "center", gap: 2,
+                            transition: "all 150ms",
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(99,102,241,0.25), rgba(139,92,246,0.2))"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15))"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.35)"; }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <Sparkles size={15} />
+                            <span style={{ fontSize: 14, fontWeight: 600 }}>Visualize It</span>
+                          </div>
+                          <span style={{ fontSize: 11, color: "#6366f1", opacity: 0.75 }}>See what your improved ad could look like</span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => onUpgradeRequired("visualize")}
+                          style={{
+                            width: "100%", height: 48,
+                            background: "rgba(255,255,255,0.02)",
+                            border: "1px solid rgba(255,255,255,0.08)",
+                            borderRadius: 12,
+                            color: "#52525b", cursor: "pointer",
+                            display: "flex", flexDirection: "column",
+                            alignItems: "center", justifyContent: "center", gap: 2,
+                            transition: "all 150ms",
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(99,102,241,0.3)"; e.currentTarget.style.color = "#71717a"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#52525b"; }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <Lock size={14} />
+                            <span style={{ fontSize: 14, fontWeight: 600 }}>Visualize It</span>
+                            <span style={{ fontSize: 9, fontWeight: 600, padding: "1px 5px", borderRadius: 4, background: "rgba(99,102,241,0.12)", color: "#818cf8" }}>PRO</span>
+                          </div>
+                          <span style={{ fontSize: 11, opacity: 0.6 }}>Upgrade to see your improved ad</span>
+                        </button>
+                      )
                     )}
                     {/* Visualize Panel */}
                     {mode === "single" && (visualizeOpen || visualizeStatus !== "idle") && (

@@ -208,7 +208,7 @@ export default function ResetPassword() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        className="w-full h-[44px] rounded-[10px] pl-10 pr-11 text-sm outline-none transition-all"
+                        className="w-full h-[44px] rounded-[10px] pl-10 pr-11 text-sm outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 transition-all"
                         style={{
                           background: "rgba(255,255,255,0.04)",
                           border: "1px solid rgba(255,255,255,0.08)",
@@ -248,7 +248,7 @@ export default function ResetPassword() {
                           setTouched(true);
                         }}
                         required
-                        className="w-full h-[44px] rounded-[10px] pl-10 pr-11 text-sm outline-none transition-all"
+                        className="w-full h-[44px] rounded-[10px] pl-10 pr-11 text-sm outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 transition-all"
                         style={{
                           background: showMismatch ? "rgba(239,68,68,0.06)" : "rgba(255,255,255,0.04)",
                           border: `1px solid ${showMismatch ? "rgba(239,68,68,0.5)" : "rgba(255,255,255,0.08)"}`,

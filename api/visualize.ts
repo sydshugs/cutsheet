@@ -7,14 +7,12 @@ export const maxDuration = 60; // seconds — image gen takes 15-20s
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Anthropic from "@anthropic-ai/sdk";
 import { GoogleGenAI, Modality } from "@google/genai";
-import { verifyAuth, checkRateLimit, handlePreflight, isProOrTeam } from "./_lib/auth";
+import { verifyAuth, handlePreflight, isProOrTeam } from "./_lib/auth";
+import { checkFeatureCredit } from "./_lib/creditCheck";
 import { safePlatform, safeAdType, safeNiche, validateBase64Size } from "./_lib/validateInput";
 
 const CLAUDE_MODEL = "claude-sonnet-4-20250514";
 const GEMINI_IMAGE_MODEL = "gemini-2.0-flash-preview-image-generation";
-
-// Free: 2 visualizations per day; Pro: effectively unlimited (200/day)
-const RATE = { freeLimit: 2, proLimit: 200, windowSeconds: 86400 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handlePreflight(req, res)) return;
@@ -26,15 +24,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const user = await verifyAuth(req);
   if (!user) return res.status(401).json({ error: "Unauthorized" });
 
-  // ── Rate limit ────────────────────────────────────────────────────────────
-  const rl = await checkRateLimit("visualize", user.id, user.tier, RATE);
-  if (!rl.allowed) {
-    return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
-  }
-
   // ── Pro/Team gate ─────────────────────────────────────────────────────────
   if (!isProOrTeam(user.tier)) {
     return res.status(403).json({ error: "PRO_REQUIRED", feature: "visualize" });
+  }
+
+  // ── Monthly credit check (Pro: 10/mo, Team: 25/mo) ─────────────────────
+  const credit = await checkFeatureCredit(user.id, user.tier, "visualize");
+  if (!credit.allowed) {
+    return res.status(429).json({
+      error: "RATE_LIMITED",
+      reason: credit.reason,
+      remaining: credit.remaining,
+      limit: credit.limit,
+    });
   }
 
   // ── Input validation ─────────────────────────────────────────────────────
@@ -62,7 +65,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     ? analysisResult.improvements.map((imp: string, i: number) => `  ${i + 1}. ${imp}`).join("\n")
     : "  (no improvements listed)";
 
-  const anthropic = new Anthropic({ apiKey: (process.env.ANTHROPIC_API_KEY ?? process.env.VITE_ANTHROPIC_API_KEY)! });
+  const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
   // ── STEP 1: Claude — generate image generation prompt ────────────────────
   let imageGenPrompt: string;

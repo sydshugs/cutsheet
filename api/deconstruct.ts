@@ -259,7 +259,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // ── Claude teardown ────────────────────────────────────────────────────────
   try {
-    const apiKey = process.env.ANTHROPIC_API_KEY ?? process.env.VITE_ANTHROPIC_API_KEY;
+    const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
       console.error("[deconstruct] ANTHROPIC_API_KEY is not set");
       return res.status(500).json({ error: "Server configuration error — please contact support." });

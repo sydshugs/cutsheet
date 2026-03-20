@@ -41,6 +41,7 @@
     "react-helmet-async": "^3.0.0",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.13.1",
+    "rehype-sanitize": "^6.0.0",
     "remotion": "4.0.435",
     "stripe": "^20.4.1",
     "tailwind-merge": "^3.5.0",

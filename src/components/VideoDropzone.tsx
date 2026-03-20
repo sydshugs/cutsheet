@@ -115,7 +115,7 @@ export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, 
 
   // Empty state — dropzone
   if (!file) {
-    const formatPills = ["MP4", "MOV", "WEBM", "JPG", "PNG", "WEBP"];
+    const formatPills = acceptImages ? ["MP4", "MOV", "WEBM", "JPG", "PNG", "WEBP"] : ["MP4", "MOV", "WEBM"];
     const shortcutKey = typeof navigator !== 'undefined' && navigator.platform?.includes('Mac') ? '⌘V' : 'Ctrl+V';
 
     return (
@@ -186,7 +186,7 @@ export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, 
                 type="text"
                 value={pastedUrl}
                 onChange={(e) => setPastedUrl(e.target.value)}
-                className="flex-1 bg-white/5 rounded-xl text-sm text-white px-4 py-2.5 outline-none border border-white/10 focus:border-indigo-500/50"
+                className="flex-1 bg-white/5 rounded-xl text-sm text-white px-4 py-2.5 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 border border-white/10 focus:border-indigo-500/50"
                 onClick={(e) => e.stopPropagation()}
               />
               <button

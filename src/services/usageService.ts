@@ -80,6 +80,49 @@ export const checkFeatureLimit = async (
   }
 };
 
+/**
+ * Fetch credit status for all 7 features in a single batch request (peek only, no increment).
+ * Uses /api/batch-feature-limits to avoid N+1 individual API calls.
+ */
+export const fetchCreditStatus = async (): Promise<Record<string, FeatureLimitResult>> => {
+  const features = ["analyze", "visualize", "script", "fixIt", "policyCheck", "deconstruct", "brief"];
+
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    // Return all features as not-authenticated
+    return Object.fromEntries(
+      features.map((f) => [f, { allowed: false, remaining: null, limit: null, reason: "NOT_AUTHENTICATED" }])
+    );
+  }
+
+  try {
+    const response = await fetch('/api/batch-feature-limits', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ features, increment: false }),
+    });
+
+    if (!response.ok) {
+      console.error('[usageService] batch-feature-limits error:', response.status);
+      // Fallback: return all as errored
+      return Object.fromEntries(
+        features.map((f) => [f, { allowed: false, remaining: null, limit: null, reason: "API_ERROR" }])
+      );
+    }
+
+    const { results } = await response.json() as { results: Record<string, FeatureLimitResult> };
+    return results;
+  } catch (err) {
+    console.error('[usageService] fetchCreditStatus batch fetch failed:', err);
+    return Object.fromEntries(
+      features.map((f) => [f, { allowed: false, remaining: null, limit: null, reason: "NETWORK_ERROR" }])
+    );
+  }
+};
+
 export const checkAnalysisLimit = async (): Promise<boolean> => {
   const {
     data: { user },
@@ -96,8 +139,8 @@ export const checkAnalysisLimit = async (): Promise<boolean> => {
 
   if (!profile) return true; // allow if no profile found
 
-  // Pro users have unlimited
-  if (profile.subscription_status === "pro") return true;
+  // Pro/Team users have unlimited
+  if (profile.subscription_status === "pro" || profile.subscription_status === "team") return true;
 
   // Reset counter if new month
   const today = new Date().toISOString().split("T")[0];
@@ -122,6 +165,15 @@ export const checkAnalysisLimit = async (): Promise<boolean> => {
   return (profile.analyses_used_this_month || 0) < 3;
 };
 
+/**
+ * Increment the analysis count for the current user.
+ *
+ * NOTE: This uses a read-then-write pattern because Supabase JS client
+ * does not support SQL expressions (e.g. `column + 1`) in `.update()`.
+ * An `.rpc('increment_analysis_count')` Postgres function would be the
+ * ideal fix for true atomicity; this is safe enough for casual usage
+ * tracking where a rare race condition is acceptable.
+ */
 export const incrementAnalysisCount = async () => {
   const {
     data: { user },
@@ -134,7 +186,7 @@ export const incrementAnalysisCount = async () => {
     .eq("id", user.id)
     .single();
 
-  if (!profile || profile.subscription_status === "pro") return;
+  if (!profile || profile.subscription_status === "pro" || profile.subscription_status === "team") return;
 
   await supabase
     .from("profiles")

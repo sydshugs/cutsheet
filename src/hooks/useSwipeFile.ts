@@ -1,4 +1,14 @@
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
+import {
+  type SwipeFileFilters,
+  DEFAULT_FILTERS,
+  applyFilters,
+  deriveFilterOptions,
+  filtersToParams,
+  filtersFromParams,
+  isDefaultFilters,
+} from "@/src/lib/swipeFileFilters";
 
 export interface SwipeItem {
   id: string;
@@ -40,6 +50,35 @@ function persist(items: SwipeItem[]): void {
 
 export function useSwipeFile() {
   const [items, setItems] = useState<SwipeItem[]>(() => load());
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Derive filters from URL search params
+  const filters: SwipeFileFilters = useMemo(
+    () => filtersFromParams(searchParams),
+    [searchParams]
+  );
+
+  const setFilters = useCallback(
+    (next: SwipeFileFilters) => {
+      const params = filtersToParams(next);
+      setSearchParams(params, { replace: true });
+    },
+    [setSearchParams]
+  );
+
+  const resetFilters = useCallback(() => {
+    setSearchParams({}, { replace: true });
+  }, [setSearchParams]);
+
+  // Derived values
+  const filteredItems = useMemo(
+    () => applyFilters(items, filters),
+    [items, filters]
+  );
+
+  const filterOptions = useMemo(() => deriveFilterOptions(items), [items]);
+
+  const isFiltered = !isDefaultFilters(filters);
 
   const addItem = (item: Omit<SwipeItem, "id">) => {
     setItems((prev) => {
@@ -75,6 +114,20 @@ export function useSwipeFile() {
     } catch {}
   };
 
-  return { items, addItem, updateItem, deleteItem, clearAll };
+  return {
+    items,
+    addItem,
+    updateItem,
+    deleteItem,
+    clearAll,
+    // Filter API
+    filteredItems,
+    filters,
+    setFilters,
+    resetFilters,
+    filterOptions,
+    isFiltered,
+    filteredCount: filteredItems.length,
+    totalCount: items.length,
+  };
 }
-

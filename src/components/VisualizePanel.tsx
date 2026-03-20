@@ -180,10 +180,11 @@ export interface VisualizePanelProps {
   originalImageUrl: string | null;
   error?: string | null;
   onClose: () => void;
+  onAnalyzeVersion?: (file: File) => void;
 }
 
 export function VisualizePanel({
-  status, result, originalImageUrl, error, onClose,
+  status, result, originalImageUrl, error, onClose, onAnalyzeVersion,
 }: VisualizePanelProps) {
   const [briefCopied, setBriefCopied] = useState(false);
   const [downloadTouched, setDownloadTouched] = useState(false);
@@ -207,6 +208,18 @@ export function VisualizePanel({
     a.click();
     setTimeout(() => setDownloadTouched(false), 1500);
   }, [result]);
+
+  const handleAnalyzeVersion = useCallback(async () => {
+    if (!result?.generatedImageUrl || !onAnalyzeVersion) return;
+    try {
+      const resp = await fetch(result.generatedImageUrl);
+      const blob = await resp.blob();
+      const file = new File([blob], "improved-ad.png", { type: blob.type || "image/png" });
+      onAnalyzeVersion(file);
+    } catch {
+      // Silently fail — the button will just not respond
+    }
+  }, [result, onAnalyzeVersion]);
 
   return (
     <motion.div
@@ -398,23 +411,23 @@ export function VisualizePanel({
                 <Copy size={13} />
                 {briefCopied ? "Copied!" : "Copy Visual Brief"}
               </button>
-              <div style={{ position: "relative", display: "inline-flex" }}>
+              {result.generatedImageUrl && onAnalyzeVersion && (
                 <button
                   type="button"
-                  disabled
-                  title="Upload your revised creative to compare scores"
+                  onClick={handleAnalyzeVersion}
                   style={{
                     display: "flex", alignItems: "center", gap: 6,
                     padding: "8px 14px",
-                    background: "transparent",
-                    border: "1px solid rgba(255,255,255,0.06)",
-                    borderRadius: 8, cursor: "not-allowed",
-                    fontSize: 13, color: "#3f3f46",
+                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: 8, cursor: "pointer",
+                    fontSize: 13, color: "#a1a1aa",
+                    transition: "all 150ms",
                   }}
                 >
                   Analyze This Version
                 </button>
-              </div>
+              )}
             </div>
           </motion.div>
         )}
