@@ -93,20 +93,17 @@ function NavItemRow({ item, collapsed }: { item: NavItem; collapsed: boolean }) 
         }
       />
 
-      {/* Labels */}
+      {/* Label */}
       {!collapsed && (
-        <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
           <span
             style={{ fontSize: 13, fontWeight: 500, lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
             className={isActive ? "text-[#f4f4f5]" : "text-[#a1a1aa] group-hover:text-[#f4f4f5] transition-colors"}
           >
             {item.label}
           </span>
-          <span style={{ fontSize: 11, color: "#52525b", lineHeight: 1.3, whiteSpace: "nowrap" }}>
-            {item.sublabel}
-          </span>
-          {item.comingSoon && !collapsed && (
-            <span style={{ fontSize: 9, padding: "1px 5px", borderRadius: 4, background: "rgba(99,102,241,0.15)", color: "#818cf8", fontWeight: 500, marginLeft: 6, lineHeight: 1, letterSpacing: "0.04em", alignSelf: "flex-start", marginTop: 2 }}>SOON</span>
+          {item.comingSoon && (
+            <span style={{ fontSize: 9, padding: "1px 5px", borderRadius: 4, background: "rgba(99,102,241,0.15)", color: "#818cf8", fontWeight: 500, lineHeight: 1, letterSpacing: "0.04em" }}>SOON</span>
           )}
         </div>
       )}
