@@ -43,6 +43,7 @@ onSelectHistory?: (record: AnalysisRecord) => void;
   onNavigateSettings?: () => void;
   improvementsLoading?: boolean;
   onReanalyze?: () => void;
+  onStartOver?: () => void;
 }
 
 const SCORE_LABELS: Record<keyof Scores, string> = {
@@ -177,6 +178,7 @@ onSelectHistory,
   onNavigateSettings,
   improvementsLoading,
   onReanalyze,
+  onStartOver,
 }: ScoreCardProps) {
   const { label: overallLabel } = getScoreLabel(scores.overall);
   const [mounted, setMounted] = useState(false);
@@ -659,7 +661,7 @@ onSelectHistory,
 
 
       {/* Quick actions — overflow menu */}
-      {(onGenerateBrief || onAddToSwipeFile) && (
+      {(onGenerateBrief || onAddToSwipeFile || onStartOver) && (
         <div className="mt-auto px-5 pb-3 flex justify-end">
           <OverflowMenu
             items={[
@@ -669,6 +671,7 @@ onSelectHistory,
                 onClick: () => { onAddToSwipeFile(); setToast("Added to Swipe File"); setTimeout(() => setToast(null), 2500); },
                 icon: <Bookmark size={14} />,
               }] : []),
+              ...(onStartOver ? [{ label: "Start Over", onClick: onStartOver, icon: <RotateCcw size={14} />, destructive: true }] : []),
             ] satisfies OverflowMenuItem[]}
           />
         </div>

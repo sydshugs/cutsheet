@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useOutletContext, useNavigate } from "react-router-dom";
 import { Zap, RotateCcw, Upload, AlertCircle } from "lucide-react";
+import { PlatformPills, type Platform as PillPlatform } from "../../components/PlatformPills";
 import { AnalyzerView } from "../../components/AnalyzerView";
 import { ScoreCard } from "../../components/ScoreCard";
 import { VideoDropzone } from "../../components/VideoDropzone";
@@ -95,67 +96,16 @@ function IntentHeader({
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-        <span style={{ fontSize: 13, color: "#52525b", flexShrink: 0 }}>Analyzing for:</span>
-
-        {/* Platform pills — radio group with accessibility */}
-        <div role="radiogroup" aria-label="Platform selector" style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-          {PLATFORM_COMPAT[format].map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              role="radio"
-              aria-checked={platform === opt.value && opt.enabled}
-              aria-disabled={!opt.enabled || undefined}
-              aria-label={!opt.enabled && opt.note ? `${opt.label} — ${opt.note}` : opt.label}
-              tabIndex={!opt.enabled ? -1 : undefined}
-              onClick={() => { if (opt.enabled) setPlatform(opt.value); }}
-              title={opt.note ?? undefined}
-              style={{
-                height: 30, padding: "0 12px", borderRadius: 9999, fontSize: 13,
-                cursor: opt.enabled ? "pointer" : "not-allowed",
-                opacity: opt.enabled ? 1 : 0.35,
-                textDecoration: opt.enabled ? "none" : "line-through",
-                background: platform === opt.value && opt.enabled ? "#4f46e5" : "rgba(255,255,255,0.04)",
-                border: `1px solid ${platform === opt.value && opt.enabled ? "#4f46e5" : "rgba(255,255,255,0.08)"}`,
-                color: platform === opt.value && opt.enabled ? "white" : "#71717a",
-                fontWeight: platform === opt.value && opt.enabled ? 500 : 400,
-                transition: "all 150ms",
-              }}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Divider */}
-        <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.08)", flexShrink: 0 }} />
-
-        {/* Format pills */}
-        <div role="radiogroup" aria-label="Format selector" style={{ display: "flex", gap: 6 }}>
-          {FORMATS.map((f) => (
-            <button
-              key={f}
-              type="button"
-              role="radio"
-              aria-checked={format === f}
-              onClick={() => {
-                setFormat(f);
-                const currentPlatformEnabled = PLATFORM_COMPAT[f].find(o => o.value === platform)?.enabled;
-                if (!currentPlatformEnabled) setPlatform("all");
-              }}
-              style={{
-                height: 30, padding: "0 12px", borderRadius: 9999, fontSize: 13, cursor: "pointer",
-                background: format === f ? "#4f46e5" : "rgba(255,255,255,0.04)",
-                border: `1px solid ${format === f ? "#4f46e5" : "rgba(255,255,255,0.08)"}`,
-                color: format === f ? "white" : "#71717a",
-                fontWeight: format === f ? 500 : 400,
-                transition: "all 150ms",
-              }}
-            >
-              {f.charAt(0).toUpperCase() + f.slice(1)}
-            </button>
-          ))}
-        </div>
+        <PlatformPills
+          selected={platform as PillPlatform}
+          onSelect={(p) => setPlatform(p as Platform)}
+          format={format}
+          onFormatChange={(f) => {
+            setFormat(f);
+            const currentPlatformEnabled = PLATFORM_COMPAT[f].find(o => o.value === platform)?.enabled;
+            if (!currentPlatformEnabled) setPlatform("Meta");
+          }}
+        />
       </div>
 
       {/* Second Eye toggle — video only */}
@@ -282,7 +232,7 @@ export default function PaidAdAnalyzer() {
   }, [])
 
   // ── Platform / format / second eye state ───────────────────────────────────
-  const [platform, setPlatform] = useState<Platform>("all");
+  const [platform, setPlatform] = useState<Platform>("Meta");
   const [format, setFormat] = useState<Format>("video");
   const [secondEye, setSecondEye] = useState(false);
   const [secondEyeOutput, setSecondEyeOutput] = useState<SecondEyeResult | null>(null);
@@ -865,6 +815,7 @@ export default function PaidAdAnalyzer() {
                 engineBudget={engineBudget}
                 onNavigateSettings={() => navigate('/settings')}
                 onReanalyze={() => setReanalyzeMode(true)}
+                onStartOver={handleReset}
               />
             </div>
             {/* Second Eye output below scorecard — video only */}
@@ -1011,26 +962,6 @@ export default function PaidAdAnalyzer() {
           </div>
         )}
 
-        {/* Analyze another — sticky at bottom of right panel */}
-        {showRightPanel && !comparisonResult && (
-          <div style={{ position: "sticky", bottom: 0, padding: "0 16px 16px", background: "linear-gradient(transparent, rgba(9,9,11,0.95) 8px)" }}>
-            <button
-              type="button"
-              onClick={handleReset}
-              style={{
-                width: "100%", height: 44, background: "rgba(9,9,11,0.8)", backdropFilter: "blur(8px)",
-                border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10,
-                color: "#71717a", fontSize: 13, cursor: "pointer",
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "all 150ms",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.color = "#a1a1aa"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(9,9,11,0.8)"; e.currentTarget.style.color = "#71717a"; }}
-            >
-              <RotateCcw size={14} />
-              Analyze another creative
-            </button>
-          </div>
-        )}
       </div>
 
       {/* History drawer */}
