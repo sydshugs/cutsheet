@@ -759,27 +759,6 @@ export default function PaidAdAnalyzer() {
         <div className="flex-1 overflow-auto">
           {status === "idle" && !loadedEntry ? (
             <>
-              {!isPro && (
-                <div style={{ textAlign: "center", fontSize: 12, color: "#52525b", marginTop: 12, marginBottom: -24 }}>
-                  {usageCount} of {FREE_LIMIT} free analyses used
-                </div>
-              )}
-              {!isPro && canAnalyze && usageCount === FREE_LIMIT - 1 && (
-                <div style={{
-                  maxWidth: 520, margin: "16px auto 0", padding: "10px 16px",
-                  background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)",
-                  borderRadius: 8, display: "flex", alignItems: "center", gap: 8,
-                  fontSize: 12, fontFamily: "var(--mono)", color: "var(--warn)",
-                }}>
-                  <span>⚠</span>
-                  <span style={{ flex: 1 }}>
-                    Last free analysis —{" "}
-                    <Link to="/upgrade" style={{ color: "var(--accent)", textDecoration: "underline", textUnderlineOffset: 2 }}>
-                      upgrade for unlimited
-                    </Link>
-                  </span>
-                </div>
-              )}
               <PaidEmptyState
                 onFileSelect={(f) => handleFileWithFormatCheck(f)}
                 onUrlSubmit={async (u) => { setUrlInput(u); await importFromUrl(u); }}
