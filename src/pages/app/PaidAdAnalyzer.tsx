@@ -2,7 +2,7 @@
 import { Helmet } from 'react-helmet-async';
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useOutletContext, useNavigate, Link } from "react-router-dom";
-import { Zap, RotateCcw, Upload, Sparkles, Lock } from "lucide-react";
+import { RotateCcw, Upload, Sparkles, Lock } from "lucide-react";
 import { Toast } from "../../components/Toast";
 import { AnalyzerView } from "../../components/AnalyzerView";
 import { ScoreCard } from "../../components/ScoreCard";
@@ -69,9 +69,9 @@ function PaidEmptyState({
   const PILLS = ["Hook strength", "CTA score", "Budget recommendation"];
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px", minHeight: "calc(100vh - 120px)" }}>
-      {/* Icon */}
+      {/* Cutsheet app icon */}
       <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <Zap size={28} color="#6366f1" fill="rgba(99,102,241,0.3)" />
+        <img src="/cutsheet-logo.png" alt="Cutsheet" style={{ width: 36, height: 36 }} />
       </div>
 
       <h2 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>
