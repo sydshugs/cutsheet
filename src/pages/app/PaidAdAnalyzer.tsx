@@ -2,7 +2,7 @@
 import { Helmet } from 'react-helmet-async';
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useOutletContext, useNavigate, Link } from "react-router-dom";
-import { Zap, RotateCcw, Upload, AlertCircle, Sparkles, Lock } from "lucide-react";
+import { Zap, RotateCcw, Upload, Sparkles, Lock } from "lucide-react";
 import { Toast } from "../../components/Toast";
 import { AnalyzerView } from "../../components/AnalyzerView";
 import { ScoreCard } from "../../components/ScoreCard";
@@ -536,44 +536,27 @@ export default function PaidAdAnalyzer() {
     }
   }, [status]);
 
-  // ── Format mismatch detection ──────────────────────────────────────────
-  const [formatMismatch, setFormatMismatch] = useState<"video_as_static" | "static_as_video" | null>(null);
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
-
+  // ── Format auto-detection ──────────────────────────────────────────
   const handleFileWithFormatCheck = useCallback((f: File | null) => {
     if (!f) { handleReset(); return; }
-    setFormatMismatch(null);
-    setPendingFile(null);
 
     const fileIsVideo = f.type.startsWith("video/") || [".mp4", ".mov", ".webm"].some(e => f.name.toLowerCase().endsWith(e));
     const fileIsImage = f.type.startsWith("image/") || [".jpg", ".jpeg", ".png", ".webp"].some(e => f.name.toLowerCase().endsWith(e));
 
+    // Auto-switch format if mismatch detected
     if (format === "video" && fileIsImage) {
-      setFormatMismatch("static_as_video");
-      setPendingFile(f);
-      return;
+      setFormat("static");
+      setInfoToast("Detected static image — analyzing as Static");
+      setTimeout(() => setInfoToast(null), 3000);
+    } else if (format === "static" && fileIsVideo) {
+      setFormat("video");
+      setInfoToast("Detected video — analyzing as Video");
+      setTimeout(() => setInfoToast(null), 3000);
     }
-    if (format === "static" && fileIsVideo) {
-      setFormatMismatch("video_as_static");
-      setPendingFile(f);
-      return;
-    }
+
     setFile(f);
     reset();
   }, [format, handleReset, reset]);
-
-  const handleFormatSwitch = useCallback(() => {
-    if (!pendingFile) return;
-    const newFormat = formatMismatch === "static_as_video" ? "static" : "video";
-    setFormat(newFormat as Format);
-    if (newFormat === "static" && (platform === "YouTube" || platform === "TikTok")) {
-      setPlatform("all");
-    }
-    setFormatMismatch(null);
-    setFile(pendingFile);
-    setPendingFile(null);
-    reset();
-  }, [pendingFile, formatMismatch, platform]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
   const handleAnalyze = useCallback(async () => {
@@ -892,35 +875,7 @@ export default function PaidAdAnalyzer() {
         )}
 
         <div className="flex-1 overflow-auto">
-          {/* Format mismatch error */}
-          {formatMismatch && (
-            <div style={{ display: "flex", justifyContent: "center", padding: "80px 24px" }}>
-              <div style={{ maxWidth: 420, padding: 20, borderRadius: 12, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                  <AlertCircle size={16} color="#ef4444" />
-                  <span style={{ fontSize: 14, fontWeight: 600, color: "#f4f4f5" }}>
-                    {formatMismatch === "static_as_video" ? "This looks like a static image" : "This looks like a video"}
-                  </span>
-                </div>
-                <p style={{ fontSize: 13, color: "#a1a1aa", margin: "0 0 16px", lineHeight: 1.5 }}>
-                  {formatMismatch === "static_as_video"
-                    ? "You have Video selected. Switch to Static to analyze this image correctly."
-                    : "You have Static selected. Switch to Video to analyze this correctly."}
-                </p>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button type="button" onClick={handleFormatSwitch}
-                    style={{ flex: 1, height: 40, borderRadius: 9999, border: "none", background: "#6366f1", color: "white", fontSize: 13, fontWeight: 500, cursor: "pointer" }}>
-                    Switch to {formatMismatch === "static_as_video" ? "Static" : "Video"}
-                  </button>
-                  <button type="button" onClick={() => { setFormatMismatch(null); setPendingFile(null); }}
-                    style={{ height: 40, padding: "0 16px", borderRadius: 9999, border: "1px solid rgba(255,255,255,0.08)", background: "transparent", color: "#71717a", fontSize: 13, cursor: "pointer" }}>
-                    Remove file
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-          {!formatMismatch && status === "idle" && !loadedEntry ? (
+          {status === "idle" && !loadedEntry ? (
             <>
               {!isPro && (
                 <div style={{ textAlign: "center", fontSize: 12, color: "#52525b", marginTop: 12, marginBottom: -24 }}>
@@ -948,7 +903,7 @@ export default function PaidAdAnalyzer() {
                 onUrlSubmit={async (u) => { setUrlInput(u); await importFromUrl(u); }}
               />
             </>
-          ) : !formatMismatch && (status !== "idle" || loadedEntry) ? (
+          ) : (status !== "idle" || loadedEntry) ? (
             <div className="relative px-4 py-6 md:px-8 min-h-full flex flex-col">
               {/* Ambient glow */}
               <div className="pointer-events-none absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-indigo-600/10 blur-[120px]" />
