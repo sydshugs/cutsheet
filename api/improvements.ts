@@ -5,6 +5,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
 import { sanitizeSessionMemory } from "./_lib/sanitizeMemory";
 
+export const maxDuration = 60;
+
 const CLAUDE_MODEL = "claude-sonnet-4-20250514";
 const RATE = { freeLimit: 30, proLimit: 120, windowSeconds: 60 };
 
@@ -19,7 +21,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const user = await verifyAuth(req);
   if (!user) return res.status(401).json({ error: "Unauthorized" });
 
-  const rl = await checkRateLimit("improvements", user.id, user.isPro, RATE);
+  const rl = await checkRateLimit("improvements", user.id, user.tier, RATE);
   if (!rl.allowed) {
     return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
   }
@@ -27,8 +29,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { action, payload } = req.body ?? {};
 
   if (action === "improvements") {
-    const { analysisMarkdown, scores, userContext, platform, sessionMemory: rawMemory } = payload ?? {};
+    const { analysisMarkdown, scores, userContext: rawContext, platform, sessionMemory: rawMemory } = payload ?? {};
     const sessionMemory = sanitizeSessionMemory(rawMemory);
+    const userContext = sanitizeSessionMemory(rawContext);
     if (!scores) return res.status(200).json({ improvements: [] });
 
     const weakAreas = Object.entries(scores as Record<string, number>)
@@ -69,8 +72,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (action === "cta-rewrites") {
-    const { currentCTA, productContext, userContext, sessionMemory: rawMemory } = payload ?? {};
+    const { currentCTA, productContext, userContext: rawContext, sessionMemory: rawMemory } = payload ?? {};
     const sessionMemory = sanitizeSessionMemory(rawMemory);
+    const userContext = sanitizeSessionMemory(rawContext);
     if (!currentCTA) return res.status(200).json({ rewrites: [] });
 
     const contextBlock = userContext
@@ -109,8 +113,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (action === "brief") {
-    const { analysisMarkdown, filename, userContext, sessionMemory: rawMemory } = payload ?? {};
+    const { analysisMarkdown, filename, userContext: rawContext, sessionMemory: rawMemory } = payload ?? {};
     const sessionMemory = sanitizeSessionMemory(rawMemory);
+    const userContext = sanitizeSessionMemory(rawContext);
     if (!analysisMarkdown) return res.status(400).json({ error: "analysisMarkdown is required" });
 
     const contextBlock = userContext

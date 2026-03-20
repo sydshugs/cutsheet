@@ -5,6 +5,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
 import { sanitizeSessionMemory } from "./_lib/sanitizeMemory";
 
+export const maxDuration = 60;
+
 const CLAUDE_MODEL = "claude-sonnet-4-20250514";
 const RATE = { freeLimit: 5, proLimit: 30, windowSeconds: 60 };
 
@@ -15,7 +17,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const user = await verifyAuth(req);
   if (!user) return res.status(401).json({ error: "Unauthorized" });
 
-  const rl = await checkRateLimit("gap-analysis", user.id, user.isPro, RATE);
+  const rl = await checkRateLimit("gap-analysis", user.id, user.tier, RATE);
   if (!rl.allowed) {
     return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
   }
@@ -24,9 +26,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     yourScores, competitorScores,
     yourImprovements, competitorImprovements,
     yourFileName, competitorFileName,
-    platform, format, userContext, sessionMemory: rawMemory,
+    platform, format, userContext: rawContext, sessionMemory: rawMemory,
   } = req.body ?? {};
   const sessionMemory = sanitizeSessionMemory(rawMemory);
+  const userContext = sanitizeSessionMemory(rawContext);
 
   if (!yourScores || !competitorScores) {
     return res.status(400).json({ error: "yourScores and competitorScores are required" });
@@ -113,7 +116,12 @@ Rules:
   const jsonMatch = text.match(/\{[\s\S]*\}/);
   if (!jsonMatch) return res.status(500).json({ error: "Could not parse Claude response" });
 
-  const parsed = JSON.parse(jsonMatch[0]);
+  let parsed;
+  try {
+    parsed = JSON.parse(jsonMatch[0]);
+  } catch {
+    return res.status(500).json({ error: "Failed to parse AI response — please try again" });
+  }
   return res.status(200).json({
     verdict: (["winning", "losing", "tied"].includes(parsed.verdict) ? parsed.verdict : "tied"),
     scoreDiff: Number(parsed.scoreDiff) || 0,

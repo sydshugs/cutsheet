@@ -1,10 +1,8 @@
 // comparisonService.ts — Stage 2 Pre-Flight comparison via Gemini
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { AnalysisResult } from "./analyzerService";
 import type { ComparisonResult, TestType } from "../types/preflight";
-
-const MODEL = "gemini-2.5-flash";
+import { supabase } from "../lib/supabase";
 
 function buildComparisonPrompt(
   analyses: AnalysisResult[],
@@ -88,21 +86,29 @@ export async function runComparison(
   analyses: AnalysisResult[],
   labels: string[],
   testType: TestType,
-  apiKey: string
+  _apiKey: string
 ): Promise<ComparisonResult> {
   const prompt = buildComparisonPrompt(analyses, labels, testType);
 
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({
-    model: MODEL,
-    generationConfig: {
-      temperature: 0.3,
-      maxOutputTokens: 8192,
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) throw new Error("Not authenticated");
+
+  const response = await fetch("/api/analyze", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${session.access_token}`,
+      "Content-Type": "application/json",
     },
+    body: JSON.stringify({ prompt, maxOutputTokens: 8192, temperature: 0.3 }),
   });
 
-  const result = await model.generateContent(prompt);
-  const text = result.response.text();
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error((data as { error?: string }).error ?? `API error ${response.status}`);
+  }
+
+  const result = await response.json() as { text: string };
+  const text = result.text;
 
   try {
     const cleaned = text.replace(/```json|```/g, "").trim();

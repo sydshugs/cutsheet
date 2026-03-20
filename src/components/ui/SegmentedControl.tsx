@@ -27,9 +27,24 @@ export function SegmentedControl({
     onChange?.(value)
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    const idx = options.indexOf(active)
+    let next = idx
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+      e.preventDefault()
+      next = (idx + 1) % options.length
+    } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+      e.preventDefault()
+      next = (idx - 1 + options.length) % options.length
+    } else { return }
+    handleClick(options[next])
+  }
+
   return (
     <div
       className={className}
+      role="radiogroup"
+      onKeyDown={handleKeyDown}
       style={{
         display: "inline-flex",
         background: "var(--surface)",
@@ -45,6 +60,7 @@ export function SegmentedControl({
           <button
             key={option}
             onClick={() => handleClick(option)}
+            tabIndex={isActive ? 0 : -1}
             style={{
               padding: "7px 16px",
               borderRadius: 7,

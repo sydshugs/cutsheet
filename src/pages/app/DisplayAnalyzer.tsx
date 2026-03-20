@@ -3,15 +3,20 @@
 import { Helmet } from "react-helmet-async";
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useOutletContext } from "react-router-dom";
-import { Monitor, Upload, Eye, Download, X, Plus, CheckCircle } from "lucide-react";
+import { Monitor, Upload, Eye, Download, X, Plus, CheckCircle, ShieldCheck, Sparkles, Lock } from "lucide-react";
 import { sanitizeFileName } from "../../utils/sanitize";
 import { SuiteCohesionCard } from "../../components/SuiteCohesionCard";
 import { DisplayScoreCard, type DisplayResult } from "../../components/DisplayScoreCard";
+import { PolicyCheckPanel } from "../../components/PolicyCheckPanel";
+import { runPolicyCheck, type PolicyCheckResult } from "../../lib/policyCheckService";
 import { getImageDimensions, detectDisplayFormat, getFormatGuidance, type DisplayFormat } from "../../utils/displayAdUtils";
 import { generateDisplayMockup, generateSuiteMockup } from "../../services/mockupService";
 import { analyzeVideo } from "../../services/analyzerService";
 import { analyzeSuiteCohesion, type SuiteCohesionResult } from "../../services/claudeService";
 import { getUserContext, formatUserContextBlock } from "../../services/userContextService";
+import { VisualizePanel } from "../../components/VisualizePanel";
+import { visualizeAd, fileToBase64, getMediaType } from "../../lib/visualizeService";
+import type { VisualizeResult, VisualizeStatus } from "../../types/visualize";
 import { getSessionMemory } from "@/src/lib/userMemoryService";
 import type { AppSharedContext } from "../../components/AppLayout";
 
@@ -26,7 +31,7 @@ interface SuiteBanner {
   result: DisplayResult | null;
 }
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY ?? "";
+const API_KEY = ""; // Gemini calls are now server-side via /api/analyze
 
 const NETWORKS = [
   { value: "google", label: "Google Display" },
@@ -97,6 +102,9 @@ export default function DisplayAnalyzer() {
   const [mockupUrl, setMockupUrl] = useState<string | null>(null);
   const [mockupLoading, setMockupLoading] = useState(false);
   const [userContext, setUserContext] = useState("");
+  const [policyResult, setPolicyResult] = useState<PolicyCheckResult | null>(null);
+  const [policyLoading, setPolicyLoading] = useState(false);
+  const [policyError, setPolicyError] = useState<string | null>(null);
   const sessionMemoryRef = useRef<string>('');
   // ── Suite state
   const [suiteBanners, setSuiteBanners] = useState<SuiteBanner[]>([]);
@@ -105,6 +113,12 @@ export default function DisplayAnalyzer() {
   const [suiteCohesionError, setSuiteCohesionError] = useState(false);
   const [suiteMockupUrl, setSuiteMockupUrl] = useState<string | null>(null);
   const [suiteMockupLoading, setSuiteMockupLoading] = useState(false);
+
+  // ── Visualize It state (single mode only)
+  const [visualizeOpen, setVisualizeOpen] = useState(false);
+  const [visualizeStatus, setVisualizeStatus] = useState<VisualizeStatus>("idle");
+  const [visualizeResult, setVisualizeResult] = useState<VisualizeResult | null>(null);
+  const [visualizeError, setVisualizeError] = useState<string | null>(null);
 
   const previewUrl = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
   useEffect(() => { return () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }; }, [previewUrl]);
@@ -117,6 +131,8 @@ export default function DisplayAnalyzer() {
     setMockupUrl(null); setMockupLoading(false);
     setSuiteBanners([]); setSuiteStatus("idle"); setSuiteCohesion(null); setSuiteCohesionError(false);
     setSuiteMockupUrl(null); setSuiteMockupLoading(false);
+    setPolicyResult(null); setPolicyLoading(false); setPolicyError(null);
+    setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null);
   }, []);
 
   const isComplete = mode === "single" ? status === "complete" : suiteStatus === "complete";
@@ -225,7 +241,7 @@ Return JSON only:
 
     setSuiteStatus("complete");
     const c = increment();
-    if (c >= FREE_LIMIT && !isPro) onUpgradeRequired();
+    if (c >= FREE_LIMIT && !isPro) onUpgradeRequired("analyze");
 
     // Generate suite mockup
     setSuiteMockupLoading(true);
@@ -347,7 +363,7 @@ Return JSON only — no prose:
       setResult(displayResult);
       setStatus("complete");
       const c = increment();
-      if (c >= FREE_LIMIT && !isPro) onUpgradeRequired();
+      if (c >= FREE_LIMIT && !isPro) onUpgradeRequired("analyze");
 
       // Generate mockup (async, non-blocking)
       setMockupLoading(true);
@@ -358,6 +374,69 @@ Return JSON only — no prose:
     } catch (err) {
       setStatus("error");
       setError(err instanceof Error ? err.message : "Analysis failed");
+    }
+  };
+
+  const handleVisualize = async () => {
+    if (!result || !file) return;
+    setVisualizeOpen(true);
+    setVisualizeStatus("loading");
+    setVisualizeResult(null);
+    setVisualizeError(null);
+    try {
+      const imageBase64 = await fileToBase64(file);
+      const mediaType = getMediaType(file);
+      const niche = userContext.match(/Niche:\s*(.+)/)?.[1]?.trim() || "general";
+      const vizResult = await visualizeAd({
+        imageBase64,
+        imageMediaType: mediaType,
+        analysisResult: {
+          scores: result.scores as unknown as Record<string, number>,
+          improvements: result.improvements ?? [],
+        },
+        platform: network === "google" ? "Google Display" : network === "affiliate" ? "Affiliate" : "general",
+        niche,
+        adType: "display",
+      });
+      setVisualizeResult(vizResult);
+      setVisualizeStatus("complete");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      if (msg === "PRO_REQUIRED") {
+        setVisualizeOpen(false);
+        setVisualizeStatus("idle");
+        onUpgradeRequired("visualize");
+        return;
+      }
+      setVisualizeError(msg.includes("RATE_LIMITED") ? "RATE_LIMITED" : msg);
+      setVisualizeStatus("error");
+    }
+  };
+
+  const handleCheckPolicies = async () => {
+    if (!result || policyLoading) return;
+    setPolicyLoading(true);
+    setPolicyError(null);
+    setPolicyResult(null);
+    try {
+      const r = await runPolicyCheck({
+        platform: "both",
+        adType: "display",
+        niche: "display advertising",
+        adCopy: result.improvements?.join(". ") ?? "",
+        existingAnalysis: result as unknown as object,
+      });
+      setPolicyResult(r);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Policy check failed";
+      if (msg.startsWith("RATE_LIMITED")) {
+        const time = msg.split(":")[1] ?? "24h";
+        setPolicyError(`Daily limit reached. Resets in ${time}. Upgrade to Pro for unlimited checks.`);
+      } else {
+        setPolicyError(msg);
+      }
+    } finally {
+      setPolicyLoading(false);
     }
   };
 
@@ -514,6 +593,13 @@ Return JSON only — no prose:
                       </div>
                     )}
 
+                    {/* Suite cohesion threshold hint */}
+                    {suiteBanners.filter((b) => b.status === "complete").length < 3 && suiteBanners.length > 0 && suiteStatus === "idle" && (
+                      <p style={{ fontSize: 12, color: "var(--ink-muted, #71717a)", margin: "0 0 12px", textAlign: "center" }}>
+                        Add {3 - suiteBanners.filter((b) => b.status === "complete").length} more banner{3 - suiteBanners.filter((b) => b.status === "complete").length === 1 ? "" : "s"} to unlock suite cohesion analysis.
+                      </p>
+                    )}
+
                     {/* Analyze suite button */}
                     <button type="button" onClick={handleSuiteAnalyze}
                       disabled={suiteBanners.length < 2 || !canAnalyze}
@@ -589,10 +675,10 @@ Return JSON only — no prose:
 
                     {/* Suite cohesion results */}
                     <div>
-                      <SuiteCohesionCard result={suiteCohesion} loading={suiteStatus === "analyzing" || (suiteStatus === "complete" && !suiteCohesion && !suiteCohesionError)} />
+                      <SuiteCohesionCard result={suiteCohesion} loading={!suiteCohesion && !suiteCohesionError} />
                       {suiteCohesionError && !suiteCohesion && (
                         <div style={{ padding: "12px 16px", borderRadius: 10, background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)", marginTop: 12, display: "flex", alignItems: "center", gap: 8 }}>
-                          <span style={{ fontSize: 12, color: "#f59e0b" }}>Suite cohesion analysis couldn't be generated</span>
+                          <span style={{ fontSize: 12, color: "#f59e0b" }}>Couldn't analyze suite consistency. This usually means the banners are too different in style. Try uploading banners from the same campaign.</span>
                           <button type="button" onClick={async () => {
                             setSuiteCohesionError(false);
                             try {
@@ -793,8 +879,8 @@ Return JSON only — no prose:
                     </p>
                   </div>
 
-                  {/* RIGHT — Scores */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                  {/* RIGHT — Scores + Policy */}
+                  <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 12 }}>
                     <DisplayScoreCard
                       result={result}
                       format={detectedFormat}
@@ -803,6 +889,109 @@ Return JSON only — no prose:
                       mockupLoading={false}
                       dimensions={dimensions}
                     />
+
+                    {/* Visualize It button — single mode, after analysis */}
+                    {mode === "single" && !visualizeOpen && (
+                      isPro ? (
+                        <button
+                          type="button"
+                          onClick={handleVisualize}
+                          style={{
+                            width: "100%", height: 48,
+                            background: "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15))",
+                            border: "1px solid rgba(99,102,241,0.35)",
+                            borderRadius: 12,
+                            color: "#818cf8", cursor: "pointer",
+                            display: "flex", flexDirection: "column",
+                            alignItems: "center", justifyContent: "center", gap: 2,
+                            transition: "all 150ms",
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(99,102,241,0.25), rgba(139,92,246,0.2))"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15))"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.35)"; }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <Sparkles size={15} />
+                            <span style={{ fontSize: 14, fontWeight: 600 }}>Visualize It</span>
+                          </div>
+                          <span style={{ fontSize: 11, color: "#6366f1", opacity: 0.75 }}>See what your improved ad could look like</span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => onUpgradeRequired("visualize")}
+                          style={{
+                            width: "100%", height: 48,
+                            background: "rgba(255,255,255,0.02)",
+                            border: "1px solid rgba(255,255,255,0.08)",
+                            borderRadius: 12,
+                            color: "#52525b", cursor: "pointer",
+                            display: "flex", flexDirection: "column",
+                            alignItems: "center", justifyContent: "center", gap: 2,
+                            transition: "all 150ms",
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(99,102,241,0.3)"; e.currentTarget.style.color = "#71717a"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#52525b"; }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <Lock size={14} />
+                            <span style={{ fontSize: 14, fontWeight: 600 }}>Visualize It</span>
+                            <span style={{ fontSize: 9, fontWeight: 600, padding: "1px 5px", borderRadius: 4, background: "rgba(99,102,241,0.12)", color: "#818cf8" }}>PRO</span>
+                          </div>
+                          <span style={{ fontSize: 11, opacity: 0.6 }}>Upgrade to see your improved ad</span>
+                        </button>
+                      )
+                    )}
+                    {/* Visualize Panel */}
+                    {mode === "single" && (visualizeOpen || visualizeStatus !== "idle") && (
+                      <VisualizePanel
+                        status={visualizeStatus}
+                        result={visualizeResult}
+                        originalImageUrl={previewUrl}
+                        error={visualizeError}
+                        onClose={() => { setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); }}
+                      />
+                    )}
+                    {/* Check Policies button */}
+                    {!policyResult && (
+                      <button
+                        type="button"
+                        onClick={handleCheckPolicies}
+                        disabled={policyLoading}
+                        style={{
+                          display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                          width: "100%", height: 44, borderRadius: 12,
+                          background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.25)",
+                          color: "#f59e0b", fontSize: 14, fontWeight: 500,
+                          cursor: policyLoading ? "default" : "pointer",
+                          opacity: policyLoading ? 0.7 : 1, transition: "all 150ms",
+                        }}
+                        onMouseEnter={(e) => { if (!policyLoading) e.currentTarget.style.background = "rgba(245,158,11,0.18)"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(245,158,11,0.1)"; }}
+                      >
+                        {policyLoading ? (
+                          <>
+                            <div style={{ width: 14, height: 14, border: "2px solid rgba(245,158,11,0.3)", borderTopColor: "#f59e0b", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+                            Checking policies...
+                          </>
+                        ) : (
+                          <>
+                            <ShieldCheck size={15} /> Check Policies
+                          </>
+                        )}
+                      </button>
+                    )}
+
+                    {/* Policy error */}
+                    {policyError && (
+                      <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", fontSize: 13, color: "#ef4444" }}>
+                        {policyError}
+                      </div>
+                    )}
+
+                    {/* Policy results */}
+                    {policyResult && (
+                      <PolicyCheckPanel result={policyResult} onClose={() => setPolicyResult(null)} />
+                    )}
                   </div>
                 </div>
               )}

@@ -61,7 +61,7 @@ const PLANS: Plan[] = [
       { label: "Pre-Flight A/B testing", icon: FlaskConical },
       { label: "Generate creative brief", icon: FileText },
       { label: "PDF export & share links", icon: Share2 },
-      { label: "Swipe file (coming soon)", icon: FolderHeart },
+      { label: "Saved Ads library", icon: FolderHeart },
     ],
   },
   {

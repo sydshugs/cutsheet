@@ -21,16 +21,16 @@ export interface AnalysisError {
 const ERROR_MAP: Record<AnalysisErrorType, Omit<AnalysisError, "type">> = {
   timeout: {
     message: "Analysis is taking longer than usual",
-    recovery: "Try uploading a shorter clip — under 30 seconds works best",
+    recovery: "Try a smaller file — shorter clips or compressed images work best",
     severity: "amber",
   },
   rate_limit: {
-    message: "We're processing a lot of videos right now",
+    message: "We're processing a lot of files right now",
     recovery: "Your file is still loaded — wait 30 seconds then retry",
     severity: "amber",
   },
   api_down: {
-    message: "Video analysis isn't available right now",
+    message: "Analysis isn't available right now",
     recovery: "This is on our end — check back in a few minutes",
     severity: "red",
   },
@@ -60,7 +60,7 @@ function categorizeError(err: unknown): AnalysisError {
   }
   if (err instanceof Error) {
     const msg = err.message.toLowerCase();
-    if (msg.includes("429") || msg.includes("rate") || msg.includes("quota") || msg.includes("resource exhausted")) {
+    if (msg.includes("429") || msg.includes("rate_limited") || msg.includes("quota") || msg.includes("resource exhausted")) {
       return { type: "rate_limit", ...ERROR_MAP.rate_limit };
     }
     if (msg.includes("500") || msg.includes("503") || msg.includes("unavailable") || msg.includes("internal")) {

@@ -4,6 +4,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import {
   Zap, TrendingUp, Monitor, GitBranch, Swords, Trophy,
   Bookmark, Settings, ChevronLeft, ChevronRight, MoreHorizontal, X, HelpCircle,
+  ScanSearch, ShieldCheck,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { UsageIndicator } from "./UsageIndicator";
@@ -23,6 +24,7 @@ interface SidebarProps {
   onMobileClose: () => void;
   userEmail: string;
   isPro: boolean;
+  isTeam?: boolean;
   usageCount: number;
   FREE_LIMIT: number;
   onShowShortcuts?: () => void;
@@ -31,22 +33,25 @@ interface SidebarProps {
 // ─── NAV CONFIG ───────────────────────────────────────────────────────────────
 
 const ANALYZE: NavItem[] = [
-  { label: "Paid Ad",  sublabel: "Meta, TikTok, Google",  path: "/app/paid",     icon: Zap },
-  { label: "Organic",  sublabel: "TikTok, Reels, Shorts", path: "/app/organic",  icon: TrendingUp },
-  { label: "Display",  sublabel: "Google, affiliate",     path: "/app/display",  icon: Monitor },
+  { label: "Paid Ad",       sublabel: "Meta, TikTok, Google",  path: "/app/paid",          icon: Zap },
+  { label: "Organic",       sublabel: "TikTok, Reels, Shorts", path: "/app/organic",       icon: TrendingUp },
+  { label: "Display",       sublabel: "Google, affiliate",     path: "/app/display",       icon: Monitor },
+  { label: "Deconstructor", sublabel: "Teardown any ad URL",   path: "/app/deconstructor", icon: ScanSearch },
+  { label: "Policy Checker", sublabel: "Pre-launch policy scan", path: "/app/policy-check", icon: ShieldCheck },
 ];
 
 const COMPARE: NavItem[] = [
-  { label: "A/B Test",   sublabel: "Test variants",      path: "/app/ab-test",    icon: GitBranch },
+  { label: "A/B Test",   sublabel: "Quick compare 2–5 variants",      path: "/app/ab-test",    icon: GitBranch },
   { label: "Competitor", sublabel: "Your ad vs theirs",  path: "/app/competitor", icon: Swords },
-  { label: "Rank Creatives", sublabel: "Find your best",  path: "/app/batch",      icon: Trophy },
+  { label: "Rank Creatives", sublabel: "Score & rank up to 10",  path: "/app/batch",      icon: Trophy },
 ];
 
 const LIBRARY: NavItem[] = [
-  { label: "Swipe File", sublabel: "Saved winners", path: "/app/swipe-file", icon: Bookmark },
+  { label: "Saved Ads", sublabel: "Your reference library", path: "/app/swipe-file", icon: Bookmark },
 ];
 
-const MORE_ITEMS = [...COMPARE.slice(1), ...LIBRARY]; // Competitor, Batch, Swipe File
+// Mobile "More" drawer: extra ANALYZE items + COMPARE (minus A/B Test) + LIBRARY
+const MORE_ITEMS = [...ANALYZE.slice(3), ...COMPARE.slice(1), ...LIBRARY];
 
 // ─── SECTION LABEL ────────────────────────────────────────────────────────────
 
@@ -191,8 +196,8 @@ function NavItemRow({ item, collapsed }: { item: NavItem; collapsed: boolean }) 
 // ─── DESKTOP SIDEBAR ──────────────────────────────────────────────────────────
 
 function DesktopSidebar({
-  userEmail, isPro, usageCount, FREE_LIMIT, onShowShortcuts,
-}: { userEmail: string; isPro: boolean; usageCount: number; FREE_LIMIT: number; onShowShortcuts?: () => void }) {
+  userEmail, isPro, isTeam, usageCount, FREE_LIMIT, onShowShortcuts,
+}: { userEmail: string; isPro: boolean; isTeam?: boolean; usageCount: number; FREE_LIMIT: number; onShowShortcuts?: () => void }) {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -255,7 +260,13 @@ function DesktopSidebar({
 
       {/* Bottom */}
       <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "8px 0 12px", display: "flex", flexDirection: "column", gap: 2 }}>
-        <UsageIndicator usageCount={usageCount} FREE_LIMIT={FREE_LIMIT} isPro={isPro} collapsed={collapsed} />
+        <UsageIndicator
+          usageCount={usageCount}
+          FREE_LIMIT={FREE_LIMIT}
+          isPro={isPro}
+          isTeam={isTeam}
+          collapsed={collapsed}
+        />
 
         {/* Shortcuts hint — only visible when collapsed */}
         {collapsed && onShowShortcuts && (
@@ -274,6 +285,25 @@ function DesktopSidebar({
               ?
             </button>
           </div>
+        )}
+
+        {/* Keyboard shortcuts — expanded mode */}
+        {!collapsed && onShowShortcuts && (
+          <button
+            type="button"
+            onClick={onShowShortcuts}
+            style={{
+              display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
+              margin: "0 8px", background: "transparent", border: "none", cursor: "pointer",
+              color: "#52525b", fontSize: 12, textDecoration: "none", transition: "color 150ms",
+              justifyContent: "flex-start",
+            }}
+            onMouseEnter={e => (e.currentTarget.style.color = "#a1a1aa")}
+            onMouseLeave={e => (e.currentTarget.style.color = "#52525b")}
+          >
+            <span style={{ fontFamily: "monospace", fontSize: 11, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 4, padding: "1px 5px", lineHeight: 1 }}>?</span>
+            <span>Keyboard shortcuts</span>
+          </button>
         )}
 
         {/* Help & Support */}
@@ -413,11 +443,11 @@ function MobileMoreDrawer({ open, onClose }: { open: boolean; onClose: () => voi
 
 // ─── MAIN EXPORT ──────────────────────────────────────────────────────────────
 
-export function Sidebar({ mobileOpen: _mobileOpen, onMobileClose: _onMobileClose, userEmail, isPro, usageCount, FREE_LIMIT, onShowShortcuts }: SidebarProps) {
+export function Sidebar({ mobileOpen: _mobileOpen, onMobileClose: _onMobileClose, userEmail, isPro, isTeam, usageCount, FREE_LIMIT, onShowShortcuts }: SidebarProps) {
   const [moreOpen, setMoreOpen] = useState(false);
   return (
     <>
-      <DesktopSidebar userEmail={userEmail} isPro={isPro} usageCount={usageCount} FREE_LIMIT={FREE_LIMIT} onShowShortcuts={onShowShortcuts} />
+      <DesktopSidebar userEmail={userEmail} isPro={isPro} isTeam={isTeam} usageCount={usageCount} FREE_LIMIT={FREE_LIMIT} onShowShortcuts={onShowShortcuts} />
       <MobileTabBar onMoreClick={() => setMoreOpen(true)} />
       <MobileMoreDrawer open={moreOpen} onClose={() => setMoreOpen(false)} />
     </>

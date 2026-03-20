@@ -3,7 +3,7 @@
 import { Helmet } from 'react-helmet-async';
 import { PreFlightView } from "../../components/PreFlightView";
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY ?? "";
+const API_KEY = ""; // Gemini calls are now server-side via /api/analyze
 
 export default function ABTestPage() {
   return (

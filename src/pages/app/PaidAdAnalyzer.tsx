@@ -1,9 +1,9 @@
 // src/pages/app/PaidAdAnalyzer.tsx
 import { Helmet } from 'react-helmet-async';
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useOutletContext, useNavigate } from "react-router-dom";
-import { Zap, RotateCcw, Upload, AlertCircle } from "lucide-react";
-import { PlatformPills, type Platform as PillPlatform } from "../../components/PlatformPills";
+import { useOutletContext, useNavigate, Link } from "react-router-dom";
+import { Zap, RotateCcw, Upload, AlertCircle, Sparkles, Lock } from "lucide-react";
+import { Toast } from "../../components/Toast";
 import { AnalyzerView } from "../../components/AnalyzerView";
 import { ScoreCard } from "../../components/ScoreCard";
 import { VideoDropzone } from "../../components/VideoDropzone";
@@ -18,12 +18,21 @@ import {
 } from "../../services/analyzerService";
 import {
   generateBriefWithClaude, generateCTARewrites, generateSecondEyeReview,
-  generateStaticSecondEye, generateImprovements,
+  generateStaticSecondEye, generateImprovements, generatePlatformScore,
   type SecondEyeResult,
   type StaticSecondEyeResult,
+  type PlatformScore,
 } from "../../services/claudeService";
+import { PlatformSwitcher, PAID_AD_PLATFORMS } from "../../components/PlatformSwitcher";
+import { generateFixIt, type FixItResult } from "../../services/fixItService";
+import { generatePrediction, type PredictionResult } from "../../services/predictionService";
 import { SecondEyePanel } from "../../components/SecondEyePanel";
+import { VisualizePanel } from "../../components/VisualizePanel";
+import { visualizeAd, fileToBase64, getMediaType } from "../../lib/visualizeService";
+import type { VisualizeResult, VisualizeStatus } from "../../types/visualize";
 import { StaticSecondEyePanel } from "../../components/StaticSecondEyePanel";
+import { PolicyCheckPanel } from "../../components/PolicyCheckPanel";
+import { runPolicyCheck, type PolicyCheckResult } from "../../lib/policyCheckService";
 import { BeforeAfterComparison } from "../../components/BeforeAfterComparison";
 import { generateComparison, type ComparisonResult } from "../../services/claudeService";
 import { createShare } from "../../services/shareService";
@@ -35,7 +44,7 @@ import { getSessionMemory } from "@/src/lib/userMemoryService";
 import { generateBudgetRecommendation, type EngineBudgetRecommendation } from "../../services/budgetService";
 import type { AppSharedContext } from "../../components/AppLayout";
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY ?? "";
+const API_KEY = ""; // Gemini calls are now server-side via /api/analyze
 
 const PLATFORMS = ["all", "Meta", "TikTok", "Google", "YouTube"] as const;
 const FORMATS = ["video", "static"] as const;
@@ -51,14 +60,14 @@ interface PlatformOption {
 
 const PLATFORM_COMPAT: Record<Format, PlatformOption[]> = {
   video: [
-    { value: "all",     label: "All",     enabled: true,  note: null },
+    { value: "all",     label: "General",  enabled: true,  note: null },
     { value: "Meta",    label: "Meta",    enabled: true,  note: null },
     { value: "TikTok",  label: "TikTok",  enabled: true,  note: null },
     { value: "Google",  label: "Google",  enabled: true,  note: null },
     { value: "YouTube", label: "YouTube", enabled: true,  note: null },
   ],
   static: [
-    { value: "all",     label: "All",     enabled: true,  note: null },
+    { value: "all",     label: "General",  enabled: true,  note: null },
     { value: "Meta",    label: "Meta",    enabled: true,  note: null },
     { value: "TikTok",  label: "TikTok",  enabled: false, note: "Carousel only — uncommon" },
     { value: "Google",  label: "Google",  enabled: true,  note: null },
@@ -80,11 +89,13 @@ function IntentHeader({
   platform, setPlatform, format, setFormat,
   secondEye, setSecondEye,
   staticSecondEye, setStaticSecondEye,
+  onPlatformReset,
 }: {
   platform: Platform; setPlatform: (p: Platform) => void;
   format: Format; setFormat: (f: Format) => void;
   secondEye: boolean; setSecondEye: (v: boolean) => void;
   staticSecondEye: boolean; setStaticSecondEye: (v: boolean) => void;
+  onPlatformReset?: (oldPlatform: string) => void;
 }) {
   return (
     <div
@@ -96,16 +107,71 @@ function IntentHeader({
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-        <PlatformPills
-          selected={platform as PillPlatform}
-          onSelect={(p) => setPlatform(p as Platform)}
-          format={format}
-          onFormatChange={(f) => {
-            setFormat(f);
-            const currentPlatformEnabled = PLATFORM_COMPAT[f].find(o => o.value === platform)?.enabled;
-            if (!currentPlatformEnabled) setPlatform("Meta");
-          }}
-        />
+        <span style={{ fontSize: 13, color: "#52525b", flexShrink: 0 }}>Analyzing for:</span>
+
+        {/* Platform pills — radio group with accessibility */}
+        <div role="radiogroup" aria-label="Platform selector" style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          {PLATFORM_COMPAT[format].map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              role="radio"
+              aria-checked={platform === opt.value && opt.enabled}
+              aria-disabled={!opt.enabled || undefined}
+              aria-label={!opt.enabled && opt.note ? `${opt.label} — ${opt.note}` : opt.label}
+              tabIndex={!opt.enabled ? -1 : undefined}
+              onClick={() => { if (opt.enabled) setPlatform(opt.value); }}
+              title={opt.note ?? undefined}
+              style={{
+                height: 30, padding: "0 12px", borderRadius: 9999, fontSize: 13,
+                cursor: opt.enabled ? "pointer" : "not-allowed",
+                opacity: opt.enabled ? 1 : 0.35,
+                textDecoration: opt.enabled ? "none" : "line-through",
+                background: platform === opt.value && opt.enabled ? "#4f46e5" : "rgba(255,255,255,0.04)",
+                border: `1px solid ${platform === opt.value && opt.enabled ? "#4f46e5" : "rgba(255,255,255,0.08)"}`,
+                color: platform === opt.value && opt.enabled ? "white" : "#71717a",
+                fontWeight: platform === opt.value && opt.enabled ? 500 : 400,
+                transition: "all 150ms",
+              }}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Divider */}
+        <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.08)", flexShrink: 0 }} />
+
+        {/* Format pills */}
+        <div role="radiogroup" aria-label="Format selector" style={{ display: "flex", gap: 6 }}>
+          {FORMATS.map((f) => (
+            <button
+              key={f}
+              type="button"
+              role="radio"
+              aria-checked={format === f}
+              onClick={() => {
+                setFormat(f);
+                const currentPlatformEnabled = PLATFORM_COMPAT[f].find(o => o.value === platform)?.enabled;
+                if (!currentPlatformEnabled) {
+                  const oldPlatform = platform;
+                  setPlatform("all");
+                  onPlatformReset?.(oldPlatform);
+                }
+              }}
+              style={{
+                height: 30, padding: "0 12px", borderRadius: 9999, fontSize: 13, cursor: "pointer",
+                background: format === f ? "#4f46e5" : "rgba(255,255,255,0.04)",
+                border: `1px solid ${format === f ? "#4f46e5" : "rgba(255,255,255,0.08)"}`,
+                color: format === f ? "white" : "#71717a",
+                fontWeight: format === f ? 500 : 400,
+                transition: "all 150ms",
+              }}
+            >
+              {f.charAt(0).toUpperCase() + f.slice(1)}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Second Eye toggle — video only */}
@@ -113,9 +179,7 @@ function IntentHeader({
         <div style={{ display: "flex", alignItems: "center", gap: 8 }} title="Get a fresh first-impression review from a separate AI model">
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
             <span style={{ fontSize: 13, color: "#a1a1aa" }}>Second Eye</span>
-            {secondEye && (
-              <span style={{ fontSize: 11, color: "#52525b" }}>Fresh first-time viewer perspective</span>
-            )}
+            <span style={{ fontSize: 11, color: "#52525b" }}>Fresh first-time viewer perspective</span>
           </div>
           <button
             type="button"
@@ -143,9 +207,7 @@ function IntentHeader({
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
             <span style={{ fontSize: 13, color: "#a1a1aa" }}>Design Review</span>
-            {staticSecondEye && (
-              <span style={{ fontSize: 11, color: "#52525b" }}>Typography & layout check</span>
-            )}
+            <span style={{ fontSize: 11, color: "#52525b" }}>Typography & layout check</span>
           </div>
           <button
             type="button"
@@ -227,8 +289,12 @@ export default function PaidAdAnalyzer() {
 
   // ── User context for personalized AI ──────────────────────────────────────
   const [userContext, setUserContext] = useState<string>('')
+  const [rawUserContext, setRawUserContext] = useState<{ niche: string; platform: string } | null>(null)
   useEffect(() => {
-    getUserContext().then(ctx => setUserContext(formatUserContextBlock(ctx)))
+    getUserContext().then(ctx => {
+      setUserContext(formatUserContextBlock(ctx))
+      setRawUserContext({ niche: ctx.niche, platform: ctx.platform })
+    })
   }, [])
 
   // ── Platform / format / second eye state ───────────────────────────────────
@@ -247,6 +313,11 @@ export default function PaidAdAnalyzer() {
   const [comparisonLoading, setComparisonLoading] = useState(false);
   const [originalScoresSnapshot, setOriginalScoresSnapshot] = useState<{ overall: number; hook: number; cta: number; clarity: number; production: number } | null>(null);
   const [originalImprovementsSnapshot, setOriginalImprovementsSnapshot] = useState<string[]>([]);
+  // ── Visualize It state
+  const [visualizeOpen, setVisualizeOpen] = useState(false);
+  const [visualizeStatus, setVisualizeStatus] = useState<VisualizeStatus>("idle");
+  const [visualizeResult, setVisualizeResult] = useState<VisualizeResult | null>(null);
+  const [visualizeError, setVisualizeError] = useState<string | null>(null);
 
   // ── Local analyzer state ───────────────────────────────────────────────────
   const [file, setFile] = useState<File | null>(null);
@@ -256,13 +327,16 @@ export default function PaidAdAnalyzer() {
   const [isImporting, setIsImporting] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [loadedEntry, setLoadedEntry] = useState<HistoryEntry | null>(null);
-  const [rightTab, setRightTab] = useState<"analysis" | "brief">("analysis");
+  const [rightTab, setRightTab] = useState<"analysis" | "brief" | "policy">("analysis");
   const [brief, setBrief] = useState<string | null>(null);
   const [briefLoading, setBriefLoading] = useState(false);
   const [briefError, setBriefError] = useState<string | null>(null);
   const [briefCopied, setBriefCopied] = useState(false);
   const [ctaRewrites, setCtaRewrites] = useState<string[] | null>(null);
   const [ctaLoading, setCtaLoading] = useState(false);
+  const [policyResult, setPolicyResult] = useState<PolicyCheckResult | null>(null);
+  const [policyLoading, setPolicyLoading] = useState(false);
+  const [policyError, setPolicyError] = useState<string | null>(null);
   const [shareToast, setShareToast] = useState(false);
   const [infoToast, setInfoToast] = useState<string | null>(null);
   const [shareLoading, setShareLoading] = useState(false);
@@ -270,9 +344,20 @@ export default function PaidAdAnalyzer() {
   const [analysisCompletedAt, setAnalysisCompletedAt] = useState<Date | null>(null);
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
   const [loadedFromHistory, setLoadedFromHistory] = useState<AnalysisRecord | null>(null);
+  const [platformResetToast, setPlatformResetToast] = useState<string | null>(null);
 
   const [improvementsLoading, setImprovementsLoading] = useState(false);
   const [platformImprovements, setPlatformImprovements] = useState<string[] | null>(null);
+  const [platformScoreResult, setPlatformScoreResult] = useState<PlatformScore | null>(null);
+  const [isPlatformSwitching, setIsPlatformSwitching] = useState(false);
+  const platformAbortRef = useRef<AbortController | null>(null);
+
+  // ── Fix It For Me state ──────────────────────────────────────────────────
+  const [fixItResult, setFixItResult] = useState<FixItResult | null>(null);
+  const [fixItLoading, setFixItLoading] = useState(false);
+
+  // ── Predicted Performance state ──────────────────────────────────────────
+  const [prediction, setPrediction] = useState<PredictionResult | null>(null);
   const scorecardRef = useRef<HTMLDivElement | null>(null);
   const lastSavedRef = useRef<string | null>(null);
   const prevPlatformRef = useRef<Platform>(platform);
@@ -305,6 +390,16 @@ export default function PaidAdAnalyzer() {
     setComparisonLoading(false);
     setOriginalScoresSnapshot(null);
     setOriginalImprovementsSnapshot([]);
+    setPolicyResult(null);
+    setPolicyLoading(false);
+    setPolicyError(null);
+    setVisualizeOpen(false);
+    setVisualizeStatus("idle");
+    setVisualizeResult(null);
+    setVisualizeError(null);
+    setFixItResult(null);
+    setFixItLoading(false);
+    setPrediction(null);
   }, [reset]);
 
   // Re-analyze handler: upload improved version, score, compare
@@ -376,7 +471,7 @@ export default function PaidAdAnalyzer() {
           thumbnailDataUrl: thumbnailDataUrl ?? undefined,
         });
         const newCount = increment();
-        if (newCount >= FREE_LIMIT && !isPro) onUpgradeRequired();
+        if (newCount >= FREE_LIMIT && !isPro) onUpgradeRequired("analyze");
         // Fire and forget — do not await, do not block UI
         saveAnalysis({
           file_name: result.fileName,
@@ -455,18 +550,38 @@ export default function PaidAdAnalyzer() {
     }
   }, [status, result, staticSecondEye, format]); // eslint-disable-line
 
-  // Platform switch: re-generate improvements when platform changes after analysis
-  useEffect(() => {
-    if (prevPlatformRef.current === platform) return;
-    prevPlatformRef.current = platform;
+  // Platform switch: re-generate improvements + platform score when platform changes
+  const handlePlatformSwitch = useCallback(async (newPlatform: string) => {
+    setPlatform(newPlatform as Platform);
     if (status !== "complete" || !result?.markdown || !result?.scores) return;
+    if (newPlatform === "all") {
+      setPlatformScoreResult(null);
+      setPlatformImprovements(null);
+      return;
+    }
 
+    // Cancel any in-flight platform score request
+    platformAbortRef.current?.abort();
+    platformAbortRef.current = new AbortController();
+
+    setIsPlatformSwitching(true);
     setImprovementsLoading(true);
-    generateImprovements(result.markdown, result.scores, userContext || undefined, platform, sessionMemoryRef.current)
-      .then((imps) => { setPlatformImprovements(imps); })
-      .catch(() => { setPlatformImprovements(null); })
-      .finally(() => setImprovementsLoading(false));
-  }, [platform]); // eslint-disable-line
+
+    try {
+      const [imps, pScore] = await Promise.all([
+        generateImprovements(result.markdown, result.scores, userContext || undefined, newPlatform, sessionMemoryRef.current),
+        generatePlatformScore(newPlatform, result, result.fileName, format as 'video' | 'static', userContext || undefined),
+      ]);
+      setPlatformImprovements(imps);
+      setPlatformScoreResult(pScore);
+    } catch {
+      setPlatformImprovements(null);
+      // Keep existing platform score on error
+    } finally {
+      setIsPlatformSwitching(false);
+      setImprovementsLoading(false);
+    }
+  }, [status, result, userContext, format]); // eslint-disable-line
 
   useEffect(() => {
     if (status === "uploading") {
@@ -626,6 +741,118 @@ export default function PaidAdAnalyzer() {
     finally { setCtaLoading(false); }
   };
 
+  const handleCheckPolicies = async () => {
+    if (!activeResult || policyLoading) return;
+    setPolicyLoading(true);
+    setPolicyError(null);
+    setRightTab("policy");
+    try {
+      // Determine policy platform from current platform selection
+      const policyPlatform =
+        platform === "Meta" ? "meta"
+        : platform === "TikTok" ? "tiktok"
+        : "both";
+
+      const r = await runPolicyCheck({
+        platform: policyPlatform,
+        adType: format,
+        niche: userContext ? "from user context" : "unknown",
+        adCopy: activeResult.markdown,
+        existingAnalysis: activeResult.scores as unknown as object,
+      });
+      setPolicyResult(r);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Policy check failed";
+      if (msg.startsWith("RATE_LIMITED")) {
+        const time = msg.split(":")[1] ?? "24h";
+        setPolicyError(`Daily limit reached. Resets in ${time}. Upgrade to Pro for unlimited checks.`);
+      } else {
+        setPolicyError(msg);
+      }
+    } finally {
+      setPolicyLoading(false);
+    }
+  };
+
+  // ── Fix It For Me handler ──────────────────────────────────────────────────
+  const handleFixIt = async () => {
+    if (!activeResult?.markdown || !activeResult?.scores || fixItLoading) return;
+    setFixItLoading(true);
+    try {
+      const result = await generateFixIt(
+        activeResult.markdown,
+        activeResult.scores,
+        platform === "all" ? rawUserContext?.platform : platform,
+        rawUserContext?.niche,
+        undefined, // intent
+        format as 'video' | 'static',
+      );
+      setFixItResult(result);
+    } catch (err) {
+      console.error('Fix It failed:', err);
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.startsWith('RATE_LIMITED')) {
+        setInfoToast('Fix It limit reached. Try again later.');
+        setTimeout(() => setInfoToast(null), 3000);
+      }
+    } finally {
+      setFixItLoading(false);
+    }
+  };
+
+  // ── Predicted Performance — auto-fire on analysis complete ────────────────
+  useEffect(() => {
+    if (status === "complete" && result?.markdown && result?.scores && !prediction) {
+      generatePrediction(
+        result.markdown,
+        result.scores,
+        platform === "all" ? rawUserContext?.platform : platform,
+        format as 'video' | 'static',
+        rawUserContext?.niche,
+      ).then(setPrediction).catch((err) => {
+        console.error('Prediction failed (silent):', err);
+        // Silently omit — spec says never show error for this
+      });
+    }
+  }, [status, result]); // eslint-disable-line
+
+  const handleVisualize = async () => {
+    if (!activeResult?.scores || !file) return;
+    setVisualizeOpen(true);
+    setVisualizeStatus("loading");
+    setVisualizeResult(null);
+    setVisualizeError(null);
+    try {
+      const imageBase64 = await fileToBase64(file);
+      const mediaType = getMediaType(file);
+      const niche = userContext.match(/Niche:\s*(.+)/)?.[1]?.trim() || "general";
+      const result = await visualizeAd({
+        imageBase64,
+        imageMediaType: mediaType,
+        analysisResult: {
+          scores: activeResult.scores as Record<string, number>,
+          improvements: activeResult.improvements ?? [],
+          markdown: activeResult.markdown,
+        },
+        platform: platform === "all" ? "general" : platform,
+        niche,
+        adType: "static",
+      });
+      setVisualizeResult(result);
+      setVisualizeStatus("complete");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      if (msg === "PRO_REQUIRED") {
+        setVisualizeOpen(false);
+        setVisualizeStatus("idle");
+        onUpgradeRequired("visualize");
+        return;
+      }
+      setVisualizeError(msg.includes("RATE_LIMITED") ? "RATE_LIMITED" : msg);
+      setVisualizeStatus("error");
+    }
+  };
+
   const handleBriefCopy = async () => {
     if (!brief) return;
     await copyToClipboard(brief);
@@ -642,7 +869,7 @@ export default function PaidAdAnalyzer() {
       markdown: activeResult.markdown,
       brand: "", format: "", niche: "", platform: "", tags: [], notes: "",
     });
-    setInfoToast("Saved to Swipe File");
+    setInfoToast("Saved to your library");
     setTimeout(() => setInfoToast(null), 2500);
   };
 
@@ -677,6 +904,15 @@ export default function PaidAdAnalyzer() {
     if (!trimmed || isAnalyzing || isImporting) return;
     let parsed: URL;
     try { parsed = new URL(trimmed); } catch { setUrlError("Enter a valid URL."); return; }
+    // SSRF protection: only allow https and block private/internal IPs
+    if (parsed.protocol !== "https:") { setUrlError("Only HTTPS URLs are allowed."); return; }
+    const host = parsed.hostname.toLowerCase();
+    if (
+      host === "localhost" || host === "127.0.0.1" || host === "[::1]" ||
+      host.endsWith(".local") || host.endsWith(".internal") ||
+      /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|0\.)/.test(host) ||
+      host === "metadata.google.internal" || host === "169.254.169.254"
+    ) { setUrlError("This URL is not allowed."); return; }
     setIsImporting(true);
     setUrlError(null);
     try {
@@ -710,7 +946,7 @@ export default function PaidAdAnalyzer() {
       </div>
       {/* Main content */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        <IntentHeader platform={platform} setPlatform={setPlatform} format={format} setFormat={setFormat} secondEye={secondEye} setSecondEye={setSecondEye} staticSecondEye={staticSecondEye} setStaticSecondEye={setStaticSecondEye} />
+        <IntentHeader platform={platform} setPlatform={setPlatform} format={format} setFormat={setFormat} secondEye={secondEye} setSecondEye={setSecondEye} staticSecondEye={staticSecondEye} setStaticSecondEye={setStaticSecondEye} onPlatformReset={(oldPlatform) => setPlatformResetToast(`Platform reset to All — ${oldPlatform} isn't available for static ads`)} />
 
         <div className="flex-1 overflow-auto">
           {/* Format mismatch error */}
@@ -746,6 +982,22 @@ export default function PaidAdAnalyzer() {
               {!isPro && (
                 <div style={{ textAlign: "center", fontSize: 12, color: "#52525b", marginTop: 12, marginBottom: -24 }}>
                   {usageCount} of {FREE_LIMIT} free analyses used
+                </div>
+              )}
+              {!isPro && canAnalyze && usageCount === FREE_LIMIT - 1 && (
+                <div style={{
+                  maxWidth: 520, margin: "16px auto 0", padding: "10px 16px",
+                  background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)",
+                  borderRadius: 8, display: "flex", alignItems: "center", gap: 8,
+                  fontSize: 12, fontFamily: "var(--mono)", color: "var(--warn)",
+                }}>
+                  <span>⚠</span>
+                  <span style={{ flex: 1 }}>
+                    Last free analysis —{" "}
+                    <Link to="/upgrade" style={{ color: "var(--accent)", textDecoration: "underline", textUnderlineOffset: 2 }}>
+                      upgrade for unlimited
+                    </Link>
+                  </span>
                 </div>
               )}
               <PaidEmptyState
@@ -793,10 +1045,33 @@ export default function PaidAdAnalyzer() {
       >
         {showRightPanel && activeResult?.scores && rightTab === "analysis" && (
           <>
+            {/* Platform Switcher */}
+            <div className="px-4 pt-3 pb-1">
+              <PlatformSwitcher
+                platforms={PAID_AD_PLATFORMS}
+                selected={platform}
+                onChange={handlePlatformSwitch}
+                isSwitching={isPlatformSwitching}
+                disabled={status !== "complete"}
+              />
+            </div>
+            {/* Platform score verdict badge */}
+            {platformScoreResult && platform !== "all" && (
+              <div className="px-4 pb-2">
+                <div
+                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs"
+                  style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)" }}
+                >
+                  <span className="font-mono font-bold text-indigo-400">{platformScoreResult.score}/10</span>
+                  <span className="text-zinc-400">{platformScoreResult.verdict}</span>
+                </div>
+              </div>
+            )}
             <div ref={scorecardRef}>
               <ScoreCard
                 scores={activeResult.scores}
-                improvements={platformImprovements ?? activeResult.improvements}
+                hookDetail={activeResult.hookDetail}
+                improvements={platformScoreResult?.improvements ?? platformImprovements ?? activeResult.improvements}
                 improvementsLoading={improvementsLoading}
                 budget={activeResult.budget}
                 hashtags={activeResult.hashtags}
@@ -816,6 +1091,14 @@ export default function PaidAdAnalyzer() {
                 onNavigateSettings={() => navigate('/settings')}
                 onReanalyze={() => setReanalyzeMode(true)}
                 onStartOver={handleReset}
+                onCheckPolicies={handleCheckPolicies}
+                policyLoading={policyLoading}
+                niche={rawUserContext?.niche}
+                platform={rawUserContext?.platform}
+                onFixIt={handleFixIt}
+                fixItResult={fixItResult}
+                fixItLoading={fixItLoading}
+                prediction={prediction}
               />
             </div>
             {/* Second Eye output below scorecard — video only */}
@@ -825,6 +1108,70 @@ export default function PaidAdAnalyzer() {
             {/* Static Design Review below scorecard — static only */}
             {format === "static" && staticSecondEye && (
               <StaticSecondEyePanel result={staticSecondEyeResult} loading={staticSecondEyeLoading} />
+            )}
+            {/* Visualize It button — static ads only, requires original file */}
+            {format === "static" && file && !visualizeOpen && (
+              <div style={{ padding: "0 16px 12px" }}>
+                {isPro ? (
+                  <button
+                    type="button"
+                    onClick={handleVisualize}
+                    style={{
+                      width: "100%", height: 44,
+                      background: "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15))",
+                      border: "1px solid rgba(99,102,241,0.35)",
+                      borderRadius: 10,
+                      color: "#818cf8", cursor: "pointer",
+                      display: "flex", flexDirection: "column",
+                      alignItems: "center", justifyContent: "center", gap: 2,
+                      transition: "all 150ms",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(99,102,241,0.25), rgba(139,92,246,0.2))"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15))"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.35)"; }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <Sparkles size={14} />
+                      <span style={{ fontSize: 13, fontWeight: 600 }}>Visualize It</span>
+                    </div>
+                    <span style={{ fontSize: 10, color: "#6366f1", opacity: 0.75 }}>See what your improved ad could look like</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => onUpgradeRequired("visualize")}
+                    style={{
+                      width: "100%", height: 44,
+                      background: "rgba(255,255,255,0.02)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      borderRadius: 10,
+                      color: "#52525b", cursor: "pointer",
+                      display: "flex", flexDirection: "column",
+                      alignItems: "center", justifyContent: "center", gap: 2,
+                      transition: "all 150ms",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(99,102,241,0.3)"; e.currentTarget.style.color = "#71717a"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#52525b"; }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <Lock size={13} />
+                      <span style={{ fontSize: 13, fontWeight: 600 }}>Visualize It</span>
+                      <span style={{ fontSize: 9, fontWeight: 600, padding: "1px 5px", borderRadius: 4, background: "rgba(99,102,241,0.12)", color: "#818cf8" }}>PRO</span>
+                    </div>
+                    <span style={{ fontSize: 10, opacity: 0.6 }}>Upgrade to see your improved ad</span>
+                  </button>
+                )}
+              </div>
+            )}
+            {/* Visualize Panel — slides in below scorecard */}
+            {format === "static" && (visualizeOpen || visualizeStatus !== "idle") && (
+              <VisualizePanel
+                status={visualizeStatus}
+                result={visualizeResult}
+                originalImageUrl={thumbnailDataUrl ?? null}
+                error={visualizeError}
+                onClose={() => { setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); }}
+                onAnalyzeVersion={handleReanalyze}
+              />
             )}
           </>
 
@@ -840,7 +1187,7 @@ export default function PaidAdAnalyzer() {
               >
                 ← Back to Scores
               </button>
-              <span className="text-xs text-zinc-600 font-mono">Claude Sonnet</span>
+              <span className="text-xs text-zinc-500 font-mono">Claude Sonnet</span>
             </div>
             {briefLoading && !brief && (
               <div className="flex-1 flex flex-col items-center justify-center gap-3 px-5">
@@ -897,6 +1244,39 @@ export default function PaidAdAnalyzer() {
                 </div>
               </>
             )}
+          </div>
+        )}
+
+        {/* Policy Check panel */}
+        {showRightPanel && rightTab === "policy" && (
+          <div className="flex flex-col h-full">
+            <div className="p-4 border-b border-white/5 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setRightTab("analysis")}
+                className="text-xs text-amber-400 hover:text-amber-300 transition-colors cursor-pointer flex items-center gap-1"
+              >
+                ← Back to Scores
+              </button>
+              <span className="text-xs text-zinc-500 font-mono">Claude Sonnet</span>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              {policyLoading && !policyResult && (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 0", gap: 12 }}>
+                  <div style={{ width: 20, height: 20, border: "2px solid rgba(245,158,11,0.3)", borderTopColor: "#f59e0b", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+                  <span style={{ fontSize: 13, color: "#71717a" }}>Checking policies...</span>
+                  <span style={{ fontSize: 11, color: "#52525b" }}>Evaluating Meta & TikTok compliance</span>
+                </div>
+              )}
+              {policyError && (
+                <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", fontSize: 13, color: "#ef4444" }}>
+                  {policyError}
+                </div>
+              )}
+              {policyResult && !policyLoading && (
+                <PolicyCheckPanel result={policyResult} onClose={() => setRightTab("analysis")} />
+              )}
+            </div>
           </div>
         )}
 
@@ -998,6 +1378,14 @@ export default function PaidAdAnalyzer() {
         <div role="status" aria-live="polite" className="fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-3 bg-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-xl text-xs font-mono text-zinc-300 shadow-lg z-[100]">
           {infoToast}
         </div>
+      )}
+      {platformResetToast && (
+        <Toast
+          message={platformResetToast}
+          variant="info"
+          onClose={() => setPlatformResetToast(null)}
+          duration={3500}
+        />
       )}
     </div>
   );

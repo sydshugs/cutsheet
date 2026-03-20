@@ -6,6 +6,7 @@ import { useParams, Link } from "react-router-dom";
 import { ScoreCard } from "../components/ScoreCard";
 import { getAnalysisBySlug, type Analysis } from "../services/supabaseClient";
 import ReactMarkdown from "react-markdown";
+import rehypeSanitize from "rehype-sanitize";
 
 export function SharePage() {
   const { slug } = useParams<{ slug: string }>();
@@ -278,7 +279,7 @@ export function SharePage() {
               }
             `}</style>
             <div className="share-analysis">
-              <ReactMarkdown>{analysis.markdown}</ReactMarkdown>
+              <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{analysis.markdown}</ReactMarkdown>
             </div>
           </div>
         </div>

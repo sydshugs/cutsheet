@@ -322,6 +322,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
                 <input
                   type="text"
                   value={v.label}
+                  maxLength={40}
                   onChange={(e) => handleLabelChange(i, e.target.value)}
                   style={{
                     background: "transparent",

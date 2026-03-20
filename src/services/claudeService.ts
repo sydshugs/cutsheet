@@ -37,6 +37,34 @@ async function callApi<T>(endpoint: string, body: unknown): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+// ─── PLATFORM SCORING ────────────────────────────────────────────────────────
+
+export interface PlatformScore {
+  platform: string;
+  score: number;
+  platformFit: number;
+  strengths: string[];
+  weaknesses: string[];
+  improvements: string[];
+  tips: string[];
+  verdict: string;
+}
+
+export async function generatePlatformScore(
+  platform: string,
+  result: { markdown: string; scores: { overall: number } },
+  _fileName: string,
+  adType?: 'video' | 'static',
+  userContext?: string,
+): Promise<PlatformScore> {
+  return callApi<PlatformScore>("/api/platform-score", {
+    analysisMarkdown: result.markdown,
+    platform,
+    adType: adType ?? 'video',
+    userContext,
+  });
+}
+
 // ─── IMPROVEMENTS ────────────────────────────────────────────────────────────
 
 export async function generateImprovements(
@@ -214,21 +242,6 @@ export interface PlatformScore {
   improvements: string[];
 }
 
-/** Placeholder — platform scoring endpoint not yet implemented */
-export async function generatePlatformScore(
-  _platform: 'tiktok' | 'reels' | 'shorts',
-  _result: unknown,
-  _fileName: string,
-): Promise<PlatformScore> {
-  // TODO: implement /api/platform-score endpoint
-  return {
-    platform: _platform,
-    score: 0,
-    signals: [],
-    verdict: '',
-    improvements: [],
-  };
-}
 
 export async function generateComparison(
   originalScores: { overall: number; hook: number; cta: number; clarity: number; production: number },

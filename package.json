@@ -4,11 +4,12 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "vite --port=3000 --host=0.0.0.0",
+    "build": "mkdir -p dist && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives"
+    "clean": "rm -rf dist",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
@@ -19,6 +20,9 @@
     "@stripe/stripe-js": "^8.9.0",
     "@supabase/supabase-js": "^2.99.0",
     "@tailwindcss/vite": "^4.1.14",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.37.0",
+    "@vercel/node": "^5.6.18",
     "@vitejs/plugin-react": "^5.0.4",
     "better-sqlite3": "^12.4.1",
     "canvas-confetti": "^1.9.4",
@@ -37,7 +41,9 @@
     "react-helmet-async": "^3.0.0",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.13.1",
+    "rehype-sanitize": "^6.0.0",
     "remotion": "4.0.435",
+    "stripe": "^20.4.1",
     "tailwind-merge": "^3.5.0",
     "vite": "^6.2.0"
   },
@@ -48,6 +54,7 @@
     "@types/dompurify": "^3.0.5",
     "@types/express": "^4.17.21",
     "@types/node": "^22.14.0",
+    "@vercel/ncc": "^0.38.4",
     "autoprefixer": "^10.4.21",
     "canvas": "^3.2.1",
     "jsdom": "^29.0.1",

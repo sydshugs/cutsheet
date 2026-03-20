@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, CheckCircle, XCircle, X } from "lucide-react";
+import { ArrowLeft, CheckCircle, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { getUsageInfo } from "../services/usageService";
+import { getUsageInfo, fetchCreditStatus, FeatureLimitResult } from "../services/usageService";
 import { supabase } from "../lib/supabase";
+import { SegmentedControl } from "../components/ui/SegmentedControl";
 import { Switch } from "../components/ui/Switch";
+import { clearUserContextCache, type AdIntent } from "../services/userContextService";
 
 // ─── SHARED STYLES ────────────────────────────────────────────────────────────
 const CARD_STYLE: React.CSSProperties = {
@@ -45,13 +47,41 @@ const DOWNGRADE_CONSEQUENCES = [
   "Scene-by-scene breakdowns + creative briefs will be unavailable",
 ];
 
+const FEATURE_ROWS: { key: string; label: string }[] = [
+  { key: "analyze",     label: "Analyses" },
+  { key: "visualize",   label: "🎨 Visualize" },
+  { key: "script",      label: "✍️ Script Generator" },
+  { key: "fixIt",       label: "🛠️ Fix It For Me" },
+  { key: "policyCheck", label: "🛡️ Policy Checker" },
+  { key: "deconstruct", label: "🔍 Ad Deconstructor" },
+  { key: "brief",       label: "📋 Score → Brief" },
+];
+
+const PRO_FEATURE_BULLETS = [
+  "Unlimited video + static ad analyses",
+  "🎨 Visualize — AI Art Director (10/month)",
+  "✍️ Script Generator (10/month)",
+  "🛠️ Fix It For Me (20/month)",
+  "🛡️ Policy Checker (30/month)",
+  "🔍 Ad Deconstructor (20/month)",
+  "📋 Score → Brief (20/month)",
+  "Hook Score, Emotion Map, Creative Fatigue Predictor",
+  "Benchmark context",
+];
+
+const FREE_FEATURE_BULLETS = [
+  "3 analyses per day",
+  "Video + static ad analysis",
+  "Basic scorecard",
+];
+
 type Tab = "profile" | "billing" | "usage";
 type BillingView = "dashboard" | "manage" | "downgrade-reason" | "downgrade-confirm" | "downgraded";
 
 // ─── SETTINGS PAGE ────────────────────────────────────────────────────────────
 export function Settings() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, subscriptionStatus } = useAuth();
 
   const [tab, setTab] = useState<Tab>("profile");
 
@@ -60,10 +90,16 @@ export function Settings() {
   const [weeklyDigest, setWeeklyDigest] = useState(true);
   const [passwordResetSent, setPasswordResetSent] = useState(false);
   const [passwordResetLoading, setPasswordResetLoading] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [passwordResetError, setPasswordResetError] = useState(false);
+  const [prefSaved, setPrefSaved] = useState(false);
+
+  // Ad intent state
+  const [intent, setIntent] = useState<AdIntent>("conversion");
+  const [intentSaved, setIntentSaved] = useState(false);
 
   // Usage + billing state
   const [usage, setUsage] = useState<{ used: number; limit: number; isPro: boolean } | null>(null);
+  const [credits, setCredits] = useState<Record<string, FeatureLimitResult> | null>(null);
 
   // Billing flow state
   const [billingView, setBillingView] = useState<BillingView>("dashboard");
@@ -71,9 +107,36 @@ export function Settings() {
 
   useEffect(() => {
     getUsageInfo().then(setUsage).catch(() => {});
+    fetchCreditStatus().then(setCredits).catch(() => {});
   }, []);
 
-  const isPro = usage?.isPro ?? false;
+  // Load intent from profile
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("intent")
+      .eq("id", user.id)
+      .single()
+      .then(({ data }) => {
+        if (data?.intent && ["awareness", "consideration", "conversion"].includes(data.intent)) {
+          setIntent(data.intent as AdIntent);
+        }
+      });
+  }, [user]);
+
+  const handleIntentChange = async (value: string) => {
+    const newIntent = value.toLowerCase() as AdIntent;
+    setIntent(newIntent);
+    if (!user) return;
+    await supabase.from("profiles").update({ intent: newIntent }).eq("id", user.id);
+    clearUserContextCache();
+    setIntentSaved(true);
+    setTimeout(() => setIntentSaved(false), 2000);
+  };
+
+  const isTeam = subscriptionStatus === "team";
+  const isPro = subscriptionStatus === "pro" || isTeam;
   const analysesUsed = usage?.used ?? 0;
   const analysesTotal = usage?.limit ?? 3;
 
@@ -98,16 +161,23 @@ export function Settings() {
   const handlePasswordReset = async () => {
     if (!user?.email) return;
     setPasswordResetLoading(true);
+    setPasswordResetError(false);
     try {
       await supabase.auth.resetPasswordForEmail(user.email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
       setPasswordResetSent(true);
     } catch {
-      // silent fail — user can retry
+      setPasswordResetError(true);
     } finally {
       setPasswordResetLoading(false);
     }
+  };
+
+  const handlePrefChange = (setter: (v: boolean) => void, value: boolean) => {
+    setter(value);
+    setPrefSaved(true);
+    setTimeout(() => setPrefSaved(false), 2000);
   };
 
   const tabs: { id: Tab; label: string }[] = [
@@ -118,168 +188,177 @@ export function Settings() {
 
   // ─── BILLING VIEWS ──────────────────────────────────────────────────────────
 
-  const BillingDashboard = () => (
-    <motion.div className="max-w-lg flex flex-col gap-4" {...cardAnim(0)}>
-      {/* Plan card */}
-      <div style={CARD_STYLE}>
-        <div className="flex items-start justify-between mb-5">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <h2 style={{ fontSize: 16, fontWeight: 600, color: "#f4f4f5" }}>
-                {isPro ? "Cutsheet Pro" : "Free Plan"}
-              </h2>
+  const BillingDashboard = () => {
+    const renderCreditValue = (cr: FeatureLimitResult | undefined) => {
+      if (!cr) {
+        return (
+          <span
+            style={{
+              display: "inline-block",
+              width: 44,
+              height: 12,
+              borderRadius: 4,
+              background: "rgba(255,255,255,0.06)",
+            }}
+          />
+        );
+      }
+      if (cr.reason === "TIER_BLOCKED") {
+        return (
+          <span
+            style={{
+              fontSize: 10,
+              fontWeight: 600,
+              color: "#818cf8",
+              background: "rgba(99,102,241,0.12)",
+              border: "1px solid rgba(99,102,241,0.2)",
+              borderRadius: 9999,
+              padding: "1px 7px",
+            }}
+          >
+            Pro
+          </span>
+        );
+      }
+      if (cr.limit === null) {
+        return (
+          <span style={{ fontSize: 13, fontWeight: 500, color: "#10b981", fontFamily: "var(--mono)" }}>
+            ∞
+          </span>
+        );
+      }
+      const used = (cr.limit ?? 0) - (cr.remaining ?? 0);
+      const pct = cr.limit ? used / cr.limit : 0;
+      const color = pct >= 0.9 ? "#ef4444" : pct >= 0.6 ? "#f59e0b" : "#10b981";
+      return (
+        <span style={{ fontSize: 13, fontWeight: 500, color, fontFamily: "var(--mono)" }}>
+          {used} / {cr.limit}
+        </span>
+      );
+    };
+
+    return (
+      <motion.div className="max-w-lg flex flex-col gap-4" {...cardAnim(0)}>
+        {/* Plan card */}
+        <div style={CARD_STYLE}>
+          <div className="flex items-start justify-between mb-5">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <h2 style={{ fontSize: 16, fontWeight: 600, color: "#f4f4f5" }}>
+                  {isTeam ? "Cutsheet Team" : isPro ? "Cutsheet Pro" : "Cutsheet Free"}
+                </h2>
+                {isPro && (
+                  <span
+                    style={{
+                      fontSize: 11,
+                      color: "#10b981",
+                      background: "rgba(16,185,129,0.1)",
+                      border: "1px solid rgba(16,185,129,0.2)",
+                      borderRadius: 9999,
+                      padding: "2px 8px",
+                    }}
+                  >
+                    Active
+                  </span>
+                )}
+              </div>
               {isPro && (
-                <span
-                  style={{
-                    fontSize: 11,
-                    color: "#10b981",
-                    background: "rgba(16,185,129,0.1)",
-                    border: "1px solid rgba(16,185,129,0.2)",
-                    borderRadius: 9999,
-                    padding: "2px 8px",
-                  }}
-                >
-                  Active
-                </span>
+                <p style={{ fontSize: 12, color: "#71717a" }}>
+                  Renewal date{" "}
+                  <span style={{ color: "#a1a1aa" }}>
+                    {renewalDate.toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </span>
+                </p>
               )}
             </div>
-            {isPro && (
-              <p style={{ fontSize: 12, color: "#71717a" }}>
-                Renewal date{" "}
-                <span style={{ color: "#a1a1aa" }}>
-                  {renewalDate.toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
+            <span style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5" }}>
+              {isTeam ? "$49" : isPro ? "$29" : "$0"}
+              <span style={{ fontSize: 13, color: "#71717a", fontWeight: 400 }}>/month</span>
+            </span>
+          </div>
+
+          <div style={DIVIDER} />
+
+          {/* Live credit rows */}
+          <div className="mt-4 flex flex-col gap-2.5">
+            {FEATURE_ROWS.map(({ key, label }) => (
+              <div key={key} className="flex items-center justify-between">
+                <span
+                  style={{
+                    fontSize: 13,
+                    color: credits?.[key]?.reason === "TIER_BLOCKED" ? "#52525b" : "#a1a1aa",
+                  }}
+                >
+                  {label}
                 </span>
-              </p>
-            )}
-          </div>
-          <span style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5" }}>
-            {isPro ? "$29" : "$0"}
-            <span style={{ fontSize: 13, color: "#71717a", fontWeight: 400 }}>/month</span>
-          </span>
-        </div>
-
-        <div style={DIVIDER} />
-
-        {/* Credits / analyses display */}
-        <div className="mt-4 flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span style={{ fontSize: 13, color: "#a1a1aa" }}>
-                {isPro ? "Analyses" : "Monthly analyses"}
-              </span>
-            </div>
-            <span style={{ fontSize: 13, fontWeight: 500, color: "#f4f4f5", fontFamily: "var(--mono)" }}>
-              {isPro ? "∞" : `${analysesUsed} / ${analysesTotal}`}
-            </span>
+                {renderCreditValue(credits?.[key])}
+              </div>
+            ))}
+            <p style={{ fontSize: 11, color: "#52525b", marginTop: 4 }}>
+              {isPro
+                ? `Credits reset on ${resetDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
+                : "Free limits reset daily"}
+            </p>
           </div>
 
-          {isPro && (
-            <div className="flex items-center justify-between">
-              <span style={{ fontSize: 13, color: "#a1a1aa" }}>CTA rewrites</span>
-              <span style={{ fontSize: 13, fontWeight: 500, color: "#f4f4f5", fontFamily: "var(--mono)" }}>∞</span>
-            </div>
-          )}
+          <div className="mt-5" style={DIVIDER} />
 
-          <div className="flex items-center justify-between">
-            <span style={{ fontSize: 13, color: "#a1a1aa" }}>Creative briefs</span>
-            <span style={{ fontSize: 13, fontWeight: 500, color: "#f4f4f5", fontFamily: "var(--mono)" }}>
-              {isPro ? "∞" : "—"}
-            </span>
-          </div>
-        </div>
-
-        <div className="mt-5" style={DIVIDER} />
-
-        {/* Actions */}
-        <div className="mt-4 flex gap-3">
-          {isPro ? (
-            <>
+          {/* Actions */}
+          <div className="mt-4 flex gap-3">
+            {isPro ? (
               <button
                 type="button"
                 onClick={() => setBillingView("manage")}
                 className="flex-1 py-2.5 rounded-full text-sm font-medium transition-all"
-                style={{
-                  background: "#6366f1",
-                  color: "white",
-                  border: "none",
-                  cursor: "pointer",
-                }}
+                style={{ background: "#6366f1", color: "white", border: "none", cursor: "pointer" }}
               >
                 Manage plan
               </button>
-              <button
+            ) : (
+              <motion.button
                 type="button"
-                onClick={() => window.open("https://billing.stripe.com", "_blank")}
-                className="flex-1 py-2.5 rounded-full text-sm font-medium transition-all"
-                style={{
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  color: "#a1a1aa",
-                  background: "transparent",
-                  cursor: "pointer",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(99,102,241,0.4)";
-                  e.currentTarget.style.color = "#818cf8";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
-                  e.currentTarget.style.color = "#a1a1aa";
-                }}
+                onClick={() => navigate("/upgrade")}
+                className="w-full py-3 rounded-full text-sm font-semibold"
+                style={{ background: "#6366f1", color: "white", height: 48, border: "none", cursor: "pointer" }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
               >
-                View invoices
-              </button>
-            </>
-          ) : (
-            <motion.button
-              type="button"
-              onClick={() => navigate("/upgrade")}
-              className="w-full py-3 rounded-full text-sm font-semibold"
-              style={{ background: "#6366f1", color: "white", height: 48, border: "none", cursor: "pointer" }}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.97 }}
-            >
-              Upgrade to Pro →
-            </motion.button>
-          )}
+                Upgrade to Pro →
+              </motion.button>
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Features included */}
-      <div style={CARD_STYLE}>
-        <p style={{ fontSize: 11, fontWeight: 600, color: "#71717a", marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-          {isPro ? "Everything included" : "Free plan includes"}
-        </p>
-        <div className="flex flex-col gap-3">
-          {isPro
-            ? [
-                "Unlimited video + static ad analyses",
-                "Claude Sonnet improvements + CTA rewrites",
-                "Pre-Flight A/B testing — unlimited",
-                "Scene-by-scene breakdown + creative briefs",
-              ].map((f) => (
-                <div key={f} className="flex items-center gap-2">
-                  <CheckCircle size={13} color="#10b981" />
-                  <span style={{ fontSize: 13, color: "#a1a1aa" }}>{f}</span>
-                </div>
-              ))
-            : [
-                "3 analyses per month",
-                "Video + static ad analysis",
-                "Basic scorecard",
-              ].map((f) => (
-                <div key={f} className="flex items-center gap-2">
-                  <CheckCircle size={13} color="#52525b" />
-                  <span style={{ fontSize: 13, color: "#71717a" }}>{f}</span>
-                </div>
-              ))}
+        {/* Features included */}
+        <div style={CARD_STYLE}>
+          <p
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              color: "#71717a",
+              marginBottom: 12,
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+            }}
+          >
+            {isPro ? "Everything included" : "Free plan includes"}
+          </p>
+          <div className="flex flex-col gap-3">
+            {(isPro ? PRO_FEATURE_BULLETS : FREE_FEATURE_BULLETS).map((f) => (
+              <div key={f} className="flex items-center gap-2">
+                <CheckCircle size={13} color={isPro ? "#10b981" : "#52525b"} />
+                <span style={{ fontSize: 13, color: isPro ? "#a1a1aa" : "#71717a" }}>{f}</span>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
-    </motion.div>
-  );
+      </motion.div>
+    );
+  };
 
   const ManageSubscription = () => (
     <motion.div
@@ -311,53 +390,8 @@ export function Settings() {
 
         <div style={DIVIDER} />
 
+        {/* TODO: implement Stripe portal session for Update payment method and View invoices */}
         <div className="mt-5 flex flex-col gap-3">
-          {/* Update payment */}
-          <button
-            type="button"
-            // TODO: /api/create-portal-session → redirect to Stripe portal
-            onClick={() => window.open("https://billing.stripe.com", "_blank")}
-            className="w-full flex items-center justify-between py-3 px-4 rounded-xl transition-all"
-            style={{
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.06)",
-              cursor: "pointer",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(255,255,255,0.05)";
-              e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(255,255,255,0.03)";
-              e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
-            }}
-          >
-            <span style={{ fontSize: 14, color: "#f4f4f5" }}>Update payment method</span>
-            <span style={{ fontSize: 12, color: "#52525b" }}>→</span>
-          </button>
-
-          {/* View invoices */}
-          <button
-            type="button"
-            onClick={() => window.open("https://billing.stripe.com", "_blank")}
-            className="w-full flex items-center justify-between py-3 px-4 rounded-xl transition-all"
-            style={{
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.06)",
-              cursor: "pointer",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(255,255,255,0.05)";
-              e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(255,255,255,0.03)";
-              e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
-            }}
-          >
-            <span style={{ fontSize: 14, color: "#f4f4f5" }}>View invoices</span>
-            <span style={{ fontSize: 12, color: "#52525b" }}>→</span>
-          </button>
         </div>
 
         {/* Downgrade to free */}
@@ -543,14 +577,12 @@ export function Settings() {
           <button
             type="button"
             onClick={() => {
-              // TODO: POST /api/cancel-subscription { subscriptionId }
-              // Then update profiles.subscription_status = 'free'
-              setBillingView("downgraded");
+              window.location.href = "mailto:support@cutsheet.app?subject=Downgrade%20Request&body=Hi%2C%20I%27d%20like%20to%20downgrade%20my%20subscription%20to%20Free.%20My%20email%20is%20" + encodeURIComponent(user?.email ?? "");
             }}
             className="flex-1 py-2.5 rounded-full text-sm font-medium"
             style={{ background: "#ef4444", color: "white", border: "none", cursor: "pointer" }}
           >
-            Confirm downgrade
+            Contact support to downgrade
           </button>
         </div>
       </div>
@@ -719,35 +751,42 @@ export function Settings() {
                   </div>
                   <div className="flex flex-col items-end gap-1 shrink-0">
                     {passwordResetSent ? (
-                      <span style={{ fontSize: 12, color: "#10b981" }}>Reset link sent</span>
+                      <span style={{ fontSize: 12, color: "var(--success)" }}>Reset link sent</span>
                     ) : (
-                      <button
-                        type="button"
-                        onClick={handlePasswordReset}
-                        disabled={passwordResetLoading}
-                        className="px-3 py-1.5 rounded-full transition-all"
-                        style={{
-                          border: "1px solid rgba(255,255,255,0.08)",
-                          color: "#a1a1aa",
-                          background: "transparent",
-                          fontSize: 13,
-                          cursor: passwordResetLoading ? "default" : "pointer",
-                          whiteSpace: "nowrap",
-                          opacity: passwordResetLoading ? 0.6 : 1,
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!passwordResetLoading) {
-                            e.currentTarget.style.borderColor = "rgba(99,102,241,0.4)";
-                            e.currentTarget.style.color = "#818cf8";
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
-                          e.currentTarget.style.color = "#a1a1aa";
-                        }}
-                      >
-                        {passwordResetLoading ? "Sending..." : "Change password"}
-                      </button>
+                      <>
+                        <button
+                          type="button"
+                          onClick={handlePasswordReset}
+                          disabled={passwordResetLoading}
+                          className="px-3 py-1.5 rounded-full transition-all"
+                          style={{
+                            border: "1px solid rgba(255,255,255,0.08)",
+                            color: "#a1a1aa",
+                            background: "transparent",
+                            fontSize: 13,
+                            cursor: passwordResetLoading ? "default" : "pointer",
+                            whiteSpace: "nowrap",
+                            opacity: passwordResetLoading ? 0.6 : 1,
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!passwordResetLoading) {
+                              e.currentTarget.style.borderColor = "rgba(99,102,241,0.4)";
+                              e.currentTarget.style.color = "#818cf8";
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
+                            e.currentTarget.style.color = "#a1a1aa";
+                          }}
+                        >
+                          {passwordResetLoading ? "Sending..." : "Change password"}
+                        </button>
+                        {passwordResetError && (
+                          <span style={{ fontSize: 12, color: "var(--error)" }}>
+                            Couldn't send reset link. Check your connection and try again.
+                          </span>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
@@ -772,7 +811,7 @@ export function Settings() {
                       New features and improvements
                     </p>
                   </div>
-                  <Switch checked={productUpdates} onCheckedChange={setProductUpdates} disabled />
+                  <Switch checked={productUpdates} onCheckedChange={(v) => handlePrefChange(setProductUpdates, v)} disabled />
                 </div>
 
                 <div className="flex items-center justify-between opacity-40 pointer-events-none">
@@ -782,55 +821,26 @@ export function Settings() {
                       Your usage summary every Monday
                     </p>
                   </div>
-                  <Switch checked={weeklyDigest} onCheckedChange={setWeeklyDigest} disabled />
+                  <Switch checked={weeklyDigest} onCheckedChange={(v) => handlePrefChange(setWeeklyDigest, v)} disabled />
                 </div>
+              </motion.div>
 
-                <div className="mt-6 pt-4" style={DIVIDER}>
-                  {!showDeleteConfirm ? (
-                    <button
-                      type="button"
-                      onClick={() => setShowDeleteConfirm(true)}
-                      style={{
-                        fontSize: 13,
-                        color: "#ef4444",
-                        cursor: "pointer",
-                        background: "none",
-                        border: "none",
-                        padding: 0,
-                      }}
-                    >
-                      Delete account
-                    </button>
-                  ) : (
-                    <div className="flex flex-col gap-3">
-                      <p style={{ fontSize: 13, color: "#a1a1aa" }}>
-                        This will permanently delete your account and all data.
-                      </p>
-                      <button
-                        type="button"
-                        // TODO: Implement account deletion via Supabase
-                        className="w-full py-2 rounded-full text-sm font-medium"
-                        style={{ background: "#ef4444", color: "white", border: "none", cursor: "pointer" }}
-                      >
-                        Yes, delete my account
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setShowDeleteConfirm(false)}
-                        style={{
-                          fontSize: 13,
-                          color: "#71717a",
-                          cursor: "pointer",
-                          background: "none",
-                          border: "none",
-                          padding: 0,
-                        }}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  )}
-                </div>
+              {/* Ad Intent card */}
+              <motion.div style={{ ...CARD_STYLE, gridColumn: "1 / -1" }} {...cardAnim(0.16)}>
+                <h2 style={{ fontSize: 14, fontWeight: 600, color: "#f4f4f5" }}>Ad Intent</h2>
+                <p style={{ fontSize: 12, color: "#71717a", marginTop: 4, marginBottom: 16 }}>
+                  What's your primary ad goal? This tailors all AI feedback to your objective.
+                </p>
+                <SegmentedControl
+                  options={["Awareness", "Consideration", "Conversion"]}
+                  selected={intent.charAt(0).toUpperCase() + intent.slice(1)}
+                  onChange={handleIntentChange}
+                />
+                {intentSaved && (
+                  <p style={{ fontSize: 12, color: "var(--success)", marginTop: 8 }}>
+                    Saved — AI feedback will now prioritize {intent} signals
+                  </p>
+                )}
               </motion.div>
             </motion.div>
           )}

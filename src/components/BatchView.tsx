@@ -1,12 +1,14 @@
 // BatchView.tsx — Rank Creatives: multi-file upload, parallel analysis, ranked leaderboard
 
 import { useState, useRef, useCallback, useMemo, useEffect } from "react";
-import { Trophy, Upload, Zap, X, ChevronDown } from "lucide-react";
+import { Trophy, Upload, Zap, X, ChevronDown, Square } from "lucide-react";
 import { sanitizeFileName } from "../utils/sanitize";
 import { AnimatePresence, motion } from "framer-motion";
 import { analyzeVideo, recalculateOverallScore, type AnalysisResult } from "../services/analyzerService";
 import { ScoreCard } from "./ScoreCard";
 import { UpgradeModal } from "./UpgradeModal";
+import { Toast } from "./Toast";
+import { AlertDialog } from "./ui/AlertDialog";
 import type { ThemeTokens } from "../theme";
 
 const ACCEPTED_TYPES = ["video/mp4", "video/webm", "video/quicktime", "image/jpeg", "image/png", "image/webp"];
@@ -44,14 +46,25 @@ function rankStyle(rank: number): { bg: string; color: string } {
 
 // ─── EMPTY STATE ──────────────────────────────────────────────────────────────
 
-function RankEmptyState({ onStart }: { onStart: () => void }) {
+function RankEmptyState({ onStart, onFileDrop }: { onStart: () => void; onFileDrop: (files: FileList) => void }) {
+  const [isDragOver, setIsDragOver] = useState(false);
   const steps = [
     { icon: Upload, label: "Upload 5-10 creative variations" },
     { icon: Zap, label: "Cutsheet scores them all in parallel" },
     { icon: Trophy, label: "Get a ranked list — test the top 2-3" },
   ];
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 24px", gap: 16, minHeight: "calc(100vh - 120px)" }}>
+    <div
+      onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+      onDragLeave={(e) => { if (e.currentTarget.contains(e.relatedTarget as Node)) return; setIsDragOver(false); }}
+      onDrop={(e) => { e.preventDefault(); setIsDragOver(false); if (e.dataTransfer.files.length > 0) onFileDrop(e.dataTransfer.files); }}
+      style={{
+        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 24px", gap: 16, minHeight: "calc(100vh - 120px)",
+        border: isDragOver ? "2px dashed var(--accent, #6366f1)" : "2px dashed transparent",
+        background: isDragOver ? "rgba(99,102,241,0.04)" : "transparent",
+        borderRadius: 16, transition: "border-color 150ms, background 150ms",
+      }}
+    >
       <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <Trophy size={28} color="#6366f1" />
       </div>
@@ -104,6 +117,9 @@ export function BatchView({ apiKey, addHistoryEntry, t, canAnalyze, isPro, incre
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showUpload, setShowUpload] = useState(false);
+  const [rejectionToast, setRejectionToast] = useState<{ message: string } | null>(null);
+  const [confirmResetOpen, setConfirmResetOpen] = useState(false);
+  const stopRequestedRef = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const allDone = items.length > 0 && items.every((i) => i.status === "complete" || i.status === "error");
@@ -124,12 +140,15 @@ export function BatchView({ apiKey, addHistoryEntry, t, canAnalyze, isPro, incre
   };
 
   const addFiles = useCallback((files: FileList | File[]) => {
+    let skippedFormat = 0;
+    let skippedSize = 0;
+
     setItems((prev) => {
       let next = [...prev];
       for (const file of Array.from(files)) {
         if (next.length >= MAX_FILES) break;
-        if (!ACCEPTED_TYPES.includes(file.type)) continue;
-        if (file.size > MAX_SIZE_MB * 1024 * 1024) continue;
+        if (!ACCEPTED_TYPES.includes(file.type)) { skippedFormat++; continue; }
+        if (file.size > MAX_SIZE_MB * 1024 * 1024) { skippedSize++; continue; }
         if (next.some((i) => i.file.name === file.name && i.file.size === file.size)) continue;
         next.push({
           id: crypto.randomUUID(),
@@ -142,6 +161,14 @@ export function BatchView({ apiKey, addHistoryEntry, t, canAnalyze, isPro, incre
       }
       return next.slice(0, MAX_FILES);
     });
+
+    // Surface rejection feedback via toast
+    const parts: string[] = [];
+    if (skippedFormat > 0) parts.push(`${skippedFormat} file${skippedFormat > 1 ? "s" : ""} skipped: unsupported format`);
+    if (skippedSize > 0) parts.push(`${skippedSize} file${skippedSize > 1 ? "s" : ""} skipped: exceeds ${MAX_SIZE_MB}MB limit`);
+    if (parts.length > 0) {
+      setRejectionToast({ message: parts.join(". ") });
+    }
   }, []);
 
   const removeItem = useCallback((id: string) => {
@@ -153,10 +180,14 @@ export function BatchView({ apiKey, addHistoryEntry, t, canAnalyze, isPro, incre
     if (!canAnalyze && !isPro) { setShowUpgradeModal(true); return; }
 
     setIsRunning(true);
+    stopRequestedRef.current = false;
 
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
       if (item.status !== "pending") continue;
+
+      // Check if stop was requested before starting next item
+      if (stopRequestedRef.current) break;
 
       setItems((prev) => prev.map((x) => (x.id === item.id ? { ...x, status: "analyzing" as const } : x)));
 
@@ -174,6 +205,7 @@ export function BatchView({ apiKey, addHistoryEntry, t, canAnalyze, isPro, incre
       }
     }
 
+    stopRequestedRef.current = false;
     setIsRunning(false);
   }, [items, isRunning, apiKey, addHistoryEntry, canAnalyze, isPro, increment, FREE_LIMIT]);
 
@@ -190,7 +222,7 @@ export function BatchView({ apiKey, addHistoryEntry, t, canAnalyze, isPro, incre
   if (items.length === 0 && !showUpload) {
     return (
       <>
-        <RankEmptyState onStart={() => setShowUpload(true)} />
+        <RankEmptyState onStart={() => setShowUpload(true)} onFileDrop={(files) => { addFiles(files); setShowUpload(true); }} />
         {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} t={t} />}
       </>
     );
@@ -207,6 +239,17 @@ export function BatchView({ apiKey, addHistoryEntry, t, canAnalyze, isPro, incre
           <p style={{ fontSize: 13, color: "#71717a", margin: "0 0 20px" }}>
             {items.length === 0 ? "Drop up to 10 video or static ad files." : isRunning ? `Analyzing ${items.filter((i) => i.status === "analyzing").length > 0 ? items.findIndex((i) => i.status === "analyzing") + 1 : ""}...` : "Add more or start analysis."}
           </p>
+
+          {/* Batch progress counter */}
+          {isRunning && (() => {
+            const analyzingIdx = items.findIndex((i) => i.status === "analyzing");
+            const currentNum = analyzingIdx >= 0 ? analyzingIdx + 1 : items.filter((i) => i.status === "complete" || i.status === "error").length;
+            return (
+              <p style={{ fontSize: 13, color: "var(--ink-muted, #71717a)", margin: "0 0 8px" }}>
+                Analyzing {currentNum} of {items.length}...
+              </p>
+            );
+          })()}
 
           {/* File list */}
           {items.length > 0 && (
@@ -270,6 +313,22 @@ export function BatchView({ apiKey, addHistoryEntry, t, canAnalyze, isPro, incre
               <Zap size={18} /> Rank {items.filter((i) => i.status === "pending").length} Creatives
             </button>
           )}
+
+          {/* Stop after current button */}
+          {isRunning && !stopRequestedRef.current && (
+            <button
+              type="button"
+              onClick={() => { stopRequestedRef.current = true; }}
+              style={{
+                width: "100%", marginTop: 8, background: "none", border: "none",
+                color: "var(--ink-muted, #71717a)", fontSize: 13, cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                padding: "8px 0",
+              }}
+            >
+              <Square size={14} /> Stop after current
+            </button>
+          )}
         </>
       )}
 
@@ -281,7 +340,7 @@ export function BatchView({ apiKey, addHistoryEntry, t, canAnalyze, isPro, incre
               <h3 style={{ fontSize: 18, fontWeight: 600, color: "#f4f4f5", margin: 0 }}>{ranked.length} creatives ranked</h3>
               <p style={{ fontSize: 13, color: "#71717a", margin: "2px 0 0" }}>Based on overall ad strength</p>
             </div>
-            <button type="button" onClick={() => { setItems([]); setExpandedId(null); setShowUpload(true); }}
+            <button type="button" onClick={() => setConfirmResetOpen(true)}
               style={{ fontSize: 12, color: "#71717a", background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "6px 12px", cursor: "pointer" }}>
               Rank more →
             </button>
@@ -397,6 +456,28 @@ export function BatchView({ apiKey, addHistoryEntry, t, canAnalyze, isPro, incre
       )}
 
       {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} t={t} />}
+
+      {/* Rejection toast */}
+      {rejectionToast && (
+        <Toast
+          message={rejectionToast.message}
+          variant="warning"
+          duration={4000}
+          onClose={() => setRejectionToast(null)}
+        />
+      )}
+
+      {/* Confirm reset dialog */}
+      <AlertDialog
+        open={confirmResetOpen}
+        onClose={() => setConfirmResetOpen(false)}
+        onConfirm={() => { setItems([]); setExpandedId(null); setShowUpload(true); }}
+        title="Start a new batch?"
+        description="Your current rankings will be cleared. Consider exporting first."
+        confirmLabel="Clear & Start Over"
+        variant="default"
+      />
+
       <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
     </div>
   );

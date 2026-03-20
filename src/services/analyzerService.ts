@@ -1,13 +1,57 @@
 // analyzerService.ts
 // Drop this into src/services/analyzerService.ts
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { generateImprovements as claudeImprovements } from "./claudeService";
+import { supabase } from "../lib/supabase";
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 
-const MODEL = "gemini-2.5-flash"; // updated from deprecated 2.0 models
 const MAX_TOKENS = 8192;
+
+// ─── SERVER-SIDE GEMINI PROXY ────────────────────────────────────────────────
+
+async function getAuthToken(): Promise<string> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) throw new Error("Not authenticated");
+  return session.access_token;
+}
+
+async function callGeminiProxy(params: {
+  base64Data: string;
+  mimeType: string;
+  prompt: string;
+  systemInstruction?: string;
+  maxOutputTokens?: number;
+  temperature?: number;
+  topP?: number;
+  topK?: number;
+}): Promise<string> {
+  const token = await getAuthToken();
+  const response = await fetch("/api/analyze", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(params),
+  });
+
+  if (response.status === 429) {
+    const data = await response.json().catch(() => ({}));
+    const secs = (data as { resetAt?: string }).resetAt
+      ? Math.ceil((new Date((data as { resetAt: string }).resetAt).getTime() - Date.now()) / 1000)
+      : 60;
+    throw new Error(`RATE_LIMITED:${secs}`);
+  }
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error((data as { error?: string }).error ?? `API error ${response.status}`);
+  }
+
+  const result = await response.json() as { text: string };
+  return result.text;
+}
 
 // ─── SYSTEM PROMPT ────────────────────────────────────────────────────────────
 
@@ -101,6 +145,15 @@ A 7/10 means the same thing every time.
 - CTA Effectiveness: X/10
 - Production Quality: X/10
 - Overall Ad Strength: X/10
+
+---
+
+## 🪝 HOOK DETAIL
+Evaluate ONLY the first 3 seconds. Does it create a pattern interrupt? Does it earn the next 5 seconds of attention? Score strictly — a generic product shot opening is a 2, not a 6.
+- Hook Type: [Pattern Interrupt | Curiosity Gap | Bold Claim | Social Proof | Problem-Agitate | Question Hook | None detected]
+- Hook Verdict: [Scroll-Stopper | Needs Work | Weak Open]
+- First 3 Seconds: [one sentence describing exactly what happens in the first 3 seconds]
+- Hook Fix: [one sentence actionable fix if Hook Strength < 8, or "None needed" if >= 8]
 
 ---
 
@@ -217,6 +270,15 @@ A 7/10 means the same thing every time.
 
 ---
 
+## 🪝 HOOK DETAIL
+Evaluate the above-the-fold visual impact. Does it stop the scroll? Score strictly — a generic stock photo with small text is a 2, not a 6.
+- Hook Type: [Pattern Interrupt | Curiosity Gap | Bold Claim | Social Proof | Problem-Agitate | Question Hook | None detected]
+- Hook Verdict: [Scroll-Stopper | Needs Work | Weak Open]
+- First Glance: [one sentence describing the immediate visual impression above the fold]
+- Hook Fix: [one sentence actionable fix if Hook Strength < 8, or "None needed" if >= 8]
+
+---
+
 ## 🔧 IMPROVEMENTS
 List exactly 3-5 specific, actionable suggestions to improve this static creative.
 Each suggestion should apply to the STATIC format as-is.
@@ -260,6 +322,16 @@ export interface Hashtags {
   instagram: string[];
 }
 
+export type HookType = "Pattern Interrupt" | "Curiosity Gap" | "Bold Claim" | "Social Proof" | "Problem-Agitate" | "Question Hook" | "None detected";
+export type HookVerdict = "Scroll-Stopper" | "Needs Work" | "Weak Open";
+
+export interface HookDetail {
+  hookType: HookType;
+  verdict: HookVerdict;
+  firstImpression: string;  // "First 3 Seconds" for video, "First Glance" for static
+  hookFix: string | null;   // null if score >= 8
+}
+
 export interface AnalysisResult {
   markdown: string;
   scores: {
@@ -269,6 +341,7 @@ export interface AnalysisResult {
     production: number;
     overall: number;
   } | null;
+  hookDetail?: HookDetail;
   improvements: string[];
   budget: BudgetRecommendation | null;
   hashtags?: Hashtags;
@@ -320,6 +393,35 @@ function parseScores(markdown: string): AnalysisResult["scores"] {
     };
   } catch {
     return null;
+  }
+}
+
+const VALID_HOOK_TYPES: HookType[] = ["Pattern Interrupt", "Curiosity Gap", "Bold Claim", "Social Proof", "Problem-Agitate", "Question Hook", "None detected"];
+const VALID_HOOK_VERDICTS: HookVerdict[] = ["Scroll-Stopper", "Needs Work", "Weak Open"];
+
+export function parseHookDetail(markdown: string): HookDetail | undefined {
+  try {
+    const typeMatch = markdown.match(/Hook Type:\s*\[?([^\]\n]+)\]?/);
+    const verdictMatch = markdown.match(/Hook Verdict:\s*\[?([^\]\n]+)\]?/);
+    const impressionMatch = markdown.match(/(?:First 3 Seconds|First Glance):\s*\[?([^\]\n]+)\]?/);
+    const fixMatch = markdown.match(/Hook Fix:\s*\[?([^\]\n]+)\]?/);
+
+    if (!typeMatch || !verdictMatch || !impressionMatch) return undefined;
+
+    const rawType = typeMatch[1].trim();
+    const rawVerdict = verdictMatch[1].trim();
+    const hookType = VALID_HOOK_TYPES.find(t => rawType.includes(t)) ?? "None detected";
+    const verdict = VALID_HOOK_VERDICTS.find(v => rawVerdict.includes(v)) ?? "Needs Work";
+    const fixText = fixMatch?.[1]?.trim() ?? null;
+
+    return {
+      hookType,
+      verdict,
+      firstImpression: impressionMatch[1].trim(),
+      hookFix: fixText === "None needed" ? null : fixText,
+    };
+  } catch {
+    return undefined;
   }
 }
 
@@ -448,7 +550,7 @@ export function recalculateOverallScore(
 
 export async function analyzeVideo(
   file: File,
-  apiKey: string,
+  _apiKey: string,
   onStatusChange?: (status: AnalysisStatus, message?: string) => void,
   contextPrefix?: string,
   userContext?: string,
@@ -459,26 +561,13 @@ export async function analyzeVideo(
   };
 
   try {
-    // 1. Init client
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
-      model: MODEL,
-      systemInstruction: SYSTEM_PROMPT,
-      generationConfig: {
-        maxOutputTokens: MAX_TOKENS,
-        temperature: 0.1,
-        topP: 0.8,
-        topK: 40,
-      },
-    });
-
-    // 2. Convert file to base64
+    // 1. Convert file to base64
     emit("uploading", "Reading video file...");
     const base64Data = await fileToBase64(file);
 
-    // 3. Build request with inline data — format-aware prompt
+    // 2. Build prompt — format-aware
     const isImage = file.type.startsWith("image/");
-    emit("processing", isImage ? "Gemini is analyzing your static creative..." : "Gemini is analyzing your creative...");
+    emit("processing", isImage ? "Analyzing your static creative..." : "Analyzing your creative...");
 
     const basePrompt = isImage ? STATIC_ANALYSIS_PROMPT : ANALYSIS_PROMPT;
     const parts: string[] = [];
@@ -487,25 +576,17 @@ export async function analyzeVideo(
     parts.push(basePrompt);
     const prompt = parts.join('\n\n');
 
-    const result = await model.generateContent([
-      {
-        inlineData: {
-          mimeType: file.type as string,
-          data: base64Data,
-        },
-      },
-      {
-        text: prompt,
-      },
-    ]);
-
-    // 4. Extract response
-    const response = result.response;
-    const markdown = response.text();
-
-    if (!markdown || markdown.trim().length === 0) {
-      throw new Error("Gemini returned an empty response. Try again.");
-    }
+    // 3. Call server-side Gemini proxy (key never leaves the server)
+    const markdown = await callGeminiProxy({
+      base64Data,
+      mimeType: file.type,
+      prompt,
+      systemInstruction: SYSTEM_PROMPT,
+      maxOutputTokens: MAX_TOKENS,
+      temperature: 0.1,
+      topP: 0.8,
+      topK: 40,
+    });
 
     // 5. Parse scores from markdown and normalize overall score
     const parsedScores = parseScores(markdown);
@@ -532,11 +613,15 @@ export async function analyzeVideo(
     // 9. Parse scene-by-scene breakdown from markdown (graceful — never throws)
     const scenes = parseScenes(markdown);
 
+    // 10. Parse hook detail from markdown (graceful — never throws)
+    const hookDetail = parseHookDetail(markdown);
+
     emit("complete");
 
     return {
       markdown,
       scores,
+      hookDetail,
       improvements,
       budget,
       hashtags,
@@ -576,14 +661,8 @@ export function copyToClipboard(text: string): Promise<void> {
 export async function compareAnalyses(
   markdownA: string,
   markdownB: string,
-  apiKey: string
+  _apiKey: string
 ): Promise<string> {
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({
-    model: MODEL,
-    generationConfig: { maxOutputTokens: 2048, temperature: 0.4 },
-  });
-
   const prompt = `You are a performance marketing creative analyst. Two video ad analyses are provided below.
 
 Given these two ad analyses, which creative is stronger and why? Be direct. Give a verdict, key differences, and one recommendation for each.
@@ -612,24 +691,16 @@ ${markdownA}
 ## AD B ANALYSIS
 ${markdownB}`;
 
-  const result = await model.generateContent(prompt);
-  return result.response.text();
+  // Text-only call — no media, just prompt
+  return callGeminiProxy({ prompt, maxOutputTokens: 2048, temperature: 0.4 });
 }
 
 // ─── GENERATE BRIEF ───────────────────────────────────────────────────────────
 
 export async function generateBrief(
   analysisMarkdown: string,
-  apiKey: string
+  _apiKey: string
 ): Promise<string> {
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({
-    model: MODEL,
-    systemInstruction:
-      "You are a senior creative strategist. You write tight, actionable creative briefs that creative teams can execute immediately.",
-    generationConfig: { maxOutputTokens: 2048, temperature: 0.6 },
-  });
-
   const prompt = `Based on this video ad analysis, write a creative brief for the next iteration of this ad. Structure it exactly like this:
 
 ## Creative Brief
@@ -658,8 +729,12 @@ Be specific. No generic advice. Every line should be actionable.
 ## AD ANALYSIS
 ${analysisMarkdown}`;
 
-  const result = await model.generateContent(prompt);
-  return result.response.text();
+  return callGeminiProxy({
+    prompt,
+    systemInstruction: "You are a senior creative strategist. You write tight, actionable creative briefs that creative teams can execute immediately.",
+    maxOutputTokens: 2048,
+    temperature: 0.6,
+  });
 }
 
 // ─── BATCH VERDICT ────────────────────────────────────────────────────────────
@@ -671,16 +746,9 @@ export interface BatchVerdictInput {
 
 export async function generateBatchVerdict(
   items: BatchVerdictInput[],
-  apiKey: string
+  _apiKey: string
 ): Promise<string> {
   if (items.length === 0) return "";
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({
-    model: MODEL,
-    systemInstruction:
-      "You are a performance marketing creative analyst. You rank video ads from strongest to weakest and give one sentence per ad.",
-    generationConfig: { maxOutputTokens: 2048, temperature: 0.4 },
-  });
 
   const lines = items.map((item) => {
     const s = item.scores;
@@ -694,6 +762,10 @@ ${lines.join("\n")}
 
 Rank these ads from strongest to weakest and give a one sentence reason for each ranking. Write one paragraph: start with the strongest ad (filename + one sentence why), then the next, and so on until the weakest. Be direct and specific.`;
 
-  const result = await model.generateContent(prompt);
-  return result.response.text();
+  return callGeminiProxy({
+    prompt,
+    systemInstruction: "You are a performance marketing creative analyst. You rank video ads from strongest to weakest and give one sentence per ad.",
+    maxOutputTokens: 2048,
+    temperature: 0.4,
+  });
 }
