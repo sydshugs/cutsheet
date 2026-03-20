@@ -2,7 +2,7 @@
 import { Helmet } from 'react-helmet-async';
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useOutletContext, useNavigate, Link } from "react-router-dom";
-import { Zap, RotateCcw, Upload, AlertCircle, Sparkles, Lock } from "lucide-react";
+import { Zap, RotateCcw, Upload, Sparkles, Lock } from "lucide-react";
 import { Toast } from "../../components/Toast";
 import { AnalyzerView } from "../../components/AnalyzerView";
 import { ScoreCard } from "../../components/ScoreCard";
@@ -87,14 +87,10 @@ const STATUS_COPY = {
 
 function IntentHeader({
   platform, setPlatform, format, setFormat,
-  secondEye, setSecondEye,
-  staticSecondEye, setStaticSecondEye,
   onPlatformReset,
 }: {
   platform: Platform; setPlatform: (p: Platform) => void;
   format: Format; setFormat: (f: Format) => void;
-  secondEye: boolean; setSecondEye: (v: boolean) => void;
-  staticSecondEye: boolean; setStaticSecondEye: (v: boolean) => void;
   onPlatformReset?: (oldPlatform: string) => void;
 }) {
   return (
@@ -174,61 +170,6 @@ function IntentHeader({
         </div>
       </div>
 
-      {/* Second Eye toggle — video only */}
-      {format === "video" && (
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }} title="Get a fresh first-impression review from a separate AI model">
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-            <span style={{ fontSize: 13, color: "#a1a1aa" }}>Second Eye</span>
-            <span style={{ fontSize: 11, color: "#52525b" }}>Fresh first-time viewer perspective</span>
-          </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={secondEye}
-            onClick={() => setSecondEye(!secondEye)}
-            style={{
-              width: 40, height: 22, borderRadius: 11, border: "none", cursor: "pointer",
-              background: secondEye ? "#6366f1" : "#27272a",
-              position: "relative", transition: "background 200ms", flexShrink: 0,
-            }}
-          >
-            <div
-              style={{
-                position: "absolute", top: 2, width: 18, height: 18, borderRadius: "50%", background: "white",
-                left: secondEye ? 20 : 2, transition: "left 200ms cubic-bezier(0.16,1,0.3,1)",
-              }}
-            />
-          </button>
-        </div>
-      )}
-
-      {/* Design Review toggle — static only */}
-      {format === "static" && (
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-            <span style={{ fontSize: 13, color: "#a1a1aa" }}>Design Review</span>
-            <span style={{ fontSize: 11, color: "#52525b" }}>Typography & layout check</span>
-          </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={staticSecondEye}
-            onClick={() => setStaticSecondEye(!staticSecondEye)}
-            style={{
-              width: 40, height: 22, borderRadius: 11, border: "none", cursor: "pointer",
-              background: staticSecondEye ? "#6366f1" : "#27272a",
-              position: "relative", transition: "background 200ms", flexShrink: 0,
-            }}
-          >
-            <div
-              style={{
-                position: "absolute", top: 2, width: 18, height: 18, borderRadius: "50%", background: "white",
-                left: staticSecondEye ? 20 : 2, transition: "left 200ms cubic-bezier(0.16,1,0.3,1)",
-              }}
-            />
-          </button>
-        </div>
-      )}
     </div>
   );
 }
@@ -300,10 +241,10 @@ export default function PaidAdAnalyzer() {
   // ── Platform / format / second eye state ───────────────────────────────────
   const [platform, setPlatform] = useState<Platform>("Meta");
   const [format, setFormat] = useState<Format>("video");
-  const [secondEye, setSecondEye] = useState(false);
+  const [secondEye] = useState(true);
   const [secondEyeOutput, setSecondEyeOutput] = useState<SecondEyeResult | null>(null);
   const [secondEyeLoading, setSecondEyeLoading] = useState(false);
-  const [staticSecondEye, setStaticSecondEye] = useState(false);
+  const [staticSecondEye] = useState(true);
   const [staticSecondEyeResult, setStaticSecondEyeResult] = useState<StaticSecondEyeResult | null>(null);
   const [staticSecondEyeLoading, setStaticSecondEyeLoading] = useState(false);
   const [engineBudget, setEngineBudget] = useState<EngineBudgetRecommendation | null>(null);
@@ -496,7 +437,7 @@ export default function PaidAdAnalyzer() {
 
   // Second Eye trigger: fires when analysis completes and secondEye is on
   useEffect(() => {
-    if (status === "complete" && result && secondEye) {
+    if (status === "complete" && result) {
       if (secondEyeLoading) return;
       const run = async () => {
         setSecondEyeLoading(true);
@@ -524,7 +465,7 @@ export default function PaidAdAnalyzer() {
 
   // Static Second Eye trigger: fires when analysis completes and staticSecondEye is on
   useEffect(() => {
-    if (status === "complete" && result && staticSecondEye && format === "static") {
+    if (status === "complete" && result && format === "static") {
       if (staticSecondEyeLoading) return;
       const run = async () => {
         setStaticSecondEyeLoading(true);
@@ -595,44 +536,27 @@ export default function PaidAdAnalyzer() {
     }
   }, [status]);
 
-  // ── Format mismatch detection ──────────────────────────────────────────
-  const [formatMismatch, setFormatMismatch] = useState<"video_as_static" | "static_as_video" | null>(null);
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
-
+  // ── Format auto-detection ──────────────────────────────────────────
   const handleFileWithFormatCheck = useCallback((f: File | null) => {
     if (!f) { handleReset(); return; }
-    setFormatMismatch(null);
-    setPendingFile(null);
 
     const fileIsVideo = f.type.startsWith("video/") || [".mp4", ".mov", ".webm"].some(e => f.name.toLowerCase().endsWith(e));
     const fileIsImage = f.type.startsWith("image/") || [".jpg", ".jpeg", ".png", ".webp"].some(e => f.name.toLowerCase().endsWith(e));
 
+    // Auto-switch format if mismatch detected
     if (format === "video" && fileIsImage) {
-      setFormatMismatch("static_as_video");
-      setPendingFile(f);
-      return;
+      setFormat("static");
+      setInfoToast("Detected static image — analyzing as Static");
+      setTimeout(() => setInfoToast(null), 3000);
+    } else if (format === "static" && fileIsVideo) {
+      setFormat("video");
+      setInfoToast("Detected video — analyzing as Video");
+      setTimeout(() => setInfoToast(null), 3000);
     }
-    if (format === "static" && fileIsVideo) {
-      setFormatMismatch("video_as_static");
-      setPendingFile(f);
-      return;
-    }
+
     setFile(f);
     reset();
   }, [format, handleReset, reset]);
-
-  const handleFormatSwitch = useCallback(() => {
-    if (!pendingFile) return;
-    const newFormat = formatMismatch === "static_as_video" ? "static" : "video";
-    setFormat(newFormat as Format);
-    if (newFormat === "static" && (platform === "YouTube" || platform === "TikTok")) {
-      setPlatform("all");
-    }
-    setFormatMismatch(null);
-    setFile(pendingFile);
-    setPendingFile(null);
-    reset();
-  }, [pendingFile, formatMismatch, platform]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
   const handleAnalyze = useCallback(async () => {
@@ -946,38 +870,12 @@ export default function PaidAdAnalyzer() {
       </div>
       {/* Main content */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        <IntentHeader platform={platform} setPlatform={setPlatform} format={format} setFormat={setFormat} secondEye={secondEye} setSecondEye={setSecondEye} staticSecondEye={staticSecondEye} setStaticSecondEye={setStaticSecondEye} onPlatformReset={(oldPlatform) => setPlatformResetToast(`Platform reset to All — ${oldPlatform} isn't available for static ads`)} />
+        {(status === "complete" || loadedEntry || loadedFromHistory) && (
+          <IntentHeader platform={platform} setPlatform={setPlatform} format={format} setFormat={setFormat} onPlatformReset={(oldPlatform) => setPlatformResetToast(`Platform reset to All — ${oldPlatform} isn't available for static ads`)} />
+        )}
 
         <div className="flex-1 overflow-auto">
-          {/* Format mismatch error */}
-          {formatMismatch && (
-            <div style={{ display: "flex", justifyContent: "center", padding: "80px 24px" }}>
-              <div style={{ maxWidth: 420, padding: 20, borderRadius: 12, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                  <AlertCircle size={16} color="#ef4444" />
-                  <span style={{ fontSize: 14, fontWeight: 600, color: "#f4f4f5" }}>
-                    {formatMismatch === "static_as_video" ? "This looks like a static image" : "This looks like a video"}
-                  </span>
-                </div>
-                <p style={{ fontSize: 13, color: "#a1a1aa", margin: "0 0 16px", lineHeight: 1.5 }}>
-                  {formatMismatch === "static_as_video"
-                    ? "You have Video selected. Switch to Static to analyze this image correctly."
-                    : "You have Static selected. Switch to Video to analyze this correctly."}
-                </p>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button type="button" onClick={handleFormatSwitch}
-                    style={{ flex: 1, height: 40, borderRadius: 9999, border: "none", background: "#6366f1", color: "white", fontSize: 13, fontWeight: 500, cursor: "pointer" }}>
-                    Switch to {formatMismatch === "static_as_video" ? "Static" : "Video"}
-                  </button>
-                  <button type="button" onClick={() => { setFormatMismatch(null); setPendingFile(null); }}
-                    style={{ height: 40, padding: "0 16px", borderRadius: 9999, border: "1px solid rgba(255,255,255,0.08)", background: "transparent", color: "#71717a", fontSize: 13, cursor: "pointer" }}>
-                    Remove file
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-          {!formatMismatch && status === "idle" && !loadedEntry ? (
+          {status === "idle" && !loadedEntry ? (
             <>
               {!isPro && (
                 <div style={{ textAlign: "center", fontSize: 12, color: "#52525b", marginTop: 12, marginBottom: -24 }}>
@@ -1005,7 +903,7 @@ export default function PaidAdAnalyzer() {
                 onUrlSubmit={async (u) => { setUrlInput(u); await importFromUrl(u); }}
               />
             </>
-          ) : !formatMismatch && (status !== "idle" || loadedEntry) ? (
+          ) : (status !== "idle" || loadedEntry) ? (
             <div className="relative px-4 py-6 md:px-8 min-h-full flex flex-col">
               {/* Ambient glow */}
               <div className="pointer-events-none absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-indigo-600/10 blur-[120px]" />
@@ -1102,11 +1000,11 @@ export default function PaidAdAnalyzer() {
               />
             </div>
             {/* Second Eye output below scorecard — video only */}
-            {format === "video" && secondEye && (
+            {format === "video" && (
               <SecondEyePanel result={secondEyeOutput} loading={secondEyeLoading} />
             )}
             {/* Static Design Review below scorecard — static only */}
-            {format === "static" && staticSecondEye && (
+            {format === "static" && (
               <StaticSecondEyePanel result={staticSecondEyeResult} loading={staticSecondEyeLoading} />
             )}
             {/* Visualize It button — static ads only, requires original file */}
