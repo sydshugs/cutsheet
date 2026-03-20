@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useThumbnail } from "../hooks/useThumbnail";
+import { Skeleton } from "./ui/Skeleton";
 import { sanitizeFileName } from "../utils/sanitize";
 
 interface ProgressCardProps {
@@ -119,25 +120,9 @@ export function ProgressCard({ file, status, onCancel }: ProgressCardProps) {
             <span style={{ fontSize: 14, fontWeight: 600, color: "#f4f4f5" }}>Analyzing...</span>
           </div>
 
-          {/* Score placeholder (shimmer arc) */}
+          {/* Score placeholder (skeleton shimmer) */}
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
-            <div style={{
-              width: 88, height: 88, borderRadius: "50%",
-              border: "4px solid rgba(255,255,255,0.06)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              position: "relative",
-            }}>
-              <motion.div
-                style={{
-                  position: "absolute", inset: -4, borderRadius: "50%",
-                  border: "4px solid transparent",
-                  borderTopColor: "#6366f1",
-                }}
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
-              />
-              <span style={{ fontSize: 11, color: "#52525b" }}>—/10</span>
-            </div>
+            <Skeleton width="88px" height="88px" radius="50%" />
           </div>
 
           {/* Metric rows with progressive reveal */}
@@ -214,7 +199,6 @@ export function ProgressCard({ file, status, onCancel }: ProgressCardProps) {
       </div>
 
       <style>{`
-        @keyframes shimmer { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
         @keyframes pulse-dot { 0%, 100% { opacity: 1 } 50% { opacity: 0.4 } }
       `}</style>
     </div>
