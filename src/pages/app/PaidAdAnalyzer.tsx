@@ -2,7 +2,7 @@
 import { Helmet } from 'react-helmet-async';
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useOutletContext, useNavigate, Link } from "react-router-dom";
-import { Zap, RotateCcw, Upload, AlertCircle, Sparkles, Lock } from "lucide-react";
+import { Zap, RotateCcw, Upload, Sparkles, Lock } from "lucide-react";
 import { Toast } from "../../components/Toast";
 import { AnalyzerView } from "../../components/AnalyzerView";
 import { ScoreCard } from "../../components/ScoreCard";
@@ -47,33 +47,8 @@ import type { AppSharedContext } from "../../components/AppLayout";
 const API_KEY = ""; // Gemini calls are now server-side via /api/analyze
 
 const PLATFORMS = ["all", "Meta", "TikTok", "Google", "YouTube"] as const;
-const FORMATS = ["video", "static"] as const;
 type Platform = (typeof PLATFORMS)[number];
-type Format = (typeof FORMATS)[number];
-
-interface PlatformOption {
-  value: Platform;
-  label: string;
-  enabled: boolean;
-  note: string | null;
-}
-
-const PLATFORM_COMPAT: Record<Format, PlatformOption[]> = {
-  video: [
-    { value: "all",     label: "General",  enabled: true,  note: null },
-    { value: "Meta",    label: "Meta",    enabled: true,  note: null },
-    { value: "TikTok",  label: "TikTok",  enabled: true,  note: null },
-    { value: "Google",  label: "Google",  enabled: true,  note: null },
-    { value: "YouTube", label: "YouTube", enabled: true,  note: null },
-  ],
-  static: [
-    { value: "all",     label: "General",  enabled: true,  note: null },
-    { value: "Meta",    label: "Meta",    enabled: true,  note: null },
-    { value: "TikTok",  label: "TikTok",  enabled: false, note: "Carousel only — uncommon" },
-    { value: "Google",  label: "Google",  enabled: true,  note: null },
-    { value: "YouTube", label: "YouTube", enabled: false, note: "Not available for static ads" },
-  ],
-};
+type Format = "video" | "static";
 
 const STATUS_COPY = {
   uploading: "Reading video...",
@@ -82,156 +57,6 @@ const STATUS_COPY = {
   error: "Something went wrong",
   idle: "",
 } as const;
-
-// ─── INTENT HEADER ────────────────────────────────────────────────────────────
-
-function IntentHeader({
-  platform, setPlatform, format, setFormat,
-  secondEye, setSecondEye,
-  staticSecondEye, setStaticSecondEye,
-  onPlatformReset,
-}: {
-  platform: Platform; setPlatform: (p: Platform) => void;
-  format: Format; setFormat: (f: Format) => void;
-  secondEye: boolean; setSecondEye: (v: boolean) => void;
-  staticSecondEye: boolean; setStaticSecondEye: (v: boolean) => void;
-  onPlatformReset?: (oldPlatform: string) => void;
-}) {
-  return (
-    <div
-      style={{
-        padding: "12px 24px",
-        borderBottom: "1px solid rgba(255,255,255,0.06)",
-        display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap",
-        justifyContent: "space-between",
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-        <span style={{ fontSize: 13, color: "#52525b", flexShrink: 0 }}>Analyzing for:</span>
-
-        {/* Platform pills — radio group with accessibility */}
-        <div role="radiogroup" aria-label="Platform selector" style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-          {PLATFORM_COMPAT[format].map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              role="radio"
-              aria-checked={platform === opt.value && opt.enabled}
-              aria-disabled={!opt.enabled || undefined}
-              aria-label={!opt.enabled && opt.note ? `${opt.label} — ${opt.note}` : opt.label}
-              tabIndex={!opt.enabled ? -1 : undefined}
-              onClick={() => { if (opt.enabled) setPlatform(opt.value); }}
-              title={opt.note ?? undefined}
-              style={{
-                height: 30, padding: "0 12px", borderRadius: 9999, fontSize: 13,
-                cursor: opt.enabled ? "pointer" : "not-allowed",
-                opacity: opt.enabled ? 1 : 0.35,
-                textDecoration: opt.enabled ? "none" : "line-through",
-                background: platform === opt.value && opt.enabled ? "#4f46e5" : "rgba(255,255,255,0.04)",
-                border: `1px solid ${platform === opt.value && opt.enabled ? "#4f46e5" : "rgba(255,255,255,0.08)"}`,
-                color: platform === opt.value && opt.enabled ? "white" : "#71717a",
-                fontWeight: platform === opt.value && opt.enabled ? 500 : 400,
-                transition: "all 150ms",
-              }}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Divider */}
-        <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.08)", flexShrink: 0 }} />
-
-        {/* Format pills */}
-        <div role="radiogroup" aria-label="Format selector" style={{ display: "flex", gap: 6 }}>
-          {FORMATS.map((f) => (
-            <button
-              key={f}
-              type="button"
-              role="radio"
-              aria-checked={format === f}
-              onClick={() => {
-                setFormat(f);
-                const currentPlatformEnabled = PLATFORM_COMPAT[f].find(o => o.value === platform)?.enabled;
-                if (!currentPlatformEnabled) {
-                  const oldPlatform = platform;
-                  setPlatform("all");
-                  onPlatformReset?.(oldPlatform);
-                }
-              }}
-              style={{
-                height: 30, padding: "0 12px", borderRadius: 9999, fontSize: 13, cursor: "pointer",
-                background: format === f ? "#4f46e5" : "rgba(255,255,255,0.04)",
-                border: `1px solid ${format === f ? "#4f46e5" : "rgba(255,255,255,0.08)"}`,
-                color: format === f ? "white" : "#71717a",
-                fontWeight: format === f ? 500 : 400,
-                transition: "all 150ms",
-              }}
-            >
-              {f.charAt(0).toUpperCase() + f.slice(1)}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Second Eye toggle — video only */}
-      {format === "video" && (
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }} title="Get a fresh first-impression review from a separate AI model">
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-            <span style={{ fontSize: 13, color: "#a1a1aa" }}>Second Eye</span>
-            <span style={{ fontSize: 11, color: "#52525b" }}>Fresh first-time viewer perspective</span>
-          </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={secondEye}
-            onClick={() => setSecondEye(!secondEye)}
-            style={{
-              width: 40, height: 22, borderRadius: 11, border: "none", cursor: "pointer",
-              background: secondEye ? "#6366f1" : "#27272a",
-              position: "relative", transition: "background 200ms", flexShrink: 0,
-            }}
-          >
-            <div
-              style={{
-                position: "absolute", top: 2, width: 18, height: 18, borderRadius: "50%", background: "white",
-                left: secondEye ? 20 : 2, transition: "left 200ms cubic-bezier(0.16,1,0.3,1)",
-              }}
-            />
-          </button>
-        </div>
-      )}
-
-      {/* Design Review toggle — static only */}
-      {format === "static" && (
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-            <span style={{ fontSize: 13, color: "#a1a1aa" }}>Design Review</span>
-            <span style={{ fontSize: 11, color: "#52525b" }}>Typography & layout check</span>
-          </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={staticSecondEye}
-            onClick={() => setStaticSecondEye(!staticSecondEye)}
-            style={{
-              width: 40, height: 22, borderRadius: 11, border: "none", cursor: "pointer",
-              background: staticSecondEye ? "#6366f1" : "#27272a",
-              position: "relative", transition: "background 200ms", flexShrink: 0,
-            }}
-          >
-            <div
-              style={{
-                position: "absolute", top: 2, width: 18, height: 18, borderRadius: "50%", background: "white",
-                left: staticSecondEye ? 20 : 2, transition: "left 200ms cubic-bezier(0.16,1,0.3,1)",
-              }}
-            />
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ─── EMPTY STATE ──────────────────────────────────────────────────────────────
 
@@ -297,13 +122,14 @@ export default function PaidAdAnalyzer() {
     })
   }, [])
 
-  // ── Platform / format / second eye state ───────────────────────────────────
-  const [platform, setPlatform] = useState<Platform>("Meta");
+  // ── Platform / format state ─────────────────────────────────────────────────
+  const [platform, setPlatform] = useState<Platform>("all");
   const [format, setFormat] = useState<Format>("video");
-  const [secondEye, setSecondEye] = useState(false);
+  // Second Eye + Design Review always on — no toggles
+  const secondEye = true;
+  const staticSecondEye = true;
   const [secondEyeOutput, setSecondEyeOutput] = useState<SecondEyeResult | null>(null);
   const [secondEyeLoading, setSecondEyeLoading] = useState(false);
-  const [staticSecondEye, setStaticSecondEye] = useState(false);
   const [staticSecondEyeResult, setStaticSecondEyeResult] = useState<StaticSecondEyeResult | null>(null);
   const [staticSecondEyeLoading, setStaticSecondEyeLoading] = useState(false);
   const [engineBudget, setEngineBudget] = useState<EngineBudgetRecommendation | null>(null);
@@ -344,7 +170,6 @@ export default function PaidAdAnalyzer() {
   const [analysisCompletedAt, setAnalysisCompletedAt] = useState<Date | null>(null);
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
   const [loadedFromHistory, setLoadedFromHistory] = useState<AnalysisRecord | null>(null);
-  const [platformResetToast, setPlatformResetToast] = useState<string | null>(null);
 
   const [improvementsLoading, setImprovementsLoading] = useState(false);
   const [platformImprovements, setPlatformImprovements] = useState<string[] | null>(null);
@@ -595,44 +420,27 @@ export default function PaidAdAnalyzer() {
     }
   }, [status]);
 
-  // ── Format mismatch detection ──────────────────────────────────────────
-  const [formatMismatch, setFormatMismatch] = useState<"video_as_static" | "static_as_video" | null>(null);
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
-
+  // ── Auto-detect format on file drop (no modal) ──────────────────────────
   const handleFileWithFormatCheck = useCallback((f: File | null) => {
     if (!f) { handleReset(); return; }
-    setFormatMismatch(null);
-    setPendingFile(null);
 
     const fileIsVideo = f.type.startsWith("video/") || [".mp4", ".mov", ".webm"].some(e => f.name.toLowerCase().endsWith(e));
     const fileIsImage = f.type.startsWith("image/") || [".jpg", ".jpeg", ".png", ".webp"].some(e => f.name.toLowerCase().endsWith(e));
 
-    if (format === "video" && fileIsImage) {
-      setFormatMismatch("static_as_video");
-      setPendingFile(f);
-      return;
+    // Auto-switch format silently + show toast
+    if (fileIsImage && format !== "static") {
+      setFormat("static" as Format);
+      setInfoToast("Detected static image — analyzing as Static");
+      setTimeout(() => setInfoToast(null), 3000);
+    } else if (fileIsVideo && format !== "video") {
+      setFormat("video" as Format);
+      setInfoToast("Detected video — analyzing as Video");
+      setTimeout(() => setInfoToast(null), 3000);
     }
-    if (format === "static" && fileIsVideo) {
-      setFormatMismatch("video_as_static");
-      setPendingFile(f);
-      return;
-    }
+
     setFile(f);
     reset();
   }, [format, handleReset, reset]);
-
-  const handleFormatSwitch = useCallback(() => {
-    if (!pendingFile) return;
-    const newFormat = formatMismatch === "static_as_video" ? "static" : "video";
-    setFormat(newFormat as Format);
-    if (newFormat === "static" && (platform === "YouTube" || platform === "TikTok")) {
-      setPlatform("all");
-    }
-    setFormatMismatch(null);
-    setFile(pendingFile);
-    setPendingFile(null);
-    reset();
-  }, [pendingFile, formatMismatch, platform]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
   const handleAnalyze = useCallback(async () => {
@@ -946,38 +754,10 @@ export default function PaidAdAnalyzer() {
       </div>
       {/* Main content */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        <IntentHeader platform={platform} setPlatform={setPlatform} format={format} setFormat={setFormat} secondEye={secondEye} setSecondEye={setSecondEye} staticSecondEye={staticSecondEye} setStaticSecondEye={setStaticSecondEye} onPlatformReset={(oldPlatform) => setPlatformResetToast(`Platform reset to All — ${oldPlatform} isn't available for static ads`)} />
+        {/* IntentHeader removed — platform pills and toggles stripped */}
 
         <div className="flex-1 overflow-auto">
-          {/* Format mismatch error */}
-          {formatMismatch && (
-            <div style={{ display: "flex", justifyContent: "center", padding: "80px 24px" }}>
-              <div style={{ maxWidth: 420, padding: 20, borderRadius: 12, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                  <AlertCircle size={16} color="#ef4444" />
-                  <span style={{ fontSize: 14, fontWeight: 600, color: "#f4f4f5" }}>
-                    {formatMismatch === "static_as_video" ? "This looks like a static image" : "This looks like a video"}
-                  </span>
-                </div>
-                <p style={{ fontSize: 13, color: "#a1a1aa", margin: "0 0 16px", lineHeight: 1.5 }}>
-                  {formatMismatch === "static_as_video"
-                    ? "You have Video selected. Switch to Static to analyze this image correctly."
-                    : "You have Static selected. Switch to Video to analyze this correctly."}
-                </p>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button type="button" onClick={handleFormatSwitch}
-                    style={{ flex: 1, height: 40, borderRadius: 9999, border: "none", background: "#6366f1", color: "white", fontSize: 13, fontWeight: 500, cursor: "pointer" }}>
-                    Switch to {formatMismatch === "static_as_video" ? "Static" : "Video"}
-                  </button>
-                  <button type="button" onClick={() => { setFormatMismatch(null); setPendingFile(null); }}
-                    style={{ height: 40, padding: "0 16px", borderRadius: 9999, border: "1px solid rgba(255,255,255,0.08)", background: "transparent", color: "#71717a", fontSize: 13, cursor: "pointer" }}>
-                    Remove file
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-          {!formatMismatch && status === "idle" && !loadedEntry ? (
+          {status === "idle" && !loadedEntry ? (
             <>
               {!isPro && (
                 <div style={{ textAlign: "center", fontSize: 12, color: "#52525b", marginTop: 12, marginBottom: -24 }}>
@@ -1005,7 +785,7 @@ export default function PaidAdAnalyzer() {
                 onUrlSubmit={async (u) => { setUrlInput(u); await importFromUrl(u); }}
               />
             </>
-          ) : !formatMismatch && (status !== "idle" || loadedEntry) ? (
+          ) : (status !== "idle" || loadedEntry) ? (
             <div className="relative px-4 py-6 md:px-8 min-h-full flex flex-col">
               {/* Ambient glow */}
               <div className="pointer-events-none absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-indigo-600/10 blur-[120px]" />
@@ -1378,14 +1158,6 @@ export default function PaidAdAnalyzer() {
         <div role="status" aria-live="polite" className="fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-3 bg-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-xl text-xs font-mono text-zinc-300 shadow-lg z-[100]">
           {infoToast}
         </div>
-      )}
-      {platformResetToast && (
-        <Toast
-          message={platformResetToast}
-          variant="info"
-          onClose={() => setPlatformResetToast(null)}
-          duration={3500}
-        />
       )}
     </div>
   );
