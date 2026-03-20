@@ -1,5 +1,3 @@
-import { cn } from '../../lib/utils'
-
 interface SkeletonProps {
   width?: string
   height?: string
