@@ -7,8 +7,12 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
+export type SubscriptionTier = 'free' | 'pro' | 'team';
+
 export interface AuthedUser {
   id: string;
+  tier: SubscriptionTier;
+  /** @deprecated use tier. Kept for endpoints not yet updated. */
   isPro: boolean;
 }
 
@@ -16,6 +20,10 @@ export interface RateLimitConfig {
   freeLimit: number;
   proLimit: number;
   windowSeconds: number;
+}
+
+export function isProOrTeam(tier: SubscriptionTier): boolean {
+  return tier === 'pro' || tier === 'team';
 }
 
 // ─── SUPABASE ADMIN CLIENT ───────────────────────────────────────────────────
@@ -50,9 +58,14 @@ export async function verifyAuth(req: VercelRequest): Promise<AuthedUser | null>
     .eq("id", user.id)
     .single();
 
+  const rawStatus = profile?.subscription_status ?? 'free';
+  const tier: SubscriptionTier =
+    rawStatus === 'team' ? 'team' : rawStatus === 'pro' ? 'pro' : 'free';
+
   return {
     id: user.id,
-    isPro: profile?.subscription_status === "pro",
+    tier,
+    isPro: isProOrTeam(tier), // backwards compat
   };
 }
 
@@ -65,10 +78,10 @@ export async function verifyAuth(req: VercelRequest): Promise<AuthedUser | null>
 export async function checkRateLimit(
   endpoint: string,
   userId: string,
-  isPro: boolean,
+  tier: SubscriptionTier,
   config: RateLimitConfig
 ): Promise<{ allowed: boolean; resetAt?: string }> {
-  const limit = isPro ? config.proLimit : config.freeLimit;
+  const limit = isProOrTeam(tier) ? config.proLimit : config.freeLimit;
   const ratelimit = new Ratelimit({
     redis: Redis.fromEnv(),
     limiter: Ratelimit.slidingWindow(limit, `${config.windowSeconds} s`),
@@ -76,7 +89,6 @@ export async function checkRateLimit(
     prefix: `cutsheet:${endpoint}`,
   });
 
-  const tier = isPro ? "pro" : "free";
   const { success, reset } = await ratelimit.limit(`${tier}:${userId}`);
   if (!success) {
     return { allowed: false, resetAt: new Date(reset).toISOString() };

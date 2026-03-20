@@ -1,21 +1,39 @@
-// Stripe checkout via Payment Links (no backend required)
-// Create a Payment Link in Stripe Dashboard → Products → Cutsheet Pro → Payment Link
+// src/lib/stripe.ts — Stripe Payment Link redirects (client-side, no backend needed)
+//
+// Create Payment Links in Stripe Dashboard → Products → [Pro/Team] → Payment Links
 // Set success URL: https://cutsheet.xyz/checkout/success
-// Set cancel URL (after-payment): configure in Stripe Dashboard
+//
+// client_reference_id = userId allows the webhook to identify the user
+// without email matching (more reliable than email lookup).
 
-const PAYMENT_LINK = import.meta.env.VITE_STRIPE_PAYMENT_LINK || ''
+const PRO_LINK = import.meta.env.VITE_STRIPE_PRO_PAYMENT_LINK || '';
+const TEAM_LINK = import.meta.env.VITE_STRIPE_TEAM_PAYMENT_LINK || '';
 
-export const redirectToCheckout = (_userId: string, email: string) => {
-  if (!PAYMENT_LINK) {
-    console.error('VITE_STRIPE_PAYMENT_LINK not set')
-    return
+function buildCheckoutUrl(
+  baseLink: string,
+  userId: string,
+  email: string,
+  varName: string
+): string {
+  if (!baseLink) {
+    console.error(`${varName} is not set in environment variables`);
+    return '';
   }
-
-  // Stripe Payment Links support prefilled_email as a query param
-  const url = new URL(PAYMENT_LINK)
-  if (email) {
-    url.searchParams.set('prefilled_email', email)
-  }
-
-  window.location.href = url.toString()
+  const url = new URL(baseLink);
+  if (email) url.searchParams.set('prefilled_email', email);
+  if (userId) url.searchParams.set('client_reference_id', userId);
+  return url.toString();
 }
+
+export const redirectToProCheckout = (userId: string, email: string): void => {
+  const url = buildCheckoutUrl(PRO_LINK, userId, email, 'VITE_STRIPE_PRO_PAYMENT_LINK');
+  if (url) window.location.href = url;
+};
+
+export const redirectToTeamCheckout = (userId: string, email: string): void => {
+  const url = buildCheckoutUrl(TEAM_LINK, userId, email, 'VITE_STRIPE_TEAM_PAYMENT_LINK');
+  if (url) window.location.href = url;
+};
+
+/** @deprecated Use redirectToProCheckout */
+export const redirectToCheckout = redirectToProCheckout;

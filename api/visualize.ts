@@ -7,7 +7,7 @@ export const maxDuration = 60; // seconds — image gen takes 15-20s
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Anthropic from "@anthropic-ai/sdk";
 import { GoogleGenAI, Modality } from "@google/genai";
-import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
+import { verifyAuth, checkRateLimit, handlePreflight, isProOrTeam } from "./_lib/auth";
 import { safePlatform, safeAdType, safeNiche, validateBase64Size } from "./_lib/validateInput";
 
 const CLAUDE_MODEL = "claude-sonnet-4-20250514";
@@ -27,9 +27,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!user) return res.status(401).json({ error: "Unauthorized" });
 
   // ── Rate limit ────────────────────────────────────────────────────────────
-  const rl = await checkRateLimit("visualize", user.id, user.isPro, RATE);
+  const rl = await checkRateLimit("visualize", user.id, user.tier, RATE);
   if (!rl.allowed) {
     return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
+  }
+
+  // ── Pro/Team gate ─────────────────────────────────────────────────────────
+  if (!isProOrTeam(user.tier)) {
+    return res.status(403).json({ error: "PRO_REQUIRED", feature: "visualize" });
   }
 
   // ── Input validation ─────────────────────────────────────────────────────

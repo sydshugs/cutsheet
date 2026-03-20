@@ -3,7 +3,8 @@
     { "source": "/((?!api/|assets/).*)", "destination": "/index.html" }
   ],
   "functions": {
-    "api/*.ts": { "maxDuration": 60 }
+    "api/*.ts": { "maxDuration": 60 },
+    "api/stripe-webhook.ts": { "maxDuration": 30, "bodyParser": false }
   },
   "headers": [
     {

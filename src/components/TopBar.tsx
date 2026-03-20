@@ -30,7 +30,7 @@ export function TopBar({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const initial = userName ? userName.charAt(0).toUpperCase() : "U";
-  const planLabel = userPlan === "pro" ? "Pro" : "Free";
+  const planLabel = userPlan === "team" ? "Team" : userPlan === "pro" ? "Pro" : "Free";
 
   useEffect(() => {
     function handleMouseDown(e: MouseEvent) {

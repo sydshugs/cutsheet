@@ -24,6 +24,7 @@ interface SidebarProps {
   onMobileClose: () => void;
   userEmail: string;
   isPro: boolean;
+  isTeam?: boolean;
   usageCount: number;
   FREE_LIMIT: number;
   onShowShortcuts?: () => void;
@@ -195,8 +196,8 @@ function NavItemRow({ item, collapsed }: { item: NavItem; collapsed: boolean }) 
 // ─── DESKTOP SIDEBAR ──────────────────────────────────────────────────────────
 
 function DesktopSidebar({
-  userEmail, isPro, usageCount, FREE_LIMIT, onShowShortcuts,
-}: { userEmail: string; isPro: boolean; usageCount: number; FREE_LIMIT: number; onShowShortcuts?: () => void }) {
+  userEmail, isPro, isTeam, usageCount, FREE_LIMIT, onShowShortcuts,
+}: { userEmail: string; isPro: boolean; isTeam?: boolean; usageCount: number; FREE_LIMIT: number; onShowShortcuts?: () => void }) {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -259,7 +260,13 @@ function DesktopSidebar({
 
       {/* Bottom */}
       <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "8px 0 12px", display: "flex", flexDirection: "column", gap: 2 }}>
-        <UsageIndicator usageCount={usageCount} FREE_LIMIT={FREE_LIMIT} isPro={isPro} collapsed={collapsed} />
+        <UsageIndicator
+          usageCount={usageCount}
+          FREE_LIMIT={FREE_LIMIT}
+          isPro={isPro}
+          isTeam={isTeam}
+          collapsed={collapsed}
+        />
 
         {/* Shortcuts hint — only visible when collapsed */}
         {collapsed && onShowShortcuts && (
@@ -436,11 +443,11 @@ function MobileMoreDrawer({ open, onClose }: { open: boolean; onClose: () => voi
 
 // ─── MAIN EXPORT ──────────────────────────────────────────────────────────────
 
-export function Sidebar({ mobileOpen: _mobileOpen, onMobileClose: _onMobileClose, userEmail, isPro, usageCount, FREE_LIMIT, onShowShortcuts }: SidebarProps) {
+export function Sidebar({ mobileOpen: _mobileOpen, onMobileClose: _onMobileClose, userEmail, isPro, isTeam, usageCount, FREE_LIMIT, onShowShortcuts }: SidebarProps) {
   const [moreOpen, setMoreOpen] = useState(false);
   return (
     <>
-      <DesktopSidebar userEmail={userEmail} isPro={isPro} usageCount={usageCount} FREE_LIMIT={FREE_LIMIT} onShowShortcuts={onShowShortcuts} />
+      <DesktopSidebar userEmail={userEmail} isPro={isPro} isTeam={isTeam} usageCount={usageCount} FREE_LIMIT={FREE_LIMIT} onShowShortcuts={onShowShortcuts} />
       <MobileTabBar onMoreClick={() => setMoreOpen(true)} />
       <MobileMoreDrawer open={moreOpen} onClose={() => setMoreOpen(false)} />
     </>

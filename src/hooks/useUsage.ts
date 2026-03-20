@@ -1,20 +1,21 @@
-// useUsage.ts — React hook for usage count and Pro status
+// useUsage.ts — React hook for subscription tier and usage count
 // Syncs subscription_status from Supabase into localStorage on mount + auth changes
 import { useState, useEffect, useCallback } from "react";
 import * as usage from "../utils/usage";
+import type { SubscriptionTier } from "../utils/usage";
 import { supabase } from "../lib/supabase";
 
 export function useUsage() {
   const [count, setCount] = useState(usage.getUsageCount);
-  const [pro, setProState] = useState(usage.isPro);
+  const [tier, setTierState] = useState<SubscriptionTier>(usage.getSubscriptionTier);
 
   const refresh = useCallback(() => {
     setCount(usage.getUsageCount());
-    setProState(usage.isPro());
+    setTierState(usage.getSubscriptionTier());
   }, []);
 
-  // Fetch subscription_status from Supabase and sync to localStorage
-  const syncProFromSupabase = useCallback(async () => {
+  // Sync tier from Supabase profiles table
+  const syncTierFromSupabase = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -25,9 +26,12 @@ export function useUsage() {
         .eq("id", user.id)
         .single();
 
-      const isProInDb = data?.subscription_status === "pro";
-      usage.setPro(isProInDb);
-      setProState(isProInDb);
+      const rawStatus = data?.subscription_status ?? 'free';
+      const newTier: SubscriptionTier =
+        rawStatus === 'team' ? 'team' : rawStatus === 'pro' ? 'pro' : 'free';
+
+      usage.setSubscriptionTier(newTier);
+      setTierState(newTier);
     } catch {
       // Silent — keep localStorage value as fallback
     }
@@ -35,29 +39,32 @@ export function useUsage() {
 
   // Sync on mount
   useEffect(() => {
-    syncProFromSupabase();
-  }, [syncProFromSupabase]);
+    syncTierFromSupabase();
+  }, [syncTierFromSupabase]);
 
   // Sync on auth state changes (login, token refresh, sign out)
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         if (session?.user) {
-          syncProFromSupabase();
+          syncTierFromSupabase();
         } else {
-          // Signed out — clear pro status
-          usage.setPro(false);
-          setProState(false);
+          usage.setSubscriptionTier('free');
+          setTierState('free');
         }
       }
     );
     return () => subscription.unsubscribe();
-  }, [syncProFromSupabase]);
+  }, [syncTierFromSupabase]);
 
   // Listen for cross-tab localStorage changes
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
-      if (e.key === usage.USAGE_KEY || e.key === usage.PRO_KEY) refresh();
+      if (
+        e.key === usage.USAGE_KEY ||
+        e.key === usage.PRO_KEY ||
+        e.key === usage.TIER_KEY
+      ) refresh();
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
@@ -71,18 +78,23 @@ export function useUsage() {
 
   const setPro = useCallback((value: boolean) => {
     usage.setPro(value);
-    setProState(usage.isPro());
+    setTierState(usage.getSubscriptionTier());
   }, []);
+
+  const isPro = tier === 'pro' || tier === 'team';
 
   return {
     usageCount: count,
-    isPro: pro,
+    tier,
+    isPro,
+    isTeam: tier === 'team',
     canAnalyze: usage.canAnalyze(),
     isAtLimit: usage.isAtLimit(),
     increment,
     setPro,
     refresh,
-    syncProFromSupabase,
+    /** @deprecated alias for syncTierFromSupabase */
+    syncProFromSupabase: syncTierFromSupabase,
     FREE_LIMIT: usage.FREE_LIMIT,
   };
 }
