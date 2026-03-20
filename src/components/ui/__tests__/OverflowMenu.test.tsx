@@ -18,7 +18,7 @@ describe('OverflowMenu', () => {
     render(<OverflowMenu items={[{ label: 'Start Over', onClick: vi.fn(), destructive: true }]} />)
     fireEvent.click(screen.getByLabelText('More actions'))
     const item = screen.getByText('Start Over')
-    expect(item.closest('button')?.style.color).toBe('#EF4444')
+    expect(item.closest('button')?.style.color).toBe('rgb(239, 68, 68)')
   })
   it('shows error state and allows retry', () => {
     render(<OverflowMenu items={[{ label: 'Generate Brief', onClick: vi.fn(), error: 'API failed' }]} />)
