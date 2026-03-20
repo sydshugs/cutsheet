@@ -119,7 +119,7 @@ export function ProgressCard({ file, status, onCancel }: ProgressCardProps) {
               display: "flex", alignItems: "center", justifyContent: "center",
               position: "relative",
             }}>
-              <img src="/cutsheet-logo.png" alt="" style={{ width: 16, height: 16 }} />
+              <img src="/cutsheet-logo-clear.png" alt="" style={{ width: 16, height: 16 }} />
               <div style={{
                 position: "absolute", bottom: -1, right: -1,
                 width: 8, height: 8, borderRadius: "50%", background: "#6366f1",
