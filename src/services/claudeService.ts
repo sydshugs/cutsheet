@@ -232,6 +232,17 @@ export interface ComparisonResult {
   remainingWork: string[];
 }
 
+// ─── PLATFORM SCORING (Organic Analyzer) ─────────────────────────────────────
+
+export interface PlatformScore {
+  platform: 'tiktok' | 'reels' | 'shorts';
+  score: number;
+  signals: { label: string; pass: boolean }[];
+  verdict: string;
+  improvements: string[];
+}
+
+
 export async function generateComparison(
   originalScores: { overall: number; hook: number; cta: number; clarity: number; production: number },
   improvedScores: { overall: number; hook: number; cta: number; clarity: number; production: number },

@@ -794,36 +794,35 @@ export function Settings() {
 
               {/* Preferences card */}
               <motion.div style={CARD_STYLE} {...cardAnim(0.08)}>
-                <h2 style={{ fontSize: 14, fontWeight: 600, color: "#f4f4f5" }}>Preferences</h2>
-                <p style={{ fontSize: 12, color: "#71717a", marginTop: 4, marginBottom: 20 }}>
-                  Control what reaches your inbox.
+                <div className="flex items-center justify-between">
+                  <h2 style={{ fontSize: 14, fontWeight: 600, color: "#f4f4f5" }}>Preferences</h2>
+                  <span style={{ fontSize: 10, color: "#52525b", background: "rgba(255,255,255,0.04)", borderRadius: 9999, padding: "2px 8px" }}>
+                    Coming soon
+                  </span>
+                </div>
+                <p style={{ fontSize: 12, color: "#52525b", marginTop: 4, marginBottom: 20 }}>
+                  Email preferences are not yet available.
                 </p>
 
-                <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center justify-between mb-5 opacity-40 pointer-events-none">
                   <div>
                     <p style={{ fontSize: 13, fontWeight: 600, color: "#f4f4f5" }}>Product updates</p>
                     <p style={{ fontSize: 12, color: "#71717a", marginTop: 2 }}>
                       New features and improvements
                     </p>
                   </div>
-                  <Switch checked={productUpdates} onCheckedChange={(v) => handlePrefChange(setProductUpdates, v)} />
+                  <Switch checked={productUpdates} onCheckedChange={(v) => handlePrefChange(setProductUpdates, v)} disabled />
                 </div>
 
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between opacity-40 pointer-events-none">
                   <div>
                     <p style={{ fontSize: 13, fontWeight: 600, color: "#f4f4f5" }}>Weekly digest</p>
                     <p style={{ fontSize: 12, color: "#71717a", marginTop: 2 }}>
                       Your usage summary every Monday
                     </p>
                   </div>
-                  <Switch checked={weeklyDigest} onCheckedChange={(v) => handlePrefChange(setWeeklyDigest, v)} />
+                  <Switch checked={weeklyDigest} onCheckedChange={(v) => handlePrefChange(setWeeklyDigest, v)} disabled />
                 </div>
-
-                {prefSaved && (
-                  <p style={{ fontSize: 12, color: "var(--success)", marginTop: 8 }}>
-                    Saved
-                  </p>
-                )}
               </motion.div>
 
               {/* Ad Intent card */}

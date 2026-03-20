@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Copy, CheckCircle, Wand2, Loader2 } from "lucide-react";
+import { Copy, CheckCircle, Wand2, Loader2, FileText, Bookmark } from "lucide-react";
 import type { BudgetRecommendation, Hashtags, Scene, HookDetail } from "../services/analyzerService";
 import type { EngineBudgetRecommendation } from "../services/budgetService";
 import { getBenchmark, type BenchmarkResult } from "../lib/benchmarks";
@@ -14,13 +14,14 @@ import HistoryPanel from "./HistoryPanel";
 import type { AnalysisRecord } from "../services/historyService";
 import FixItPanel, { type FixItResult } from "./FixItPanel";
 import PredictedPerformanceCard, { type PredictionResult } from "./PredictedPerformanceCard";
+import { CollapsibleSection } from "./ui/CollapsibleSection";
+import { OverflowMenu, type OverflowMenuItem } from "./ui/OverflowMenu";
 
 // Sub-components
 import { MetricBars } from "./scorecard/MetricBars";
 import { HookDetailCard } from "./scorecard/HookDetailCard";
 import { BudgetCard } from "./scorecard/BudgetCard";
 import { ScoreAdaptiveCTA } from "./scorecard/ScoreAdaptiveCTA";
-import { QuickActions } from "./scorecard/QuickActions";
 
 interface Scores {
   hook: number;
@@ -91,6 +92,45 @@ function getScoreBadgeClasses(score: number): string {
   if (score >= 7) return "bg-indigo-500/15 text-indigo-400";
   if (score >= 5) return "bg-amber-500/15 text-amber-400";
   return "bg-red-500/15 text-red-400";
+}
+
+// ─── Improvements list with "Show all" expander ─────────────────────────────
+const MAX_VISIBLE_IMPROVEMENTS = 3;
+
+function ImprovementsList({ improvements, loading }: { improvements: string[]; loading?: boolean }) {
+  const [expanded, setExpanded] = useState(false);
+  const hasMore = improvements.length > MAX_VISIBLE_IMPROVEMENTS;
+  const visible = expanded ? improvements : improvements.slice(0, MAX_VISIBLE_IMPROVEMENTS);
+
+  return (
+    <div id="improvements-section" className="px-5 border-t border-white/5 mt-4 pt-4" style={{ transition: "opacity 200ms", opacity: loading ? 0.4 : 1 }}>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wider m-0">
+          Improve This Ad
+        </h3>
+        {loading && (
+          <div style={{ width: 12, height: 12, border: "2px solid rgba(99,102,241,0.2)", borderTopColor: "#6366f1", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+        )}
+      </div>
+      <ul className="flex flex-col gap-1">
+        {visible.map((item, i) => (
+          <li key={i} className="flex gap-2 items-start py-1.5">
+            <span className="w-1 h-1 rounded-full bg-indigo-400 mt-2 flex-shrink-0" />
+            <span className="text-xs text-zinc-400 leading-relaxed">{item}</span>
+          </li>
+        ))}
+      </ul>
+      {hasMore && (
+        <button
+          type="button"
+          onClick={() => setExpanded(!expanded)}
+          className="text-[11px] text-indigo-400 hover:text-indigo-300 mt-2 cursor-pointer bg-transparent border-none p-0 font-medium transition-colors"
+        >
+          {expanded ? "Show less" : `Show all ${improvements.length} →`}
+        </button>
+      )}
+    </div>
+  );
 }
 
 function formatFileName(fileName: string): string {
@@ -371,26 +411,9 @@ onSelectHistory,
         <HookDetailCard hookDetail={hookDetail} format={format} />
       )}
 
-      {/* Improve This Ad */}
+      {/* Improve This Ad — limited to 3, expandable */}
       {improvements && improvements.length > 0 && (
-        <div id="improvements-section" className="px-5 border-t border-white/5 mt-4 pt-4" style={{ transition: "opacity 200ms", opacity: improvementsLoading ? 0.4 : 1 }}>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wider m-0">
-              Improve This Ad
-            </h3>
-            {improvementsLoading && (
-              <div style={{ width: 12, height: 12, border: "2px solid rgba(99,102,241,0.2)", borderTopColor: "#6366f1", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
-            )}
-          </div>
-          <ul className="flex flex-col gap-1">
-            {improvements.map((item, i) => (
-              <li key={i} className="flex gap-2 items-start py-1.5">
-                <span className="w-1 h-1 rounded-full bg-indigo-400 mt-2 flex-shrink-0" />
-                <span className="text-xs text-zinc-400 leading-relaxed">{item}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <ImprovementsList improvements={improvements} loading={improvementsLoading} />
       )}
 
       {/* Fix It For Me */}
@@ -430,17 +453,24 @@ onSelectHistory,
         </div>
       )}
 
-      {/* Scene Breakdown — video only */}
+      {/* Scene Breakdown — video only, collapsed by default */}
       {format === "video" && scenes && scenes.length > 0 && (
-        <div className="px-5">
-          <SceneBreakdown scenes={scenes} />
+        <div className="px-5 border-t border-white/5 mt-4 pt-4">
+          <CollapsibleSection
+            title="Scene Breakdown"
+            trailing={<span className="text-[10px] text-zinc-500">{scenes.length} scenes</span>}
+          >
+            <SceneBreakdown scenes={scenes} />
+          </CollapsibleSection>
         </div>
       )}
 
-      {/* Static Ad Checks — static only */}
+      {/* Static Ad Checks — static only, collapsed by default */}
       {format === "static" && scores && (
-        <div className="px-5">
-          <StaticAdChecks scores={scores} />
+        <div className="px-5 border-t border-white/5 mt-4 pt-4">
+          <CollapsibleSection title="Ad Quality Checks">
+            <StaticAdChecks scores={scores} />
+          </CollapsibleSection>
         </div>
       )}
 
@@ -458,28 +488,34 @@ onSelectHistory,
         </div>
       )}
 
-      {/* Recommended Hashtags */}
+      {/* Recommended Hashtags — collapsed by default */}
       {hashtags && (hashtags.tiktok.length > 0 || hashtags.meta.length > 0 || hashtags.instagram.length > 0) && (
         <div className="px-5 border-t border-white/5 mt-4 pt-4">
-          <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-3">
-            Recommended Hashtags
-          </p>
-          {([["TikTok", hashtags.tiktok], ["Meta", hashtags.meta], ["Instagram", hashtags.instagram]] as const).map(
-            ([platform, tags]) =>
-              tags.length > 0 && (
-                <div key={platform} className="flex items-center gap-1.5 flex-wrap mb-2">
-                  <span className="text-xs text-zinc-500 w-16 flex-shrink-0">{platform}</span>
-                  {tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="bg-zinc-800 text-zinc-300 text-xs px-2 py-0.5 rounded-md font-mono"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              )
-          )}
+          <CollapsibleSection
+            title="Recommended Hashtags"
+            trailing={
+              <span className="text-[10px] text-zinc-500">
+                {[hashtags.tiktok, hashtags.meta, hashtags.instagram].reduce((n, t) => n + t.length, 0)} tags
+              </span>
+            }
+          >
+            {([["TikTok", hashtags.tiktok], ["Meta", hashtags.meta], ["Instagram", hashtags.instagram]] as const).map(
+              ([platform, tags]) =>
+                tags.length > 0 && (
+                  <div key={platform} className="flex items-center gap-1.5 flex-wrap mb-2">
+                    <span className="text-xs text-zinc-500 w-16 flex-shrink-0">{platform}</span>
+                    {tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="bg-zinc-800 text-zinc-300 text-xs px-2 py-0.5 rounded-md font-mono"
+                      >
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                )
+            )}
+          </CollapsibleSection>
         </div>
       )}
 
@@ -497,26 +533,18 @@ onSelectHistory,
         onGenerateBrief={onGenerateBrief}
       />
 
-      {/* Share button (backward compat) */}
-      {onShare && (
-        <div className="px-5 pb-2" data-html2canvas-ignore="true">
-          <button
-            type="button"
-            onClick={onShare}
-            className="w-full py-2 px-3 bg-transparent border border-white/10 rounded-lg text-zinc-400 text-xs font-medium hover:bg-white/5 hover:text-white hover:border-white/20 transition-all duration-150 cursor-pointer"
-          >
-            Copy Scorecard
-          </button>
+      {/* Quick actions — overflow menu */}
+      {(onGenerateBrief || onAddToSwipeFile || onCheckPolicies) && (
+        <div className="mt-auto px-5 pb-3 flex justify-end">
+          <OverflowMenu
+            items={[
+              ...(onGenerateBrief ? [{ label: "Generate Brief", onClick: onGenerateBrief, icon: <FileText size={14} /> }] : []),
+              ...(onAddToSwipeFile ? [{ label: "Add to Swipe File", onClick: onAddToSwipeFile, icon: <Bookmark size={14} /> }] : []),
+              ...(onCheckPolicies ? [{ label: "Check Policies", onClick: onCheckPolicies, loading: policyLoading, loadingLabel: "Checking..." }] : []),
+            ] satisfies OverflowMenuItem[]}
+          />
         </div>
       )}
-
-      {/* ── Quick actions (extracted) ── */}
-      <QuickActions
-        onCheckPolicies={onCheckPolicies}
-        policyLoading={policyLoading}
-        onGenerateBrief={onGenerateBrief}
-        onAddToSwipeFile={onAddToSwipeFile}
-      />
       </>}
 
       {/* Compare against competitor link */}
