@@ -51,8 +51,8 @@ export function ProgressCard({ file, status, onCancel }: ProgressCardProps) {
 
   return (
     <div style={{ display: "flex", gap: 24, padding: "24px 0", alignItems: "flex-start", maxWidth: 900, margin: "0 auto", width: "100%" }} className="max-md:flex-col">
-      {/* LEFT — Creative preview (large) */}
-      <div style={{ flex: "0 0 55%", minWidth: 0 }} className="max-md:w-full">
+      {/* LEFT — Creative preview (50/50 split) */}
+      <div style={{ flex: "0 0 50%", minWidth: 0 }} className="max-md:w-full">
         <div style={{
           borderRadius: 16,
           border: "1px solid rgba(255,255,255,0.06)",
@@ -111,12 +111,21 @@ export function ProgressCard({ file, status, onCancel }: ProgressCardProps) {
           borderRadius: 16,
           padding: 20,
         }}>
-          {/* Header */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
+          {/* Header with Cutsheet icon */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
             <div style={{
-              width: 8, height: 8, borderRadius: "50%", background: "#6366f1",
-              animation: "pulse-dot 1.5s ease-in-out infinite",
-            }} />
+              width: 28, height: 28, borderRadius: 6,
+              background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.15)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              position: "relative",
+            }}>
+              <img src="/cutsheet-logo.png" alt="" style={{ width: 16, height: 16 }} />
+              <div style={{
+                position: "absolute", bottom: -1, right: -1,
+                width: 8, height: 8, borderRadius: "50%", background: "#6366f1",
+                animation: "pulse-dot 1.5s ease-in-out infinite",
+              }} />
+            </div>
             <span style={{ fontSize: 14, fontWeight: 600, color: "#f4f4f5" }}>Analyzing...</span>
           </div>
 
