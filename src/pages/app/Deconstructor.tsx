@@ -653,7 +653,7 @@ export default function Deconstructor() {
       style={{ minHeight: "calc(100vh - 56px)" }}
     >
       <Helmet>
-        <title>Ad Deconstructor — Cutsheet</title>
+        <title>Ad Breakdown — Cutsheet</title>
         <meta
           name="description"
           content="Paste any ad URL. Get a full teardown: hook analysis, psychological triggers, structure breakdown, and a ready-to-use creative brief."
@@ -674,7 +674,7 @@ export default function Deconstructor() {
             <div className="inline-flex items-center gap-2 mb-4 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20">
               <ExternalLink size={12} className="text-indigo-400" />
               <span className="text-xs font-mono text-indigo-400">
-                Ad Deconstructor
+                Ad Breakdown
               </span>
             </div>
             <h1 className="text-3xl md:text-4xl font-semibold text-white tracking-tight mb-3">

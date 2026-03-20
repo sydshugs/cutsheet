@@ -252,7 +252,7 @@ export default function PolicyCheck() {
   return (
     <div className="flex h-full overflow-hidden" style={{ minHeight: "calc(100vh - 56px)" }}>
       <Helmet>
-        <title>Policy Checker — Cutsheet</title>
+        <title>Ad Policy Check — Cutsheet</title>
         <meta name="description" content="Check your ad creative against Meta and TikTok advertising policies before launch. Catch rejections before they cost you ad spend." />
         <link rel="canonical" href="https://cutsheet.xyz/app/policy-check" />
       </Helmet>
@@ -266,7 +266,7 @@ export default function PolicyCheck() {
           }}
         >
           <ShieldCheck size={16} color="#f59e0b" />
-          <span style={{ fontSize: 13, fontWeight: 600, color: "#f4f4f5" }}>Policy Checker</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "#f4f4f5" }}>Ad Policy Check</span>
           <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.08)" }} />
           <span style={{ fontSize: 12, color: "#52525b" }}>Platform:</span>
           <div style={{ display: "flex", gap: 4 }}>

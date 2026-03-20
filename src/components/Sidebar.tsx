@@ -36,8 +36,8 @@ const ANALYZE: NavItem[] = [
   { label: "Paid Ad",       sublabel: "Meta, TikTok, Google",  path: "/app/paid",          icon: Zap },
   { label: "Organic",       sublabel: "TikTok, Reels, Shorts", path: "/app/organic",       icon: TrendingUp },
   { label: "Display",       sublabel: "Google, affiliate",     path: "/app/display",       icon: Monitor },
-  { label: "Deconstructor", sublabel: "Teardown any ad URL",   path: "/app/deconstructor", icon: ScanSearch },
-  { label: "Policy Checker", sublabel: "Pre-launch policy scan", path: "/app/policy-check", icon: ShieldCheck },
+  { label: "Ad Breakdown",   sublabel: "Teardown any ad URL",   path: "/app/deconstructor", icon: ScanSearch },
+  { label: "Ad Policy Check", sublabel: "Pre-launch policy scan", path: "/app/policy-check", icon: ShieldCheck },
 ];
 
 const COMPARE: NavItem[] = [
