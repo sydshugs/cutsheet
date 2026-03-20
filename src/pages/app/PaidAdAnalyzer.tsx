@@ -2,7 +2,7 @@
 import { Helmet } from 'react-helmet-async';
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useOutletContext, useNavigate, Link } from "react-router-dom";
-import { Zap, RotateCcw, Upload, Sparkles, Lock } from "lucide-react";
+import { RotateCcw, Upload, Sparkles, Lock } from "lucide-react";
 import { Toast } from "../../components/Toast";
 import { AnalyzerView } from "../../components/AnalyzerView";
 import { ScoreCard } from "../../components/ScoreCard";
@@ -47,33 +47,8 @@ import type { AppSharedContext } from "../../components/AppLayout";
 const API_KEY = ""; // Gemini calls are now server-side via /api/analyze
 
 const PLATFORMS = ["all", "Meta", "TikTok", "Google", "YouTube"] as const;
-const FORMATS = ["video", "static"] as const;
 type Platform = (typeof PLATFORMS)[number];
-type Format = (typeof FORMATS)[number];
-
-interface PlatformOption {
-  value: Platform;
-  label: string;
-  enabled: boolean;
-  note: string | null;
-}
-
-const PLATFORM_COMPAT: Record<Format, PlatformOption[]> = {
-  video: [
-    { value: "all",     label: "General",  enabled: true,  note: null },
-    { value: "Meta",    label: "Meta",    enabled: true,  note: null },
-    { value: "TikTok",  label: "TikTok",  enabled: true,  note: null },
-    { value: "Google",  label: "Google",  enabled: true,  note: null },
-    { value: "YouTube", label: "YouTube", enabled: true,  note: null },
-  ],
-  static: [
-    { value: "all",     label: "General",  enabled: true,  note: null },
-    { value: "Meta",    label: "Meta",    enabled: true,  note: null },
-    { value: "TikTok",  label: "TikTok",  enabled: false, note: "Carousel only — uncommon" },
-    { value: "Google",  label: "Google",  enabled: true,  note: null },
-    { value: "YouTube", label: "YouTube", enabled: false, note: "Not available for static ads" },
-  ],
-};
+type Format = "video" | "static";
 
 const STATUS_COPY = {
   uploading: "Reading video...",
@@ -82,97 +57,6 @@ const STATUS_COPY = {
   error: "Something went wrong",
   idle: "",
 } as const;
-
-// ─── INTENT HEADER ────────────────────────────────────────────────────────────
-
-function IntentHeader({
-  platform, setPlatform, format, setFormat,
-  onPlatformReset,
-}: {
-  platform: Platform; setPlatform: (p: Platform) => void;
-  format: Format; setFormat: (f: Format) => void;
-  onPlatformReset?: (oldPlatform: string) => void;
-}) {
-  return (
-    <div
-      style={{
-        padding: "12px 24px",
-        borderBottom: "1px solid rgba(255,255,255,0.06)",
-        display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap",
-        justifyContent: "space-between",
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-        <span style={{ fontSize: 13, color: "#52525b", flexShrink: 0 }}>Analyzing for:</span>
-
-        {/* Platform pills — radio group with accessibility */}
-        <div role="radiogroup" aria-label="Platform selector" style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-          {PLATFORM_COMPAT[format].map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              role="radio"
-              aria-checked={platform === opt.value && opt.enabled}
-              aria-disabled={!opt.enabled || undefined}
-              aria-label={!opt.enabled && opt.note ? `${opt.label} — ${opt.note}` : opt.label}
-              tabIndex={!opt.enabled ? -1 : undefined}
-              onClick={() => { if (opt.enabled) setPlatform(opt.value); }}
-              title={opt.note ?? undefined}
-              style={{
-                height: 30, padding: "0 12px", borderRadius: 9999, fontSize: 13,
-                cursor: opt.enabled ? "pointer" : "not-allowed",
-                opacity: opt.enabled ? 1 : 0.35,
-                textDecoration: opt.enabled ? "none" : "line-through",
-                background: platform === opt.value && opt.enabled ? "#4f46e5" : "rgba(255,255,255,0.04)",
-                border: `1px solid ${platform === opt.value && opt.enabled ? "#4f46e5" : "rgba(255,255,255,0.08)"}`,
-                color: platform === opt.value && opt.enabled ? "white" : "#71717a",
-                fontWeight: platform === opt.value && opt.enabled ? 500 : 400,
-                transition: "all 150ms",
-              }}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Divider */}
-        <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.08)", flexShrink: 0 }} />
-
-        {/* Format pills */}
-        <div role="radiogroup" aria-label="Format selector" style={{ display: "flex", gap: 6 }}>
-          {FORMATS.map((f) => (
-            <button
-              key={f}
-              type="button"
-              role="radio"
-              aria-checked={format === f}
-              onClick={() => {
-                setFormat(f);
-                const currentPlatformEnabled = PLATFORM_COMPAT[f].find(o => o.value === platform)?.enabled;
-                if (!currentPlatformEnabled) {
-                  const oldPlatform = platform;
-                  setPlatform("all");
-                  onPlatformReset?.(oldPlatform);
-                }
-              }}
-              style={{
-                height: 30, padding: "0 12px", borderRadius: 9999, fontSize: 13, cursor: "pointer",
-                background: format === f ? "#4f46e5" : "rgba(255,255,255,0.04)",
-                border: `1px solid ${format === f ? "#4f46e5" : "rgba(255,255,255,0.08)"}`,
-                color: format === f ? "white" : "#71717a",
-                fontWeight: format === f ? 500 : 400,
-                transition: "all 150ms",
-              }}
-            >
-              {f.charAt(0).toUpperCase() + f.slice(1)}
-            </button>
-          ))}
-        </div>
-      </div>
-
-    </div>
-  );
-}
 
 // ─── EMPTY STATE ──────────────────────────────────────────────────────────────
 
@@ -185,9 +69,9 @@ function PaidEmptyState({
   const PILLS = ["Hook strength", "CTA score", "Budget recommendation"];
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px", minHeight: "calc(100vh - 120px)" }}>
-      {/* Icon */}
+      {/* Cutsheet app icon */}
       <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <Zap size={28} color="#6366f1" fill="rgba(99,102,241,0.3)" />
+        <img src="/cutsheet-logo-clear.png" alt="Cutsheet" style={{ width: 36, height: 36 }} />
       </div>
 
       <h2 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>
@@ -238,13 +122,14 @@ export default function PaidAdAnalyzer() {
     })
   }, [])
 
-  // ── Platform / format / second eye state ───────────────────────────────────
-  const [platform, setPlatform] = useState<Platform>("Meta");
+  // ── Platform / format state ─────────────────────────────────────────────────
+  const [platform, setPlatform] = useState<Platform>("all");
   const [format, setFormat] = useState<Format>("video");
-  const [secondEye] = useState(true);
+  // Second Eye + Design Review always on — no toggles
+  const secondEye = true;
+  const staticSecondEye = true;
   const [secondEyeOutput, setSecondEyeOutput] = useState<SecondEyeResult | null>(null);
   const [secondEyeLoading, setSecondEyeLoading] = useState(false);
-  const [staticSecondEye] = useState(true);
   const [staticSecondEyeResult, setStaticSecondEyeResult] = useState<StaticSecondEyeResult | null>(null);
   const [staticSecondEyeLoading, setStaticSecondEyeLoading] = useState(false);
   const [engineBudget, setEngineBudget] = useState<EngineBudgetRecommendation | null>(null);
@@ -285,7 +170,6 @@ export default function PaidAdAnalyzer() {
   const [analysisCompletedAt, setAnalysisCompletedAt] = useState<Date | null>(null);
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
   const [loadedFromHistory, setLoadedFromHistory] = useState<AnalysisRecord | null>(null);
-  const [platformResetToast, setPlatformResetToast] = useState<string | null>(null);
 
   const [improvementsLoading, setImprovementsLoading] = useState(false);
   const [platformImprovements, setPlatformImprovements] = useState<string[] | null>(null);
@@ -437,7 +321,7 @@ export default function PaidAdAnalyzer() {
 
   // Second Eye trigger: fires when analysis completes and secondEye is on
   useEffect(() => {
-    if (status === "complete" && result) {
+    if (status === "complete" && result && secondEye) {
       if (secondEyeLoading) return;
       const run = async () => {
         setSecondEyeLoading(true);
@@ -465,7 +349,7 @@ export default function PaidAdAnalyzer() {
 
   // Static Second Eye trigger: fires when analysis completes and staticSecondEye is on
   useEffect(() => {
-    if (status === "complete" && result && format === "static") {
+    if (status === "complete" && result && staticSecondEye && format === "static") {
       if (staticSecondEyeLoading) return;
       const run = async () => {
         setStaticSecondEyeLoading(true);
@@ -536,20 +420,20 @@ export default function PaidAdAnalyzer() {
     }
   }, [status]);
 
-  // ── Format auto-detection ──────────────────────────────────────────
+  // ── Auto-detect format on file drop (no modal) ──────────────────────────
   const handleFileWithFormatCheck = useCallback((f: File | null) => {
     if (!f) { handleReset(); return; }
 
     const fileIsVideo = f.type.startsWith("video/") || [".mp4", ".mov", ".webm"].some(e => f.name.toLowerCase().endsWith(e));
     const fileIsImage = f.type.startsWith("image/") || [".jpg", ".jpeg", ".png", ".webp"].some(e => f.name.toLowerCase().endsWith(e));
 
-    // Auto-switch format if mismatch detected
-    if (format === "video" && fileIsImage) {
-      setFormat("static");
+    // Auto-switch format silently + show toast
+    if (fileIsImage && format !== "static") {
+      setFormat("static" as Format);
       setInfoToast("Detected static image — analyzing as Static");
       setTimeout(() => setInfoToast(null), 3000);
-    } else if (format === "static" && fileIsVideo) {
-      setFormat("video");
+    } else if (fileIsVideo && format !== "video") {
+      setFormat("video" as Format);
       setInfoToast("Detected video — analyzing as Video");
       setTimeout(() => setInfoToast(null), 3000);
     }
@@ -870,34 +754,11 @@ export default function PaidAdAnalyzer() {
       </div>
       {/* Main content */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        {(status === "complete" || loadedEntry || loadedFromHistory) && (
-          <IntentHeader platform={platform} setPlatform={setPlatform} format={format} setFormat={setFormat} onPlatformReset={(oldPlatform) => setPlatformResetToast(`Platform reset to All — ${oldPlatform} isn't available for static ads`)} />
-        )}
+        {/* IntentHeader removed — platform pills and toggles stripped */}
 
         <div className="flex-1 overflow-auto">
           {status === "idle" && !loadedEntry ? (
             <>
-              {!isPro && (
-                <div style={{ textAlign: "center", fontSize: 12, color: "#52525b", marginTop: 12, marginBottom: -24 }}>
-                  {usageCount} of {FREE_LIMIT} free analyses used
-                </div>
-              )}
-              {!isPro && canAnalyze && usageCount === FREE_LIMIT - 1 && (
-                <div style={{
-                  maxWidth: 520, margin: "16px auto 0", padding: "10px 16px",
-                  background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)",
-                  borderRadius: 8, display: "flex", alignItems: "center", gap: 8,
-                  fontSize: 12, fontFamily: "var(--mono)", color: "var(--warn)",
-                }}>
-                  <span>⚠</span>
-                  <span style={{ flex: 1 }}>
-                    Last free analysis —{" "}
-                    <Link to="/upgrade" style={{ color: "var(--accent)", textDecoration: "underline", textUnderlineOffset: 2 }}>
-                      upgrade for unlimited
-                    </Link>
-                  </span>
-                </div>
-              )}
               <PaidEmptyState
                 onFileSelect={(f) => handleFileWithFormatCheck(f)}
                 onUrlSubmit={async (u) => { setUrlInput(u); await importFromUrl(u); }}
@@ -931,6 +792,70 @@ export default function PaidAdAnalyzer() {
                   historyEntries={historyEntries}
                   onHistoryEntryClick={(entry) => setLoadedEntry(entry)}
                 />
+
+                {/* Visualize It — below creative in left panel (static only) */}
+                {status === "complete" && format === "static" && file && !visualizeOpen && (
+                  <div style={{ padding: "16px 0" }}>
+                    {isPro ? (
+                      <button
+                        type="button"
+                        onClick={handleVisualize}
+                        style={{
+                          width: "100%", height: 44,
+                          background: "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15))",
+                          border: "1px solid rgba(99,102,241,0.35)",
+                          borderRadius: 10,
+                          color: "#818cf8", cursor: "pointer",
+                          display: "flex", flexDirection: "column",
+                          alignItems: "center", justifyContent: "center", gap: 2,
+                          transition: "all 150ms",
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(99,102,241,0.25), rgba(139,92,246,0.2))"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15))"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.35)"; }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <Sparkles size={14} />
+                          <span style={{ fontSize: 13, fontWeight: 600 }}>Visualize It</span>
+                        </div>
+                        <span style={{ fontSize: 10, color: "#6366f1", opacity: 0.75 }}>See what your improved ad could look like</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => onUpgradeRequired("visualize")}
+                        style={{
+                          width: "100%", height: 44,
+                          background: "rgba(255,255,255,0.02)",
+                          border: "1px solid rgba(255,255,255,0.08)",
+                          borderRadius: 10,
+                          color: "#52525b", cursor: "pointer",
+                          display: "flex", flexDirection: "column",
+                          alignItems: "center", justifyContent: "center", gap: 2,
+                          transition: "all 150ms",
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(99,102,241,0.3)"; e.currentTarget.style.color = "#71717a"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#52525b"; }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <Lock size={13} />
+                          <span style={{ fontSize: 13, fontWeight: 600 }}>Visualize It</span>
+                          <span style={{ fontSize: 9, fontWeight: 600, padding: "1px 5px", borderRadius: 4, background: "rgba(99,102,241,0.12)", color: "#818cf8" }}>PRO</span>
+                        </div>
+                        <span style={{ fontSize: 10, opacity: 0.6 }}>Upgrade to see your improved ad</span>
+                      </button>
+                    )}
+                  </div>
+                )}
+                {status === "complete" && format === "static" && (visualizeOpen || visualizeStatus !== "idle") && (
+                  <VisualizePanel
+                    status={visualizeStatus}
+                    result={visualizeResult}
+                    originalImageUrl={thumbnailDataUrl ?? null}
+                    error={visualizeError}
+                    onClose={() => { setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); }}
+                    onAnalyzeVersion={handleReanalyze}
+                  />
+                )}
               </div>
             </div>
           ) : null}
@@ -1000,77 +925,14 @@ export default function PaidAdAnalyzer() {
               />
             </div>
             {/* Second Eye output below scorecard — video only */}
-            {format === "video" && (
+            {format === "video" && secondEye && (
               <SecondEyePanel result={secondEyeOutput} loading={secondEyeLoading} />
             )}
             {/* Static Design Review below scorecard — static only */}
-            {format === "static" && (
+            {format === "static" && staticSecondEye && (
               <StaticSecondEyePanel result={staticSecondEyeResult} loading={staticSecondEyeLoading} />
             )}
-            {/* Visualize It button — static ads only, requires original file */}
-            {format === "static" && file && !visualizeOpen && (
-              <div style={{ padding: "0 16px 12px" }}>
-                {isPro ? (
-                  <button
-                    type="button"
-                    onClick={handleVisualize}
-                    style={{
-                      width: "100%", height: 44,
-                      background: "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15))",
-                      border: "1px solid rgba(99,102,241,0.35)",
-                      borderRadius: 10,
-                      color: "#818cf8", cursor: "pointer",
-                      display: "flex", flexDirection: "column",
-                      alignItems: "center", justifyContent: "center", gap: 2,
-                      transition: "all 150ms",
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(99,102,241,0.25), rgba(139,92,246,0.2))"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15))"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.35)"; }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <Sparkles size={14} />
-                      <span style={{ fontSize: 13, fontWeight: 600 }}>Visualize It</span>
-                    </div>
-                    <span style={{ fontSize: 10, color: "#6366f1", opacity: 0.75 }}>See what your improved ad could look like</span>
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => onUpgradeRequired("visualize")}
-                    style={{
-                      width: "100%", height: 44,
-                      background: "rgba(255,255,255,0.02)",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                      borderRadius: 10,
-                      color: "#52525b", cursor: "pointer",
-                      display: "flex", flexDirection: "column",
-                      alignItems: "center", justifyContent: "center", gap: 2,
-                      transition: "all 150ms",
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(99,102,241,0.3)"; e.currentTarget.style.color = "#71717a"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#52525b"; }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <Lock size={13} />
-                      <span style={{ fontSize: 13, fontWeight: 600 }}>Visualize It</span>
-                      <span style={{ fontSize: 9, fontWeight: 600, padding: "1px 5px", borderRadius: 4, background: "rgba(99,102,241,0.12)", color: "#818cf8" }}>PRO</span>
-                    </div>
-                    <span style={{ fontSize: 10, opacity: 0.6 }}>Upgrade to see your improved ad</span>
-                  </button>
-                )}
-              </div>
-            )}
-            {/* Visualize Panel — slides in below scorecard */}
-            {format === "static" && (visualizeOpen || visualizeStatus !== "idle") && (
-              <VisualizePanel
-                status={visualizeStatus}
-                result={visualizeResult}
-                originalImageUrl={thumbnailDataUrl ?? null}
-                error={visualizeError}
-                onClose={() => { setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); }}
-                onAnalyzeVersion={handleReanalyze}
-              />
-            )}
+            {/* Visualize It moved to left panel (below creative) */}
           </>
 
         )}
@@ -1276,14 +1138,6 @@ export default function PaidAdAnalyzer() {
         <div role="status" aria-live="polite" className="fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-3 bg-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-xl text-xs font-mono text-zinc-300 shadow-lg z-[100]">
           {infoToast}
         </div>
-      )}
-      {platformResetToast && (
-        <Toast
-          message={platformResetToast}
-          variant="info"
-          onClose={() => setPlatformResetToast(null)}
-          duration={3500}
-        />
       )}
     </div>
   );
