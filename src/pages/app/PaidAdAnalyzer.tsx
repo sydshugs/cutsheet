@@ -87,14 +87,10 @@ const STATUS_COPY = {
 
 function IntentHeader({
   platform, setPlatform, format, setFormat,
-  secondEye, setSecondEye,
-  staticSecondEye, setStaticSecondEye,
   onPlatformReset,
 }: {
   platform: Platform; setPlatform: (p: Platform) => void;
   format: Format; setFormat: (f: Format) => void;
-  secondEye: boolean; setSecondEye: (v: boolean) => void;
-  staticSecondEye: boolean; setStaticSecondEye: (v: boolean) => void;
   onPlatformReset?: (oldPlatform: string) => void;
 }) {
   return (
@@ -174,61 +170,6 @@ function IntentHeader({
         </div>
       </div>
 
-      {/* Second Eye toggle — video only */}
-      {format === "video" && (
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }} title="Get a fresh first-impression review from a separate AI model">
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-            <span style={{ fontSize: 13, color: "#a1a1aa" }}>Second Eye</span>
-            <span style={{ fontSize: 11, color: "#52525b" }}>Fresh first-time viewer perspective</span>
-          </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={secondEye}
-            onClick={() => setSecondEye(!secondEye)}
-            style={{
-              width: 40, height: 22, borderRadius: 11, border: "none", cursor: "pointer",
-              background: secondEye ? "#6366f1" : "#27272a",
-              position: "relative", transition: "background 200ms", flexShrink: 0,
-            }}
-          >
-            <div
-              style={{
-                position: "absolute", top: 2, width: 18, height: 18, borderRadius: "50%", background: "white",
-                left: secondEye ? 20 : 2, transition: "left 200ms cubic-bezier(0.16,1,0.3,1)",
-              }}
-            />
-          </button>
-        </div>
-      )}
-
-      {/* Design Review toggle — static only */}
-      {format === "static" && (
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-            <span style={{ fontSize: 13, color: "#a1a1aa" }}>Design Review</span>
-            <span style={{ fontSize: 11, color: "#52525b" }}>Typography & layout check</span>
-          </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={staticSecondEye}
-            onClick={() => setStaticSecondEye(!staticSecondEye)}
-            style={{
-              width: 40, height: 22, borderRadius: 11, border: "none", cursor: "pointer",
-              background: staticSecondEye ? "#6366f1" : "#27272a",
-              position: "relative", transition: "background 200ms", flexShrink: 0,
-            }}
-          >
-            <div
-              style={{
-                position: "absolute", top: 2, width: 18, height: 18, borderRadius: "50%", background: "white",
-                left: staticSecondEye ? 20 : 2, transition: "left 200ms cubic-bezier(0.16,1,0.3,1)",
-              }}
-            />
-          </button>
-        </div>
-      )}
     </div>
   );
 }
@@ -300,10 +241,10 @@ export default function PaidAdAnalyzer() {
   // ── Platform / format / second eye state ───────────────────────────────────
   const [platform, setPlatform] = useState<Platform>("Meta");
   const [format, setFormat] = useState<Format>("video");
-  const [secondEye, setSecondEye] = useState(false);
+  const [secondEye] = useState(true);
   const [secondEyeOutput, setSecondEyeOutput] = useState<SecondEyeResult | null>(null);
   const [secondEyeLoading, setSecondEyeLoading] = useState(false);
-  const [staticSecondEye, setStaticSecondEye] = useState(false);
+  const [staticSecondEye] = useState(true);
   const [staticSecondEyeResult, setStaticSecondEyeResult] = useState<StaticSecondEyeResult | null>(null);
   const [staticSecondEyeLoading, setStaticSecondEyeLoading] = useState(false);
   const [engineBudget, setEngineBudget] = useState<EngineBudgetRecommendation | null>(null);
@@ -496,7 +437,7 @@ export default function PaidAdAnalyzer() {
 
   // Second Eye trigger: fires when analysis completes and secondEye is on
   useEffect(() => {
-    if (status === "complete" && result && secondEye) {
+    if (status === "complete" && result) {
       if (secondEyeLoading) return;
       const run = async () => {
         setSecondEyeLoading(true);
@@ -524,7 +465,7 @@ export default function PaidAdAnalyzer() {
 
   // Static Second Eye trigger: fires when analysis completes and staticSecondEye is on
   useEffect(() => {
-    if (status === "complete" && result && staticSecondEye && format === "static") {
+    if (status === "complete" && result && format === "static") {
       if (staticSecondEyeLoading) return;
       const run = async () => {
         setStaticSecondEyeLoading(true);
@@ -946,7 +887,9 @@ export default function PaidAdAnalyzer() {
       </div>
       {/* Main content */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        <IntentHeader platform={platform} setPlatform={setPlatform} format={format} setFormat={setFormat} secondEye={secondEye} setSecondEye={setSecondEye} staticSecondEye={staticSecondEye} setStaticSecondEye={setStaticSecondEye} onPlatformReset={(oldPlatform) => setPlatformResetToast(`Platform reset to All — ${oldPlatform} isn't available for static ads`)} />
+        {(status === "complete" || loadedEntry || loadedFromHistory) && (
+          <IntentHeader platform={platform} setPlatform={setPlatform} format={format} setFormat={setFormat} onPlatformReset={(oldPlatform) => setPlatformResetToast(`Platform reset to All — ${oldPlatform} isn't available for static ads`)} />
+        )}
 
         <div className="flex-1 overflow-auto">
           {/* Format mismatch error */}
@@ -1102,11 +1045,11 @@ export default function PaidAdAnalyzer() {
               />
             </div>
             {/* Second Eye output below scorecard — video only */}
-            {format === "video" && secondEye && (
+            {format === "video" && (
               <SecondEyePanel result={secondEyeOutput} loading={secondEyeLoading} />
             )}
             {/* Static Design Review below scorecard — static only */}
-            {format === "static" && staticSecondEye && (
+            {format === "static" && (
               <StaticSecondEyePanel result={staticSecondEyeResult} loading={staticSecondEyeLoading} />
             )}
             {/* Visualize It button — static ads only, requires original file */}
