@@ -115,11 +115,55 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ results });
   }
 
-  if (isFree && increment) {
-    // Free tier with increment: must use Ratelimit per feature (sliding window)
+  try {
+    if (isFree && increment) {
+      // Free tier with increment: must use Ratelimit per feature (sliding window)
+      const redis = Redis.fromEnv();
+      for (const feature of features) {
+        const limit = getLimitForTier(user.tier, feature);
+        if (limit === 0) {
+          results[feature] = {
+            allowed: false,
+            reason: "TIER_BLOCKED",
+            feature,
+            tier: user.tier,
+            limit: 0,
+            remaining: 0,
+          };
+          continue;
+        }
+        const ratelimit = new Ratelimit({
+          redis,
+          limiter: Ratelimit.slidingWindow(limit, "86400 s"),
+          prefix: `cutsheet:daily:${feature}`,
+        });
+        const { success, remaining, reset } = await ratelimit.limit(user.id);
+        if (!success) {
+          results[feature] = {
+            allowed: false,
+            reason: "DAILY_LIMIT_REACHED",
+            remaining: 0,
+            limit,
+            resetAt: new Date(reset).toISOString(),
+            feature,
+          };
+        } else {
+          results[feature] = { allowed: true, remaining, limit, feature };
+        }
+      }
+      return res.status(200).json({ results });
+    }
+
+    // ── Pro/Team tier ──────────────────────────────────────────────────────────
     const redis = Redis.fromEnv();
+    const month = getYearMonth();
+
+    // Build Redis keys for all features at once
+    const keysAndFeatures: { key: string; feature: string; limit: number }[] = [];
     for (const feature of features) {
       const limit = getLimitForTier(user.tier, feature);
+
+      // Handle special cases immediately
       if (limit === 0) {
         results[feature] = {
           allowed: false,
@@ -131,113 +175,81 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         };
         continue;
       }
-      const ratelimit = new Ratelimit({
-        redis,
-        limiter: Ratelimit.slidingWindow(limit, "86400 s"),
-        prefix: `cutsheet:daily:${feature}`,
-      });
-      const { success, remaining, reset } = await ratelimit.limit(user.id);
-      if (!success) {
-        results[feature] = {
-          allowed: false,
-          reason: "DAILY_LIMIT_REACHED",
-          remaining: 0,
-          limit,
-          resetAt: new Date(reset).toISOString(),
-          feature,
-        };
-      } else {
-        results[feature] = { allowed: true, remaining, limit, feature };
+      if (limit === Infinity) {
+        results[feature] = { allowed: true, remaining: Infinity, limit: Infinity, feature };
+        continue;
       }
-    }
-    return res.status(200).json({ results });
-  }
 
-  // ── Pro/Team tier ──────────────────────────────────────────────────────────
-  const redis = Redis.fromEnv();
-  const month = getYearMonth();
-
-  // Build Redis keys for all features at once
-  const keysAndFeatures: { key: string; feature: string; limit: number }[] = [];
-  for (const feature of features) {
-    const limit = getLimitForTier(user.tier, feature);
-
-    // Handle special cases immediately
-    if (limit === 0) {
-      results[feature] = {
-        allowed: false,
-        reason: "TIER_BLOCKED",
+      keysAndFeatures.push({
+        key: `credit:${user.tier}:${user.id}:${feature}:${month}`,
         feature,
-        tier: user.tier,
-        limit: 0,
-        remaining: 0,
-      };
-      continue;
-    }
-    if (limit === Infinity) {
-      results[feature] = { allowed: true, remaining: Infinity, limit: Infinity, feature };
-      continue;
-    }
-
-    keysAndFeatures.push({
-      key: `credit:${user.tier}:${user.id}:${feature}:${month}`,
-      feature,
-      limit,
-    });
-  }
-
-  if (keysAndFeatures.length === 0) {
-    return res.status(200).json({ results });
-  }
-
-  if (!increment) {
-    // Check-only: batch read all keys with mget
-    const keys = keysAndFeatures.map((k) => k.key);
-    const values = await redis.mget<(number | null)[]>(...keys);
-
-    for (let i = 0; i < keysAndFeatures.length; i++) {
-      const { feature, limit } = keysAndFeatures[i];
-      const current = values[i] ?? 0;
-      results[feature] = {
-        allowed: current < limit,
-        remaining: Math.max(limit - current, 0),
-        used: current,
         limit,
-        feature,
-      };
+      });
     }
-  } else {
-    // Increment: must do per-feature INCR (no batch atomic increment)
-    for (const { key, feature, limit } of keysAndFeatures) {
-      const current = await redis.incr(key);
-      if (current === 1) {
-        const now = new Date();
-        const nextMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
-        const ttl = Math.floor((nextMonth.getTime() - now.getTime()) / 1000);
-        await redis.expire(key, ttl);
-      }
-      if (current > limit) {
-        await redis.decr(key);
+
+    if (keysAndFeatures.length === 0) {
+      return res.status(200).json({ results });
+    }
+
+    if (!increment) {
+      // Check-only: batch read all keys with mget
+      const keys = keysAndFeatures.map((k) => k.key);
+      const values = await redis.mget<(number | null)[]>(...keys);
+
+      for (let i = 0; i < keysAndFeatures.length; i++) {
+        const { feature, limit } = keysAndFeatures[i];
+        const current = values[i] ?? 0;
         results[feature] = {
-          allowed: false,
-          reason: "MONTHLY_LIMIT_REACHED",
-          remaining: 0,
-          used: limit,
-          limit,
-          feature,
-          tier: user.tier,
-        };
-      } else {
-        results[feature] = {
-          allowed: true,
+          allowed: current < limit,
           remaining: Math.max(limit - current, 0),
           used: current,
           limit,
           feature,
         };
       }
+    } else {
+      // Increment: must do per-feature INCR (no batch atomic increment)
+      for (const { key, feature, limit } of keysAndFeatures) {
+        const current = await redis.incr(key);
+        if (current === 1) {
+          const now = new Date();
+          const nextMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+          const ttl = Math.floor((nextMonth.getTime() - now.getTime()) / 1000);
+          await redis.expire(key, ttl);
+        }
+        if (current > limit) {
+          await redis.decr(key);
+          results[feature] = {
+            allowed: false,
+            reason: "MONTHLY_LIMIT_REACHED",
+            remaining: 0,
+            used: limit,
+            limit,
+            feature,
+            tier: user.tier,
+          };
+        } else {
+          results[feature] = {
+            allowed: true,
+            remaining: Math.max(limit - current, 0),
+            used: current,
+            limit,
+            feature,
+          };
+        }
+      }
     }
-  }
 
-  return res.status(200).json({ results });
+    return res.status(200).json({ results });
+  } catch (err) {
+    console.error("[batch-feature-limits] Redis error:", err);
+    // Fail open — return all features as allowed so the app doesn't lock up
+    for (const feature of features) {
+      if (!results[feature]) {
+        const limit = getLimitForTier(user.tier, feature);
+        results[feature] = { allowed: true, remaining: null, limit, feature };
+      }
+    }
+    return res.status(200).json({ results });
+  }
 }

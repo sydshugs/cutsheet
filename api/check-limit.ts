@@ -33,41 +33,53 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // 3. Usage limit (free tier only)
   if (!isProOrTeam(user.tier)) {
-    const supabase = createClient(
-      (process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL)!,
-      (process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.VITE_SUPABASE_SERVICE_ROLE_KEY)!,
-      { auth: { persistSession: false } }
-    );
+    try {
+      const supabase = createClient(
+        (process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL)!,
+        (process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.VITE_SUPABASE_SERVICE_ROLE_KEY)!,
+        { auth: { persistSession: false } }
+      );
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("analyses_used_this_month, analyses_reset_date")
-      .eq("id", user.id)
-      .single();
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("analyses_used_this_month, analyses_reset_date")
+        .eq("id", user.id)
+        .single();
 
-    const today = new Date().toISOString().split("T")[0];
-    let used = profile?.analyses_used_this_month ?? 0;
-
-    // Reset counter if month has rolled over
-    if (profile?.analyses_reset_date) {
-      const resetDate = new Date(profile.analyses_reset_date);
-      resetDate.setMonth(resetDate.getMonth() + 1);
-      if (today >= resetDate.toISOString().split("T")[0]) {
-        await supabase
-          .from("profiles")
-          .update({ analyses_used_this_month: 0, analyses_reset_date: today })
-          .eq("id", user.id);
-        used = 0;
+      if (profileError) {
+        console.error("[check-limit] Supabase query failed:", profileError.message);
+        // Fail open — allow the request if we can't check usage
+        return res.status(200).json({ allowed: true });
       }
-    }
 
-    if (used >= FREE_ANALYSES_LIMIT) {
-      return res.status(200).json({
-        allowed: false,
-        reason: "LIMIT_REACHED",
-        used,
-        limit: FREE_ANALYSES_LIMIT,
-      });
+      const today = new Date().toISOString().split("T")[0];
+      let used = profile?.analyses_used_this_month ?? 0;
+
+      // Reset counter if month has rolled over
+      if (profile?.analyses_reset_date) {
+        const resetDate = new Date(profile.analyses_reset_date);
+        resetDate.setMonth(resetDate.getMonth() + 1);
+        if (today >= resetDate.toISOString().split("T")[0]) {
+          await supabase
+            .from("profiles")
+            .update({ analyses_used_this_month: 0, analyses_reset_date: today })
+            .eq("id", user.id);
+          used = 0;
+        }
+      }
+
+      if (used >= FREE_ANALYSES_LIMIT) {
+        return res.status(200).json({
+          allowed: false,
+          reason: "LIMIT_REACHED",
+          used,
+          limit: FREE_ANALYSES_LIMIT,
+        });
+      }
+    } catch (err) {
+      console.error("[check-limit] Usage check failed:", err);
+      // Fail open — don't block users because of infra issues
+      return res.status(200).json({ allowed: true });
     }
   }
 

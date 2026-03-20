@@ -70,13 +70,15 @@ export const checkFeatureLimit = async (
 
     if (!response.ok) {
       console.error('[usageService] check-feature-limit error:', response.status);
-      return { allowed: false, remaining: null, limit: null, reason: 'API_ERROR' };
+      // Fail open — don't block the user because of an API error
+      return { allowed: true, remaining: null, limit: null, reason: 'API_ERROR' };
     }
 
     return response.json() as Promise<FeatureLimitResult>;
   } catch (err) {
     console.error('[usageService] checkFeatureLimit fetch failed:', err);
-    return { allowed: false, remaining: null, limit: null, reason: 'NETWORK_ERROR' };
+    // Fail open — don't block the user because of a network error
+    return { allowed: true, remaining: null, limit: null, reason: 'NETWORK_ERROR' };
   }
 };
 
@@ -107,9 +109,9 @@ export const fetchCreditStatus = async (): Promise<Record<string, FeatureLimitRe
 
     if (!response.ok) {
       console.error('[usageService] batch-feature-limits error:', response.status);
-      // Fallback: return all as errored
+      // Fail open — don't lock every feature because of an API error
       return Object.fromEntries(
-        features.map((f) => [f, { allowed: false, remaining: null, limit: null, reason: "API_ERROR" }])
+        features.map((f) => [f, { allowed: true, remaining: null, limit: null, reason: "API_ERROR" }])
       );
     }
 
@@ -117,8 +119,9 @@ export const fetchCreditStatus = async (): Promise<Record<string, FeatureLimitRe
     return results;
   } catch (err) {
     console.error('[usageService] fetchCreditStatus batch fetch failed:', err);
+    // Fail open — don't lock every feature because of a network error
     return Object.fromEntries(
-      features.map((f) => [f, { allowed: false, remaining: null, limit: null, reason: "NETWORK_ERROR" }])
+      features.map((f) => [f, { allowed: true, remaining: null, limit: null, reason: "NETWORK_ERROR" }])
     );
   }
 };

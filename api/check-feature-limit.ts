@@ -105,69 +105,81 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // ── Free tier: daily sliding window ──────────────────────────────────────
   if (!isProOrTeam(user.tier)) {
-    const ratelimit = new Ratelimit({
-      redis: Redis.fromEnv(),
-      limiter: Ratelimit.slidingWindow(limit, "86400 s"),
-      prefix: `cutsheet:daily:${feature}`,
-    });
+    try {
+      const ratelimit = new Ratelimit({
+        redis: Redis.fromEnv(),
+        limiter: Ratelimit.slidingWindow(limit, "86400 s"),
+        prefix: `cutsheet:daily:${feature}`,
+      });
 
-    if (increment) {
-      const { success, remaining, reset } = await ratelimit.limit(user.id);
-      if (!success) {
-        return res.status(200).json({
-          allowed: false,
-          reason: "DAILY_LIMIT_REACHED",
-          remaining: 0,
-          limit,
-          resetAt: new Date(reset).toISOString(),
-        });
+      if (increment) {
+        const { success, remaining, reset } = await ratelimit.limit(user.id);
+        if (!success) {
+          return res.status(200).json({
+            allowed: false,
+            reason: "DAILY_LIMIT_REACHED",
+            remaining: 0,
+            limit,
+            resetAt: new Date(reset).toISOString(),
+          });
+        }
+        return res.status(200).json({ allowed: true, remaining, limit, feature });
       }
-      return res.status(200).json({ allowed: true, remaining, limit, feature });
-    }
 
-    // Check-only (no increment): just report allowed
-    return res.status(200).json({ allowed: true, remaining: null, limit, feature });
+      // Check-only (no increment): just report allowed
+      return res.status(200).json({ allowed: true, remaining: null, limit, feature });
+    } catch (err) {
+      console.error(`[check-feature-limit] Redis error for ${feature}:`, err);
+      // Fail open — don't block users because Redis is down
+      return res.status(200).json({ allowed: true, remaining: null, limit, feature });
+    }
   }
 
   // ── Pro/Team tier: monthly credits via Redis INCR ─────────────────────────
-  const redis = Redis.fromEnv();
-  const month = getYearMonth();
-  const key = `credit:${user.tier}:${user.id}:${feature}:${month}`;
+  try {
+    const redis = Redis.fromEnv();
+    const month = getYearMonth();
+    const key = `credit:${user.tier}:${user.id}:${feature}:${month}`;
 
-  if (increment) {
-    const current = await redis.incr(key);
-    // Set TTL only on first write this month
-    if (current === 1) {
-      await redis.expire(key, getMonthTTL());
-    }
-    if (current > limit) {
-      await redis.decr(key); // undo the over-increment
+    if (increment) {
+      const current = await redis.incr(key);
+      // Set TTL only on first write this month
+      if (current === 1) {
+        await redis.expire(key, getMonthTTL());
+      }
+      if (current > limit) {
+        await redis.decr(key); // undo the over-increment
+        return res.status(200).json({
+          allowed: false,
+          reason: "MONTHLY_LIMIT_REACHED",
+          remaining: 0,
+          used: limit,
+          limit,
+          feature,
+          tier: user.tier,
+        });
+      }
       return res.status(200).json({
-        allowed: false,
-        reason: "MONTHLY_LIMIT_REACHED",
-        remaining: 0,
-        used: limit,
+        allowed: true,
+        remaining: Math.max(limit - current, 0),
+        used: current,
         limit,
         feature,
-        tier: user.tier,
       });
     }
+
+    // Check-only (no increment)
+    const current = (await redis.get<number>(key)) ?? 0;
     return res.status(200).json({
-      allowed: true,
+      allowed: current < limit,
       remaining: Math.max(limit - current, 0),
       used: current,
       limit,
       feature,
     });
+  } catch (err) {
+    console.error(`[check-feature-limit] Redis error for ${feature}:`, err);
+    // Fail open — don't block users because Redis is down
+    return res.status(200).json({ allowed: true, remaining: null, limit, feature });
   }
-
-  // Check-only (no increment)
-  const current = (await redis.get<number>(key)) ?? 0;
-  return res.status(200).json({
-    allowed: current < limit,
-    remaining: Math.max(limit - current, 0),
-    used: current,
-    limit,
-    feature,
-  });
 }
