@@ -1,7 +1,8 @@
 import { useMemo, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import { sanitizeFileName } from "../utils/sanitize";
-import { Copy, FileDown, Share2 } from "lucide-react";
+import { Copy, FileDown, Share2, Anchor, MessageSquare, MousePointerClick, Clapperboard, DollarSign, Hash, Eye, Lightbulb, BarChart3, type LucideIcon } from "lucide-react";
+import { CollapsibleSection } from "./ui/CollapsibleSection";
 
 interface ReportCardsProps {
   file: File | null;
@@ -18,6 +19,37 @@ interface ReportCardsProps {
 
 const JSON_TITLE_RE = /json|scene|raw\s*data|budget\s*recommend/i;
 const JSON_CONTENT_RE = /^\s*[\[{]/;
+
+// Hook-related section titles to merge into a single "Hook analysis" section
+const HOOK_RE = /hook|opening|first.*(second|frame)|attention.*(grab|open)/i;
+
+// Map section titles to Lucide icons (case-insensitive keyword match)
+const SECTION_ICON_MAP: [RegExp, LucideIcon][] = [
+  [/hook|opening|attention/i, Anchor],
+  [/message|clarity|script|copy/i, MessageSquare],
+  [/cta|call.to.action/i, MousePointerClick],
+  [/production|visual|quality|creative/i, Clapperboard],
+  [/budget|spend|cost/i, DollarSign],
+  [/hashtag|tag/i, Hash],
+  [/second.eye|review|audit/i, Eye],
+  [/improve|recommend|suggest|tip/i, Lightbulb],
+  [/score|overall|summary|performance/i, BarChart3],
+];
+
+function getIconForTitle(title: string): LucideIcon | null {
+  for (const [re, Icon] of SECTION_ICON_MAP) {
+    if (re.test(title)) return Icon;
+  }
+  return null;
+}
+
+/** Sentence-case a title: "HOOK STRENGTH ANALYSIS" → "Hook strength analysis" */
+function toSentenceCase(s: string): string {
+  if (!s) return s;
+  // If already mixed case (not ALL CAPS), leave it
+  if (s !== s.toUpperCase()) return s;
+  return s.charAt(0) + s.slice(1).toLowerCase();
+}
 
 function splitMarkdown(md: string): { title: string | null; content: string }[] {
   const sections = md.split(/\n(?=## )/);
@@ -48,6 +80,32 @@ export function ReportCards({ file, markdown, thumbnailDataUrl, onCopy, onExport
   }, [fileUrl]);
 
   const sections = useMemo(() => splitMarkdown(markdown), [markdown]);
+
+  // Merge hook-related sections into a single "Hook analysis" section
+  const mergedSections = useMemo(() => {
+    const hookSections: typeof sections = [];
+    const otherSections: typeof sections = [];
+    for (const s of sections) {
+      if (s.title && HOOK_RE.test(s.title)) {
+        hookSections.push(s);
+      } else {
+        otherSections.push(s);
+      }
+    }
+    if (hookSections.length <= 1) return sections; // Nothing to merge
+    const merged = {
+      title: "Hook analysis",
+      content: hookSections.map(s => {
+        const sub = s.title ? `### ${toSentenceCase(s.title)}\n${s.content}` : s.content;
+        return sub;
+      }).join("\n\n"),
+    };
+    // Insert merged hook section at the position of the first hook section
+    const firstIdx = sections.findIndex(s => s.title && HOOK_RE.test(s.title));
+    const result = [...otherSections];
+    result.splice(Math.min(firstIdx, result.length), 0, merged);
+    return result;
+  }, [sections]);
 
   return (
     <div className="flex flex-col">
@@ -120,18 +178,37 @@ export function ReportCards({ file, markdown, thumbnailDataUrl, onCopy, onExport
       {/* Report section label */}
       <p className="text-xs font-mono uppercase tracking-widest text-indigo-400 mb-4 mt-6">ANALYSIS</p>
 
-      {/* Report cards */}
+      {/* Report cards — collapsible with Lucide icons */}
       <div className="flex flex-col gap-3">
-        {sections.map((section, i) => (
-          <div key={i} className="bg-zinc-900/50 rounded-2xl border border-white/5 p-5">
-            {section.title && (
-              <h3 className="text-sm font-semibold text-white mb-2">{section.title}</h3>
-            )}
-            <div className="text-sm text-zinc-400 leading-relaxed [&_strong]:text-white [&_ul]:list-disc [&_ul]:pl-4 [&_li]:mb-1 [&_code]:bg-white/5 [&_code]:rounded [&_code]:px-1 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:mb-2 [&_p:last-child]:mb-0">
+        {mergedSections.map((section, i) => {
+          const title = section.title ? toSentenceCase(section.title) : null;
+          const SectionIcon = title ? getIconForTitle(title) : null;
+          const content = (
+            <div className="text-sm text-zinc-400 leading-relaxed [&_strong]:text-white [&_ul]:list-disc [&_ul]:pl-4 [&_li]:mb-1 [&_code]:bg-white/5 [&_code]:rounded [&_code]:px-1 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_h3]:text-xs [&_h3]:font-semibold [&_h3]:text-zinc-300 [&_h3]:mt-4 [&_h3]:mb-2">
               <ReactMarkdown>{section.content}</ReactMarkdown>
             </div>
-          </div>
-        ))}
+          );
+
+          if (title) {
+            return (
+              <div key={i} className="bg-zinc-900/50 rounded-2xl border border-white/5 p-5">
+                <CollapsibleSection
+                  title={title}
+                  defaultOpen={i < 3}
+                  icon={SectionIcon ? <SectionIcon size={14} /> : undefined}
+                >
+                  {content}
+                </CollapsibleSection>
+              </div>
+            );
+          }
+
+          return (
+            <div key={i} className="bg-zinc-900/50 rounded-2xl border border-white/5 p-5">
+              {content}
+            </div>
+          );
+        })}
       </div>
 
       {/* Sticky action bar */}
