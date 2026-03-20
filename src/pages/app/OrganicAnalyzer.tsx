@@ -51,44 +51,7 @@ const STATUS_COPY = {
   idle: "",
 };
 
-// ─── INTENT HEADER ────────────────────────────────────────────────────────────
-
-function IntentHeader({
-  platform, setPlatform,
-}: {
-  platform: Platform; setPlatform: (p: Platform) => void;
-}) {
-  return (
-    <div style={{ padding: "12px 24px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", justifyContent: "space-between" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-        <span style={{ fontSize: 13, color: "#71717a", flexShrink: 0 }}>Platform:</span>
-        <div role="radiogroup" aria-label="Platform selector" style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-          {PLATFORMS.map((p) => (
-            <button
-              key={p}
-              type="button"
-              role="radio"
-              aria-checked={platform === p}
-              onClick={() => setPlatform(p)}
-              style={{
-                height: 30, padding: "0 12px", borderRadius: 9999, fontSize: 13, cursor: "pointer",
-                background: platform === p ? "#059669" : "rgba(255,255,255,0.04)",
-                border: `1px solid ${platform === p ? "#059669" : "rgba(255,255,255,0.08)"}`,
-                color: platform === p ? "white" : "#71717a",
-                fontWeight: platform === p ? 500 : 400,
-                transition: "all 150ms",
-              }}
-            >
-              {p === "all" ? "All" : p}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Fresh Viewer Review runs automatically — no toggle needed */}
-    </div>
-  );
-}
+// IntentHeader removed — platform defaults to "all", auto-detected post-analysis
 
 // ─── EMPTY STATE ──────────────────────────────────────────────────────────────
 
@@ -101,8 +64,8 @@ function OrganicEmptyState({
   const PILLS = ["Retention score", "Platform fit", "Shareability"];
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px", minHeight: "calc(100vh - 120px)" }}>
-      <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <TrendingUp size={28} color="#10b981" />
+      <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <img src="/cutsheet-logo.png" alt="Cutsheet" style={{ width: 36, height: 36 }} />
       </div>
       <h2 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>
         Score your organic content
@@ -519,7 +482,7 @@ export default function OrganicAnalyzer() {
       </Helmet>
       {/* Main */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        <IntentHeader platform={platform} setPlatform={setPlatform} />
+        {/* IntentHeader removed — platform defaults to "all" */}
         <div className="flex-1 overflow-auto">
           {/* Image mismatch error */}
           {imageMismatch && (
