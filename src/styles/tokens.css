@@ -9,8 +9,8 @@
 
 /* Cutsheet design tokens — match prototype + landing */
 :root {
-  --bg:          #08080F;
-  --surface:    rgba(255,255,255,0.03);
+  --bg:          #09090b;
+  --surface:    rgba(255,255,255,0.04);
   --surface-el:  rgba(255,255,255,0.05);
   --border:     rgba(255,255,255,0.10);
   --border-strong: rgba(255,255,255,0.18);
@@ -29,10 +29,10 @@
   --warn:       #F59E0B;
   --mono:       'Geist Mono', monospace;
   --sans:       'Geist', sans-serif;
-  --radius-sm:  8px;
-  --radius:     16px;
-  --radius-lg:  20px;
-  --radius-xl:  24px;
+  --radius-sm:  6px;
+  --radius:     12px;
+  --radius-lg:  16px;
+  --radius-xl:  20px;
   --ease-out:   cubic-bezier(0.16, 1, 0.3, 1);
   --spring:     cubic-bezier(0.34, 1.56, 0.64, 1);
 
@@ -76,6 +76,45 @@
   /* ── Bar dimensions ── */
   --bar-height:  6px;
   --bar-radius:  3px;
+
+  /* ── Spacing scale (4px base unit) ── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* ── Button hierarchy ── */
+  --btn-primary-bg: var(--accent);
+  --btn-primary-hover: var(--accent-hover);
+  --btn-ghost-border: var(--border);
+  --btn-ghost-hover-border: var(--border-strong);
+  --btn-text-color: var(--ink-muted);
+
+  /* ── Skeleton shimmer ── */
+  --skeleton-base: rgba(255,255,255,0.04);
+  --skeleton-shine: rgba(255,255,255,0.08);
+
+  /* ── Glass system ── */
+  --glass-card-bg: rgba(24, 24, 27, 0.6);
+  --glass-card-blur: blur(20px) saturate(180%);
+  --glass-card-border: rgba(255, 255, 255, 0.08);
+  --glass-card-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
+  --glass-sheet-bg: rgba(15, 15, 18, 0.85);
+  --glass-sheet-blur: blur(24px) saturate(200%);
+  --glass-sheet-border: rgba(255, 255, 255, 0.1);
+
+  /* ── Ambient glow ── */
+  --ambient-glow: radial-gradient(ellipse at 50% 40%, rgba(99,102,241,0.06) 0%, transparent 60%);
+
+  /* ── Grid cells ── */
+  --grid-cell-bg: rgba(255,255,255,0.04);
+  --grid-cell-border: rgba(255,255,255,0.06);
+  --grid-gap-bg: rgba(255,255,255,0.06);
 }
 
 /* ─── ANIMATIONS ──────────────────────────────────────────── */
