@@ -284,7 +284,6 @@ export function ScoreCard({
           )}
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-zinc-600 font-mono">{modelName}</span>
           <button
             onClick={handleCopy}
             style={{
