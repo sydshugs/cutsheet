@@ -269,6 +269,15 @@ export default function PaidAdAnalyzer() {
     if (status === "complete") setAnalysisCompletedAt(new Date());
   }, [status]);
 
+  // Mobile: scroll to ScoreCard when analysis completes
+  useEffect(() => {
+    if (status === "complete" && window.innerWidth < 768) {
+      setTimeout(() => {
+        scorecardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 150);
+    }
+  }, [status]);
+
   // Compute budget recommendation from engine when analysis completes
   useEffect(() => {
     if (status === "complete" && result?.scores) {
