@@ -7,11 +7,12 @@ import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
 
 export const maxDuration = 120; // video analysis can take 30-60s
 
-// Allow larger request bodies for video base64 (default 4.5MB is too small)
+// Body is now just JSON metadata (file comes via Supabase Storage URL).
+// Keep a modest limit for legacy base64 fallback on small files.
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: "25mb",
+      sizeLimit: "10mb",
     },
   },
 };
@@ -24,6 +25,7 @@ const RATE = { freeLimit: 5, proLimit: 100, windowSeconds: 86400 };
 
 interface AnalyzeRequest {
   base64Data?: string;
+  fileUrl?: string;
   mimeType?: string;
   prompt: string;
   systemInstruction?: string;
@@ -50,6 +52,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const {
       base64Data,
+      fileUrl,
       mimeType,
       prompt,
       systemInstruction,
@@ -62,20 +65,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // ── Validate inputs ───────────────────────────────────────────────────────
     if (!prompt) return res.status(400).json({ error: "prompt is required" });
 
-    // If media is provided, validate it
-    if (base64Data) {
+    // Cap prompt length to prevent abuse
+    if (prompt.length > 50_000) {
+      return res.status(413).json({ error: "prompt exceeds maximum length" });
+    }
+
+    // ── Resolve media: fileUrl (preferred) or legacy base64Data ────────────
+    let resolvedBase64: string | undefined = base64Data;
+    let resolvedMime: string | undefined = mimeType;
+
+    if (fileUrl) {
+      // SSRF protection: only allow Supabase Storage URLs
+      const supabaseUrl = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "";
+      if (!supabaseUrl || !fileUrl.startsWith(supabaseUrl)) {
+        return res.status(400).json({ error: "fileUrl must be a Supabase Storage signed URL" });
+      }
+
+      if (!mimeType) return res.status(400).json({ error: "mimeType is required when fileUrl is provided" });
+
+      // Fetch file from Supabase Storage
+      const fileResponse = await fetch(fileUrl);
+      if (!fileResponse.ok) {
+        return res.status(400).json({ error: `Failed to fetch file from storage: ${fileResponse.status}` });
+      }
+      const buffer = Buffer.from(await fileResponse.arrayBuffer());
+      resolvedBase64 = buffer.toString("base64");
+      resolvedMime = mimeType;
+    } else if (base64Data) {
+      // Legacy path: base64 in body (still works for small files)
       if (!mimeType) return res.status(400).json({ error: "mimeType is required when base64Data is provided" });
-      // Videos can be up to 20MB (≈27MB base64), images up to 5MB
       const isVideo = mimeType.startsWith("video/");
       const maxB64Length = isVideo ? 27_000_000 : 6_700_000;
       if (base64Data.length > maxB64Length) {
         return res.status(413).json({ error: `Media exceeds maximum size (${isVideo ? "20MB" : "5MB"})` });
       }
-    }
-
-    // Cap prompt length to prevent abuse
-    if (prompt.length > 50_000) {
-      return res.status(413).json({ error: "prompt exceeds maximum length" });
     }
 
     // ── Call Gemini ───────────────────────────────────────────────────────────
@@ -99,8 +122,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Build content parts — media + text, or text-only
     const contentParts: Array<{ inlineData: { mimeType: string; data: string } } | { text: string }> = [];
-    if (base64Data && mimeType) {
-      contentParts.push({ inlineData: { mimeType, data: base64Data } });
+    if (resolvedBase64 && resolvedMime) {
+      contentParts.push({ inlineData: { mimeType: resolvedMime, data: resolvedBase64 } });
     }
     contentParts.push({ text: prompt });
 
