@@ -922,6 +922,7 @@ export default function PaidAdAnalyzer() {
                 fixItResult={fixItResult}
                 fixItLoading={fixItLoading}
                 prediction={prediction}
+                onCompare={() => navigate('/app/competitor')}
               />
             </div>
             {/* Second Eye output below scorecard — video only */}
