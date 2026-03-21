@@ -50,7 +50,7 @@ interface MetricBarsProps {
 
 export function MetricBars({ scores, mounted, onCTARewrite, ctaRewrites, ctaLoading }: MetricBarsProps) {
   return (
-    <div className="px-5 py-4 flex flex-col gap-2">
+    <div className="px-5 py-5 flex flex-col gap-4">
       {scoreKeys.map((key) => {
         const value = scores[key];
         const pct = value <= 0 ? 2 : Math.min(100, (value / 10) * 100);

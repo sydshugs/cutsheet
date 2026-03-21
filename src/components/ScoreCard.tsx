@@ -311,7 +311,7 @@ export function ScoreCard({
         borderRadius: "var(--radius-lg)",
         overflow: "hidden",
         position: "relative",
-        margin: "12px 12px 0",
+        margin: "12px 16px 0",
       }}>
         {/* Ambient glow */}
         <div style={{
@@ -326,7 +326,7 @@ export function ScoreCard({
         <div style={{ position: "relative", zIndex: 1 }}>
 
           {/* 1. Score hero \u2014 arc gauge */}
-          <div className="px-5 pt-5 flex flex-col items-center">
+          <div className="px-5 pt-6 pb-2 flex flex-col items-center">
             <div className="relative w-40 h-24 flex-shrink-0">
               <svg viewBox="0 0 120 70" className="w-full h-full" role="img" aria-label={`Overall score: ${scores.overall} out of 10`}>
                 <title>Overall score: {scores.overall} out of 10</title>
@@ -354,7 +354,7 @@ export function ScoreCard({
               {overallLabel}
             </span>
 
-            <div className="mt-2">
+            <div className="mt-3 mb-1">
               <BenchmarkBadge userScore={scores.overall} benchmark={benchmark} />
             </div>
 
@@ -366,7 +366,7 @@ export function ScoreCard({
           </div>
 
           {/* 2. MetricBars \u2014 always visible */}
-          <div style={{ marginTop: 16 }}>
+          <div style={{ marginTop: 8 }}>
             <MetricBars
               scores={scores}
               mounted={mounted}
@@ -377,7 +377,7 @@ export function ScoreCard({
           </div>
 
           {/* 3. ScoreAdaptiveCTA \u2014 always visible */}
-          <div style={{ marginTop: 20, padding: "0 20px" }}>
+          <div style={{ marginTop: 24, padding: "0 20px" }}>
             <ScoreAdaptiveCTA
               overallScore={scores.overall}
               onShare={onShare}
@@ -387,7 +387,7 @@ export function ScoreCard({
 
           {/* 4. Action row \u2014 Fix It / Visualize / Policy Check */}
           <div
-            style={{ marginTop: 12, padding: "0 20px", display: "flex", gap: 8 }}
+            style={{ marginTop: 16, padding: "0 20px", display: "flex", gap: 8 }}
             className="max-md:flex-col"
           >
             {/* Fix It For Me */}
@@ -398,7 +398,7 @@ export function ScoreCard({
                 disabled={fixItLoading}
                 aria-label={scores.overall >= 8 ? "Polish It" : "Fix It For Me"}
                 style={{
-                  flex: 1, height: 36, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                  flex: 1, height: 40, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
                   background: "transparent", border: "1px solid var(--border)",
                   borderRadius: "var(--radius-sm)", cursor: fixItLoading ? "default" : "pointer",
                   fontSize: 12, fontFamily: "var(--sans)", color: "var(--ink-muted)",
@@ -421,7 +421,7 @@ export function ScoreCard({
                   disabled={visualizeLoading}
                   aria-label="Visualize It"
                   style={{
-                    flex: 1, height: 36, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                    flex: 1, height: 40, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
                     background: "transparent", border: "1px solid var(--border)",
                     borderRadius: "var(--radius-sm)", cursor: visualizeLoading ? "default" : "pointer",
                     fontSize: 12, fontFamily: "var(--sans)", color: "var(--ink-muted)",
@@ -439,7 +439,7 @@ export function ScoreCard({
                   onClick={() => onUpgradeRequired?.("visualize")}
                   aria-label="Visualize It \u2014 Pro feature"
                   style={{
-                    flex: 1, height: 36, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                    flex: 1, height: 40, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
                     background: "transparent", border: "1px solid var(--border)",
                     borderRadius: "var(--radius-sm)", cursor: "pointer",
                     fontSize: 12, fontFamily: "var(--sans)", color: "var(--ink-faint)",
@@ -461,7 +461,7 @@ export function ScoreCard({
                 disabled={policyLoading}
                 aria-label="Check Ad Policies"
                 style={{
-                  flex: 1, height: 36, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                  flex: 1, height: 40, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
                   background: "transparent", border: "1px solid var(--border)",
                   borderRadius: "var(--radius-sm)", cursor: policyLoading ? "default" : "pointer",
                   fontSize: 12, fontFamily: "var(--sans)", color: "var(--ink-muted)",
@@ -487,7 +487,7 @@ export function ScoreCard({
 
           {/* 6. Hook Analysis */}
           {hookDetail && (
-            <div style={{ marginTop: 24, padding: "0 20px" }}>
+            <div style={{ marginTop: 32, padding: "0 20px" }}>
               <CollapsibleSection
                 title="Hook Analysis"
                 icon={<Lightbulb size={14} />}
@@ -504,7 +504,7 @@ export function ScoreCard({
 
           {/* 7. Improvements */}
           {improvements && improvements.length > 0 && (
-            <div style={{ marginTop: 8, padding: "0 20px" }}>
+            <div style={{ marginTop: 12, padding: "0 20px" }}>
               <CollapsibleSection
                 title="Improvements"
                 icon={<AlertCircle size={14} />}
@@ -519,7 +519,7 @@ export function ScoreCard({
 
           {/* 8. Predicted Performance */}
           {prediction && (
-            <div style={{ marginTop: 8, padding: "0 20px" }}>
+            <div style={{ marginTop: 12, padding: "0 20px" }}>
               <CollapsibleSection
                 title="Predicted Performance"
                 icon={<TrendingUp size={14} />}
@@ -531,7 +531,7 @@ export function ScoreCard({
 
           {/* 9. Budget Recommendation */}
           {(engineBudget || budget) && (
-            <div style={{ marginTop: 8, padding: "0 20px" }}>
+            <div style={{ marginTop: 12, padding: "0 20px" }}>
               <CollapsibleSection
                 title="Budget Recommendation"
                 icon={<DollarSign size={14} />}
@@ -547,7 +547,7 @@ export function ScoreCard({
 
           {/* 10. Scene Breakdown \u2014 video only */}
           {format === "video" && scenes && scenes.length > 0 && (
-            <div style={{ marginTop: 8, padding: "0 20px" }}>
+            <div style={{ marginTop: 12, padding: "0 20px" }}>
               <CollapsibleSection
                 title="Scene Breakdown"
                 trailing={<span className="text-[10px] text-zinc-500">{scenes.length} scenes</span>}
@@ -559,7 +559,7 @@ export function ScoreCard({
 
           {/* 11. Static Ad Checks \u2014 static only */}
           {format === "static" && scores && (
-            <div style={{ marginTop: 8, padding: "0 20px" }}>
+            <div style={{ marginTop: 12, padding: "0 20px" }}>
               <CollapsibleSection title="Ad Quality Checks">
                 <StaticAdChecks scores={scores} />
               </CollapsibleSection>
@@ -568,7 +568,7 @@ export function ScoreCard({
 
           {/* 12. Hashtags */}
           {hashtags && (hashtags.tiktok.length > 0 || hashtags.meta.length > 0 || hashtags.instagram.length > 0) && (
-            <div style={{ marginTop: 8, padding: "0 20px", paddingBottom: 16 }}>
+            <div style={{ marginTop: 12, padding: "0 20px", paddingBottom: 16 }}>
               <CollapsibleSection
                 title="Recommended Hashtags"
                 trailing={
