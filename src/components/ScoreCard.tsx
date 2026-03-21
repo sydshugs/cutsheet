@@ -3,7 +3,7 @@
 // Pass 1: Consolidated layout — removed Deep Dive, tabs, Compare link. Reordered sections.
 
 import { useEffect, useState } from "react";
-import { Copy, CheckCircle, Wand2, Loader2, AlertCircle, TrendingUp, ArrowUpRight, Share2, RotateCcw, ShieldCheck, FileText, Bookmark, Lightbulb, DollarSign } from "lucide-react";
+import { Copy, CheckCircle, Wand2, Loader2, AlertCircle, TrendingUp, ArrowUpRight, Share2, RotateCcw, ShieldCheck, FileText, Bookmark, Lightbulb, DollarSign, Sparkles, Lock } from "lucide-react";
 import type { BudgetRecommendation, Hashtags, Scene, HookDetail } from "../services/analyzerService";
 import type { EngineBudgetRecommendation } from "../services/budgetService";
 import { getBenchmark, type BenchmarkResult } from "../lib/benchmarks";
@@ -65,6 +65,13 @@ interface ScoreCardProps {
   prediction?: PredictionResult | null;
   // Compare (moved from standalone link)
   onCompare?: () => void;
+  // Visualize It (moved from left panel)
+  onVisualize?: () => void;
+  visualizeLoading?: boolean;
+  canVisualize?: boolean; // false for video format
+  // Pro gate
+  isPro?: boolean;
+  onUpgradeRequired?: (feature: string) => void;
 }
 
 const SCORE_TOOLTIPS: Record<string, string> = {
@@ -179,6 +186,11 @@ export function ScoreCard({
   fixItLoading,
   prediction,
   onCompare,
+  onVisualize,
+  visualizeLoading,
+  canVisualize,
+  isPro,
+  onUpgradeRequired,
 }: ScoreCardProps) {
   const { label: overallLabel, color: overallLabelColor } = getScoreLabel(scores.overall);
   const [mounted, setMounted] = useState(false);
@@ -372,9 +384,95 @@ export function ScoreCard({
             />
           </div>
 
-          {/* 4. Action row \u2014 Pass 2 will populate this */}
-          <div style={{ marginTop: 12, padding: "0 20px" }}>
-            {/* Placeholder: action row buttons will be added in Pass 2 */}
+          {/* 4. Action row \u2014 Fix It / Visualize / Policy Check */}
+          <div
+            style={{ marginTop: 12, padding: "0 20px", display: "flex", gap: 8 }}
+            className="max-md:flex-col"
+          >
+            {/* Fix It For Me */}
+            {onFixIt && (
+              <button
+                type="button"
+                onClick={onFixIt}
+                disabled={fixItLoading}
+                aria-label={scores.overall >= 8 ? "Polish It" : "Fix It For Me"}
+                style={{
+                  flex: 1, height: 36, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                  background: "transparent", border: "1px solid var(--border)",
+                  borderRadius: "var(--radius-sm)", cursor: fixItLoading ? "default" : "pointer",
+                  fontSize: 12, fontFamily: "var(--sans)", color: "var(--ink-muted)",
+                  transition: "all var(--duration-fast)",
+                }}
+                onMouseEnter={(e) => { if (!fixItLoading) { e.currentTarget.style.background = "var(--surface)"; e.currentTarget.style.borderColor = "var(--border-strong)"; }}}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "var(--border)"; }}
+              >
+                {fixItLoading ? <Loader2 size={14} className="animate-spin" /> : <Wand2 size={14} />}
+                {scores.overall >= 8 ? "Polish It" : "Fix It"}
+              </button>
+            )}
+
+            {/* Visualize It */}
+            {canVisualize !== false && (
+              isPro ? (
+                <button
+                  type="button"
+                  onClick={onVisualize}
+                  disabled={visualizeLoading}
+                  aria-label="Visualize It"
+                  style={{
+                    flex: 1, height: 36, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                    background: "transparent", border: "1px solid var(--border)",
+                    borderRadius: "var(--radius-sm)", cursor: visualizeLoading ? "default" : "pointer",
+                    fontSize: 12, fontFamily: "var(--sans)", color: "var(--ink-muted)",
+                    transition: "all var(--duration-fast)",
+                  }}
+                  onMouseEnter={(e) => { if (!visualizeLoading) { e.currentTarget.style.background = "var(--surface)"; e.currentTarget.style.borderColor = "var(--border-strong)"; }}}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "var(--border)"; }}
+                >
+                  {visualizeLoading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                  Visualize
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => onUpgradeRequired?.("visualize")}
+                  aria-label="Visualize It \u2014 Pro feature"
+                  style={{
+                    flex: 1, height: 36, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                    background: "transparent", border: "1px solid var(--border)",
+                    borderRadius: "var(--radius-sm)", cursor: "pointer",
+                    fontSize: 12, fontFamily: "var(--sans)", color: "var(--ink-faint)",
+                    transition: "all var(--duration-fast)",
+                  }}
+                >
+                  <Lock size={12} />
+                  Visualize
+                  <span style={{ fontSize: 9, fontWeight: 600, padding: "1px 5px", borderRadius: 4, background: "var(--accent-subtle)", color: "var(--accent)" }}>PRO</span>
+                </button>
+              )
+            )}
+
+            {/* Policy Check */}
+            {onCheckPolicies && (
+              <button
+                type="button"
+                onClick={onCheckPolicies}
+                disabled={policyLoading}
+                aria-label="Check Ad Policies"
+                style={{
+                  flex: 1, height: 36, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                  background: "transparent", border: "1px solid var(--border)",
+                  borderRadius: "var(--radius-sm)", cursor: policyLoading ? "default" : "pointer",
+                  fontSize: 12, fontFamily: "var(--sans)", color: "var(--ink-muted)",
+                  transition: "all var(--duration-fast)",
+                }}
+                onMouseEnter={(e) => { if (!policyLoading) { e.currentTarget.style.background = "var(--surface)"; e.currentTarget.style.borderColor = "var(--border-strong)"; }}}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "var(--border)"; }}
+              >
+                {policyLoading ? <Loader2 size={14} className="animate-spin" /> : <ShieldCheck size={14} />}
+                Policies
+              </button>
+            )}
           </div>
 
           {/* 5. Fix It result (if already generated) */}
@@ -512,7 +610,6 @@ export function ScoreCard({
                 onClick: () => { onAddToSwipeFile(); setToast("Added to Swipe File"); setTimeout(() => setToast(null), 2500); },
                 icon: <Bookmark size={14} />,
               }] : []),
-              ...(onCheckPolicies ? [{ label: "Check Policies", onClick: onCheckPolicies, loading: policyLoading, loadingLabel: "Checking...", icon: <ShieldCheck size={14} /> }] : []),
               ...(onShare ? [{ label: "Share Score", onClick: onShare, icon: <Share2 size={14} /> }] : []),
               ...(onCompare ? [{ label: "Compare", onClick: onCompare, icon: <ArrowUpRight size={14} /> }] : []),
               ...(onStartOver ? [{ label: "Start Over", onClick: onStartOver, icon: <RotateCcw size={14} />, destructive: true }] : []),
