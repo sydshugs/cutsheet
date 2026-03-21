@@ -14,6 +14,7 @@ import FixItPanel, { type FixItResult } from "./FixItPanel";
 import PredictedPerformanceCard, { type PredictionResult } from "./PredictedPerformanceCard";
 import { CollapsibleSection } from "./ui/CollapsibleSection";
 import { OverflowMenu, type OverflowMenuItem } from "./ui/OverflowMenu";
+import { AlertDialog } from "./ui/AlertDialog";
 
 // Sub-components
 import { MetricBars } from "./scorecard/MetricBars";
@@ -197,6 +198,7 @@ export function ScoreCard({
   const benchmark: BenchmarkResult = getBenchmark(niche ?? '', platform ?? '', format === 'video' ? 'video' : 'static');
   const [relativeTime, setRelativeTime] = useState<string>("");
   const [toast, setToast] = useState<string | null>(null);
+  const [startOverOpen, setStartOverOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -612,7 +614,7 @@ export function ScoreCard({
               }] : []),
               ...(onShare ? [{ label: "Share Score", onClick: onShare, icon: <Share2 size={14} /> }] : []),
               ...(onCompare ? [{ label: "Compare", onClick: onCompare, icon: <ArrowUpRight size={14} /> }] : []),
-              ...(onStartOver ? [{ label: "Start Over", onClick: onStartOver, icon: <RotateCcw size={14} />, destructive: true }] : []),
+              ...(onStartOver ? [{ label: "Start Over", onClick: () => setStartOverOpen(true), icon: <RotateCcw size={14} />, destructive: true }] : []),
             ] satisfies OverflowMenuItem[]}
           />
         </div>
@@ -629,6 +631,18 @@ export function ScoreCard({
           {toast}
         </div>
       )}
+
+      {/* Start Over confirmation dialog */}
+      <AlertDialog
+        open={startOverOpen}
+        onClose={() => setStartOverOpen(false)}
+        onConfirm={() => { if (onStartOver) onStartOver(); }}
+        title="Start over?"
+        description="This will clear your current analysis. You can find it in History."
+        confirmLabel="Start Over"
+        cancelLabel="Cancel"
+        variant="destructive"
+      />
     </div>
   );
 }
