@@ -39,7 +39,7 @@ export function BenchmarkBadge({ userScore, benchmark, className }: BenchmarkBad
   return (
     <div className={`relative inline-flex items-center gap-1 ${className ?? ""}`}>
       <span
-        className="text-[10px] font-medium rounded-full px-2.5 py-0.5 leading-tight"
+        className="text-xs font-medium rounded-full px-3 py-1 leading-tight"
         style={{
           background: style.bg,
           color: style.color,
@@ -57,10 +57,10 @@ export function BenchmarkBadge({ userScore, benchmark, className }: BenchmarkBad
         onBlur={() => setShowTooltip(false)}
         aria-label="Benchmark information"
       >
-        <Info size={12} style={{ color: style.color, opacity: 0.6 }} />
+        <Info size={14} style={{ color: style.color, opacity: 0.6 }} />
         {showTooltip && (
           <div
-            className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 text-[10px] leading-relaxed text-zinc-300 rounded-lg px-3 py-2"
+            className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 text-xs leading-relaxed text-zinc-300 rounded-lg px-3 py-2.5"
             style={{
               background: "rgba(24,24,27,0.95)",
               border: "1px solid rgba(255,255,255,0.1)",

@@ -222,28 +222,30 @@ export default function FixItPanel({ result, onCopyAll }: FixItPanelProps) {
                 Predicted Improvements
               </span>
             </div>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-3">
               {result.predictedImprovements.map((imp, i) => (
                 <div
                   key={i}
-                  className="flex items-center justify-between py-2 px-3 rounded-lg"
+                  className="py-3 px-4 rounded-lg"
                   style={{ background: "var(--surface-el)" }}
                 >
-                  <span className="text-sm font-medium" style={{ color: "var(--ink)" }}>
-                    {imp.dimension}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-mono" style={{ color: "var(--ink-muted)" }}>
-                      {imp.oldScore}
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium" style={{ color: "var(--ink)" }}>
+                      {imp.dimension}
                     </span>
-                    <ArrowUp size={14} style={{ color: "var(--success)" }} />
-                    <span className="text-sm font-mono font-semibold" style={{ color: "var(--success)" }}>
-                      {imp.newScore}
-                    </span>
-                    <span className="text-xs ml-2 hidden sm:inline" style={{ color: "var(--ink-faint)" }}>
-                      {imp.reason}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-mono" style={{ color: "var(--ink-muted)" }}>
+                        {imp.oldScore}
+                      </span>
+                      <ArrowUp size={12} style={{ color: "var(--success)" }} />
+                      <span className="text-sm font-mono font-semibold" style={{ color: "var(--success)" }}>
+                        {imp.newScore}
+                      </span>
+                    </div>
                   </div>
+                  <p className="text-xs leading-relaxed m-0" style={{ color: "var(--ink-faint)" }}>
+                    {imp.reason}
+                  </p>
                 </div>
               ))}
             </div>
