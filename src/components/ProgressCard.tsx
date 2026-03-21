@@ -148,7 +148,7 @@ export function ProgressCard({ file, status, onCancel }: ProgressCardProps) {
                     {isDone ? (
                       <motion.div
                         initial={{ width: 0 }}
-                        animate={{ width: "60%" }}
+                        animate={{ width: "100%" }}
                         transition={{ duration: 0.6, ease: "easeOut" }}
                         style={{ height: "100%", borderRadius: 2, background: "#6366f1" }}
                       />
