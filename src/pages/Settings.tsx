@@ -100,6 +100,7 @@ export function Settings() {
   // Usage + billing state
   const [usage, setUsage] = useState<{ used: number; limit: number; isPro: boolean } | null>(null);
   const [credits, setCredits] = useState<Record<string, FeatureLimitResult> | null>(null);
+  const [totalAnalyses, setTotalAnalyses] = useState<number | null>(null);
 
   // Billing flow state
   const [billingView, setBillingView] = useState<BillingView>("dashboard");
@@ -108,6 +109,13 @@ export function Settings() {
   useEffect(() => {
     getUsageInfo().then(setUsage).catch(() => {});
     fetchCreditStatus().then(setCredits).catch(() => {});
+    // Fetch total analyses count for this user
+    supabase
+      .from("analyses")
+      .select("id", { count: "exact", head: true })
+      .then(({ count }) => {
+        setTotalAnalyses(count ?? 0);
+      });
   }, []);
 
   // Load intent from profile
@@ -925,7 +933,6 @@ export function Settings() {
                     >
                       Total analyses run
                     </p>
-                    {/* TODO: SELECT count(*) FROM analyses WHERE user_id = current_user */}
                     <p
                       style={{
                         fontSize: 24,
@@ -935,7 +942,7 @@ export function Settings() {
                         marginTop: 4,
                       }}
                     >
-                      —
+                      {totalAnalyses !== null ? totalAnalyses.toLocaleString() : "—"}
                     </p>
                   </div>
                 </motion.div>
