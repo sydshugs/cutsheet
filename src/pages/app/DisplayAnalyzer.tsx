@@ -450,65 +450,7 @@ Return JSON only — no prose:
 
       {/* Main content */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        {/* Intent header */}
-        <div style={{
-          padding: "12px 24px",
-          borderBottom: "1px solid rgba(255,255,255,0.06)",
-          display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap",
-        }}>
-          {/* Mode toggle */}
-          <div style={{ display: "flex", gap: 4 }}>
-            {(["single", "suite"] as Mode[]).map((m) => (
-              <button key={m} type="button" onClick={() => setMode(m)}
-                style={{
-                  height: 30, padding: "0 12px", borderRadius: 9999, fontSize: 13, cursor: "pointer",
-                  background: mode === m ? "#6366f1" : "rgba(255,255,255,0.04)",
-                  border: `1px solid ${mode === m ? "#6366f1" : "rgba(255,255,255,0.08)"}`,
-                  color: mode === m ? "white" : "#71717a",
-                  fontWeight: mode === m ? 500 : 400, transition: "all 150ms",
-                }}>
-                {m === "single" ? "Single Ad" : "Ad Suite"}
-              </button>
-            ))}
-          </div>
-          <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.08)", flexShrink: 0 }} />
-          <span style={{ fontSize: 13, color: "#52525b", flexShrink: 0 }}>Network:</span>
-          <div style={{ display: "flex", gap: 6 }}>
-            {NETWORKS.map((n) => (
-              <button
-                key={n.value}
-                type="button"
-                onClick={() => setNetwork(n.value)}
-                style={{
-                  height: 30, padding: "0 12px", borderRadius: 9999, fontSize: 13, cursor: "pointer",
-                  background: network === n.value ? "#6366f1" : "rgba(255,255,255,0.04)",
-                  border: `1px solid ${network === n.value ? "#6366f1" : "rgba(255,255,255,0.08)"}`,
-                  color: network === n.value ? "white" : "#71717a",
-                  fontWeight: network === n.value ? 500 : 400,
-                  transition: "all 150ms",
-                }}
-              >
-                {n.label}
-              </button>
-            ))}
-          </div>
-          {detectedFormat && (
-            <>
-              <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.08)" }} />
-              <span style={{ fontSize: 12, color: "#818cf8", background: "rgba(99,102,241,0.1)", borderRadius: 9999, padding: "3px 10px" }}>
-                {detectedFormat.key} · {detectedFormat.name}{detectedFormat.note ? ` (${detectedFormat.note.replace(/^Matched to \S+ /, '')})` : ''}
-              </span>
-            </>
-          )}
-          {dimensions && !detectedFormat && (
-            <>
-              <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.08)" }} />
-              <span style={{ fontSize: 12, color: "#f59e0b", background: "rgba(245,158,11,0.1)", borderRadius: 9999, padding: "3px 10px" }}>
-                {dimensions.width}×{dimensions.height} · Custom
-              </span>
-            </>
-          )}
-        </div>
+        {/* Intent header removed */}
 
         <div className="flex-1 overflow-auto">
           {/* ── SUITE MODE ──────────────────────────────────────────── */}
@@ -826,11 +768,11 @@ Return JSON only — no prose:
                 </div>
               )}
 
-              {/* ── RESULTS: Two-column layout ─────────────────────── */}
+              {/* ── RESULTS: Stacked layout ─────────────────────── */}
               {status === "complete" && result && dimensions && (
-                <div style={{ display: "flex", gap: 24, marginTop: 8, alignItems: "flex-start" }} className="max-lg:flex-col">
-                  {/* LEFT — Mockup (hero) */}
-                  <div style={{ flex: "0 0 50%", minWidth: 0 }} className="max-lg:w-full">
+                <div style={{ display: "flex", flexDirection: "column", gap: 24, marginTop: 8 }}>
+                  {/* Mockup (hero — full width) */}
+                  <div style={{ width: "100%" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
                       <Eye size={14} color="#71717a" />
                       <span style={{ fontSize: 13, fontWeight: 600, color: "#f4f4f5" }}>Real-life placement preview</span>
@@ -879,8 +821,8 @@ Return JSON only — no prose:
                     </p>
                   </div>
 
-                  {/* RIGHT — Scores + Policy */}
-                  <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 12 }}>
+                  {/* Scores + Policy */}
+                  <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 12 }}>
                     <DisplayScoreCard
                       result={result}
                       format={detectedFormat}

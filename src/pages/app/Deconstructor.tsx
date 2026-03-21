@@ -667,7 +667,7 @@ export default function Deconstructor() {
       {/* Ambient glow */}
       <div className="pointer-events-none fixed top-0 right-0 w-[700px] h-[500px] rounded-full bg-indigo-600/[0.06] blur-[140px]" />
 
-      <div className="relative flex-1 flex flex-col px-4 py-10 md:py-14">
+      <div className="relative flex-1 flex flex-col items-center justify-center px-4 py-10 md:py-14">
         {/* Header — visible until result */}
         {!result && (
           <div className="text-center mb-10">
