@@ -37,22 +37,42 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const adTypeLabel = adType ?? "video";
   const intentLabel = intent ?? "conversion";
 
-  const prompt = `You are a performance marketing analyst who has studied the results of over 100,000 ad campaigns. Based on the following creative scorecard data, generate a performance prediction.
+  const nicheBenchmarks: Record<string, { ctr: string; cvr: string }> = {
+    ecommerce: { ctr: "Meta ecommerce avg CTR: 1.0-1.5%. TikTok: 0.8-1.2%. Google Display: 0.3-0.5%.", cvr: "Ecommerce avg CVR from ad click: 2-4%." },
+    supplements: { ctr: "Supplement ads avg CTR: 1.2-2.0% on Meta (higher due to curiosity hooks). TikTok: 1.0-1.5%.", cvr: "Supplement CVR: 3-6% (impulse category)." },
+    saas: { ctr: "SaaS avg CTR: 0.8-1.2% on Meta. LinkedIn: 0.4-0.8%. Google Display: 0.2-0.4%.", cvr: "SaaS CVR from ad: 1-3% (longer sales cycle)." },
+    fitness: { ctr: "Fitness avg CTR: 1.5-2.5% on Meta (visual category). TikTok: 1.2-2.0%.", cvr: "Fitness CVR: 2-5% depending on price point." },
+    skincare: { ctr: "Skincare avg CTR: 1.2-1.8% on Meta. Instagram: 1.5-2.2% (visual platform).", cvr: "Skincare CVR: 2-4%." },
+    finance: { ctr: "Finance avg CTR: 0.6-1.0% on Meta. Google: 0.5-0.8%.", cvr: "Finance CVR: 1-2% (high consideration)." },
+  };
+
+  const nicheKey = nicheLabel.toLowerCase().replace(/[^a-z]/g, "");
+  const benchmarks = Object.entries(nicheBenchmarks).find(([k]) => nicheKey.includes(k))?.[1];
+  const benchmarkBlock = benchmarks
+    ? `\nINDUSTRY BENCHMARKS:\n${benchmarks.ctr}\n${benchmarks.cvr}`
+    : `\nNote: Use general paid social benchmarks for ${nicheLabel}. Meta avg CTR: 0.9-1.5%. Google Display: 0.3-0.5%.`;
+
+  const systemPrompt = `You are a performance marketing analyst specializing in ${nicheLabel} advertising on ${platformLabel}. You have studied over 100,000 ${platformLabel} ad campaigns in the ${nicheLabel} category. Your predictions are calibrated against real campaign data — you never guess high to flatter the user. You anchor every prediction to specific creative signals and platform benchmarks.`;
+
+  const prompt = `Based on the following creative scorecard, generate a performance prediction for this ${adTypeLabel} ad on ${platformLabel} in the ${nicheLabel} niche.
 
 Scorecard & Analysis:
 ${analysisMarkdown}
 
 Scores: Hook ${scores.hook ?? 0}/10, Clarity ${scores.clarity ?? 0}/10, CTA ${scores.cta ?? 0}/10, Production ${scores.production ?? 0}/10, Overall ${scores.overall ?? 0}/10
 Platform: ${platformLabel} | Format: ${adTypeLabel} | Niche: ${nicheLabel} | Intent: ${intentLabel}
+${benchmarkBlock}
+
+The user's goal is ${intentLabel === "awareness" ? "brand awareness and reach" : intentLabel === "consideration" ? "engagement and click-through rate" : "direct response conversion and ROAS"}.
 
 Predict:
-1. CTR Range — estimated click-through rate for this creative on ${platformLabel}. Include benchmark for ${nicheLabel}/${platformLabel}.
-2. CVR Potential — if this ad drives to a typical ${nicheLabel} landing page.
-3. Hook Retention (video only) — estimated % who watch past 3 seconds.
-4. Fatigue Timeline — at moderate spend ($300-500/day), estimated days before fatigue.
-5. Confidence Level and reason.
-6. Top 2 signals boosting performance.
-7. Top 2 signals limiting performance.
+1. CTR Range — for this specific ${nicheLabel} ${adTypeLabel} ad on ${platformLabel}. Anchor against the benchmarks above.
+2. CVR Potential — if this ad drives to a typical ${nicheLabel} landing page on ${platformLabel}.
+3. Hook Retention (video only) — estimated % who watch past 3 seconds on ${platformLabel}. ${platformLabel === "TikTok" ? "TikTok users decide in 0.5-1s." : platformLabel === "YouTube" ? "YouTube users can skip at 5s." : "Meta feed users decide in 1-2s."}
+4. Fatigue Timeline — at moderate spend ($300-500/day on ${platformLabel}), estimated days before fatigue for ${nicheLabel}.
+5. Confidence Level and reason — cite specific scores and creative signals.
+6. Top 2 signals boosting performance — be specific to what you saw in the analysis.
+7. Top 2 signals limiting performance — reference the weakest scores.
 
 Return as JSON:
 {
@@ -66,13 +86,14 @@ Return as JSON:
   "negativeSignals": [string, string]
 }
 
-Return ONLY valid JSON, no markdown fencing. Frame all predictions as ranges. Be calibrated — avoid extremes unless scores justify them.`;
+Return ONLY valid JSON, no markdown fencing. Be calibrated — a hook score of 3/10 should predict low retention, not moderate.`;
 
   try {
     const client = getClient();
     const message = await client.messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 1024,
+      system: systemPrompt,
       messages: [{ role: "user", content: prompt }],
     });
 
