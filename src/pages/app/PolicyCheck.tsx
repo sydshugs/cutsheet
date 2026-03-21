@@ -258,62 +258,7 @@ export default function PolicyCheck() {
       </Helmet>
 
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        {/* Intent header */}
-        <div
-          style={{
-            padding: "12px 24px", borderBottom: "1px solid rgba(255,255,255,0.06)",
-            display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap",
-          }}
-        >
-          <ShieldCheck size={16} color="#f59e0b" />
-          <span style={{ fontSize: 13, fontWeight: 600, color: "#f4f4f5" }}>Ad Policy Check</span>
-          <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.08)" }} />
-          <span style={{ fontSize: 12, color: "#52525b" }}>Platform:</span>
-          <div style={{ display: "flex", gap: 4 }}>
-            {(["both", "meta", "tiktok"] as Platform[]).map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setPlatform(p)}
-                style={{
-                  height: 28, padding: "0 12px", borderRadius: 9999, fontSize: 12, cursor: "pointer",
-                  background: platform === p ? "rgba(245,158,11,0.15)" : "rgba(255,255,255,0.04)",
-                  border: `1px solid ${platform === p ? "rgba(245,158,11,0.4)" : "rgba(255,255,255,0.08)"}`,
-                  color: platform === p ? "#f59e0b" : "#71717a",
-                  transition: "all 150ms",
-                }}
-              >
-                {p === "both" ? "Meta + TikTok" : p.charAt(0).toUpperCase() + p.slice(1)}
-              </button>
-            ))}
-          </div>
-          <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.08)" }} />
-          <span style={{ fontSize: 12, color: "#52525b" }}>Type:</span>
-          <div style={{ display: "flex", gap: 4 }}>
-            {(["video", "static", "display"] as AdType[]).map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setAdType(t)}
-                style={{
-                  height: 28, padding: "0 12px", borderRadius: 9999, fontSize: 12, cursor: "pointer",
-                  background: adType === t ? "rgba(245,158,11,0.15)" : "rgba(255,255,255,0.04)",
-                  border: `1px solid ${adType === t ? "rgba(245,158,11,0.4)" : "rgba(255,255,255,0.08)"}`,
-                  color: adType === t ? "#f59e0b" : "#71717a",
-                  transition: "all 150ms",
-                }}
-              >
-                {t.charAt(0).toUpperCase() + t.slice(1)}
-              </button>
-            ))}
-          </div>
-          {!isPro && (
-            <>
-              <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.08)" }} />
-              <span style={{ fontSize: 11, color: "#52525b" }}>3 checks / day free</span>
-            </>
-          )}
-        </div>
+        {/* Intent header removed */}
 
         <div className="flex-1 overflow-auto">
           {!result ? (
