@@ -1,7 +1,7 @@
 import { useMemo, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import { sanitizeFileName } from "../utils/sanitize";
-import { Copy, FileDown, Share2, Anchor, MessageSquare, MousePointerClick, Clapperboard, DollarSign, Hash, Eye, Lightbulb, BarChart3, type LucideIcon } from "lucide-react";
+import { Copy, FileDown, Share2, Anchor, MessageSquare, MousePointerClick, Clapperboard, DollarSign, Hash, Eye, Lightbulb, BarChart3, Heart, Layout, Target, Palette, FileText, type LucideIcon } from "lucide-react";
 import { CollapsibleSection } from "./ui/CollapsibleSection";
 
 interface ReportCardsProps {
@@ -26,7 +26,7 @@ const HOOK_RE = /hook|opening|first.*(second|frame)|attention.*(grab|open)/i;
 // Map section titles to Lucide icons (case-insensitive keyword match)
 const SECTION_ICON_MAP: [RegExp, LucideIcon][] = [
   [/hook|opening|attention/i, Anchor],
-  [/message|clarity|script|copy/i, MessageSquare],
+  [/message|clarity|script|copy|messaging/i, MessageSquare],
   [/cta|call.to.action/i, MousePointerClick],
   [/production|visual|quality|creative/i, Clapperboard],
   [/budget|spend|cost/i, DollarSign],
@@ -34,13 +34,20 @@ const SECTION_ICON_MAP: [RegExp, LucideIcon][] = [
   [/second.eye|review|audit/i, Eye],
   [/improve|recommend|suggest|tip/i, Lightbulb],
   [/score|overall|summary|performance/i, BarChart3],
+  [/emotion|sentiment|feeling|tone|impact/i, Heart],
+  [/structure|layout|hierarchy|flow/i, Layout],
+  [/target|audience|persona|demographic/i, Target],
+  [/brand|identity|style|design/i, Palette],
 ];
 
-function getIconForTitle(title: string): LucideIcon | null {
+/** Fallback icon for sections that don't match any pattern */
+const FALLBACK_ICON: LucideIcon = FileText;
+
+function getIconForTitle(title: string): LucideIcon {
   for (const [re, Icon] of SECTION_ICON_MAP) {
     if (re.test(title)) return Icon;
   }
-  return null;
+  return FALLBACK_ICON;
 }
 
 /** Strip emoji characters from a string */
@@ -189,7 +196,7 @@ export function ReportCards({ file, markdown, thumbnailDataUrl, onCopy, onExport
       <div className="flex flex-col gap-3">
         {mergedSections.map((section, i) => {
           const title = section.title ? toSentenceCase(section.title) : null;
-          const SectionIcon = title ? getIconForTitle(title) : null;
+          const SectionIcon = title ? getIconForTitle(title) : FALLBACK_ICON;
           const content = (
             <div className="text-sm text-zinc-400 leading-relaxed [&_strong]:text-white [&_ul]:list-disc [&_ul]:pl-4 [&_li]:mb-1 [&_code]:bg-white/5 [&_code]:rounded [&_code]:px-1 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_h3]:text-xs [&_h3]:font-semibold [&_h3]:text-zinc-300 [&_h3]:mt-4 [&_h3]:mb-2">
               <ReactMarkdown>{section.content}</ReactMarkdown>
@@ -202,7 +209,7 @@ export function ReportCards({ file, markdown, thumbnailDataUrl, onCopy, onExport
                 <CollapsibleSection
                   title={title}
                   defaultOpen={i < 3}
-                  icon={SectionIcon ? <SectionIcon size={14} /> : undefined}
+                  icon={<SectionIcon size={14} />}
                 >
                   {content}
                 </CollapsibleSection>
