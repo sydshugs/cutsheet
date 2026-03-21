@@ -17,8 +17,9 @@ async function getAuthToken(): Promise<string> {
 }
 
 async function callGeminiProxy(params: {
-  base64Data: string;
-  mimeType: string;
+  base64Data?: string;
+  fileUrl?: string;
+  mimeType?: string;
   prompt: string;
   systemInstruction?: string;
   maxOutputTokens?: number;
@@ -360,16 +361,32 @@ export type AnalysisStatus =
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
-function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      resolve(result.split(",")[1]); // strip data:video/mp4;base64,
-    };
-    reader.onerror = () => reject(new Error("Failed to read file"));
-    reader.readAsDataURL(file);
-  });
+/** Upload file to Supabase Storage and return a signed URL (bypasses Vercel 4.5MB body limit). */
+async function uploadToStorage(file: File): Promise<{ fileUrl: string; storagePath: string }> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user?.id) throw new Error("Not authenticated");
+
+  const ext = file.name.split(".").pop() || "bin";
+  const storagePath = `${session.user.id}/${crypto.randomUUID()}.${ext}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("uploads")
+    .upload(storagePath, file, { cacheControl: "3600", upsert: false });
+  if (uploadError) throw new Error(`Storage upload failed: ${uploadError.message}`);
+
+  const { data: signedUrlData, error: urlError } = await supabase.storage
+    .from("uploads")
+    .createSignedUrl(storagePath, 3600);
+  if (urlError || !signedUrlData?.signedUrl) throw new Error("Failed to create signed URL");
+
+  return { fileUrl: signedUrlData.signedUrl, storagePath };
+}
+
+/** Clean up uploaded file from Supabase Storage (best-effort, never throws). */
+async function cleanupStorage(storagePath: string): Promise<void> {
+  try {
+    await supabase.storage.from("uploads").remove([storagePath]);
+  } catch { /* best-effort cleanup */ }
 }
 
 function parseScores(markdown: string): AnalysisResult["scores"] {
@@ -560,10 +577,13 @@ export async function analyzeVideo(
     onStatusChange?.(status, message);
   };
 
+  let storagePath: string | undefined;
+
   try {
-    // 1. Convert file to base64
-    emit("uploading", "Reading video file...");
-    const base64Data = await fileToBase64(file);
+    // 1. Upload file to Supabase Storage (bypasses Vercel 4.5MB body limit)
+    emit("uploading", "Uploading file...");
+    const uploaded = await uploadToStorage(file);
+    storagePath = uploaded.storagePath;
 
     // 2. Build prompt — format-aware
     const isImage = file.type.startsWith("image/");
@@ -576,9 +596,9 @@ export async function analyzeVideo(
     parts.push(basePrompt);
     const prompt = parts.join('\n\n');
 
-    // 3. Call server-side Gemini proxy (key never leaves the server)
+    // 3. Call server-side Gemini proxy with file URL (not base64)
     const markdown = await callGeminiProxy({
-      base64Data,
+      fileUrl: uploaded.fileUrl,
       mimeType: file.type,
       prompt,
       systemInstruction: SYSTEM_PROMPT,
@@ -618,6 +638,9 @@ export async function analyzeVideo(
 
     emit("complete");
 
+    // Clean up the uploaded file from storage
+    if (storagePath) cleanupStorage(storagePath);
+
     return {
       markdown,
       scores,
@@ -630,6 +653,8 @@ export async function analyzeVideo(
       fileName: file.name,
     };
   } catch (err) {
+    // Clean up on failure too
+    if (storagePath) cleanupStorage(storagePath);
     emit("error");
     if (err instanceof Error) {
       throw new Error(`Analysis failed: ${err.message}`);
