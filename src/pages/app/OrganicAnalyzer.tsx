@@ -64,8 +64,8 @@ function OrganicEmptyState({
   const PILLS = ["Retention score", "Platform fit", "Shareability"];
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px", minHeight: "calc(100vh - 120px)" }}>
-      <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <img src="/cutsheet-logo-clear.png" alt="Cutsheet" style={{ width: 36, height: 36 }} />
+      <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <TrendingUp size={28} color="#10b981" />
       </div>
       <h2 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>
         Score your organic content

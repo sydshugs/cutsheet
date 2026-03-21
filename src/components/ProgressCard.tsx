@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Zap } from "lucide-react";
 import { useThumbnail } from "../hooks/useThumbnail";
-
 import { sanitizeFileName } from "../utils/sanitize";
 
 interface ProgressCardProps {
@@ -127,7 +127,7 @@ export function ProgressCard({ file, status, onCancel }: ProgressCardProps) {
               background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)",
               display: "flex", alignItems: "center", justifyContent: "center",
             }}>
-              <img src="/cutsheet-logo-clear.png" alt="" style={{ width: 32, height: 32 }} />
+              <Zap size={28} color="#6366f1" />
             </div>
           </div>
 
