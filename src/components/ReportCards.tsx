@@ -43,12 +43,19 @@ function getIconForTitle(title: string): LucideIcon | null {
   return null;
 }
 
+/** Strip emoji characters from a string */
+function stripEmoji(s: string): string {
+  return s.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}\u200d\ufe0f]/gu, "").trim();
+}
+
 /** Sentence-case a title: "HOOK STRENGTH ANALYSIS" → "Hook strength analysis" */
 function toSentenceCase(s: string): string {
   if (!s) return s;
+  const clean = stripEmoji(s);
+  if (!clean) return s;
   // If already mixed case (not ALL CAPS), leave it
-  if (s !== s.toUpperCase()) return s;
-  return s.charAt(0) + s.slice(1).toLowerCase();
+  if (clean !== clean.toUpperCase()) return clean;
+  return clean.charAt(0) + clean.slice(1).toLowerCase();
 }
 
 function splitMarkdown(md: string): { title: string | null; content: string }[] {

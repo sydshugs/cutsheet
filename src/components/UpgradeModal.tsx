@@ -10,41 +10,34 @@ interface UpgradeModalProps {
   t?: unknown; // backwards compat — unused
 }
 
-const UPGRADE_MESSAGES: Record<string, { headline: string; body: string; icon: string }> = {
+const UPGRADE_MESSAGES: Record<string, { headline: string; body: string }> = {
   visualize: {
     headline: "Your AI Art Director awaits",
-    body: "See exactly what your improved ad looks like — before you spend a day redesigning. Upgrade to Pro for 10 Visualize credits/month.",
-    icon: "🎨",
+    body: "See exactly what your improved ad looks like \u2014 before you spend a day redesigning. Upgrade to Pro for 10 Visualize credits/month.",
   },
   analyze: {
     headline: "You've hit today's analysis limit",
-    body: "Upgrade to Pro for unlimited analyses — score as many creatives as you need, any time.",
-    icon: "✨",
+    body: "Upgrade to Pro for unlimited analyses \u2014 score as many creatives as you need, any time.",
   },
   script: {
     headline: "Write your next winning ad",
     body: "Generate platform-optimized scripts and score them before you film. Upgrade to Pro for 10 scripts/month.",
-    icon: "✍️",
   },
   fixIt: {
     headline: "Fix it before you spend",
     body: "Let AI rewrite your ad to directly address every weakness in the scorecard. Upgrade to Pro for 20 Fix It credits/month.",
-    icon: "🛠️",
   },
   deconstruct: {
     headline: "Tear down any winning ad",
     body: "Paste any URL from Meta Ad Library, TikTok Creative Center, or YouTube and get a full teardown. Upgrade to Pro for 20/month.",
-    icon: "🔍",
   },
   policyCheck: {
     headline: "Check before you launch",
     body: "Scan your creative against Meta and TikTok policies before you submit. Upgrade to Pro for 30 policy checks/month.",
-    icon: "🛡️",
   },
   brief: {
     headline: "Brief your next creative",
     body: "Reverse-engineer a production-ready brief from any high-scoring ad. Upgrade to Pro for 20 briefs/month.",
-    icon: "📋",
   },
 };
 
@@ -110,19 +103,15 @@ export function UpgradeModal({ onClose, featureKey }: UpgradeModalProps) {
 
         {/* Icon + headline */}
         <div className="flex flex-col items-center gap-3 text-center pt-2">
-          {msg.icon ? (
-            <span className="text-3xl">{msg.icon}</span>
-          ) : (
-            <div
-              className="w-12 h-12 rounded-full flex items-center justify-center"
-              style={{
-                background: "rgba(99,102,241,0.12)",
-                border: "1px solid rgba(99,102,241,0.2)",
-              }}
-            >
-              <Sparkles size={22} style={{ color: "#818cf8" }} />
-            </div>
-          )}
+          <div
+            className="w-12 h-12 rounded-full flex items-center justify-center"
+            style={{
+              background: "rgba(99,102,241,0.12)",
+              border: "1px solid rgba(99,102,241,0.2)",
+            }}
+          >
+            <Sparkles size={22} style={{ color: "#818cf8" }} />
+          </div>
           <h2 id="upgrade-modal-title" className="text-[18px] font-semibold" style={{ color: "#f4f4f5" }}>
             {msg.headline}
           </h2>
