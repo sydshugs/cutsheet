@@ -111,25 +111,38 @@ export function ProgressCard({ file, status, onCancel }: ProgressCardProps) {
           borderRadius: 16,
           padding: 20,
         }}>
-          {/* Header */}
+          {/* Header with Cutsheet icon */}
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
-            <span style={{ fontSize: 14, fontWeight: 600, color: "#f4f4f5" }}>Analyzing...</span>
-          </div>
-
-          {/* Score placeholder with Cutsheet logo */}
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
             <div style={{
-              width: 88, height: 88, borderRadius: "50%",
-              background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)",
+              width: 28, height: 28, borderRadius: 6,
+              background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.15)",
               display: "flex", alignItems: "center", justifyContent: "center",
               position: "relative",
             }}>
-              <img src="/cutsheet-logo-clear.png" alt="" style={{ width: 32, height: 32 }} />
+              <img src="/cutsheet-logo-clear.png" alt="" style={{ width: 16, height: 16 }} />
               <div style={{
-                position: "absolute", bottom: 4, right: 4,
-                width: 10, height: 10, borderRadius: "50%", background: "var(--accent)",
+                position: "absolute", bottom: -1, right: -1,
+                width: 8, height: 8, borderRadius: "50%", background: "#6366f1",
                 animation: "pulse-dot 1.5s ease-in-out infinite",
               }} />
+            </div>
+            <span style={{ fontSize: 14, fontWeight: 600, color: "#f4f4f5" }}>Analyzing...</span>
+          </div>
+
+          {/* Logo placeholder */}
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
+            <div style={{
+              width: 88, height: 88, borderRadius: "50%",
+              background: "rgba(255,255,255,0.03)",
+              border: "1px solid rgba(255,255,255,0.06)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              overflow: "hidden",
+            }}>
+              <img
+                src="/logo/cutsheet_Logo.png"
+                alt="Cutsheet"
+                style={{ width: 52, height: 52, objectFit: "contain", opacity: 0.5 }}
+              />
             </div>
           </div>
 
