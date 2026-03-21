@@ -12,7 +12,7 @@ import { checkFeatureCredit } from "./_lib/creditCheck";
 import { safePlatform, safeAdType, safeNiche, validateBase64Size } from "./_lib/validateInput";
 
 const CLAUDE_MODEL = "claude-sonnet-4-20250514";
-const GEMINI_IMAGE_MODEL = "gemini-2.0-flash-preview-image-generation";
+const GEMINI_IMAGE_MODEL = "gemini-2.5-flash-image";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handlePreflight(req, res)) return;
@@ -145,8 +145,7 @@ Return JSON only — no prose, no preamble:
       contents: [{ role: "user", parts: [{ text: imageGenPrompt }] }],
       config: {
         responseModalities: [Modality.IMAGE, Modality.TEXT],
-        numberOfImages: 1,
-      } as Record<string, unknown>,
+      },
     });
 
     // Extract image from response parts
