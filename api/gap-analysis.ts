@@ -35,8 +35,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: "yourScores and competitorScores are required" });
   }
 
-  const prompt = `You are a senior performance marketing strategist.
-You have just scored two ad creatives head-to-head.
+  const systemPrompt = `You are a competitive intelligence analyst for performance marketing. You don't sugarcoat — if the user's ad is losing, say so clearly. Your action plan items must be specific and steal-worthy: not "improve your hook" but "use the competitor's curiosity-gap hook pattern with your own product angle". Every insight must reference specific scores.`;
+
+  const prompt = `You have just scored two ad creatives head-to-head.
 
 ${userContext || ""}
 ${sessionMemory ? `\n${sessionMemory}\nFactor in the user's historical score trends when assessing competitive position.\n` : ""}
@@ -109,6 +110,7 @@ Rules:
   const response = await client.messages.create({
     model: CLAUDE_MODEL,
     max_tokens: 1500,
+    system: systemPrompt,
     messages: [{ role: "user", content: prompt }],
   });
 

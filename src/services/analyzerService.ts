@@ -686,25 +686,38 @@ export function copyToClipboard(text: string): Promise<void> {
 export async function compareAnalyses(
   markdownA: string,
   markdownB: string,
-  _apiKey: string
+  _apiKey: string,
+  platform?: string,
+  niche?: string,
 ): Promise<string> {
-  const prompt = `You are a performance marketing creative analyst. Two video ad analyses are provided below.
+  const platformContext = platform && platform !== "all"
+    ? `Both ads are evaluated for ${platform} performance. Frame all comparisons in terms of what works on ${platform} specifically.`
+    : "Compare these ads on general performance marketing criteria.";
+
+  const nicheContext = niche
+    ? `Both ads are in the ${niche} niche. Reference ${niche}-specific audience expectations and conversion patterns.`
+    : "";
+
+  const prompt = `You are a senior performance creative strategist comparing two ad creatives head-to-head.
+
+${platformContext}
+${nicheContext}
 
 Given these two ad analyses, which creative is stronger and why? Be direct. Give a verdict, key differences, and one recommendation for each.
 
 Format your response exactly as:
 
 ## VERDICT
-State clearly which ad is stronger and why in 2–3 sentences.
+State clearly which ad is stronger and why in 2–3 sentences.${platform ? ` Reference ${platform}-specific performance factors.` : ""}
 
 ## KEY DIFFERENCES
-- [3–5 bullet points comparing the two ads head to head]
+- [3–5 bullet points comparing the two ads head to head${platform ? `, evaluated against ${platform} best practices` : ""}]
 
 ## RECOMMENDATION FOR AD A
-One specific, actionable recommendation.
+One specific, actionable recommendation.${niche ? ` Tailored to ${niche} audience expectations.` : ""}
 
 ## RECOMMENDATION FOR AD B
-One specific, actionable recommendation.
+One specific, actionable recommendation.${niche ? ` Tailored to ${niche} audience expectations.` : ""}
 
 ---
 
@@ -724,30 +737,44 @@ ${markdownB}`;
 
 export async function generateBrief(
   analysisMarkdown: string,
-  _apiKey: string
+  _apiKey: string,
+  platform?: string,
+  niche?: string,
+  scores?: { hook: number; clarity: number; cta: number; production: number; overall: number } | null,
 ): Promise<string> {
-  const prompt = `Based on this video ad analysis, write a creative brief for the next iteration of this ad. Structure it exactly like this:
+  const weakDims = scores
+    ? Object.entries(scores)
+        .filter(([k]) => ["hook", "clarity", "cta", "production"].includes(k))
+        .sort(([, a], [, b]) => a - b)
+        .slice(0, 2)
+        .map(([k, v]) => `${k} (${v}/10)`)
+    : [];
+
+  const prompt = `Based on this ${platform ?? "video"} ad analysis${niche ? ` in the ${niche} niche` : ""}, write a creative brief for the next iteration.
+${weakDims.length ? `\nThe weakest areas to address: ${weakDims.join(", ")}.\n` : ""}
+${platform ? `The brief must be optimized for ${platform} — use ${platform}-specific format, pacing, and copy guidance.\n` : ""}
+Structure it exactly like this:
 
 ## Creative Brief
 
-**Objective:** One sentence on what this ad should achieve.
+**Objective:** One sentence on what this ad should achieve${scores ? ` (current overall: ${scores.overall}/10)` : ""}.
 
-**Target Audience:** Who this is for, what they care about, what their pain point is.
+**Target Audience:** Who this is for, what they care about, what their pain point is${niche ? ` — specific to ${niche}` : ""}.
 
-**Hook Direction:** 2-3 hook concepts with the first 3 seconds described for each.
+**Hook Direction:** 2-3 hook concepts${platform ? ` optimized for ${platform}` : ""} with the first 3 seconds described for each.${weakDims.some(d => d.includes("hook")) ? " The current hook is weak — make these significantly stronger." : ""}
 
-**Format:** [UGC / Talking head / Lifestyle / Animation / Other] — and why this format fits the audience.
+**Format:** [UGC / Talking head / Lifestyle / Animation / Other] — and why this format fits the audience${platform ? ` on ${platform}` : ""}.
 
 **Key Message:** The single most important thing the viewer should feel or understand.
 
-**Proof Points:** What evidence or credibility to include.
+**Proof Points:** What evidence or credibility to include${niche ? ` that resonates in ${niche}` : ""}.
 
-**CTA:** Exact CTA copy + placement recommendation.
+**CTA:** Exact CTA copy + placement recommendation${platform ? ` following ${platform} best practices` : ""}.${weakDims.some(d => d.includes("cta")) ? " The current CTA is weak — make this dramatically more compelling." : ""}
 
 **Do:** 3 things the creative must include or achieve.
 **Don't:** 3 things to avoid based on weaknesses in the current ad.
 
-Be specific. No generic advice. Every line should be actionable.
+Be specific. No generic advice. Every line should be actionable${niche ? ` for ${niche}` : ""}.
 
 ---
 
@@ -756,7 +783,7 @@ ${analysisMarkdown}`;
 
   return callGeminiProxy({
     prompt,
-    systemInstruction: "You are a senior creative strategist. You write tight, actionable creative briefs that creative teams can execute immediately.",
+    systemInstruction: `You are a senior creative strategist specializing in ${niche ?? "performance marketing"}${platform ? ` on ${platform}` : ""}. You write tight, actionable creative briefs that creative teams can execute immediately. Your briefs are specific to the ad analyzed — not generic templates.`,
     maxOutputTokens: 2048,
     temperature: 0.6,
   });

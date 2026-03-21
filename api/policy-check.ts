@@ -92,9 +92,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const genai = new GoogleGenerativeAI(geminiKey);
         const model = genai.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-        const visualScanPrompt = `Analyze this ad creative for potential advertising policy violations. Look specifically for:
-- Any text or visual claims that could be considered misleading
-- Before/after imagery
+        const nicheRiskContext: Record<string, string> = {
+          supplements: "HIGH-RISK NICHE: Supplements. Pay extra attention to: health claims, before/after imagery, efficacy promises, FDA disclaimer absence, ingredient claims, 'doctor recommended' without proof.",
+          health: "HIGH-RISK NICHE: Health/Medical. Pay extra attention to: medical claims, diagnosis suggestions, treatment promises, before/after imagery, professional endorsements without disclaimers.",
+          finance: "HIGH-RISK NICHE: Finance. Pay extra attention to: income claims, earnings screenshots, guaranteed returns, financial advice without disclaimers, wealth lifestyle imagery.",
+          weightloss: "HIGH-RISK NICHE: Weight Loss. Pay extra attention to: before/after body imagery, specific weight loss claims, timeframe promises, body shaming, unrealistic results.",
+          skincare: "MODERATE-RISK NICHE: Skincare/Beauty. Watch for: before/after skin imagery, anti-aging claims, dermatologist endorsements, 'clinically proven' without citation.",
+          alcohol: "RESTRICTED NICHE: Alcohol. Watch for: age-gating absence, excessive consumption imagery, health benefit claims, appeal to minors.",
+        };
+
+        const nicheKey = niche.toLowerCase().replace(/[^a-z]/g, "");
+        const nicheWarning = Object.entries(nicheRiskContext).find(([k]) => nicheKey.includes(k))?.[1] || "";
+
+        const visualScanPrompt = `You are a ${platform === "meta" || platform === "both" ? "Meta" : "TikTok"} ad policy reviewer scanning a ${adType} ad in the ${niche} niche for potential violations.
+
+${nicheWarning}
+
+PLATFORM: ${platform === "both" ? "Meta AND TikTok" : platform === "meta" ? "Meta" : "TikTok"}
+AD TYPE: ${adType}
+NICHE: ${niche}
+
+Scan this ad creative for:
+- Any text or visual claims that could be considered misleading for ${niche} specifically
+- Before/after imagery (especially critical in ${niche})
 - Text overlays making health, financial, or results-based claims
 - Images of people in distress or exaggerated reactions
 - Countdown timers or artificial urgency signals
@@ -102,9 +122,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 - Text that appears to circumvent automated review (misspellings, symbols replacing letters)
 - Weight loss or body transformation visuals
 - Financial gain claims or income promises
-- Celebrity or testimonial imagery
+- Celebrity or testimonial imagery without proper disclosure
 - Weapons, drugs, or adult content indicators
 - Logo or brand marks that could indicate trademarked content
+- ${platform === "meta" || platform === "both" ? "Meta's ~20% text-in-image threshold" : ""}
+- ${platform === "tiktok" || platform === "both" ? "TikTok's restricted category triggers for " + niche : ""}
 
 Return findings as structured JSON:
 {
@@ -117,8 +139,9 @@ Return findings as structured JSON:
   "hasFinancialClaims": boolean,
   "textHeavy": boolean,
   "textPercentageEstimate": string,
-  "specificFlags": ["describe each visual concern concisely"],
-  "overallRisk": "low" | "medium" | "high"
+  "specificFlags": ["describe each visual concern concisely, referencing ${niche}-specific risks"],
+  "overallRisk": "low" | "medium" | "high",
+  "nicheSpecificRisks": ["${niche}-specific policy concerns found"]
 }`;
 
         let base64: string;

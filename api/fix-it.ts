@@ -32,19 +32,53 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: "Missing analysisMarkdown" });
   }
 
-  const prompt = `You are a world-class performance creative director. A user's ad received the following scorecard:
+  // Identify weakest dimensions for targeted fixes
+  const weakDims = scores
+    ? Object.entries(scores as Record<string, number>)
+        .filter(([k]) => ["hook", "clarity", "cta", "production"].includes(k))
+        .sort(([, a], [, b]) => a - b)
+        .slice(0, 2)
+        .map(([k, v]) => `${k}: ${v}/10`)
+    : [];
+
+  const platformCopyRules: Record<string, string> = {
+    Meta: "Meta copy rules: Primary text under 125 chars for full visibility. Headline under 40 chars. No ALL CAPS in headlines. CTA must match the ad objective (Shop Now for commerce, Learn More for awareness).",
+    TikTok: "TikTok copy rules: Speak like a creator, not a brand. Use first person. Text overlays must be readable at 9:16 on mobile. No corporate language. Hook must be in the first line of caption.",
+    Instagram: "Instagram copy rules: First line is the hook (before 'more' truncation). Use line breaks for readability. Hashtags at the end, not inline. CTA in the last line.",
+    YouTube: "YouTube copy rules: First 5 seconds must deliver the value prop verbally AND visually. End screen CTA must be specific. Audio is primary — text overlays support, not replace.",
+    "Google Display": "Display copy rules: Headline max 30 chars. One message per banner. CTA button must have high contrast. No body copy that requires reading — the ad has <2 seconds of attention.",
+  };
+
+  const platformRules = platformCopyRules[platform ?? ""] || "";
+
+  const systemPrompt = `You are a senior performance creative director who specializes in ${niche ?? "DTC"} advertising on ${platform ?? "paid social"}. You write copy that converts — not copy that sounds like marketing. Your rewrites must:
+- Preserve the brand's existing voice and tone from the original ad
+- Be specific to ${niche ?? "this"} category — use language the audience actually uses
+- Follow ${platform ?? "platform"} copy best practices and character limits
+- Fix the specific weaknesses identified in the scorecard, not generic issues
+- Never produce generic copy like "Transform your life" or "Don't miss out"`;
+
+  const prompt = `A user's ${adType ?? "video"} ad on ${platform ?? "unknown platform"} in the ${niche ?? "unknown"} niche received this scorecard:
 
 ${analysisMarkdown}
 
-Platform: ${platform ?? "unknown"} | Niche: ${niche ?? "unknown"} | Intent: ${intent ?? "unknown"} | Format: ${adType ?? "video"}
+Scores: Hook ${scores?.hook ?? "?"}/10 | Clarity ${scores?.clarity ?? "?"}/10 | CTA ${scores?.cta ?? "?"}/10 | Production ${scores?.production ?? "?"}/10 | Overall ${scores?.overall ?? "?"}/10
+${weakDims.length ? `\nWEAKEST AREAS (fix these first): ${weakDims.join(", ")}` : ""}
 
-${scores ? `Scores: Hook ${scores.hook}/10 | Clarity ${scores.clarity}/10 | CTA ${scores.cta}/10 | Production ${scores.production}/10 | Overall ${scores.overall}/10` : ""}
+User's intent: ${intent ?? "conversion"} — optimize the rewrite for ${intent === "awareness" ? "brand recall and reach" : intent === "consideration" ? "engagement and click-through" : "direct response and conversion"}.
 
-Your job is to FIX this ad, not just critique it. Produce a complete rewrite that directly addresses every weakness.
+${platformRules}
+
+RULES:
+1. Read the original ad copy carefully. Match its voice — if it's casual, stay casual. If it's technical, stay technical.
+2. The rewritten hook must stop the scroll on ${platform ?? "the feed"} specifically.
+3. Every change must address a specific weakness from the scorecard. Don't change things that scored 8+.
+4. Text overlays must be readable on mobile in ${adType === "static" ? "a single glance" : "under 3 seconds"}.
+5. The CTA must be specific to ${niche ?? "this product"} — no generic "Learn More" unless that was the original.
 
 Return a JSON object with these exact keys:
 {
-  "rewrittenHook": { "copy": "<new hook text/script>", "reasoning": "<1 sentence why this is stronger>" },
+  "rewrittenHook": { "copy": "<new hook text/script>", "reasoning": "<1 sentence why this is stronger for ${platform ?? "this platform"}>" },
   "revisedBody": "<full rewrite with **bold** on every changed part>",
   "newCTA": { "copy": "<rewritten CTA>", "placement": "<where to put it>" },
   "textOverlays": [{ "timestamp": "<when>", "copy": "<text>", "placement": "<where>" }],
@@ -59,6 +93,7 @@ Return ONLY valid JSON, no markdown fencing.`;
     const message = await client.messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 2048,
+      system: systemPrompt,
       messages: [{ role: "user", content: prompt }],
     });
 

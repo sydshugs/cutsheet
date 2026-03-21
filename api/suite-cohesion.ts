@@ -36,7 +36,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     )
     .join("\n");
 
-  const prompt = `You are a display advertising expert reviewing a full banner ad suite for campaign consistency.
+  const systemPrompt = `You are a display advertising creative director who has reviewed thousands of IAB banner suites. You know that consistency across sizes is what separates professional campaigns from amateur ones. You evaluate against real campaign standards — not just whether files exist, but whether they function as a cohesive campaign that builds brand recognition across placements.`;
+
+  const prompt = `You are reviewing a full banner ad suite for campaign consistency.
 
 ${userContext || ""}
 ${sessionMemory ? `\n${sessionMemory}\nIf this user's prior ads share consistency issues with this suite, flag the pattern.\n` : ""}
@@ -78,6 +80,7 @@ Return JSON only — no prose:
   const response = await client.messages.create({
     model: CLAUDE_MODEL,
     max_tokens: 1200,
+    system: systemPrompt,
     messages: [{ role: "user", content: prompt }],
   });
 

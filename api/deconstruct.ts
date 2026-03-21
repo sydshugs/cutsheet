@@ -83,28 +83,42 @@ async function fetchMetaAdMeta(url: string): Promise<{
 
 // ─── GEMINI VISUAL ANALYSIS ──────────────────────────────────────────────────
 
-const GEMINI_VISUAL_PROMPT = `You are analyzing a paid advertisement. Analyze this ad creative and identify:
-1. Hook type (pattern interrupt, curiosity gap, bold claim, social proof, problem-agitate)
-2. Visual hierarchy — what the eye goes to first, second, third
-3. Emotional triggers present (fear, desire, envy, aspiration, humor, urgency)
-4. Text overlay usage — placement, size, timing
-5. Brand/product presentation style
-6. CTA placement and style
-7. Estimated target audience based on visual cues
+function buildGeminiVisualPrompt(sourceType: string): string {
+  const platformContext: Record<string, string> = {
+    meta: "This is a Meta (Facebook/Instagram) ad. Look for: thumb-stop visual, sound-off readability, text overlay compliance (Meta's 20% text rule), CTA button placement, and feed-native aesthetics.",
+    tiktok: "This is a TikTok ad. Look for: native UGC feel vs overproduced look, vertical framing, text overlay placement for TikTok's UI safe zones, trending format usage, and creator-style authenticity.",
+    youtube: "This is a YouTube ad. Look for: skip-worthy first 5 seconds, horizontal framing quality, end screen CTA setup, audio-dependent elements, and mid-roll retention hooks.",
+  };
+
+  return `You are analyzing a paid advertisement from ${sourceType.toUpperCase()}. This is a ${sourceType} ad — evaluate it against ${sourceType}-specific creative standards.
+
+${platformContext[sourceType] || "Evaluate against general paid advertising standards."}
+
+Analyze this ad creative and identify:
+1. Hook type (pattern interrupt, curiosity gap, bold claim, social proof, problem-agitate) — and whether this hook style works specifically on ${sourceType}
+2. Visual hierarchy — what the eye goes to first, second, third. Is this optimized for ${sourceType}'s feed layout?
+3. Emotional triggers present (fear, desire, envy, aspiration, humor, urgency) — which of these performs best on ${sourceType}?
+4. Text overlay usage — placement, size, readability. Does it comply with ${sourceType}'s text guidelines?
+5. Brand/product presentation style — is it ${sourceType}-native or does it feel like a repurposed asset?
+6. CTA placement and style — does the CTA follow ${sourceType} best practices?
+7. Estimated target audience based on visual cues and ${sourceType} demographics
 
 Return structured JSON only. No prose, no preamble.
 {
   "hookType": "string",
   "visualHierarchy": ["first element", "second element", "third element"],
   "emotionalTriggers": ["trigger1", "trigger2"],
-  "textOverlay": "description of text overlay usage",
-  "brandPresentation": "description of brand/product style",
-  "ctaStyle": "description of CTA",
-  "targetAudience": "estimated audience description"
+  "textOverlay": "description of text overlay usage and platform compliance",
+  "brandPresentation": "description of brand/product style and platform nativeness",
+  "ctaStyle": "description of CTA and platform-specific effectiveness",
+  "targetAudience": "estimated audience description based on visual cues and platform",
+  "platformFit": "how well this creative fits ${sourceType} specifically"
 }`;
+}
 
 async function runGeminiAnalysis(
-  imageUrl: string
+  imageUrl: string,
+  sourceType: string
 ): Promise<Record<string, unknown>> {
   try {
     const imageData = await fetchImageAsBase64(imageUrl);
@@ -115,7 +129,7 @@ async function runGeminiAnalysis(
 
     const result = await model.generateContent([
       { inlineData: { mimeType: imageData.mimeType, data: imageData.data } },
-      GEMINI_VISUAL_PROMPT,
+      buildGeminiVisualPrompt(sourceType),
     ]);
 
     const text = result.response.text();
@@ -239,7 +253,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // ── Gemini visual analysis (non-fatal if it fails) ────────────────────────
   let geminiParsed: Record<string, unknown> = {};
   if (resolvedMediaUrl) {
-    geminiParsed = await runGeminiAnalysis(resolvedMediaUrl);
+    geminiParsed = await runGeminiAnalysis(resolvedMediaUrl, sourceType ?? "meta");
   }
 
   const geminiContext =
