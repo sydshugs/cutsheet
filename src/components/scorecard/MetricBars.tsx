@@ -1,6 +1,12 @@
 // MetricBars — 4 score bars (hook, clarity, cta, production) with CTA rewrite
 
-import { getScoreColorByValue } from "../ScoreCard";
+/** Token-based score color using CSS custom properties */
+function getScoreTokenColor(score: number): string {
+  if (score >= 9) return "var(--score-excellent)";
+  if (score >= 7) return "var(--score-good)";
+  if (score >= 5) return "var(--score-average)";
+  return "var(--score-weak)";
+}
 
 interface Scores {
   hook: number;
@@ -48,7 +54,7 @@ export function MetricBars({ scores, mounted, onCTARewrite, ctaRewrites, ctaLoad
       {scoreKeys.map((key) => {
         const value = scores[key];
         const pct = value <= 0 ? 2 : Math.min(100, (value / 10) * 100);
-        const barColor = getScoreColorByValue(value);
+        const barColor = getScoreTokenColor(value);
         return (
           <div key={key}>
             <div className="flex justify-between text-xs mb-1.5">
@@ -61,9 +67,8 @@ export function MetricBars({ scores, mounted, onCTARewrite, ctaRewrites, ctaLoad
                 style={{
                   "--bar-width": `${pct}%`,
                   width: mounted ? `${pct}%` : "0%",
-                  background: `linear-gradient(90deg, ${barColor}, ${barColor}cc)`,
+                  background: barColor,
                   animation: mounted ? "barFill 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards" : "none",
-                  boxShadow: `0 0 6px ${barColor}40`,
                 } as React.CSSProperties}
               />
             </div>

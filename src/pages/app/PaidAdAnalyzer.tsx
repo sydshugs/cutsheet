@@ -269,6 +269,15 @@ export default function PaidAdAnalyzer() {
     if (status === "complete") setAnalysisCompletedAt(new Date());
   }, [status]);
 
+  // Mobile: scroll to ScoreCard when analysis completes
+  useEffect(() => {
+    if (status === "complete" && window.innerWidth < 768) {
+      setTimeout(() => {
+        scorecardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 150);
+    }
+  }, [status]);
+
   // Compute budget recommendation from engine when analysis completes
   useEffect(() => {
     if (status === "complete" && result?.scores) {
@@ -793,59 +802,7 @@ export default function PaidAdAnalyzer() {
                   onHistoryEntryClick={(entry) => setLoadedEntry(entry)}
                 />
 
-                {/* Visualize It — below creative in left panel (static only) */}
-                {status === "complete" && format === "static" && file && !visualizeOpen && (
-                  <div style={{ padding: "16px 0" }}>
-                    {isPro ? (
-                      <button
-                        type="button"
-                        onClick={handleVisualize}
-                        style={{
-                          width: "100%", height: 44,
-                          background: "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15))",
-                          border: "1px solid rgba(99,102,241,0.35)",
-                          borderRadius: 10,
-                          color: "#818cf8", cursor: "pointer",
-                          display: "flex", flexDirection: "column",
-                          alignItems: "center", justifyContent: "center", gap: 2,
-                          transition: "all 150ms",
-                        }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(99,102,241,0.25), rgba(139,92,246,0.2))"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15))"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.35)"; }}
-                      >
-                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                          <Sparkles size={14} />
-                          <span style={{ fontSize: 13, fontWeight: 600 }}>Visualize It</span>
-                        </div>
-                        <span style={{ fontSize: 10, color: "#6366f1", opacity: 0.75 }}>See what your improved ad could look like</span>
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => onUpgradeRequired("visualize")}
-                        style={{
-                          width: "100%", height: 44,
-                          background: "rgba(255,255,255,0.02)",
-                          border: "1px solid rgba(255,255,255,0.08)",
-                          borderRadius: 10,
-                          color: "#52525b", cursor: "pointer",
-                          display: "flex", flexDirection: "column",
-                          alignItems: "center", justifyContent: "center", gap: 2,
-                          transition: "all 150ms",
-                        }}
-                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(99,102,241,0.3)"; e.currentTarget.style.color = "#71717a"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#52525b"; }}
-                      >
-                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                          <Lock size={13} />
-                          <span style={{ fontSize: 13, fontWeight: 600 }}>Visualize It</span>
-                          <span style={{ fontSize: 9, fontWeight: 600, padding: "1px 5px", borderRadius: 4, background: "rgba(99,102,241,0.12)", color: "#818cf8" }}>PRO</span>
-                        </div>
-                        <span style={{ fontSize: 10, opacity: 0.6 }}>Upgrade to see your improved ad</span>
-                      </button>
-                    )}
-                  </div>
-                )}
+                {/* Visualize It trigger moved to ScoreCard action row — output stays here */}
                 {status === "complete" && format === "static" && (visualizeOpen || visualizeStatus !== "idle") && (
                   <VisualizePanel
                     status={visualizeStatus}
@@ -922,6 +879,12 @@ export default function PaidAdAnalyzer() {
                 fixItResult={fixItResult}
                 fixItLoading={fixItLoading}
                 prediction={prediction}
+                onCompare={() => navigate('/app/competitor')}
+                onVisualize={handleVisualize}
+                visualizeLoading={visualizeStatus === "loading"}
+                canVisualize={format === "static"}
+                isPro={isPro}
+                onUpgradeRequired={onUpgradeRequired}
               />
             </div>
             {/* Second Eye output below scorecard — video only */}
