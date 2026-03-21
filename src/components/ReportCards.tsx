@@ -18,6 +18,8 @@ interface ReportCardsProps {
 }
 
 const JSON_TITLE_RE = /json|scene|raw\s*data|budget\s*recommend/i;
+// Sections already shown in ScoreCard — filter from left panel to avoid duplication
+const SCORECARD_DUPLICATE_RE = /^(improve|hashtag|recommend.*hashtag|budget|predicted.*perform|quick.?score|score.?summary|overall.*score|overall.*strength)/i;
 const JSON_CONTENT_RE = /^\s*[\[{]/;
 
 // Hook-related section titles to merge into a single "Hook analysis" section
@@ -75,6 +77,8 @@ function splitMarkdown(md: string): { title: string | null; content: string }[] 
     if (!s.content) return false;
     // Filter out sections with JSON-related titles (SCENE JSON, Raw Data, etc.)
     if (s.title && JSON_TITLE_RE.test(s.title)) return false;
+    // Filter out sections already displayed in ScoreCard (Improvements, Hashtags, Budget, etc.)
+    if (s.title && SCORECARD_DUPLICATE_RE.test(stripEmoji(s.title))) return false;
     // Filter out sections whose content is raw JSON
     const trimmed = s.content.trim();
     if (JSON_CONTENT_RE.test(trimmed) && (trimmed.endsWith('}') || trimmed.endsWith(']'))) return false;
