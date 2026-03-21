@@ -46,7 +46,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const platformKey = platform.toLowerCase().replace(/\s+/g, "");
   const guidance = PLATFORM_GUIDANCE[platformKey] ?? PLATFORM_GUIDANCE.meta;
 
-  const prompt = `You are a senior performance creative strategist. A creative has already been analyzed. Based on the following analysis, generate a platform-specific scorecard for ${platform}.
+  const systemPrompt = `You are a ${platform} advertising specialist who scores creative specifically for ${platform} performance. You know exactly what works on ${platform} — the formats, the audience behavior, the algorithm preferences. Your scores are calibrated: a 7 means "good for ${platform}", not "good in general". A creative optimized for Meta might score 4 on TikTok. Be platform-honest.`;
+
+  const prompt = `A creative has already been analyzed. Based on the following analysis, generate a platform-specific scorecard for ${platform}.
 
 ORIGINAL ANALYSIS:
 ${analysisMarkdown}
@@ -78,6 +80,7 @@ Return ONLY valid JSON, no markdown fencing.`;
     const message = await client.messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 1024,
+      system: systemPrompt,
       messages: [{ role: "user", content: prompt }],
     });
 
