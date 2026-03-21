@@ -111,25 +111,23 @@ export function ProgressCard({ file, status, onCancel }: ProgressCardProps) {
           borderRadius: 16,
           padding: 20,
         }}>
-          {/* Header */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
+          {/* Header with pulsing dot */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
+            <div style={{
+              width: 10, height: 10, borderRadius: "50%", background: "var(--accent)",
+              animation: "pulse-dot 1.5s ease-in-out infinite",
+            }} />
             <span style={{ fontSize: 14, fontWeight: 600, color: "#f4f4f5" }}>Analyzing...</span>
           </div>
 
-          {/* Score placeholder with Cutsheet logo */}
+          {/* Score placeholder */}
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
             <div style={{
               width: 88, height: 88, borderRadius: "50%",
               background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)",
               display: "flex", alignItems: "center", justifyContent: "center",
-              position: "relative",
             }}>
               <img src="/cutsheet-logo-clear.png" alt="" style={{ width: 32, height: 32 }} />
-              <div style={{
-                position: "absolute", bottom: 4, right: 4,
-                width: 10, height: 10, borderRadius: "50%", background: "var(--accent)",
-                animation: "pulse-dot 1.5s ease-in-out infinite",
-              }} />
             </div>
           </div>
 
