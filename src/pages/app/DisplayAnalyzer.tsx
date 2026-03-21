@@ -655,8 +655,8 @@ Return JSON only — no prose:
           {/* ── SINGLE MODE ─────────────────────────────────────────── */}
           {mode === "single" && status === "idle" && !file && <EmptyState onFileSelect={handleFileSelect} />}
 
-          {mode === "single" && (
-          /* Upload + preview area */
+          {mode === "single" && (file || status !== "idle") && (
+          /* Upload + preview area — only when file is loaded or analysis in progress */
           <div className="relative px-4 py-6 md:px-8 min-h-full flex flex-col">
             <div className="pointer-events-none absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-indigo-600/10 blur-[120px]" />
             <div className="pointer-events-none absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-violet-600/[0.08] blur-[100px]" />
