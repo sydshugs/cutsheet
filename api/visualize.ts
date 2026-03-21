@@ -1,18 +1,94 @@
 // api/visualize.ts — Visualize It: generate an improved ad image from scorecard
-// Step 1: Claude Sonnet → image generation prompt
-// Step 2: Gemini imagen → generated ad image (fallback: Claude visual brief)
+// Scorecard-driven prompt → Gemini image gen (with original image for reference)
+// Fallback: visual brief text if image generation fails
 
 export const maxDuration = 60; // seconds — image gen takes 15-20s
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import Anthropic from "@anthropic-ai/sdk";
 import { GoogleGenAI, Modality } from "@google/genai";
 import { verifyAuth, handlePreflight, isProOrTeam } from "./_lib/auth";
 import { checkFeatureCredit } from "./_lib/creditCheck";
 import { safePlatform, safeAdType, safeNiche, validateBase64Size } from "./_lib/validateInput";
 
-const CLAUDE_MODEL = "claude-sonnet-4-20250514";
 const GEMINI_IMAGE_MODEL = "gemini-2.5-flash-image";
+
+// ── Scorecard-driven prompt construction ─────────────────────────────────────
+
+const PLATFORM_SPECS: Record<string, string> = {
+  Meta: "square (1:1) or vertical (4:5) format, mobile-first layout",
+  TikTok: "full vertical (9:16) format, bold text overlays native to TikTok style",
+  Instagram: "square or vertical, clean aesthetic, strong visual hook in top third",
+  "Google Display": "horizontal banner format, high contrast, clear brand presence",
+  YouTube: "horizontal (16:9), skip-proof first frame, clear value prop visible immediately",
+};
+
+function buildVisualizePrompt(params: {
+  platform: string;
+  overallScore: number;
+  dimensionScores: { name: string; score: number }[];
+  improvements: string[];
+  adFormat: "static" | "video_frame";
+  hookVerdict?: string;
+}): string {
+  const weakDimensions = params.dimensionScores
+    .filter((d) => d.score < 7)
+    .sort((a, b) => a.score - b.score)
+    .slice(0, 2);
+
+  const topImprovements = params.improvements.slice(0, 3);
+  const platformSpec = PLATFORM_SPECS[params.platform] || "maintain original aspect ratio";
+
+  const hookLine =
+    params.hookVerdict && params.hookVerdict !== "Strong"
+      ? `\nHOOK IS ${params.hookVerdict.toUpperCase()}: The opening visual/headline is not stopping the scroll. Fix the hook — make the first thing the eye lands on impossible to ignore.\n`
+      : "";
+
+  return `You are a senior performance creative director at a top DTC performance marketing agency.
+
+You are looking at a ${params.platform} ${params.adFormat === "static" ? "static image ad" : "video ad frame"} that scored ${params.overallScore}/10 in an AI creative analysis.
+
+Your job: produce an improved version of this exact ad. Not a new ad. Not a reimagined concept. The SAME ad, with the specific weaknesses fixed.
+
+---
+
+WHAT IS WEAK IN THIS AD (fix these specifically):
+${weakDimensions.map((d) => `- ${d.name}: scored ${d.score}/10`).join("\n")}
+
+SPECIFIC IMPROVEMENTS IDENTIFIED BY THE ANALYSIS:
+${topImprovements.map((imp, i) => `${i + 1}. ${imp}`).join("\n")}
+${hookLine}
+---
+
+PLATFORM REQUIREMENTS FOR ${params.platform.toUpperCase()}:
+${platformSpec}
+
+---
+
+CRITICAL STYLE RULES — READ CAREFULLY:
+
+1. PRESERVE THE ORIGINAL AESTHETIC. If the original uses real photography, keep real photography. If it uses a specific color palette, keep it. If it has a specific brand voice in the copy, preserve that voice. Do NOT replace the style with something generic.
+
+2. DO NOT MAKE THIS LOOK AI-GENERATED. Specifically:
+   - No perfect symmetry unless it was in the original
+   - No overlit product shots with fake studio lighting unless that was the original style
+   - No uncanny-valley faces or impossibly perfect skin
+   - No generic stock photo aesthetic
+   - Real textures, real imperfections, authentic feel
+   - If there are people in the original, keep the same ethnic diversity and age range
+
+3. SURGICAL FIXES ONLY. Change only what the analysis flagged as weak:
+   - If the CTA is weak → make the CTA more compelling and prominent
+   - If the headline is generic → replace it with something specific and benefit-driven
+   - If the visual hierarchy is confused → clarify what the eye should land on first
+   - If the hook is weak → make the opening visual more arresting
+   - Do NOT redesign elements that scored 8+ — leave them alone
+
+4. TEXT IN THE AD must be readable, specific, and benefit-driven. No placeholder text. No generic copy like "Shop Now" or "Learn More" unless that was the original.
+
+5. MAINTAIN BRAND INTEGRITY. Keep the brand's visual identity — logo placement, brand colors, typography style — exactly as they appeared in the original.
+
+Produce the improved ad now. Output only the image — no explanation, no description.`;
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handlePreflight(req, res)) return;
@@ -54,86 +130,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const cleanAdType = safeAdType(adType);
   const safeMediaType: string = imageMediaType || "image/jpeg";
 
-  // ── Format scorecard for Claude ───────────────────────────────────────────
-  const scoresBlock = analysisResult.scores
-    ? Object.entries(analysisResult.scores)
-        .map(([k, v]) => `  ${k}: ${v}/10`)
-        .join("\n")
-    : "  (no scores available)";
+  // ── Build scorecard-driven prompt ─────────────────────────────────────────
+  const scores = analysisResult.scores ?? {};
+  const dimensionScores = [
+    { name: "Hook Strength", score: scores.hook ?? 5 },
+    { name: "Message Clarity", score: scores.clarity ?? 5 },
+    { name: "CTA Effectiveness", score: scores.cta ?? 5 },
+    { name: "Production Quality", score: scores.production ?? 5 },
+  ];
+  const overallScore = scores.overall ?? 5;
+  const improvements: string[] = Array.isArray(analysisResult.improvements)
+    ? analysisResult.improvements
+    : [];
+  const hookVerdict: string | undefined = analysisResult.hookDetail?.verdict;
+  const adFormat = cleanAdType === "static" ? "static" as const : "video_frame" as const;
 
-  const improvementsBlock = Array.isArray(analysisResult.improvements) && analysisResult.improvements.length
-    ? analysisResult.improvements.map((imp: string, i: number) => `  ${i + 1}. ${imp}`).join("\n")
-    : "  (no improvements listed)";
+  const imageGenPrompt = buildVisualizePrompt({
+    platform: cleanPlatform,
+    overallScore,
+    dimensionScores,
+    improvements,
+    adFormat,
+    hookVerdict,
+  });
 
-  const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+  // Derive improvement summary and changes from scorecard data (no Claude call needed)
+  const weakDims = dimensionScores.filter((d) => d.score < 7).sort((a, b) => a.score - b.score);
+  const improvementSummary = weakDims.length
+    ? `This ad scored ${overallScore}/10 overall. The weakest areas were ${weakDims.map((d) => `${d.name} (${d.score}/10)`).join(" and ")}. The improved version surgically fixes these while preserving everything that was already working.`
+    : `This ad scored ${overallScore}/10 overall. The improved version refines the creative with the specific changes identified in the analysis.`;
+  const changesApplied = improvements.slice(0, 6);
 
-  // ── STEP 1: Claude — generate image generation prompt ────────────────────
-  let imageGenPrompt: string;
-  let improvementSummary: string;
-  let changesApplied: string[];
-
-  try {
-    const step1 = await anthropic.messages.create({
-      model: CLAUDE_MODEL,
-      max_tokens: 1024,
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "image",
-              source: {
-                type: "base64",
-                media_type: safeMediaType as "image/jpeg" | "image/png" | "image/webp" | "image/gif",
-                data: imageBase64,
-              },
-            },
-            {
-              type: "text",
-              text: `You are a world-class performance creative director. A user's ${cleanAdType} ad received this scorecard:
-
-SCORES:
-${scoresBlock}
-
-KEY IMPROVEMENTS NEEDED:
-${improvementsBlock}
-
-Platform: ${cleanPlatform} | Niche: ${cleanNiche} | Format: ${cleanAdType}
-
-Generate a detailed visual description of an IMPROVED version of this ad that directly fixes every weakness in the scorecard. This description will be used to generate an image.
-
-Your description must be:
-- Specific and visual — describe exactly what to see, not concepts
-- Structured for image generation — layout, colors, typography, imagery, hierarchy
-- Grounded in the original ad's brand/product (don't invent a new product)
-- Optimized for ${cleanPlatform} ad specs and best practices
-
-Return JSON only — no prose, no preamble:
-{
-  "imagePrompt": "<single image generation prompt of 150-250 words starting with visual description — no preamble. Include: 1. Layout and composition, 2. Hero image or visual, 3. Headline text (exact copy, placement, size), 4. Body copy if applicable (exact copy), 5. CTA button (exact copy, color, placement), 6. Color palette, 7. Overall mood and style, 8. Platform-specific format notes. End with: Photorealistic ad mockup, professional advertising quality, clean design.>",
-  "improvementSummary": "<2-3 sentence summary of what changed and why, written for the ad creator>",
-  "changesApplied": ["<specific change 1>", "<specific change 2>", "<specific change 3>", "<up to 6 changes>"]
-}`,
-            },
-          ],
-        },
-      ],
-    });
-
-    const rawText = step1.content[0].type === "text" ? step1.content[0].text : "";
-    const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error("Could not parse Claude step 1 response");
-
-    const parsed = JSON.parse(jsonMatch[0]);
-    imageGenPrompt = String(parsed.imagePrompt ?? "");
-    improvementSummary = String(parsed.improvementSummary ?? "");
-    changesApplied = Array.isArray(parsed.changesApplied) ? parsed.changesApplied.map(String) : [];
-  } catch (err) {
-    console.error("[visualize] Step 1 (Claude) failed:", err);
-    return res.status(500).json({ error: "Failed to generate improvement description" });
-  }
-
-  // ── STEP 2: Gemini — generate improved ad image ───────────────────────────
+  // ── Gemini — generate improved ad image with original for reference ──────
   let generatedImageUrl: string | undefined;
   let visualBrief: string | undefined;
 
@@ -142,7 +170,20 @@ Return JSON only — no prose, no preamble:
 
     const imageResponse = await genAI.models.generateContent({
       model: GEMINI_IMAGE_MODEL,
-      contents: [{ role: "user", parts: [{ text: imageGenPrompt }] }],
+      contents: [{
+        role: "user",
+        parts: [
+          {
+            text: "SYSTEM: You are a performance creative director. Your output will be shown directly to a paid media professional. Generic, stock-photo-style, or obviously AI-generated output is not acceptable and will be rejected. The improved ad must look like it was produced by a human creative team — authentic, on-brand, platform-native.",
+          },
+          {
+            inlineData: { mimeType: safeMediaType, data: imageBase64 },
+          },
+          {
+            text: imageGenPrompt,
+          },
+        ],
+      }],
       config: {
         responseModalities: [Modality.IMAGE, Modality.TEXT],
       },
@@ -163,8 +204,7 @@ Return JSON only — no prose, no preamble:
       visualBrief = imageGenPrompt;
     }
   } catch (err) {
-    console.error("[visualize] Step 2 (Gemini image gen) failed — falling back to visual brief:", err);
-    // Fallback: use the image gen prompt itself as the visual brief
+    console.error("[visualize] Gemini image gen failed — falling back to visual brief:", err);
     visualBrief = imageGenPrompt;
   }
 
