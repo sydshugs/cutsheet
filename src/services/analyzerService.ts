@@ -686,25 +686,38 @@ export function copyToClipboard(text: string): Promise<void> {
 export async function compareAnalyses(
   markdownA: string,
   markdownB: string,
-  _apiKey: string
+  _apiKey: string,
+  platform?: string,
+  niche?: string,
 ): Promise<string> {
-  const prompt = `You are a performance marketing creative analyst. Two video ad analyses are provided below.
+  const platformContext = platform && platform !== "all"
+    ? `Both ads are evaluated for ${platform} performance. Frame all comparisons in terms of what works on ${platform} specifically.`
+    : "Compare these ads on general performance marketing criteria.";
+
+  const nicheContext = niche
+    ? `Both ads are in the ${niche} niche. Reference ${niche}-specific audience expectations and conversion patterns.`
+    : "";
+
+  const prompt = `You are a senior performance creative strategist comparing two ad creatives head-to-head.
+
+${platformContext}
+${nicheContext}
 
 Given these two ad analyses, which creative is stronger and why? Be direct. Give a verdict, key differences, and one recommendation for each.
 
 Format your response exactly as:
 
 ## VERDICT
-State clearly which ad is stronger and why in 2–3 sentences.
+State clearly which ad is stronger and why in 2–3 sentences.${platform ? ` Reference ${platform}-specific performance factors.` : ""}
 
 ## KEY DIFFERENCES
-- [3–5 bullet points comparing the two ads head to head]
+- [3–5 bullet points comparing the two ads head to head${platform ? `, evaluated against ${platform} best practices` : ""}]
 
 ## RECOMMENDATION FOR AD A
-One specific, actionable recommendation.
+One specific, actionable recommendation.${niche ? ` Tailored to ${niche} audience expectations.` : ""}
 
 ## RECOMMENDATION FOR AD B
-One specific, actionable recommendation.
+One specific, actionable recommendation.${niche ? ` Tailored to ${niche} audience expectations.` : ""}
 
 ---
 
