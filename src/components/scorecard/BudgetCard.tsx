@@ -74,14 +74,14 @@ export function BudgetCard({ engineBudget, budget, onNavigateSettings }: BudgetC
           {/* Pills row */}
           {engineBudget.action !== "hold" && (
             <div className="flex flex-wrap gap-1.5">
-              <span className="text-[10px] text-zinc-500 bg-white/5 rounded-full px-2.5 py-0.5">
+              <span className="text-[10px] text-zinc-500 bg-white/5 rounded-full px-2 py-px">
                 Test: {engineBudget.testDuration}
               </span>
-              <span className="text-[10px] text-zinc-500 bg-white/5 rounded-full px-2.5 py-0.5">
+              <span className="text-[10px] text-zinc-500 bg-white/5 rounded-full px-2 py-px">
                 ROAS: {engineBudget.roasTarget}
               </span>
               <span
-                className="text-[10px] rounded-full px-2.5 py-0.5"
+                className="text-[10px] rounded-full px-2 py-px"
                 style={{ background: 'rgba(16,185,129,0.08)', color: '#10b981' }}
               >
                 {engineBudget.niche} · {engineBudget.platform === "all" ? "All platforms" : engineBudget.platform}
