@@ -346,7 +346,7 @@ export default function CompetitorAnalyzer() {
       <StepIndicator step={step} yourFile={yourFile} competitorFile={competitorFile} onStepClick={(s) => { setStatus("idle"); setStep(s); }} />
 
       <div className="flex-1 overflow-auto">
-        <div style={{ maxWidth: 580, margin: "0 auto", padding: "24px 16px" }}>
+        <div style={{ maxWidth: 580, margin: "0 auto", padding: "clamp(24px, 8vh, 80px) 16px 24px" }}>
           <AnimatePresence mode="wait">
 
             {/* ── STEP 0: YOUR AD ─────────────────────────────────── */}

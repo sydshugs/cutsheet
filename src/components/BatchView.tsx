@@ -59,7 +59,7 @@ function RankEmptyState({ onStart, onFileDrop }: { onStart: () => void; onFileDr
       onDragLeave={(e) => { if (e.currentTarget.contains(e.relatedTarget as Node)) return; setIsDragOver(false); }}
       onDrop={(e) => { e.preventDefault(); setIsDragOver(false); if (e.dataTransfer.files.length > 0) onFileDrop(e.dataTransfer.files); }}
       style={{
-        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 24px", gap: 16, minHeight: "calc(100vh - 120px)",
+        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 24px", gap: 16, flex: 1,
         border: isDragOver ? "2px dashed var(--accent, #6366f1)" : "2px dashed transparent",
         background: isDragOver ? "rgba(99,102,241,0.04)" : "transparent",
         borderRadius: 16, transition: "border-color 150ms, background 150ms",

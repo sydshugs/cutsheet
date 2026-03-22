@@ -768,7 +768,7 @@ export default function PaidAdAnalyzer() {
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         {/* IntentHeader removed — platform pills and toggles stripped */}
 
-        <div ref={leftPanelRef} className="flex-1 overflow-auto">
+        <div ref={leftPanelRef} className="flex-1 flex flex-col overflow-auto">
           {status === "idle" && !loadedEntry ? (
             <>
               <PaidEmptyState
@@ -777,7 +777,7 @@ export default function PaidAdAnalyzer() {
               />
             </>
           ) : (status !== "idle" || loadedEntry) ? (
-            <div className="relative px-4 py-6 md:px-8 min-h-full flex flex-col">
+            <div className="relative px-4 py-6 md:px-8 flex-1 flex flex-col">
               {/* Ambient glow */}
               <div className="pointer-events-none absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-indigo-600/10 blur-[120px]" />
               <div className="pointer-events-none absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-violet-600/[0.08] blur-[100px]" />

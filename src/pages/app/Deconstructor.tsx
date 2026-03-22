@@ -671,15 +671,12 @@ export default function Deconstructor() {
         {/* Header — visible until result */}
         {!result && (
           <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 mb-4 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20">
-              <ExternalLink size={12} className="text-indigo-400" />
-              <span className="text-xs font-mono text-indigo-400">
-                Ad Breakdown
-              </span>
+            <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
+              <Link2 size={28} color="#6366f1" />
             </div>
-            <h1 className="text-3xl md:text-4xl font-semibold text-white tracking-tight mb-3">
+            <h2 className="text-2xl font-semibold text-white tracking-tight mb-3">
               Why does this ad work?
-            </h1>
+            </h2>
             <p className="text-sm text-zinc-500 max-w-md mx-auto">
               Paste any ad URL. Get the full breakdown — hook, triggers,
               structure, and a brief to make your own version.

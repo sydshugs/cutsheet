@@ -200,7 +200,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
         style={{
           maxWidth: "900px",
           margin: "0 auto",
-          padding: "40px 24px",
+          padding: "clamp(32px, 8vh, 80px) 24px 40px",
           fontFamily: "var(--sans)",
         }}
       >
