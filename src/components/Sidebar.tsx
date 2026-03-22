@@ -213,37 +213,57 @@ function DesktopSidebar({
         overflow: "hidden",
       }}
     >
-      {/* Collapse toggle */}
-      <button
-        type="button"
-        onClick={() => setCollapsed((c) => !c)}
-        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        className="absolute top-4 right-2 flex items-center justify-center text-[#52525b] hover:text-[#a1a1aa] hover:bg-[rgba(255,255,255,0.04)] transition-colors rounded-md z-10"
-        style={{ width: 24, height: 24, background: "transparent", border: "none", cursor: "pointer" }}
-      >
-        {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-      </button>
-
-      {/* Logo */}
+      {/* Logo + collapse toggle row */}
       <div
         style={{
-          padding: collapsed ? "20px 0 0" : "20px 16px 0",
-          display: "flex", alignItems: "center", gap: 10,
-          justifyContent: collapsed ? "center" : "flex-start",
-          marginBottom: 4,
+          padding: collapsed ? "16px 8px 0" : "16px 16px 0",
+          display: "flex", alignItems: "center",
+          justifyContent: collapsed ? "center" : "space-between",
+          marginBottom: 8,
         }}
       >
-        <img
-          src="/icon.png"
-          alt="Cutsheet"
-          style={{ width: 32, height: 32, borderRadius: 8, flexShrink: 0 }}
-        />
+        <button
+          type="button"
+          onClick={() => navigate("/app")}
+          style={{ display: "flex", alignItems: "center", gap: 10, background: "none", border: "none", cursor: "pointer", padding: 0 }}
+          aria-label="Go to home"
+        >
+          <img
+            src="/icon.png"
+            alt="Cutsheet"
+            style={{ width: 32, height: 32, borderRadius: 8, flexShrink: 0 }}
+          />
+          {!collapsed && (
+            <span style={{ fontFamily: "var(--mono)", fontSize: 15, fontWeight: 600, color: "#f4f4f5", letterSpacing: "-0.02em" }}>
+              cutsheet
+            </span>
+          )}
+        </button>
         {!collapsed && (
-          <span style={{ fontFamily: "var(--mono)", fontSize: 15, fontWeight: 600, color: "#f4f4f5", letterSpacing: "-0.02em" }}>
-            cutsheet
-          </span>
+          <button
+            type="button"
+            onClick={() => setCollapsed((c) => !c)}
+            aria-label="Collapse sidebar"
+            className="flex items-center justify-center text-[#52525b] hover:text-[#a1a1aa] hover:bg-[rgba(255,255,255,0.04)] transition-colors rounded-md"
+            style={{ width: 24, height: 24, background: "transparent", border: "none", cursor: "pointer", flexShrink: 0 }}
+          >
+            <ChevronLeft size={14} />
+          </button>
         )}
       </div>
+
+      {/* Expand button — visible only when collapsed, below logo */}
+      {collapsed && (
+        <button
+          type="button"
+          onClick={() => setCollapsed((c) => !c)}
+          aria-label="Expand sidebar"
+          className="flex items-center justify-center text-[#52525b] hover:text-[#a1a1aa] hover:bg-[rgba(255,255,255,0.04)] transition-colors rounded-md mx-auto"
+          style={{ width: 28, height: 28, background: "transparent", border: "none", cursor: "pointer", marginBottom: 4 }}
+        >
+          <ChevronRight size={14} />
+        </button>
+      )}
 
       {/* Nav items */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden py-1">
