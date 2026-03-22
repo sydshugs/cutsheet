@@ -1,8 +1,8 @@
-// src/components/PredictedPerformanceCard.tsx
+// src/components/PredictedPerformanceCard.tsx — Predicted Performance (redesigned)
+// Range bar, verdict header, fatigue callout, confidence footnote
 import { useState } from 'react'
-import { TrendingUp, Activity, Clock, Zap, ChevronDown, ChevronUp, Info } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { cn } from '@/src/lib/utils'
+import { ChevronDown } from 'lucide-react'
+import { motion } from 'framer-motion'
 
 export interface PredictionResult {
   ctr: { low: number; high: number; benchmark: number; vsAvg: 'above' | 'at' | 'below' }
@@ -21,230 +21,235 @@ interface PredictedPerformanceCardProps {
   niche?: string
 }
 
-const VS_AVG_CONFIG = {
-  above: { label: 'Above Average', bg: 'rgba(16,185,129,0.12)', text: '#10b981' },
-  at:    { label: 'Average',       bg: 'rgba(245,158,11,0.12)', text: '#f59e0b' },
-  below: { label: 'Below Average', bg: 'rgba(239,68,68,0.12)',  text: '#ef4444' },
+// ─── VERDICT BADGE ───────────────────────────────────────────────────────────
+
+const VERDICT_STYLES = {
+  below: { label: 'Below average', bg: 'rgba(239,68,68,0.1)', color: '#ef4444' },
+  at:    { label: 'On track',      bg: 'rgba(251,191,36,0.12)', color: '#d97706' },
+  above: { label: 'Above average', bg: 'rgba(16,185,129,0.1)', color: '#10b981' },
 } as const
 
-const CONFIDENCE_CONFIG = {
-  Low:    { bg: 'rgba(245,158,11,0.12)', text: '#f59e0b' },
-  Medium: { bg: 'rgba(99,102,241,0.12)', text: '#6366f1' },
-  High:   { bg: 'rgba(16,185,129,0.12)', text: '#10b981' },
-} as const
+// ─── CTR RANGE BAR ───────────────────────────────────────────────────────────
 
-function AnimatedPercent({ value, suffix = '%' }: { value: number; suffix?: string }) {
-  return (
-    <motion.span
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-    >
-      <motion.span
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.6 }}
-      >
-        {value}
-      </motion.span>
-      {suffix}
-    </motion.span>
-  )
-}
+function CtrRangeBar({ low, high, nicheAvg }: { low: number; high: number; nicheAvg: number }) {
+  const MAX_CTR = 3.0
+  const fillLeft = Math.min((low / MAX_CTR) * 100, 100)
+  const fillRight = Math.min((high / MAX_CTR) * 100, 100)
+  const fillWidth = fillRight - fillLeft
+  const avgPos = Math.min((nicheAvg / MAX_CTR) * 100, 100)
 
-function MetricCell({
-  label,
-  icon: Icon,
-  children,
-}: {
-  label: string
-  icon: React.ComponentType<{ size?: number; className?: string }>
-  children: React.ReactNode
-}) {
   return (
-    <div
-      style={{
-        background: 'var(--surface)',
-        border: '1px solid var(--border)',
-        borderRadius: 'var(--radius-sm)',
-      }}
-      className="p-3"
-    >
-      <div className="flex items-center gap-1.5 mb-1">
-        <Icon size={11} className="text-zinc-500" />
-        <p className="text-[10px] uppercase tracking-wider text-zinc-500">{label}</p>
+    <div style={{ marginTop: 12 }}>
+      {/* Track */}
+      <div style={{ position: 'relative', height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 99, width: '100%' }}>
+        {/* CTR range fill */}
+        <div
+          style={{
+            position: 'absolute',
+            left: `${fillLeft}%`,
+            width: `${fillWidth}%`,
+            height: '100%',
+            background: '#6366f1',
+            borderRadius: 99,
+          }}
+        />
+        {/* Niche avg marker */}
+        <div
+          style={{
+            position: 'absolute',
+            left: `${avgPos}%`,
+            top: -4,
+            width: 1.5,
+            height: 12,
+            background: '#52525b',
+            borderRadius: 1,
+            transform: 'translateX(-50%)',
+          }}
+        />
       </div>
-      {children}
+      {/* Labels below */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+        <span style={{ fontSize: 9, color: '#3f3f46', fontFamily: 'var(--mono)' }}>0%</span>
+        <span style={{ fontSize: 9, color: '#52525b', fontFamily: 'var(--mono)' }}>avg {nicheAvg}%</span>
+        <span style={{ fontSize: 9, color: '#3f3f46', fontFamily: 'var(--mono)' }}>{MAX_CTR}%+</span>
+      </div>
     </div>
   )
 }
+
+// ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 
 export default function PredictedPerformanceCard({
   prediction,
   platform,
   niche,
 }: PredictedPerformanceCardProps) {
-  const [expanded, setExpanded] = useState(false)
-  const [cardOpen, setCardOpen] = useState(false)
-
-  const vsAvg = VS_AVG_CONFIG[prediction.ctr.vsAvg]
-  const conf = CONFIDENCE_CONFIG[prediction.confidence]
+  const [driversOpen, setDriversOpen] = useState(false)
+  const verdict = VERDICT_STYLES[prediction.ctr.vsAvg]
   const platformLabel = platform ?? 'Meta'
   const nicheLabel = niche ?? 'general'
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-      style={{
-        background: 'var(--surface)',
-        border: '1px solid var(--border)',
-        borderRadius: 'var(--radius)',
-        overflow: 'hidden',
-      }}
+      transition={{ duration: 0.3 }}
     >
-      {/* Header — toggles card open/closed */}
-      <button
-        type="button"
-        onClick={() => setCardOpen((prev) => !prev)}
+      {/* Verdict badge (outside card, in header context from CollapsibleSection) */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+        <span
+          style={{
+            fontSize: 10,
+            fontWeight: 500,
+            color: verdict.color,
+            background: verdict.bg,
+            borderRadius: 99,
+            padding: '2px 8px',
+            lineHeight: '16px',
+          }}
+        >
+          {verdict.label}
+        </span>
+      </div>
+
+      {/* Main metric card */}
+      <div
         style={{
-          width: '100%',
-          background: 'linear-gradient(135deg, rgba(99,102,241,0.05), rgba(139,92,246,0.05))',
-          borderBottom: cardOpen ? '1px solid var(--border)' : 'none',
-          borderTop: 'none', borderLeft: 'none', borderRight: 'none',
-          cursor: 'pointer', textAlign: 'left',
+          background: 'rgba(255,255,255,0.02)',
+          border: '0.5px solid rgba(255,255,255,0.06)',
+          borderRadius: 10,
+          padding: '14px 16px',
         }}
-        className="px-4 py-3 flex items-center justify-between"
       >
-        <div className="flex items-center gap-2">
-          <TrendingUp size={15} style={{ color: 'var(--accent)' }} />
-          <span className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>
-            Performance Forecast
+        {/* CTR range — primary metric */}
+        <div>
+          <span style={{ fontSize: 11, color: '#52525b' }}>Estimated CTR</span>
+          <p style={{ fontSize: 26, fontWeight: 500, fontFamily: 'var(--mono)', color: '#e4e4e7', margin: '2px 0 0', lineHeight: 1.2 }}>
+            {prediction.ctr.low}–{prediction.ctr.high}%
+          </p>
+          <span style={{ fontSize: 11, color: '#52525b' }}>
+            Niche avg for {nicheLabel} on {platformLabel}: {prediction.ctr.benchmark}%
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] font-medium" style={{ color: 'var(--ink-muted)', fontFamily: 'var(--mono)' }}>
-            {prediction.ctr.low}–{prediction.ctr.high}% CTR
-          </span>
-          <motion.span animate={{ rotate: cardOpen ? 180 : 0 }} transition={{ duration: 0.2 }} style={{ color: '#52525b' }}>
-            <ChevronDown size={14} />
-          </motion.span>
-        </div>
-      </button>
 
-      {/* Metric grid body — animated collapse */}
-      <AnimatePresence initial={false}>
-        {cardOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            style={{ overflow: "hidden" }}
-          >
-            <div className="p-4">
-              <div className={cn(
-                'grid gap-3',
-                prediction.hookRetention ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-3'
-              )}>
-                {/* CTR Range */}
-                <MetricCell label="CTR Range" icon={Activity}>
-                  <p className="text-lg font-bold" style={{ color: 'var(--ink)' }}>
-                    <AnimatedPercent value={prediction.ctr.low} /> – <AnimatedPercent value={prediction.ctr.high} />
-                  </p>
-                  <p className="text-[11px] text-zinc-500">
-                    Avg: {prediction.ctr.benchmark}% in {nicheLabel}/{platformLabel}
-                  </p>
-                </MetricCell>
+        {/* Range bar */}
+        <CtrRangeBar low={prediction.ctr.low} high={prediction.ctr.high} nicheAvg={prediction.ctr.benchmark} />
 
-                {/* CVR Potential */}
-                <MetricCell label="CVR Potential" icon={Zap}>
-                  <p className="text-lg font-bold" style={{ color: 'var(--ink)' }}>
-                    <AnimatedPercent value={prediction.cvr.low} /> – <AnimatedPercent value={prediction.cvr.high} />
-                  </p>
-                </MetricCell>
-
-                {/* Hook Retention (video only) */}
-                {prediction.hookRetention && (
-                  <MetricCell label="Hook Retention" icon={Activity}>
-                    <p className="text-lg font-bold" style={{ color: 'var(--ink)' }}>
-                      <AnimatedPercent value={prediction.hookRetention.low} /> – <AnimatedPercent value={prediction.hookRetention.high} />
-                    </p>
-                    <p className="text-[11px] text-zinc-500">watch past 3s</p>
-                  </MetricCell>
-                )}
-
-                {/* Fatigue Timeline */}
-                <MetricCell label="Fatigue Timeline" icon={Clock}>
-                  <p className="text-lg font-bold" style={{ color: 'var(--ink)' }}>
-                    ~{prediction.fatigueDays.low}–{prediction.fatigueDays.high} days
-                  </p>
-                  <p className="text-[11px] text-zinc-500">at $400/day</p>
-                </MetricCell>
-              </div>
-
-              {/* Confidence pill */}
-              <div className="mt-3 flex items-center gap-2">
-                <span
-                  className="text-[11px] font-medium px-2 py-0.5 rounded-full"
-                  style={{ background: vsAvg.bg, color: vsAvg.text }}
-                >
-                  {vsAvg.label}
-                </span>
-                <span
-                  className="text-[11px] font-medium px-2 py-0.5 rounded-full inline-flex items-center gap-1 cursor-default"
-                  style={{ background: conf.bg, color: conf.text }}
-                  title={prediction.confidenceReason}
-                >
-                  <Info size={10} />
-                  {prediction.confidence} Confidence
-                </span>
-              </div>
-
-              {/* Expandable signals section */}
-              <button
-                onClick={() => setExpanded((prev) => !prev)}
-                className="mt-3 w-full flex items-center justify-between px-1 py-1.5 text-[12px] font-medium cursor-pointer rounded hover:bg-white/[0.03] transition-colors"
-                style={{ color: 'var(--ink-muted)' }}
-              >
-                <span>What's driving this</span>
-                {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-              </button>
-
-              {expanded && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="mt-1 space-y-2 px-1"
-                >
-                  {/* Positive signals */}
-                  {prediction.positiveSignals.map((signal, i) => (
-                    <div key={`pos-${i}`} className="flex items-start gap-2">
-                      <span className="mt-0.5 text-[12px]" style={{ color: '#10b981' }}>&#10003;</span>
-                      <span className="text-[12px]" style={{ color: 'var(--ink-muted)' }}>{signal}</span>
-                    </div>
-                  ))}
-                  {/* Negative signals */}
-                  {prediction.negativeSignals.map((signal, i) => (
-                    <div key={`neg-${i}`} className="flex items-start gap-2">
-                      <span className="mt-0.5 text-[12px]" style={{ color: '#f59e0b' }}>&#9888;</span>
-                      <span className="text-[12px]" style={{ color: 'var(--ink-muted)' }}>{signal}</span>
-                    </div>
-                  ))}
-                </motion.div>
-              )}
-
-              {/* Disclaimer */}
-              <p className="mt-3 text-[11px] text-zinc-500 leading-relaxed">
-                Predictions are estimates based on creative quality signals. Actual performance depends on audience, budget, landing page, and market conditions.
+        {/* Secondary metrics — 2 column grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 14 }}>
+          <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: '10px 12px' }}>
+            <span style={{ fontSize: 10, color: '#52525b' }}>Cvr potential</span>
+            <p style={{ fontSize: 16, fontWeight: 500, fontFamily: 'var(--mono)', color: '#e4e4e7', margin: '2px 0 0' }}>
+              {prediction.cvr.low}–{prediction.cvr.high}%
+            </p>
+            <span style={{ fontSize: 10, color: '#3f3f46' }}>If clicked</span>
+          </div>
+          {prediction.hookRetention && (
+            <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: '10px 12px' }}>
+              <span style={{ fontSize: 10, color: '#52525b' }}>Hook retention</span>
+              <p style={{ fontSize: 16, fontWeight: 500, fontFamily: 'var(--mono)', color: '#e4e4e7', margin: '2px 0 0' }}>
+                {prediction.hookRetention.low}–{prediction.hookRetention.high}%
               </p>
+              <span style={{ fontSize: 10, color: '#3f3f46' }}>Watch past 3s</span>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+          {!prediction.hookRetention && (
+            <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: '10px 12px' }}>
+              <span style={{ fontSize: 10, color: '#52525b' }}>Conversion rate</span>
+              <p style={{ fontSize: 16, fontWeight: 500, fontFamily: 'var(--mono)', color: '#e4e4e7', margin: '2px 0 0' }}>
+                ~{(prediction.cvr.low + prediction.cvr.high) / 2}%
+              </p>
+              <span style={{ fontSize: 10, color: '#3f3f46' }}>{platformLabel} avg</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Fatigue callout — separate from card */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          background: 'rgba(255,255,255,0.03)',
+          borderRadius: 8,
+          padding: '8px 12px',
+          marginTop: 8,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#f59e0b', flexShrink: 0 }} />
+          <span style={{ fontSize: 12, color: '#71717a' }}>Creative fatigue expected</span>
+        </div>
+        <span style={{ fontSize: 13, fontWeight: 500, fontFamily: 'var(--mono)', color: '#e4e4e7' }}>
+          ~{prediction.fatigueDays.low}–{prediction.fatigueDays.high} days
+        </span>
+      </div>
+
+      {/* Confidence footnote — NOT a badge */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginTop: 8, paddingLeft: 2 }}>
+        <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', flexShrink: 0, marginTop: 4 }} />
+        <span style={{ fontSize: 11, color: '#52525b', lineHeight: 1.5 }}>
+          {prediction.confidence} confidence — {prediction.confidenceReason || 'estimates based on creative quality signals. Actual results depend on audience, budget, and landing page.'}
+        </span>
+      </div>
+
+      {/* What's driving this — expandable */}
+      {(prediction.positiveSignals.length > 0 || prediction.negativeSignals.length > 0) && (
+        <div style={{ marginTop: 10 }}>
+          <button
+            type="button"
+            onClick={() => setDriversOpen(prev => !prev)}
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '6px 2px',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: 12,
+              fontWeight: 500,
+              color: '#71717a',
+              fontFamily: 'var(--sans)',
+            }}
+          >
+            <span>What's driving this</span>
+            <ChevronDown
+              size={14}
+              style={{
+                transform: driversOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                transition: 'transform 200ms',
+                color: '#3f3f46',
+              }}
+            />
+          </button>
+
+          <div
+            style={{
+              maxHeight: driversOpen ? 300 : 0,
+              overflow: 'hidden',
+              transition: 'max-height 200ms ease-in-out',
+            }}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 4, paddingBottom: 4 }}>
+              {prediction.positiveSignals.map((signal, i) => (
+                <div key={`pos-${i}`} style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+                  <span style={{ fontSize: 12, color: '#10b981', marginTop: 1, flexShrink: 0 }}>&#10003;</span>
+                  <span style={{ fontSize: 12, color: '#71717a', lineHeight: 1.5 }}>{signal}</span>
+                </div>
+              ))}
+              {prediction.negativeSignals.map((signal, i) => (
+                <div key={`neg-${i}`} style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+                  <span style={{ fontSize: 12, color: '#f59e0b', marginTop: 1, flexShrink: 0 }}>&#9888;</span>
+                  <span style={{ fontSize: 12, color: '#71717a', lineHeight: 1.5 }}>{signal}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </motion.div>
   )
 }
