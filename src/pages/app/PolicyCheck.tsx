@@ -5,6 +5,7 @@ import { useState, useRef } from "react";
 import { useOutletContext } from "react-router-dom";
 import { ShieldCheck, Upload, X } from "lucide-react";
 import { runPolicyCheck, type PolicyCheckResult, type PolicyCheckParams } from "../../lib/policyCheckService";
+import { uploadImageToStorage, removeFromStorage } from "../../lib/storageService";
 import { PolicyCheckPanel } from "../../components/PolicyCheckPanel";
 import type { AppSharedContext } from "../../components/AppLayout";
 
@@ -212,10 +213,19 @@ export default function PolicyCheck() {
     setResult(null);
 
     try {
-      // Convert file to base64 data URL, resized to fit serverless body limit
-      let mediaDataUrl: string | undefined;
+      if (!file && !adCopy.trim()) {
+        setError("Upload a creative or paste your ad copy for a text-only check");
+        setLoading(false);
+        return;
+      }
+
+      // Upload file to Supabase Storage first (bypasses Vercel 4.5MB body limit)
+      let mediaStorageUrl: string | undefined;
+      let storagePath: string | undefined;
       if (file) {
-        mediaDataUrl = await fileToMediaDataUrl(file, 1200, 0.8);
+        const uploaded = await uploadImageToStorage(file, 1200, 0.8);
+        mediaStorageUrl = uploaded.signedUrl;
+        storagePath = uploaded.storagePath;
       }
 
       const params: PolicyCheckParams = {
@@ -223,17 +233,12 @@ export default function PolicyCheck() {
         adType,
         niche: niche.trim(),
         adCopy: adCopy.trim() || undefined,
-        mediaDataUrl,
+        mediaStorageUrl,
       };
-
-      if (!file && !adCopy.trim()) {
-        setError("Upload a creative or paste your ad copy for a text-only check");
-        setLoading(false);
-        return;
-      }
 
       const r = await runPolicyCheck(params);
       setResult(r);
+      if (storagePath) removeFromStorage(storagePath);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Policy check failed";
       if (msg.startsWith("RATE_LIMITED")) {
