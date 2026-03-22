@@ -842,6 +842,7 @@ export default function PaidAdAnalyzer() {
                         onHistoryEntryClick={(entry) => setLoadedEntry(entry)}
                       />
                   </div>
+                )}
               </div>
             </div>
           ) : null}
