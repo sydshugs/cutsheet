@@ -189,6 +189,7 @@ export function ScoreCard({
   onUpgradeRequired,
 }: ScoreCardProps) {
   const { label: overallLabel } = getScoreLabel(scores.overall);
+  const heroVerdict = scores.overall >= 8 ? "Strong" : scores.overall >= 4 ? "Average" : "Needs Work";
   const benchmark: BenchmarkResult = getBenchmark(niche ?? '', platform ?? '', format === 'video' ? 'video' : 'static');
   const [relativeTime, setRelativeTime] = useState<string>("");
   const [toast, setToast] = useState<string | null>(null);
@@ -316,7 +317,7 @@ export function ScoreCard({
           {/* 1 + 2. ScoreHero — score number + benchmark bar + dimension grid */}
           <ScoreHero
             score={scores.overall}
-            verdict={overallLabel}
+            verdict={heroVerdict}
             benchmark={benchmark.averageScore}
             platform={platform}
             dimensions={[
