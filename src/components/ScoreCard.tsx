@@ -602,7 +602,7 @@ export function ScoreCard({
 
       {/* 13. Overflow menu */}
       {(onGenerateBrief || onAddToSwipeFile || onStartOver || onCheckPolicies || onCompare) && (
-        <div style={{ marginTop: 16 }} className="px-5 pb-3 flex justify-end">
+        <div style={{ marginTop: 16 }} className="px-5 pb-8 flex justify-end">
           <OverflowMenu
             items={[
               ...(onGenerateBrief ? [{ label: "Generate Brief", onClick: onGenerateBrief, icon: <FileText size={14} /> }] : []),
