@@ -158,16 +158,18 @@ Predict:
 1. CTR Range — for this specific ${nicheLabel} ${adTypeLabel} ad on ${platformLabel}. Anchor against the benchmarks above.
 2. CVR Potential — if this ad drives to a typical ${nicheLabel} landing page on ${platformLabel}.
 3. Hook Retention (video only) — estimated % who watch past 3 seconds on ${platformLabel}. ${platformLabel === "TikTok" ? "TikTok users decide in 0.5-1s." : platformLabel === "YouTube" ? "YouTube users can skip at 5s." : "Meta feed users decide in 1-2s."}
-4. Fatigue Timeline — at moderate spend ($300-500/day on ${platformLabel}), estimated days before fatigue for ${nicheLabel}.
-5. Confidence Level and reason — cite specific scores and creative signals.
-6. Top 2 signals boosting performance — be specific to what you saw in the analysis.
-7. Top 2 signals limiting performance — reference the weakest scores.
+4. ${adTypeLabel === "video" ? "Completion Rate — estimated % of viewers who watch 50%+ of the video. Consider hook score and pacing signals." : "Thumb-Stop Rate — estimated % of users who pause their scroll on this static ad. Anchor to hook score and visual hierarchy signals."}
+5. Fatigue Timeline — at moderate spend ($300-500/day on ${platformLabel}), estimated days before fatigue for ${nicheLabel}.
+6. Confidence Level and reason — cite specific scores and creative signals.
+7. Top 2 signals boosting performance — be specific to what you saw in the analysis.
+8. Top 2 signals limiting performance — reference the weakest scores.
 
 Return as JSON:
 {
   "ctr": { "low": number, "high": number, "benchmark": number, "vsAvg": "above" | "at" | "below" },
   "cvr": { "low": number, "high": number },
   "hookRetention": { "low": number, "high": number } | null,
+  ${adTypeLabel === "video" ? '"completionRate": { "low": number, "high": number },' : '"thumbStop": { "low": number, "high": number },'}
   "fatigueDays": { "low": number, "high": number },
   "confidence": "Low" | "Medium" | "High",
   "confidenceReason": string,

@@ -680,8 +680,18 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
     setVisualizeResult(null);
     setVisualizeError(null);
     try {
-      // v2 spec: max 1024px for Gemini image editing to control cost and stay within limits
-      const { signedUrl: imageStorageUrl, storagePath } = await uploadImageToStorage(file, 1024, 0.85);
+      // For video: use thumbnail (hook frame) as the creative input
+      let imageFile: File = file;
+      if (format === "video") {
+        if (!thumbnailDataUrl) {
+          setVisualizeError("Could not extract a frame from this video.");
+          setVisualizeStatus("error");
+          return;
+        }
+        const blob = await fetch(thumbnailDataUrl).then(r => r.blob());
+        imageFile = new File([blob], "hook-frame.jpg", { type: "image/jpeg" });
+      }
+      const { signedUrl: imageStorageUrl, storagePath } = await uploadImageToStorage(imageFile, 1200, 0.85);
       const niche = userContext.match(/Niche:\s*(.+)/)?.[1]?.trim() || "general";
       // Meta static ads use platform-native CTA — exclude CTA from generated creative
       const isMetaStatic = platform === "Meta" && format === "static";
@@ -969,7 +979,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
               <div className="pointer-events-none absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-violet-600/[0.08] blur-[100px]" />
               <div className="relative flex flex-col flex-1">
                 {/* Show VisualizePanel IN PLACE OF AnalyzerView when visualize is active */}
-                {status === "complete" && format === "static" && (visualizeOpen || visualizeStatus !== "idle") ? (
+                {status === "complete" && (visualizeOpen || visualizeStatus !== "idle") ? (
                   <motion.div
                     key="visualize"
                     initial={{ opacity: 0, y: 8 }}
@@ -993,6 +1003,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                       onAnimateOriginal={handleAnimateOriginalFromPanel}
                       onAnalyzeVersion={handleReanalyze}
                       onUpgrade={onUpgradeRequired}
+                      format={format}
                     />
                   </motion.div>
                 ) : (
@@ -1021,6 +1032,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                         onHistoryEntryClick={(entry) => setLoadedEntry(entry)}
                         platform={platform !== "all" ? platform : (rawUserContext?.platform ?? undefined)}
                         icon={Zap}
+                        format={format}
                         niche={rawUserContext?.niche}
                         onFixIt={handleFixIt}
                         onVisualize={handleVisualize}

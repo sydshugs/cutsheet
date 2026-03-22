@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Zap, type LucideIcon } from "lucide-react";
+import { Zap } from "lucide-react";
 import { cn } from "../lib/utils";
 import { useThumbnail } from "../hooks/useThumbnail";
 import { sanitizeFileName } from "../utils/sanitize";
@@ -13,32 +13,43 @@ interface ProgressCardProps {
   statusMessage: string;
   onCancel: () => void;
   platform?: string;
-  icon?: LucideIcon;
-  /** Override the title (default: "Analyzing your ad") */
-  title?: string;
-  /** Override the metric bar labels */
-  metrics?: string[];
-  /** Override the loading stage labels */
-  stages?: { label: string; metric: string | null; pct: number }[];
-  /** Override the checklist items */
-  checkItems?: { id: string; label: string }[];
+  format?: "video" | "static";
 }
 
-const DEFAULT_STAGES = [
+const VIDEO_STAGES = [
   { label: "Reading creative...", metric: null, pct: 10 },
   { label: "Scoring hook strength...", metric: "Hook", pct: 30 },
+  { label: "Analyzing scene pacing...", metric: "Clarity", pct: 50 },
+  { label: "Evaluating CTA effectiveness...", metric: "CTA", pct: 70 },
+  { label: "Assessing production quality...", metric: "Production", pct: 85 },
+  { label: "Generating report...", metric: null, pct: 95 },
+];
+
+const STATIC_STAGES = [
+  { label: "Reading creative...", metric: null, pct: 10 },
+  { label: "Scoring scroll-stop power...", metric: "Hook", pct: 30 },
   { label: "Evaluating message clarity...", metric: "Clarity", pct: 50 },
   { label: "Analyzing CTA effectiveness...", metric: "CTA", pct: 70 },
-  { label: "Assessing production quality...", metric: "Production", pct: 85 },
+  { label: "Assessing visual quality...", metric: "Production", pct: 85 },
   { label: "Generating report...", metric: null, pct: 95 },
 ];
 
 const DEFAULT_METRICS = ["Hook Strength", "Message Clarity", "CTA Effectiveness", "Production Quality"];
 
-const DEFAULT_CHECK_ITEMS = [
+// ── Checklist card ────────────────────────────────────────────────────────────
+
+const VIDEO_CHECK_ITEMS = [
+  { id: "opening-hook", label: "Opening hook (first 3 seconds)" },
+  { id: "scene-pacing", label: "Scene structure & pacing" },
+  { id: "cta",          label: "CTA clarity + urgency" },
+  { id: "platform",     label: "Platform fit for {platform}" },
+  { id: "policy",       label: "Policy risk flags" },
+] as const;
+
+const STATIC_CHECK_ITEMS = [
   { id: "hook",     label: "Hook & scroll-stop power" },
-  { id: "cta",      label: "CTA clarity + urgency" },
   { id: "visual",   label: "Visual hierarchy & brand" },
+  { id: "cta",      label: "CTA clarity + urgency" },
   { id: "platform", label: "Platform fit for {platform}" },
   { id: "policy",   label: "Policy risk flags" },
 ];
@@ -98,21 +109,12 @@ function ChecklistItem({ label, done, active }: { label: string; done: boolean; 
   );
 }
 
-export function ProgressCard({
-  file, status, onCancel, platform, icon: Icon = Zap,
-  title = "Analyzing your ad",
-  metrics: customMetrics,
-  stages: customStages,
-  checkItems: customCheckItems,
-}: ProgressCardProps) {
-  const STAGES = customStages ?? DEFAULT_STAGES;
-  const METRICS = customMetrics ?? DEFAULT_METRICS;
-  const CHECK_ITEMS = customCheckItems ?? DEFAULT_CHECK_ITEMS;
-  const STAGE_TO_CHECK_INDEX = STAGES.map((_, i) => Math.min(i, CHECK_ITEMS.length - 1));
-
+export function ProgressCard({ file, status, onCancel, platform, format = "video" }: ProgressCardProps) {
   const [stageIndex, setStageIndex] = useState(0);
   const thumbnailDataUrl = useThumbnail(file);
   const isImage = file.type.startsWith("image/");
+  const STAGES = format === "static" ? STATIC_STAGES : VIDEO_STAGES;
+  const CHECK_ITEMS = format === "static" ? STATIC_CHECK_ITEMS : VIDEO_CHECK_ITEMS;
 
   const previewUrl = useMemo(() => {
     if (isImage) return URL.createObjectURL(file);

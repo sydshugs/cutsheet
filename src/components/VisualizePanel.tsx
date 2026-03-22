@@ -354,12 +354,14 @@ export interface VisualizePanelProps {
   videoSource?: "improved" | "original" | null;
   onAnimate?: () => void;
   onAnimateOriginal?: () => void;
+  format?: 'video' | 'static';
 }
 
 export function VisualizePanel({
   status, result, originalImageUrl, error, creditData, onClose, onBack, onAnalyzeVersion, onUpgrade,
-  videoUrl, videoLoading, videoError, videoSource, onAnimate, onAnimateOriginal,
+  videoUrl, videoLoading, videoError, videoSource, onAnimate, onAnimateOriginal, format,
 }: VisualizePanelProps) {
+  const isVideo = format === 'video';
   const [briefCopied, setBriefCopied] = useState(false);
   const [downloadTouched, setDownloadTouched] = useState(false);
 
@@ -443,7 +445,7 @@ export function VisualizePanel({
               background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
               borderRadius: 4, padding: "2px 6px",
             }}>
-              MVP — Static Ads
+              {isVideo ? "MVP — Hook Frame" : "MVP — Static Ads"}
             </span>
           </div>
           <p style={{ fontSize: 12, color: "#71717a", marginTop: 3 }}>
@@ -552,11 +554,11 @@ export function VisualizePanel({
               marginBottom: 24,
             }}>
               {originalImageUrl && (
-                <ImagePanel src={originalImageUrl} label="Before" height={380} />
+                <ImagePanel src={originalImageUrl} label={isVideo ? "Hook Frame" : "Before"} height={380} />
               )}
 
               {result.generatedImageUrl ? (
-                <ImagePanel src={result.generatedImageUrl} label="After" height={380} isAfter />
+                <ImagePanel src={result.generatedImageUrl} label={isVideo ? "Improved Hook Frame" : "After"} height={380} />
               ) : result.visualBrief ? (
                 <VisualBriefPanel
                   brief={result.visualBrief}
@@ -764,6 +766,13 @@ export function VisualizePanel({
                 </button>
               )}
             </div>
+
+            {/* Video — coming soon note */}
+            {isVideo && (
+              <p style={{ marginTop: 12, fontSize: 11, color: "#3f3f46", textAlign: "center" }}>
+                Full video generation coming soon — hook frame improvement only in v1
+              </p>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

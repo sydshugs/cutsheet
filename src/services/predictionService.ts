@@ -6,6 +6,8 @@ export interface PredictionResult {
   ctr: { low: number; high: number; benchmark: number; vsAvg: 'above' | 'at' | 'below' };
   cvr: { low: number; high: number };
   hookRetention: { low: number; high: number } | null;
+  completionRate?: { low: number; high: number }; // video only
+  thumbStop?: { low: number; high: number };       // static only
   fatigueDays: { low: number; high: number };
   confidence: 'Low' | 'Medium' | 'High';
   confidenceReason: string;

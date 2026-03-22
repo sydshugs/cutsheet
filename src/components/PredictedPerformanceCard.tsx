@@ -26,6 +26,7 @@ interface PredictedPerformanceCardProps {
   platform?: string
   niche?: string
   isOrganic?: boolean
+  format?: 'video' | 'static'
 }
 
 const VERDICT_STYLES = {
@@ -59,7 +60,7 @@ function CtrRangeBar({ low, high, nicheAvg }: { low: number; high: number; niche
   )
 }
 
-export default function PredictedPerformanceCard({ prediction, platform, niche, isOrganic }: PredictedPerformanceCardProps) {
+export default function PredictedPerformanceCard({ prediction, platform, niche, isOrganic, format }: PredictedPerformanceCardProps) {
   const [driversOpen, setDriversOpen] = useState(false)
   const organic = isOrganic || prediction.isOrganic
   const verdict = VERDICT_STYLES[prediction.ctr.vsAvg]

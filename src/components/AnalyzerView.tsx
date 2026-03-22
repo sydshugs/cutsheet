@@ -140,7 +140,7 @@ export function AnalyzerView({
             statusMessage={statusMessage}
             onCancel={onReset}
             platform={platform}
-            icon={icon}
+            format={format}
           />
         </div>
       )}
