@@ -26,7 +26,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
   }
 
-  const { analysisMarkdown, platform, niche, intent, adType, scores, isOrganic } = req.body ?? {};
+  const { analysisMarkdown, platform, niche, intent, adType, scores } = req.body ?? {};
 
   if (!analysisMarkdown) {
     return res.status(400).json({ error: "Missing analysisMarkdown" });
@@ -51,16 +51,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const platformRules = platformCopyRules[platform ?? ""] || "";
 
-  const organicOverride = isOrganic ? `
-ORGANIC CONTENT RULES — THIS IS NOT A PAID AD:
-Rewrite to sound like a real creator talking to their audience.
-Never use ad language: no urgency, no offer callouts, no CTAs, no "limited time", no "shop now", no conversion language.
-Sound like something a person would naturally say on ${platform ?? "social media"}.
-Replace any CTA rewrites with engagement hooks (save this, share with a friend, comment your take).
-The "newCTA" field should contain an engagement prompt, not a conversion CTA.
-` : "";
-
-  const systemPrompt = `You are a senior ${isOrganic ? "content" : "performance"} creative director specializing in ${niche ?? "DTC"} ${isOrganic ? "content" : "advertising"} on ${platform ?? isOrganic ? "social media" : "paid social"}. You're rewriting a ${adType ?? "video"} ${isOrganic ? "post" : "ad"} that scored ${scores?.overall ?? "?"}/10 overall, with weakest areas: ${weakDims.join(", ") || "not identified"}.
+  const systemPrompt = `You are a senior performance creative director specializing in ${niche ?? "DTC"} advertising on ${platform ?? "paid social"}. You're rewriting a ${adType ?? "video"} ad that scored ${scores?.overall ?? "?"}/10 overall, with weakest areas: ${weakDims.join(", ") || "not identified"}.
 
 Your rewrites must:
 - Preserve the brand's existing voice and tone — read the original ad carefully before rewriting
@@ -89,12 +80,11 @@ User's intent: ${intent ?? "conversion"} — optimize the rewrite for ${intent =
 ${platformRules}
 
 RULES:
-1. Read the original ${isOrganic ? "post" : "ad"} copy carefully. Match its voice — if it's casual, stay casual. If it's technical, stay technical.
+1. Read the original ad copy carefully. Match its voice — if it's casual, stay casual. If it's technical, stay technical.
 2. The rewritten hook must stop the scroll on ${platform ?? "the feed"} specifically.
 3. Every change must address a specific weakness from the scorecard. Don't change things that scored 8+.
 4. Text overlays must be readable on mobile in ${adType === "static" ? "a single glance" : "under 3 seconds"}.
-${isOrganic ? "5. No CTA buttons, no conversion language. The engagement prompt should feel natural for organic content." : `5. The CTA must be specific to ${niche ?? "this product"} — no generic "Learn More" unless that was the original.`}
-${organicOverride}
+5. The CTA must be specific to ${niche ?? "this product"} — no generic "Learn More" unless that was the original.
 
 Return a JSON object with these exact keys:
 {
