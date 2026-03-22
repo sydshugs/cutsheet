@@ -4,6 +4,9 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 
+/** Platforms that do NOT support static image ads — benchmark should be hidden for these */
+const STATIC_INCOMPATIBLE_PLATFORMS = new Set(['TikTok', 'YouTube', 'YouTube Shorts', 'Instagram Reels']);
+
 export interface ScoreHeroProps {
   score: number;          // 0–10, one decimal
   verdict: string;        // 'Strong' | 'Average' | 'Needs Work' | etc.
@@ -13,6 +16,7 @@ export interface ScoreHeroProps {
     score: number;        // 0–10
   }[];
   platform?: string;      // 'Meta' | 'TikTok' | etc. — for benchmark label
+  format?: 'video' | 'static';  // ad format — used to hide invalid benchmarks
 }
 
 /** Platform benchmark defaults — used when benchmark prop is not supplied */
@@ -21,8 +25,38 @@ const PLATFORM_BENCHMARKS: Record<string, number> = {
   'TikTok': 6.8,
   'Instagram': 7.0,
   'YouTube': 7.4,
+  'Google': 6.5,
   'Google Display': 6.5,
+  'Instagram Reels': 6.9,
+  'YouTube Shorts': 6.6,
   'LinkedIn': 6.9,
+  'Facebook': 7.0,
+};
+
+/** Platform-specific benchmark label shown in the benchmark bar */
+const PLATFORM_BENCHMARK_LABELS: Record<string, string> = {
+  'Meta': 'Meta avg',
+  'TikTok': 'TikTok avg',
+  'YouTube': 'YouTube avg',
+  'Google': 'Google Display avg',
+  'Instagram Reels': 'Reels avg',
+  'YouTube Shorts': 'Shorts avg',
+  'Instagram': 'Instagram avg',
+  'Facebook': 'Facebook avg',
+  'all': 'Industry avg',
+};
+
+/** Platform-specific dimension labels for the 4-metric grid */
+const PLATFORM_DIMENSIONS: Record<string, [string, string, string, string]> = {
+  'Meta':            ['Hook', 'Copy', 'Visual', 'CTA'],
+  'TikTok':          ['Hook', 'Retention', 'Sound', 'CTA'],
+  'YouTube':         ['Hook', 'Watch Time', 'Visual', 'CTA'],
+  'Google':          ['Headline', 'Visual', 'Relevance', 'CTA'],
+  'Instagram Reels': ['Hook', 'Retention', 'Audio', 'Share Trigger'],
+  'YouTube Shorts':  ['Hook', 'Pacing', 'Visual', 'End Screen'],
+  'Reels':           ['Hook', 'Retention', 'Audio', 'Share Trigger'],
+  'Shorts':          ['Hook', 'Pacing', 'Visual', 'End Screen'],
+  'all':             ['Hook', 'Copy', 'Visual', 'CTA'],
 };
 
 /** Score color: 8+ emerald, 4–7.9 amber, 0–3.9 red */
@@ -65,9 +99,10 @@ interface BenchmarkBarProps {
   benchmark: number;
   color: string;
   platform?: string;
+  label?: string;
 }
 
-function BenchmarkBar({ score, benchmark, color, platform }: BenchmarkBarProps) {
+function BenchmarkBar({ score, benchmark, color, label }: BenchmarkBarProps) {
   const fillPct = `${(score / 10) * 100}%`;
   const tickPct = `${(benchmark / 10) * 100}%`;
 
@@ -137,7 +172,7 @@ function BenchmarkBar({ score, benchmark, color, platform }: BenchmarkBarProps) 
             fontFamily: "var(--mono)",
           }}
         >
-          {platform ? `${platform} avg` : "Avg"} · {benchmark.toFixed(1)}
+          {label ?? "Avg"} · {benchmark.toFixed(1)}
         </span>
       </div>
     </div>
@@ -146,19 +181,37 @@ function BenchmarkBar({ score, benchmark, color, platform }: BenchmarkBarProps) 
 
 // ── ScoreHero ──────────────────────────────────────────────────────────────────
 
-export function ScoreHero({ score, verdict, benchmark, dimensions, platform }: ScoreHeroProps) {
+export function ScoreHero({ score, verdict, benchmark, dimensions, platform, format }: ScoreHeroProps) {
   const animatedScore = useCountUp(score, 600);
   const color = scoreColor(score);
 
+  // Hide benchmark for platforms that don't serve the current format
+  const platformIncompatible = format === 'static' && platform != null && STATIC_INCOMPATIBLE_PLATFORMS.has(platform);
+
   // Resolve benchmark: explicit prop → platform default lookup → undefined
-  const resolvedBenchmark =
-    benchmark != null
+  const resolvedBenchmark = platformIncompatible
+    ? undefined
+    : benchmark != null
       ? benchmark
       : platform != null
       ? PLATFORM_BENCHMARKS[platform]
       : undefined;
 
   const showBenchmark = resolvedBenchmark != null;
+
+  // Apply platform-specific dimension labels (override names from props)
+  const platformDimLabels = platform ? PLATFORM_DIMENSIONS[platform] : undefined;
+  const resolvedDimensions = platformDimLabels
+    ? dimensions.map((dim, i) => ({
+        ...dim,
+        name: platformDimLabels[i] ?? dim.name,
+      }))
+    : dimensions;
+
+  // Resolve benchmark label for display
+  const benchmarkLabel = platform
+    ? (PLATFORM_BENCHMARK_LABELS[platform] ?? `${platform} avg`)
+    : "Avg";
 
   return (
     <div
@@ -214,6 +267,7 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform }: S
           benchmark={resolvedBenchmark!}
           color={color}
           platform={platform}
+          label={benchmarkLabel}
         />
       )}
 
@@ -235,7 +289,7 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform }: S
           width: "100%",
         }}
       >
-        {dimensions.map((dim, i) => {
+        {resolvedDimensions.map((dim, i) => {
           const dimColor = scoreColor(dim.score);
           return (
             <motion.div
