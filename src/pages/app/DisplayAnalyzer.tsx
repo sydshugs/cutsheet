@@ -15,7 +15,8 @@ import { analyzeVideo } from "../../services/analyzerService";
 import { analyzeSuiteCohesion, type SuiteCohesionResult } from "../../services/claudeService";
 import { getUserContext, formatUserContextBlock } from "../../services/userContextService";
 import { VisualizePanel } from "../../components/VisualizePanel";
-import { visualizeAd, fileToBase64, getMediaType } from "../../lib/visualizeService";
+import { visualizeAd } from "../../lib/visualizeService";
+import { uploadImageToStorage, removeFromStorage } from "../../lib/storageService";
 import type { VisualizeResult, VisualizeStatus } from "../../types/visualize";
 import { getSessionMemory } from "@/src/lib/userMemoryService";
 import type { AppSharedContext } from "../../components/AppLayout";
@@ -391,12 +392,11 @@ Return JSON only — no prose:
     setVisualizeResult(null);
     setVisualizeError(null);
     try {
-      const imageBase64 = await fileToBase64(file);
-      const mediaType = getMediaType(file);
+      const { signedUrl: imageStorageUrl, storagePath } = await uploadImageToStorage(file, 1200, 0.85);
       const niche = userContext.match(/Niche:\s*(.+)/)?.[1]?.trim() || "general";
       const vizResult = await visualizeAd({
-        imageBase64,
-        imageMediaType: mediaType,
+        imageStorageUrl,
+        imageMediaType: "image/jpeg",
         analysisResult: {
           scores: result.scores as unknown as Record<string, number>,
           improvements: result.improvements ?? [],
@@ -407,6 +407,7 @@ Return JSON only — no prose:
       });
       setVisualizeResult(vizResult);
       setVisualizeStatus("complete");
+      removeFromStorage(storagePath);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
       if (msg === "PRO_REQUIRED") {

@@ -26,6 +26,9 @@ export interface PolicyCheckResult {
 
 export interface PolicyCheckParams {
   mediaUrl?: string;
+  /** Preferred: Supabase signed URL (bypasses Vercel 4.5MB body limit). */
+  mediaStorageUrl?: string;
+  /** Legacy fallback: base64 data URL (small images only). */
   mediaDataUrl?: string;
   adCopy?: string;
   platform: "meta" | "tiktok" | "both";

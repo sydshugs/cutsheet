@@ -30,7 +30,8 @@ import { generateFixIt, type FixItResult } from "../../services/fixItService";
 import { generatePrediction, type PredictionResult } from "../../services/predictionService";
 import { SecondEyePanel } from "../../components/SecondEyePanel";
 import { VisualizePanel } from "../../components/VisualizePanel";
-import { visualizeAd, fileToBase64, getMediaType } from "../../lib/visualizeService";
+import { visualizeAd } from "../../lib/visualizeService";
+import { uploadImageToStorage, removeFromStorage } from "../../lib/storageService";
 import type { VisualizeResult, VisualizeStatus } from "../../types/visualize";
 import { StaticSecondEyePanel } from "../../components/StaticSecondEyePanel";
 import { PolicyCheckPanel } from "../../components/PolicyCheckPanel";
@@ -643,12 +644,11 @@ export default function PaidAdAnalyzer() {
     setVisualizeResult(null);
     setVisualizeError(null);
     try {
-      const imageBase64 = await fileToBase64(file);
-      const mediaType = getMediaType(file);
+      const { signedUrl: imageStorageUrl, storagePath } = await uploadImageToStorage(file, 1200, 0.85);
       const niche = userContext.match(/Niche:\s*(.+)/)?.[1]?.trim() || "general";
       const result = await visualizeAd({
-        imageBase64,
-        imageMediaType: mediaType,
+        imageStorageUrl,
+        imageMediaType: "image/jpeg",
         analysisResult: {
           scores: activeResult.scores as Record<string, number>,
           improvements: activeResult.improvements ?? [],
@@ -660,6 +660,7 @@ export default function PaidAdAnalyzer() {
       });
       setVisualizeResult(result);
       setVisualizeStatus("complete");
+      removeFromStorage(storagePath);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
       if (msg === "PRO_REQUIRED") {

@@ -1,7 +1,10 @@
 // src/types/visualize.ts — Types for the Visualize It feature
 
 export interface VisualizeRequest {
-  imageBase64: string;
+  /** Preferred: Supabase signed URL (bypasses Vercel 4.5MB body limit). */
+  imageStorageUrl?: string;
+  /** Legacy fallback: raw base64 image string (no data URL prefix). */
+  imageBase64?: string;
   imageMediaType: "image/jpeg" | "image/png" | "image/webp";
   analysisResult: {
     scores: Record<string, number> | null;
