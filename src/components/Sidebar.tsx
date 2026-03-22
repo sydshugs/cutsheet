@@ -258,11 +258,11 @@ function DesktopSidebar({
       </div>
 
       {/* Bottom */}
-      <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "8px 0 12px", display: "flex", flexDirection: "column", gap: 2 }}>
+      <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "8px 8px 12px", display: "flex", flexDirection: "column", gap: 2 }}>
         {/* Pro plan badge */}
         {!collapsed && (
           <div style={{
-            margin: "4px 12px 8px", padding: "8px 12px", borderRadius: 10,
+            margin: "4px 4px 6px", padding: "8px 12px", borderRadius: 8,
             background: isPro ? "rgba(99,102,241,0.08)" : "rgba(255,255,255,0.03)",
             border: `1px solid ${isPro ? "rgba(99,102,241,0.2)" : "rgba(255,255,255,0.06)"}`,
             display: "flex", alignItems: "center", gap: 8,
@@ -277,7 +277,7 @@ function DesktopSidebar({
           </div>
         )}
         {collapsed && (
-          <div style={{ display: "flex", justifyContent: "center", margin: "4px 0 8px" }}>
+          <div style={{ display: "flex", justifyContent: "center", margin: "4px 0 6px" }}>
             <div style={{
               width: 8, height: 8, borderRadius: "50%",
               background: isPro ? "#6366f1" : "#52525b",
@@ -286,8 +286,20 @@ function DesktopSidebar({
         )}
 
         {/* Help & Support */}
-        <a href="mailto:support@cutsheet.xyz" style={{ display: "flex", alignItems: "center", gap: 10, padding: collapsed ? "8px 0" : "8px 12px", justifyContent: collapsed ? "center" : "flex-start", color: "#52525b", fontSize: 12, textDecoration: "none", transition: "color 150ms", margin: "0 8px" }} title={collapsed ? "Help & Support" : undefined} onMouseEnter={e => (e.currentTarget.style.color = "#a1a1aa")} onMouseLeave={e => (e.currentTarget.style.color = "#52525b")}>
-          <HelpCircle size={16} />
+        <a
+          href="mailto:support@cutsheet.xyz"
+          style={{
+            display: "flex", alignItems: "center", gap: 10,
+            padding: collapsed ? "8px 0" : "8px 16px",
+            justifyContent: collapsed ? "center" : "flex-start",
+            color: "#52525b", fontSize: 13, textDecoration: "none",
+            transition: "color 150ms", borderRadius: 8,
+          }}
+          title={collapsed ? "Help & Support" : undefined}
+          onMouseEnter={e => (e.currentTarget.style.color = "#a1a1aa")}
+          onMouseLeave={e => (e.currentTarget.style.color = "#52525b")}
+        >
+          <HelpCircle size={18} />
           {!collapsed && <span>Help &amp; Support</span>}
         </a>
 
@@ -296,7 +308,7 @@ function DesktopSidebar({
           type="button"
           onClick={() => navigate("/settings")}
           className="group flex items-center gap-[10px] transition-colors hover:bg-[rgba(255,255,255,0.04)] rounded-[8px]"
-          style={{ height: 40, padding: collapsed ? 0 : "0 16px", margin: "0 8px", background: "transparent", border: "none", cursor: "pointer", justifyContent: collapsed ? "center" : "flex-start" }}
+          style={{ height: 40, padding: collapsed ? 0 : "0 16px", background: "transparent", border: "none", cursor: "pointer", justifyContent: collapsed ? "center" : "flex-start" }}
           aria-label="Settings"
         >
           <Settings size={18} className="text-[#71717a] group-hover:text-[#a1a1aa] transition-colors" />
