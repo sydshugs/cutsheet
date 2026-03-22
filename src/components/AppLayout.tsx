@@ -1,5 +1,6 @@
 // AppLayout.tsx — layout shell for all /app/* routes
 import { useRef, useCallback, useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { Outlet, useNavigate } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
@@ -94,6 +95,10 @@ export default function AppLayout() {
   const userEmail = user?.email ?? "";
 
   return (
+    <>
+    <Helmet>
+      <meta name="robots" content="noindex, nofollow" />
+    </Helmet>
     <div className="flex h-screen overflow-hidden" style={{ background: "#09090b" }}>
       <a
         href="#main-content"
@@ -140,5 +145,6 @@ export default function AppLayout() {
       )}
       <KeyboardShortcutsModal open={showShortcuts} onClose={() => setShowShortcuts(false)} />
     </div>
+    </>
   );
 }
