@@ -132,10 +132,7 @@ async function runGeminiAnalysis(
     if (!imageData) return {};
 
     const genAI = new GoogleGenerativeAI((process.env.GEMINI_API_KEY ?? process.env.VITE_GEMINI_API_KEY)!);
-    const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
-      generationConfig: { temperature: 0 },
-    });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const result = await model.generateContent([
       { inlineData: { mimeType: imageData.mimeType, data: imageData.data } },
@@ -176,56 +173,45 @@ Your job is to deconstruct winning ads so the reader can steal specific techniqu
 function buildClaudePrompt(
   adContext: string,
   geminiContext: string,
-  sourceType: string,
-  niche?: string,
-  userContext?: string,
+  ctx: UserContext
 ): string {
-  const nicheLabel = niche || "performance marketing";
-  const platformLabel = sourceType === "meta" ? "Meta (Facebook/Instagram)" : sourceType === "tiktok" ? "TikTok" : "YouTube";
+  const nicheClause = ctx.niche ? ` for ${ctx.niche}` : "";
+  const platform = adContext.includes("Source: meta") ? "Meta" : adContext.includes("Source: tiktok") ? "TikTok" : "YouTube";
 
-  const platformHookContext: Record<string, string> = {
-    meta: "On Meta, users scroll at 1.7 seconds per post. The hook must stop the thumb in frame 1. Sound-off is default — text overlays carry the hook.",
-    tiktok: "On TikTok, users decide in 0.5-1 second. The hook must be immediate — no logo intros, no 'hey guys'. Native creator energy outperforms polished production.",
-    youtube: "On YouTube, users can skip at 5 seconds. The first 5 seconds must deliver enough value or curiosity to prevent the skip. Audio is primary.",
-  };
-
-  return `You are a senior performance creative director specializing in ${nicheLabel} advertising on ${platformLabel}. You've reviewed thousands of ${nicheLabel} ads on ${platformLabel} and know exactly what patterns drive results in this category.
+  return `Based on this ad analysis data, write a complete Ad Deconstruction Report. Be specific — reference concrete elements from the ad. Every section must pass the "could this apply to any ad?" test. If it could, it's not specific enough.
 
 ${adContext}
 
 ${geminiContext}
 
-${userContext ? `USER CONTEXT:\n${userContext}\nCompare this competitor's techniques against the user's own creative approach.\n` : ""}
-
-Write a complete Ad Deconstruction Report. Every insight must be specific to ${nicheLabel} on ${platformLabel} — not generic advice that could apply to any ad.
+Write the following sections in clean markdown:
 
 ## Why This Ad Works
-2-3 sentence executive summary. What makes this ad effective specifically for ${nicheLabel} audiences on ${platformLabel}? Reference the actual creative elements.
+2-3 sentence executive summary of the single core insight that makes this ad effective${nicheClause}. Name the specific mechanism, not the category.
 
 ## Hook Analysis
-${platformHookContext[sourceType] || ""}
-What happens in the first 3 seconds/above the fold. Why it stops the scroll for ${nicheLabel} audiences. Hook type and effectiveness score (1-10). Would this hook pattern work for other ${nicheLabel} brands?
+What happens in the first 3 seconds/above the fold. Why it stops the scroll on ${platform}. Hook type, hook effectiveness score (1-10), and what would make it stronger.
 
 ## Psychological Triggers
-Bullet list of every trigger used. For each: where it appears, why it works specifically for ${nicheLabel} buyers, and whether ${platformLabel}'s audience responds well to this trigger type.
+Bullet list of every trigger used — with location/timestamp and explanation of why each one works specifically for ${ctx.niche || "this"} buyers on ${platform}.
 
 ## Structure Breakdown
-The narrative arc: Hook → Tension → Resolution → CTA. What each beat achieves for ${nicheLabel} conversion. Where does this structure differ from the typical ${platformLabel} ${nicheLabel} ad?
+The narrative arc: Hook → Tension → Resolution → CTA. What each beat achieves and why this sequence works${nicheClause}.
 
 ## CTA Mechanics
-Exact CTA language, placement, urgency signals. Does this CTA follow ${platformLabel} best practices for ${nicheLabel}? What makes it convert for this specific audience?
+Exact CTA language, placement, urgency signals. What makes it convert for ${ctx.niche || "this"} audience, and what would make it stronger.
 
 ## What You Can Steal
-3 specific techniques from this ad. Frame each as: "For your ${nicheLabel} ${platformLabel} ads, steal this: [specific pattern] because [why it works in ${nicheLabel}]." Not generic advice — patterns specific to this niche and platform.
+3 specific, immediately actionable techniques from this ad${ctx.niche ? ` that work for ${ctx.niche} advertising` : ""}. Name each technique, where it appears, and the exact brief for adapting it to your own creative.
 
 ## Your Brief
-A ready-to-use creative brief for making your own ${nicheLabel} version of this ad on ${platformLabel}:
-- **Hook concept:** (adapted for ${nicheLabel})
-- **Core message:** (what resonates with ${nicheLabel} buyers)
-- **Tone & style:** (${platformLabel}-native for ${nicheLabel})
-- **Key visual moments:**
-- **CTA recommendation:** (${platformLabel} best practices for ${nicheLabel})
-- **Platform optimization notes:** (${platformLabel}-specific)`;
+A ready-to-use creative brief${ctx.niche ? ` for a ${ctx.niche} advertiser` : ""} making their own version of this ad:
+- **Hook concept:** (adapted for ${ctx.niche || "your"} product)
+- **Core message:** (what problem/desire this targets)
+- **Tone & style:** (match or intentionally contrast this ad's approach)
+- **Key visual moments:** (the 2-3 scenes/frames that do the heavy lifting)
+- **CTA recommendation:** (specific language for ${ctx.niche || "your"} audience)
+- **${platform} optimization notes:** (platform-specific production guidance)`;
 }
 
 // ─── HANDLER ─────────────────────────────────────────────────────────────────
@@ -247,12 +233,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
   }
 
-  const { url, sourceType, mediaUrl, niche, userContext } = (req.body ?? {}) as {
+  const { url, sourceType, mediaUrl, niche, userRole, userIntent } = (req.body ?? {}) as {
     url?: string;
     sourceType?: string;
     mediaUrl?: string;
     niche?: string;
-    userContext?: string;
+    userRole?: string;
+    userIntent?: string;
   };
 
   if (!url || typeof url !== "string") {
@@ -336,12 +323,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const message = await client.messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 3000,
-      temperature: 0,
       system: buildClaudeSystemPrompt(sourceType ?? "meta", userCtx),
       messages: [
         {
           role: "user",
-          content: buildClaudePrompt(adContext, geminiContext, sourceType ?? "meta", niche, userContext),
+          content: buildClaudePrompt(adContext, geminiContext, userCtx),
         },
       ],
     });
