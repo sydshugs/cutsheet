@@ -7,7 +7,6 @@ import { Copy, CheckCircle, Wand2, Loader2, AlertCircle, TrendingUp, ArrowUpRigh
 import type { BudgetRecommendation, Hashtags, Scene, HookDetail } from "../services/analyzerService";
 import type { EngineBudgetRecommendation } from "../services/budgetService";
 import { getBenchmark, type BenchmarkResult } from "../lib/benchmarks";
-import { BenchmarkBadge } from "./BenchmarkBadge";
 import SceneBreakdown from "./SceneBreakdown";
 import { StaticAdChecks } from "./StaticAdChecks";
 import FixItPanel, { type FixItResult } from "./FixItPanel";
@@ -17,7 +16,7 @@ import { OverflowMenu, type OverflowMenuItem } from "./ui/OverflowMenu";
 import { AlertDialog } from "./ui/AlertDialog";
 
 // Sub-components
-import { MetricBars } from "./scorecard/MetricBars";
+import { ScoreHero } from "./ScoreHero";
 import { HookDetailCard } from "./scorecard/HookDetailCard";
 import { BudgetCard } from "./scorecard/BudgetCard";
 import { ScoreAdaptiveCTA } from "./scorecard/ScoreAdaptiveCTA";
@@ -74,10 +73,6 @@ interface ScoreCardProps {
   isPro?: boolean;
   onUpgradeRequired?: (feature: string) => void;
 }
-
-const SCORE_TOOLTIPS: Record<string, string> = {
-  overall: "Weighted composite of all scoring dimensions",
-};
 
 /** Score band color for chips/overlays: 9-10 green, 7-8 indigo, 5-6 amber, 1-4 red (scores 0-10). */
 export function getScoreColorByValue(score: number): string {
@@ -193,16 +188,11 @@ export function ScoreCard({
   isPro,
   onUpgradeRequired,
 }: ScoreCardProps) {
-  const { label: overallLabel, color: overallLabelColor } = getScoreLabel(scores.overall);
-  const [mounted, setMounted] = useState(false);
+  const { label: overallLabel } = getScoreLabel(scores.overall);
   const benchmark: BenchmarkResult = getBenchmark(niche ?? '', platform ?? '', format === 'video' ? 'video' : 'static');
   const [relativeTime, setRelativeTime] = useState<string>("");
   const [toast, setToast] = useState<string | null>(null);
   const [startOverOpen, setStartOverOpen] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (!analysisTime) return;
@@ -271,8 +261,6 @@ export function ScoreCard({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const overallColor = getScoreColorByValue(scores.overall);
-
   return (
     <div className="scorecard flex flex-col h-full">
       {/* Header */}
@@ -325,56 +313,27 @@ export function ScoreCard({
         {/* Card content */}
         <div style={{ position: "relative", zIndex: 1 }}>
 
-          {/* 1. Score hero \u2014 arc gauge */}
-          <div className="px-5 pt-6 pb-2 flex flex-col items-center">
-            <div className="relative w-40 h-24 flex-shrink-0">
-              <svg viewBox="0 0 120 70" className="w-full h-full" role="img" aria-label={`Overall score: ${scores.overall} out of 10`}>
-                <title>Overall score: {scores.overall} out of 10</title>
-                <path d="M 10 60 A 50 50 0 0 1 110 60" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="3" strokeLinecap="round" />
-                <path
-                  d="M 10 60 A 50 50 0 0 1 110 60"
-                  fill="none"
-                  stroke={overallColor}
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeDasharray={`${mounted ? (scores.overall / 10) * 157 : 0} 157`}
-                  style={{ transition: "stroke-dasharray 0.8s cubic-bezier(0.16, 1, 0.3, 1)" }}
-                />
-              </svg>
-            </div>
+          {/* 1 + 2. ScoreHero — score number + benchmark bar + dimension grid */}
+          <ScoreHero
+            score={scores.overall}
+            verdict={overallLabel}
+            benchmark={benchmark.averageScore}
+            platform={platform}
+            dimensions={[
+              { name: "Hook",   score: scores.hook },
+              { name: "Copy",   score: scores.clarity },
+              { name: "Visual", score: scores.production },
+              { name: "CTA",    score: scores.cta },
+            ]}
+          />
 
-            <div className="flex items-baseline gap-1 -mt-4" title={SCORE_TOOLTIPS.overall} style={{ cursor: "help" }}>
-              <span style={{ fontSize: 72, fontFamily: "var(--mono)", fontWeight: 700, color: overallColor, lineHeight: 1 }}>
-                {scores.overall}
-              </span>
-              <span style={{ fontSize: 14, fontFamily: "var(--mono)", color: "var(--ink-faint)" }}>/10</span>
-            </div>
-
-            <span style={{ fontSize: 13, fontWeight: 500, color: overallLabelColor, marginTop: 4 }}>
-              {overallLabel}
-            </span>
-
-            <div className="mt-3 mb-1">
-              <BenchmarkBadge userScore={scores.overall} benchmark={benchmark} />
-            </div>
-
-            {winner && (
-              <div className="mt-2 px-3 py-1 rounded-full text-xs font-semibold font-mono bg-amber-500/10 text-amber-400 border border-amber-500/25">
+          {winner && (
+            <div className="flex justify-center pb-2">
+              <div className="px-3 py-1 rounded-full text-xs font-semibold font-mono bg-amber-500/10 text-amber-400 border border-amber-500/25">
                 &#9733; Winner
               </div>
-            )}
-          </div>
-
-          {/* 2. MetricBars \u2014 always visible */}
-          <div style={{ marginTop: 8 }}>
-            <MetricBars
-              scores={scores}
-              mounted={mounted}
-              onCTARewrite={onCTARewrite}
-              ctaRewrites={ctaRewrites}
-              ctaLoading={ctaLoading}
-            />
-          </div>
+            </div>
+          )}
 
           {/* 3. ScoreAdaptiveCTA \u2014 always visible */}
           <div style={{ marginTop: 24, padding: "0 20px" }}>
