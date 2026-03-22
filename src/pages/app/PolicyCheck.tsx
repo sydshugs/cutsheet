@@ -243,7 +243,7 @@ export default function PolicyCheck() {
   const hasInput = file || adCopy.trim().length > 0;
 
   return (
-    <div className="flex h-full overflow-hidden" style={{ minHeight: "calc(100vh - 56px)" }}>
+    <div className="flex h-full" style={{ minHeight: "calc(100vh - 56px)" }}>
       <Helmet>
         <title>Ad Policy Check — Cutsheet</title>
         <meta name="description" content="Check your ad creative against Meta and TikTok advertising policies before launch. Catch rejections before they cost you ad spend." />
