@@ -263,8 +263,8 @@ export default function PaidAdAnalyzer() {
   // ── Build context prefix for Gemini prompt ────────────────────────────────
   const contextPrefix =
     platform !== "all"
-      ? `Analyzing as ${format} ad for ${platform}.\nScore and optimize specifically for ${platform} performance.\nApply ${platform}-specific improvement suggestions.`
-      : undefined;
+      ? `This is a PAID ${format} ad for ${platform}.\nScore and optimize specifically for ${platform} performance.\nApply ${platform}-specific improvement suggestions.\nFocus on CTR, ROAS, and conversion potential.`
+      : `This is a PAID ${format} ad.\nScore for performance marketing metrics: CTR, ROAS, conversion potential, and ad spend efficiency.\nApply cross-platform best practices.`;
 
   // ── Effects ───────────────────────────────────────────────────────────────
   useEffect(() => {
