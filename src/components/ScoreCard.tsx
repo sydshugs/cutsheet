@@ -76,6 +76,8 @@ interface ScoreCardProps {
   onUpgradeRequired?: (feature: string) => void;
   // Mode — affects hashtag default state (expanded for organic)
   isOrganic?: boolean;
+  // Verdict
+  verdict?: { state: 'not_ready' | 'needs_work' | 'ready'; headline: string; sub: string };
 }
 
 /** Score band color for chips/overlays: 9-10 green, 7-8 indigo, 5-6 amber, 1-4 red (scores 0-10). */
@@ -194,6 +196,7 @@ export function ScoreCard({
   isPro,
   onUpgradeRequired,
   isOrganic = false,
+  verdict,
 }: ScoreCardProps) {
   const displayScore = platformScore ?? scores.overall;
   const { label: overallLabel } = getScoreLabel(displayScore);
@@ -314,7 +317,30 @@ export function ScoreCard({
         </div>
       </div>
 
-      {/* Analysis content \u2014 Glass card */}
+      {/* Verdict chip — below header, above score */}
+      {verdict && (
+        <div className="mx-4 mt-3">
+          <div className="flex items-center gap-2.5 rounded-xl px-3.5 py-2.5"
+            style={{
+              background: verdict.state === 'ready' ? 'rgba(16,185,129,0.06)' : verdict.state === 'needs_work' ? 'rgba(251,191,36,0.06)' : 'rgba(239,68,68,0.06)',
+              border: `0.5px solid ${verdict.state === 'ready' ? 'rgba(16,185,129,0.15)' : verdict.state === 'needs_work' ? 'rgba(251,191,36,0.15)' : 'rgba(239,68,68,0.15)'}`,
+            }}
+          >
+            <span
+              className="text-[10px] font-medium rounded-full px-2 py-0.5 shrink-0 leading-4"
+              style={{
+                color: verdict.state === 'ready' ? '#10b981' : verdict.state === 'needs_work' ? '#d97706' : '#ef4444',
+                background: verdict.state === 'ready' ? 'rgba(16,185,129,0.12)' : verdict.state === 'needs_work' ? 'rgba(251,191,36,0.12)' : 'rgba(239,68,68,0.12)',
+              }}
+            >
+              {verdict.state === 'ready' ? 'Ready to run' : verdict.state === 'needs_work' ? 'Needs work' : 'Not ready'}
+            </span>
+            <span className="text-[11px] text-zinc-400 leading-snug line-clamp-2">{verdict.headline}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Analysis content — Glass card */}
       <div style={{
         background: "var(--glass-card-bg)",
         backdropFilter: "var(--glass-card-blur)",

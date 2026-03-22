@@ -974,29 +974,6 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                 </div>
               </div>
             )}
-            {/* Verdict chip above scorecard */}
-            {activeResult.verdict && (
-              <div className="px-4 pb-2">
-                <div
-                  className="flex items-center gap-2 rounded-lg px-3 py-2"
-                  style={{
-                    background: activeResult.verdict.state === 'ready' ? 'rgba(16,185,129,0.08)' : activeResult.verdict.state === 'needs_work' ? 'rgba(251,191,36,0.08)' : 'rgba(239,68,68,0.08)',
-                    border: `1px solid ${activeResult.verdict.state === 'ready' ? 'rgba(16,185,129,0.15)' : activeResult.verdict.state === 'needs_work' ? 'rgba(251,191,36,0.15)' : 'rgba(239,68,68,0.15)'}`,
-                  }}
-                >
-                  <span
-                    className="text-[10px] font-medium rounded-full px-2 py-0.5"
-                    style={{
-                      color: activeResult.verdict.state === 'ready' ? '#10b981' : activeResult.verdict.state === 'needs_work' ? '#d97706' : '#ef4444',
-                      background: activeResult.verdict.state === 'ready' ? 'rgba(16,185,129,0.15)' : activeResult.verdict.state === 'needs_work' ? 'rgba(251,191,36,0.15)' : 'rgba(239,68,68,0.15)',
-                    }}
-                  >
-                    {activeResult.verdict.state === 'ready' ? 'Ready to run' : activeResult.verdict.state === 'needs_work' ? 'Needs work' : 'Not ready to run'}
-                  </span>
-                  <span className="text-xs text-zinc-400 truncate">{activeResult.verdict.headline}</span>
-                </div>
-              </div>
-            )}
             <div ref={scorecardRef}>
               <ScoreCard
                 scores={activeResult.scores}
@@ -1036,6 +1013,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                 visualizeLoading={visualizeStatus === "loading"}
                 canVisualize={true}
                 isPro={isPro}
+                verdict={activeResult.verdict}
                 onUpgradeRequired={onUpgradeRequired}
               />
             </div>

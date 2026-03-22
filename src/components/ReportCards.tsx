@@ -358,17 +358,7 @@ export function ReportCards({
         </div>
       )}
 
-      {/* ─── VERDICT BANNER ─── */}
-      {effectiveVerdict && (
-        <div className="mt-4">
-          <VerdictBanner
-            verdict={effectiveVerdict}
-            platform={platform}
-            format={format}
-            niche={niche}
-          />
-        </div>
-      )}
+      {/* Verdict banner moved to right panel */}
 
       {/* ─── ZONE 1: Priority Fixes ─── */}
       {fixes.length > 0 && (
