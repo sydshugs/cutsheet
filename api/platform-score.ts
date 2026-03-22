@@ -20,12 +20,9 @@ const PLATFORM_GUIDANCE: Record<string, string> = {
   reels: `Prioritize: native feel, vertical framing, trending audio, Reels-specific engagement hooks, text overlays, quick cuts. Penalize: overly produced content, horizontal format, slow pacing.`,
   shorts: `Prioritize: strong hook in 5s (skip threshold), vertical format, fast pacing, clear text overlays, YouTube-specific end screen CTA. Penalize: weak audio, no clear narrative, buried CTA.`,
   meta: `Prioritize: thumb-stop in first frame, clear value prop, sound-off readability, strong CTA above fold, text overlay on key moments. Penalize: long intros without text, no captions, weak opening frame.`,
-  instagram: `Prioritize: visual quality, aesthetic consistency, save-worthy composition, carousel-friendly framing, caption-keyword discoverability, hashtag reach mix. Penalize: low-res imagery, cluttered layouts, missing alt text, weak caption hooks.`,
-  pinterest: `Prioritize: vertical 2:3 aspect ratio, keyword-rich descriptions, save-worthy design, text overlay readability, pin-worthy composition, board-relevant styling. Penalize: horizontal format, missing descriptions, low-contrast text, non-vertical framing.`,
   youtube: `Prioritize: strong hook in 5s (skip threshold), audio quality, retention arc, end screen CTA, brand consistency. Penalize: weak audio, no clear narrative, buried CTA.`,
   google: `Prioritize: hierarchy at smallest size, single clear message, brand visibility, CTA button contrast. Penalize: text-heavy layout, low contrast, unclear offer.`,
   display: `Prioritize: hierarchy at smallest size, single clear message, brand visibility, CTA button contrast. Penalize: text-heavy layout, low contrast, unclear offer.`,
-  facebook: `Prioritize: thumb-stop in first frame, clear value prop, sound-off readability, strong CTA above fold, text overlay on key moments. Penalize: long intros without text, no captions, weak opening frame.`,
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -98,15 +95,6 @@ ${guidance}
 
 ${nicheContext ? `\n${nicheLabel.toUpperCase()} ON ${platform.toUpperCase()} SPECIFICS:\n${nicheContext}` : ""}
 
-SCORING RULES — DETERMINISTIC:
-You are a scoring engine. Apply criteria mechanically and consistently.
-For the same input, always produce the same score. Scores must be integers 1-10. No decimals. No ranges.
-Scoring scale:
-1-3: Significant problems. Multiple critical issues.
-4-6: Functional but weak. Core elements present but underperforming.
-7-8: Solid. Meets platform best practices.
-9-10: Excellent. Exceeds benchmarks. Production-ready.
-
 Score this ad specifically for ${platform} performance. Return a JSON object with these exact keys:
 {
   "platform": "${platform}",
@@ -126,7 +114,6 @@ Return ONLY valid JSON, no markdown fencing.`;
     const message = await client.messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 1024,
-      temperature: 0,
       system: systemPrompt,
       messages: [{ role: "user", content: prompt }],
     });
