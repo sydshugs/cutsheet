@@ -52,7 +52,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     ? `\nINDUSTRY BENCHMARKS:\n${benchmarks.ctr}\n${benchmarks.cvr}`
     : `\nNote: Use general paid social benchmarks for ${nicheLabel}. Meta avg CTR: 0.9-1.5%. Google Display: 0.3-0.5%.`;
 
-  const systemPrompt = `You are a performance marketing analyst specializing in ${nicheLabel} advertising on ${platformLabel}. You have studied over 100,000 ${platformLabel} ad campaigns in the ${nicheLabel} category. Your predictions are calibrated against real campaign data — you never guess high to flatter the user. You anchor every prediction to specific creative signals and platform benchmarks.`;
+  // Identify weakest dimensions for calibration
+  const weakDims = scores
+    ? Object.entries(scores as Record<string, number>)
+        .filter(([k]) => ["hook", "clarity", "cta", "production"].includes(k))
+        .sort(([, a], [, b]) => a - b)
+        .slice(0, 2)
+        .map(([k, v]) => `${k} (${v}/10)`)
+    : [];
+
+  const systemPrompt = `You are a performance marketing analyst specializing in ${nicheLabel} ${adTypeLabel} advertising on ${platformLabel}. You have studied over 100,000 ${platformLabel} ad campaigns in the ${nicheLabel} category.
+
+This ad scored ${scores?.overall ?? "?"}/10 overall. Weakest areas: ${weakDims.join(", ") || "not identified"}. Hook: ${scores?.hook ?? "?"}/10, CTA: ${scores?.cta ?? "?"}/10.
+
+CALIBRATION RULES:
+- A hook score of 3/10 → predict retention below 20%. A hook of 8/10 → predict retention above 55%.
+- A CTA score of 3/10 → predict CTR in the bottom quartile for ${nicheLabel}. A CTA of 8/10 → top quartile.
+- An overall score of 4/10 → fatigue in under 7 days at moderate spend. An 8/10 → 14-21 days.
+- Every prediction must cite the specific score that drives it: "CTR predicted at X% vs Y% ${platformLabel} average for ${nicheLabel} because [dimension] scored [N]/10."
+- Never guess high to flatter. A weak ad gets weak predictions.`;
 
   const prompt = `Based on the following creative scorecard, generate a performance prediction for this ${adTypeLabel} ad on ${platformLabel} in the ${nicheLabel} niche.
 
