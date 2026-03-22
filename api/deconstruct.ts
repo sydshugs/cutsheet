@@ -145,42 +145,57 @@ async function runGeminiAnalysis(
 
 function buildClaudePrompt(
   adContext: string,
-  geminiContext: string
+  geminiContext: string,
+  sourceType: string,
+  niche?: string,
+  userContext?: string,
 ): string {
-  return `You are a world-class creative strategist and media buyer. Based on this ad analysis data, write a complete Ad Deconstruction Report.
+  const nicheLabel = niche || "performance marketing";
+  const platformLabel = sourceType === "meta" ? "Meta (Facebook/Instagram)" : sourceType === "tiktok" ? "TikTok" : "YouTube";
+
+  const platformHookContext: Record<string, string> = {
+    meta: "On Meta, users scroll at 1.7 seconds per post. The hook must stop the thumb in frame 1. Sound-off is default — text overlays carry the hook.",
+    tiktok: "On TikTok, users decide in 0.5-1 second. The hook must be immediate — no logo intros, no 'hey guys'. Native creator energy outperforms polished production.",
+    youtube: "On YouTube, users can skip at 5 seconds. The first 5 seconds must deliver enough value or curiosity to prevent the skip. Audio is primary.",
+  };
+
+  return `You are a senior performance creative director specializing in ${nicheLabel} advertising on ${platformLabel}. You've reviewed thousands of ${nicheLabel} ads on ${platformLabel} and know exactly what patterns drive results in this category.
 
 ${adContext}
 
 ${geminiContext}
 
-Write the following sections in clean markdown. Be specific, not generic. Reference concrete elements from the ad data.
+${userContext ? `USER CONTEXT:\n${userContext}\nCompare this competitor's techniques against the user's own creative approach.\n` : ""}
+
+Write a complete Ad Deconstruction Report. Every insight must be specific to ${nicheLabel} on ${platformLabel} — not generic advice that could apply to any ad.
 
 ## Why This Ad Works
-2-3 sentence executive summary of the core insight that makes this ad effective.
+2-3 sentence executive summary. What makes this ad effective specifically for ${nicheLabel} audiences on ${platformLabel}? Reference the actual creative elements.
 
 ## Hook Analysis
-What happens in the first 3 seconds/above the fold. Why it stops the scroll. Hook type and effectiveness score (1-10).
+${platformHookContext[sourceType] || ""}
+What happens in the first 3 seconds/above the fold. Why it stops the scroll for ${nicheLabel} audiences. Hook type and effectiveness score (1-10). Would this hook pattern work for other ${nicheLabel} brands?
 
 ## Psychological Triggers
-Bullet list of every trigger used with location/timestamp and explanation of why each one works.
+Bullet list of every trigger used. For each: where it appears, why it works specifically for ${nicheLabel} buyers, and whether ${platformLabel}'s audience responds well to this trigger type.
 
 ## Structure Breakdown
-The narrative arc: Hook → Tension → Resolution → CTA. What each beat achieves.
+The narrative arc: Hook → Tension → Resolution → CTA. What each beat achieves for ${nicheLabel} conversion. Where does this structure differ from the typical ${platformLabel} ${nicheLabel} ad?
 
 ## CTA Mechanics
-Exact CTA language, placement, urgency signals used, what makes it convert.
+Exact CTA language, placement, urgency signals. Does this CTA follow ${platformLabel} best practices for ${nicheLabel}? What makes it convert for this specific audience?
 
 ## What You Can Steal
-3 specific, actionable techniques from this ad you can apply immediately to your own creatives.
+3 specific techniques from this ad. Frame each as: "For your ${nicheLabel} ${platformLabel} ads, steal this: [specific pattern] because [why it works in ${nicheLabel}]." Not generic advice — patterns specific to this niche and platform.
 
 ## Your Brief
-A ready-to-use creative brief for making your own version of this ad:
-- **Hook concept:**
-- **Core message:**
-- **Tone & style:**
+A ready-to-use creative brief for making your own ${nicheLabel} version of this ad on ${platformLabel}:
+- **Hook concept:** (adapted for ${nicheLabel})
+- **Core message:** (what resonates with ${nicheLabel} buyers)
+- **Tone & style:** (${platformLabel}-native for ${nicheLabel})
 - **Key visual moments:**
-- **CTA recommendation:**
-- **Platform optimization notes:**`;
+- **CTA recommendation:** (${platformLabel} best practices for ${nicheLabel})
+- **Platform optimization notes:** (${platformLabel}-specific)`;
 }
 
 // ─── HANDLER ─────────────────────────────────────────────────────────────────
@@ -202,10 +217,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
   }
 
-  const { url, sourceType, mediaUrl } = (req.body ?? {}) as {
+  const { url, sourceType, mediaUrl, niche, userContext } = (req.body ?? {}) as {
     url?: string;
     sourceType?: string;
     mediaUrl?: string;
+    niche?: string;
+    userContext?: string;
   };
 
   if (!url || typeof url !== "string") {
@@ -286,7 +303,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       messages: [
         {
           role: "user",
-          content: buildClaudePrompt(adContext, geminiContext),
+          content: buildClaudePrompt(adContext, geminiContext, sourceType ?? "meta", niche, userContext),
         },
       ],
     });

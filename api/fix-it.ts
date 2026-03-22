@@ -51,12 +51,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const platformRules = platformCopyRules[platform ?? ""] || "";
 
-  const systemPrompt = `You are a senior performance creative director who specializes in ${niche ?? "DTC"} advertising on ${platform ?? "paid social"}. You write copy that converts — not copy that sounds like marketing. Your rewrites must:
-- Preserve the brand's existing voice and tone from the original ad
-- Be specific to ${niche ?? "this"} category — use language the audience actually uses
+  const systemPrompt = `You are a senior performance creative director specializing in ${niche ?? "DTC"} advertising on ${platform ?? "paid social"}. You're rewriting a ${adType ?? "video"} ad that scored ${scores?.overall ?? "?"}/10 overall, with weakest areas: ${weakDims.join(", ") || "not identified"}.
+
+Your rewrites must:
+- Preserve the brand's existing voice and tone — read the original ad carefully before rewriting
+- Be specific to ${niche ?? "this"} category — use language ${niche ?? "this"} audiences actually use, not marketing speak
 - Follow ${platform ?? "platform"} copy best practices and character limits
-- Fix the specific weaknesses identified in the scorecard, not generic issues
-- Never produce generic copy like "Transform your life" or "Don't miss out"`;
+- Fix the specific weaknesses identified in the scorecard — don't touch what scored 8+
+- Address the weakest dimensions FIRST: ${weakDims.join(", ") || "all areas"}
+
+ANTI-GENERIC RULES (violations = failure):
+- No "Transform your [X]" or "Don't miss out" or "Take your [X] to the next level"
+- No "Unlock the power of" or "Discover the secret to" or "Join thousands who"
+- No generic urgency ("Act now!", "Limited time!") unless the original ad used it
+- Every rewritten line must reference something specific from THIS ad — a product feature, a score finding, a visual element
+- If you catch yourself writing copy that could apply to any product in any niche, delete it and try again
+- The rewrite must be so specific to ${niche ?? "this product"} on ${platform ?? "this platform"} that it would be wrong for any other niche/platform combination`;
 
   const prompt = `A user's ${adType ?? "video"} ad on ${platform ?? "unknown platform"} in the ${niche ?? "unknown"} niche received this scorecard:
 

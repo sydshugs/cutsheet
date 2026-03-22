@@ -22,7 +22,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
   }
 
-  const { banners, userContext: rawContext, sessionMemory: rawMemory } = req.body ?? {};
+  const { banners, userContext: rawContext, sessionMemory: rawMemory, niche, platform } = req.body ?? {};
   const sessionMemory = sanitizeSessionMemory(rawMemory);
   const userContext = sanitizeSessionMemory(rawContext);
   if (!Array.isArray(banners) || banners.length < 2) {
@@ -36,23 +36,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     )
     .join("\n");
 
-  const systemPrompt = `You are a display advertising creative director who has reviewed thousands of IAB banner suites. You know that consistency across sizes is what separates professional campaigns from amateur ones. You evaluate against real campaign standards — not just whether files exist, but whether they function as a cohesive campaign that builds brand recognition across placements.`;
+  const nicheLabel = niche || "general";
+  const platformLabel = platform || "Google Display Network";
 
-  const prompt = `You are reviewing a full banner ad suite for campaign consistency.
+  // Niche-specific display ad design standards
+  const nicheDesignStandards: Record<string, string> = {
+    supplements: "Supplement display ads: product imagery must be prominent in all sizes. Health claims must be consistent (same disclaimer in every banner). Before/after imagery is banned on GDN. Color psychology: green/natural tones build trust. CTA must avoid 'cure' or 'treat' language.",
+    ecommerce: "DTC/ecommerce display ads: product-on-lifestyle outperforms product-on-white at small sizes. Price/offer must be legible at 320x50. 'Shop Now' CTA outperforms 'Learn More' for commerce. Consistent sale/discount messaging across all sizes.",
+    saas: "SaaS display ads: UI screenshots must be legible at smallest sizes or replaced with icon/illustration. Feature benefit headline, not feature name. 'Start Free Trial' CTA outperforms 'Sign Up'. Social proof (logo bar) should appear in 300x250 and 728x90.",
+    finance: "Finance display ads: regulatory disclaimers must appear in every size. Trust signals (security badges, compliance logos) critical. Conservative color palette builds credibility. No income/return claims without disclaimers in ALL banners.",
+    skincare: "Skincare display ads: product photography quality must be consistent across sizes. Ingredient callouts in larger formats. Before/after restricted on most ad networks. 'Dermatologist recommended' needs to appear wherever claimed.",
+  };
+
+  const nicheKey2 = nicheLabel.toLowerCase().replace(/[^a-z]/g, "");
+  const nicheStandards = Object.entries(nicheDesignStandards).find(([k]) => nicheKey2.includes(k))?.[1] || "";
+
+  const systemPrompt = `You are a display advertising creative director specializing in ${nicheLabel} campaigns on ${platformLabel}. You've reviewed thousands of ${nicheLabel} IAB banner suites and know that consistency across sizes is what separates professional campaigns from amateur ones. You evaluate against real ${nicheLabel} campaign standards — not just whether files exist, but whether they function as a cohesive ${nicheLabel} campaign that builds brand recognition across ${platformLabel} placements.`;
+
+  const prompt = `You are reviewing a ${nicheLabel} banner ad suite for campaign consistency on ${platformLabel}.
 
 ${userContext || ""}
 ${sessionMemory ? `\n${sessionMemory}\nIf this user's prior ads share consistency issues with this suite, flag the pattern.\n` : ""}
-A display ad suite must be consistent across all sizes: same brand identity, same headline/offer, same CTA, same visual style.
+A ${nicheLabel} display ad suite must be consistent across all sizes: same brand identity, same headline/offer, same CTA, same visual style.
+
+${nicheStandards ? `\n${nicheLabel.toUpperCase()} DESIGN STANDARDS:\n${nicheStandards}\n` : ""}
 
 BANNERS IN THIS SUITE:
 ${bannerList}
 
 Analyze for:
-1. Brand consistency — same logo/colors/fonts across sizes?
-2. Message consistency — same headline/offer across sizes?
-3. Visual consistency — do all sizes feel like the same campaign?
-4. CTA consistency — same call to action everywhere?
-5. Format coverage — key standard formats missing?
+1. Brand consistency — same logo/colors/fonts across sizes? Do they meet ${nicheLabel} category expectations?
+2. Message consistency — same headline/offer across sizes? Is the ${nicheLabel} value prop clear in every format?
+3. Visual consistency — do all sizes feel like the same ${nicheLabel} campaign?
+4. CTA consistency — same call to action everywhere? Does it follow ${nicheLabel} CTA best practices?
+5. Format coverage — key standard formats for ${platformLabel} missing?
 
 Standard IAB suite: 728x90, 300x250, 160x600, 320x50. Missing formats should be flagged.
 
