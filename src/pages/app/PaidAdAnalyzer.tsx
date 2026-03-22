@@ -8,6 +8,7 @@ import { AnalyzerView } from "../../components/AnalyzerView";
 import { ScoreCard } from "../../components/ScoreCard";
 import { VideoDropzone } from "../../components/VideoDropzone";
 import { HistoryDrawer } from "../../components/HistoryDrawer";
+import { AlertDialog } from "../../components/ui/AlertDialog";
 import { useVideoAnalyzer } from "../../hooks/useVideoAnalyzer";
 import { type HistoryEntry } from "../../hooks/useHistory";
 import { useThumbnail } from "../../hooks/useThumbnail";
@@ -167,6 +168,7 @@ export default function PaidAdAnalyzer() {
   const [analysisCompletedAt, setAnalysisCompletedAt] = useState<Date | null>(null);
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
   const [loadedFromHistory, setLoadedFromHistory] = useState<AnalysisRecord | null>(null);
+  const [confirmStartOver, setConfirmStartOver] = useState(false);
 
   const [improvementsLoading, setImprovementsLoading] = useState(false);
   const [platformImprovements, setPlatformImprovements] = useState<string[] | null>(null);
@@ -901,7 +903,7 @@ export default function PaidAdAnalyzer() {
                 engineBudget={engineBudget}
                 onNavigateSettings={() => navigate('/settings')}
                 onReanalyze={() => setReanalyzeMode(true)}
-                onStartOver={handleReset}
+                onStartOver={() => setConfirmStartOver(true)}
                 onCheckPolicies={handleCheckPolicies}
                 policyLoading={policyLoading}
                 niche={rawUserContext?.niche}
@@ -1133,6 +1135,17 @@ export default function PaidAdAnalyzer() {
           {infoToast}
         </div>
       )}
+
+      <AlertDialog
+        open={confirmStartOver}
+        onClose={() => setConfirmStartOver(false)}
+        onConfirm={handleReset}
+        title="Start over?"
+        description="This will clear your current analysis. You can find it in History."
+        confirmLabel="Start Over"
+        cancelLabel="Cancel"
+        variant="destructive"
+      />
     </div>
   );
 }
