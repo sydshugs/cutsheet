@@ -69,6 +69,26 @@ export function TopBar({
 
       {/* Spacer */}
       <div className="flex-1" />
+
+      {/* Profile avatar */}
+      {userName && (
+        <button
+          type="button"
+          onClick={onLogout ? undefined : undefined}
+          className="flex items-center gap-2 hover:bg-white/[0.04] rounded-lg px-2 py-1.5 transition-colors"
+          style={{ background: "transparent", border: "none", cursor: "pointer" }}
+          aria-label="Profile"
+        >
+          <div style={{
+            width: 28, height: 28, borderRadius: "50%",
+            background: "#6366f1",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 12, fontWeight: 600, color: "white", flexShrink: 0,
+          }}>
+            {initial}
+          </div>
+        </button>
+      )}
     </div>
   );
 }
