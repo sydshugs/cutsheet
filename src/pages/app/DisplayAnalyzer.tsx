@@ -17,7 +17,7 @@ import { getUserContext, formatUserContextBlock } from "../../services/userConte
 import { VisualizePanel } from "../../components/VisualizePanel";
 import { visualizeAd } from "../../lib/visualizeService";
 import { uploadImageToStorage, removeFromStorage } from "../../lib/storageService";
-import type { VisualizeResult, VisualizeStatus } from "../../types/visualize";
+import type { VisualizeResult, VisualizeStatus, VisualizeCreditData } from "../../types/visualize";
 import { getSessionMemory } from "@/src/lib/userMemoryService";
 import type { AppSharedContext } from "../../components/AppLayout";
 
@@ -127,6 +127,7 @@ export default function DisplayAnalyzer() {
   const [visualizeStatus, setVisualizeStatus] = useState<VisualizeStatus>("idle");
   const [visualizeResult, setVisualizeResult] = useState<VisualizeResult | null>(null);
   const [visualizeError, setVisualizeError] = useState<string | null>(null);
+  const [visualizeCreditData, setVisualizeCreditData] = useState<VisualizeCreditData | null>(null);
 
   const previewUrl = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
   useEffect(() => { return () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }; }, [previewUrl]);
@@ -140,7 +141,7 @@ export default function DisplayAnalyzer() {
     setSuiteBanners([]); setSuiteStatus("idle"); setSuiteCohesion(null); setSuiteCohesionError(false);
     setSuiteMockupUrl(null); setSuiteMockupLoading(false);
     setPolicyResult(null); setPolicyLoading(false); setPolicyError(null);
-    setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null);
+    setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); setVisualizeCreditData(null);
   }, []);
 
   const isComplete = mode === "single" ? status === "complete" : suiteStatus === "complete";
@@ -414,6 +415,12 @@ Return JSON only — no prose:
         setVisualizeOpen(false);
         setVisualizeStatus("idle");
         onUpgradeRequired("visualize");
+        return;
+      }
+      if (msg === "CREDIT_LIMIT_REACHED" && err && typeof err === "object" && "creditData" in err) {
+        const creditErr = err as Error & { creditData: VisualizeCreditData };
+        setVisualizeCreditData(creditErr.creditData);
+        setVisualizeStatus("credit_limit");
         return;
       }
       setVisualizeError(msg.includes("RATE_LIMITED") ? "RATE_LIMITED" : msg);
@@ -898,7 +905,9 @@ Return JSON only — no prose:
                         result={visualizeResult}
                         originalImageUrl={previewUrl}
                         error={visualizeError}
-                        onClose={() => { setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); }}
+                        creditData={visualizeCreditData}
+                        onClose={() => { setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); setVisualizeCreditData(null); }}
+                        onUpgrade={onUpgradeRequired}
                       />
                     )}
                     {/* Check Policies button */}
