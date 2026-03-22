@@ -1016,15 +1016,19 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                 onUpgradeRequired={onUpgradeRequired}
               />
             </div>
-            {/* Second Eye output below scorecard — video only */}
-            {format === "video" && secondEye && (
-              <SecondEyePanel result={secondEyeOutput} loading={secondEyeLoading} />
-            )}
-            {/* Static Design Review below scorecard — static only */}
-            {format === "static" && staticSecondEye && (
-              <StaticSecondEyePanel result={staticSecondEyeResult} loading={staticSecondEyeLoading} />
-            )}
+            {/* Second Eye + Design Review moved to center column deep dive */}
             {/* Visualize It moved to left panel (below creative) */}
+
+            {/* Re-analyze button — below scorecard in right panel */}
+            <div className="px-4 pb-4">
+              <button
+                onClick={() => setReanalyzeMode(true)}
+                className="w-full flex items-center justify-center gap-2 rounded-xl border border-white/5 bg-zinc-900/50 px-4 py-3 text-[13px] font-medium text-zinc-400 hover:border-white/10 hover:text-zinc-200 transition-colors"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+                Re-analyze improved version →
+              </button>
+            </div>
           </>
 
         )}
