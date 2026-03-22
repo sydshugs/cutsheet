@@ -234,7 +234,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
               }}
             />
           </div>
-          <div
+          <h1
             style={{
               fontSize: "24px",
               fontWeight: 800,
@@ -242,10 +242,11 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
               letterSpacing: "-0.02em",
               lineHeight: 1.2,
               fontFamily: "var(--sans)",
+              margin: 0,
             }}
           >
             Predict the winner before you spend.
-          </div>
+          </h1>
           <div
             style={{
               fontSize: "14px",

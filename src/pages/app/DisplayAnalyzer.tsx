@@ -48,7 +48,7 @@ function EmptyState({ onFileSelect }: { onFileSelect: (f: File) => void }) {
       <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <Monitor size={28} color="#8b5cf6" />
       </div>
-      <h2 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>Display & Banner Analysis</h2>
+      <h1 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>Display & Banner Analysis</h1>
       <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)", textAlign: "center", maxWidth: 380, lineHeight: 1.6, marginTop: 10 }}>
         Upload a Google Display or affiliate banner ad. Auto-detects format. Scored against display-specific criteria.
       </p>

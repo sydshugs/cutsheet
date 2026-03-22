@@ -74,9 +74,9 @@ function PaidEmptyState({
         <Zap size={28} color="#6366f1" />
       </div>
 
-      <h2 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>
+      <h1 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>
         Score your paid ad
-      </h2>
+      </h1>
       <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)", textAlign: "center", maxWidth: 320, marginTop: 10, lineHeight: 1.6 }}>
         Upload a video or static creative. Get a full AI breakdown in 30 seconds.
       </p>

@@ -125,7 +125,8 @@ export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, 
             onDragOver={onDragOver}
             onDragLeave={onDragLeave}
             role="button"
-            aria-label="Upload video file"
+            aria-label="Drop your creative here to upload"
+            aria-describedby="dropzone-hints"
             tabIndex={0}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
@@ -200,6 +201,9 @@ export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, 
           )}
         </div>
 
+        <span id="dropzone-hints" className="sr-only">
+          Accepts {acceptImages ? "MP4, MOV, WEBM, JPG, PNG, WEBP" : "MP4, MOV, WEBM"}. Max 200MB per file.
+        </span>
         <input
           ref={fileInputRef}
           type="file"

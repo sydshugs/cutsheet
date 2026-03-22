@@ -67,9 +67,9 @@ function OrganicEmptyState({
       <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <TrendingUp size={28} color="#10b981" />
       </div>
-      <h2 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>
+      <h1 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>
         Score your organic content
-      </h2>
+      </h1>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 14 }}>
         {PILLS.map((pill) => (
           <span key={pill} style={{ fontSize: 12, color: "#34d399", background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.15)", borderRadius: 9999, padding: "4px 12px" }}>

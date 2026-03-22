@@ -95,6 +95,12 @@ export default function AppLayout() {
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: "#09090b" }}>
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-indigo-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:text-sm focus:font-medium"
+      >
+        Skip to main content
+      </a>
       <Sidebar
         mobileOpen={mobileOpen}
         onMobileClose={() => setMobileOpen(false)}
@@ -118,7 +124,7 @@ export default function AppLayout() {
           hasResult={hasAnalysisResult}
           onLogout={async () => { await supabase.auth.signOut(); navigate("/login"); }}
         />
-        <main className="flex-1 overflow-auto">
+        <main id="main-content" className="flex-1 overflow-auto">
           <Outlet context={ctx} />
         </main>
       </div>

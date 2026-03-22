@@ -226,7 +226,7 @@ function DesktopSidebar({
           type="button"
           onClick={() => navigate("/app")}
           style={{ display: "flex", alignItems: "center", gap: 10, background: "none", border: "none", cursor: "pointer", padding: 0 }}
-          aria-label="Go to home"
+          aria-label="Cutsheet — go to home"
         >
           <img
             src="/icon.png"
