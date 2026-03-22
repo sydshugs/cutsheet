@@ -23,6 +23,7 @@ import {
 } from "../../services/claudeService";
 import { SecondEyePanel } from "../../components/SecondEyePanel";
 import PlatformScoreCard from "../../components/PlatformScoreCard";
+import { ORGANIC_STATIC_PLATFORMS, VIDEO_ONLY_PLATFORMS } from "../../components/PlatformSwitcher";
 import { generateFixIt, type FixItResult } from "../../services/fixItService";
 import { generatePrediction, type PredictionResult } from "../../services/predictionService";
 import { createShare } from "../../services/shareService";
@@ -57,12 +58,16 @@ const STATUS_COPY = {
 // ─── EMPTY STATE ──────────────────────────────────────────────────────────────
 
 function OrganicEmptyState({
-  onFileSelect, onUrlSubmit,
+  onFileSelect, onUrlSubmit, format, onFormatChange,
 }: {
   onFileSelect: (f: File | null) => void;
   onUrlSubmit?: (url: string) => void;
+  format: "video" | "static";
+  onFormatChange: (f: "video" | "static") => void;
 }) {
-  const PILLS = ["Retention score", "Platform fit", "Shareability"];
+  const VIDEO_PILLS = ["Retention score", "Platform fit", "Shareability"];
+  const STATIC_PILLS = ["Visual hierarchy", "Caption strength", "Shareability"];
+  const PILLS = format === "static" ? STATIC_PILLS : VIDEO_PILLS;
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px", minHeight: "calc(100vh - 120px)" }}>
       <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -71,16 +76,36 @@ function OrganicEmptyState({
       <h1 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>
         Score your organic content
       </h1>
+      {/* Format selector */}
+      <div style={{ display: "flex", gap: 4, marginTop: 16, padding: 4, borderRadius: 12, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)" }}>
+        {(["video", "static"] as const).map((f) => (
+          <button
+            key={f}
+            type="button"
+            onClick={() => onFormatChange(f)}
+            style={{
+              padding: "6px 16px", borderRadius: 8, border: "none", cursor: "pointer",
+              fontSize: 13, fontWeight: 500, transition: "all 150ms",
+              background: format === f ? "#10b981" : "transparent",
+              color: format === f ? "white" : "#71717a",
+            }}
+          >
+            {f === "video" ? "Video" : "Static"}
+          </button>
+        ))}
+      </div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 14 }}>
         {PILLS.map((pill) => (
           <FeaturePill key={pill} label={pill} />
         ))}
       </div>
       <p style={{ fontSize: 14, color: "#a1a1aa", textAlign: "center", maxWidth: 320, marginTop: 14, lineHeight: 1.6 }}>
-        Upload your TikTok, Reel, YouTube Short, or static post. Get scored on retention, shareability, and algorithm signals.
+        {format === "static"
+          ? "Upload your Instagram or Facebook post image. Get scored on visual impact, caption strength, and shareability."
+          : "Upload your TikTok, Reel, YouTube Short, or static post. Get scored on retention, shareability, and algorithm signals."}
       </p>
       <div style={{ width: "100%", maxWidth: 520, marginTop: 32 }}>
-        <VideoDropzone onFileSelect={onFileSelect} file={null} onUrlSubmit={onUrlSubmit} />
+        <VideoDropzone onFileSelect={onFileSelect} file={null} onUrlSubmit={onUrlSubmit} acceptImages={format === "static"} />
       </div>
     </div>
   );
@@ -96,7 +121,9 @@ export default function OrganicAnalyzer() {
   } = useOutletContext<AppSharedContext>();
   const navigate = useNavigate();
 
+  const [organicFormat, setOrganicFormat] = useState<"video" | "static">("video");
   const [imageMismatch, setImageMismatch] = useState(false);
+  const [formatMismatch, setFormatMismatch] = useState<"video-as-static" | "image-as-video" | null>(null);
 
   // ── User context for personalized AI ──────────────────────────────────────
   const [userContext, setUserContext] = useState<string>('')
@@ -149,7 +176,9 @@ export default function OrganicAnalyzer() {
 
   // ── Organic context prefix (always prepended) ─────────────────────────────
   const platformLabel = platform === "all" ? "all platforms" : platform;
-  const contextPrefix = `This is an ORGANIC content video (not a paid ad).\nScore for: entertainment value, native feel, retention curve, shareability, and algorithm signals for ${platformLabel}.\nDo NOT apply paid ad scoring criteria.\nScore as if a viewer found this organically on their feed.\nDo NOT include a budget recommendation. This is organic content — there is no ad spend.`;
+  const contextPrefix = organicFormat === "static"
+    ? `This is an ORGANIC static image post (not a paid ad, not a video).\nScore for: visual stopping power in a feed scroll, caption hook effectiveness, save-worthiness, shareability, and platform-native feel for ${platformLabel}.\nDo NOT apply paid ad or video scoring criteria.\nThere is no retention curve or scene breakdown for static content.\nDo NOT include a budget recommendation. This is organic content — there is no ad spend.`
+    : `This is an ORGANIC content video (not a paid ad).\nScore for: entertainment value, native feel, retention curve, shareability, and algorithm signals for ${platformLabel}.\nDo NOT apply paid ad scoring criteria.\nScore as if a viewer found this organically on their feed.\nDo NOT include a budget recommendation. This is organic content — there is no ad spend.`;
 
   const handleReset = useCallback(() => {
     setFile(null);
@@ -172,13 +201,35 @@ export default function OrganicAnalyzer() {
     setPrediction(null);
   }, [reset]);
 
+  // ── Auto-reset platform when format switches to static ──
+  useEffect(() => {
+    if (organicFormat === "static" && VIDEO_ONLY_PLATFORMS.has(platform)) {
+      setPlatform("all" as Platform);
+    }
+  }, [organicFormat]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleFileWithCheck = useCallback((f: File | null) => {
     if (!f) { handleReset(); return; }
     setImageMismatch(false);
+    setFormatMismatch(null);
     const isImage = f.type.startsWith("image/") || [".jpg", ".jpeg", ".png", ".webp"].some(e => f.name.toLowerCase().endsWith(e));
-    if (isImage) { setImageMismatch(true); return; }
+    const isVideo = f.type.startsWith("video/") || [".mp4", ".mov", ".webm"].some(e => f.name.toLowerCase().endsWith(e));
+
+    // Format mismatch: offer to switch format instead of hard-redirecting
+    if (isImage && organicFormat === "video") {
+      setFormatMismatch("image-as-video");
+      // Store file ref for switch action
+      (window as unknown as Record<string, File>).__pendingOrganicFile = f;
+      return;
+    }
+    if (isVideo && organicFormat === "static") {
+      setFormatMismatch("video-as-static");
+      (window as unknown as Record<string, File>).__pendingOrganicFile = f;
+      return;
+    }
+
     setFile(f); reset();
-  }, [handleReset, reset]);
+  }, [handleReset, reset, organicFormat]);
 
   useEffect(() => {
     if (status === "complete") setAnalysisCompletedAt(new Date());
@@ -254,7 +305,7 @@ export default function OrganicAnalyzer() {
         // Fire and forget — do not await, do not block UI
         saveAnalysis({
           file_name: result.fileName,
-          file_type: 'video',
+          file_type: organicFormat === 'static' ? 'static' : 'video',
           mode: 'organic',
           platform: platform || 'all',
           overall_score: result.scores?.overall ?? 0,
@@ -482,24 +533,38 @@ export default function OrganicAnalyzer() {
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         {/* IntentHeader removed — platform defaults to "all" */}
         <div className="flex-1 flex flex-col overflow-auto">
-          {/* Image mismatch error */}
-          {imageMismatch && (
+          {/* Format mismatch prompt — switch format in-place instead of hard redirect */}
+          {formatMismatch && (
             <div style={{ display: "flex", justifyContent: "center", padding: "80px 24px" }}>
-              <div style={{ maxWidth: 420, padding: 20, borderRadius: 12, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)" }}>
+              <div style={{ maxWidth: 420, padding: 20, borderRadius: 12, background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.2)" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                  <AlertCircle size={16} color="#ef4444" />
-                  <span style={{ fontSize: 14, fontWeight: 600, color: "#f4f4f5" }}>Organic analysis is for video content</span>
+                  <AlertCircle size={16} color="#6366f1" />
+                  <span style={{ fontSize: 14, fontWeight: 600, color: "#f4f4f5" }}>
+                    {formatMismatch === "image-as-video" ? "That's an image — switch to Static?" : "That's a video — switch to Video?"}
+                  </span>
                 </div>
                 <p style={{ fontSize: 13, color: "#a1a1aa", margin: "0 0 16px", lineHeight: 1.5 }}>
-                  Static images can't be analyzed for retention curves, algorithm signals, or platform performance. Use the Paid Ad analyzer for static images.
+                  {formatMismatch === "image-as-video"
+                    ? "You're in Video mode but uploaded an image. Switch to Static to analyze Instagram and Facebook posts."
+                    : "You're in Static mode but uploaded a video. Switch to Video to analyze TikTok, Reels, and Shorts."}
                 </p>
                 <div style={{ display: "flex", gap: 8 }}>
-                  <button type="button" onClick={() => { setImageMismatch(false); navigate("/app/paid"); }}
+                  <button type="button" onClick={() => {
+                    const newFormat = formatMismatch === "image-as-video" ? "static" : "video";
+                    setOrganicFormat(newFormat as "video" | "static");
+                    setFormatMismatch(null);
+                    const pendingFile = (window as unknown as Record<string, File>).__pendingOrganicFile;
+                    if (pendingFile) {
+                      setFile(pendingFile);
+                      reset();
+                      delete (window as unknown as Record<string, File>).__pendingOrganicFile;
+                    }
+                  }}
                     style={{ flex: 1, height: 40, borderRadius: 9999, border: "none", background: "#6366f1", color: "white", fontSize: 13, fontWeight: 500, cursor: "pointer" }}>
-                    Go to Paid Ad
+                    Switch to {formatMismatch === "image-as-video" ? "Static" : "Video"}
                   </button>
-                  <button type="button" onClick={() => setImageMismatch(false)}
-                    aria-label="Dismiss image format warning"
+                  <button type="button" onClick={() => { setFormatMismatch(null); delete (window as unknown as Record<string, File>).__pendingOrganicFile; }}
+                    aria-label="Dismiss format mismatch warning"
                     style={{ height: 40, padding: "0 16px", borderRadius: 9999, border: "1px solid rgba(255,255,255,0.08)", background: "transparent", color: "#71717a", fontSize: 13, cursor: "pointer" }}>
                     Dismiss
                   </button>
@@ -507,12 +572,14 @@ export default function OrganicAnalyzer() {
               </div>
             </div>
           )}
-          {!imageMismatch && status === "idle" && !loadedEntry ? (
+          {!formatMismatch && status === "idle" && !loadedEntry ? (
             <OrganicEmptyState
               onFileSelect={(f) => handleFileWithCheck(f)}
               onUrlSubmit={async (u) => { setUrlInput(u); await importFromUrl(u); }}
+              format={organicFormat}
+              onFormatChange={setOrganicFormat}
             />
-          ) : !imageMismatch ? (
+          ) : !formatMismatch ? (
             <div className={`relative flex flex-col ${(effectiveStatus === "uploading" || effectiveStatus === "processing") ? "h-full" : "px-4 py-6 md:px-8 min-h-full"}`}>
               <div className="pointer-events-none absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-emerald-600/10 blur-[120px]" />
               <div className="pointer-events-none absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-violet-600/[0.08] blur-[100px]" />
@@ -567,7 +634,7 @@ export default function OrganicAnalyzer() {
                 ctaLoading={ctaLoading}
                 onShare={handleCopy}
                 isDark={true}
-                format="video"
+                format={organicFormat}
                 isOrganic={true}
                 niche={rawUserContext?.niche}
                 platform={rawUserContext?.platform}
