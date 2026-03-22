@@ -87,6 +87,12 @@ CRITICAL STYLE RULES — READ CAREFULLY:
 
 5. MAINTAIN BRAND INTEGRITY. Keep the brand's visual identity — logo placement, brand colors, typography style — exactly as they appeared in the original.
 
+6. PRESERVE PSYCHOLOGICALLY STRONG ELEMENTS. Before changing any copy or layout, ask: is this element doing something clever? Binary choice CTAs ("Scan Now / Ignore Risk"), loss aversion framing, named villains, urgency triggers — these are high-value persuasion patterns. Do NOT remove them. Only intensify them.
+
+7. INTENSIFY EMOTIONAL SPECIFICITY. Match or intensify the original's emotional register. "Scammers love unprotected phone numbers" is stronger than "Your personal info is still exposed online" because it has a named villain and a specific fear. Never sand copy down to something blander or more generic. If the original is aggressive, be more aggressive. If it's urgent, be more urgent.
+
+8. PROOFREAD ALL TEXT. Before finalizing, check every text element for duplicate words, repeated phrases, and incomplete sentences. No word should appear twice in a row. No phrase should be repeated. "FREE: Find My Data Now Now" style duplications are unacceptable — every text string must be clean.
+
 Produce the improved ad now. Output only the image — no explanation, no description.`;
 }
 
