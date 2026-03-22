@@ -1,4 +1,5 @@
 import { AnimatePresence } from "framer-motion";
+import type { LucideIcon } from "lucide-react";
 import { AnalysisStatus, AnalysisResult } from "../services/analyzerService";
 import { HistoryEntry } from "../hooks/useHistory";
 import type { AnalysisError } from "../hooks/useVideoAnalyzer";
@@ -30,6 +31,7 @@ interface AnalyzerViewProps {
   onHistoryEntryClick?: (entry: HistoryEntry) => void;
   onModeChange?: (mode: string) => void;
   platform?: string;
+  icon?: LucideIcon;
 }
 
 export function AnalyzerView({
@@ -53,6 +55,7 @@ export function AnalyzerView({
   onHistoryEntryClick,
   onModeChange,
   platform,
+  icon,
 }: AnalyzerViewProps) {
   return (
     <AnimatePresence mode="wait">
@@ -86,6 +89,7 @@ export function AnalyzerView({
             statusMessage={statusMessage}
             onCancel={onReset}
             platform={platform}
+            icon={icon}
           />
         </div>
       )}

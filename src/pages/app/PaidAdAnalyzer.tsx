@@ -835,6 +835,7 @@ export default function PaidAdAnalyzer() {
                         historyEntries={historyEntries}
                         onHistoryEntryClick={(entry) => setLoadedEntry(entry)}
                         platform={platform !== "all" ? platform : (rawUserContext?.platform ?? undefined)}
+                        icon={Zap}
                       />
                   </div>
                 )}

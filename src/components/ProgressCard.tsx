@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Zap } from "lucide-react";
+import { Zap, type LucideIcon } from "lucide-react";
 import { cn } from "../lib/utils";
 import { useThumbnail } from "../hooks/useThumbnail";
 import { sanitizeFileName } from "../utils/sanitize";
@@ -13,6 +13,7 @@ interface ProgressCardProps {
   statusMessage: string;
   onCancel: () => void;
   platform?: string;
+  icon?: LucideIcon;
 }
 
 const STAGES = [
@@ -89,7 +90,7 @@ function ChecklistItem({ label, done, active }: { label: string; done: boolean; 
   );
 }
 
-export function ProgressCard({ file, status, onCancel, platform }: ProgressCardProps) {
+export function ProgressCard({ file, status, onCancel, platform, icon: Icon = Zap }: ProgressCardProps) {
   const [stageIndex, setStageIndex] = useState(0);
   const thumbnailDataUrl = useThumbnail(file);
   const isImage = file.type.startsWith("image/");
@@ -184,7 +185,7 @@ export function ProgressCard({ file, status, onCancel, platform }: ProgressCardP
                   animate={{ opacity: [0.6, 1, 0.6] }}
                   transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
                 >
-                  <Zap className="w-3.5 h-3.5 text-indigo-400" />
+                  <Icon className="w-3.5 h-3.5 text-indigo-400" />
                 </motion.div>
               </div>
               <div>
