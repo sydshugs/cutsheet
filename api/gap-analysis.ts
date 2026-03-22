@@ -35,9 +35,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: "yourScores and competitorScores are required" });
   }
 
-  const systemPrompt = `You are a competitive intelligence analyst for performance marketing. You don't sugarcoat — if the user's ad is losing, say so clearly. Your action plan items must be specific and steal-worthy: not "improve your hook" but "use the competitor's curiosity-gap hook pattern with your own product angle". Every insight must reference specific scores.`;
+  const nicheLabel = userContext?.match(/niche[:\s]+(\w[\w\s/&-]*)/i)?.[1]?.trim() || "performance marketing";
+  const intentLabel = userContext?.match(/intent[:\s]+(\w[\w\s-]*)/i)?.[1]?.trim() || "conversion";
+  const platformLabel = platform || "paid social";
 
-  const prompt = `You have just scored two ad creatives head-to-head.
+  // Identify user's weakest dimensions for targeted action plans
+  const userWeakDims = ["hook", "clarity", "cta", "production"]
+    .map(d => ({ dim: d, score: (yourScores as Record<string, number>)?.[d] ?? 0 }))
+    .sort((a, b) => a.score - b.score)
+    .slice(0, 2);
+
+  const systemPrompt = `You are a competitive intelligence analyst specializing in ${nicheLabel} advertising on ${platformLabel}. You don't sugarcoat — if the user's ad is losing, say so clearly and explain exactly what the competitor does better for ${nicheLabel} audiences.
+
+The user's weakest dimensions are: ${userWeakDims.map(d => `${d.dim} (${d.score}/10)`).join(", ")}. Every action plan item must be specific and steal-worthy — not "improve your hook" but "steal the competitor's [specific technique] and adapt it for ${nicheLabel} on ${platformLabel}". Rank actions by impact on the user's weakest dimensions first.`;
+
+  const prompt = `You have scored two ${nicheLabel} ad creatives head-to-head on ${platformLabel}.
 
 ${userContext || ""}
 ${sessionMemory ? `\n${sessionMemory}\nFactor in the user's historical score trends when assessing competitive position.\n` : ""}
@@ -57,8 +69,10 @@ CTA: ${competitorScores.cta}/10
 Production: ${competitorScores.production}/10
 Key issues: ${(competitorImprovements ?? []).slice(0, 3).join(", ") || "none flagged"}
 
-Platform: ${platform ?? "all"}
+USER'S WEAKEST DIMENSIONS: ${userWeakDims.map(d => `${d.dim} (${d.score}/10)`).join(", ")}
+Platform: ${platformLabel}
 Format: ${format ?? "all"}
+User's goal: ${intentLabel}
 
 IMPORTANT: Do not mention the user's role, niche, or platform explicitly.
 Use the context to inform your analysis but never reference it directly.
@@ -67,15 +81,15 @@ Return JSON only — no prose, no preamble:
 {
   "verdict": "winning" | "losing" | "tied",
   "scoreDiff": <your overall minus competitor overall>,
-  "winProbability": <0-100, honest probability your ad outperforms>,
-  "summary": "<one paragraph honest assessment, mention specific scores>",
+  "winProbability": <0-100, honest probability your ad outperforms on ${platformLabel} for ${intentLabel}>,
+  "summary": "<one paragraph honest assessment — mention specific scores, explain what the gap means for ${intentLabel} on ${platformLabel}>",
   "strengths": [
     {
       "metric": "<Hook | CTA | Clarity | Production>",
       "yourScore": <number>,
       "competitorScore": <number>,
       "diff": <positive number>,
-      "insight": "<one sentence, specific, why this matters>"
+      "insight": "<why this advantage matters for ${intentLabel} on ${platformLabel}>"
     }
   ],
   "weaknesses": [
@@ -84,16 +98,16 @@ Return JSON only — no prose, no preamble:
       "yourScore": <number>,
       "competitorScore": <number>,
       "diff": <negative number>,
-      "insight": "<one sentence, specific, what competitor does better>"
+      "insight": "<what the competitor does better and why it matters for ${intentLabel}>"
     }
   ],
   "actionPlan": [
     {
       "priority": 1 | 2 | 3,
-      "action": "<specific, actionable, one sentence — not generic>",
+      "action": "<steal-this pattern from competitor — specific technique, not generic advice. Format: 'Steal [competitor's specific technique] for your [weakest dimension] because [why it works on ${platformLabel}]'>",
       "impact": "high" | "medium" | "low",
       "effort": "quick" | "medium" | "heavy",
-      "metric": "<which score this improves>"
+      "metric": "<which score this improves — prioritize ${userWeakDims[0]?.dim ?? "hook"} and ${userWeakDims[1]?.dim ?? "cta"} first>"
     }
   ]
 }
@@ -102,9 +116,10 @@ Rules:
 - strengths: only metrics where your score > competitor score
 - weaknesses: only metrics where competitor score > your score
 - tied metrics: omit from both arrays
-- actionPlan: 3-5 items, ordered by priority (1 = most important)
-- winProbability: honest, not flattering
-- summary: mention specific scores, be direct about the gap`;
+- actionPlan: 3-5 items, ordered by impact on user's weakest dimensions (${userWeakDims.map(d => d.dim).join(", ")}) first
+- winProbability: honest, calibrated for ${platformLabel} ${intentLabel} campaigns
+- summary: mention specific scores, be direct about the gap
+- Every action must be a steal-this pattern from the competitor, not generic advice`;
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
   const response = await client.messages.create({

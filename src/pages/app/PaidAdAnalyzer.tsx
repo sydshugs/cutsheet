@@ -820,6 +820,7 @@ export default function PaidAdAnalyzer() {
                         error={error}
                         analysisError={analysisError}
                         thumbnailDataUrl={activeResult?.thumbnailDataUrl}
+                        format={format}
                         onFileSelect={(f) => handleFileWithFormatCheck(f)}
                         onUrlSubmit={async (u) => { setUrlInput(u); await importFromUrl(u); }}
                         onAnalyze={handleAnalyze}
@@ -906,7 +907,7 @@ export default function PaidAdAnalyzer() {
                 onCompare={() => navigate('/app/competitor')}
                 onVisualize={handleVisualize}
                 visualizeLoading={visualizeStatus === "loading"}
-                canVisualize={format === "static"}
+                canVisualize={true}
                 isPro={isPro}
                 onUpgradeRequired={onUpgradeRequired}
               />
