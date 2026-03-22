@@ -233,19 +233,59 @@ export default function PredictedPerformanceCard({
               transition: 'max-height 200ms ease-in-out',
             }}
           >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 4, paddingBottom: 4 }}>
-              {prediction.positiveSignals.map((signal, i) => (
-                <div key={`pos-${i}`} style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
-                  <span style={{ fontSize: 12, color: '#10b981', marginTop: 1, flexShrink: 0 }}>&#10003;</span>
-                  <span style={{ fontSize: 12, color: '#71717a', lineHeight: 1.5 }}>{signal}</span>
-                </div>
-              ))}
-              {prediction.negativeSignals.map((signal, i) => (
-                <div key={`neg-${i}`} style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
-                  <span style={{ fontSize: 12, color: '#f59e0b', marginTop: 1, flexShrink: 0 }}>&#9888;</span>
-                  <span style={{ fontSize: 12, color: '#71717a', lineHeight: 1.5 }}>{signal}</span>
-                </div>
-              ))}
+            <div style={{ display: 'flex', flexDirection: 'column', paddingTop: 2, paddingBottom: 4 }}>
+              {prediction.positiveSignals.map((signal, i) => {
+                const parts = signal.split(/[.–—]\s*/);
+                const label = parts[0]?.trim() ?? signal;
+                const note = parts.slice(1).join('. ').trim();
+                return (
+                  <div
+                    key={`pos-${i}`}
+                    style={{
+                      display: 'flex', alignItems: 'flex-start', gap: 10, padding: '7px 0',
+                      borderBottom: i < prediction.positiveSignals.length - 1 || prediction.negativeSignals.length > 0
+                        ? '0.5px solid rgba(255,255,255,0.05)' : 'none',
+                    }}
+                  >
+                    <div style={{
+                      width: 16, height: 16, borderRadius: '50%', flexShrink: 0, marginTop: 1,
+                      background: 'rgba(16,185,129,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ fontSize: 11, fontWeight: 500, color: '#e4e4e7' }}>{label}</span>
+                      {note && <span style={{ fontSize: 11, color: '#52525b', display: 'block', marginTop: 1 }}>{note}</span>}
+                    </div>
+                  </div>
+                );
+              })}
+              {prediction.negativeSignals.map((signal, i) => {
+                const parts = signal.split(/[.–—]\s*/);
+                const label = parts[0]?.trim() ?? signal;
+                const note = parts.slice(1).join('. ').trim();
+                return (
+                  <div
+                    key={`neg-${i}`}
+                    style={{
+                      display: 'flex', alignItems: 'flex-start', gap: 10, padding: '7px 0',
+                      borderBottom: i < prediction.negativeSignals.length - 1
+                        ? '0.5px solid rgba(255,255,255,0.05)' : 'none',
+                    }}
+                  >
+                    <div style={{
+                      width: 16, height: 16, borderRadius: '50%', flexShrink: 0, marginTop: 1,
+                      background: 'rgba(251,191,36,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <svg width="8" height="2" viewBox="0 0 8 2"><rect width="8" height="2" rx="1" fill="#f59e0b"/></svg>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ fontSize: 11, fontWeight: 500, color: '#e4e4e7' }}>{label}</span>
+                      {note && <span style={{ fontSize: 11, color: '#52525b', display: 'block', marginTop: 1 }}>{note}</span>}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
