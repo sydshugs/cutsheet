@@ -500,8 +500,59 @@ export function ScoreCard({
             </div>
           )}
 
-          {/* 10. Scene Breakdown \u2014 video only */}
-          {/* Scene Breakdown, Ad Quality Checks, Hashtags — moved to center column */}
+          {/* Scene Breakdown, Ad Quality Checks — moved to center column */}
+
+          {/* Recommended Hashtags */}
+          {hashtags && (hashtags.tiktok.length > 0 || hashtags.meta.length > 0 || hashtags.instagram.length > 0) && (
+            <div style={{ marginTop: 16, padding: "0 20px", paddingBottom: 16 }}>
+              <CollapsibleSection
+                title="Recommended Hashtags"
+                icon={<Hash size={14} />}
+                defaultOpen={isOrganic}
+                trailing={
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-zinc-500">
+                      {[hashtags.tiktok, hashtags.meta, hashtags.instagram].reduce((n, t) => n + t.length, 0)} tags
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const allTags = [
+                          ...hashtags.tiktok.map(t => `#${t}`),
+                          ...hashtags.meta.map(t => `#${t}`),
+                          ...hashtags.instagram.map(t => `#${t}`),
+                        ];
+                        navigator.clipboard.writeText(allTags.join(' '));
+                      }}
+                      className="text-[10px] text-indigo-400 hover:text-indigo-300 transition-colors"
+                    >
+                      Copy all
+                    </button>
+                  </div>
+                }
+              >
+                {([["TikTok", hashtags.tiktok], ["Meta", hashtags.meta], ["Instagram", hashtags.instagram]] as const).map(
+                  ([plat, tags]) =>
+                    tags.length > 0 && (
+                      <div key={plat} className="mb-3">
+                        <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">{plat}</span>
+                        <div className="flex flex-wrap gap-1.5 mt-1.5">
+                          {tags.map((tag) => (
+                            <span
+                              key={tag}
+                              className="bg-zinc-800 text-zinc-300 text-xs px-2 py-0.5 rounded-md font-mono hover:bg-zinc-700 transition-colors cursor-default"
+                            >
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                )}
+              </CollapsibleSection>
+            </div>
+          )}
 
         </div>{/* end card content */}
       </div>{/* end glass card */}
