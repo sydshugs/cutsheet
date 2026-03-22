@@ -124,6 +124,13 @@ Clean timestamped transcript of all spoken audio and on-screen text:
 
 ---
 
+## 📋 VERDICT
+- State: [not_ready | needs_work | ready] — "not_ready" if missing CTA or fundamental issues, "needs_work" if 5-7/10, "ready" if 8+/10
+- Headline: [one sentence verdict — what this ad does and what's missing, max 15 words]
+- Sub: [one sentence explanation — the key issue or strength, max 20 words]
+
+---
+
 ## 🧠 CREATIVE VERDICT
 IMPORTANT: Do not mention the user's role, niche, or platform in the Creative Verdict. Never say "as a designer", "for an agency", "for your YouTube audience" or any similar phrase. Write the verdict as expert analysis of the creative itself only.
 Three paragraphs written as a media buyer debriefing a creative team:
@@ -160,10 +167,11 @@ Evaluate ONLY the first 3 seconds. Does it create a pattern interrupt? Does it e
 ---
 
 ## 🔧 IMPROVEMENTS
-After your analysis, list exactly 3-5 specific, actionable suggestions to improve this creative. Each suggestion should be one sentence, direct, and specific to what you observed in this creative. Format as a numbered list.
-1. [Specific improvement based on what you observed]
-2. [Specific improvement based on what you observed]
-3. [Specific improvement based on what you observed]
+List exactly 3-5 specific, actionable suggestions. Each line MUST start with priority and category tags:
+1. [HIGH|MEDIUM|LOW] [CTA|VISUAL|HOOK|LAYOUT|TRUST|COPY] — [one sentence fix]
+2. [HIGH|MEDIUM|LOW] [CTA|VISUAL|HOOK|LAYOUT|TRUST|COPY] — [one sentence fix]
+3. [HIGH|MEDIUM|LOW] [CTA|VISUAL|HOOK|LAYOUT|TRUST|COPY] — [one sentence fix]
+Example: HIGH CTA — Add a clear call-to-action button with urgency language
 
 ---
 
@@ -258,6 +266,13 @@ Label each: [Headline], [Subhead], [Body], [CTA], [Brand], [Legal], [Tagline]
 
 ---
 
+## 📋 VERDICT
+- State: [not_ready | needs_work | ready] — "not_ready" if missing CTA or fundamental issues, "needs_work" if 5-7/10, "ready" if 8+/10
+- Headline: [one sentence verdict — what this ad does and what's missing, max 15 words]
+- Sub: [one sentence explanation — the key issue or strength, max 20 words]
+
+---
+
 ## 🧠 CREATIVE VERDICT
 IMPORTANT: Do not mention the user's role, niche, or platform in the Creative Verdict. Never say "as a designer", "for an agency", "for your YouTube audience" or any similar phrase. Write the verdict as expert analysis of the creative itself only.
 Three paragraphs written as a media buyer debriefing a creative team:
@@ -294,13 +309,13 @@ Evaluate the above-the-fold visual impact. Does it stop the scroll? Score strict
 ---
 
 ## 🔧 IMPROVEMENTS
-List exactly 3-5 specific, actionable suggestions to improve this static creative.
-Each suggestion should apply to the STATIC format as-is.
-Do NOT suggest adding animation or video as an improvement.
-Format as a numbered list.
-1. [Specific improvement for the static ad]
-2. [Specific improvement for the static ad]
-3. [Specific improvement for the static ad]
+List exactly 3-5 specific, actionable suggestions for this static creative.
+Each suggestion should apply to the STATIC format as-is. Do NOT suggest adding animation or video.
+Each line MUST start with priority and category tags:
+1. [HIGH|MEDIUM|LOW] [CTA|VISUAL|HOOK|LAYOUT|TRUST|COPY] — [one sentence fix]
+2. [HIGH|MEDIUM|LOW] [CTA|VISUAL|HOOK|LAYOUT|TRUST|COPY] — [one sentence fix]
+3. [HIGH|MEDIUM|LOW] [CTA|VISUAL|HOOK|LAYOUT|TRUST|COPY] — [one sentence fix]
+Example: HIGH CTA — Add a clear call-to-action button with urgency language
 
 ---
 
@@ -353,6 +368,18 @@ export interface HookDetail {
   hookFix: string | null;   // null if score >= 8
 }
 
+export interface Verdict {
+  state: 'not_ready' | 'needs_work' | 'ready';
+  headline: string;
+  sub: string;
+}
+
+export interface StructuredImprovement {
+  priority: 'high' | 'medium' | 'low';
+  category: string;
+  text: string;
+}
+
 export interface AnalysisResult {
   markdown: string;
   scores: {
@@ -364,6 +391,8 @@ export interface AnalysisResult {
   } | null;
   hookDetail?: HookDetail;
   improvements: string[];
+  structuredImprovements?: StructuredImprovement[];
+  verdict?: Verdict;
   budget: BudgetRecommendation | null;
   hashtags?: Hashtags;
   scenes?: Scene[];
@@ -476,6 +505,73 @@ export function parseImprovements(markdown: string): string[] {
       .filter((line) => line.length > 0 && !line.startsWith("#"));
   } catch {
     return [];
+  }
+}
+
+export function parseVerdict(markdown: string, scores?: { overall: number } | null): Verdict | undefined {
+  try {
+    const match = markdown.match(/##\s*(?:📋\s*)?VERDICT\s*\n([\s\S]*?)(?=\n---|\n##|$)/i);
+    if (match) {
+      const section = match[1].trim();
+      const stateMatch = section.match(/State:\s*\[?(not_ready|needs_work|ready)\]?/i);
+      const headlineMatch = section.match(/Headline:\s*\[?(.*?)\]?\s*$/m);
+      const subMatch = section.match(/Sub:\s*\[?(.*?)\]?\s*$/m);
+      if (stateMatch && headlineMatch) {
+        return {
+          state: stateMatch[1].toLowerCase() as Verdict['state'],
+          headline: headlineMatch[1].replace(/^\[|\]$/g, '').trim(),
+          sub: subMatch ? subMatch[1].replace(/^\[|\]$/g, '').trim() : '',
+        };
+      }
+    }
+    // Fallback: derive from scores + creative verdict first sentence
+    if (scores) {
+      const verdictSection = markdown.match(/##\s*(?:🧠\s*)?CREATIVE VERDICT\s*\n([\s\S]*?)(?=\n---|\n##|$)/i);
+      const firstSentence = verdictSection?.[1]?.trim().split(/[.!]\s/)?.[0] ?? '';
+      const secondSentence = verdictSection?.[1]?.trim().split(/[.!]\s/)?.[1] ?? '';
+      return {
+        state: scores.overall >= 8 ? 'ready' : scores.overall >= 5 ? 'needs_work' : 'not_ready',
+        headline: firstSentence ? firstSentence + '.' : 'Analysis complete',
+        sub: secondSentence ? secondSentence + '.' : '',
+      };
+    }
+    return undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function parseStructuredImprovements(markdown: string): StructuredImprovement[] | undefined {
+  try {
+    const match = markdown.match(/##\s*(?:🔧\s*)?IMPROVEMENTS\s*\n([\s\S]*?)(?=\n---|\n##|$)/i);
+    if (!match) return undefined;
+
+    const lines = match[1].trim().split('\n').filter(l => l.trim().length > 0 && !l.startsWith('#'));
+    const results: StructuredImprovement[] = [];
+
+    for (const line of lines) {
+      const cleaned = line.replace(/^\d+\.\s*/, '').trim();
+      // Try to match: [HIGH|MEDIUM|LOW] [CATEGORY] — text
+      const tagMatch = cleaned.match(/^(HIGH|MEDIUM|LOW)\s+(CTA|VISUAL|HOOK|LAYOUT|TRUST|COPY)\s*[—–-]\s*(.+)$/i);
+      if (tagMatch) {
+        results.push({
+          priority: tagMatch[1].toLowerCase() as StructuredImprovement['priority'],
+          category: tagMatch[2].toLowerCase(),
+          text: tagMatch[3].trim(),
+        });
+      } else {
+        // Fallback: no tags, infer priority from position
+        results.push({
+          priority: results.length === 0 ? 'high' : results.length === 1 ? 'medium' : 'low',
+          category: 'visual',
+          text: cleaned,
+        });
+      }
+    }
+
+    return results.length > 0 ? results : undefined;
+  } catch {
+    return undefined;
   }
 }
 
@@ -656,6 +752,12 @@ export async function analyzeVideo(
     // 10. Parse hook detail from markdown (graceful — never throws)
     const hookDetail = parseHookDetail(markdown);
 
+    // 11. Parse verdict from markdown (graceful — never throws)
+    const verdict = parseVerdict(markdown, scores);
+
+    // 12. Parse structured improvements with priority/category (graceful — never throws)
+    const structuredImprovements = parseStructuredImprovements(markdown);
+
     emit("complete");
 
     // Increment usage counter (fire-and-forget — never blocks result)
@@ -669,6 +771,8 @@ export async function analyzeVideo(
       scores,
       hookDetail,
       improvements,
+      structuredImprovements,
+      verdict,
       budget,
       hashtags,
       scenes,

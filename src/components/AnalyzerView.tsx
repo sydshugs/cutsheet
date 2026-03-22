@@ -32,6 +32,15 @@ interface AnalyzerViewProps {
   onModeChange?: (mode: string) => void;
   platform?: string;
   icon?: LucideIcon;
+  // New props for redesigned layout
+  format?: 'video' | 'static';
+  niche?: string;
+  onFixIt?: () => void;
+  onVisualize?: () => void;
+  onCheckPolicies?: () => void;
+  onCompare?: () => void;
+  fixItLoading?: boolean;
+  policyLoading?: boolean;
 }
 
 export function AnalyzerView({
@@ -49,6 +58,7 @@ export function AnalyzerView({
   onCopy,
   onExportPdf,
   onShare,
+  onGenerateBrief,
   copied,
   shareLoading,
   historyEntries,
@@ -56,6 +66,14 @@ export function AnalyzerView({
   onModeChange,
   platform,
   icon,
+  format,
+  niche,
+  onFixIt,
+  onVisualize,
+  onCheckPolicies,
+  onCompare,
+  fixItLoading,
+  policyLoading,
 }: AnalyzerViewProps) {
   return (
     <AnimatePresence mode="wait">
@@ -118,6 +136,21 @@ export function AnalyzerView({
             shareLoading={shareLoading}
             onReset={onReset}
             onFileSelect={onFileSelect}
+            verdict={result.verdict}
+            structuredImprovements={result.structuredImprovements}
+            improvements={result.improvements}
+            scores={result.scores}
+            format={format}
+            platform={platform}
+            niche={niche}
+            hashtags={result.hashtags}
+            onFixIt={onFixIt}
+            onVisualize={onVisualize}
+            onCheckPolicies={onCheckPolicies}
+            onCompare={onCompare}
+            onGenerateBrief={onGenerateBrief}
+            fixItLoading={fixItLoading}
+            policyLoading={policyLoading}
           />
         </div>
       )}
