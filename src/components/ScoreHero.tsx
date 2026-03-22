@@ -4,6 +4,9 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 
+/** Platforms that do NOT support static image ads — benchmark should be hidden for these */
+const STATIC_INCOMPATIBLE_PLATFORMS = new Set(['TikTok', 'YouTube', 'YouTube Shorts', 'Instagram Reels']);
+
 export interface ScoreHeroProps {
   score: number;          // 0–10, one decimal
   verdict: string;        // 'Strong' | 'Average' | 'Needs Work' | etc.
@@ -13,6 +16,7 @@ export interface ScoreHeroProps {
     score: number;        // 0–10
   }[];
   platform?: string;      // 'Meta' | 'TikTok' | etc. — for benchmark label
+  format?: 'video' | 'static';  // ad format — used to hide invalid benchmarks
 }
 
 /** Platform benchmark defaults — used when benchmark prop is not supplied */
@@ -146,13 +150,17 @@ function BenchmarkBar({ score, benchmark, color, platform }: BenchmarkBarProps) 
 
 // ── ScoreHero ──────────────────────────────────────────────────────────────────
 
-export function ScoreHero({ score, verdict, benchmark, dimensions, platform }: ScoreHeroProps) {
+export function ScoreHero({ score, verdict, benchmark, dimensions, platform, format }: ScoreHeroProps) {
   const animatedScore = useCountUp(score, 600);
   const color = scoreColor(score);
 
+  // Hide benchmark for platforms that don't serve the current format
+  const platformIncompatible = format === 'static' && platform != null && STATIC_INCOMPATIBLE_PLATFORMS.has(platform);
+
   // Resolve benchmark: explicit prop → platform default lookup → undefined
-  const resolvedBenchmark =
-    benchmark != null
+  const resolvedBenchmark = platformIncompatible
+    ? undefined
+    : benchmark != null
       ? benchmark
       : platform != null
       ? PLATFORM_BENCHMARKS[platform]

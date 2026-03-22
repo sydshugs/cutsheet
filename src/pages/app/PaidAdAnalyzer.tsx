@@ -25,7 +25,7 @@ import {
   type StaticSecondEyeResult,
   type PlatformScore,
 } from "../../services/claudeService";
-import { PlatformSwitcher, PAID_AD_PLATFORMS } from "../../components/PlatformSwitcher";
+import { PlatformSwitcher, PAID_AD_PLATFORMS, PAID_STATIC_PLATFORMS, VIDEO_ONLY_PLATFORMS } from "../../components/PlatformSwitcher";
 import { generateFixIt, type FixItResult } from "../../services/fixItService";
 import { generatePrediction, type PredictionResult } from "../../services/predictionService";
 import { SecondEyePanel } from "../../components/SecondEyePanel";
@@ -50,7 +50,7 @@ import type { AppSharedContext } from "../../components/AppLayout";
 const API_KEY = ""; // Gemini calls are now server-side via /api/analyze
 
 const PLATFORMS = ["all", "Meta", "TikTok", "Google", "YouTube"] as const;
-type Platform = (typeof PLATFORMS)[number];
+type Platform = (typeof PLATFORMS)[number] | "Google" | "Instagram" | "Facebook";
 type Format = "video" | "static";
 
 const STATUS_COPY = {
@@ -430,6 +430,18 @@ export default function PaidAdAnalyzer() {
       setStaticSecondEyeResult(null);
     }
   }, [status]);
+
+  // ── Auto-reset platform when format switches and current platform is invalid ──
+  useEffect(() => {
+    if (format === "static" && VIDEO_ONLY_PLATFORMS.has(platform)) {
+      setPlatform("Meta" as Platform);
+      setInfoToast("TikTok and YouTube don't support static ads — switched to Meta");
+      setTimeout(() => setInfoToast(null), 3000);
+    }
+    if (format === "static" && platform === "all") {
+      setPlatform("Meta" as Platform);
+    }
+  }, [format]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Auto-detect format on file drop (no modal) ──────────────────────────
   const handleFileWithFormatCheck = useCallback((f: File | null) => {
@@ -851,10 +863,10 @@ export default function PaidAdAnalyzer() {
       >
         {showRightPanel && activeResult?.scores && rightTab === "analysis" && (
           <>
-            {/* Platform Switcher */}
+            {/* Platform Switcher — format-aware */}
             <div className="px-4 pt-3 pb-1">
               <PlatformSwitcher
-                platforms={PAID_AD_PLATFORMS}
+                platforms={format === "static" ? PAID_STATIC_PLATFORMS : PAID_AD_PLATFORMS}
                 selected={platform}
                 onChange={handlePlatformSwitch}
                 isSwitching={isPlatformSwitching}

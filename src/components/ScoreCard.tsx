@@ -336,6 +336,7 @@ export function ScoreCard({
             verdict={heroVerdict}
             benchmark={benchmark.averageScore}
             platform={platform}
+            format={format}
             dimensions={[
               { name: "Hook",   score: scores.hook },
               { name: "Copy",   score: scores.clarity },

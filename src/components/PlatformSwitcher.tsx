@@ -95,8 +95,23 @@ export const PAID_AD_PLATFORMS: PlatformOption[] = [
   { key: "Shorts", label: "Shorts" },
 ];
 
+// Paid static: only Meta + Google serve static image ads
+export const PAID_STATIC_PLATFORMS: PlatformOption[] = [
+  { key: "Meta", label: "Meta" },
+  { key: "Google", label: "Google" },
+];
+
 export const ORGANIC_PLATFORMS: PlatformOption[] = [
   { key: "TikTok", label: "TikTok" },
   { key: "Reels", label: "Reels" },
   { key: "Shorts", label: "Shorts" },
 ];
+
+// Organic static: Instagram + Facebook only
+export const ORGANIC_STATIC_PLATFORMS: PlatformOption[] = [
+  { key: "Instagram", label: "Instagram" },
+  { key: "Facebook", label: "Facebook" },
+];
+
+/** Platforms that do NOT support static image ads */
+export const VIDEO_ONLY_PLATFORMS = new Set(["TikTok", "YouTube", "Shorts", "Reels"]);
