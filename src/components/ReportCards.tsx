@@ -471,23 +471,87 @@ export function ReportCards({
         );
       })}
 
-      {/* Pacing & Retention — VIDEO ONLY */}
+      {/* Pacing & Retention — VIDEO ONLY, structured layout */}
       {format === 'video' && centerSections.filter(s => /pacing|retention/i.test(s.title ?? '')).map((section, i) => {
         const title = toSentenceCase(section.title!);
         const SectionIcon = getIconForTitle(title);
+        const c = section.content;
+
+        // Parse structured fields from markdown
+        const avgScene = c.match(/Average scene length:\s*\*?\*?\s*([^\n*]+)/i)?.[1]?.trim();
+        const pacing = c.match(/Overall pacing:\s*\*?\*?\s*([^\n*]+)/i)?.[1]?.trim();
+        const retentionMatch = c.match(/Retention hooks?:\s*\*?\*?\s*([^\n]+(?:\n(?!\*\*|-\s)[^\n]+)*)/i);
+        const retention = retentionMatch?.[1]?.trim();
+        const dropOffMatch = c.match(/Drop.off risk.*?:\s*\*?\*?\s*([^\n]+(?:\n(?!\*\*|##)[^\n]+)*)/i);
+        const dropOffText = dropOffMatch?.[1]?.trim();
+
+        // Parse drop-off moments from bullet list
+        const dropOffs = dropOffText
+          ? dropOffText.split('\n').filter(l => l.trim()).map(l => {
+              const clean = l.replace(/^[-*]\s*/, '').trim();
+              const tsMatch = clean.match(/^(\d+:\d+[–-]\d+:\d+|\d+:\d+s?)/);
+              const ts = tsMatch?.[1] ?? 'Overall';
+              const rest = clean.replace(tsMatch?.[0] ?? '', '').replace(/^[\s:—–-]+/, '').trim();
+              return { timestamp: ts, text: rest };
+            })
+          : [];
+
+        const pacingChipColor = /fast/i.test(pacing ?? '') ? '#10b981' : /slow/i.test(pacing ?? '') ? '#ef4444' : '#d97706';
+
         return (
           <div key={`pacing-${i}`} className="bg-zinc-900/50 rounded-2xl border border-white/5 p-5 mt-3">
+            {/* Header */}
             <div className="flex items-center gap-2 mb-3">
               <SectionIcon size={14} className="text-zinc-500" />
               <span className="text-xs font-medium text-zinc-200">{title}</span>
-              {(() => {
-                const pacingMatch = section.content.match(/Overall pacing:\s*\*?\*?\s*\[?([^\]\n*]+)\]?/i);
-                return pacingMatch ? (
-                  <span className="ml-auto text-[10px] text-zinc-500">{pacingMatch[1].trim()}</span>
-                ) : null;
-              })()}
+              {pacing && (
+                <span className="ml-auto text-[10px] font-medium rounded-full px-1.5 py-px"
+                  style={{ color: pacingChipColor, background: `${pacingChipColor}15` }}>
+                  {pacing}
+                </span>
+              )}
             </div>
-            {renderSectionContent(section)}
+
+            {/* 2-up tile grid */}
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              {avgScene && (
+                <div className="bg-white/[0.03] rounded-lg p-2.5">
+                  <span className="text-[10px] text-zinc-500 uppercase tracking-[0.05em] block mb-1">Avg scene length</span>
+                  <span className="text-[13px] font-medium text-zinc-200">{avgScene}</span>
+                </div>
+              )}
+              {pacing && (
+                <div className="bg-white/[0.03] rounded-lg p-2.5">
+                  <span className="text-[10px] text-zinc-500 uppercase tracking-[0.05em] block mb-1">Overall pacing</span>
+                  <span className="text-[13px] font-medium text-zinc-200">{pacing}</span>
+                </div>
+              )}
+              {retention && (
+                <div className="bg-white/[0.03] rounded-lg p-2.5 col-span-2">
+                  <span className="text-[10px] text-zinc-500 uppercase tracking-[0.05em] block mb-1">Retention hooks</span>
+                  <span className="text-xs text-zinc-300 leading-relaxed">{retention}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Drop-off risk moments */}
+            {dropOffs.length > 0 && (
+              <div>
+                <span className="text-[10px] text-zinc-500 uppercase tracking-[0.05em] block mb-2">Drop-off risk moments</span>
+                <div className="flex flex-col gap-[5px]">
+                  {dropOffs.map((d, j) => (
+                    <div key={j} className="flex items-start gap-2.5 bg-white/[0.03] rounded-lg px-2.5 py-2">
+                      <span className="text-[11px] font-mono text-zinc-500 min-w-[52px] shrink-0">{d.timestamp}</span>
+                      <span className="text-xs text-zinc-300 flex-1 leading-relaxed">{d.text}</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-400 mt-1.5 shrink-0" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Fallback if parsing fails */}
+            {!avgScene && !pacing && !retention && dropOffs.length === 0 && renderSectionContent(section)}
           </div>
         );
       })}
