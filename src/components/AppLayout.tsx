@@ -13,6 +13,7 @@ import { supabase } from "../lib/supabase";
 import { themes } from "../theme";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import { OfflineBanner } from "./OfflineBanner";
+import { Helmet } from "react-helmet-async";
 
 // ─── OUTLET CONTEXT TYPE ─────────────────────────────────────────────────────
 
@@ -115,6 +116,9 @@ export default function AppLayout() {
       >
         Skip to main content
       </a>
+      <Helmet>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <Sidebar
         mobileOpen={mobileOpen}
         onMobileClose={() => setMobileOpen(false)}
