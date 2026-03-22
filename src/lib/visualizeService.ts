@@ -55,6 +55,18 @@ export async function visualizeAd(payload: VisualizeRequest): Promise<VisualizeR
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
     if (response.status === 403 && body?.error === "PRO_REQUIRED") throw new Error("PRO_REQUIRED");
+    if (response.status === 429 && body?.error === "CREDIT_LIMIT_REACHED") {
+      const err = new Error("CREDIT_LIMIT_REACHED") as Error & {
+        creditData: { used: number; limit: number; tier: string; resetDate: string };
+      };
+      err.creditData = {
+        used: body.used ?? 0,
+        limit: body.limit ?? 0,
+        tier: body.tier ?? "pro",
+        resetDate: body.resetDate ?? new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString(),
+      };
+      throw err;
+    }
     if (response.status === 429) throw new Error("RATE_LIMITED");
     throw new Error(body?.error ?? `API error ${response.status}`);
   }

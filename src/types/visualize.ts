@@ -21,4 +21,11 @@ export interface VisualizeResult {
   changesApplied: string[];      // bullet list of changes
 }
 
-export type VisualizeStatus = "idle" | "loading" | "complete" | "error";
+export type VisualizeStatus = "idle" | "loading" | "complete" | "error" | "credit_limit";
+
+export interface VisualizeCreditData {
+  used: number;
+  limit: number;
+  tier: "free" | "pro" | "team";
+  resetDate: string; // ISO date string
+}
