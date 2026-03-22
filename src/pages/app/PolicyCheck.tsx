@@ -106,7 +106,7 @@ function EmptyState({
       <h2 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>
         Check ad policies before launch
       </h2>
-      <p style={{ fontSize: 14, color: "#71717a", textAlign: "center", maxWidth: 360, marginTop: 10, lineHeight: 1.6 }}>
+      <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)", textAlign: "center", maxWidth: 360, marginTop: 10, lineHeight: 1.6 }}>
         Scan your creative against Meta and TikTok policies. Catch rejections before they cost you ad spend.
       </p>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 16 }}>
@@ -150,7 +150,7 @@ function EmptyState({
         >
           <Upload size={24} color="#d97706" />
           <span style={{ fontSize: 14, color: "#a16207" }}>Upload your ad creative (optional)</span>
-          <span style={{ fontSize: 11, color: "#52525b" }}>Video, JPG, PNG, WebP — or skip and use copy only</span>
+          <span style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>Video, JPG, PNG, WebP — or skip and use copy only</span>
         </div>
         <input
           ref={fileInputRef}

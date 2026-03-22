@@ -196,6 +196,7 @@ export function HistoryDrawer({
             )}
             <button
               onClick={onClose}
+              aria-label="Close history"
               style={{
                 width: "28px",
                 height: "28px",

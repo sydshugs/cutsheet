@@ -49,7 +49,7 @@ function EmptyState({ onFileSelect }: { onFileSelect: (f: File) => void }) {
         <Monitor size={28} color="#8b5cf6" />
       </div>
       <h2 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>Display & Banner Analysis</h2>
-      <p style={{ fontSize: 14, color: "#71717a", textAlign: "center", maxWidth: 380, lineHeight: 1.6, marginTop: 10 }}>
+      <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)", textAlign: "center", maxWidth: 380, lineHeight: 1.6, marginTop: 10 }}>
         Upload a Google Display or affiliate banner ad. Auto-detects format. Scored against display-specific criteria.
       </p>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 16 }}>
@@ -74,9 +74,9 @@ function EmptyState({ onFileSelect }: { onFileSelect: (f: File) => void }) {
           onDragLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
           onDrop={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; const f = e.dataTransfer.files[0]; if (f) onFileSelect(f); }}
         >
-          <Upload size={28} color="#52525b" />
-          <span style={{ fontSize: 14, color: "#71717a" }}>Drop your banner ad or click to browse</span>
-          <span style={{ fontSize: 11, color: "#52525b" }}>JPG, PNG, WEBP, or GIF</span>
+          <Upload size={28} color="rgba(255,255,255,0.4)" />
+          <span style={{ fontSize: 14, color: "rgba(255,255,255,0.5)" }}>Drop your banner ad or click to browse</span>
+          <span style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>JPG, PNG, WEBP, or GIF</span>
         </div>
       </div>
     </div>

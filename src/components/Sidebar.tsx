@@ -57,7 +57,7 @@ const MORE_ITEMS = [...ANALYZE.slice(3), ...COMPARE.slice(1), ...LIBRARY];
 
 function SectionLabel({ label }: { label: string }) {
   return (
-    <div role="heading" aria-level={2} style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "#71717a", padding: "0 12px", marginTop: 24, marginBottom: 2 }}>
+    <div role="heading" aria-level={2} style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.5)", padding: "0 12px", marginTop: 24, marginBottom: 2 }}>
       {label}
     </div>
   );
@@ -312,12 +312,12 @@ function DesktopSidebar({
             display: "flex", alignItems: "center", gap: 10,
             padding: collapsed ? "8px 0" : "8px 16px",
             justifyContent: collapsed ? "center" : "flex-start",
-            color: "#52525b", fontSize: 13, textDecoration: "none",
+            color: "rgba(255,255,255,0.5)", fontSize: 13, textDecoration: "none",
             transition: "color 150ms", borderRadius: 8,
           }}
           title={collapsed ? "Help & Support" : undefined}
           onMouseEnter={e => (e.currentTarget.style.color = "#a1a1aa")}
-          onMouseLeave={e => (e.currentTarget.style.color = "#52525b")}
+          onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.5)")}
         >
           <HelpCircle size={18} />
           {!collapsed && <span>Help &amp; Support</span>}
@@ -366,8 +366,8 @@ function MobileTabBar({ onMoreClick }: { onMoreClick: () => void }) {
           >
             {({ isActive }) => (
               <>
-                <Icon size={20} color={isActive ? "#6366f1" : "#52525b"} />
-                <span style={{ fontSize: 10, color: isActive ? "#6366f1" : "#52525b", fontWeight: isActive ? 500 : 400 }}>
+                <Icon size={20} color={isActive ? "#6366f1" : "rgba(255,255,255,0.4)"} />
+                <span style={{ fontSize: 10, color: isActive ? "#6366f1" : "rgba(255,255,255,0.4)", fontWeight: isActive ? 500 : 400 }}>
                   {tab.label}
                 </span>
               </>
@@ -380,8 +380,8 @@ function MobileTabBar({ onMoreClick }: { onMoreClick: () => void }) {
         onClick={onMoreClick}
         style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3, background: "transparent", border: "none", cursor: "pointer" }}
       >
-        <MoreHorizontal size={20} color="#52525b" />
-        <span style={{ fontSize: 10, color: "#52525b" }}>More</span>
+        <MoreHorizontal size={20} color="rgba(255,255,255,0.4)" />
+        <span style={{ fontSize: 10, color: "rgba(255,255,255,0.4)" }}>More</span>
       </button>
     </nav>
   );
@@ -418,7 +418,7 @@ function MobileMoreDrawer({ open, onClose }: { open: boolean; onClose: () => voi
                 <Icon size={18} color="#71717a" />
                 <div style={{ textAlign: "left" }}>
                   <div style={{ fontSize: 13, fontWeight: 500, color: "#f4f4f5" }}>{item.label}</div>
-                  <div style={{ fontSize: 11, color: "#52525b" }}>{item.sublabel}</div>
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>{item.sublabel}</div>
                 </div>
                 {item.comingSoon && (
                   <span style={{ marginLeft: "auto", fontSize: 10, color: "#818cf8", background: "rgba(99,102,241,0.1)", padding: "2px 8px", borderRadius: 999, border: "1px solid rgba(99,102,241,0.2)" }}>
