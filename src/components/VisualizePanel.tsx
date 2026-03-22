@@ -311,16 +311,27 @@ export function VisualizePanel({
         {status === "error" && (
           <motion.div key="error" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <div style={{
-              display: "flex", alignItems: "center", gap: 10,
-              background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)",
-              borderRadius: 10, padding: "10px 14px", marginBottom: 12,
+              display: "flex", flexDirection: "column", alignItems: "center", gap: 12,
+              background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)",
+              borderRadius: 12, padding: "24px 20px", textAlign: "center",
             }}>
-              <AlertCircle size={14} color="#ef4444" />
-              <span style={{ fontSize: 13, color: "#fca5a5" }}>
+              <AlertCircle size={20} color="#ef4444" />
+              <span style={{ fontSize: 14, color: "#fca5a5", lineHeight: 1.5 }}>
                 {error === "RATE_LIMITED"
-                  ? "Daily limit reached — upgrade to Pro for unlimited visualizations."
+                  ? "You've used all your Visualize credits this month. Credits reset on the 1st."
                   : "Generation failed — please try again."}
               </span>
+              <button
+                type="button"
+                onClick={onClose}
+                style={{
+                  marginTop: 4, padding: "6px 16px", fontSize: 12,
+                  background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
+                  borderRadius: 8, color: "#a1a1aa", cursor: "pointer",
+                }}
+              >
+                Dismiss
+              </button>
             </div>
           </motion.div>
         )}
