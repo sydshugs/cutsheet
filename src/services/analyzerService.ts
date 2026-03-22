@@ -3,6 +3,7 @@
 
 import { generateImprovements as claudeImprovements } from "./claudeService";
 import { supabase } from "../lib/supabase";
+import { incrementAnalysisCount } from "./usageService";
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 
@@ -637,6 +638,9 @@ export async function analyzeVideo(
     const hookDetail = parseHookDetail(markdown);
 
     emit("complete");
+
+    // Increment usage counter (fire-and-forget — never blocks result)
+    incrementAnalysisCount().catch(() => {});
 
     // Clean up the uploaded file from storage
     if (storagePath) cleanupStorage(storagePath);
