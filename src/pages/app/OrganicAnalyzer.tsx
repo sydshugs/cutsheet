@@ -499,6 +499,7 @@ export default function OrganicAnalyzer() {
                     Go to Paid Ad
                   </button>
                   <button type="button" onClick={() => setImageMismatch(false)}
+                    aria-label="Dismiss image format warning"
                     style={{ height: 40, padding: "0 16px", borderRadius: 9999, border: "1px solid rgba(255,255,255,0.08)", background: "transparent", color: "#71717a", fontSize: 13, cursor: "pointer" }}>
                     Dismiss
                   </button>
@@ -572,6 +573,8 @@ export default function OrganicAnalyzer() {
                 fixItResult={fixItResult}
                 fixItLoading={fixItLoading}
                 prediction={prediction}
+                onStartOver={handleReset}
+                canVisualize={false}
               />
             </div>
             {/* Second Eye output below scorecard */}
@@ -632,6 +635,7 @@ export default function OrganicAnalyzer() {
             <button
               type="button"
               onClick={handleReset}
+              aria-label="Analyze another creative"
               style={{
                 width: "100%", height: 44, background: "rgba(9,9,11,0.8)", backdropFilter: "blur(8px)",
                 border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10,
