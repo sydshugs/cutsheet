@@ -57,6 +57,7 @@ interface ScoreCardProps {
   hookDetail?: HookDetail;
   niche?: string;
   platform?: string;
+  youtubeFormat?: string;
   // Fix It For Me
   onFixIt?: () => void;
   fixItResult?: FixItResult | null;
@@ -179,6 +180,7 @@ export function ScoreCard({
   hookDetail,
   niche,
   platform,
+  youtubeFormat,
   onFixIt,
   fixItResult,
   fixItLoading,
@@ -340,6 +342,7 @@ export function ScoreCard({
             benchmark={benchmark.averageScore}
             platform={platform}
             format={format}
+            youtubeFormat={youtubeFormat}
             dimensions={[
               { name: "Hook",   score: scores.hook },
               { name: "Copy",   score: scores.clarity },

@@ -17,6 +17,7 @@ export interface ScoreHeroProps {
   }[];
   platform?: string;      // 'Meta' | 'TikTok' | etc. — for benchmark label
   format?: 'video' | 'static';  // ad format — used to hide invalid benchmarks
+  youtubeFormat?: string; // YouTube sub-format: 'skippable' | 'non_skippable' | 'bumper' | 'shorts' | 'in_feed'
 }
 
 /** Platform benchmark defaults — used when benchmark prop is not supplied */
@@ -68,6 +69,24 @@ const PLATFORM_FORMAT_DIMENSIONS: Record<string, Record<string, [string, string,
   'TikTok': {
     'video':  ['Hook', 'Retention', 'Audio & Captions', 'CTA'],
   },
+};
+
+/** YouTube format-specific dimension labels */
+const YOUTUBE_FORMAT_DIMENSIONS: Record<string, [string, string, string, string]> = {
+  'skippable':     ['Pre-Skip Hook', 'Watch-Through', 'Message Arc', 'CTA Timing'],
+  'non_skippable': ['Message Clarity', 'Brand Visibility', 'CTA Efficiency', 'Visual Impact'],
+  'bumper':        ['Brand Recall', 'Simplicity', 'Message', 'Audio Brand'],
+  'shorts':        ['Hook', 'Hold Rate', 'Format Fit', 'End Action'],
+  'in_feed':       ['Thumbnail', 'Title Strength', 'First 5s', 'Watch-Worthy'],
+};
+
+/** YouTube format-specific benchmark labels */
+const YOUTUBE_FORMAT_BENCHMARK_LABELS: Record<string, string> = {
+  'skippable':     'YouTube VTR avg \u00B7 31.9%',
+  'non_skippable': 'YouTube avg \u00B7 completion 100%',
+  'bumper':        'YouTube Bumper \u00B7 brand recall',
+  'shorts':        'YouTube Shorts avg \u00B7 hold rate',
+  'in_feed':       'YouTube In-Feed \u00B7 CTR avg 0.65%',
 };
 
 /** Score color: 8+ emerald, 4–7.9 amber, 0–3.9 red */
@@ -192,7 +211,7 @@ function BenchmarkBar({ score, benchmark, color, label }: BenchmarkBarProps) {
 
 // ── ScoreHero ──────────────────────────────────────────────────────────────────
 
-export function ScoreHero({ score, verdict, benchmark, dimensions, platform, format }: ScoreHeroProps) {
+export function ScoreHero({ score, verdict, benchmark, dimensions, platform, format, youtubeFormat }: ScoreHeroProps) {
   const animatedScore = useCountUp(score, 600);
   const color = scoreColor(score);
 
@@ -211,9 +230,12 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
   const showBenchmark = resolvedBenchmark != null;
 
   // Apply platform-specific dimension labels (override names from props)
-  // Format-aware overrides take precedence when both platform and format match
+  // YouTube format-specific > format-aware > platform-only
+  const ytFormatOverride = (platform === 'YouTube' || platform === 'Shorts') && youtubeFormat
+    ? YOUTUBE_FORMAT_DIMENSIONS[youtubeFormat]
+    : undefined;
   const formatOverride = platform && format ? PLATFORM_FORMAT_DIMENSIONS[platform]?.[format] : undefined;
-  const platformDimLabels = formatOverride ?? (platform ? PLATFORM_DIMENSIONS[platform] : undefined);
+  const platformDimLabels = ytFormatOverride ?? formatOverride ?? (platform ? PLATFORM_DIMENSIONS[platform] : undefined);
   const resolvedDimensions = platformDimLabels
     ? dimensions.map((dim, i) => ({
         ...dim,
@@ -222,9 +244,13 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
     : dimensions;
 
   // Resolve benchmark label for display
-  const benchmarkLabel = platform
+  // YouTube format-specific labels take precedence
+  const ytBenchmarkLabel = (platform === 'YouTube' || platform === 'Shorts') && youtubeFormat
+    ? YOUTUBE_FORMAT_BENCHMARK_LABELS[youtubeFormat]
+    : undefined;
+  const benchmarkLabel = ytBenchmarkLabel ?? (platform
     ? (PLATFORM_BENCHMARK_LABELS[platform] ?? `${platform} avg`)
-    : "Avg";
+    : "Avg");
 
   return (
     <div

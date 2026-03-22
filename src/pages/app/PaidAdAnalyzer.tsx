@@ -26,6 +26,7 @@ import {
   type PlatformScore,
 } from "../../services/claudeService";
 import { PlatformSwitcher, PAID_AD_PLATFORMS, PAID_STATIC_PLATFORMS, VIDEO_ONLY_PLATFORMS } from "../../components/PlatformSwitcher";
+import { YouTubeFormatSelector, type YouTubeFormat } from "../../components/YouTubeFormatSelector";
 import { generateFixIt, type FixItResult } from "../../services/fixItService";
 import { generatePrediction, type PredictionResult } from "../../services/predictionService";
 import { SecondEyePanel } from "../../components/SecondEyePanel";
@@ -124,6 +125,7 @@ export default function PaidAdAnalyzer() {
   // ── Platform / format state ─────────────────────────────────────────────────
   const [platform, setPlatform] = useState<Platform>("all");
   const [format, setFormat] = useState<Format>("video");
+  const [youtubeFormat, setYoutubeFormat] = useState<YouTubeFormat>("skippable");
   // Second Eye + Design Review always on — no toggles
   const secondEye = true;
   const staticSecondEye = true;
@@ -277,6 +279,36 @@ The question is: does this image stop the scroll and communicate the offer befor
 If a CTA IS present inside the creative, note it as a positive signal ("In-creative CTA detected — complements Meta's native button") but do not penalize its absence.
 For "CTA Effectiveness" scoring: score the image's ability to drive action through visual urgency, offer clarity, and desire — NOT the presence of CTA text.
 Meta's Andromeda algorithm uses the creative as the targeting signal — visual relevance and thumb-stop power directly impact delivery efficiency.`;
+    }
+
+    // YouTube format-specific prompt context
+    if ((platform === "YouTube" || platform === "Shorts") && format === "video") {
+      const ytPrompts: Record<YouTubeFormat, string> = {
+        skippable: `This is a YouTube SKIPPABLE IN-STREAM ad. Viewers can skip after 5 seconds.
+The first 5 seconds are the most critical — brand must be visible and value prop clear before the skip button appears.
+Target VTR: 35%+. Average is 31.9%. Score accordingly.
+CTA should appear before expected drop-off point, not only at the end.
+Score dimensions: Pre-Skip Hook (brand visible + value prop in first 5s), Watch-Through (will viewers stay past 5s?), Message Arc (does story build for viewers who stay?), CTA Timing (CTA placed before expected drop-off).`,
+        non_skippable: `This is a YouTube NON-SKIPPABLE ad (7–15 seconds). Viewers cannot skip.
+One idea. One visual. One takeaway. No wasted moments.
+Brand must be unmistakable within 3 seconds.
+CTA must land within 12 seconds.
+Score dimensions: Message Clarity (single idea in 15s), Brand Visibility (unmistakable within 3s), CTA Efficiency (clear action within 12s), Visual Impact (commands attention).`,
+        bumper: `This is a YouTube BUMPER AD (max 6 seconds, non-skippable).
+No narrative is possible in 6 seconds. Score only on brand recall and impression strength.
+Do NOT score for CTA, copy depth, or story arc — these are impossible in this format.
+The only question: will this 6-second exposure be remembered?
+Score dimensions: Brand Recall (will this be remembered?), Visual Simplicity (one image, no competing elements), Message (single idea communicated instantly), Audio Branding (sonic identity that reinforces recall).`,
+        shorts: `This is a YouTube SHORTS AD (vertical 9:16, non-skippable, under 60s).
+Behavior is similar to TikTok: hold rate and completion are the primary algorithm signals.
+Vertical format and mobile-first composition are required, not optional.
+Score dimensions: Hook (stops scroll in first 3s), Hold Rate (will viewers watch to end?), Format Fit (native 9:16, properly composed for vertical), End Action (drives subscribe, click, or next-video).`,
+        in_feed: `This is a YouTube IN-FEED (Discovery) ad. Users choose to click based on thumbnail + title.
+This is intent-based — the viewer chose to watch. Score for delivering on the implicit promise.
+Thumbnail appeal and title strength matter more here than for any other YouTube format.
+Score dimensions: Thumbnail Appeal (would this get clicked?), Title Strength (creates curiosity or answers search intent?), First 5 Seconds (delivers on thumbnail/title promise?), Watch-Worthiness (worth spending time on?).`,
+      };
+      return base + '\n\n' + ytPrompts[youtubeFormat];
     }
 
     // Sound-off check for Meta video
@@ -913,6 +945,16 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                 disabled={status !== "complete"}
               />
             </div>
+            {/* YouTube format sub-selector */}
+            {(platform === "YouTube" || platform === "Shorts") && format === "video" && (
+              <div className="px-4 pb-1">
+                <YouTubeFormatSelector
+                  selected={youtubeFormat}
+                  onChange={setYoutubeFormat}
+                  disabled={status !== "complete"}
+                />
+              </div>
+            )}
             {/* Platform score verdict badge */}
             {platformScoreResult && platform !== "all" && (
               <div className="px-4 pb-2">
@@ -953,6 +995,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                 policyLoading={policyLoading}
                 niche={rawUserContext?.niche}
                 platform={rawUserContext?.platform}
+                youtubeFormat={(platform === "YouTube" || platform === "Shorts") ? youtubeFormat : undefined}
                 onFixIt={handleFixIt}
                 fixItResult={fixItResult}
                 fixItLoading={fixItLoading}
