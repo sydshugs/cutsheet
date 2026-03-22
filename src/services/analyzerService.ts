@@ -551,8 +551,13 @@ export function parseStructuredImprovements(markdown: string): StructuredImprove
 
     for (const line of lines) {
       const cleaned = line.replace(/^\d+\.\s*/, '').trim();
-      // Try to match: [HIGH|MEDIUM|LOW] [CATEGORY] — text
-      const tagMatch = cleaned.match(/^(HIGH|MEDIUM|LOW)\s+(CTA|VISUAL|HOOK|LAYOUT|TRUST|COPY)\s*[—–-]\s*(.+)$/i);
+
+      // Format 1: [HIGH|CTA] — text (bracket-pipe, what Gemini actually returns)
+      const bracketMatch = cleaned.match(/^\[(HIGH|MEDIUM|LOW)\|([A-Z]+)\]\s*[—–-]?\s*(.+)$/i);
+      // Format 2: HIGH CTA — text (space-separated, what we asked for)
+      const spaceMatch = cleaned.match(/^(HIGH|MEDIUM|LOW)\s+(CTA|VISUAL|HOOK|LAYOUT|TRUST|COPY)\s*[—–-]\s*(.+)$/i);
+
+      const tagMatch = bracketMatch || spaceMatch;
       if (tagMatch) {
         results.push({
           priority: tagMatch[1].toLowerCase() as StructuredImprovement['priority'],
@@ -560,11 +565,12 @@ export function parseStructuredImprovements(markdown: string): StructuredImprove
           text: tagMatch[3].trim(),
         });
       } else {
-        // Fallback: no tags, infer priority from position
+        // Fallback: strip any remaining bracket prefix patterns, infer priority from position
+        const strippedText = cleaned.replace(/^\[.*?\]\s*[—–-]?\s*/, '').trim();
         results.push({
           priority: results.length === 0 ? 'high' : results.length === 1 ? 'medium' : 'low',
           category: 'visual',
-          text: cleaned,
+          text: strippedText || cleaned,
         });
       }
     }
