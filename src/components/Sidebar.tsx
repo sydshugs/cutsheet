@@ -234,9 +234,9 @@ function DesktopSidebar({
         }}
       >
         <img
-          src="/cutsheet-logo-full.png"
+          src="/icon.png"
           alt="Cutsheet"
-          style={{ width: 32, height: 32, borderRadius: 10, flexShrink: 0 }}
+          style={{ width: 32, height: 32, borderRadius: 8, flexShrink: 0 }}
         />
         {!collapsed && (
           <span style={{ fontFamily: "var(--mono)", fontSize: 15, fontWeight: 600, color: "#f4f4f5", letterSpacing: "-0.02em" }}>
