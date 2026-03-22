@@ -406,20 +406,51 @@ export function ReportCards({
                   }}>{scores.overall}/10</span>
               )}
             </div>
-            {renderSectionContent(section)}
+            {(() => {
+              // Extract one-liner (first sentence) + support (next 2 sentences max)
+              const sentences = section.content.trim().split(/(?<=[.!])\s+/).filter(s => s.trim());
+              const oneLiner = sentences[0] ?? '';
+              const support = sentences.slice(1, 3).join(' ');
+              return (
+                <>
+                  <div className="rounded-lg px-3 py-2.5 mb-3"
+                    style={{ background: 'rgba(99,102,241,0.06)', border: '0.5px solid rgba(99,102,241,0.18)' }}>
+                    <span className="text-[10px] text-indigo-400 uppercase tracking-[0.05em] block mb-1">Verdict</span>
+                    <p className="text-[13px] font-medium text-zinc-200 leading-snug">{oneLiner}</p>
+                  </div>
+                  {support && (
+                    <p className="text-xs text-zinc-400 leading-relaxed">{support}</p>
+                  )}
+                </>
+              );
+            })()}
           </div>
         );
       })}
 
-      {/* Emotional Impact / Emotion Arc — always visible */}
-      {centerSections.filter(s => /emotion|arc|impact/i.test(s.title ?? '')).map((section, i) => {
+      {/* Emotional Impact / Emotion Arc — show only one (prefer arc on video) */}
+      {(() => {
+        const emotionSections = centerSections.filter(s => /emotion|arc|impact/i.test(s.title ?? ''));
+        // On video: prefer Emotion Arc, skip Emotional Impact to avoid dupes
+        const filtered = format === 'video'
+          ? emotionSections.filter(s => /arc/i.test(s.title ?? '') || emotionSections.length === 1)
+          : emotionSections.filter(s => !/arc/i.test(s.title ?? '') || emotionSections.length === 1);
+        // Only show first match to prevent duplicates
+        return filtered.slice(0, 1);
+      })().map((section, i) => {
         const title = toSentenceCase(section.title!);
         const SectionIcon = getIconForTitle(title);
         const isArc = /arc/i.test(section.title ?? '');
         // For emotion arc, render as chip sequence
         if (isArc || format === 'video') {
+          // Try arrow chain first: "Curiosity → Discovery → Satisfaction"
           const chain = section.content.match(/([A-Z][a-z]+(?:\s*→\s*[A-Z][a-z]+)+)/);
-          const emotions = chain ? chain[1].split(/\s*→\s*/) : [];
+          let emotions = chain ? chain[1].split(/\s*→\s*/) : [];
+          // Fallback: try to extract from bold labels or numbered list
+          if (emotions.length === 0) {
+            const boldItems = section.content.match(/\*\*([A-Z][a-z]+(?:\s*\/\s*[A-Z][a-z]+)?)\*\*/g);
+            if (boldItems) emotions = boldItems.map(b => b.replace(/\*\*/g, ''));
+          }
           return (
             <div key={`emotion-${i}`} className="bg-zinc-900/50 rounded-2xl border border-white/5 p-5 mt-3">
               <div className="flex items-center gap-2 mb-3">
@@ -465,7 +496,9 @@ export function ReportCards({
             </div>
             <div className="bg-white/[0.03] rounded-[9px] p-3">
               <span className="text-[10px] text-zinc-500 uppercase tracking-[0.05em] block mb-1.5">Concept</span>
-              {renderSectionContent(section)}
+              <p className="text-xs font-medium text-zinc-200 leading-relaxed">
+                {section.content.replace(/^MOTION TEST IDEA:\s*/i, '').replace(/\*\*/g, '').trim()}
+              </p>
             </div>
           </div>
         );
