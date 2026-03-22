@@ -568,6 +568,7 @@ export default function OrganicAnalyzer() {
                 onShare={handleCopy}
                 isDark={true}
                 format="video"
+                isOrganic={true}
                 niche={rawUserContext?.niche}
                 platform={rawUserContext?.platform}
                 onFixIt={handleFixIt}

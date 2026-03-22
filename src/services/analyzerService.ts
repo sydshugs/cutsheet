@@ -193,7 +193,19 @@ Rules:
 - Timestamps use the format "M:SS — M:SS"
 - title is 3–5 words, plain text, no punctuation
 - visual, working, improve are each one sentence
-- Do not add any text between the markdown and the JSON block other than the section header above`;
+- Do not add any text between the markdown and the JSON block other than the section header above
+
+---
+
+## #️⃣ HASHTAGS
+Provide platform-specific hashtag recommendations. Mix reach levels: 3 mega (1M+ posts), 4 mid-range (100K–1M posts), 5 niche (<100K posts). Format:
+TIKTOK: #tag1 #tag2 #tag3 #tag4 #tag5 #tag6 #tag7 #tag8 #tag9 #tag10 #tag11 #tag12
+META: #tag1 #tag2 #tag3 #tag4 #tag5 #tag6 #tag7 #tag8 #tag9 #tag10 #tag11 #tag12
+INSTAGRAM: #tag1 #tag2 #tag3 #tag4 #tag5 #tag6 #tag7 #tag8 #tag9 #tag10 #tag11 #tag12
+
+---
+
+Do NOT include a budget recommendation section. Budget guidance is handled separately.`;
 
 // ─── STATIC AD ANALYSIS PROMPT ──────────────────────────────────────────────
 
@@ -295,6 +307,13 @@ Format as a numbered list.
 ## 🎥 MOTION TEST IDEA
 If this static ad could work as a video or motion graphic, describe the concept in one sentence:
 MOTION TEST IDEA: [one sentence describing how to adapt this as a short video ad]
+
+---
+
+## #️⃣ HASHTAGS
+Provide platform-specific hashtag recommendations. Mix reach levels: 3 mega (1M+ posts), 4 mid-range (100K–1M posts), 5 niche (<100K posts). Format:
+META: #tag1 #tag2 #tag3 #tag4 #tag5 #tag6 #tag7 #tag8 #tag9 #tag10 #tag11 #tag12
+INSTAGRAM: #tag1 #tag2 #tag3 #tag4 #tag5 #tag6 #tag7 #tag8 #tag9 #tag10 #tag11 #tag12
 
 ---
 
