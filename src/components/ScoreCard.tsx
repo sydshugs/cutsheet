@@ -263,7 +263,7 @@ export function ScoreCard({
   };
 
   return (
-    <div className="scorecard flex flex-col h-full">
+    <div className="scorecard flex flex-col">
       {/* Header */}
       <div className="p-5 border-b border-white/5 flex items-center justify-between">
         <div className="flex flex-col gap-0.5">
@@ -287,6 +287,22 @@ export function ScoreCard({
             {copied ? <CheckCircle size={13} /> : <Copy size={13} />}
             {copied ? "Copied!" : "Copy results"}
           </button>
+          {(onGenerateBrief || onAddToSwipeFile || onStartOver || onCheckPolicies || onCompare) && (
+            <OverflowMenu
+              direction="down"
+              items={[
+                ...(onGenerateBrief ? [{ label: "Generate Brief", onClick: onGenerateBrief, icon: <FileText size={14} /> }] : []),
+                ...(onAddToSwipeFile ? [{
+                  label: "Add to Swipe File",
+                  onClick: () => { onAddToSwipeFile(); setToast("Added to Swipe File"); setTimeout(() => setToast(null), 2500); },
+                  icon: <Bookmark size={14} />,
+                }] : []),
+                ...(onShare ? [{ label: "Share Score", onClick: onShare, icon: <Share2 size={14} /> }] : []),
+                ...(onCompare ? [{ label: "Compare", onClick: onCompare, icon: <ArrowUpRight size={14} /> }] : []),
+                ...(onStartOver ? [{ label: "Start Over", onClick: () => setStartOverOpen(true), icon: <RotateCcw size={14} />, destructive: true }] : []),
+              ] satisfies OverflowMenuItem[]}
+            />
+          )}
         </div>
       </div>
 
@@ -560,24 +576,7 @@ export function ScoreCard({
         </div>{/* end card content */}
       </div>{/* end glass card */}
 
-      {/* 13. Overflow menu */}
-      {(onGenerateBrief || onAddToSwipeFile || onStartOver || onCheckPolicies || onCompare) && (
-        <div style={{ marginTop: 16 }} className="px-5 pb-8 flex justify-end">
-          <OverflowMenu
-            items={[
-              ...(onGenerateBrief ? [{ label: "Generate Brief", onClick: onGenerateBrief, icon: <FileText size={14} /> }] : []),
-              ...(onAddToSwipeFile ? [{
-                label: "Add to Swipe File",
-                onClick: () => { onAddToSwipeFile(); setToast("Added to Swipe File"); setTimeout(() => setToast(null), 2500); },
-                icon: <Bookmark size={14} />,
-              }] : []),
-              ...(onShare ? [{ label: "Share Score", onClick: onShare, icon: <Share2 size={14} /> }] : []),
-              ...(onCompare ? [{ label: "Compare", onClick: onCompare, icon: <ArrowUpRight size={14} /> }] : []),
-              ...(onStartOver ? [{ label: "Start Over", onClick: () => setStartOverOpen(true), icon: <RotateCcw size={14} />, destructive: true }] : []),
-            ] satisfies OverflowMenuItem[]}
-          />
-        </div>
-      )}
+      {/* Overflow menu moved to header row — see Score Overview header above */}
 
       {/* Toast notification */}
       {toast && (
