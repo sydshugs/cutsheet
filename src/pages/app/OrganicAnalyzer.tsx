@@ -72,7 +72,7 @@ function OrganicEmptyState({
       </h2>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 14 }}>
         {PILLS.map((pill) => (
-          <span key={pill} style={{ fontSize: 12, color: "#34d399", background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.15)", borderRadius: 9999, padding: "4px 12px" }}>
+          <span key={pill} style={{ fontSize: 12, color: "#818cf8", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)", borderRadius: 9999, padding: "4px 12px" }}>
             {pill}
           </span>
         ))}
@@ -83,7 +83,6 @@ function OrganicEmptyState({
       <div style={{ width: "100%", maxWidth: 520, marginTop: 32 }}>
         <VideoDropzone onFileSelect={onFileSelect} file={null} onUrlSubmit={onUrlSubmit} />
       </div>
-      <p style={{ fontSize: 11, color: "#52525b", marginTop: 12 }} className="hidden md:block">or press &#8984;K</p>
     </div>
   );
 }
@@ -483,7 +482,7 @@ export default function OrganicAnalyzer() {
       {/* Main */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         {/* IntentHeader removed — platform defaults to "all" */}
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 flex flex-col overflow-auto">
           {/* Image mismatch error */}
           {imageMismatch && (
             <div style={{ display: "flex", justifyContent: "center", padding: "80px 24px" }}>

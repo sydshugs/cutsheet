@@ -75,8 +75,15 @@ function EmptyState({ onFileSelect }: { onFileSelect: (f: File) => void }) {
           onDrop={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; const f = e.dataTransfer.files[0]; if (f) onFileSelect(f); }}
         >
           <Upload size={28} color="#52525b" />
-          <span style={{ fontSize: 14, color: "#71717a" }}>Drop your banner ad or click to browse</span>
-          <span style={{ fontSize: 11, color: "#52525b" }}>JPG, PNG, WEBP, or GIF</span>
+          <span style={{ fontSize: 14, color: "#71717a" }}>Drop your banner ad here</span>
+          <button
+            type="button"
+            style={{ marginTop: 4, padding: "8px 20px", borderRadius: 9999, border: "none", background: "#6366f1", color: "white", fontSize: 13, fontWeight: 500, cursor: "pointer" }}
+            onClick={(e) => { e.stopPropagation(); const input = document.createElement("input"); input.type = "file"; input.accept = "image/jpeg,image/png,image/webp,image/gif"; input.onchange = (ev) => { const f = (ev.target as HTMLInputElement).files?.[0]; if (f) onFileSelect(f); }; input.click(); }}
+          >
+            Browse Files
+          </button>
+          <span style={{ fontSize: 11, color: "#52525b" }}>JPG · PNG · WEBP · GIF</span>
         </div>
       </div>
     </div>
@@ -452,7 +459,7 @@ Return JSON only — no prose:
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         {/* Intent header removed */}
 
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 flex flex-col overflow-auto">
           {/* ── SUITE MODE ──────────────────────────────────────────── */}
           {mode === "suite" && (
             <div className="relative px-4 py-6 md:px-8 min-h-full flex flex-col">

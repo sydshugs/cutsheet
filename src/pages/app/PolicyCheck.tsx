@@ -114,8 +114,8 @@ function EmptyState({
           <span
             key={pill}
             style={{
-              fontSize: 12, color: "#d97706", background: "rgba(245,158,11,0.08)",
-              border: "1px solid rgba(245,158,11,0.15)", borderRadius: 9999, padding: "4px 12px",
+              fontSize: 12, color: "#818cf8", background: "rgba(99,102,241,0.08)",
+              border: "1px solid rgba(99,102,241,0.15)", borderRadius: 9999, padding: "4px 12px",
             }}
           >
             {pill}
@@ -260,7 +260,7 @@ export default function PolicyCheck() {
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         {/* Intent header removed */}
 
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 flex flex-col overflow-auto">
           {!result ? (
             <>
               {!hasInput && !file ? (
