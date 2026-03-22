@@ -994,7 +994,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                 onCheckPolicies={handleCheckPolicies}
                 policyLoading={policyLoading}
                 niche={rawUserContext?.niche}
-                platform={rawUserContext?.platform}
+                platform={platform !== "all" ? platform : rawUserContext?.platform}
                 youtubeFormat={(platform === "YouTube" || platform === "Shorts") ? youtubeFormat : undefined}
                 onFixIt={handleFixIt}
                 fixItResult={fixItResult}
