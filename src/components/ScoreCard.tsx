@@ -559,7 +559,7 @@ export function ScoreCard({
 
           {/* 11. Static Ad Checks \u2014 static only */}
           {format === "static" && scores && (
-            <div style={{ marginTop: 12, padding: "0 20px" }}>
+            <div style={{ marginTop: 12, padding: "0 20px", paddingBottom: 20 }}>
               <CollapsibleSection title="Ad Quality Checks" icon={<ShieldCheck size={14} />}>
                 <StaticAdChecks scores={scores} />
               </CollapsibleSection>
