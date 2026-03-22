@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
@@ -7,10 +7,19 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
   const navigate = useNavigate()
   const [checking, setChecking] = useState(true)
+  const verifiedUserIdRef = useRef<string | null>(null)
 
   useEffect(() => {
     if (loading) return
     if (!user) {
+      verifiedUserIdRef.current = null
+      setChecking(false)
+      return
+    }
+
+    // Skip profile re-check if we already verified this user
+    // (prevents flash to loading state on Supabase TOKEN_REFRESHED events)
+    if (verifiedUserIdRef.current === user.id) {
       setChecking(false)
       return
     }
@@ -23,6 +32,8 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
       .then(({ data }) => {
         if (!data || !data.onboarding_completed) {
           navigate('/welcome', { replace: true })
+        } else {
+          verifiedUserIdRef.current = user.id
         }
         setChecking(false)
       })
