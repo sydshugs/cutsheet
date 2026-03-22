@@ -996,6 +996,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                 niche={rawUserContext?.niche}
                 platform={platform !== "all" ? platform : rawUserContext?.platform}
                 youtubeFormat={(platform === "YouTube" || platform === "Shorts") ? youtubeFormat : undefined}
+                platformScore={platform !== "all" && platformScoreResult ? platformScoreResult.score : undefined}
                 onFixIt={handleFixIt}
                 fixItResult={fixItResult}
                 fixItLoading={fixItLoading}

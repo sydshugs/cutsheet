@@ -58,6 +58,7 @@ interface ScoreCardProps {
   niche?: string;
   platform?: string;
   youtubeFormat?: string;
+  platformScore?: number; // override overall score when platform-specific score exists
   // Fix It For Me
   onFixIt?: () => void;
   fixItResult?: FixItResult | null;
@@ -181,6 +182,7 @@ export function ScoreCard({
   niche,
   platform,
   youtubeFormat,
+  platformScore,
   onFixIt,
   fixItResult,
   fixItLoading,
@@ -193,8 +195,9 @@ export function ScoreCard({
   onUpgradeRequired,
   isOrganic = false,
 }: ScoreCardProps) {
-  const { label: overallLabel } = getScoreLabel(scores.overall);
-  const heroVerdict = scores.overall >= 8 ? "Strong" : scores.overall >= 4 ? "Average" : "Needs Work";
+  const displayScore = platformScore ?? scores.overall;
+  const { label: overallLabel } = getScoreLabel(displayScore);
+  const heroVerdict = displayScore >= 8 ? "Strong" : displayScore >= 4 ? "Average" : "Needs Work";
   const benchmark: BenchmarkResult = getBenchmark(niche ?? '', platform ?? '', format === 'video' ? 'video' : 'static');
   const [relativeTime, setRelativeTime] = useState<string>("");
   const [toast, setToast] = useState<string | null>(null);
@@ -337,7 +340,7 @@ export function ScoreCard({
 
           {/* 1 + 2. ScoreHero — score number + benchmark bar + dimension grid */}
           <ScoreHero
-            score={scores.overall}
+            score={displayScore}
             verdict={heroVerdict}
             benchmark={benchmark.averageScore}
             platform={platform}
@@ -362,7 +365,7 @@ export function ScoreCard({
           {/* 3. ScoreAdaptiveCTA \u2014 always visible */}
           <div style={{ marginTop: 16, padding: "0 20px" }}>
             <ScoreAdaptiveCTA
-              overallScore={scores.overall}
+              overallScore={displayScore}
               onShare={onShare}
               onGenerateBrief={onGenerateBrief}
             />

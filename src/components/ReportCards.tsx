@@ -19,7 +19,7 @@ interface ReportCardsProps {
 
 const JSON_TITLE_RE = /json|scene|raw\s*data|budget\s*recommend/i;
 // Sections already shown in ScoreCard — filter from left panel to avoid duplication
-const SCORECARD_DUPLICATE_RE = /^(improve|hashtag|recommend.*hashtag|budget|predicted.*perform|quick.?score|score.?summary|overall.*score|overall.*strength)/i;
+const SCORECARD_DUPLICATE_RE = /^[#⃣\s]*(improve|hashtag|recommend.*hashtag|budget|predicted.*perform|quick.?score|score.?summary|overall.*score|overall.*strength)/i;
 const JSON_CONTENT_RE = /^\s*[\[{]/;
 
 // Hook-related section titles to merge into a single "Hook analysis" section
