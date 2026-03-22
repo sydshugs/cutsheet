@@ -100,7 +100,7 @@ export function StaticSecondEyePanel({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
       style={{
-        margin: "12px 16px 16px",
+        margin: "20px 16px 16px",
         borderRadius: 12,
         background: "rgba(255,255,255,0.02)",
         border: "1px solid rgba(255,255,255,0.06)",
