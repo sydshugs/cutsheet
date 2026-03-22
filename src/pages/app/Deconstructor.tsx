@@ -674,9 +674,9 @@ export default function Deconstructor() {
             <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
               <Link2 size={28} color="#6366f1" />
             </div>
-            <h2 className="text-2xl font-semibold text-white tracking-tight mb-3">
+            <h1 className="text-2xl font-semibold text-white tracking-tight mb-3">
               Why does this ad work?
-            </h2>
+            </h1>
             <p className="text-sm text-zinc-500 max-w-md mx-auto">
               Paste any ad URL. Get the full breakdown — hook, triggers,
               structure, and a brief to make your own version.

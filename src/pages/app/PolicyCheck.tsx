@@ -103,9 +103,9 @@ function EmptyState({
       >
         <ShieldCheck size={28} color="#f59e0b" />
       </div>
-      <h2 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>
+      <h1 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>
         Check ad policies before launch
-      </h2>
+      </h1>
       <p style={{ fontSize: 14, color: "#a1a1aa", textAlign: "center", maxWidth: 360, marginTop: 10, lineHeight: 1.6 }}>
         Scan your creative against Meta and TikTok policies. Catch rejections before they cost you ad spend.
       </p>

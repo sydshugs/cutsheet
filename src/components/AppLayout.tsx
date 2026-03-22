@@ -95,6 +95,26 @@ export default function AppLayout() {
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: "#09090b" }}>
+      <a
+        href="#main-content"
+        style={{
+          position: "absolute",
+          left: "-9999px",
+          top: 8,
+          zIndex: 999,
+          background: "#6366f1",
+          color: "white",
+          padding: "8px 16px",
+          borderRadius: 8,
+          fontSize: 14,
+          fontWeight: 500,
+          textDecoration: "none",
+        }}
+        onFocus={(e) => { e.currentTarget.style.left = "8px"; }}
+        onBlur={(e) => { e.currentTarget.style.left = "-9999px"; }}
+      >
+        Skip to main content
+      </a>
       <Sidebar
         mobileOpen={mobileOpen}
         onMobileClose={() => setMobileOpen(false)}
@@ -118,7 +138,7 @@ export default function AppLayout() {
           hasResult={hasAnalysisResult}
           onLogout={async () => { await supabase.auth.signOut(); navigate("/login"); }}
         />
-        <main className="flex-1 flex flex-col overflow-auto">
+        <main id="main-content" className="flex-1 flex flex-col overflow-auto">
           <Outlet context={ctx} />
         </main>
       </div>
