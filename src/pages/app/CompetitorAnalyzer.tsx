@@ -125,9 +125,9 @@ function DropZone({ onFileSelect, height = 240 }: { onFileSelect: (f: File) => v
       onDragLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
       onDrop={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; const f = e.dataTransfer.files[0]; if (f) onFileSelect(f); }}
     >
-      <Upload size={28} color="#52525b" />
-      <span style={{ fontSize: 14, color: "#71717a" }}>Drop your creative or click to browse</span>
-      <span style={{ fontSize: 11, color: "#52525b" }}>Video or static image</span>
+      <Upload size={28} color="#71717a" />
+      <span style={{ fontSize: 14, color: "#a1a1aa" }}>Drop your creative or click to browse</span>
+      <span style={{ fontSize: 11, color: "#71717a" }}>Video or static image</span>
     </div>
   );
 }
