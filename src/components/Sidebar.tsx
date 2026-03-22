@@ -7,7 +7,7 @@ import {
   ScanSearch, ShieldCheck,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import { UsageIndicator } from "./UsageIndicator";
+// UsageIndicator removed from sidebar — plan badge shown inline
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -259,50 +259,30 @@ function DesktopSidebar({
 
       {/* Bottom */}
       <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "8px 0 12px", display: "flex", flexDirection: "column", gap: 2 }}>
-        <UsageIndicator
-          usageCount={usageCount}
-          FREE_LIMIT={FREE_LIMIT}
-          isPro={isPro}
-          isTeam={isTeam}
-          collapsed={collapsed}
-        />
-
-        {/* Shortcuts hint — only visible when collapsed */}
-        {collapsed && onShowShortcuts && (
-          <div style={{ display: "flex", justifyContent: "center", margin: "0 8px 2px" }}>
-            <button
-              type="button"
-              onClick={onShowShortcuts}
-              aria-label="Keyboard shortcuts"
-              style={{
-                background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
-                borderRadius: 6, width: 28, height: 28, display: "flex", alignItems: "center",
-                justifyContent: "center", cursor: "pointer", color: "#71717a", fontSize: 12,
-                fontFamily: "monospace",
-              }}
-            >
-              ?
-            </button>
+        {/* Pro plan badge */}
+        {!collapsed && (
+          <div style={{
+            margin: "4px 12px 8px", padding: "8px 12px", borderRadius: 10,
+            background: isPro ? "rgba(99,102,241,0.08)" : "rgba(255,255,255,0.03)",
+            border: `1px solid ${isPro ? "rgba(99,102,241,0.2)" : "rgba(255,255,255,0.06)"}`,
+            display: "flex", alignItems: "center", gap: 8,
+          }}>
+            <div style={{
+              width: 6, height: 6, borderRadius: "50%",
+              background: isPro ? "#6366f1" : "#52525b",
+            }} />
+            <span style={{ fontSize: 12, fontWeight: 500, color: isPro ? "#818cf8" : "#71717a" }}>
+              {isTeam ? "Team Plan" : isPro ? "Pro Plan" : "Free Plan"}
+            </span>
           </div>
         )}
-
-        {/* Keyboard shortcuts — expanded mode */}
-        {!collapsed && onShowShortcuts && (
-          <button
-            type="button"
-            onClick={onShowShortcuts}
-            style={{
-              display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
-              margin: "0 8px", background: "transparent", border: "none", cursor: "pointer",
-              color: "#52525b", fontSize: 12, textDecoration: "none", transition: "color 150ms",
-              justifyContent: "flex-start",
-            }}
-            onMouseEnter={e => (e.currentTarget.style.color = "#a1a1aa")}
-            onMouseLeave={e => (e.currentTarget.style.color = "#52525b")}
-          >
-            <span style={{ fontFamily: "monospace", fontSize: 11, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 4, padding: "1px 5px", lineHeight: 1 }}>?</span>
-            <span>Keyboard shortcuts</span>
-          </button>
+        {collapsed && (
+          <div style={{ display: "flex", justifyContent: "center", margin: "4px 0 8px" }}>
+            <div style={{
+              width: 8, height: 8, borderRadius: "50%",
+              background: isPro ? "#6366f1" : "#52525b",
+            }} title={isTeam ? "Team Plan" : isPro ? "Pro Plan" : "Free Plan"} />
+          </div>
         )}
 
         {/* Help & Support */}
@@ -322,24 +302,6 @@ function DesktopSidebar({
           <Settings size={18} className="text-[#71717a] group-hover:text-[#a1a1aa] transition-colors" />
           {!collapsed && (
             <span style={{ fontSize: 13, fontWeight: 500, color: "#a1a1aa" }}>Settings</span>
-          )}
-        </button>
-
-        {/* User avatar */}
-        <button
-          type="button"
-          onClick={() => navigate("/settings")}
-          className="group flex items-center gap-[10px] transition-colors hover:bg-[rgba(255,255,255,0.04)] rounded-[8px]"
-          style={{ height: 40, padding: collapsed ? 0 : "0 16px", margin: "0 8px", background: "transparent", border: "none", cursor: "pointer", justifyContent: collapsed ? "center" : "flex-start" }}
-          aria-label="Profile settings"
-        >
-          <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#6366f1", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 12, fontWeight: 600, color: "white" }}>
-            {initial}
-          </div>
-          {!collapsed && (
-            <span style={{ fontSize: 12, color: "#a1a1aa" }}>
-              {isPro ? "Pro Plan" : "Free Plan"}
-            </span>
           )}
         </button>
       </div>
