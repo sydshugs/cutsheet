@@ -290,7 +290,7 @@ export function ScoreCard({
             }}
           >
             {copied ? <CheckCircle size={13} /> : <Copy size={13} />}
-            {copied ? "Copied!" : "Copy results"}
+            {copied ? "Copied!" : "Copy scores"}
           </button>
           {(onGenerateBrief || onAddToSwipeFile || onStartOver || onCheckPolicies || onCompare) && (
             <OverflowMenu
@@ -391,7 +391,7 @@ export function ScoreCard({
                 onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "var(--border)"; }}
               >
                 {fixItLoading ? <Loader2 size={14} className="animate-spin" /> : <Wand2 size={14} />}
-                {scores.overall >= 8 ? "Polish It" : "Fix It"}
+                {scores.overall >= 8 ? "Polish" : "AI Rewrite"}
               </button>
             )}
 

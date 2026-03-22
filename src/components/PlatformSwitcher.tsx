@@ -26,7 +26,7 @@ export function PlatformSwitcher({
 
   return (
     <div
-      className="flex gap-1 p-1 rounded-xl"
+      className="flex gap-1 p-1 rounded-xl overflow-x-auto scrollbar-none"
       style={{
         background: "var(--surface, rgba(255,255,255,0.03))",
         border: "1px solid var(--border, rgba(255,255,255,0.1))",

@@ -84,6 +84,8 @@ function splitMarkdown(md: string): { title: string | null; content: string }[] 
     if (JSON_CONTENT_RE.test(trimmed) && (trimmed.endsWith('}') || trimmed.endsWith(']'))) return false;
     // Filter out sections that contain "scenes": [ ... ] pattern
     if (/"scenes"\s*:\s*\[/.test(trimmed)) return false;
+    // Filter out untitled sections with only whitespace, dividers (---), or empty content
+    if (!s.title && /^[\s\-]*$/.test(trimmed)) return false;
     return true;
   });
 }
@@ -153,8 +155,8 @@ export function ReportCards({ file, markdown, thumbnailDataUrl, onCopy, onExport
               className="rounded-2xl border border-white/5 overflow-hidden max-h-[320px] w-full object-contain bg-black"
             />
           )}
-          <p className="text-xs text-zinc-500 font-mono mt-2">
-            {sanitizeFileName(file.name)} · {(file.size / 1024 / 1024).toFixed(1)} MB
+          <p className="text-xs text-zinc-500 font-mono mt-2 truncate" title={file.name}>
+            {(() => { const n = sanitizeFileName(file.name); return n.length > 40 ? n.slice(0, 37) + "\u2026" : n; })()} · {(file.size / 1024 / 1024).toFixed(1)} MB
           </p>
         </div>
       )}
@@ -165,7 +167,7 @@ export function ReportCards({ file, markdown, thumbnailDataUrl, onCopy, onExport
           style={{
             marginTop: 12,
             height: 52,
-            border: "1px dashed rgba(99,102,241,0.2)",
+            border: "1px dashed rgba(99,102,241,0.3)",
             borderRadius: 10,
             display: "flex",
             alignItems: "center",
@@ -191,8 +193,8 @@ export function ReportCards({ file, markdown, thumbnailDataUrl, onCopy, onExport
           onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
           onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "transparent"; }}
         >
-          <Upload size={14} style={{ color: "#6366f1", opacity: 0.5 }} />
-          <span style={{ fontSize: 11, color: "#71717a" }}>Analyze another creative</span>
+          <Upload size={14} style={{ color: "#818cf8" }} />
+          <span style={{ fontSize: 12, color: "#a1a1aa" }}>Analyze another creative</span>
         </div>
       )}
 
@@ -233,7 +235,7 @@ export function ReportCards({ file, markdown, thumbnailDataUrl, onCopy, onExport
       </div>
 
       {/* Sticky action bar */}
-      <div className="sticky bottom-0 bg-zinc-950/80 backdrop-blur-xl border-t border-white/5 px-4 md:px-6 py-3 flex items-center gap-3 mt-6 -mx-4 md:-mx-8 -mb-6">
+      <div className="sticky bottom-0 bg-zinc-950/80 backdrop-blur-xl border-t border-white/5 px-4 md:px-6 py-3 pb-[calc(12px+env(safe-area-inset-bottom,0px))] md:pb-3 flex items-center gap-3 mt-6 -mx-4 md:-mx-8 -mb-6">
         <button
           onClick={onCopy}
           className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-white text-sm rounded-xl px-4 py-2 transition-colors"

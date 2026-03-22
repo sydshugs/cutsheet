@@ -12,7 +12,7 @@ const CATEGORY_META: Record<
   scroll_trigger: { label: "Scroll risk", bg: "rgba(239,68,68,0.1)", text: "#ef4444" },
   sound_off:     { label: "Sound-off",   bg: "rgba(99,102,241,0.1)", text: "#818cf8" },
   pacing:        { label: "Pacing",       bg: "rgba(245,158,11,0.1)", text: "#f59e0b" },
-  clarity:       { label: "Clarity",      bg: "rgba(16,185,129,0.1)", text: "#10b981" },
+  clarity:       { label: "Clarity",      bg: "rgba(245,158,11,0.1)", text: "#f59e0b" },
 };
 
 const SEVERITY_STYLES: Record<
@@ -214,13 +214,13 @@ export function SecondEyePanel({
                       flexShrink: 0,
                     }}
                   />
-                  <span style={{ fontSize: 11, color: "#71717a" }}>Would scroll at</span>
+                  <span style={{ fontSize: 12, color: "#a1a1aa", fontWeight: 500 }}>Would scroll at</span>
                   <span
                     style={{
-                      fontSize: 12,
+                      fontSize: 14,
                       fontFamily: "var(--font-geist-mono, 'Geist Mono', monospace)",
                       color: "#ef4444",
-                      fontWeight: 500,
+                      fontWeight: 700,
                     }}
                   >
                     {result.scrollMoment.match(/^[\d:]+/)?.[0] ?? ""}
