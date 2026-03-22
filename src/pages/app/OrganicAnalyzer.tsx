@@ -537,6 +537,7 @@ export default function OrganicAnalyzer() {
                   shareLoading={shareLoading}
                   historyEntries={historyEntries}
                   onHistoryEntryClick={(entry) => setLoadedEntry(entry)}
+                  icon={TrendingUp}
                 />
               </div>
             </div>
