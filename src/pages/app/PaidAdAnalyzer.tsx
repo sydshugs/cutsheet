@@ -140,6 +140,7 @@ export default function PaidAdAnalyzer() {
   const [visualizeStatus, setVisualizeStatus] = useState<VisualizeStatus>("idle");
   const [visualizeResult, setVisualizeResult] = useState<VisualizeResult | null>(null);
   const [visualizeError, setVisualizeError] = useState<string | null>(null);
+  const [visualizeCreditData, setVisualizeCreditData] = useState<import("../../types/visualize").VisualizeCreditData | null>(null);
 
   // ── Local analyzer state ───────────────────────────────────────────────────
   const [file, setFile] = useState<File | null>(null);
@@ -664,6 +665,12 @@ export default function PaidAdAnalyzer() {
         onUpgradeRequired("visualize");
         return;
       }
+      if (msg === "CREDIT_LIMIT_REACHED" && err && typeof err === "object" && "creditData" in err) {
+        const creditErr = err as Error & { creditData: import("../../types/visualize").VisualizeCreditData };
+        setVisualizeCreditData(creditErr.creditData);
+        setVisualizeStatus("credit_limit");
+        return;
+      }
       setVisualizeError(msg.includes("RATE_LIMITED") ? "RATE_LIMITED" : msg);
       setVisualizeStatus("error");
     }
@@ -790,7 +797,7 @@ export default function PaidAdAnalyzer() {
                     {/* Back to analysis link */}
                     <button
                       type="button"
-                      onClick={() => { setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); }}
+                      onClick={() => { setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); setVisualizeCreditData(null); }}
                       className="flex items-center gap-1.5 text-sm font-medium mb-4 transition-colors"
                       style={{ color: "var(--ink-muted)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
                       onMouseEnter={(e) => { e.currentTarget.style.color = "var(--ink)"; }}
@@ -804,8 +811,10 @@ export default function PaidAdAnalyzer() {
                       result={visualizeResult}
                       originalImageUrl={thumbnailDataUrl ?? null}
                       error={visualizeError}
-                      onClose={() => { setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); }}
+                      creditData={visualizeCreditData}
+                      onClose={() => { setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); setVisualizeCreditData(null); }}
                       onAnalyzeVersion={handleReanalyze}
+                      onUpgrade={onUpgradeRequired}
                     />
                   </motion.div>
                 ) : (
@@ -833,7 +842,6 @@ export default function PaidAdAnalyzer() {
                         onHistoryEntryClick={(entry) => setLoadedEntry(entry)}
                       />
                   </div>
-                )}
               </div>
             </div>
           ) : null}

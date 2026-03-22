@@ -114,11 +114,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // ── Monthly credit check (Pro: 10/mo, Team: 25/mo) ─────────────────────
   const credit = await checkFeatureCredit(user.id, user.tier, "visualize");
   if (!credit.allowed) {
+    const now = new Date();
+    const resetDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
     return res.status(429).json({
-      error: "RATE_LIMITED",
-      reason: credit.reason,
-      remaining: credit.remaining,
+      error: "CREDIT_LIMIT_REACHED",
+      feature: "visualize",
+      used: credit.used,
       limit: credit.limit,
+      tier: user.tier,
+      resetDate: resetDate.toISOString(),
     });
   }
 
