@@ -362,27 +362,7 @@ export function ReportCards({
 
       {/* Verdict banner moved to right panel */}
 
-      {/* ─── ZONE 1: Priority Fixes ─── */}
-      {fixes.length > 0 && (
-        <>
-          <ZoneLabel label="Priority fixes" />
-          <div className="flex flex-col gap-2">
-            {visibleFixes.map((fix, i) => (
-              <PriorityFixCard key={i} index={i} improvement={fix} />
-            ))}
-            {hasMoreFixes && !showAllFixes && (
-              <button
-                onClick={() => setShowAllFixes(true)}
-                className="text-[11px] text-indigo-400 hover:text-indigo-300 transition-colors mt-1 text-left"
-              >
-                Show {fixes.length - 3} more →
-              </button>
-            )}
-          </div>
-        </>
-      )}
-
-      {/* ─── ZONE 2: Deep Dive ─── */}
+      {/* ─── Deep Dive ─── */}
       <ZoneLabel label="Deep dive" />
 
       {/* 3-up preview grid */}
@@ -399,6 +379,8 @@ export function ReportCards({
                 badge={badge?.badge}
                 badgeColor={badge?.color}
                 badgeBg={badge?.bg}
+                signal={getPreview(section.content)}
+                isActive={expandedSection === title}
                 onClick={() => setExpandedSection(expandedSection === title ? null : title)}
               />
             );
@@ -427,7 +409,7 @@ export function ReportCards({
       })}
 
       {/* Full-width row cards */}
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-[5px]">
         {rowSections.map((section, i) => {
           const title = toSentenceCase(section.title!);
           const SectionIcon = getIconForTitle(title);
@@ -440,6 +422,7 @@ export function ReportCards({
                 title={title}
                 icon={SectionIcon}
                 preview={getPreview(section.content)}
+                isActive={isExpanded}
                 onClick={() => setExpandedSection(isExpanded ? null : title)}
               />
               {isExpanded && (
