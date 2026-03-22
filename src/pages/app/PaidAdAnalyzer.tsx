@@ -936,7 +936,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
         {showRightPanel && activeResult?.scores && rightTab === "analysis" && (
           <>
             {/* Platform Switcher — format-aware */}
-            <div className="px-4 pt-3 pb-1">
+            <div className="px-4 pt-3 pb-0.5">
               <PlatformSwitcher
                 platforms={format === "static" ? PAID_STATIC_PLATFORMS : PAID_AD_PLATFORMS}
                 selected={platform}

@@ -96,6 +96,13 @@ function scoreColor(score: number): string {
   return "#ef4444";
 }
 
+/** Colorblind-safe indicator: shape that communicates score band without relying on color */
+function scoreIndicator(score: number): string {
+  if (score >= 8) return "\u25B2"; // ▲ up triangle = strong
+  if (score >= 4) return "\u25CF"; // ● circle = average
+  return "\u25BC"; // ▼ down triangle = weak
+}
+
 /** Count-up animation from 0 → target over `duration` ms */
 function useCountUp(target: number, duration = 600): number {
   const [value, setValue] = useState(0);
@@ -200,7 +207,13 @@ function BenchmarkBar({ score, benchmark, color, label }: BenchmarkBarProps) {
             fontSize: 12,
             color: "#6366f1",
             fontFamily: "var(--mono)",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            maxWidth: "55%",
+            textAlign: "right",
           }}
+          title={`${label ?? "Avg"} · ${benchmark.toFixed(1)}`}
         >
           {label ?? "Avg"} · {benchmark.toFixed(1)}
         </span>
@@ -350,11 +363,15 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
                   fontWeight: 600,
                   color: dimColor,
                   fontVariantNumeric: "tabular-nums",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 3,
                 }}
               >
+                <span style={{ fontSize: 7, lineHeight: 1 }} aria-hidden="true">{scoreIndicator(dim.score)}</span>
                 {dim.score.toFixed(1)}
               </span>
-              <span style={{ fontSize: 10, color: "#71717a" }}>
+              <span style={{ fontSize: 11, color: "#71717a", whiteSpace: "nowrap" }}>
                 {dim.name}
               </span>
             </motion.div>

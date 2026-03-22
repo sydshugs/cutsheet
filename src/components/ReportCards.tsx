@@ -1,7 +1,7 @@
 import { useMemo, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import { sanitizeFileName } from "../utils/sanitize";
-import { Copy, FileDown, Share2, Anchor, MessageSquare, MousePointerClick, Clapperboard, DollarSign, Hash, Eye, Lightbulb, BarChart3, Heart, Layout, Target, Palette, FileText, type LucideIcon } from "lucide-react";
+import { Copy, FileDown, Share2, Anchor, MessageSquare, MousePointerClick, Clapperboard, DollarSign, Hash, Eye, Lightbulb, BarChart3, Heart, Layout, Target, Palette, FileText, Upload, type LucideIcon } from "lucide-react";
 import { CollapsibleSection } from "./ui/CollapsibleSection";
 
 interface ReportCardsProps {
@@ -165,13 +165,15 @@ export function ReportCards({ file, markdown, thumbnailDataUrl, onCopy, onExport
           style={{
             marginTop: 12,
             height: 52,
-            border: "1px dashed rgba(255,255,255,0.08)",
+            border: "1px dashed rgba(99,102,241,0.2)",
             borderRadius: 10,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            gap: 6,
             cursor: "pointer",
             transition: "all 150ms",
+            background: "rgba(99,102,241,0.03)",
           }}
           onClick={() => {
             const input = document.createElement("input");
@@ -189,7 +191,8 @@ export function ReportCards({ file, markdown, thumbnailDataUrl, onCopy, onExport
           onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
           onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "transparent"; }}
         >
-          <span style={{ fontSize: 11, color: "#52525b" }}>Drop new creative or click to browse</span>
+          <Upload size={14} style={{ color: "#6366f1", opacity: 0.5 }} />
+          <span style={{ fontSize: 11, color: "#71717a" }}>Analyze another creative</span>
         </div>
       )}
 
@@ -240,10 +243,11 @@ export function ReportCards({ file, markdown, thumbnailDataUrl, onCopy, onExport
         </button>
         <button
           onClick={onExportPdf}
-          className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-white text-sm rounded-xl px-4 py-2 transition-colors"
+          className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-white/50 text-sm rounded-xl px-4 py-2 transition-colors"
         >
           <FileDown size={14} />
           Export PDF
+          <span className="text-[9px] text-white/30 ml-0.5">Soon</span>
         </button>
         <button
           onClick={onShare}
