@@ -353,7 +353,7 @@ export function ProgressCard({ file, status, onCancel, platform }: ProgressCardP
               background: "#111111",
               border: "1px solid rgba(255,255,255,0.05)",
               borderRadius: 12,
-              padding: "14px 16px",
+              padding: "14px 16px 20px",
               marginTop: 8,
             }}
           >
