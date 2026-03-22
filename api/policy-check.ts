@@ -25,6 +25,7 @@ interface PolicyCheckRequest {
   platform: "meta" | "tiktok" | "both";
   adType: "video" | "static" | "display";
   niche: string;
+  userRole?: string;
   existingAnalysis?: object;
 }
 
@@ -64,7 +65,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
   }
 
-  const { mediaUrl, mediaStorageUrl, mediaDataUrl, adCopy, platform: rawPlatform, adType: rawAdType, niche: rawNiche, existingAnalysis } =
+  const { mediaUrl, mediaStorageUrl, mediaDataUrl, adCopy, platform: rawPlatform, adType: rawAdType, niche: rawNiche, userRole, existingAnalysis } =
     (req.body ?? {}) as PolicyCheckRequest;
 
   if (!rawPlatform || !rawAdType || !rawNiche) {
@@ -104,16 +105,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const model = genai.getGenerativeModel({ model: "gemini-2.0-flash" });
 
         const nicheRiskContext: Record<string, string> = {
-          supplements: "HIGH-RISK NICHE: Supplements. Pay extra attention to: health claims, before/after imagery, efficacy promises, FDA disclaimer absence, ingredient claims, 'doctor recommended' without proof.",
-          health: "HIGH-RISK NICHE: Health/Medical. Pay extra attention to: medical claims, diagnosis suggestions, treatment promises, before/after imagery, professional endorsements without disclaimers.",
-          finance: "HIGH-RISK NICHE: Finance. Pay extra attention to: income claims, earnings screenshots, guaranteed returns, financial advice without disclaimers, wealth lifestyle imagery.",
-          weightloss: "HIGH-RISK NICHE: Weight Loss. Pay extra attention to: before/after body imagery, specific weight loss claims, timeframe promises, body shaming, unrealistic results.",
-          skincare: "MODERATE-RISK NICHE: Skincare/Beauty. Watch for: before/after skin imagery, anti-aging claims, dermatologist endorsements, 'clinically proven' without citation.",
-          alcohol: "RESTRICTED NICHE: Alcohol. Watch for: age-gating absence, excessive consumption imagery, health benefit claims, appeal to minors.",
+          supplements: "HIGH-RISK NICHE: Supplements. Extra scrutiny required: health claims, before/after imagery, efficacy promises, missing FDA disclaimers, unsubstantiated ingredient claims, 'doctor recommended' without proof.",
+          health: "HIGH-RISK NICHE: Health/Medical. Extra scrutiny: medical claims, diagnosis implications, treatment promises, before/after imagery, professional endorsements without disclaimers.",
+          finance: "HIGH-RISK NICHE: Finance/Investing. Extra scrutiny: income claims, earnings screenshots, guaranteed returns, financial advice without disclaimers, wealth lifestyle imagery.",
+          crypto: "HIGH-RISK NICHE: Crypto/Web3. Extra scrutiny: guaranteed profit claims, 'not financial advice' disclaimers absent, FOMO language, speculative asset promotion without risk disclosure.",
+          weightloss: "HIGH-RISK NICHE: Weight Loss. Extra scrutiny: before/after body imagery, specific weight/measurement claims, timeframe promises, unrealistic result imagery.",
+          insurance: "HIGH-RISK NICHE: Insurance. Extra scrutiny: guaranteed acceptance claims, specific premium amounts without disclaimer, health-based qualification claims.",
+          skincare: "MODERATE-RISK NICHE: Skincare/Beauty. Watch for: before/after skin imagery, anti-aging claims, 'clinically proven' without citation, dermatologist endorsements without verification.",
+          alcohol: "RESTRICTED NICHE: Alcohol/Beverages. Watch for: absence of age-gating signals, excessive consumption imagery, health benefit claims, any appeal to minors.",
+          realestate: "MODERATE-RISK NICHE: Real Estate. Watch for: investment return guarantees, passive income promises, no-money-down claims, appreciation predictions.",
+          education: "MODERATE-RISK NICHE: Education/Courses/Coaching. Watch for: income outcome promises, student success claims without typical results disclosure, artificial enrollment scarcity.",
+          dating: "RESTRICTED NICHE: Dating/Relationships. Watch for: misleading success rate claims, before/after imagery implying transformation, suggestive or relationship-manipulative content.",
+          saas: "STANDARD-RISK NICHE: SaaS/Software. Watch for: unverifiable ROI statistics, 'trusted by X companies' without substantiation, feature comparison claims that mislead.",
+          ecommerce: "STANDARD-RISK NICHE: E-commerce/DTC. Watch for: false urgency signals ('only 3 left' when untrue), artificial countdown timers, misleading discount pricing, synthetic review imagery.",
+          app: "STANDARD-RISK NICHE: Mobile Apps. Watch for: inflated download counts, app store rating claims, subscription pricing not disclosed upfront, feature availability misrepresentation.",
         };
 
         const nicheKey = niche.toLowerCase().replace(/[^a-z]/g, "");
-        const nicheWarning = Object.entries(nicheRiskContext).find(([k]) => nicheKey.includes(k))?.[1] || "";
+        const nicheWarning = Object.entries(nicheRiskContext).find(([k]) => nicheKey.includes(k))?.[1]
+          || `NICHE: ${niche}. Check for claims specific to ${niche} advertisers — results promises, endorsements, testimonials, before/after comparisons, and any content that could mislead this market. Flag ${niche}-specific language that ad reviewers commonly target.`;
 
         const visualScanPrompt = `You are a ${platform === "meta" || platform === "both" ? "Meta" : "TikTok"} ad policy reviewer scanning a ${adType} ad in the ${niche} niche for potential violations.
 

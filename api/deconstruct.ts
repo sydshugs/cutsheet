@@ -83,25 +83,30 @@ async function fetchMetaAdMeta(url: string): Promise<{
 
 // ─── GEMINI VISUAL ANALYSIS ──────────────────────────────────────────────────
 
-function buildGeminiVisualPrompt(sourceType: string): string {
+function buildGeminiVisualPrompt(sourceType: string, niche: string): string {
   const platformContext: Record<string, string> = {
     meta: "This is a Meta (Facebook/Instagram) ad. Look for: thumb-stop visual, sound-off readability, text overlay compliance (Meta's 20% text rule), CTA button placement, and feed-native aesthetics.",
     tiktok: "This is a TikTok ad. Look for: native UGC feel vs overproduced look, vertical framing, text overlay placement for TikTok's UI safe zones, trending format usage, and creator-style authenticity.",
     youtube: "This is a YouTube ad. Look for: skip-worthy first 5 seconds, horizontal framing quality, end screen CTA setup, audio-dependent elements, and mid-roll retention hooks.",
   };
 
-  return `You are analyzing a paid advertisement from ${sourceType.toUpperCase()}. This is a ${sourceType} ad — evaluate it against ${sourceType}-specific creative standards.
+  const nicheVisualGuidance = niche
+    ? `\nNICHE-SPECIFIC VISUAL CUES (${niche}): Pay attention to how the creative communicates value specifically for ${niche} — product presentation style, social proof signals, results imagery, and visual claims that are common in this category. Note whether the hook approach is typical for ${niche} advertising or breaks from convention in a notable way.`
+    : "";
+
+  return `You are analyzing a paid advertisement from ${sourceType.toUpperCase()} in the ${niche || "general"} niche. Evaluate it against ${sourceType}-specific creative standards AND ${niche || "general"} category norms.
 
 ${platformContext[sourceType] || "Evaluate against general paid advertising standards."}
+${nicheVisualGuidance}
 
 Analyze this ad creative and identify:
-1. Hook type (pattern interrupt, curiosity gap, bold claim, social proof, problem-agitate) — and whether this hook style works specifically on ${sourceType}
+1. Hook type (pattern interrupt, curiosity gap, bold claim, social proof, problem-agitate) — and whether this hook style works specifically on ${sourceType} for ${niche || "this"} ads
 2. Visual hierarchy — what the eye goes to first, second, third. Is this optimized for ${sourceType}'s feed layout?
-3. Emotional triggers present (fear, desire, envy, aspiration, humor, urgency) — which of these performs best on ${sourceType}?
+3. Emotional triggers present (fear, desire, envy, aspiration, humor, urgency) — which of these performs best on ${sourceType} for ${niche || "this"} category?
 4. Text overlay usage — placement, size, readability. Does it comply with ${sourceType}'s text guidelines?
 5. Brand/product presentation style — is it ${sourceType}-native or does it feel like a repurposed asset?
-6. CTA placement and style — does the CTA follow ${sourceType} best practices?
-7. Estimated target audience based on visual cues and ${sourceType} demographics
+6. CTA placement and style — does the CTA follow ${sourceType} best practices for ${niche || "this"} advertisers?
+7. Estimated target audience based on visual cues, ${sourceType} demographics, and ${niche || "general"} buyer signals
 
 Return structured JSON only. No prose, no preamble.
 {
@@ -111,14 +116,16 @@ Return structured JSON only. No prose, no preamble.
   "textOverlay": "description of text overlay usage and platform compliance",
   "brandPresentation": "description of brand/product style and platform nativeness",
   "ctaStyle": "description of CTA and platform-specific effectiveness",
-  "targetAudience": "estimated audience description based on visual cues and platform",
-  "platformFit": "how well this creative fits ${sourceType} specifically"
+  "targetAudience": "estimated audience description based on visual cues, platform, and niche",
+  "platformFit": "how well this creative fits ${sourceType} specifically for ${niche || 'this'} advertising",
+  "nicheConventions": "whether this ad follows or breaks from typical ${niche || 'category'} creative patterns — and why that matters"
 }`;
 }
 
 async function runGeminiAnalysis(
   imageUrl: string,
-  sourceType: string
+  sourceType: string,
+  niche: string
 ): Promise<Record<string, unknown>> {
   try {
     const imageData = await fetchImageAsBase64(imageUrl);
@@ -129,7 +136,7 @@ async function runGeminiAnalysis(
 
     const result = await model.generateContent([
       { inlineData: { mimeType: imageData.mimeType, data: imageData.data } },
-      buildGeminiVisualPrompt(sourceType),
+      buildGeminiVisualPrompt(sourceType, niche),
     ]);
 
     const text = result.response.text();
@@ -142,6 +149,26 @@ async function runGeminiAnalysis(
 }
 
 // ─── CLAUDE TEARDOWN PROMPT ──────────────────────────────────────────────────
+
+interface UserContext {
+  niche: string;
+  userRole: string;
+  userIntent: string;
+}
+
+function buildClaudeSystemPrompt(sourceType: string, ctx: UserContext): string {
+  const platform = sourceType === "meta" ? "Meta (Facebook/Instagram)" : sourceType === "tiktok" ? "TikTok" : "YouTube";
+  const roleClause = ctx.userRole ? ` You're briefing a ${ctx.userRole}.` : "";
+  const intentClause = ctx.userIntent === "awareness"
+    ? "Their goal is brand awareness and memorability."
+    : ctx.userIntent === "consideration"
+    ? "Their goal is driving consideration and mid-funnel engagement."
+    : "Their goal is direct-response conversion — clicks, installs, or purchases.";
+
+  return `You are a world-class creative strategist and performance media buyer specializing in ${platform} advertising${ctx.niche ? ` for the ${ctx.niche} space` : ""}.${roleClause} ${intentClause}
+
+Your job is to deconstruct winning ads so the reader can steal specific techniques and apply them immediately. Every insight must be concrete — reference actual elements from the ad data. Never write generic creative advice that could apply to any ad in any category.`;
+}
 
 function buildClaudePrompt(
   adContext: string,
@@ -270,7 +297,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // ── Gemini visual analysis (non-fatal if it fails) ────────────────────────
   let geminiParsed: Record<string, unknown> = {};
   if (resolvedMediaUrl) {
-    geminiParsed = await runGeminiAnalysis(resolvedMediaUrl, sourceType ?? "meta");
+    geminiParsed = await runGeminiAnalysis(resolvedMediaUrl, sourceType ?? "meta", niche ?? "");
   }
 
   const geminiContext =
@@ -296,10 +323,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: "Server configuration error — please contact support." });
     }
 
+    const userCtx: UserContext = {
+      niche: niche ?? "",
+      userRole: userRole ?? "",
+      userIntent: userIntent ?? "conversion",
+    };
+
     const client = new Anthropic({ apiKey });
     const message = await client.messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 3000,
+      system: buildClaudeSystemPrompt(sourceType ?? "meta", userCtx),
       messages: [
         {
           role: "user",

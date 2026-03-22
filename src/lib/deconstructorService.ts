@@ -1,6 +1,7 @@
 // src/lib/deconstructorService.ts — URL parsing + API orchestration for Ad Deconstructor
 
 import { supabase } from "./supabase";
+import { getUserContext } from "../services/userContextService";
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -67,7 +68,7 @@ export async function deconstructAd(
   sourceType: SourceType,
   mediaUrl?: string
 ): Promise<DeconstructResult> {
-  const token = await getAuthToken();
+  const [token, userCtx] = await Promise.all([getAuthToken(), getUserContext()]);
 
   const response = await fetch("/api/deconstruct", {
     method: "POST",
@@ -75,7 +76,14 @@ export async function deconstructAd(
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ url, sourceType, mediaUrl }),
+    body: JSON.stringify({
+      url,
+      sourceType,
+      mediaUrl,
+      niche: userCtx.niche,
+      userRole: userCtx.role,
+      userIntent: userCtx.intent,
+    }),
   });
 
   if (response.status === 429) {
