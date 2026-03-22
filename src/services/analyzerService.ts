@@ -517,10 +517,11 @@ export function parseVerdict(markdown: string, scores?: { overall: number } | nu
       const headlineMatch = section.match(/Headline:\s*\[?(.*?)\]?\s*$/m);
       const subMatch = section.match(/Sub:\s*\[?(.*?)\]?\s*$/m);
       if (stateMatch && headlineMatch) {
+        const stripQuotes = (s: string) => s.replace(/^\[|\]$/g, '').replace(/^["']|["']$/g, '').trim();
         return {
           state: stateMatch[1].toLowerCase() as Verdict['state'],
-          headline: headlineMatch[1].replace(/^\[|\]$/g, '').trim(),
-          sub: subMatch ? subMatch[1].replace(/^\[|\]$/g, '').trim() : '',
+          headline: stripQuotes(headlineMatch[1]),
+          sub: subMatch ? stripQuotes(subMatch[1]) : '',
         };
       }
     }
@@ -529,10 +530,11 @@ export function parseVerdict(markdown: string, scores?: { overall: number } | nu
       const verdictSection = markdown.match(/##\s*(?:🧠\s*)?CREATIVE VERDICT\s*\n([\s\S]*?)(?=\n---|\n##|$)/i);
       const firstSentence = verdictSection?.[1]?.trim().split(/[.!]\s/)?.[0] ?? '';
       const secondSentence = verdictSection?.[1]?.trim().split(/[.!]\s/)?.[1] ?? '';
+      const sq = (s: string) => s.replace(/^["']|["']$/g, '').trim();
       return {
         state: scores.overall >= 8 ? 'ready' : scores.overall >= 5 ? 'needs_work' : 'not_ready',
-        headline: firstSentence ? firstSentence + '.' : 'Analysis complete',
-        sub: secondSentence ? secondSentence + '.' : '',
+        headline: firstSentence ? sq(firstSentence) + '.' : 'Analysis complete',
+        sub: secondSentence ? sq(secondSentence) + '.' : '',
       };
     }
     return undefined;
@@ -552,21 +554,34 @@ export function parseStructuredImprovements(markdown: string): StructuredImprove
     for (const line of lines) {
       const cleaned = line.replace(/^\d+\.\s*/, '').trim();
 
-      // Format 1: [HIGH|CTA] — text (bracket-pipe, what Gemini actually returns)
-      const bracketMatch = cleaned.match(/^\[(HIGH|MEDIUM|LOW)\|([A-Z]+)\]\s*[—–-]?\s*(.+)$/i);
-      // Format 2: HIGH CTA — text (space-separated, what we asked for)
-      const spaceMatch = cleaned.match(/^(HIGH|MEDIUM|LOW)\s+(CTA|VISUAL|HOOK|LAYOUT|TRUST|COPY)\s*[—–-]\s*(.+)$/i);
+      // Format 1: [HIGH|CTA] — text (bracket-pipe with priority)
+      const bracketPriorityMatch = cleaned.match(/^\[(HIGH|MEDIUM|LOW)\|([A-Z]+)\]\s*[—–\-]?\s*(.+)$/i);
+      // Format 2: HIGH CTA — text (space-separated with priority)
+      const spacePriorityMatch = cleaned.match(/^(HIGH|MEDIUM|LOW)\s+(CTA|VISUAL|HOOK|LAYOUT|TRUST|COPY)\s*[—–\-]\s*(.+)$/i);
+      // Format 3: [CTA] — text (bracket category only, no priority)
+      const bracketCategoryMatch = cleaned.match(/^\[(CTA|VISUAL|HOOK|LAYOUT|TRUST|COPY)\]\s*[—–\-]?\s*(.+)$/i);
 
-      const tagMatch = bracketMatch || spaceMatch;
-      if (tagMatch) {
+      if (bracketPriorityMatch) {
         results.push({
-          priority: tagMatch[1].toLowerCase() as StructuredImprovement['priority'],
-          category: tagMatch[2].toLowerCase(),
-          text: tagMatch[3].trim(),
+          priority: bracketPriorityMatch[1].toLowerCase() as StructuredImprovement['priority'],
+          category: bracketPriorityMatch[2].toLowerCase(),
+          text: bracketPriorityMatch[3].trim(),
+        });
+      } else if (spacePriorityMatch) {
+        results.push({
+          priority: spacePriorityMatch[1].toLowerCase() as StructuredImprovement['priority'],
+          category: spacePriorityMatch[2].toLowerCase(),
+          text: spacePriorityMatch[3].trim(),
+        });
+      } else if (bracketCategoryMatch) {
+        results.push({
+          priority: results.length === 0 ? 'high' : results.length === 1 ? 'medium' : 'low',
+          category: bracketCategoryMatch[1].toLowerCase(),
+          text: bracketCategoryMatch[2].trim(),
         });
       } else {
         // Fallback: strip any remaining bracket prefix patterns, infer priority from position
-        const strippedText = cleaned.replace(/^\[.*?\]\s*[—–-]?\s*/, '').trim();
+        const strippedText = cleaned.replace(/^\[.*?\]\s*[—–\-]?\s*/, '').trim();
         results.push({
           priority: results.length === 0 ? 'high' : results.length === 1 ? 'medium' : 'low',
           category: 'visual',
