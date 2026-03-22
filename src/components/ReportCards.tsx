@@ -1,3 +1,4 @@
+import type React from "react";
 import { useMemo, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import { sanitizeFileName } from "../utils/sanitize";
@@ -50,6 +51,71 @@ function getIconForTitle(title: string): LucideIcon {
     if (re.test(title)) return Icon;
   }
   return FALLBACK_ICON;
+}
+
+// ─── SECTION HEADER CHIPS ────────────────────────────────────────────────────
+
+/** Generate a trailing chip/badge for a section header based on content analysis */
+function getTrailingForSection(title: string, content: string): React.ReactNode {
+  const lower = title.toLowerCase();
+
+  // Hook analysis → extract verdict from content
+  if (/hook/i.test(lower)) {
+    const verdictMatch = content.match(/Hook (?:Verdict|strength):\s*\[?([^\]\n]+)\]?/i);
+    if (verdictMatch) {
+      const v = verdictMatch[1].trim();
+      const isStrong = /strong|scroll.?stop/i.test(v);
+      const isWeak = /weak/i.test(v);
+      const color = isStrong ? '#10b981' : isWeak ? '#ef4444' : '#d97706';
+      const bg = isStrong ? 'rgba(16,185,129,0.1)' : isWeak ? 'rgba(239,68,68,0.1)' : 'rgba(251,191,36,0.12)';
+      const label = isStrong ? 'Strong' : isWeak ? 'Weak' : 'Needs work';
+      return <span style={{ fontSize: 10, fontWeight: 500, color, background: bg, borderRadius: 99, padding: '2px 7px', lineHeight: '16px' }}>{label}</span>;
+    }
+  }
+
+  // Messaging structure → detect missing CTA
+  if (/messag/i.test(lower)) {
+    if (/no\s*(explicit\s*)?(cta|call.to.action)|cta.*none|none.*cta/i.test(content)) {
+      return <span style={{ fontSize: 10, fontWeight: 500, color: '#ef4444', background: 'rgba(239,68,68,0.1)', borderRadius: 99, padding: '2px 7px', lineHeight: '16px' }}>No CTA</span>;
+    }
+  }
+
+  // Emotion arc → extract first emotion as preview
+  if (/emotion/i.test(lower)) {
+    const arrowMatch = content.match(/([A-Z][a-z]+)\s*→/);
+    if (arrowMatch) {
+      const chain = content.match(/([A-Z][a-z]+(?:\s*→\s*[A-Z][a-z]+)+)/);
+      if (chain) {
+        return <span style={{ fontSize: 10, color: '#71717a', fontFamily: 'var(--mono)' }}>{chain[1].length > 40 ? chain[1].slice(0, 37) + '…' : chain[1]}</span>;
+      }
+    }
+  }
+
+  // Creative verdict → show as "Verdict" chip
+  if (/verdict/i.test(lower)) {
+    return <span style={{ fontSize: 10, fontWeight: 500, color: '#818cf8', background: 'rgba(99,102,241,0.08)', borderRadius: 99, padding: '2px 7px', lineHeight: '16px' }}>Verdict</span>;
+  }
+
+  // Pacing → extract pacing type
+  if (/pacing|retention/i.test(lower)) {
+    const pacingMatch = content.match(/Overall pacing:\s*\*?\*?\s*\[?([^\]\n*]+)\]?/i);
+    if (pacingMatch) {
+      return <span style={{ fontSize: 10, color: '#71717a' }}>{pacingMatch[1].trim()}</span>;
+    }
+  }
+
+  // Full transcript → show word count
+  if (/transcript/i.test(lower)) {
+    const words = content.split(/\s+/).length;
+    return <span style={{ fontSize: 10, color: '#52525b' }}>{words} words</span>;
+  }
+
+  // Motion test idea
+  if (/motion/i.test(lower)) {
+    return <span style={{ fontSize: 10, color: '#52525b', fontStyle: 'italic' }}>Concept</span>;
+  }
+
+  return null;
 }
 
 /** Strip emoji characters from a string */
@@ -206,8 +272,9 @@ export function ReportCards({ file, markdown, thumbnailDataUrl, onCopy, onExport
         {mergedSections.map((section, i) => {
           const title = section.title ? toSentenceCase(section.title) : null;
           const SectionIcon = title ? getIconForTitle(title) : FALLBACK_ICON;
+          const trailing = title ? getTrailingForSection(title, section.content) : null;
           const content = (
-            <div className="text-sm text-zinc-400 leading-relaxed [&_strong]:text-white [&_ul]:list-disc [&_ul]:pl-4 [&_li]:mb-1 [&_code]:bg-white/5 [&_code]:rounded [&_code]:px-1 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_h3]:text-xs [&_h3]:font-semibold [&_h3]:text-zinc-300 [&_h3]:mt-4 [&_h3]:mb-2">
+            <div className="text-sm text-zinc-400 leading-relaxed [&_strong]:text-zinc-300 [&_strong]:font-medium [&_ul]:list-disc [&_ul]:pl-4 [&_li]:mb-1.5 [&_code]:bg-white/5 [&_code]:rounded [&_code]:px-1 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_h3]:text-xs [&_h3]:font-semibold [&_h3]:text-zinc-300 [&_h3]:mt-4 [&_h3]:mb-2 [&_em]:text-indigo-300/70">
               <ReactMarkdown>{section.content}</ReactMarkdown>
             </div>
           );
@@ -217,8 +284,9 @@ export function ReportCards({ file, markdown, thumbnailDataUrl, onCopy, onExport
               <div key={i} className="bg-zinc-900/50 rounded-2xl border border-white/5 p-5">
                 <CollapsibleSection
                   title={title}
-                  defaultOpen={i < 3}
+                  defaultOpen={i < 2}
                   icon={<SectionIcon size={14} />}
+                  trailing={trailing}
                 >
                   {content}
                 </CollapsibleSection>
