@@ -3,7 +3,7 @@
 // Pass 1: Consolidated layout — removed Deep Dive, tabs, Compare link. Reordered sections.
 
 import { useEffect, useState } from "react";
-import { Copy, CheckCircle, Wand2, Loader2, AlertCircle, TrendingUp, ArrowUpRight, Share2, RotateCcw, ShieldCheck, FileText, Bookmark, Lightbulb, DollarSign, Sparkles, Lock } from "lucide-react";
+import { Copy, CheckCircle, Wand2, Loader2, AlertCircle, TrendingUp, ArrowUpRight, Share2, RotateCcw, ShieldCheck, FileText, Bookmark, Lightbulb, DollarSign, Sparkles, Lock, Film, Hash } from "lucide-react";
 import type { BudgetRecommendation, Hashtags, Scene, HookDetail } from "../services/analyzerService";
 import type { EngineBudgetRecommendation } from "../services/budgetService";
 import { getBenchmark, type BenchmarkResult } from "../lib/benchmarks";
@@ -526,6 +526,7 @@ export function ScoreCard({
             <div style={{ marginTop: 16, padding: "0 20px" }}>
               <CollapsibleSection
                 title="Scene Breakdown"
+                icon={<Film size={14} />}
                 trailing={<span className="text-[10px] text-zinc-500">{scenes.length} scenes</span>}
               >
                 <SceneBreakdown scenes={scenes} />
@@ -547,6 +548,7 @@ export function ScoreCard({
             <div style={{ marginTop: 16, padding: "0 20px", paddingBottom: 16 }}>
               <CollapsibleSection
                 title="Recommended Hashtags"
+                icon={<Hash size={14} />}
                 trailing={
                   <span className="text-[10px] text-zinc-500">
                     {[hashtags.tiktok, hashtags.meta, hashtags.instagram].reduce((n, t) => n + t.length, 0)} tags
