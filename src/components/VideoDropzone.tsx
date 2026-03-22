@@ -116,8 +116,6 @@ export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, 
   // Empty state — dropzone
   if (!file) {
     const formatPills = acceptImages ? ["MP4", "MOV", "WEBM", "JPG", "PNG", "WEBP"] : ["MP4", "MOV", "WEBM"];
-    const shortcutKey = typeof navigator !== 'undefined' && navigator.platform?.includes('Mac') ? '⌘V' : 'Ctrl+V';
-
     return (
       <div className="w-full max-w-[640px] mx-auto">
         <div className="bg-zinc-900/50 backdrop-blur-xl rounded-3xl border border-white/5 p-4 md:p-8">
@@ -175,8 +173,7 @@ export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, 
               <p className="text-xs text-red-400 animate-[shake_0.3s_ease-in-out]">{error}</p>
             )}
 
-            {/* Shortcut hint */}
-            <p className="text-xs text-zinc-600">or paste a URL · {shortcutKey} to upload from clipboard</p>
+            <p className="text-xs text-zinc-600">Max {MAX_SIZE_MB}MB per file</p>
           </div>
 
           {/* Pasted URL input — appears when URL is pasted */}

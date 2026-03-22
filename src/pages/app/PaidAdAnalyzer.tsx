@@ -93,11 +93,7 @@ function PaidEmptyState({
       {/* Dropzone */}
       <div style={{ width: "100%", maxWidth: 520, marginTop: 32 }}>
         <VideoDropzone onFileSelect={onFileSelect} file={null} onUrlSubmit={onUrlSubmit} acceptImages />
-        <p style={{ textAlign: "center", fontSize: 11, color: "#3f3f46", marginTop: 6 }}>
-          Tip: paste any video URL (Cmd+V) to analyze it
-        </p>
       </div>
-      <p style={{ fontSize: 11, color: "#52525b", marginTop: 12 }} className="hidden md:block">or press &#8984;K</p>
     </div>
   );
 }
