@@ -266,6 +266,19 @@ export default function PaidAdAnalyzer() {
       ? `This is a PAID ${format} ad for ${platform}.\nScore and optimize specifically for ${platform} performance.\nApply ${platform}-specific improvement suggestions.\nFocus on CTR, ROAS, and conversion potential.`
       : `This is a PAID ${format} ad.\nScore for performance marketing metrics: CTR, ROAS, conversion potential, and ad spend efficiency.\nApply cross-platform best practices.`;
 
+    // Meta static: remove CTA requirement, score visual signals only
+    if (platform === "Meta" && format === "static") {
+      return base + `\n\nThis is a META PAID STATIC AD (image creative only).
+IMPORTANT: Meta's ad unit places the CTA button, primary text, and headline OUTSIDE this image in Ads Manager.
+Do NOT penalize the absence of in-creative CTA text — it is intentionally absent in most static ads.
+Do NOT score copy depth — the primary copy lives in Ads Manager fields, not in the image.
+Score only what is IN the image: visual thumb-stop power, message clarity at a glance, visual hierarchy, and brand recognition.
+The question is: does this image stop the scroll and communicate the offer before the viewer moves on?
+If a CTA IS present inside the creative, note it as a positive signal ("In-creative CTA detected — complements Meta's native button") but do not penalize its absence.
+For "CTA Effectiveness" scoring: score the image's ability to drive action through visual urgency, offer clarity, and desire — NOT the presence of CTA text.
+Meta's Andromeda algorithm uses the creative as the targeting signal — visual relevance and thumb-stop power directly impact delivery efficiency.`;
+    }
+
     // Sound-off check for Meta video
     if (platform === "Meta" && format === "video") {
       return base + `\n\nSOUND-OFF CHECK: A significant portion of Meta feed is watched muted.
