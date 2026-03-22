@@ -208,11 +208,48 @@ Return findings as structured JSON:
     .filter(Boolean)
     .join("\n");
 
-  const systemPrompt = `You are an expert in Meta and TikTok advertising policies with 10 years of experience getting ads approved and appealing rejections. You know the exact language reviewers look for, the edge cases that trip up automated systems, and the appeal strategies that actually work.
+  // Build niche-specific policy escalation
+  const highRiskNiches: Record<string, string> = {
+    supplements: "ELEVATED SCRUTINY — Supplements. Meta rejects: efficacy claims ('clinically proven', 'doctor recommended'), before/after body imagery, FDA-unapproved health claims, implied cures. TikTok rejects: health outcome promises, 'miracle' language, unverified ingredient claims. Flag ALL health-adjacent copy aggressively.",
+    health: "ELEVATED SCRUTINY — Health/Medical. Meta rejects: diagnosis language, treatment promises, personal health attributes ('struggling with...'), before/after imagery. TikTok rejects: medical advice, unqualified health claims, distressing imagery. Any claim requires visible disclaimer.",
+    finance: "ELEVATED SCRUTINY — Finance. Meta rejects: income guarantees, earnings screenshots without disclaimers, 'get rich' language, misleading ROI claims. TikTok rejects: financial advice without qualification, guaranteed returns, wealth lifestyle as proof. Requires financial disclaimers.",
+    weightloss: "ELEVATED SCRUTINY — Weight Loss. Meta rejects: before/after body photos, specific weight claims ('lose 10 lbs'), timeframe promises, body shaming. TikTok rejects: body-negative content, unrealistic transformation timelines, diet pill promotion.",
+    skincare: "MODERATE SCRUTINY — Skincare. Watch for: before/after skin close-ups (Meta restricts), 'anti-aging' claims without citation, 'dermatologist recommended' without proof, 'clinically tested' without study reference.",
+    alcohol: "RESTRICTED — Alcohol. Both platforms require: age-gating, no appeal to minors, no excessive consumption, no health benefit claims. Meta requires age-restricted targeting. TikTok prohibits alcohol ads in many regions.",
+    gambling: "RESTRICTED — Gambling. Both platforms require: licensing proof, responsible gambling messaging, age-gating. Meta requires pre-approval. TikTok prohibits in most regions.",
+  };
 
-Your job is to produce a thorough, actionable Policy Check Report. Be specific and direct. Reference actual policy language where relevant. Never be vague.`;
+  const nicheKey = niche.toLowerCase().replace(/[^a-z]/g, "");
+  const nicheEscalation = Object.entries(highRiskNiches).find(([k]) => nicheKey.includes(k))?.[1] || "";
 
-  const userPrompt = `Analyze the following ad creative and produce a Policy Check Report.
+  const systemPrompt = `You are a ${platform === "both" ? "Meta and TikTok" : platform === "meta" ? "Meta" : "TikTok"} ad policy compliance specialist reviewing a ${adType} ad in the ${niche} niche.
+
+You know the exact policy language reviewers use, the automated triggers that cause instant rejection, and the edge cases that trip up ${niche} advertisers specifically on ${platform === "both" ? "both Meta and TikTok" : platform === "meta" ? "Meta" : "TikTok"}.
+
+${nicheEscalation}
+
+Your job: produce a thorough, actionable Policy Check Report. Every finding must reference the specific policy section and explain WHY this ${niche} ad on ${platform === "both" ? "Meta/TikTok" : platform} triggers it. Never be vague — say exactly what to change and how.`;
+
+  const metaNicheForbidden: Record<string, string> = {
+    supplements: "Meta ${niche} specifics: No 'clinically proven' without linked study. No before/after body imagery. No 'FDA approved' (supplements aren't). No personal health attributes ('if you struggle with...'). Disclaimer required for all health claims.",
+    health: "Meta ${niche} specifics: No diagnosis language ('do you have...'). No treatment guarantees. No before/after medical imagery. No personal health attributes. Professional disclaimers required.",
+    finance: "Meta ${niche} specifics: No income guarantees or earnings screenshots without disclaimers. No 'get rich' or implied guaranteed returns. Financial disclaimers required. No misleading pricing or billing terms.",
+    weightloss: "Meta ${niche} specifics: No before/after body photos. No specific weight/size claims. No timeframe promises ('lose X in Y days'). No body shaming language. No diet pill promotion without disclaimers.",
+    skincare: "Meta ${niche} specifics: Before/after close-ups trigger review. 'Anti-aging' requires substantiation. 'Dermatologist recommended' needs proof. 'Clinically tested' needs study citation.",
+  };
+
+  const tiktokNicheForbidden: Record<string, string> = {
+    supplements: "TikTok ${niche} specifics: No health outcome promises. No 'miracle' or 'cure' language. No unverified ingredient efficacy claims. Must not look like medical advice. Creator-style content with health claims still gets flagged.",
+    health: "TikTok ${niche} specifics: No medical advice without qualification. No unqualified health claims. No distressing medical imagery. Health disclaimers required even in UGC-style content.",
+    finance: "TikTok ${niche} specifics: No financial advice without regulatory qualification. No guaranteed returns. No wealth-lifestyle-as-proof content. No misleading income claims even in 'story' format.",
+    weightloss: "TikTok ${niche} specifics: No body-negative content. No unrealistic transformation timelines. No diet pill promotion. No body shaming even as 'motivation'.",
+    skincare: "TikTok ${niche} specifics: Transformation videos trigger review if claims are unsubstantiated. 'Works overnight' is misleading. Creator testimonials need 'results may vary' language.",
+  };
+
+  const metaNicheRules = Object.entries(metaNicheForbidden).find(([k]) => nicheKey.includes(k))?.[1] || "";
+  const tiktokNicheRules = Object.entries(tiktokNicheForbidden).find(([k]) => nicheKey.includes(k))?.[1] || "";
+
+  const userPrompt = `Analyze the following ${adType} ad creative in the ${niche} niche and produce a Policy Check Report.
 
 AD DETAILS:
 ${adDetails}
@@ -220,26 +257,28 @@ ${adDetails}
 ${platformSection}
 
 ${platform === "meta" || platform === "both" ? `
-**META POLICY CATEGORIES TO EVALUATE:**
+**META POLICY CATEGORIES TO EVALUATE (for this ${niche} ${adType} ad):**
 1. Prohibited content (weapons, drugs, adult content, discriminatory content)
-2. Restricted content (alcohol, financial products, health/medical, weight loss, political)
-3. Personal attributes (no direct addressing of personal characteristics — race, religion, health, financial status)
+2. Restricted content (alcohol, financial products, health/medical, weight loss, political) — ${niche} ads face extra scrutiny here
+3. Personal attributes (no direct addressing of personal characteristics — race, religion, health, financial status) — common rejection trigger for ${niche} ads
 4. Misleading claims (before/after, guaranteed results, exaggerated claims, fake urgency)
 5. Text in images (heavy text flag — over ~20% text area raises review probability)
 6. Sensationalism (shocking imagery, exaggerated reactions, emotional manipulation)
 7. Community Standards (harmful, deceptive, or offensive content)
 8. Circumvention (symbols replacing letters, deliberate misspellings to avoid filters)
+${metaNicheRules}
 ` : ""}
 
 ${platform === "tiktok" || platform === "both" ? `
-**TIKTOK POLICY CATEGORIES TO EVALUATE:**
+**TIKTOK POLICY CATEGORIES TO EVALUATE (for this ${niche} ${adType} ad):**
 1. Prohibited industries (weapons, tobacco, adult content, gambling, illegal services)
-2. Restricted categories (alcohol, finance, weight loss, supplements, healthcare)
+2. Restricted categories (alcohol, finance, weight loss, supplements, healthcare) — ${niche} is in or adjacent to a restricted category
 3. Misleading advertising (false claims, fake reviews, fabricated results, misleading CTAs)
 4. Intellectual property (trademarked logos, copyrighted audio/music, celebrity likeness)
 5. Sensitive topics (political content, religious references, body image, social issues)
 6. Community Guidelines (harmful challenges, dangerous acts, distressing content)
 7. Ad format compliance (aspect ratio, duration limits, CTA button usage)
+${tiktokNicheRules}
 ` : ""}
 
 For each category, provide your assessment in this EXACT JSON format. Do not include any text outside the JSON.
