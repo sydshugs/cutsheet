@@ -1,4 +1,5 @@
 import { cn } from "@/src/lib/utils";
+import { ChevronRight } from "lucide-react";
 import type { StructuredImprovement } from "@/src/services/analyzerService";
 
 const PRIORITY_COLORS = {
@@ -16,6 +17,12 @@ const CATEGORY_COLORS: Record<string, { bg: string; color: string }> = {
   copy: { bg: 'rgba(56,189,248,0.08)', color: '#7dd3fc' },
 };
 
+const IMPACT_LABELS = {
+  high: 'High',
+  medium: 'Med',
+  low: 'Low',
+} as const;
+
 interface PriorityFixCardProps {
   index: number;
   improvement: StructuredImprovement;
@@ -29,7 +36,7 @@ export function PriorityFixCard({ index, improvement, className }: PriorityFixCa
   return (
     <div
       className={cn(
-        "flex items-start gap-3 rounded-[10px] border border-white/5 bg-zinc-900/50 px-3.5 py-3",
+        "flex items-center gap-3 rounded-[10px] border border-white/5 bg-zinc-900/50 px-3.5 py-2.5",
         className
       )}
     >
@@ -41,22 +48,23 @@ export function PriorityFixCard({ index, improvement, className }: PriorityFixCa
         {index + 1}
       </div>
 
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <p className="text-[13px] font-medium text-zinc-200 leading-snug">
-          {improvement.text}
-        </p>
-        <div className="flex items-center gap-2 mt-1.5">
-          <span
-            className="text-[9px] font-medium uppercase tracking-wider rounded-full px-2 py-0.5"
-            style={{ background: categoryStyle.bg, color: categoryStyle.color }}
-          >
-            {improvement.category}
-          </span>
-          <span className="text-[10px] text-zinc-600">
-            {improvement.priority} impact
-          </span>
-        </div>
+      {/* Fix text */}
+      <p className="flex-1 min-w-0 text-[13px] font-medium text-zinc-200 leading-snug truncate">
+        {improvement.text}
+      </p>
+
+      {/* Right side: category + impact + arrow */}
+      <div className="flex items-center gap-1.5 shrink-0">
+        <span
+          className="text-[9px] font-medium uppercase tracking-wider rounded-full px-2 py-0.5"
+          style={{ background: categoryStyle.bg, color: categoryStyle.color }}
+        >
+          {improvement.category}
+        </span>
+        <span className="text-[9px] text-zinc-600">
+          {IMPACT_LABELS[improvement.priority]}
+        </span>
+        <ChevronRight size={11} className="text-zinc-600" />
       </div>
     </div>
   );

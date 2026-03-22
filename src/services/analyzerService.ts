@@ -167,11 +167,12 @@ Evaluate ONLY the first 3 seconds. Does it create a pattern interrupt? Does it e
 ---
 
 ## 🔧 IMPROVEMENTS
-List exactly 3-5 specific, actionable suggestions. Each line MUST start with priority and category tags:
-1. [HIGH|MEDIUM|LOW] [CTA|VISUAL|HOOK|LAYOUT|TRUST|COPY] — [one sentence fix]
-2. [HIGH|MEDIUM|LOW] [CTA|VISUAL|HOOK|LAYOUT|TRUST|COPY] — [one sentence fix]
-3. [HIGH|MEDIUM|LOW] [CTA|VISUAL|HOOK|LAYOUT|TRUST|COPY] — [one sentence fix]
-Example: HIGH CTA — Add a clear call-to-action button with urgency language
+List exactly 3-5 specific, actionable suggestions. Each line MUST start with priority and category tags. Each fix must be a MAXIMUM of 10 words. Punchy and direct. No parenthetical examples. No filler phrases.
+1. [HIGH|MEDIUM|LOW] [CTA|VISUAL|HOOK|LAYOUT|TRUST|COPY] — [max 10 word fix]
+2. [HIGH|MEDIUM|LOW] [CTA|VISUAL|HOOK|LAYOUT|TRUST|COPY] — [max 10 word fix]
+3. [HIGH|MEDIUM|LOW] [CTA|VISUAL|HOOK|LAYOUT|TRUST|COPY] — [max 10 word fix]
+BAD: "HIGH CTA — Add a prominent CTA button (e.g. Shop Now) to guide user action"
+GOOD: "HIGH CTA — Add a contrasting CTA button below the headline"
 
 ---
 
@@ -311,11 +312,12 @@ Evaluate the above-the-fold visual impact. Does it stop the scroll? Score strict
 ## 🔧 IMPROVEMENTS
 List exactly 3-5 specific, actionable suggestions for this static creative.
 Each suggestion should apply to the STATIC format as-is. Do NOT suggest adding animation or video.
-Each line MUST start with priority and category tags:
-1. [HIGH|MEDIUM|LOW] [CTA|VISUAL|HOOK|LAYOUT|TRUST|COPY] — [one sentence fix]
-2. [HIGH|MEDIUM|LOW] [CTA|VISUAL|HOOK|LAYOUT|TRUST|COPY] — [one sentence fix]
-3. [HIGH|MEDIUM|LOW] [CTA|VISUAL|HOOK|LAYOUT|TRUST|COPY] — [one sentence fix]
-Example: HIGH CTA — Add a clear call-to-action button with urgency language
+Each line MUST start with priority and category tags. Each fix must be a MAXIMUM of 10 words. Punchy and direct. No parenthetical examples. No filler phrases.
+1. [HIGH|MEDIUM|LOW] [CTA|VISUAL|HOOK|LAYOUT|TRUST|COPY] — [max 10 word fix]
+2. [HIGH|MEDIUM|LOW] [CTA|VISUAL|HOOK|LAYOUT|TRUST|COPY] — [max 10 word fix]
+3. [HIGH|MEDIUM|LOW] [CTA|VISUAL|HOOK|LAYOUT|TRUST|COPY] — [max 10 word fix]
+BAD: "HIGH CTA — Add a prominent CTA button (e.g. Shop Now) to guide user action"
+GOOD: "HIGH CTA — Add a contrasting CTA button below the headline"
 
 ---
 

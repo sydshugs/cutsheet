@@ -155,10 +155,12 @@ function splitMarkdown(md: string): { title: string | null; content: string }[] 
 }
 
 /** Extract first meaningful line of section content as preview */
-function getPreview(content: string): string {
+/** Get a short preview (max 5 words) from section content */
+function getPreview(content: string, maxWords = 5): string {
   const lines = content.split('\n').filter(l => l.trim() && !l.startsWith('#'));
   const first = lines[0]?.replace(/^[-*]\s*/, '').replace(/\*\*/g, '').trim() ?? '';
-  return first.length > 80 ? first.slice(0, 77) + '…' : first;
+  const words = first.split(/\s+/).slice(0, maxWords);
+  return words.join(' ') + (first.split(/\s+/).length > maxWords ? '…' : '');
 }
 
 /** Get a score badge for a section based on content */
@@ -397,7 +399,6 @@ export function ReportCards({
                 badge={badge?.badge}
                 badgeColor={badge?.color}
                 badgeBg={badge?.bg}
-                preview={getPreview(section.content)}
                 onClick={() => setExpandedSection(expandedSection === title ? null : title)}
               />
             );

@@ -1,5 +1,5 @@
 import { cn } from "@/src/lib/utils";
-import type { LucideIcon } from "lucide-react";
+import { ChevronRight, type LucideIcon } from "lucide-react";
 
 interface DeepDivePreviewCardProps {
   title: string;
@@ -7,7 +7,6 @@ interface DeepDivePreviewCardProps {
   badge?: string;
   badgeColor?: string;
   badgeBg?: string;
-  preview?: string;
   onClick?: () => void;
   className?: string;
 }
@@ -18,7 +17,6 @@ export function DeepDivePreviewCard({
   badge,
   badgeColor = '#a1a1aa',
   badgeBg = 'rgba(161,161,170,0.08)',
-  preview,
   onClick,
   className,
 }: DeepDivePreviewCardProps) {
@@ -26,7 +24,7 @@ export function DeepDivePreviewCard({
     <button
       onClick={onClick}
       className={cn(
-        "flex flex-col text-left rounded-[10px] border border-white/5 bg-zinc-900/50 px-3 py-2.5",
+        "flex flex-col justify-between text-left rounded-[10px] border border-white/5 bg-zinc-900/50 px-3 py-2.5 min-h-[72px]",
         "hover:border-white/10 hover:bg-zinc-800/50 transition-colors cursor-pointer",
         className
       )}
@@ -47,12 +45,10 @@ export function DeepDivePreviewCard({
         )}
       </div>
 
-      {/* Preview text */}
-      {preview && (
-        <p className="text-[10px] text-zinc-500 mt-1.5 line-clamp-2 leading-relaxed">
-          {preview}
-        </p>
-      )}
+      {/* Arrow bottom-right */}
+      <div className="flex justify-end mt-2">
+        <ChevronRight size={11} className="text-zinc-600" />
+      </div>
     </button>
   );
 }
