@@ -513,33 +513,7 @@ export function ScoreCard({
             </div>
           )}
 
-          {/* 8. Predicted Performance — directly under ScoreHero */}
-          {prediction && (
-            <div style={{ marginTop: 16, padding: "0 20px" }}>
-              <CollapsibleSection
-                title="Predicted Performance"
-                icon={<TrendingUp size={14} />}
-              >
-                <PredictedPerformanceCard prediction={prediction} platform={platform} niche={niche} />
-              </CollapsibleSection>
-            </div>
-          )}
-
-          {/* 9. Budget Recommendation */}
-          {(engineBudget || budget) && (
-            <div style={{ marginTop: 16, padding: "0 20px" }}>
-              <CollapsibleSection
-                title="Budget Recommendation"
-                icon={<DollarSign size={14} />}
-              >
-                <BudgetCard
-                  engineBudget={engineBudget}
-                  budget={budget}
-                  onNavigateSettings={onNavigateSettings}
-                />
-              </CollapsibleSection>
-            </div>
-          )}
+          {/* Predicted Performance + Budget moved outside glass card */}
 
           {/* ── Analysis sections (Hook, Hierarchy, Copy, Messaging) ── */}
           {analysisSections && analysisSections.length > 0 && (
@@ -623,6 +597,34 @@ export function ScoreCard({
 
         </div>{/* end card content */}
       </div>{/* end glass card */}
+
+      {/* Predicted Performance — own card */}
+      {prediction && (
+        <div className="mx-4 mt-2 rounded-xl border border-white/5 bg-zinc-900/50 p-4">
+          <CollapsibleSection
+            title="Predicted Performance"
+            icon={<TrendingUp size={14} />}
+          >
+            <PredictedPerformanceCard prediction={prediction} platform={platform} niche={niche} />
+          </CollapsibleSection>
+        </div>
+      )}
+
+      {/* Budget Recommendation — own card */}
+      {(engineBudget || budget) && (
+        <div className="mx-4 mt-2 rounded-xl border border-white/5 bg-zinc-900/50 p-4">
+          <CollapsibleSection
+            title="Budget Recommendation"
+            icon={<DollarSign size={14} />}
+          >
+            <BudgetCard
+              engineBudget={engineBudget}
+              budget={budget}
+              onNavigateSettings={onNavigateSettings}
+            />
+          </CollapsibleSection>
+        </div>
+      )}
 
       {/* Overflow menu moved to header row — see Score Overview header above */}
 

@@ -929,6 +929,23 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                         fixItLoading={fixItLoading}
                         policyLoading={policyLoading}
                       />
+                      {/* Design Review — center column, static + video */}
+                      {status === "complete" && (
+                        <div className="px-0 mt-3">
+                          {format === "static" && staticSecondEye && (
+                            <StaticSecondEyePanel result={staticSecondEyeResult} loading={staticSecondEyeLoading} />
+                          )}
+                          {format === "video" && staticSecondEye && (
+                            <StaticSecondEyePanel result={staticSecondEyeResult} loading={staticSecondEyeLoading} />
+                          )}
+                        </div>
+                      )}
+                      {/* Second Eye Review — center column, video only */}
+                      {status === "complete" && format === "video" && secondEye && (
+                        <div className="px-0 mt-3">
+                          <SecondEyePanel result={secondEyeOutput} loading={secondEyeLoading} />
+                        </div>
+                      )}
                   </div>
                 )}
               </div>
@@ -1017,14 +1034,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                 onUpgradeRequired={onUpgradeRequired}
               />
             </div>
-            {/* Second Eye output below scorecard — video only */}
-            {format === "video" && secondEye && (
-              <SecondEyePanel result={secondEyeOutput} loading={secondEyeLoading} />
-            )}
-            {/* Static Design Review below scorecard — static only */}
-            {format === "static" && staticSecondEye && (
-              <StaticSecondEyePanel result={staticSecondEyeResult} loading={staticSecondEyeLoading} />
-            )}
+            {/* Design Review + Second Eye moved to center column */}
             {/* Visualize It moved to left panel (below creative) */}
           </>
 
