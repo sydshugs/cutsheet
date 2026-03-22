@@ -6,19 +6,22 @@ import { TopBar } from "./TopBar";
 import { UpgradeModal } from "./UpgradeModal";
 import KeyboardShortcutsModal from "./KeyboardShortcutsModal";
 import { useUsage } from "../hooks/useUsage";
-import { useHistory, type HistoryEntry } from "../hooks/useHistory";
+import { type HistoryEntry } from "../hooks/useHistory";
+import { useSupabaseHistory } from "../hooks/useSupabaseHistory";
 import { useSwipeFile, type SwipeItem } from "../hooks/useSwipeFile";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
 import { themes } from "../theme";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import { OfflineBanner } from "./OfflineBanner";
+import { Helmet } from "react-helmet-async";
 
 // ─── OUTLET CONTEXT TYPE ─────────────────────────────────────────────────────
 
 export interface AppSharedContext {
   historyEntries: HistoryEntry[];
-  addHistoryEntry: (entry: Omit<HistoryEntry, "id">) => void;
+  // addHistoryEntry is a no-op refresh trigger — pages save via saveAnalysis() directly.
+  addHistoryEntry: (entry?: Partial<Omit<HistoryEntry, "id">>) => void;
   deleteHistoryEntry: (id: string) => void;
   clearAllHistory: () => void;
   addSwipeItem: (item: Omit<SwipeItem, "id">) => void;
@@ -40,7 +43,17 @@ export default function AppLayout() {
   const { user } = useAuth();
 
   const { usageCount, isPro, isTeam, tier, canAnalyze, increment, FREE_LIMIT } = useUsage();
-  const { entries: historyEntries, addEntry: addHistoryEntry, deleteEntry: deleteHistoryEntry, clearAll: clearAllHistory } = useHistory();
+  const {
+    entries: historyEntries,
+    refresh: refreshHistory,
+    deleteEntry: deleteHistoryEntry,
+    clearAll: clearAllHistory,
+  } = useSupabaseHistory();
+
+  // Pages call saveAnalysis() directly; this triggers a Supabase re-fetch.
+  const addHistoryEntry = useCallback(async (_entry?: Partial<Omit<HistoryEntry, "id">>) => {
+    await refreshHistory();
+  }, [refreshHistory]);
   const { addItem: addSwipeItem } = useSwipeFile();
 
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -95,6 +108,29 @@ export default function AppLayout() {
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: "#09090b" }}>
+      <a
+        href="#main-content"
+        style={{
+          position: "absolute",
+          left: "-9999px",
+          top: 8,
+          zIndex: 999,
+          background: "#6366f1",
+          color: "white",
+          padding: "8px 16px",
+          borderRadius: 8,
+          fontSize: 14,
+          fontWeight: 500,
+          textDecoration: "none",
+        }}
+        onFocus={(e) => { e.currentTarget.style.left = "8px"; }}
+        onBlur={(e) => { e.currentTarget.style.left = "-9999px"; }}
+      >
+        Skip to main content
+      </a>
+      <Helmet>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <Sidebar
         mobileOpen={mobileOpen}
         onMobileClose={() => setMobileOpen(false)}
@@ -118,7 +154,7 @@ export default function AppLayout() {
           hasResult={hasAnalysisResult}
           onLogout={async () => { await supabase.auth.signOut(); navigate("/login"); }}
         />
-        <main className="flex-1 flex flex-col overflow-auto">
+        <main id="main-content" className="flex-1 flex flex-col overflow-auto">
           <Outlet context={ctx} />
         </main>
       </div>

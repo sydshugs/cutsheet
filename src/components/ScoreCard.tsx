@@ -189,6 +189,7 @@ export function ScoreCard({
   onUpgradeRequired,
 }: ScoreCardProps) {
   const { label: overallLabel } = getScoreLabel(scores.overall);
+  const heroVerdict = scores.overall >= 8 ? "Strong" : scores.overall >= 4 ? "Average" : "Needs Work";
   const benchmark: BenchmarkResult = getBenchmark(niche ?? '', platform ?? '', format === 'video' ? 'video' : 'static');
   const [relativeTime, setRelativeTime] = useState<string>("");
   const [toast, setToast] = useState<string | null>(null);
@@ -316,7 +317,7 @@ export function ScoreCard({
           {/* 1 + 2. ScoreHero — score number + benchmark bar + dimension grid */}
           <ScoreHero
             score={scores.overall}
-            verdict={overallLabel}
+            verdict={heroVerdict}
             benchmark={benchmark.averageScore}
             platform={platform}
             dimensions={[
@@ -336,7 +337,7 @@ export function ScoreCard({
           )}
 
           {/* 3. ScoreAdaptiveCTA \u2014 always visible */}
-          <div style={{ marginTop: 24, padding: "0 20px" }}>
+          <div style={{ marginTop: 16, padding: "0 20px" }}>
             <ScoreAdaptiveCTA
               overallScore={scores.overall}
               onShare={onShare}
@@ -446,7 +447,7 @@ export function ScoreCard({
 
           {/* 6. Hook Analysis */}
           {hookDetail && (
-            <div style={{ marginTop: 32, padding: "0 20px" }}>
+            <div style={{ marginTop: 24, padding: "0 20px" }}>
               <CollapsibleSection
                 title="Hook Analysis"
                 icon={<Lightbulb size={14} />}
@@ -463,7 +464,7 @@ export function ScoreCard({
 
           {/* 7. Improvements */}
           {improvements && improvements.length > 0 && (
-            <div style={{ marginTop: 12, padding: "0 20px" }}>
+            <div style={{ marginTop: 8, padding: "0 20px" }}>
               <CollapsibleSection
                 title="Improvements"
                 icon={<AlertCircle size={14} />}
@@ -478,7 +479,7 @@ export function ScoreCard({
 
           {/* 8. Predicted Performance */}
           {prediction && (
-            <div style={{ marginTop: 12, padding: "0 20px" }}>
+            <div style={{ marginTop: 8, padding: "0 20px" }}>
               <CollapsibleSection
                 title="Predicted Performance"
                 icon={<TrendingUp size={14} />}
@@ -490,7 +491,7 @@ export function ScoreCard({
 
           {/* 9. Budget Recommendation */}
           {(engineBudget || budget) && (
-            <div style={{ marginTop: 12, padding: "0 20px" }}>
+            <div style={{ marginTop: 8, padding: "0 20px" }}>
               <CollapsibleSection
                 title="Budget Recommendation"
                 icon={<DollarSign size={14} />}
@@ -506,7 +507,7 @@ export function ScoreCard({
 
           {/* 10. Scene Breakdown \u2014 video only */}
           {format === "video" && scenes && scenes.length > 0 && (
-            <div style={{ marginTop: 12, padding: "0 20px" }}>
+            <div style={{ marginTop: 8, padding: "0 20px" }}>
               <CollapsibleSection
                 title="Scene Breakdown"
                 trailing={<span className="text-[10px] text-zinc-500">{scenes.length} scenes</span>}
@@ -518,7 +519,7 @@ export function ScoreCard({
 
           {/* 11. Static Ad Checks \u2014 static only */}
           {format === "static" && scores && (
-            <div style={{ marginTop: 12, padding: "0 20px", paddingBottom: 20 }}>
+            <div style={{ marginTop: 8, padding: "0 20px", paddingBottom: 20 }}>
               <CollapsibleSection title="Ad Quality Checks" icon={<ShieldCheck size={14} />}>
                 <StaticAdChecks scores={scores} />
               </CollapsibleSection>
@@ -527,7 +528,7 @@ export function ScoreCard({
 
           {/* 12. Hashtags */}
           {hashtags && (hashtags.tiktok.length > 0 || hashtags.meta.length > 0 || hashtags.instagram.length > 0) && (
-            <div style={{ marginTop: 12, padding: "0 20px", paddingBottom: 16 }}>
+            <div style={{ marginTop: 8, padding: "0 20px", paddingBottom: 16 }}>
               <CollapsibleSection
                 title="Recommended Hashtags"
                 trailing={

@@ -287,12 +287,13 @@ export interface VisualizePanelProps {
   error?: string | null;
   creditData?: VisualizeCreditData | null;
   onClose: () => void;
+  onBack?: () => void;
   onAnalyzeVersion?: (file: File) => void;
   onUpgrade?: (feature: string) => void;
 }
 
 export function VisualizePanel({
-  status, result, originalImageUrl, error, creditData, onClose, onAnalyzeVersion, onUpgrade,
+  status, result, originalImageUrl, error, creditData, onClose, onBack, onAnalyzeVersion, onUpgrade,
 }: VisualizePanelProps) {
   const [briefCopied, setBriefCopied] = useState(false);
   const [downloadTouched, setDownloadTouched] = useState(false);
@@ -349,6 +350,22 @@ export function VisualizePanel({
         @keyframes shimmer { 0%{transform:translateX(-100%)} 100%{transform:translateX(200%)} }
         @keyframes spin    { to{transform:rotate(360deg)} }
       `}</style>
+
+      {/* ── Back button ─────────────────────────────────────── */}
+      {onBack && (
+        <button
+          type="button"
+          onClick={onBack}
+          style={{
+            display: "flex", alignItems: "center", gap: 6,
+            color: "#a1a1aa", fontSize: 13,
+            background: "transparent", border: "none", cursor: "pointer",
+            marginBottom: 16, padding: 0,
+          }}
+        >
+          ← Back to analysis
+        </button>
+      )}
 
       {/* ── Header ──────────────────────────────────────────── */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 16 }}>

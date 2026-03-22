@@ -25,10 +25,11 @@ vi.mock('../../hooks/useUsage', () => ({
   })),
 }))
 
-vi.mock('../../hooks/useHistory', () => ({
-  useHistory: vi.fn(() => ({
+vi.mock('../../hooks/useSupabaseHistory', () => ({
+  useSupabaseHistory: vi.fn(() => ({
     entries: [],
-    addEntry: vi.fn(),
+    loading: false,
+    refresh: vi.fn(),
     deleteEntry: vi.fn(),
     clearAll: vi.fn(),
   })),

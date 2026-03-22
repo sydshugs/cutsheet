@@ -15,8 +15,18 @@ export interface ScoreHeroProps {
   platform?: string;      // 'Meta' | 'TikTok' | etc. — for benchmark label
 }
 
+/** Platform benchmark defaults — used when benchmark prop is not supplied */
+const PLATFORM_BENCHMARKS: Record<string, number> = {
+  'Meta': 7.2,
+  'TikTok': 6.8,
+  'Instagram': 7.0,
+  'YouTube': 7.4,
+  'Google Display': 6.5,
+  'LinkedIn': 6.9,
+};
+
 /** Score color: 8+ emerald, 4–7.9 amber, 0–3.9 red */
-function getScoreColor(score: number): string {
+function scoreColor(score: number): string {
   if (score >= 8) return "#10b981";
   if (score >= 4) return "#f59e0b";
   return "#ef4444";
@@ -53,46 +63,80 @@ function useCountUp(target: number, duration = 600): number {
 interface BenchmarkBarProps {
   score: number;
   benchmark: number;
-  scoreColor: string;
+  color: string;
   platform?: string;
 }
 
-function BenchmarkBar({ score, benchmark, scoreColor, platform }: BenchmarkBarProps) {
+function BenchmarkBar({ score, benchmark, color, platform }: BenchmarkBarProps) {
+  const fillPct = `${(score / 10) * 100}%`;
+  const tickPct = `${(benchmark / 10) * 100}%`;
+
   return (
-    <div className="w-full flex flex-col gap-1">
-      {/* Bar track */}
-      <div className="relative w-full h-1 bg-white/[0.07] rounded-full overflow-hidden">
+    <div style={{ width: "100%", display: "flex", flexDirection: "column" }}>
+      {/* Bar track — position:relative, NOT overflow:hidden so tick can overflow */}
+      <div
+        style={{
+          width: "100%",
+          height: 4,
+          background: "rgba(255,255,255,0.07)",
+          borderRadius: 9999,
+          position: "relative",
+          marginTop: 16,
+        }}
+      >
         {/* Score fill */}
         <motion.div
-          className="h-full rounded-full"
-          style={{ background: scoreColor }}
-          initial={{ width: "0%" }}
-          animate={{ width: `${(score / 10) * 100}%` }}
+          style={{
+            height: "100%",
+            background: color,
+            borderRadius: 9999,
+            position: "absolute",
+            left: 0,
+            top: 0,
+          }}
+          initial={{ width: 0 }}
+          animate={{ width: fillPct }}
           transition={{ duration: 0.5, ease: "easeOut" }}
         />
-      </div>
-      {/* Benchmark tick — outside the overflow:hidden track, positioned relative to column */}
-      <div className="relative w-full" style={{ height: 0 }}>
+        {/* Benchmark tick — overflows the track vertically */}
         <div
-          className="absolute"
           style={{
-            left: `${(benchmark / 10) * 100}%`,
-            top: -13,
-            transform: "translateX(-50%)",
+            position: "absolute",
             width: 2,
             height: 14,
             background: "#6366f1",
             borderRadius: 2,
+            top: -5,
+            left: tickPct,
+            transform: "translateX(-50%)",
           }}
         />
       </div>
 
       {/* Labels below bar */}
-      <div className="flex justify-between" style={{ marginTop: 4 }}>
-        <span style={{ fontSize: 10, color: "var(--ink-faint)", fontFamily: "var(--mono)" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          marginTop: 6,
+        }}
+      >
+        <span
+          style={{
+            fontSize: 12,
+            color: color,
+            fontFamily: "var(--mono)",
+          }}
+        >
           You · {score.toFixed(1)}
         </span>
-        <span style={{ fontSize: 10, color: "var(--ink-faint)", fontFamily: "var(--mono)" }}>
+        <span
+          style={{
+            fontSize: 12,
+            color: "#6366f1",
+            fontFamily: "var(--mono)",
+          }}
+        >
           {platform ? `${platform} avg` : "Avg"} · {benchmark.toFixed(1)}
         </span>
       </div>
@@ -104,58 +148,107 @@ function BenchmarkBar({ score, benchmark, scoreColor, platform }: BenchmarkBarPr
 
 export function ScoreHero({ score, verdict, benchmark, dimensions, platform }: ScoreHeroProps) {
   const animatedScore = useCountUp(score, 600);
-  const scoreColor = getScoreColor(score);
+  const color = scoreColor(score);
+
+  // Resolve benchmark: explicit prop → platform default lookup → undefined
+  const resolvedBenchmark =
+    benchmark != null
+      ? benchmark
+      : platform != null
+      ? PLATFORM_BENCHMARKS[platform]
+      : undefined;
+
+  const showBenchmark = resolvedBenchmark != null;
 
   return (
-    <div className="flex flex-col items-center gap-4 w-full px-5 pt-6 pb-2">
-      {/* Section 1 — Score number + verdict */}
-      <div className="flex flex-col items-center gap-1">
-        <div className="flex items-baseline gap-1">
-          <span
-            style={{
-              fontFamily: "var(--mono)",
-              fontSize: 56,
-              fontWeight: 700,
-              lineHeight: 1,
-              color: scoreColor,
-              fontVariantNumeric: "tabular-nums",
-            }}
-          >
-            {animatedScore.toFixed(1)}
-          </span>
-          <span style={{ fontFamily: "var(--mono)", fontSize: 14, color: "var(--ink-faint)" }}>
-            /10
-          </span>
-        </div>
-        <span style={{ fontSize: 13, fontWeight: 500, color: scoreColor }}>
-          {verdict}
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        width: "100%",
+        padding: "24px 16px 8px",
+      }}
+    >
+      {/* 1. Score number + /10 */}
+      <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+        <span
+          style={{
+            fontFamily: "var(--mono)",
+            fontSize: 56,
+            fontWeight: 600,
+            lineHeight: 1,
+            color,
+            fontVariantNumeric: "tabular-nums",
+          }}
+        >
+          {animatedScore.toFixed(1)}
+        </span>
+        <span
+          style={{
+            fontFamily: "var(--mono)",
+            fontSize: 16,
+            color: "#71717a",
+          }}
+        >
+          /10
         </span>
       </div>
 
-      {/* Section 2 — Benchmark bar (conditional) */}
-      {benchmark != null && (
+      {/* 2. Verdict label */}
+      <span
+        style={{
+          fontSize: 14,
+          fontWeight: 500,
+          color,
+          marginTop: 4,
+        }}
+      >
+        {verdict}
+      </span>
+
+      {/* 3. Benchmark bar (conditional) */}
+      {showBenchmark && (
         <BenchmarkBar
           score={score}
-          benchmark={benchmark}
-          scoreColor={scoreColor}
+          benchmark={resolvedBenchmark!}
+          color={color}
           platform={platform}
         />
       )}
 
-      {/* Section 3 — Divider */}
-      <div className="w-full h-px bg-white/[0.06]" />
+      {/* 4. Divider */}
+      <div
+        style={{
+          width: "100%",
+          height: 1,
+          background: "rgba(255,255,255,0.06)",
+          margin: "16px 0",
+        }}
+      />
 
-      {/* Section 4 — Dimension scores row */}
-      <div className="grid grid-cols-4 w-full">
+      {/* 5. Dimension grid */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4, 1fr)",
+          width: "100%",
+        }}
+      >
         {dimensions.map((dim, i) => {
-          const dimColor = getScoreColor(dim.score);
+          const dimColor = scoreColor(dim.score);
           return (
             <motion.div
               key={dim.name}
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.28, delay: i * 0.08, ease: "easeOut" }}
-              className="flex flex-col items-center gap-0.5"
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 2,
+              }}
             >
               <span
                 style={{
@@ -168,7 +261,7 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform }: S
               >
                 {dim.score.toFixed(1)}
               </span>
-              <span style={{ fontSize: 11, color: "var(--ink-muted)" }}>
+              <span style={{ fontSize: 10, color: "#71717a" }}>
                 {dim.name}
               </span>
             </motion.div>

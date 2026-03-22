@@ -8,6 +8,8 @@ import { AnalyzerView } from "../../components/AnalyzerView";
 import { ScoreCard } from "../../components/ScoreCard";
 import { VideoDropzone } from "../../components/VideoDropzone";
 import { HistoryDrawer } from "../../components/HistoryDrawer";
+import { AlertDialog } from "../../components/ui/AlertDialog";
+import { motion, AnimatePresence } from "framer-motion";
 import { useVideoAnalyzer } from "../../hooks/useVideoAnalyzer";
 import { type HistoryEntry } from "../../hooks/useHistory";
 import { useThumbnail } from "../../hooks/useThumbnail";
@@ -74,10 +76,10 @@ function PaidEmptyState({
         <Zap size={28} color="#6366f1" />
       </div>
 
-      <h2 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>
+      <h1 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>
         Score your paid ad
-      </h2>
-      <p style={{ fontSize: 14, color: "#71717a", textAlign: "center", maxWidth: 320, marginTop: 10, lineHeight: 1.6 }}>
+      </h1>
+      <p style={{ fontSize: 14, color: "#a1a1aa", textAlign: "center", maxWidth: 320, marginTop: 10, lineHeight: 1.6 }}>
         Upload a video or static creative. Get a full AI breakdown in 30 seconds.
       </p>
 
@@ -167,6 +169,7 @@ export default function PaidAdAnalyzer() {
   const [analysisCompletedAt, setAnalysisCompletedAt] = useState<Date | null>(null);
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
   const [loadedFromHistory, setLoadedFromHistory] = useState<AnalysisRecord | null>(null);
+  const [confirmStartOver, setConfirmStartOver] = useState(false);
 
   const [improvementsLoading, setImprovementsLoading] = useState(false);
   const [platformImprovements, setPlatformImprovements] = useState<string[] | null>(null);
@@ -794,24 +797,13 @@ export default function PaidAdAnalyzer() {
                     transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
                     className="flex flex-col flex-1"
                   >
-                    {/* Back to analysis link */}
-                    <button
-                      type="button"
-                      onClick={() => { setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); setVisualizeCreditData(null); }}
-                      className="flex items-center gap-1.5 text-sm font-medium mb-4 transition-colors"
-                      style={{ color: "var(--ink-muted)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
-                      onMouseEnter={(e) => { e.currentTarget.style.color = "var(--ink)"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.color = "var(--ink-muted)"; }}
-                    >
-                      <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
-                      Back to analysis
-                    </button>
                     <VisualizePanel
                       status={visualizeStatus}
                       result={visualizeResult}
                       originalImageUrl={thumbnailDataUrl ?? null}
                       error={visualizeError}
                       creditData={visualizeCreditData}
+                      onBack={() => { setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); setVisualizeCreditData(null); }}
                       onClose={() => { setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); setVisualizeCreditData(null); }}
                       onAnalyzeVersion={handleReanalyze}
                       onUpgrade={onUpgradeRequired}
@@ -901,7 +893,7 @@ export default function PaidAdAnalyzer() {
                 engineBudget={engineBudget}
                 onNavigateSettings={() => navigate('/settings')}
                 onReanalyze={() => setReanalyzeMode(true)}
-                onStartOver={handleReset}
+                onStartOver={() => setConfirmStartOver(true)}
                 onCheckPolicies={handleCheckPolicies}
                 policyLoading={policyLoading}
                 niche={rawUserContext?.niche}
@@ -1133,6 +1125,17 @@ export default function PaidAdAnalyzer() {
           {infoToast}
         </div>
       )}
+
+      <AlertDialog
+        open={confirmStartOver}
+        onClose={() => setConfirmStartOver(false)}
+        onConfirm={handleReset}
+        title="Start over?"
+        description="This will clear your current analysis. You can find it in History."
+        confirmLabel="Start Over"
+        cancelLabel="Cancel"
+        variant="destructive"
+      />
     </div>
   );
 }
