@@ -233,9 +233,11 @@ function DesktopSidebar({
           marginBottom: 4,
         }}
       >
-        <div style={{ width: 32, height: 32, borderRadius: 10, background: "#6366f1", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-          <Zap size={16} color="white" fill="white" />
-        </div>
+        <img
+          src="/cutsheet-logo-full.png"
+          alt="Cutsheet"
+          style={{ width: 32, height: 32, borderRadius: 10, flexShrink: 0 }}
+        />
         {!collapsed && (
           <span style={{ fontFamily: "var(--mono)", fontSize: 15, fontWeight: 600, color: "#f4f4f5", letterSpacing: "-0.02em" }}>
             cutsheet
