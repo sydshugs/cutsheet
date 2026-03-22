@@ -51,7 +51,7 @@ import type { AppSharedContext } from "../../components/AppLayout";
 const API_KEY = ""; // Gemini calls are now server-side via /api/analyze
 
 const PLATFORMS = ["all", "Meta", "TikTok", "Google", "YouTube"] as const;
-type Platform = (typeof PLATFORMS)[number] | "Google" | "Instagram" | "Facebook";
+type Platform = (typeof PLATFORMS)[number] | "Google" | "Instagram" | "Facebook" | "Shorts" | "Reels";
 type Format = "video" | "static";
 
 const STATUS_COPY = {
