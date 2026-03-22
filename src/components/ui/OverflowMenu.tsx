@@ -19,9 +19,11 @@ export interface OverflowMenuItem {
 
 interface OverflowMenuProps {
   items: OverflowMenuItem[];
+  /** "up" opens above the button (default), "down" opens below */
+  direction?: "up" | "down";
 }
 
-export function OverflowMenu({ items }: OverflowMenuProps) {
+export function OverflowMenu({ items, direction = "up" }: OverflowMenuProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -66,7 +68,7 @@ export function OverflowMenu({ items }: OverflowMenuProps) {
 
       {open && (
         <div
-          className="absolute bottom-full mb-2 right-0 min-w-[200px] rounded-xl overflow-hidden"
+          className={`absolute ${direction === "down" ? "top-full mt-2" : "bottom-full mb-2"} right-0 min-w-[200px] rounded-xl overflow-hidden`}
           style={{
             background: "rgba(24,24,27,0.95)",
             border: "1px solid rgba(255,255,255,0.08)",
