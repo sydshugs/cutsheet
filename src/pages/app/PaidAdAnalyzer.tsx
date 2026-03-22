@@ -9,6 +9,7 @@ import { ScoreCard } from "../../components/ScoreCard";
 import { VideoDropzone } from "../../components/VideoDropzone";
 import { HistoryDrawer } from "../../components/HistoryDrawer";
 import { AlertDialog } from "../../components/ui/AlertDialog";
+import { motion, AnimatePresence } from "framer-motion";
 import { useVideoAnalyzer } from "../../hooks/useVideoAnalyzer";
 import { type HistoryEntry } from "../../hooks/useHistory";
 import { useThumbnail } from "../../hooks/useThumbnail";
