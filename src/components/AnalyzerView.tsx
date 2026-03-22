@@ -79,7 +79,7 @@ export function AnalyzerView({
       )}
 
       {(status === "uploading" || status === "processing") && (
-        <div key="progress" className="flex-1 flex items-center justify-center p-4 md:p-8">
+        <div key="progress" className="flex-1 flex flex-col">
           <ProgressCard
             file={file!}
             status={status}
