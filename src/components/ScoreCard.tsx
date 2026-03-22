@@ -3,7 +3,7 @@
 // Pass 1: Consolidated layout — removed Deep Dive, tabs, Compare link. Reordered sections.
 
 import { useEffect, useState } from "react";
-import { Copy, CheckCircle, Wand2, Loader2, AlertCircle, TrendingUp, ArrowUpRight, Share2, RotateCcw, ShieldCheck, FileText, Bookmark, Lightbulb, DollarSign, Sparkles, Lock } from "lucide-react";
+import { Copy, CheckCircle, Wand2, Loader2, AlertCircle, TrendingUp, ArrowUpRight, Share2, RotateCcw, ShieldCheck, FileText, Bookmark, Lightbulb, DollarSign, Sparkles, Lock, Film, Hash } from "lucide-react";
 import type { BudgetRecommendation, Hashtags, Scene, HookDetail } from "../services/analyzerService";
 import type { EngineBudgetRecommendation } from "../services/budgetService";
 import { getBenchmark, type BenchmarkResult } from "../lib/benchmarks";
@@ -484,7 +484,7 @@ export function ScoreCard({
 
           {/* 7. Improvements */}
           {improvements && improvements.length > 0 && (
-            <div style={{ marginTop: 8, padding: "0 20px" }}>
+            <div style={{ marginTop: 16, padding: "0 20px" }}>
               <CollapsibleSection
                 title="Improvements"
                 icon={<AlertCircle size={14} />}
@@ -499,7 +499,7 @@ export function ScoreCard({
 
           {/* 8. Predicted Performance */}
           {prediction && (
-            <div style={{ marginTop: 8, padding: "0 20px" }}>
+            <div style={{ marginTop: 16, padding: "0 20px" }}>
               <CollapsibleSection
                 title="Predicted Performance"
                 icon={<TrendingUp size={14} />}
@@ -511,7 +511,7 @@ export function ScoreCard({
 
           {/* 9. Budget Recommendation */}
           {(engineBudget || budget) && (
-            <div style={{ marginTop: 8, padding: "0 20px" }}>
+            <div style={{ marginTop: 16, padding: "0 20px" }}>
               <CollapsibleSection
                 title="Budget Recommendation"
                 icon={<DollarSign size={14} />}
@@ -527,9 +527,10 @@ export function ScoreCard({
 
           {/* 10. Scene Breakdown \u2014 video only */}
           {format === "video" && scenes && scenes.length > 0 && (
-            <div style={{ marginTop: 8, padding: "0 20px" }}>
+            <div style={{ marginTop: 16, padding: "0 20px" }}>
               <CollapsibleSection
                 title="Scene Breakdown"
+                icon={<Film size={14} />}
                 trailing={<span className="text-[10px] text-zinc-500">{scenes.length} scenes</span>}
               >
                 <SceneBreakdown scenes={scenes} />
@@ -539,7 +540,7 @@ export function ScoreCard({
 
           {/* 11. Static Ad Checks \u2014 static only */}
           {format === "static" && scores && (
-            <div style={{ marginTop: 8, padding: "0 20px", paddingBottom: 20 }}>
+            <div style={{ marginTop: 16, padding: "0 20px", paddingBottom: 20 }}>
               <CollapsibleSection title="Ad Quality Checks" icon={<ShieldCheck size={14} />}>
                 <StaticAdChecks scores={scores} />
               </CollapsibleSection>
@@ -548,9 +549,10 @@ export function ScoreCard({
 
           {/* 12. Hashtags — collapsed for paid, expanded for organic */}
           {hashtags && (hashtags.tiktok.length > 0 || hashtags.meta.length > 0 || hashtags.instagram.length > 0) && (
-            <div style={{ marginTop: 8, padding: "0 20px", paddingBottom: 16 }}>
+            <div style={{ marginTop: 16, padding: "0 20px", paddingBottom: 16 }}>
               <CollapsibleSection
                 title="Recommended Hashtags"
+                icon={<Hash size={14} />}
                 defaultOpen={isOrganic}
                 trailing={
                   <div className="flex items-center gap-2">
