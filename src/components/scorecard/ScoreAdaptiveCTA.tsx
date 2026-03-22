@@ -1,15 +1,16 @@
 // ScoreAdaptiveCTA — primary CTA that adapts based on overall score (3A hypothesis)
 
-import { Share2, Sparkles, FileText } from "lucide-react";
+import { Share2, Sparkles, FileText, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface ScoreAdaptiveCTAProps {
   overallScore: number;
   onShare?: () => void;
   onGenerateBrief?: () => void;
+  briefLoading?: boolean;
 }
 
-export function ScoreAdaptiveCTA({ overallScore, onShare, onGenerateBrief }: ScoreAdaptiveCTAProps) {
+export function ScoreAdaptiveCTA({ overallScore, onShare, onGenerateBrief, briefLoading }: ScoreAdaptiveCTAProps) {
   return (
     <div className="px-5 pb-3">
       <AnimatePresence mode="wait">
@@ -42,19 +43,21 @@ export function ScoreAdaptiveCTA({ overallScore, onShare, onGenerateBrief }: Sco
           >
             <button
               type="button"
-              onClick={() => {
-                const impSection = document.getElementById("improvements-section");
-                if (impSection) impSection.scrollIntoView({ behavior: "smooth" });
-              }}
-              className="w-full h-11 rounded-full border-none text-[13px] font-semibold cursor-pointer flex items-center justify-center gap-2 transition-colors duration-150"
+              onClick={() => onGenerateBrief?.()}
+              disabled={briefLoading}
+              className="w-full h-11 rounded-full border-none text-[13px] font-semibold cursor-pointer flex items-center justify-center gap-2 transition-colors duration-150 disabled:opacity-70 disabled:cursor-not-allowed"
               style={{ background: "#4f46e5", color: "white" }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "#4338ca"; }}
+              onMouseEnter={(e) => { if (!briefLoading) e.currentTarget.style.background = "#4338ca"; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = "#4f46e5"; }}
             >
-              <Sparkles size={14} /> Fix the Weak Spots
+              {briefLoading ? (
+                <><Loader2 size={14} className="animate-spin" /> Generating brief...</>
+              ) : (
+                <><FileText size={14} /> Generate a New Brief</>
+              )}
             </button>
             <p className="text-[11px] text-zinc-500 text-center mt-1.5">
-              Jump to improvements below
+              AI-powered creative brief based on your score
             </p>
           </motion.div>
         ) : (
@@ -68,12 +71,17 @@ export function ScoreAdaptiveCTA({ overallScore, onShare, onGenerateBrief }: Sco
             <button
               type="button"
               onClick={() => onGenerateBrief?.()}
-              className="w-full h-11 rounded-full border-none text-[13px] font-semibold cursor-pointer flex items-center justify-center gap-2 transition-colors duration-150"
+              disabled={briefLoading}
+              className="w-full h-11 rounded-full border-none text-[13px] font-semibold cursor-pointer flex items-center justify-center gap-2 transition-colors duration-150 disabled:opacity-70 disabled:cursor-not-allowed"
               style={{ background: "rgba(245,158,11,0.15)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.3)" }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(245,158,11,0.25)"; }}
+              onMouseEnter={(e) => { if (!briefLoading) e.currentTarget.style.background = "rgba(245,158,11,0.25)"; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(245,158,11,0.15)"; }}
             >
-              <FileText size={14} /> Generate a New Brief
+              {briefLoading ? (
+                <><Loader2 size={14} className="animate-spin" /> Generating brief...</>
+              ) : (
+                <><FileText size={14} /> Generate a New Brief</>
+              )}
             </button>
             <p className="text-[11px] text-zinc-500 text-center mt-1.5">
               AI-powered creative brief based on your score

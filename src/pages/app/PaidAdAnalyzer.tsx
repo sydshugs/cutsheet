@@ -982,6 +982,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                 visualizeLoading={visualizeStatus === "loading"}
                 canVisualize={true}
                 isPro={isPro}
+                briefLoading={briefLoading}
                 verdict={activeResult.verdict}
                 platformSwitcher={
                   <>
@@ -1053,34 +1054,56 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
             {brief && (
               <>
                 <div className="px-5 pt-5 pb-2 flex-1 overflow-y-auto">
-                  <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-4">Creative Brief</p>
-                  <div className="flex flex-col gap-0.5">
-                    {brief.split("\n").map((line, i) => {
-                      const t = line.trim();
-                      if (!t) return null;
-                      if (t.startsWith("## ")) return (
-                        <p key={i} className="text-xs font-semibold text-white mt-4 mb-1">
-                          {t.replace(/^##\s*/, "")}
-                        </p>
-                      );
-                      const boldMatch = t.match(/^\*\*(.+?)\*\*:?\s*(.*)/);
-                      if (boldMatch) return (
-                        <div key={i} className="mb-3">
-                          <p className="text-xs text-zinc-500 font-medium">{boldMatch[1]}</p>
-                          {boldMatch[2] && (
-                            <p className="text-xs text-zinc-300 leading-relaxed mt-0.5">{boldMatch[2]}</p>
-                          )}
-                        </div>
-                      );
-                      if (t.startsWith("- ") || t.startsWith("* ")) return (
-                        <div key={i} className="flex gap-2 items-start ml-1 mb-1">
-                          <span className="w-1 h-1 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
-                          <span className="text-xs text-zinc-400 leading-relaxed">{t.replace(/^[-*]\s*/, "")}</span>
-                        </div>
-                      );
-                      if (t === "---") return <div key={i} className="border-t border-white/5 my-3" />;
-                      return <p key={i} className="text-xs text-zinc-300 leading-relaxed mb-1">{t}</p>;
-                    })}
+                  <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.06em] mb-4">Creative Brief</p>
+                  <div className="flex flex-col">
+                    {(() => {
+                      // Parse brief into structured sections
+                      const sections: { label: string; lines: string[] }[] = [];
+                      let current: { label: string; lines: string[] } | null = null;
+                      for (const line of brief.split("\n")) {
+                        const t = line.trim();
+                        if (!t || t === "---" || t.startsWith("## ")) continue;
+                        const boldMatch = t.match(/^\*\*(.+?)\*\*:?\s*(.*)/);
+                        if (boldMatch) {
+                          if (current) sections.push(current);
+                          current = { label: boldMatch[1].replace(/:$/, ''), lines: boldMatch[2] ? [boldMatch[2]] : [] };
+                        } else if (current) {
+                          current.lines.push(t.replace(/^[-*]\s*/, ''));
+                        }
+                      }
+                      if (current) sections.push(current);
+
+                      return sections.map((sec, i) => {
+                        const isDo = /^do$/i.test(sec.label);
+                        const isDont = /^don'?t$/i.test(sec.label);
+                        const isHook = /hook/i.test(sec.label);
+                        return (
+                          <div key={i} className={i > 0 ? "border-t border-white/5 pt-3 mt-3" : ""}>
+                            <p className="text-[10px] text-zinc-500 uppercase tracking-[0.05em] mb-1">{sec.label}</p>
+                            {isHook ? (
+                              <ol className="list-decimal list-inside flex flex-col gap-1">
+                                {sec.lines.map((l, j) => (
+                                  <li key={j} className="text-[13px] text-zinc-300 leading-relaxed">{l.replace(/^\d+\.\s*/, '')}</li>
+                                ))}
+                              </ol>
+                            ) : (isDo || isDont) ? (
+                              <div className="flex flex-col gap-1">
+                                {sec.lines.map((l, j) => (
+                                  <div key={j} className="flex items-start gap-2">
+                                    <span className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${isDo ? 'bg-emerald-400' : 'bg-red-400'}`} />
+                                    <span className="text-[13px] text-zinc-300 leading-relaxed">{l}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : sec.lines.length === 1 ? (
+                              <p className="text-[13px] text-zinc-300 leading-relaxed">{sec.lines[0]}</p>
+                            ) : (
+                              <p className="text-[13px] text-zinc-300 leading-relaxed">{sec.lines.join(' · ')}</p>
+                            )}
+                          </div>
+                        );
+                      });
+                    })()}
                   </div>
                 </div>
                 <div className="p-5 border-t border-white/5">
