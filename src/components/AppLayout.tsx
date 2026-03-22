@@ -6,7 +6,8 @@ import { TopBar } from "./TopBar";
 import { UpgradeModal } from "./UpgradeModal";
 import KeyboardShortcutsModal from "./KeyboardShortcutsModal";
 import { useUsage } from "../hooks/useUsage";
-import { useHistory, type HistoryEntry } from "../hooks/useHistory";
+import { type HistoryEntry } from "../hooks/useHistory";
+import { useSupabaseHistory } from "../hooks/useSupabaseHistory";
 import { useSwipeFile, type SwipeItem } from "../hooks/useSwipeFile";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
@@ -19,7 +20,8 @@ import { Helmet } from "react-helmet-async";
 
 export interface AppSharedContext {
   historyEntries: HistoryEntry[];
-  addHistoryEntry: (entry: Omit<HistoryEntry, "id">) => void;
+  // addHistoryEntry is a no-op refresh trigger — pages save via saveAnalysis() directly.
+  addHistoryEntry: (entry?: Partial<Omit<HistoryEntry, "id">>) => void;
   deleteHistoryEntry: (id: string) => void;
   clearAllHistory: () => void;
   addSwipeItem: (item: Omit<SwipeItem, "id">) => void;
@@ -41,7 +43,17 @@ export default function AppLayout() {
   const { user } = useAuth();
 
   const { usageCount, isPro, isTeam, tier, canAnalyze, increment, FREE_LIMIT } = useUsage();
-  const { entries: historyEntries, addEntry: addHistoryEntry, deleteEntry: deleteHistoryEntry, clearAll: clearAllHistory } = useHistory();
+  const {
+    entries: historyEntries,
+    refresh: refreshHistory,
+    deleteEntry: deleteHistoryEntry,
+    clearAll: clearAllHistory,
+  } = useSupabaseHistory();
+
+  // Pages call saveAnalysis() directly; this triggers a Supabase re-fetch.
+  const addHistoryEntry = useCallback(async (_entry?: Partial<Omit<HistoryEntry, "id">>) => {
+    await refreshHistory();
+  }, [refreshHistory]);
   const { addItem: addSwipeItem } = useSwipeFile();
 
   const [mobileOpen, setMobileOpen] = useState(false);
