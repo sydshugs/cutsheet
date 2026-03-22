@@ -130,7 +130,7 @@ export function ProgressCard({ file, status, onCancel, platform }: ProgressCardP
     <>
       {/* Outer — full height, centered column */}
       <div style={{
-        minHeight: "100%",
+        flex: 1,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
