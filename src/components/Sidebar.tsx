@@ -344,7 +344,7 @@ function DesktopSidebar({
 // ─── MOBILE BOTTOM TAB BAR ────────────────────────────────────────────────────
 
 const MOBILE_TABS = [
-  { label: "Paid",     path: "/app/paid",     icon: Zap },
+  { label: "Paid Ad",  path: "/app/paid",     icon: Zap },
   { label: "Organic",  path: "/app/organic",  icon: TrendingUp },
   { label: "Display",  path: "/app/display",  icon: Monitor },
 ];

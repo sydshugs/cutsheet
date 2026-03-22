@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useOutletContext, useNavigate } from "react-router-dom";
 import { TrendingUp, RotateCcw, AlertCircle } from "lucide-react";
+import { FeaturePill } from "../../components/ui/FeaturePill";
 import { AnalyzerView } from "../../components/AnalyzerView";
 import { ScoreCard } from "../../components/ScoreCard";
 import { VideoDropzone } from "../../components/VideoDropzone";
@@ -72,9 +73,7 @@ function OrganicEmptyState({
       </h1>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 14 }}>
         {PILLS.map((pill) => (
-          <span key={pill} style={{ fontSize: 12, color: "#818cf8", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)", borderRadius: 9999, padding: "4px 12px" }}>
-            {pill}
-          </span>
+          <FeaturePill key={pill} label={pill} />
         ))}
       </div>
       <p style={{ fontSize: 14, color: "#a1a1aa", textAlign: "center", maxWidth: 320, marginTop: 14, lineHeight: 1.6 }}>

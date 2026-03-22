@@ -4,6 +4,7 @@ import { Helmet } from "react-helmet-async";
 import { useState, useRef } from "react";
 import { useOutletContext } from "react-router-dom";
 import { ShieldCheck, Upload, X } from "lucide-react";
+import { FeaturePill } from "../../components/ui/FeaturePill";
 import { runPolicyCheck, type PolicyCheckResult, type PolicyCheckParams } from "../../lib/policyCheckService";
 import { PolicyCheckPanel } from "../../components/PolicyCheckPanel";
 import type { AppSharedContext } from "../../components/AppLayout";
@@ -111,15 +112,7 @@ function EmptyState({
       </p>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 16 }}>
         {PILLS.map((pill) => (
-          <span
-            key={pill}
-            style={{
-              fontSize: 12, color: "#818cf8", background: "rgba(99,102,241,0.08)",
-              border: "1px solid rgba(99,102,241,0.15)", borderRadius: 9999, padding: "4px 12px",
-            }}
-          >
-            {pill}
-          </span>
+          <FeaturePill key={pill} label={pill} />
         ))}
       </div>
       <div style={{ width: "100%", maxWidth: 520, marginTop: 32 }}>
