@@ -50,40 +50,28 @@ export function ProgressCard({ file, status, onCancel }: ProgressCardProps) {
   const displayUrl = thumbnailDataUrl || previewUrl;
 
   return (
-    <div style={{ display: "flex", gap: 24, padding: "32px 24px", alignItems: "stretch", width: "100%", minHeight: "calc(100vh - 120px)" }} className="max-md:flex-col max-md:items-stretch">
-      {/* LEFT — Creative preview */}
-      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }} className="max-md:w-full">
+    <div style={{ display: "flex", flexDirection: "column", gap: 24, padding: "32px 24px", width: "100%", maxWidth: 720, margin: "0 auto" }}>
+      {/* Creative preview */}
+      {displayUrl && (
+      <div style={{ width: "100%" }}>
         <div style={{
           borderRadius: 16,
           border: "1px solid rgba(255,255,255,0.06)",
           overflow: "hidden",
           background: "#111113",
           position: "relative",
-          flex: 1,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
         }}>
-          {displayUrl ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.4 }}
-              style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
-            >
-              {isImage ? (
-                <img src={displayUrl} alt={sanitizeFileName(file.name)} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
-              ) : (
-                <img src={displayUrl} alt={sanitizeFileName(file.name)} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-              )}
-            </motion.div>
-          ) : (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <div style={{ width: 48, height: 48, borderRadius: 12, background: "rgba(99,102,241,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth={1.5}><path d="M5 3l14 9-14 9V3z"/></svg>
-              </div>
-            </div>
-          )}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4 }}
+          >
+            {isImage ? (
+              <img src={displayUrl} alt={sanitizeFileName(file.name)} style={{ width: "100%", maxHeight: 400, objectFit: "contain", display: "block" }} />
+            ) : (
+              <img src={displayUrl} alt={sanitizeFileName(file.name)} style={{ width: "100%", maxHeight: 400, objectFit: "cover", display: "block" }} />
+            )}
+          </motion.div>
 
           {/* Scanning overlay */}
           <motion.div
@@ -107,18 +95,15 @@ export function ProgressCard({ file, status, onCancel }: ProgressCardProps) {
           </button>
         </div>
       </div>
+      )}
 
-      {/* RIGHT — Live analysis preview */}
-      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }} className="max-md:w-full">
+      {/* Live analysis preview */}
+      <div style={{ width: "100%" }}>
         <div style={{
           background: "rgba(255,255,255,0.02)",
           border: "1px solid rgba(255,255,255,0.06)",
           borderRadius: 16,
           padding: 24,
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
         }}>
           {/* Header with pulsing dot */}
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
