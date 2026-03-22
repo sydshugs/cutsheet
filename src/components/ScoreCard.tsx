@@ -78,6 +78,8 @@ interface ScoreCardProps {
   isOrganic?: boolean;
   // Verdict
   verdict?: { state: 'not_ready' | 'needs_work' | 'ready'; headline: string; sub: string };
+  // Platform switcher (rendered inside scorecard)
+  platformSwitcher?: React.ReactNode;
 }
 
 /** Score band color for chips/overlays: 9-10 green, 7-8 indigo, 5-6 amber, 1-4 red (scores 0-10). */
@@ -197,6 +199,7 @@ export function ScoreCard({
   onUpgradeRequired,
   isOrganic = false,
   verdict,
+  platformSwitcher,
 }: ScoreCardProps) {
   const displayScore = platformScore ?? scores.overall;
   const { label: overallLabel } = getScoreLabel(displayScore);
@@ -363,6 +366,13 @@ export function ScoreCard({
 
         {/* Card content */}
         <div style={{ position: "relative", zIndex: 1 }}>
+
+          {/* Platform switcher — inside glass card at top */}
+          {platformSwitcher && (
+            <div className="px-4 pt-3 pb-1">
+              {platformSwitcher}
+            </div>
+          )}
 
           {/* 1 + 2. ScoreHero — score number + benchmark bar + dimension grid */}
           <ScoreHero

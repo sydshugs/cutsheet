@@ -942,38 +942,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
       >
         {showRightPanel && activeResult?.scores && rightTab === "analysis" && (
           <>
-            {/* Platform Switcher — format-aware */}
-            <div className="px-4 pt-3 pb-0.5">
-              <PlatformSwitcher
-                platforms={format === "static" ? PAID_STATIC_PLATFORMS : PAID_AD_PLATFORMS}
-                selected={platform}
-                onChange={handlePlatformSwitch}
-                isSwitching={isPlatformSwitching}
-                disabled={status !== "complete"}
-              />
-            </div>
-            {/* YouTube format sub-selector */}
-            {(platform === "YouTube" || platform === "Shorts") && format === "video" && (
-              <div className="px-4 pb-1">
-                <YouTubeFormatSelector
-                  selected={youtubeFormat}
-                  onChange={setYoutubeFormat}
-                  disabled={status !== "complete"}
-                />
-              </div>
-            )}
-            {/* Platform score verdict badge */}
-            {platformScoreResult && platform !== "all" && (
-              <div className="px-4 pb-2">
-                <div
-                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs"
-                  style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)" }}
-                >
-                  <span className="font-mono font-bold text-indigo-400">{platformScoreResult.score}/10</span>
-                  <span className="text-zinc-400">{platformScoreResult.verdict}</span>
-                </div>
-              </div>
-            )}
+            {/* Platform Switcher + YouTube format moved inside ScoreCard */}
             <div ref={scorecardRef}>
               <ScoreCard
                 scores={activeResult.scores}
@@ -1014,6 +983,34 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                 canVisualize={true}
                 isPro={isPro}
                 verdict={activeResult.verdict}
+                platformSwitcher={
+                  <>
+                    <PlatformSwitcher
+                      platforms={format === "static" ? PAID_STATIC_PLATFORMS : PAID_AD_PLATFORMS}
+                      selected={platform}
+                      onChange={handlePlatformSwitch}
+                      isSwitching={isPlatformSwitching}
+                      disabled={status !== "complete"}
+                    />
+                    {(platform === "YouTube" || platform === "Shorts") && format === "video" && (
+                      <div className="mt-1">
+                        <YouTubeFormatSelector
+                          selected={youtubeFormat}
+                          onChange={setYoutubeFormat}
+                          disabled={status !== "complete"}
+                        />
+                      </div>
+                    )}
+                    {platformScoreResult && platform !== "all" && (
+                      <div className="mt-1.5 flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs"
+                        style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)" }}
+                      >
+                        <span className="font-mono font-bold text-indigo-400">{platformScoreResult.score}/10</span>
+                        <span className="text-zinc-400">{platformScoreResult.verdict}</span>
+                      </div>
+                    )}
+                  </>
+                }
                 onUpgradeRequired={onUpgradeRequired}
               />
             </div>
