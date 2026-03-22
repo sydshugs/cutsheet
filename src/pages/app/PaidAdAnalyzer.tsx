@@ -26,6 +26,7 @@ import {
   type PlatformScore,
 } from "../../services/claudeService";
 import { PlatformSwitcher, PAID_AD_PLATFORMS, PAID_STATIC_PLATFORMS, VIDEO_ONLY_PLATFORMS } from "../../components/PlatformSwitcher";
+import { extractRightPanelSections } from "../../components/ReportCards";
 import { YouTubeFormatSelector, type YouTubeFormat } from "../../components/YouTubeFormatSelector";
 import { generateFixIt, type FixItResult } from "../../services/fixItService";
 import { generatePrediction, type PredictionResult } from "../../services/predictionService";
@@ -984,6 +985,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                 isPro={isPro}
                 briefLoading={briefLoading}
                 verdict={activeResult.verdict}
+                analysisSections={extractRightPanelSections(activeResult.markdown)}
                 platformSwitcher={
                   <>
                     <PlatformSwitcher

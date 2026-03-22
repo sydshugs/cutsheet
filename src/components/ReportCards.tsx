@@ -193,16 +193,40 @@ function getScoreBadge(title: string, content: string): { badge: string; color: 
   return null;
 }
 
-// ─── Deep Dive section classification ────────────────────────────────────────
+// ─── Section classification: center column vs right panel ────────────────────
 
-/** Classify sections into grid cards vs full-width rows based on format */
-const STATIC_GRID_RE = [/hook/i, /hierarchy|design.*review/i, /copy.*inventory/i];
-const VIDEO_GRID_RE = [/hook/i, /pacing|retention/i, /scene/i];
+/** Sections that render in the CENTER COLUMN */
+const CENTER_SECTION_RE = [/verdict/i, /pacing|retention/i, /motion|test/i, /transcript/i];
 
-function isGridSection(title: string, format: 'video' | 'static'): boolean {
-  const patterns = format === 'video' ? VIDEO_GRID_RE : STATIC_GRID_RE;
+/** Sections that render in the RIGHT PANEL (ScoreCard) */
+const RIGHT_PANEL_RE = [/hook/i, /hierarchy/i, /copy.*inventory/i, /messag/i, /emotion|arc|impact/i];
+
+function isCenterSection(title: string): boolean {
   const clean = stripEmoji(title).toLowerCase();
-  return patterns.some(re => re.test(clean));
+  return CENTER_SECTION_RE.some(re => re.test(clean));
+}
+
+function isRightPanelSection(title: string): boolean {
+  const clean = stripEmoji(title).toLowerCase();
+  return RIGHT_PANEL_RE.some(re => re.test(clean));
+}
+
+/** Extract right panel sections from analysis markdown — used by ScoreCard */
+export function extractRightPanelSections(markdown: string): { title: string; content: string }[] {
+  const sections = splitMarkdown(markdown);
+  // Merge hook sections
+  const hookSections = sections.filter(s => s.title && HOOK_RE.test(s.title));
+  const otherSections = sections.filter(s => !s.title || !HOOK_RE.test(s.title));
+  const merged = hookSections.length > 1
+    ? [{
+        title: "Hook analysis",
+        content: hookSections.map(s => s.title ? `### ${toSentenceCase(s.title)}\n${s.content}` : s.content).join("\n\n"),
+      }, ...otherSections]
+    : sections;
+
+  return merged
+    .filter(s => s.title && isRightPanelSection(s.title))
+    .map(s => ({ title: toSentenceCase(s.title!), content: s.content }));
 }
 
 export function ReportCards({
@@ -250,14 +274,14 @@ export function ReportCards({
     return result;
   }, [sections]);
 
-  // Split sections into grid vs row categories
-  const gridSections = useMemo(() =>
-    mergedSections.filter(s => s.title && isGridSection(s.title, format)),
-    [mergedSections, format]
+  // Split sections into center column vs right panel
+  const centerSections = useMemo(() =>
+    mergedSections.filter(s => s.title && isCenterSection(s.title)),
+    [mergedSections]
   );
-  const rowSections = useMemo(() =>
-    mergedSections.filter(s => s.title && !isGridSection(s.title, format)),
-    [mergedSections, format]
+  const rightPanelSections = useMemo(() =>
+    mergedSections.filter(s => s.title && isRightPanelSection(s.title)),
+    [mergedSections]
   );
 
   // Build priority fixes from structuredImprovements or plain improvements
@@ -362,87 +386,50 @@ export function ReportCards({
 
       {/* Verdict banner moved to right panel */}
 
-      {/* ─── Deep Dive ─── */}
-      <ZoneLabel label="Deep dive" />
+      {/* ─── Center column analysis sections ─── */}
+      {/* Second Eye Review + Design Review rendered by PaidAdAnalyzer above */}
 
-      {/* 3-up preview grid */}
-      {gridSections.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-2">
-          {gridSections.map((section, i) => {
-            const title = toSentenceCase(section.title!);
-            const badge = getScoreBadge(title, section.content);
-            return (
-              <DeepDivePreviewCard
-                key={i}
-                title={title}
-                icon={getIconForTitle(title)}
-                badge={badge?.badge}
-                badgeColor={badge?.color}
-                badgeBg={badge?.bg}
-                signal={getPreview(section.content)}
-                isActive={expandedSection === title}
-                onClick={() => setExpandedSection(expandedSection === title ? null : title)}
-              />
-            );
-          })}
-        </div>
-      )}
-
-      {/* Expanded grid section content */}
-      {gridSections.map((section) => {
+      {/* Creative Verdict */}
+      {centerSections.filter(s => /verdict/i.test(s.title ?? '')).map((section, i) => {
         const title = toSentenceCase(section.title!);
-        if (expandedSection !== title) return null;
         const SectionIcon = getIconForTitle(title);
-        const trailing = getTrailingForSection(title, section.content);
         return (
-          <div key={title} className="bg-zinc-900/50 rounded-2xl border border-white/5 p-5 mb-2">
-            <CollapsibleSection
-              title={title}
-              defaultOpen={true}
-              icon={<SectionIcon size={14} />}
-              trailing={trailing}
-            >
+          <div key={`verdict-${i}`} className="bg-zinc-900/50 rounded-2xl border border-white/5 p-5 mt-3">
+            <CollapsibleSection title={title} defaultOpen={true} icon={<SectionIcon size={14} />}
+              trailing={getTrailingForSection(title, section.content)}>
               {renderSectionContent(section)}
             </CollapsibleSection>
           </div>
         );
       })}
 
-      {/* Full-width row cards */}
-      <div className="flex flex-col gap-[5px]">
-        {rowSections.map((section, i) => {
-          const title = toSentenceCase(section.title!);
-          const SectionIcon = getIconForTitle(title);
-          const trailing = getTrailingForSection(title, section.content);
-          const isExpanded = expandedSection === title;
+      {/* Pacing & Retention — video only */}
+      {format === 'video' && centerSections.filter(s => /pacing|retention/i.test(s.title ?? '')).map((section, i) => {
+        const title = toSentenceCase(section.title!);
+        const SectionIcon = getIconForTitle(title);
+        return (
+          <div key={`pacing-${i}`} className="bg-zinc-900/50 rounded-2xl border border-white/5 p-5 mt-3">
+            <CollapsibleSection title={title} defaultOpen={false} icon={<SectionIcon size={14} />}
+              trailing={getTrailingForSection(title, section.content)}>
+              {renderSectionContent(section)}
+            </CollapsibleSection>
+          </div>
+        );
+      })}
 
-          return (
-            <div key={i}>
-              <DeepDiveRow
-                title={title}
-                icon={SectionIcon}
-                preview={getPreview(section.content)}
-                isActive={isExpanded}
-                onClick={() => setExpandedSection(isExpanded ? null : title)}
-              />
-              {isExpanded && (
-                <div className="bg-zinc-900/50 rounded-2xl border border-white/5 p-5 mt-1">
-                  <CollapsibleSection
-                    title={title}
-                    defaultOpen={true}
-                    icon={<SectionIcon size={14} />}
-                    trailing={trailing}
-                  >
-                    {renderSectionContent(section)}
-                  </CollapsibleSection>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Deliverables + Tools removed — tools stay in right panel ScoreCard */}
+      {/* Motion Test Idea */}
+      {centerSections.filter(s => /motion|test/i.test(s.title ?? '')).map((section, i) => {
+        const title = toSentenceCase(section.title!);
+        const SectionIcon = getIconForTitle(title);
+        return (
+          <div key={`motion-${i}`} className="bg-zinc-900/50 rounded-2xl border border-white/5 p-5 mt-3">
+            <CollapsibleSection title={title} defaultOpen={false} icon={<SectionIcon size={14} />}
+              trailing={getTrailingForSection(title, section.content)}>
+              {renderSectionContent(section)}
+            </CollapsibleSection>
+          </div>
+        );
+      })}
 
       {/* ─── Sticky action bar ─── */}
       <div className="sticky bottom-0 bg-zinc-950/80 backdrop-blur-xl border-t border-white/5 px-4 md:px-6 py-3 pb-[calc(12px+env(safe-area-inset-bottom,0px))] md:pb-3 flex items-center gap-3 mt-6 -mx-4 md:-mx-8 -mb-6">

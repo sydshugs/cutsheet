@@ -3,7 +3,8 @@
 // Pass 1: Consolidated layout — removed Deep Dive, tabs, Compare link. Reordered sections.
 
 import { useEffect, useState } from "react";
-import { Copy, CheckCircle, Wand2, Loader2, AlertCircle, TrendingUp, ArrowUpRight, Share2, RotateCcw, ShieldCheck, FileText, Bookmark, Lightbulb, DollarSign, Sparkles, Lock, Film, Hash } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import { Copy, CheckCircle, Wand2, Loader2, AlertCircle, TrendingUp, ArrowUpRight, Share2, RotateCcw, ShieldCheck, FileText, Bookmark, Lightbulb, DollarSign, Sparkles, Lock, Film, Hash, Layout, Heart, MessageSquare } from "lucide-react";
 import type { BudgetRecommendation, Hashtags, Scene, HookDetail } from "../services/analyzerService";
 import type { EngineBudgetRecommendation } from "../services/budgetService";
 import { getBenchmark, type BenchmarkResult } from "../lib/benchmarks";
@@ -82,6 +83,8 @@ interface ScoreCardProps {
   platformSwitcher?: React.ReactNode;
   // Brief loading state
   briefLoading?: boolean;
+  // Analysis sections for right panel (Hook, Hierarchy, Copy, Messaging, Emotional)
+  analysisSections?: { title: string; content: string }[];
 }
 
 /** Score band color for chips/overlays: 9-10 green, 7-8 indigo, 5-6 amber, 1-4 red (scores 0-10). */
@@ -203,6 +206,7 @@ export function ScoreCard({
   verdict,
   platformSwitcher,
   briefLoading,
+  analysisSections,
 }: ScoreCardProps) {
   const displayScore = platformScore ?? scores.overall;
   const { label: overallLabel } = getScoreLabel(displayScore);
@@ -509,8 +513,33 @@ export function ScoreCard({
             </div>
           )}
 
-          {/* ── Collapsible sections ── */}
-          {/* Hook Analysis + Improvements moved to center column */}
+          {/* ── Analysis sections (from markdown) ── */}
+          {analysisSections && analysisSections.length > 0 && (
+            <div style={{ marginTop: 16 }}>
+              {analysisSections.map((section, i) => {
+                const iconMap: Record<string, typeof Lightbulb> = {
+                  hook: Lightbulb, hierarchy: Layout, copy: FileText,
+                  messag: MessageSquare, emotion: Heart, arc: Heart,
+                };
+                const matchedIcon = Object.entries(iconMap).find(([key]) =>
+                  section.title.toLowerCase().includes(key)
+                );
+                const SIcon = matchedIcon?.[1] ?? FileText;
+                return (
+                  <div key={i} style={{ padding: "0 20px", marginTop: i > 0 ? 12 : 0 }}>
+                    <CollapsibleSection
+                      title={section.title}
+                      icon={<SIcon size={14} />}
+                    >
+                      <div className="text-sm text-zinc-400 leading-relaxed [&_strong]:text-zinc-300 [&_strong]:font-medium [&_ul]:list-disc [&_ul]:pl-4 [&_li]:mb-1.5 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_h3]:text-xs [&_h3]:font-semibold [&_h3]:text-zinc-300 [&_h3]:mt-4 [&_h3]:mb-2 [&_em]:text-indigo-300/70">
+                        <ReactMarkdown>{section.content}</ReactMarkdown>
+                      </div>
+                    </CollapsibleSection>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
           {/* 8. Predicted Performance */}
           {prediction && (
