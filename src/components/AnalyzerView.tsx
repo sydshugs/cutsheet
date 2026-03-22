@@ -29,6 +29,7 @@ interface AnalyzerViewProps {
   historyEntries?: HistoryEntry[];
   onHistoryEntryClick?: (entry: HistoryEntry) => void;
   onModeChange?: (mode: string) => void;
+  platform?: string;
 }
 
 export function AnalyzerView({
@@ -51,6 +52,7 @@ export function AnalyzerView({
   historyEntries,
   onHistoryEntryClick,
   onModeChange,
+  platform,
 }: AnalyzerViewProps) {
   return (
     <AnimatePresence mode="wait">
@@ -83,6 +85,7 @@ export function AnalyzerView({
             status={status}
             statusMessage={statusMessage}
             onCancel={onReset}
+            platform={platform}
           />
         </div>
       )}

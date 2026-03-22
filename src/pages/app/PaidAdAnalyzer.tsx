@@ -840,6 +840,7 @@ export default function PaidAdAnalyzer() {
                         shareLoading={shareLoading}
                         historyEntries={historyEntries}
                         onHistoryEntryClick={(entry) => setLoadedEntry(entry)}
+                        platform={platform !== "all" ? platform : undefined}
                       />
                   </div>
                 )}
