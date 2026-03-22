@@ -196,10 +196,10 @@ function getScoreBadge(title: string, content: string): { badge: string; color: 
 // ─── Section classification: center column vs right panel ────────────────────
 
 /** Sections that render in the CENTER COLUMN */
-const CENTER_SECTION_RE = [/verdict/i, /pacing|retention/i, /motion|test/i, /transcript/i];
+const CENTER_SECTION_RE = [/verdict/i, /emotion|arc|impact/i, /motion|test/i, /pacing|retention/i, /transcript/i];
 
 /** Sections that render in the RIGHT PANEL (ScoreCard) */
-const RIGHT_PANEL_RE = [/hook/i, /hierarchy/i, /copy.*inventory/i, /messag/i, /emotion|arc|impact/i];
+const RIGHT_PANEL_RE = [/hook/i, /hierarchy/i, /copy.*inventory/i, /messag/i];
 
 function isCenterSection(title: string): boolean {
   const clean = stripEmoji(title).toLowerCase();
@@ -387,46 +387,107 @@ export function ReportCards({
       {/* Verdict banner moved to right panel */}
 
       {/* ─── Center column analysis sections ─── */}
-      {/* Second Eye Review + Design Review rendered by PaidAdAnalyzer above */}
+      {/* Design Review + Second Eye Review rendered by PaidAdAnalyzer */}
 
-      {/* Creative Verdict */}
+      {/* Creative Verdict — always visible, no accordion */}
       {centerSections.filter(s => /verdict/i.test(s.title ?? '')).map((section, i) => {
         const title = toSentenceCase(section.title!);
         const SectionIcon = getIconForTitle(title);
         return (
           <div key={`verdict-${i}`} className="bg-zinc-900/50 rounded-2xl border border-white/5 p-5 mt-3">
-            <CollapsibleSection title={title} defaultOpen={true} icon={<SectionIcon size={14} />}
-              trailing={getTrailingForSection(title, section.content)}>
-              {renderSectionContent(section)}
-            </CollapsibleSection>
+            <div className="flex items-center gap-2 mb-3">
+              <SectionIcon size={14} className="text-zinc-500" />
+              <span className="text-xs font-medium text-zinc-200">{title}</span>
+              {scores && (
+                <span className="ml-auto text-[10px] font-mono font-medium rounded-full px-1.5 py-px"
+                  style={{
+                    color: scores.overall >= 8 ? '#10b981' : scores.overall >= 5 ? '#d97706' : '#ef4444',
+                    background: scores.overall >= 8 ? 'rgba(16,185,129,0.1)' : scores.overall >= 5 ? 'rgba(251,191,36,0.12)' : 'rgba(239,68,68,0.1)',
+                  }}>{scores.overall}/10</span>
+              )}
+            </div>
+            {renderSectionContent(section)}
           </div>
         );
       })}
 
-      {/* Pacing & Retention — video only */}
-      {format === 'video' && centerSections.filter(s => /pacing|retention/i.test(s.title ?? '')).map((section, i) => {
+      {/* Emotional Impact / Emotion Arc — always visible */}
+      {centerSections.filter(s => /emotion|arc|impact/i.test(s.title ?? '')).map((section, i) => {
         const title = toSentenceCase(section.title!);
         const SectionIcon = getIconForTitle(title);
+        const isArc = /arc/i.test(section.title ?? '');
+        // For emotion arc, render as chip sequence
+        if (isArc || format === 'video') {
+          const chain = section.content.match(/([A-Z][a-z]+(?:\s*→\s*[A-Z][a-z]+)+)/);
+          const emotions = chain ? chain[1].split(/\s*→\s*/) : [];
+          return (
+            <div key={`emotion-${i}`} className="bg-zinc-900/50 rounded-2xl border border-white/5 p-5 mt-3">
+              <div className="flex items-center gap-2 mb-3">
+                <SectionIcon size={14} className="text-zinc-500" />
+                <span className="text-xs font-medium text-zinc-200">{isArc ? 'Emotion arc' : title}</span>
+              </div>
+              {emotions.length > 0 ? (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {emotions.map((e, j) => (
+                    <span key={j} className="flex items-center gap-1.5">
+                      <span className="text-[11px] bg-white/5 rounded-full px-2.5 py-0.5 text-zinc-300">{e}</span>
+                      {j < emotions.length - 1 && <span className="text-[11px] text-zinc-600">→</span>}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                renderSectionContent(section)
+              )}
+            </div>
+          );
+        }
+        // Static: 2-up tiles
         return (
-          <div key={`pacing-${i}`} className="bg-zinc-900/50 rounded-2xl border border-white/5 p-5 mt-3">
-            <CollapsibleSection title={title} defaultOpen={false} icon={<SectionIcon size={14} />}
-              trailing={getTrailingForSection(title, section.content)}>
-              {renderSectionContent(section)}
-            </CollapsibleSection>
+          <div key={`emotion-${i}`} className="bg-zinc-900/50 rounded-2xl border border-white/5 p-5 mt-3">
+            <div className="flex items-center gap-2 mb-3">
+              <SectionIcon size={14} className="text-zinc-500" />
+              <span className="text-xs font-medium text-zinc-200">{title}</span>
+            </div>
+            {renderSectionContent(section)}
           </div>
         );
       })}
 
-      {/* Motion Test Idea */}
+      {/* Motion Test Idea — always visible */}
       {centerSections.filter(s => /motion|test/i.test(s.title ?? '')).map((section, i) => {
         const title = toSentenceCase(section.title!);
         const SectionIcon = getIconForTitle(title);
         return (
           <div key={`motion-${i}`} className="bg-zinc-900/50 rounded-2xl border border-white/5 p-5 mt-3">
-            <CollapsibleSection title={title} defaultOpen={false} icon={<SectionIcon size={14} />}
-              trailing={getTrailingForSection(title, section.content)}>
+            <div className="flex items-center gap-2 mb-3">
+              <SectionIcon size={14} className="text-zinc-500" />
+              <span className="text-xs font-medium text-zinc-200">{title}</span>
+            </div>
+            <div className="bg-white/[0.03] rounded-[9px] p-3">
+              <span className="text-[10px] text-zinc-500 uppercase tracking-[0.05em] block mb-1.5">Concept</span>
               {renderSectionContent(section)}
-            </CollapsibleSection>
+            </div>
+          </div>
+        );
+      })}
+
+      {/* Pacing & Retention — VIDEO ONLY */}
+      {format === 'video' && centerSections.filter(s => /pacing|retention/i.test(s.title ?? '')).map((section, i) => {
+        const title = toSentenceCase(section.title!);
+        const SectionIcon = getIconForTitle(title);
+        return (
+          <div key={`pacing-${i}`} className="bg-zinc-900/50 rounded-2xl border border-white/5 p-5 mt-3">
+            <div className="flex items-center gap-2 mb-3">
+              <SectionIcon size={14} className="text-zinc-500" />
+              <span className="text-xs font-medium text-zinc-200">{title}</span>
+              {(() => {
+                const pacingMatch = section.content.match(/Overall pacing:\s*\*?\*?\s*\[?([^\]\n*]+)\]?/i);
+                return pacingMatch ? (
+                  <span className="ml-auto text-[10px] text-zinc-500">{pacingMatch[1].trim()}</span>
+                ) : null;
+              })()}
+            </div>
+            {renderSectionContent(section)}
           </div>
         );
       })}

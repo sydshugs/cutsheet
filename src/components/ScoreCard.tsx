@@ -513,35 +513,7 @@ export function ScoreCard({
             </div>
           )}
 
-          {/* ── Analysis sections (from markdown) ── */}
-          {analysisSections && analysisSections.length > 0 && (
-            <div style={{ marginTop: 16 }}>
-              {analysisSections.map((section, i) => {
-                const iconMap: Record<string, typeof Lightbulb> = {
-                  hook: Lightbulb, hierarchy: Layout, copy: FileText,
-                  messag: MessageSquare, emotion: Heart, arc: Heart,
-                };
-                const matchedIcon = Object.entries(iconMap).find(([key]) =>
-                  section.title.toLowerCase().includes(key)
-                );
-                const SIcon = matchedIcon?.[1] ?? FileText;
-                return (
-                  <div key={i} style={{ padding: "0 20px", marginTop: i > 0 ? 12 : 0 }}>
-                    <CollapsibleSection
-                      title={section.title}
-                      icon={<SIcon size={14} />}
-                    >
-                      <div className="text-sm text-zinc-400 leading-relaxed [&_strong]:text-zinc-300 [&_strong]:font-medium [&_ul]:list-disc [&_ul]:pl-4 [&_li]:mb-1.5 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_h3]:text-xs [&_h3]:font-semibold [&_h3]:text-zinc-300 [&_h3]:mt-4 [&_h3]:mb-2 [&_em]:text-indigo-300/70">
-                        <ReactMarkdown>{section.content}</ReactMarkdown>
-                      </div>
-                    </CollapsibleSection>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* 8. Predicted Performance */}
+          {/* 8. Predicted Performance — directly under ScoreHero */}
           {prediction && (
             <div style={{ marginTop: 16, padding: "0 20px" }}>
               <CollapsibleSection
@@ -569,7 +541,33 @@ export function ScoreCard({
             </div>
           )}
 
-          {/* Scene Breakdown, Ad Quality Checks — moved to center column */}
+          {/* ── Analysis sections (Hook, Hierarchy, Copy, Messaging) ── */}
+          {analysisSections && analysisSections.length > 0 && (
+            <div style={{ marginTop: 16 }}>
+              {analysisSections.map((section, i) => {
+                const iconMap: Record<string, typeof Lightbulb> = {
+                  hook: Lightbulb, hierarchy: Layout, copy: FileText,
+                  messag: MessageSquare,
+                };
+                const matchedIcon = Object.entries(iconMap).find(([key]) =>
+                  section.title.toLowerCase().includes(key)
+                );
+                const SIcon = matchedIcon?.[1] ?? FileText;
+                return (
+                  <div key={i} style={{ padding: "0 20px", marginTop: i > 0 ? 12 : 0 }}>
+                    <CollapsibleSection
+                      title={section.title}
+                      icon={<SIcon size={14} />}
+                    >
+                      <div className="text-sm text-zinc-400 leading-relaxed [&_strong]:text-zinc-300 [&_strong]:font-medium [&_ul]:list-disc [&_ul]:pl-4 [&_li]:mb-1.5 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_h3]:text-xs [&_h3]:font-semibold [&_h3]:text-zinc-300 [&_h3]:mt-4 [&_h3]:mb-2 [&_em]:text-indigo-300/70">
+                        <ReactMarkdown>{section.content}</ReactMarkdown>
+                      </div>
+                    </CollapsibleSection>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
           {/* Recommended Hashtags */}
           {hashtags && (hashtags.tiktok.length > 0 || hashtags.meta.length > 0 || hashtags.instagram.length > 0) && (
