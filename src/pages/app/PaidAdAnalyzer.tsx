@@ -261,10 +261,37 @@ export default function PaidAdAnalyzer() {
 
 
   // ── Build context prefix for Gemini prompt ────────────────────────────────
-  const contextPrefix =
-    platform !== "all"
+  const contextPrefix = (() => {
+    const base = platform !== "all"
       ? `This is a PAID ${format} ad for ${platform}.\nScore and optimize specifically for ${platform} performance.\nApply ${platform}-specific improvement suggestions.\nFocus on CTR, ROAS, and conversion potential.`
       : `This is a PAID ${format} ad.\nScore for performance marketing metrics: CTR, ROAS, conversion potential, and ad spend efficiency.\nApply cross-platform best practices.`;
+
+    // Sound-off check for Meta video
+    if (platform === "Meta" && format === "video") {
+      return base + `\n\nSOUND-OFF CHECK: A significant portion of Meta feed is watched muted.
+Evaluate whether this ad communicates its full message when watched muted.
+Are captions or text overlays present and readable? Does the visual storytelling convey the narrative without sound?
+Would a muted viewer understand the hook, offer, and CTA?
+Score "Message Clarity" as a sound-off readability signal — a great Meta video ad works with AND without sound.
+8-10: Full captions + strong visual narrative. Works perfectly muted.
+5-7: Partial captions or text overlays. Message partially survives mute.
+1-4: Audio-dependent. Muted viewer would miss the core message.`;
+    }
+
+    // Sound-off + audio strategy for TikTok
+    if (platform === "TikTok" && format === "video") {
+      return base + `\n\nAUDIO & CAPTIONS CHECK: TikTok users frequently watch with phone on silent.
+Evaluate TWO aspects of the audio dimension:
+1. AUDIO STRATEGY: Is the sound on-trend? Trending audio, branded sound, voice, or music quality.
+2. SOUND-OFF VIABILITY: Does the ad work muted? Are captions or text overlays present? Does visual storytelling carry the narrative without audio?
+Score "Sound" considering both audio quality AND sound-off viability — a great TikTok ad works with AND without sound.
+8-10: Strong audio strategy + full captions/visual narrative. Works perfectly muted.
+5-7: Decent audio but partial caption coverage. Message partially survives mute.
+1-4: Audio-dependent with no captions. Muted viewer misses the core message.`;
+    }
+
+    return base;
+  })();
 
   // ── Effects ───────────────────────────────────────────────────────────────
   useEffect(() => {

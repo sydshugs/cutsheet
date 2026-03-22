@@ -59,6 +59,17 @@ const PLATFORM_DIMENSIONS: Record<string, [string, string, string, string]> = {
   'all':             ['Hook', 'Copy', 'Visual', 'CTA'],
 };
 
+/** Format-aware dimension overrides — takes precedence over PLATFORM_DIMENSIONS when matched */
+const PLATFORM_FORMAT_DIMENSIONS: Record<string, Record<string, [string, string, string, string]>> = {
+  'Meta': {
+    'video':  ['Hook', 'Sound-Off', 'Visual', 'CTA'],
+    'static': ['Thumb-Stop', 'Message', 'Hierarchy', 'Brand'],
+  },
+  'TikTok': {
+    'video':  ['Hook', 'Retention', 'Audio & Captions', 'CTA'],
+  },
+};
+
 /** Score color: 8+ emerald, 4–7.9 amber, 0–3.9 red */
 function scoreColor(score: number): string {
   if (score >= 8) return "#10b981";
@@ -200,7 +211,9 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
   const showBenchmark = resolvedBenchmark != null;
 
   // Apply platform-specific dimension labels (override names from props)
-  const platformDimLabels = platform ? PLATFORM_DIMENSIONS[platform] : undefined;
+  // Format-aware overrides take precedence when both platform and format match
+  const formatOverride = platform && format ? PLATFORM_FORMAT_DIMENSIONS[platform]?.[format] : undefined;
+  const platformDimLabels = formatOverride ?? (platform ? PLATFORM_DIMENSIONS[platform] : undefined);
   const resolvedDimensions = platformDimLabels
     ? dimensions.map((dim, i) => ({
         ...dim,
