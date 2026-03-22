@@ -6,7 +6,7 @@ import { useOutletContext } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import {
-  Link2, ChevronDown, Copy, Check, RotateCcw, Bookmark,
+  ScanSearch, Link2, ChevronDown, Copy, Check, RotateCcw, Bookmark,
   ExternalLink, AlertCircle, Upload,
 } from "lucide-react";
 import {
@@ -671,12 +671,12 @@ export default function Deconstructor() {
         {/* Header — visible until result */}
         {!result && (
           <div className="text-center mb-10">
-            <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
-              <Link2 size={28} color="#6366f1" />
+            <div style={{ width: 64, height: 64, borderRadius: 16, background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
+              <ScanSearch size={28} color="#6366f1" />
             </div>
-            <h2 className="text-2xl font-semibold text-white tracking-tight mb-3">
+            <h1 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginBottom: 12, letterSpacing: "-0.01em" }}>
               Why does this ad work?
-            </h2>
+            </h1>
             <p className="text-sm text-zinc-500 max-w-md mx-auto">
               Paste any ad URL. Get the full breakdown — hook, triggers,
               structure, and a brief to make your own version.

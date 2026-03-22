@@ -3,7 +3,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Check, Download, Copy, Sparkles, AlertCircle, ImageOff } from "lucide-react";
+import { X, Check, Download, Copy, Sparkles, AlertCircle } from "lucide-react";
 import type { VisualizeResult, VisualizeStatus, VisualizeCreditData } from "../types/visualize";
 
 // ─── LOADING STEPS ────────────────────────────────────────────────────────────
@@ -179,98 +179,117 @@ function CreditLimitPanel({
 }: { creditData: VisualizeCreditData; onClose: () => void; onUpgrade?: (feature: string) => void }) {
   const resetDate = new Date(creditData.resetDate);
   const resetLabel = resetDate.toLocaleDateString("en-US", { month: "long", day: "numeric" });
+  const fillPct = Math.min(100, Math.round((creditData.used / (creditData.limit || 1)) * 100));
 
-  const tier = creditData.tier;
-  const isPro = tier === "pro";
-  const isTeam = tier === "team";
+  const isPro = creditData.tier === "pro";
+  const isTeam = creditData.tier === "team";
+
+  // Churn-prevention framing: acknowledge value delivered, then explain the path forward
+  const body = isTeam
+    ? "Your team's been busy. Reach out and we'll set up a custom credit limit."
+    : isPro
+    ? "You're getting real value from this. Upgrade to Team and get 25 AI-generated improvements every month — keep the testing momentum going."
+    : "Upgrade to Pro and unlock 10 Visualize credits every month, plus all the other Pro features.";
 
   return (
     <div style={{
-      display: "flex", flexDirection: "column", alignItems: "center", gap: 16,
-      padding: "40px 24px", textAlign: "center",
+      display: "flex", flexDirection: "column", alignItems: "center", gap: 20,
+      padding: "36px 24px 28px", textAlign: "center",
     }}>
-      <div style={{
-        width: 56, height: 56, borderRadius: "50%",
-        background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-      }}>
-        <ImageOff size={24} color="#52525b" />
+      {/* Gradient sparkle — positive signal, not an error indicator */}
+      <div style={{ position: "relative", width: 56, height: 56 }}>
+        <div style={{
+          position: "absolute", inset: -10,
+          background: "radial-gradient(circle, rgba(99,102,241,0.22) 0%, transparent 70%)",
+          borderRadius: "50%",
+        }} />
+        <div style={{
+          width: 56, height: 56, borderRadius: "50%",
+          background: "linear-gradient(135deg, rgba(99,102,241,0.18), rgba(139,92,246,0.18))",
+          border: "1px solid rgba(99,102,241,0.28)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          position: "relative",
+        }}>
+          <Sparkles size={22} color="#818cf8" />
+        </div>
       </div>
 
-      <div>
-        <p style={{ fontSize: 18, fontWeight: 600, color: "#f4f4f5", lineHeight: 1.4 }}>
-          You've used all {creditData.limit} Visualize credits this month
+      {/* Copy */}
+      <div style={{ maxWidth: 316 }}>
+        <p style={{ fontSize: 18, fontWeight: 600, color: "#f4f4f5", lineHeight: 1.35, marginBottom: 7 }}>
+          You've maxed out Visualize this month
         </p>
-        {!isPro && !isTeam && (
-          <p style={{ fontSize: 14, color: "#71717a", marginTop: 4 }}>
-            Free accounts get {creditData.limit} Visualize per month.
-          </p>
-        )}
+        <p style={{ fontSize: 13, color: "#71717a", lineHeight: 1.65 }}>
+          {body}
+        </p>
       </div>
 
-      <p style={{ fontSize: 13, color: "#71717a", fontFamily: "var(--mono)" }}>
-        {creditData.used} / {creditData.limit} used · Resets {resetLabel}
-      </p>
+      {/* Credit progress bar */}
+      <div style={{ width: "100%", maxWidth: 280 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 7 }}>
+          <span style={{ fontSize: 11, color: "#52525b", fontFamily: "var(--mono)" }}>
+            {creditData.used} / {creditData.limit} used
+          </span>
+          <span style={{ fontSize: 11, color: "#52525b" }}>Resets {resetLabel}</span>
+        </div>
+        <div style={{ height: 4, borderRadius: 999, background: "rgba(255,255,255,0.07)", overflow: "hidden" }}>
+          <div style={{
+            height: "100%", width: `${fillPct}%`, borderRadius: 999,
+            background: "linear-gradient(90deg, #6366f1, #8b5cf6)",
+          }} />
+        </div>
+      </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%", maxWidth: 320, marginTop: 4 }}>
-        {!isTeam && (
+      {/* CTA */}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, width: "100%", maxWidth: 300 }}>
+        {isTeam ? (
+          <a
+            href="mailto:support@cutsheet.xyz?subject=Custom Visualize limits"
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "center",
+              width: "100%", padding: "11px 24px",
+              background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+              borderRadius: 9999, fontSize: 14, fontWeight: 600, color: "#fff",
+              textDecoration: "none", boxShadow: "0 2px 14px rgba(99,102,241,0.32)",
+            }}
+          >
+            Contact us for custom limits
+          </a>
+        ) : (
           <button
             type="button"
             onClick={() => onUpgrade?.(isPro ? "team" : "pro")}
             style={{
-              width: "100%", padding: "10px 24px",
-              background: "#6366f1", border: "none", borderRadius: 9999,
-              fontSize: 14, fontWeight: 500, color: "#fff", cursor: "pointer",
-              transition: "background 150ms",
+              width: "100%", padding: "11px 24px",
+              background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+              border: "none", borderRadius: 9999,
+              fontSize: 14, fontWeight: 600, color: "#fff", cursor: "pointer",
+              boxShadow: "0 2px 14px rgba(99,102,241,0.32)",
+              transition: "opacity 150ms",
             }}
-            onMouseEnter={(e) => { (e.currentTarget).style.background = "#5254cc"; }}
-            onMouseLeave={(e) => { (e.currentTarget).style.background = "#6366f1"; }}
+            onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.87"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
           >
             {isPro ? "Upgrade to Team — 25 Visualizes/month" : "Upgrade to Pro — 10 Visualizes/month"}
           </button>
         )}
 
-        {!isPro && !isTeam && (
-          <button
-            type="button"
-            onClick={() => onUpgrade?.("team")}
-            style={{
-              width: "100%", padding: "10px 24px",
-              background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 9999,
-              fontSize: 14, fontWeight: 500, color: "#d4d4d8", cursor: "pointer",
-            }}
-          >
-            Upgrade to Team — 25 Visualizes/month
-          </button>
-        )}
-
-        {isTeam && (
-          <a
-            href="mailto:support@cutsheet.xyz?subject=Custom Visualize limits"
-            style={{
-              display: "block", width: "100%", padding: "10px 24px",
-              background: "#6366f1", border: "none", borderRadius: 9999,
-              fontSize: 14, fontWeight: 500, color: "#fff", cursor: "pointer",
-              textAlign: "center", textDecoration: "none",
-            }}
-          >
-            Contact us for custom limits
-          </a>
-        )}
+        <p style={{ fontSize: 12, color: "#3f3f46" }}>
+          or wait until {resetLabel} for credits to reset
+        </p>
       </div>
-
-      <p style={{ fontSize: 12, color: "#52525b", marginTop: 4 }}>
-        or wait until {resetLabel} for your credits to reset
-      </p>
 
       <button
         type="button"
         onClick={onClose}
         style={{
-          marginTop: 4, padding: "4px 12px", fontSize: 11,
+          marginTop: -4, padding: "4px 14px", fontSize: 11,
           background: "none", border: "1px solid rgba(255,255,255,0.06)",
-          borderRadius: 6, color: "#52525b", cursor: "pointer",
+          borderRadius: 6, color: "#3f3f46", cursor: "pointer",
+          transition: "color 150ms",
         }}
+        onMouseEnter={(e) => { e.currentTarget.style.color = "#71717a"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.color = "#3f3f46"; }}
       >
         Dismiss
       </button>
@@ -287,12 +306,13 @@ export interface VisualizePanelProps {
   error?: string | null;
   creditData?: VisualizeCreditData | null;
   onClose: () => void;
+  onBack?: () => void;
   onAnalyzeVersion?: (file: File) => void;
   onUpgrade?: (feature: string) => void;
 }
 
 export function VisualizePanel({
-  status, result, originalImageUrl, error, creditData, onClose, onAnalyzeVersion, onUpgrade,
+  status, result, originalImageUrl, error, creditData, onClose, onBack, onAnalyzeVersion, onUpgrade,
 }: VisualizePanelProps) {
   const [briefCopied, setBriefCopied] = useState(false);
   const [downloadTouched, setDownloadTouched] = useState(false);
@@ -349,6 +369,22 @@ export function VisualizePanel({
         @keyframes shimmer { 0%{transform:translateX(-100%)} 100%{transform:translateX(200%)} }
         @keyframes spin    { to{transform:rotate(360deg)} }
       `}</style>
+
+      {/* ── Back button ─────────────────────────────────────── */}
+      {onBack && (
+        <button
+          type="button"
+          onClick={onBack}
+          style={{
+            display: "flex", alignItems: "center", gap: 6,
+            color: "#a1a1aa", fontSize: 13,
+            background: "transparent", border: "none", cursor: "pointer",
+            marginBottom: 16, padding: 0,
+          }}
+        >
+          ← Back to analysis
+        </button>
+      )}
 
       {/* ── Header ──────────────────────────────────────────── */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 16 }}>
@@ -416,9 +452,17 @@ export function VisualizePanel({
         )}
 
         {/* ── Credit Limit ────────────────────────────────────── */}
-        {status === "credit_limit" && creditData && (
+        {status === "credit_limit" && (
           <motion.div key="credit_limit" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <CreditLimitPanel creditData={creditData} onClose={onClose} onUpgrade={onUpgrade} />
+            {creditData
+              ? <CreditLimitPanel creditData={creditData} onClose={onClose} onUpgrade={onUpgrade} />
+              : (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, padding: "40px 24px", textAlign: "center" }}>
+                  <p style={{ fontSize: 15, color: "#a1a1aa" }}>You've reached your Visualize credit limit for this month.</p>
+                  <button type="button" onClick={onClose} style={{ padding: "6px 16px", fontSize: 12, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "#a1a1aa", cursor: "pointer" }}>Dismiss</button>
+                </div>
+              )
+            }
           </motion.div>
         )}
 

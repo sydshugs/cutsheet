@@ -125,7 +125,8 @@ export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, 
             onDragOver={onDragOver}
             onDragLeave={onDragLeave}
             role="button"
-            aria-label="Upload video file"
+            aria-label="Drop your creative here to upload"
+            aria-describedby="dropzone-hints"
             tabIndex={0}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
@@ -150,7 +151,7 @@ export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, 
             {/* Format chips */}
             <div className="flex gap-1.5 flex-wrap justify-center">
               {formatPills.map((p) => (
-                <span key={p} className="bg-white/5 rounded-full text-xs text-zinc-500 px-3 py-1 font-mono">
+                <span key={p} className="bg-white/5 rounded-full text-xs text-zinc-400 px-3 py-1 font-mono">
                   {p}
                 </span>
               ))}
@@ -173,7 +174,7 @@ export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, 
               <p className="text-xs text-red-400 animate-[shake_0.3s_ease-in-out]">{error}</p>
             )}
 
-            <p className="text-xs text-zinc-600">Max {MAX_SIZE_MB}MB per file</p>
+            <p className="text-xs text-zinc-400">Max {MAX_SIZE_MB}MB per file</p>
           </div>
 
           {/* Pasted URL input — appears when URL is pasted */}
@@ -200,6 +201,22 @@ export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, 
           )}
         </div>
 
+        <span
+          id="dropzone-hints"
+          style={{
+            position: "absolute",
+            width: 1,
+            height: 1,
+            padding: 0,
+            margin: -1,
+            overflow: "hidden",
+            clip: "rect(0, 0, 0, 0)",
+            whiteSpace: "nowrap",
+            borderWidth: 0,
+          }}
+        >
+          Accepts MP4, MOV, WEBM, JPG, PNG, WEBP. Max 200MB per file.
+        </span>
         <input
           ref={fileInputRef}
           type="file"

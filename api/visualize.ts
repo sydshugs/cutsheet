@@ -127,13 +127,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   // ── Input validation ─────────────────────────────────────────────────────
-  const { imageBase64, imageMediaType, analysisResult, platform, niche, adType } = req.body ?? {};
+  const { imageStorageUrl, imageBase64, imageMediaType, analysisResult, platform, niche, adType } = req.body ?? {};
 
-  if (!imageBase64) return res.status(400).json({ error: "imageBase64 is required" });
+  if (!imageStorageUrl && !imageBase64) return res.status(400).json({ error: "imageStorageUrl or imageBase64 is required" });
   if (!analysisResult) return res.status(400).json({ error: "analysisResult is required" });
 
-  const b64Err = validateBase64Size(imageBase64, "imageBase64");
-  if (b64Err) return res.status(413).json({ error: b64Err });
+  // Validate Supabase storage URL if provided
+  if (imageStorageUrl) {
+    const supabaseUrl = process.env.VITE_SUPABASE_URL ?? "";
+    if (!supabaseUrl || !imageStorageUrl.startsWith(supabaseUrl)) {
+      return res.status(400).json({ error: "Invalid storage URL" });
+    }
+  }
+
+  // Legacy: validate base64 size only when no storage URL provided
+  if (!imageStorageUrl && imageBase64) {
+    const b64Err = validateBase64Size(imageBase64, "imageBase64");
+    if (b64Err) return res.status(413).json({ error: b64Err });
+  }
 
   const cleanPlatform = safePlatform(platform);
   const cleanNiche = safeNiche(niche);
@@ -171,6 +182,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     : `This ad scored ${overallScore}/10 overall. The improved version refines the creative with the specific changes identified in the analysis.`;
   const changesApplied = improvements.slice(0, 6);
 
+  // ── Resolve image to base64 for Gemini ───────────────────────────────────
+  let resolvedBase64: string;
+  let resolvedMimeType: string = safeMediaType;
+
+  if (imageStorageUrl) {
+    const imgResp = await fetch(imageStorageUrl);
+    if (!imgResp.ok) throw new Error(`Failed to fetch stored image: ${imgResp.status}`);
+    const buf = await imgResp.arrayBuffer();
+    resolvedBase64 = Buffer.from(buf).toString("base64");
+    resolvedMimeType = imgResp.headers.get("content-type") || safeMediaType;
+  } else {
+    resolvedBase64 = imageBase64 as string;
+  }
+
   // ── Gemini — generate improved ad image with original for reference ──────
   let generatedImageUrl: string | undefined;
   let visualBrief: string | undefined;
@@ -187,7 +212,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             text: "SYSTEM: You are a performance creative director. Your output will be shown directly to a paid media professional. Generic, stock-photo-style, or obviously AI-generated output is not acceptable and will be rejected. The improved ad must look like it was produced by a human creative team — authentic, on-brand, platform-native.",
           },
           {
-            inlineData: { mimeType: safeMediaType, data: imageBase64 },
+            inlineData: { mimeType: resolvedMimeType, data: resolvedBase64 },
           },
           {
             text: imageGenPrompt,

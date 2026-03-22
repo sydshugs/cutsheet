@@ -57,7 +57,7 @@ const MORE_ITEMS = [...ANALYZE.slice(3), ...COMPARE.slice(1), ...LIBRARY];
 
 function SectionLabel({ label }: { label: string }) {
   return (
-    <div role="heading" aria-level={2} style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "#71717a", padding: "0 12px", marginTop: 24, marginBottom: 2 }}>
+    <div role="heading" aria-level={2} style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "#a1a1aa", padding: "0 12px", marginTop: 24, marginBottom: 2 }}>
       {label}
     </div>
   );
@@ -226,7 +226,7 @@ function DesktopSidebar({
           type="button"
           onClick={() => navigate("/app")}
           style={{ display: "flex", alignItems: "center", gap: 10, background: "none", border: "none", cursor: "pointer", padding: 0 }}
-          aria-label="Go to home"
+          aria-label="Cutsheet — go to home"
         >
           <img
             src="/icon.png"
@@ -312,12 +312,12 @@ function DesktopSidebar({
             display: "flex", alignItems: "center", gap: 10,
             padding: collapsed ? "8px 0" : "8px 16px",
             justifyContent: collapsed ? "center" : "flex-start",
-            color: "#52525b", fontSize: 13, textDecoration: "none",
+            color: "#71717a", fontSize: 13, textDecoration: "none",
             transition: "color 150ms", borderRadius: 8,
           }}
           title={collapsed ? "Help & Support" : undefined}
           onMouseEnter={e => (e.currentTarget.style.color = "#a1a1aa")}
-          onMouseLeave={e => (e.currentTarget.style.color = "#52525b")}
+          onMouseLeave={e => (e.currentTarget.style.color = "#71717a")}
         >
           <HelpCircle size={18} />
           {!collapsed && <span>Help &amp; Support</span>}
@@ -344,7 +344,7 @@ function DesktopSidebar({
 // ─── MOBILE BOTTOM TAB BAR ────────────────────────────────────────────────────
 
 const MOBILE_TABS = [
-  { label: "Paid",     path: "/app/paid",     icon: Zap },
+  { label: "Paid Ad",  path: "/app/paid",     icon: Zap },
   { label: "Organic",  path: "/app/organic",  icon: TrendingUp },
   { label: "Display",  path: "/app/display",  icon: Monitor },
 ];

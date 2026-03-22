@@ -68,7 +68,7 @@ function RankEmptyState({ onStart, onFileDrop }: { onStart: () => void; onFileDr
       <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <Trophy size={28} color="#6366f1" />
       </div>
-      <h2 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", margin: 0 }}>Rank your creatives</h2>
+      <h1 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", margin: 0 }}>Rank your creatives</h1>
       <p style={{ fontSize: 14, color: "#71717a", textAlign: "center", maxWidth: 380, lineHeight: 1.6, margin: 0 }}>
         Upload up to 10 ad variations. Cutsheet scores them all and ranks them — so you know which 2-3 to actually test before spending a dollar.
       </p>

@@ -17,6 +17,9 @@ const RATE = { freeLimit: 3, proLimit: 9999, windowSeconds: 86400 };
 
 interface PolicyCheckRequest {
   mediaUrl?: string;
+  /** Preferred: Supabase signed URL (bypasses Vercel 4.5MB body limit). */
+  mediaStorageUrl?: string;
+  /** Legacy fallback: base64 data URL. */
   mediaDataUrl?: string;
   adCopy?: string;
   platform: "meta" | "tiktok" | "both";
@@ -61,7 +64,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
   }
 
-  const { mediaUrl, mediaDataUrl, adCopy, platform: rawPlatform, adType: rawAdType, niche: rawNiche, existingAnalysis } =
+  const { mediaUrl, mediaStorageUrl, mediaDataUrl, adCopy, platform: rawPlatform, adType: rawAdType, niche: rawNiche, existingAnalysis } =
     (req.body ?? {}) as PolicyCheckRequest;
 
   if (!rawPlatform || !rawAdType || !rawNiche) {
@@ -73,8 +76,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const adType = safeAdType(rawAdType);
   const niche = safeNiche(rawNiche);
 
-  // Validate base64 size if client sent a data URL
-  if (mediaDataUrl) {
+  // Validate Supabase storage URL if provided
+  if (mediaStorageUrl) {
+    const supabaseUrl = process.env.VITE_SUPABASE_URL ?? "";
+    if (!supabaseUrl || !mediaStorageUrl.startsWith(supabaseUrl)) {
+      return res.status(400).json({ error: "Invalid storage URL" });
+    }
+  }
+
+  // Validate base64 size if client sent a data URL (legacy fallback)
+  if (mediaDataUrl && !mediaStorageUrl) {
     const b64Err = validateBase64Size(mediaDataUrl, "mediaDataUrl");
     if (b64Err) return res.status(413).json({ error: b64Err });
   }
@@ -82,8 +93,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // ── Step 1: Gemini visual scan (only if no existing analysis and media provided)
   let geminiFindings = "";
 
-  // Resolve image data: either from data URL (client upload) or remote URL
-  const hasMedia = !existingAnalysis && (mediaDataUrl || mediaUrl);
+  // Resolve image data: storage URL (preferred) → data URL → remote URL
+  const hasMedia = !existingAnalysis && (mediaStorageUrl || mediaDataUrl || mediaUrl);
 
   if (hasMedia) {
     try {
@@ -147,14 +158,21 @@ Return findings as structured JSON:
         let base64: string;
         let contentType: string;
 
-        if (mediaDataUrl) {
-          // Client sent base64 data URL: "data:image/png;base64,iVBOR..."
+        if (mediaStorageUrl) {
+          // Preferred: fetch from Supabase Storage (URL already validated above)
+          const imageResp = await fetch(mediaStorageUrl);
+          if (!imageResp.ok) throw new Error(`Failed to fetch stored media: ${imageResp.status}`);
+          const imageBuffer = await imageResp.arrayBuffer();
+          base64 = Buffer.from(imageBuffer).toString("base64");
+          contentType = imageResp.headers.get("content-type") || "image/jpeg";
+        } else if (mediaDataUrl) {
+          // Legacy: client sent base64 data URL
           const match = mediaDataUrl.match(/^data:([^;]+);base64,(.+)$/);
           if (!match) throw new Error("Invalid data URL format");
           contentType = match[1];
           base64 = match[2];
         } else {
-          // Fetch from remote URL — validate against SSRF
+          // Fetch from remote social media URL — validate against SSRF allowlist
           const urlErr = validateFetchUrl(mediaUrl!);
           if (urlErr) throw new Error(urlErr);
           const imageResp = await fetch(mediaUrl!);

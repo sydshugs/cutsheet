@@ -4,7 +4,9 @@ import { Helmet } from "react-helmet-async";
 import { useState, useRef } from "react";
 import { useOutletContext } from "react-router-dom";
 import { ShieldCheck, Upload, X } from "lucide-react";
+import { FeaturePill } from "../../components/ui/FeaturePill";
 import { runPolicyCheck, type PolicyCheckResult, type PolicyCheckParams } from "../../lib/policyCheckService";
+import { uploadImageToStorage, removeFromStorage } from "../../lib/storageService";
 import { PolicyCheckPanel } from "../../components/PolicyCheckPanel";
 import type { AppSharedContext } from "../../components/AppLayout";
 
@@ -103,23 +105,15 @@ function EmptyState({
       >
         <ShieldCheck size={28} color="#f59e0b" />
       </div>
-      <h2 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>
+      <h1 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>
         Check ad policies before launch
-      </h2>
-      <p style={{ fontSize: 14, color: "#71717a", textAlign: "center", maxWidth: 360, marginTop: 10, lineHeight: 1.6 }}>
+      </h1>
+      <p style={{ fontSize: 14, color: "#a1a1aa", textAlign: "center", maxWidth: 360, marginTop: 10, lineHeight: 1.6 }}>
         Scan your creative against Meta and TikTok policies. Catch rejections before they cost you ad spend.
       </p>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 16 }}>
         {PILLS.map((pill) => (
-          <span
-            key={pill}
-            style={{
-              fontSize: 12, color: "#818cf8", background: "rgba(99,102,241,0.08)",
-              border: "1px solid rgba(99,102,241,0.15)", borderRadius: 9999, padding: "4px 12px",
-            }}
-          >
-            {pill}
-          </span>
+          <FeaturePill key={pill} label={pill} />
         ))}
       </div>
       <div style={{ width: "100%", maxWidth: 520, marginTop: 32 }}>
@@ -150,7 +144,7 @@ function EmptyState({
         >
           <Upload size={24} color="#d97706" />
           <span style={{ fontSize: 14, color: "#a16207" }}>Upload your ad creative (optional)</span>
-          <span style={{ fontSize: 11, color: "#52525b" }}>Video, JPG, PNG, WebP — or skip and use copy only</span>
+          <span style={{ fontSize: 11, color: "#71717a" }}>Video, JPG, PNG, WebP — or skip and use copy only</span>
         </div>
         <input
           ref={fileInputRef}
@@ -212,10 +206,19 @@ export default function PolicyCheck() {
     setResult(null);
 
     try {
-      // Convert file to base64 data URL, resized to fit serverless body limit
-      let mediaDataUrl: string | undefined;
+      if (!file && !adCopy.trim()) {
+        setError("Upload a creative or paste your ad copy for a text-only check");
+        setLoading(false);
+        return;
+      }
+
+      // Upload file to Supabase Storage first (bypasses Vercel 4.5MB body limit)
+      let mediaStorageUrl: string | undefined;
+      let storagePath: string | undefined;
       if (file) {
-        mediaDataUrl = await fileToMediaDataUrl(file, 1200, 0.8);
+        const uploaded = await uploadImageToStorage(file, 1200, 0.8);
+        mediaStorageUrl = uploaded.signedUrl;
+        storagePath = uploaded.storagePath;
       }
 
       const params: PolicyCheckParams = {
@@ -223,17 +226,12 @@ export default function PolicyCheck() {
         adType,
         niche: niche.trim(),
         adCopy: adCopy.trim() || undefined,
-        mediaDataUrl,
+        mediaStorageUrl,
       };
-
-      if (!file && !adCopy.trim()) {
-        setError("Upload a creative or paste your ad copy for a text-only check");
-        setLoading(false);
-        return;
-      }
 
       const r = await runPolicyCheck(params);
       setResult(r);
+      if (storagePath) removeFromStorage(storagePath);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Policy check failed";
       if (msg.startsWith("RATE_LIMITED")) {
