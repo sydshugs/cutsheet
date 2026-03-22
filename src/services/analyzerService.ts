@@ -693,35 +693,57 @@ export async function compareAnalyses(
   _apiKey: string,
   platform?: string,
   niche?: string,
+  scoresA?: { hook: number; clarity: number; cta: number; production: number; overall: number } | null,
+  scoresB?: { hook: number; clarity: number; cta: number; production: number; overall: number } | null,
+  intent?: string,
 ): Promise<string> {
-  const platformContext = platform && platform !== "all"
-    ? `Both ads are evaluated for ${platform} performance. Frame all comparisons in terms of what works on ${platform} specifically.`
-    : "Compare these ads on general performance marketing criteria.";
+  const platformLabel = platform && platform !== "all" ? platform : "paid social";
+  const nicheLabel = niche || "performance marketing";
+  const intentLabel = intent || "conversion";
 
-  const nicheContext = niche
-    ? `Both ads are in the ${niche} niche. Reference ${niche}-specific audience expectations and conversion patterns.`
-    : "";
+  // Identify which dimensions differ most
+  let dimensionComparison = "";
+  if (scoresA && scoresB) {
+    const dims = ["hook", "clarity", "cta", "production"] as const;
+    const diffs = dims.map(d => ({
+      dim: d,
+      a: scoresA[d],
+      b: scoresB[d],
+      diff: scoresA[d] - scoresB[d],
+    })).sort((x, y) => Math.abs(y.diff) - Math.abs(x.diff));
 
-  const prompt = `You are a senior performance creative strategist comparing two ad creatives head-to-head.
+    dimensionComparison = `\nSCORE COMPARISON:
+Ad A: Overall ${scoresA.overall}/10 — Hook ${scoresA.hook}/10, Clarity ${scoresA.clarity}/10, CTA ${scoresA.cta}/10, Production ${scoresA.production}/10
+Ad B: Overall ${scoresB.overall}/10 — Hook ${scoresB.hook}/10, Clarity ${scoresB.clarity}/10, CTA ${scoresB.cta}/10, Production ${scoresB.production}/10
+Biggest gaps: ${diffs.slice(0, 2).map(d => `${d.dim} (${d.a} vs ${d.b}, diff ${d.diff > 0 ? "+" : ""}${d.diff})`).join(", ")}`;
+  }
 
-${platformContext}
-${nicheContext}
+  const intentContext = intentLabel === "awareness"
+    ? "The user's goal is brand awareness — weight hook strength and memorability higher than CTA conversion."
+    : intentLabel === "consideration"
+    ? "The user's goal is engagement/CTR — weight hook and clarity higher than production polish."
+    : "The user's goal is direct response conversion — weight CTA strength and clarity highest.";
 
-Given these two ad analyses, which creative is stronger and why? Be direct. Give a verdict, key differences, and one recommendation for each.
+  const prompt = `You are a senior ${nicheLabel} creative strategist on ${platformLabel}. You're comparing two ad creatives head-to-head for a ${nicheLabel} brand.
+
+${intentContext}
+${dimensionComparison}
+
+Anchor every comparison to what matters for ${nicheLabel} on ${platformLabel}. Don't just say "Ad A has a stronger hook" — say "Ad A's hook (${scoresA?.hook ?? "?"}  vs ${scoresB?.hook ?? "?"}) uses [specific pattern] which outperforms on ${platformLabel} for ${nicheLabel} because [reason]."
 
 Format your response exactly as:
 
 ## VERDICT
-State clearly which ad is stronger and why in 2–3 sentences.${platform ? ` Reference ${platform}-specific performance factors.` : ""}
+State clearly which ad wins for ${intentLabel} on ${platformLabel} and why in 2–3 sentences. Reference specific scores and ${nicheLabel} audience behavior.
 
 ## KEY DIFFERENCES
-- [3–5 bullet points comparing the two ads head to head${platform ? `, evaluated against ${platform} best practices` : ""}]
+- [3–5 bullet points comparing head-to-head, each referencing specific scores and explaining why the difference matters for ${nicheLabel} on ${platformLabel}]
 
 ## RECOMMENDATION FOR AD A
-One specific, actionable recommendation.${niche ? ` Tailored to ${niche} audience expectations.` : ""}
+One specific, actionable recommendation to improve Ad A's weakest dimension for ${nicheLabel} ${intentLabel} on ${platformLabel}.${scoresA ? ` Weakest area: ${Object.entries(scoresA).filter(([k]) => ["hook", "clarity", "cta", "production"].includes(k)).sort(([, a], [, b]) => a - b)[0]?.[0] ?? "unknown"}.` : ""}
 
 ## RECOMMENDATION FOR AD B
-One specific, actionable recommendation.${niche ? ` Tailored to ${niche} audience expectations.` : ""}
+One specific, actionable recommendation to improve Ad B's weakest dimension for ${nicheLabel} ${intentLabel} on ${platformLabel}.${scoresB ? ` Weakest area: ${Object.entries(scoresB).filter(([k]) => ["hook", "clarity", "cta", "production"].includes(k)).sort(([, a], [, b]) => a - b)[0]?.[0] ?? "unknown"}.` : ""}
 
 ---
 
@@ -733,8 +755,12 @@ ${markdownA}
 ## AD B ANALYSIS
 ${markdownB}`;
 
-  // Text-only call — no media, just prompt
-  return callGeminiProxy({ prompt, maxOutputTokens: 2048, temperature: 0.4 });
+  return callGeminiProxy({
+    prompt,
+    systemInstruction: `You are a senior creative strategist specializing in ${nicheLabel} advertising on ${platformLabel}. Your comparisons are calibrated to ${platformLabel} benchmarks for ${nicheLabel}. Every insight must reference specific scores. Never give generic advice that could apply to any two ads.`,
+    maxOutputTokens: 2048,
+    temperature: 0.4,
+  });
 }
 
 // ─── GENERATE BRIEF ───────────────────────────────────────────────────────────
