@@ -37,7 +37,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
   }
 
-  const { analysisMarkdown, platform, adType, userContext } = req.body ?? {};
+  const { analysisMarkdown, platform, adType, userContext, niche, scores } = req.body ?? {};
 
   if (!analysisMarkdown || !platform) {
     return res.status(400).json({ error: "Missing analysisMarkdown or platform" });
@@ -46,20 +46,54 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const platformKey = platform.toLowerCase().replace(/\s+/g, "");
   const guidance = PLATFORM_GUIDANCE[platformKey] ?? PLATFORM_GUIDANCE.meta;
 
-  const systemPrompt = `You are a ${platform} advertising specialist who scores creative specifically for ${platform} performance. You know exactly what works on ${platform} — the formats, the audience behavior, the algorithm preferences. Your scores are calibrated: a 7 means "good for ${platform}", not "good in general". A creative optimized for Meta might score 4 on TikTok. Be platform-honest.`;
+  const nicheLabel = niche || "general";
 
-  const prompt = `A creative has already been analyzed. Based on the following analysis, generate a platform-specific scorecard for ${platform}.
+  // Niche-specific platform expectations
+  const nichePlatformContext: Record<string, Record<string, string>> = {
+    supplements: {
+      meta: "Supplement ads on Meta: curiosity-gap hooks outperform direct claims. UGC testimonials convert 2-3x vs polished production. Text overlays must avoid health claims that trigger policy review. Sound-off is critical.",
+      tiktok: "Supplement ads on TikTok: creator-style 'I tried this' format dominates. Must feel native — polished production tanks engagement. Hook must land in 0.5s. Avoid anything that looks like a traditional ad.",
+      youtube: "Supplement ads on YouTube: longer-form education works. First 5s must establish credibility. Audio quality matters — voiceover with b-roll outperforms talking head for supplements.",
+    },
+    saas: {
+      meta: "SaaS ads on Meta: screen recordings with text overlays outperform lifestyle imagery. Problem-solution hooks in 3 seconds. CTA must be specific ('Start free trial') not generic ('Learn more').",
+      tiktok: "SaaS ads on TikTok: 'POV: you discover [tool]' format works. Must feel like a tip, not an ad. Screen recordings with casual narration. Avoid corporate language entirely.",
+      youtube: "SaaS ads on YouTube: demo-first approach. Show the product working in first 5s. Skip button is the enemy — lead with the outcome, not the problem.",
+    },
+    ecommerce: {
+      meta: "DTC/ecommerce on Meta: thumb-stop visuals are everything. Product-in-use outperforms product-on-white. UGC unboxing and review format. Price/offer visible in first frame.",
+      tiktok: "DTC on TikTok: 'TikTok made me buy it' format. Authentic creator reactions. Fast cuts, trending audio. Product reveal in first 2 seconds.",
+      youtube: "DTC on YouTube: longer consideration cycle. Detailed product demos, comparison content. End screen CTA with clear offer.",
+    },
+  };
+
+  const nicheKey = nicheLabel.toLowerCase().replace(/[^a-z]/g, "");
+  const platformKey2 = platformKey.replace(/\s+/g, "");
+  const nicheContext = Object.entries(nichePlatformContext).find(([k]) => nicheKey.includes(k))?.[1]?.[platformKey2] || "";
+
+  // Include scores context if available
+  const scoresContext = scores
+    ? `\nORIGINAL SCORES: Overall ${scores.overall ?? "?"}/10, Hook ${scores.hook ?? "?"}/10, Clarity ${scores.clarity ?? "?"}/10, CTA ${scores.cta ?? "?"}/10, Production ${scores.production ?? "?"}/10`
+    : "";
+
+  const systemPrompt = `You are a ${platform} advertising specialist for ${nicheLabel} brands. You score creative specifically for how ${nicheLabel} ads perform on ${platform} — not generic ad quality. A 7 means "good for ${nicheLabel} on ${platform}", not "good in general". A ${nicheLabel} ad optimized for Meta might score 4 on TikTok. Be platform-honest and niche-calibrated.`;
+
+  const prompt = `A ${nicheLabel} creative has already been analyzed. Based on the following analysis, generate a platform-specific scorecard for ${platform}.
 
 ORIGINAL ANALYSIS:
 ${analysisMarkdown}
+${scoresContext}
 
 AD TYPE: ${adType ?? "video"}
 TARGET PLATFORM: ${platform}
+NICHE: ${nicheLabel}
 
 ${userContext ? `USER CONTEXT:\n${userContext}\n` : ""}
 
 Platform-specific scoring guidance for ${platform}:
 ${guidance}
+
+${nicheContext ? `\n${nicheLabel.toUpperCase()} ON ${platform.toUpperCase()} SPECIFICS:\n${nicheContext}` : ""}
 
 Score this ad specifically for ${platform} performance. Return a JSON object with these exact keys:
 {
