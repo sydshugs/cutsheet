@@ -1,5 +1,4 @@
 // Barrel export for scorecard sub-components
-export { MetricBars } from "./MetricBars";
 export { HookDetailCard } from "./HookDetailCard";
 export { BudgetCard } from "./BudgetCard";
 export { ScoreAdaptiveCTA } from "./ScoreAdaptiveCTA";

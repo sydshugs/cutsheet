@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Zap } from "lucide-react";
+import { cn } from "../lib/utils";
 import { useThumbnail } from "../hooks/useThumbnail";
 import { sanitizeFileName } from "../utils/sanitize";
 
@@ -11,6 +12,7 @@ interface ProgressCardProps {
   status: "uploading" | "processing";
   statusMessage: string;
   onCancel: () => void;
+  platform?: string;
 }
 
 const STAGES = [
@@ -24,7 +26,74 @@ const STAGES = [
 
 const METRICS = ["Hook Strength", "Message Clarity", "CTA Effectiveness", "Production Quality"];
 
-export function ProgressCard({ file, status, onCancel }: ProgressCardProps) {
+// ── Checklist card ────────────────────────────────────────────────────────────
+
+const CHECK_ITEMS = [
+  { id: "hook",     label: "Hook & scroll-stop power" },
+  { id: "cta",      label: "CTA clarity + urgency" },
+  { id: "visual",   label: "Visual hierarchy & brand" },
+  { id: "platform", label: "Platform fit for {platform}" },
+  { id: "policy",   label: "Policy risk flags" },
+] as const;
+
+// Map stageIndex (0-5) → which CHECK_ITEMS index is active
+const STAGE_TO_CHECK_INDEX = [0, 1, 2, 3, 4, 4] as const;
+
+function ChecklistItem({ label, done, active }: { label: string; done: boolean; active: boolean }) {
+  return (
+    <div className="flex items-center gap-3">
+      {/* Circle indicator */}
+      <div className={cn(
+        "w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0 transition-all duration-300",
+        done   ? "border-emerald-500 bg-emerald-500/10"
+        : active ? "border-indigo-500 bg-indigo-500/10"
+        :          "border-white/10 bg-transparent"
+      )}>
+        <AnimatePresence mode="wait">
+          {done ? (
+            <motion.div
+              key="check"
+              initial={{ opacity: 0, scale: 0.6 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+            >
+              <svg width="8" height="8" viewBox="0 0 10 10" fill="none">
+                <polyline
+                  points="1.5,5 4,7.5 8.5,2"
+                  stroke="#10b981"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </motion.div>
+          ) : active ? (
+            <motion.div
+              key="dot"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"
+            />
+          ) : null}
+        </AnimatePresence>
+      </div>
+      {/* Label */}
+      <span className={cn(
+        "text-xs transition-colors duration-300",
+        done   ? "text-zinc-400"
+        : active ? "text-zinc-200"
+        :          "text-zinc-600"
+      )}>
+        {label}
+      </span>
+    </div>
+  );
+}
+
+export function ProgressCard({ file, status, onCancel, platform }: ProgressCardProps) {
   const [stageIndex, setStageIndex] = useState(0);
   const thumbnailDataUrl = useThumbnail(file);
   const isImage = file.type.startsWith("image/");
@@ -48,6 +117,10 @@ export function ProgressCard({ file, status, onCancel }: ProgressCardProps) {
 
   const stage = STAGES[stageIndex];
   const displayUrl = thumbnailDataUrl || previewUrl;
+
+  // Checklist state derived from stageIndex
+  const activeCheckIndex = STAGE_TO_CHECK_INDEX[stageIndex] ?? 0;
+  const platformLabel = platform && platform !== "all" ? platform : "your platform";
 
   // ZAP circle size
   const ZAP_SIZE = 56;
@@ -269,6 +342,44 @@ export function ProgressCard({ file, status, onCancel }: ProgressCardProps) {
               </div>
             </div>
           </div>
+
+          {/* ── Element 4: What we're checking card ── */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3, delay: 0.15 }}
+            style={{
+              width: "100%",
+              background: "#111111",
+              border: "1px solid rgba(255,255,255,0.05)",
+              borderRadius: 12,
+              padding: "14px 16px",
+              marginTop: 8,
+            }}
+          >
+            <p style={{
+              fontSize: 10,
+              color: "#3f3f46",
+              textTransform: "uppercase",
+              letterSpacing: "0.1em",
+              marginBottom: 12,
+              margin: "0 0 12px",
+            }}>
+              What we're checking
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {CHECK_ITEMS.map((item, i) => (
+                <ChecklistItem
+                  key={item.id}
+                  label={item.id === "platform"
+                    ? `Platform fit for ${platformLabel}`
+                    : item.label}
+                  done={i < activeCheckIndex}
+                  active={i === activeCheckIndex}
+                />
+              ))}
+            </div>
+          </motion.div>
 
         </div>
       </div>
