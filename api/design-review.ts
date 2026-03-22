@@ -98,7 +98,7 @@ Return JSON only — no prose, no preamble:
       "area": "typography | layout | hierarchy | contrast",
       "severity": "critical | warning | note",
       "issue": "<specific, technical, one sentence>",
-      "fix": "<specific, actionable, one sentence>"
+      "fix": "<specific, actionable, MAX 10 words, no parenthetical examples>"
     }
   ],
   "overallDesignVerdict": "<one honest sentence about the overall design quality>"

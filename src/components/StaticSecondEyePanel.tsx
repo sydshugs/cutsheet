@@ -96,7 +96,7 @@ function CategoryFilterBar({
   for (const f of flags) counts[f.area] = (counts[f.area] ?? 0) + 1;
 
   const categories: { key: FilterCategory; label: string; color?: string; bg?: string }[] = [
-    { key: "all", label: `All ${counts.all}` },
+    { key: "all", label: "All" },
     ...(counts.hierarchy ? [{ key: "hierarchy" as const, ...AREA_STYLES.hierarchy }] : []),
     ...(counts.typography ? [{ key: "typography" as const, ...AREA_STYLES.typography }] : []),
     ...(counts.layout ? [{ key: "layout" as const, ...AREA_STYLES.layout }] : []),
@@ -119,7 +119,7 @@ function CategoryFilterBar({
               gap: 4,
               fontSize: 10,
               fontWeight: 500,
-              padding: "3px 8px",
+              padding: "2px 8px",
               borderRadius: 99,
               cursor: "pointer",
               transition: "all 150ms",
@@ -137,7 +137,7 @@ function CategoryFilterBar({
             {cat.key !== "all" && (
               <span style={{ width: 5, height: 5, borderRadius: "50%", background: cat.color, flexShrink: 0 }} />
             )}
-            {cat.label ?? cat.key} {cat.key !== "all" && count}
+            {cat.label ?? cat.key}
           </button>
         );
       })}
@@ -197,15 +197,10 @@ function DesignReviewCard({
         />
       </div>
 
-      {/* Fix — always visible, primary */}
-      <div style={{ marginTop: 8 }}>
-        <span style={{ fontSize: 10, color: "#52525b", letterSpacing: "0.05em", textTransform: "uppercase" as const }}>
-          FIX
-        </span>
-        <p style={{ fontSize: 13, color: "#e4e4e7", fontWeight: 500, margin: "3px 0 0", lineHeight: 1.5 }}>
-          {flag.fix}
-        </p>
-      </div>
+      {/* Fix — always visible, primary, no label */}
+      <p style={{ fontSize: 13, color: "#e4e4e7", fontWeight: 500, margin: "8px 0 0", lineHeight: 1.5 }}>
+        {flag.fix}
+      </p>
 
       {/* Issue — expandable */}
       <div
