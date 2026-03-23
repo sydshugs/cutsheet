@@ -734,6 +734,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
       const niche = userContext.match(/Niche:\s*(.+)/)?.[1]?.trim() || "general";
       // Meta static ads use platform-native CTA — exclude CTA from generated creative
       const isMetaStatic = platform === "Meta" && format === "static";
+      const cleanPlatform = platform === "all" ? "general" : platform;
       const result = await visualizeAd({
         imageStorageUrl,
         imageMediaType: "image/jpeg",
@@ -742,10 +743,16 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
           improvements: activeResult.improvements ?? [],
           markdown: activeResult.markdown,
         },
-        platform: platform === "all" ? "general" : platform,
+        platform: cleanPlatform,
         niche,
         adType: "static",
         excludeCta: isMetaStatic,
+        visualizeContext: {
+          adType: "paid",
+          format: format as "static" | "video",
+          platform: cleanPlatform,
+          excludeCta: isMetaStatic,
+        },
       });
       setVisualizeResult(result);
       setVisualizeStatus("complete");

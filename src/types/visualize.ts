@@ -1,5 +1,17 @@
 // src/types/visualize.ts — Types for the Visualize It feature
 
+/** Context passed alongside the Visualize request to select the correct prompt quadrant. */
+export interface VisualizeContext {
+  /** 'paid' for paid ad analyzers, 'organic' for organic content analyzers. */
+  adType: "paid" | "organic";
+  /** 'static' for image creatives, 'video' for video creatives. */
+  format: "static" | "video";
+  /** Platform name (e.g. 'Meta', 'TikTok', 'Instagram', 'YouTube'). */
+  platform: string;
+  /** When true, exclude all CTA elements from generated creative. Auto-set for organic; opt-in for Meta paid static. */
+  excludeCta?: boolean;
+}
+
 export interface VisualizeRequest {
   /** Preferred: Supabase signed URL (bypasses Vercel 4.5MB body limit). */
   imageStorageUrl?: string;
@@ -14,8 +26,9 @@ export interface VisualizeRequest {
   platform: string;
   niche: string;
   adType: "static" | "display";
-  /** When true, the generated creative must NOT add any CTA button or CTA text.
-   *  Used for Meta static ads where the CTA is placed by the platform. */
+  /** Prompt matrix context — determines which quadrant prompt to inject. */
+  visualizeContext?: VisualizeContext;
+  /** @deprecated Use visualizeContext.excludeCta instead. Kept for backward compat. */
   excludeCta?: boolean;
 }
 

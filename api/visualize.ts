@@ -12,6 +12,48 @@ import { safePlatform, safeAdType, safeNiche, validateBase64Size } from "./_lib/
 
 const GEMINI_IMAGE_MODEL = "gemini-2.5-flash-image";
 
+// ── 2×2 Prompt Matrix Context (Paid/Organic × Static/Video) ─────────────────
+// Injected as a prefix to the existing scorecard-driven prompt.
+// See Notion spec: "Visualize It Prompt Matrix"
+
+interface VisualizeContextInput {
+  adType: "paid" | "organic";
+  format: "static" | "video";
+  platform: string;
+  excludeCta?: boolean;
+}
+
+const PAID_STATIC_CONTEXT = `This is a PAID STATIC ad. The advertiser's CTA button, primary text, headline, and description all live OUTSIDE the creative in the ad platform UI.
+Do NOT add a CTA button to the image.
+Do NOT add urgency copy that belongs in the headline field.
+Focus the visual improvement on: thumb-stop power, message clarity at a glance, visual hierarchy, and brand recognition.
+The improved creative should look cleaner and more scroll-stopping — not more cluttered.`;
+
+const PAID_VIDEO_CONTEXT = `This is a PAID VIDEO ad. The platform adds CTA buttons natively — do NOT add a CTA button graphic to the video frame.
+Focus improvements on: first-frame scroll-stop, sound-off readability (captions/text overlays), platform-native feel, and CTA timing within the video.
+For TikTok: the ad must feel like organic creator content, not a produced commercial.
+For Meta: assume significant % of viewers watch muted — visual storytelling must work without audio.
+For YouTube skippable: brand and value prop must be clear before the 5-second skip button appears.`;
+
+const ORGANIC_STATIC_CONTEXT = `This is ORGANIC STATIC content, not a paid ad. There is no CTA button anywhere on this platform placement.
+Do NOT add a CTA button, urgency copy, offer banners, or any paid ad conventions to the image.
+Focus improvements on: scroll-stop power, save-worthiness (would someone bookmark this?), visual value delivery, and clarity of the core message.
+The improved version should feel like high-quality organic content — not like an ad.`;
+
+const ORGANIC_VIDEO_CONTEXT = `This is ORGANIC VIDEO content, not a paid ad. There is no CTA button on this platform placement.
+Do NOT add a CTA button, offer copy, urgency language, or any paid ad conventions.
+Focus improvements on: 3-second scroll-stop hook, completion signal (does it sustain to the end?), DM/share trigger (would someone send this to a friend?), and platform-native feel.
+The improved version should feel like content a real creator would post — not like an ad.`;
+
+function buildVisualizeContextPrefix(ctx: VisualizeContextInput): string {
+  if (ctx.adType === "paid" && ctx.format === "static") return PAID_STATIC_CONTEXT;
+  if (ctx.adType === "paid" && ctx.format === "video") return PAID_VIDEO_CONTEXT;
+  if (ctx.adType === "organic" && ctx.format === "static") return ORGANIC_STATIC_CONTEXT;
+  if (ctx.adType === "organic" && ctx.format === "video") return ORGANIC_VIDEO_CONTEXT;
+  // Fallback: paid static (safest default)
+  return PAID_STATIC_CONTEXT;
+}
+
 // ── Scorecard-driven prompt construction ─────────────────────────────────────
 
 const PLATFORM_SPECS: Record<string, string> = {
@@ -130,7 +172,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   // ── Input validation ─────────────────────────────────────────────────────
-  const { imageStorageUrl, imageBase64, imageMediaType, analysisResult, platform, niche, adType, excludeCta } = req.body ?? {};
+  const { imageStorageUrl, imageBase64, imageMediaType, analysisResult, platform, niche, adType, excludeCta, visualizeContext } = req.body ?? {};
 
   if (!imageStorageUrl && !imageBase64) return res.status(400).json({ error: "imageStorageUrl or imageBase64 is required" });
   if (!analysisResult) return res.status(400).json({ error: "analysisResult is required" });
@@ -169,15 +211,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const hookVerdict: string | undefined = analysisResult.hookDetail?.verdict;
   const adFormat = cleanAdType === "static" ? "static" as const : "video_frame" as const;
 
-  const imageGenPrompt = buildVisualizePrompt({
+  // Resolve excludeCta: explicit flag OR derived from visualizeContext (organic always excludes CTA)
+  const resolvedExcludeCta = !!excludeCta
+    || visualizeContext?.excludeCta
+    || visualizeContext?.adType === "organic";
+
+  const corePrompt = buildVisualizePrompt({
     platform: cleanPlatform,
     overallScore,
     dimensionScores,
     improvements,
     adFormat,
     hookVerdict,
-    excludeCta: !!excludeCta,
+    excludeCta: resolvedExcludeCta,
   });
+
+  // Prepend 2×2 quadrant context if provided — does NOT modify the core prompt
+  const contextPrefix = visualizeContext
+    ? buildVisualizeContextPrefix({
+        adType: visualizeContext.adType ?? "paid",
+        format: visualizeContext.format ?? "static",
+        platform: cleanPlatform,
+        excludeCta: resolvedExcludeCta,
+      })
+    : "";
+
+  const imageGenPrompt = contextPrefix
+    ? `${contextPrefix}\n\n---\n\n${corePrompt}`
+    : corePrompt;
 
   // Derive improvement summary and changes from scorecard data (no Claude call needed)
   const weakDims = dimensionScores.filter((d) => d.score < 7).sort((a, b) => a.score - b.score);
