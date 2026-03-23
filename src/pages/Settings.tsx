@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, CheckCircle, X } from "lucide-react";
+import { ArrowLeft, CheckCircle, X, Layers, Zap, Users, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getUsageInfo, fetchCreditStatus, FeatureLimitResult } from "../services/usageService";
@@ -67,52 +67,58 @@ const FEATURE_ROWS: { key: string; label: string }[] = [
   { key: "brief",       label: "Score to Brief" },
 ];
 
-// Plan comparison data
-const PLANS = {
-  free: {
+// Plan comparison data with monthly/yearly pricing
+const PLANS = [
+  {
+    id: "free",
     name: "Free",
-    price: 0,
+    description: "For individuals exploring",
+    priceMonthly: 0,
+    priceYearly: 0,
+    icon: "layers",
     features: [
-      "3 analyses per day",
-      "Video + static ad analysis",
-      "Basic scorecard",
+      { label: "3 analyses per day", included: true },
+      { label: "Video + static ad analysis", included: true },
+      { label: "Basic scorecard", included: true },
+      { label: "Visualize AI Art Director", included: false },
+      { label: "Motion Preview", included: false },
+      { label: "Advanced tools", included: false },
     ],
   },
-  pro: {
+  {
+    id: "pro",
     name: "Pro",
-    price: 29,
+    description: "For marketers & creators",
+    priceMonthly: 29,
+    priceYearly: 290,
+    icon: "zap",
+    recommended: true,
     features: [
-      "Unlimited video + static ad analyses",
-      "Visualize — AI Art Director (10/month)",
-      "Motion Preview (5/month)",
-      "Script Generator (10/month)",
-      "Fix It For Me (20/month)",
-      "Policy Checker (30/month)",
-      "Ad Deconstructor (20/month)",
-      "Score to Brief (20/month)",
-      "Hook Score, Emotion Map, Fatigue Predictor",
-      "Benchmark context",
+      { label: "Unlimited analyses", included: true },
+      { label: "Visualize (10/month)", included: true },
+      { label: "Motion Preview (5/month)", included: true },
+      { label: "Script Generator (10/month)", included: true },
+      { label: "Fix It For Me (20/month)", included: true },
+      { label: "All scoring features", included: true },
     ],
   },
-  team: {
+  {
+    id: "team",
     name: "Team",
-    price: 49,
+    description: "For agencies & teams",
+    priceMonthly: 49,
+    priceYearly: 490,
+    icon: "users",
     features: [
-      "Everything in Pro, plus:",
-      "Visualize (25/month shared)",
-      "Motion Preview (15/month shared)",
-      "Script Generator (25/month shared)",
-      "Fix It For Me (50/month shared)",
-      "Policy Checker (75/month shared)",
-      "Ad Deconstructor (50/month shared)",
-      "Score to Brief (50/month shared)",
-      "3 team seats",
-      "Shared analysis history",
-      "Team management dashboard",
-      "Client sharing (coming soon)",
+      { label: "Everything in Pro", included: true },
+      { label: "3 team seats", included: true },
+      { label: "Shared analysis history", included: true },
+      { label: "Higher usage limits", included: true },
+      { label: "Team dashboard", included: true },
+      { label: "Client sharing (soon)", included: true },
     ],
   },
-};
+];
 
 type Tab = "profile" | "billing" | "usage";
 type BillingView = "dashboard" | "manage" | "downgrade-reason" | "downgrade-confirm" | "downgraded";
@@ -144,6 +150,7 @@ export function Settings() {
   // Billing flow state
   const [billingView, setBillingView] = useState<BillingView>("dashboard");
   const [downgradeReason, setDowngradeReason] = useState<string | null>(null);
+  const [isAnnual, setIsAnnual] = useState(false);
 
   useEffect(() => {
     getUsageInfo().then(setUsage).catch(() => {});
@@ -236,7 +243,7 @@ export function Settings() {
   // ─── BILLING VIEWS ──────────────────────────────────────────────────────────
 
   const BillingDashboard = () => {
-    const currentPlan = isTeam ? PLANS.team : isPro ? PLANS.pro : PLANS.free;
+    const currentPlan = PLANS.find(p => p.id === currentPlanId) || PLANS[0];
     const planColor = isTeam ? COLORS.team : isPro ? COLORS.primary : "#71717a";
 
     const renderCreditValue = (cr: FeatureLimitResult | undefined) => {
@@ -525,7 +532,7 @@ export function Settings() {
             
             {/* Sample invoice rows */}
             {[
-              { date: renewalDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }), amount: `$${currentPlan.price}.00` },
+              { date: renewalDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }), amount: `$${currentPlan.priceMonthly}.00` },
             ].map((invoice, i) => (
               <div 
                 key={i}
@@ -565,14 +572,14 @@ export function Settings() {
             </span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            {currentPlan.features.map((f, i) => (
+            {currentPlan.features.filter(f => f.included).map((f, i) => (
               <div 
                 key={i} 
                 className="flex items-start gap-2.5 p-3 rounded-lg"
                 style={{ background: "rgba(255,255,255,0.02)" }}
               >
                 <CheckCircle size={14} color={isPro ? COLORS.success : "#52525b"} style={{ marginTop: 1, flexShrink: 0 }} />
-                <span style={{ fontSize: 13, color: isPro ? "#d4d4d8" : "#71717a", lineHeight: 1.4 }}>{f}</span>
+                <span style={{ fontSize: 13, color: isPro ? "#d4d4d8" : "#71717a", lineHeight: 1.4 }}>{f.label}</span>
               </div>
             ))}
           </div>
@@ -611,157 +618,246 @@ export function Settings() {
     );
   };
 
+  // Helper to get plan icon
+  const getPlanIcon = (icon: string) => {
+    switch (icon) {
+      case "layers": return <Layers size={24} color={COLORS.primaryLight} />;
+      case "zap": return <Zap size={24} color={COLORS.primaryLight} />;
+      case "users": return <Users size={24} color={COLORS.team} />;
+      default: return <Layers size={24} color={COLORS.primaryLight} />;
+    }
+  };
+
+  // Get current plan ID
+  const currentPlanId = subscriptionStatus === "team" ? "team" : subscriptionStatus === "pro" ? "pro" : "free";
+
   const ManageSubscription = () => (
     <motion.div
-      style={{ maxWidth: 560 }}
-      initial={{ opacity: 0, x: 16 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -16 }}
-      transition={{ duration: 0.2 }}
+      style={{ maxWidth: 880 }}
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -12 }}
+      transition={{ duration: 0.25 }}
     >
-      {/* Back */}
-      <button
-        type="button"
-        onClick={() => setBillingView("dashboard")}
-        className="flex items-center gap-2 mb-6 transition-colors"
-        style={{ color: "#71717a", background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 13, fontWeight: 500 }}
-        onMouseEnter={(e) => (e.currentTarget.style.color = "#a1a1aa")}
-        onMouseLeave={(e) => (e.currentTarget.style.color = "#71717a")}
-      >
-        <ArrowLeft size={14} /> Back to billing
-      </button>
-
-      <div className="flex flex-col gap-4">
-        {/* Main settings card */}
-        <div style={CARD_STYLE}>
-          <h2 style={{ fontSize: 18, fontWeight: 600, color: "#f4f4f5", marginBottom: 4 }}>
-            Manage Subscription
+      {/* Header with close */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 600, color: "#f4f4f5", marginBottom: 4 }}>
+            Manage your subscription
           </h2>
-          <p style={{ fontSize: 13, color: "#71717a", marginBottom: 24 }}>
-            Update your billing details or view past invoices.
+          <p style={{ fontSize: 14, color: "#71717a" }}>
+            Choose a plan that fits your needs
           </p>
-
-          {/* Payment Method */}
-          <div 
-            className="flex items-center justify-between p-4 rounded-xl mb-3"
-            style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}
-          >
-            <div className="flex items-center gap-3">
-              <div 
-                style={{ 
-                  width: 36, height: 36, borderRadius: 10,
-                  background: "rgba(255,255,255,0.04)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a1a1aa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-                  <line x1="1" y1="10" x2="23" y2="10"/>
-                </svg>
-              </div>
-              <div>
-                <p style={{ fontSize: 13, fontWeight: 500, color: "#f4f4f5" }}>Payment Method</p>
-                <p style={{ fontSize: 12, color: "#71717a" }}>•••• •••• •••• 4242</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              className="px-4 py-2 rounded-lg text-xs font-medium transition-all"
-              style={{ 
-                background: "rgba(255,255,255,0.04)", 
-                border: "1px solid rgba(255,255,255,0.08)", 
-                color: "#a1a1aa", 
-                cursor: "pointer" 
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(99,102,241,0.3)"; e.currentTarget.style.color = "#818cf8"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#a1a1aa"; }}
-            >
-              Update
-            </button>
-          </div>
-
-          {/* Invoice History */}
-          <div 
-            className="flex items-center justify-between p-4 rounded-xl"
-            style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}
-          >
-            <div className="flex items-center gap-3">
-              <div 
-                style={{ 
-                  width: 36, height: 36, borderRadius: 10,
-                  background: "rgba(255,255,255,0.04)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a1a1aa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <polyline points="14 2 14 8 20 8"/>
-                  <line x1="16" y1="13" x2="8" y2="13"/>
-                  <line x1="16" y1="17" x2="8" y2="17"/>
-                  <polyline points="10 9 9 9 8 9"/>
-                </svg>
-              </div>
-              <div>
-                <p style={{ fontSize: 13, fontWeight: 500, color: "#f4f4f5" }}>Invoice History</p>
-                <p style={{ fontSize: 12, color: "#71717a" }}>View and download past invoices</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              className="px-4 py-2 rounded-lg text-xs font-medium transition-all"
-              style={{ 
-                background: "rgba(255,255,255,0.04)", 
-                border: "1px solid rgba(255,255,255,0.08)", 
-                color: "#a1a1aa", 
-                cursor: "pointer" 
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(99,102,241,0.3)"; e.currentTarget.style.color = "#818cf8"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#a1a1aa"; }}
-            >
-              View
-            </button>
-          </div>
         </div>
+        <button
+          type="button"
+          onClick={() => setBillingView("dashboard")}
+          className="w-9 h-9 flex items-center justify-center rounded-lg transition-colors"
+          style={{ background: "rgba(255,255,255,0.04)", border: "none", cursor: "pointer", color: "#71717a" }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = "#a1a1aa"; e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = "#71717a"; e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
+        >
+          <X size={18} />
+        </button>
+      </div>
 
-        {/* Danger Zone */}
-        <div 
-          className="rounded-2xl p-5"
-          style={{ 
-            background: "rgba(239,68,68,0.04)", 
-            border: "1px solid rgba(239,68,68,0.1)" 
+      {/* Billing toggle */}
+      <div className="flex items-center justify-center gap-3 mb-8">
+        <button
+          type="button"
+          onClick={() => setIsAnnual(false)}
+          className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+          style={{
+            background: !isAnnual ? "rgba(255,255,255,0.08)" : "transparent",
+            color: !isAnnual ? "#f4f4f5" : "#71717a",
+            border: "none",
+            cursor: "pointer",
           }}
         >
-          <div className="flex items-center gap-2 mb-3">
-            <div 
-              style={{ 
-                width: 24, height: 24, borderRadius: 6,
-                background: "rgba(239,68,68,0.15)",
-                display: "flex", alignItems: "center", justifyContent: "center",
+          Monthly
+        </button>
+        <button
+          type="button"
+          onClick={() => setIsAnnual(true)}
+          className="px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2"
+          style={{
+            background: isAnnual ? "rgba(255,255,255,0.08)" : "transparent",
+            color: isAnnual ? "#f4f4f5" : "#71717a",
+            border: "none",
+            cursor: "pointer",
+          }}
+        >
+          Annually
+          <span 
+            className="px-2 py-0.5 rounded-full text-xs"
+            style={{ background: "rgba(16,185,129,0.15)", color: COLORS.success }}
+          >
+            Save 17%
+          </span>
+        </button>
+      </div>
+
+      {/* Pricing Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        {PLANS.map((plan) => {
+          const isCurrentPlan = plan.id === currentPlanId;
+          const isRecommended = plan.recommended && !isCurrentPlan;
+          const price = isAnnual ? plan.priceYearly : plan.priceMonthly;
+
+          return (
+            <div
+              key={plan.id}
+              className="relative rounded-2xl p-5 transition-all"
+              style={{
+                background: isRecommended ? "rgba(99,102,241,0.06)" : "rgba(255,255,255,0.02)",
+                border: isRecommended 
+                  ? `1px solid ${COLORS.primary}` 
+                  : isCurrentPlan 
+                    ? "1px solid rgba(255,255,255,0.12)" 
+                    : "1px solid rgba(255,255,255,0.06)",
+                transform: isRecommended ? "scale(1.02)" : "scale(1)",
               }}
             >
-              <X size={12} color={COLORS.error} />
+              {/* Recommended badge */}
+              {isRecommended && (
+                <div 
+                  className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-medium"
+                  style={{ background: COLORS.primary, color: "white" }}
+                >
+                  Recommended
+                </div>
+              )}
+
+              {/* Icon + Name */}
+              <div className="flex justify-center mb-4 pt-2">
+                <div 
+                  style={{ 
+                    width: 48, height: 48, borderRadius: 12,
+                    background: plan.id === "team" ? "rgba(139,92,246,0.1)" : "rgba(99,102,241,0.1)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}
+                >
+                  {getPlanIcon(plan.icon)}
+                </div>
+              </div>
+
+              <div className="text-center mb-4">
+                <h3 style={{ fontSize: 18, fontWeight: 600, color: "#f4f4f5", marginBottom: 4 }}>
+                  {plan.name}
+                </h3>
+                <p style={{ fontSize: 13, color: "#71717a" }}>{plan.description}</p>
+              </div>
+
+              {/* Price */}
+              <div className="text-center mb-5">
+                <span style={{ fontSize: 36, fontWeight: 700, color: "#f4f4f5", fontFamily: "var(--mono)" }}>
+                  ${price}
+                </span>
+                <span style={{ fontSize: 14, color: "#71717a" }}>
+                  {" "}/ {isAnnual ? "year" : "month"}
+                </span>
+              </div>
+
+              {/* CTA Button */}
+              {isCurrentPlan ? (
+                <div 
+                  className="w-full h-10 rounded-xl flex items-center justify-center text-sm font-medium mb-5"
+                  style={{ 
+                    background: "rgba(255,255,255,0.04)", 
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    color: "#71717a",
+                  }}
+                >
+                  Current plan
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => plan.id === "free" ? setBillingView("downgrade-reason") : navigate("/upgrade")}
+                  className="w-full h-10 rounded-xl text-sm font-medium transition-all mb-5"
+                  style={{
+                    background: isRecommended ? COLORS.primary : "rgba(255,255,255,0.06)",
+                    color: isRecommended ? "white" : "#e4e4e7",
+                    border: isRecommended ? "none" : "1px solid rgba(255,255,255,0.1)",
+                    cursor: "pointer",
+                  }}
+                  onMouseEnter={(e) => { 
+                    if (!isRecommended) e.currentTarget.style.background = "rgba(255,255,255,0.1)"; 
+                    else e.currentTarget.style.background = "#4f46e5";
+                  }}
+                  onMouseLeave={(e) => { 
+                    if (!isRecommended) e.currentTarget.style.background = "rgba(255,255,255,0.06)"; 
+                    else e.currentTarget.style.background = COLORS.primary;
+                  }}
+                >
+                  {plan.id === "free" ? "Downgrade" : "Upgrade"}
+                </button>
+              )}
+
+              {/* Features */}
+              <div className="flex flex-col gap-2.5">
+                <p style={{ fontSize: 12, fontWeight: 600, color: "#a1a1aa", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                  Highlights
+                </p>
+                {plan.features.map((feature, i) => (
+                  <div key={i} className="flex items-center gap-2.5">
+                    {feature.included ? (
+                      <Check size={14} color={plan.id === "team" ? COLORS.team : COLORS.primary} />
+                    ) : (
+                      <X size={14} color="#52525b" />
+                    )}
+                    <span 
+                      style={{ 
+                        fontSize: 13, 
+                        color: feature.included ? "#a1a1aa" : "#52525b",
+                        textDecoration: feature.included ? "none" : "line-through",
+                      }}
+                    >
+                      {feature.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
-            <span style={{ fontSize: 11, fontWeight: 600, color: COLORS.error, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-              Danger Zone
-            </span>
-          </div>
-          <p style={{ fontSize: 13, color: "#a1a1aa", marginBottom: 12, lineHeight: 1.5 }}>
-            Downgrade to Free plan. Your pro features will remain active until the end of your current billing cycle.
-          </p>
+          );
+        })}
+      </div>
+
+      {/* Footer links */}
+      <div className="flex items-center justify-between pt-4" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="flex items-center gap-4">
+          <a
+            href="mailto:support@cutsheet.app"
+            className="text-xs transition-colors"
+            style={{ color: "#71717a", textDecoration: "none" }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = "#a1a1aa"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = "#71717a"; }}
+          >
+            Having a problem? Contact support
+          </a>
+        </div>
+        <div className="flex items-center gap-4">
+          {isPro && (
+            <button
+              type="button"
+              onClick={() => setBillingView("downgrade-reason")}
+              className="text-xs transition-colors"
+              style={{ color: "#71717a", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = COLORS.error; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = "#71717a"; }}
+            >
+              Downgrade to Free
+            </button>
+          )}
           <button
             type="button"
-            onClick={() => setBillingView("downgrade-reason")}
-            className="px-4 py-2 rounded-lg text-xs font-medium transition-all"
-            style={{
-              background: "transparent",
-              border: "1px solid rgba(239,68,68,0.3)",
-              color: COLORS.error,
-              cursor: "pointer",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.1)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+            onClick={() => setBillingView("dashboard")}
+            className="text-xs transition-colors"
+            style={{ color: "#71717a", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = "#a1a1aa"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = "#71717a"; }}
           >
-            Downgrade to Free
+            Edit billing →
           </button>
         </div>
       </div>
