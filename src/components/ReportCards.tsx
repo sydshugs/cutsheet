@@ -17,6 +17,7 @@ import { DeepDivePreviewCard } from "./ui/DeepDivePreviewCard";
 import { DeepDiveRow } from "./ui/DeepDiveRow";
 import { ToolButton } from "./ui/ToolButton";
 import type { Verdict, StructuredImprovement } from "../services/analyzerService";
+import { CreativeAnalysis } from "./CreativeAnalysis";
 
 interface ReportCardsProps {
   file: File | null;
@@ -49,6 +50,8 @@ interface ReportCardsProps {
   // Render slots for components managed by PaidAdAnalyzer
   designReviewSlot?: React.ReactNode;
   secondEyeSlot?: React.ReactNode;
+  // Design review data for CreativeAnalysis
+  designReviewData?: { flags: { area: string; severity: string; fix: string; issue: string }[]; topIssue?: string; overallDesignVerdict?: string };
 }
 
 const JSON_TITLE_RE = /json|scene|raw\s*data|budget\s*recommend/i;
@@ -240,6 +243,7 @@ export function ReportCards({
   onFixIt, onVisualize, onCheckPolicies, onCompare, onGenerateBrief,
   fixItLoading, policyLoading,
   designReviewSlot, secondEyeSlot,
+  designReviewData,
 }: ReportCardsProps) {
   const isImage = file?.type.startsWith("image/") ?? false;
   const fileUrl = useMemo(() => file ? URL.createObjectURL(file) : null, [file]);
@@ -414,13 +418,13 @@ export function ReportCards({
                   <button
                     key={t.key}
                     onClick={() => setActiveTool(isActive ? null : t.key)}
-                    className="flex flex-col items-center gap-2 py-4 px-2 transition-colors cursor-pointer"
+                    className="group flex flex-col items-center gap-2 py-4 px-2 transition-colors duration-150 cursor-pointer hover:bg-white/[0.03]"
                     style={{
                       background: isActive ? 'rgba(99,102,241,0.06)' : 'transparent',
                       borderRight: i < 3 ? '0.5px solid rgba(255,255,255,0.06)' : 'none',
                     }}
                   >
-                    <div className="w-[38px] h-[38px] rounded-[11px] flex items-center justify-center transition-transform hover:scale-105" style={{ background: t.iconBg }}>
+                    <div className="w-[38px] h-[38px] rounded-[11px] flex items-center justify-center transition-transform duration-150 group-hover:scale-105" style={{ background: t.iconBg }}>
                       <Icon size={16} style={{ color: t.iconColor }} />
                     </div>
                     <span className="text-[11px] font-medium" style={{ color: isActive ? '#818cf8' : '#e4e4e7' }}>{t.name}</span>
@@ -458,47 +462,34 @@ export function ReportCards({
       {/* ─── Center column analysis sections ─── */}
       {/* Design Review + Second Eye Review rendered by PaidAdAnalyzer */}
 
-      {/* Creative Verdict — always visible, no accordion */}
-      {centerSections.filter(s => /verdict/i.test(s.title ?? '')).map((section, i) => {
-        const title = toSentenceCase(section.title!);
-        const SectionIcon = getIconForTitle(title);
-        return (
-          <div key={`verdict-${i}`} className="bg-zinc-900/50 rounded-2xl border border-white/5 p-5 mt-3">
-            <div className="flex items-center gap-2 mb-3">
-              <SectionIcon size={14} className="text-zinc-500" />
-              <span className="text-xs font-medium text-zinc-200">{title}</span>
-              {scores && (
-                <span className="ml-auto text-[10px] font-mono font-medium rounded-full px-1.5 py-px"
-                  style={{
-                    color: scores.overall >= 8 ? '#10b981' : scores.overall >= 5 ? '#d97706' : '#ef4444',
-                    background: scores.overall >= 8 ? 'rgba(16,185,129,0.1)' : scores.overall >= 5 ? 'rgba(251,191,36,0.12)' : 'rgba(239,68,68,0.1)',
-                  }}>{scores.overall}/10</span>
-              )}
-            </div>
-            {(() => {
-              // Extract one-liner (first sentence) + support (next 2 sentences max)
-              const sentences = section.content.trim().split(/(?<=[.!])\s+/).filter(s => s.trim());
-              const oneLiner = sentences[0] ?? '';
-              const support = sentences.slice(1, 3).join(' ');
-              return (
-                <>
-                  <div className="rounded-lg px-3 py-2.5 mb-3"
-                    style={{ background: 'rgba(99,102,241,0.06)', border: '0.5px solid rgba(99,102,241,0.18)' }}>
-                    <span className="text-[10px] text-indigo-400 uppercase tracking-[0.05em] block mb-1">Verdict</span>
-                    <p className="text-[13px] font-medium text-zinc-200 leading-snug">{oneLiner}</p>
-                  </div>
-                  {support && (
-                    <p className="text-xs text-zinc-400 leading-relaxed">{support}</p>
-                  )}
-                </>
-              );
-            })()}
-          </div>
-        );
-      })}
+      {/* ─── Creative Analysis (combined verdict + design review) ─── */}
+      {(() => {
+        // Build CreativeAnalysis data from verdict + design review
+        const verdictSection = centerSections.find(s => /verdict/i.test(s.title ?? ''));
+        const sentences = verdictSection?.content.trim().split(/(?<=[.!])\s+/).filter(s => s.trim()) ?? [];
+        const oneLiner = effectiveVerdict?.headline ?? sentences[0] ?? 'Analysis complete';
+        const vState = effectiveVerdict?.state ?? (scores?.overall && scores.overall >= 8 ? 'ready' : scores?.overall && scores.overall >= 5 ? 'needs_work' : 'not_ready');
 
-      {/* Design Review — rendered via slot from PaidAdAnalyzer */}
-      {designReviewSlot}
+        // Build fixes from design review data
+        const fixes = (designReviewData?.flags ?? []).map(f => ({
+          fix: f.fix,
+          category: f.area,
+          severity: f.severity === 'critical' ? 'high' : f.severity === 'warning' ? 'medium' : 'low',
+        }));
+
+        const topFix = designReviewData?.flags?.find(f => f.severity === 'critical') ?? designReviewData?.flags?.[0];
+
+        return (
+          <CreativeAnalysis
+            verdictState={vState as 'not_ready' | 'needs_work' | 'ready'}
+            verdictOneLiner={oneLiner}
+            score={scores?.overall ?? 0}
+            topIssue={topFix ? { fix: topFix.fix, category: topFix.area } : undefined}
+            fixes={fixes}
+            overallNote={designReviewData?.overallDesignVerdict ?? (sentences.slice(1, 3).join(' ') || undefined)}
+          />
+        );
+      })()}
 
       {/* Emotional Impact / Emotion Arc — show only one (prefer arc on video) */}
       {(() => {

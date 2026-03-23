@@ -928,13 +928,11 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                         onCompare={() => navigate('/app/competitor')}
                         fixItLoading={fixItLoading}
                         policyLoading={policyLoading}
-                        designReviewSlot={
-                          status === "complete" && staticSecondEye ? (
-                            <div className="mt-3">
-                              <StaticSecondEyePanel result={staticSecondEyeResult} loading={staticSecondEyeLoading} />
-                            </div>
-                          ) : undefined
-                        }
+                        designReviewData={staticSecondEyeResult ? {
+                          flags: staticSecondEyeResult.flags ?? [],
+                          topIssue: staticSecondEyeResult.topIssue,
+                          overallDesignVerdict: staticSecondEyeResult.overallDesignVerdict,
+                        } : undefined}
                         secondEyeSlot={
                           status === "complete" && format === "video" && secondEye ? (
                             <div className="mt-3">
