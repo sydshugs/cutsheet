@@ -2,11 +2,23 @@
 import { Helmet } from 'react-helmet-async';
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useOutletContext, useNavigate, Link } from "react-router-dom";
-import { RotateCcw, Upload, Sparkles, Lock, Zap } from "lucide-react";
+import { RotateCcw, Upload, Sparkles, Lock, Zap, Lightbulb, DollarSign, Film, TrendingUp, ShieldCheck, Hash } from "lucide-react";
 import { Toast } from "../../components/Toast";
 import { AnalyzerView } from "../../components/AnalyzerView";
 import { ScoreCard } from "../../components/ScoreCard";
 import { VideoDropzone } from "../../components/VideoDropzone";
+import { ToolSheet } from "../../components/ToolSheet";
+import { ActionStrip } from "../../components/ActionStrip";
+import { QuickWins } from "../../components/QuickWins";
+import { ScoreHero } from "../../components/ScoreHero";
+import { HookDetailCard } from "../../components/scorecard/HookDetailCard";
+import { BudgetCard } from "../../components/scorecard/BudgetCard";
+import SceneBreakdown from "../../components/SceneBreakdown";
+import { StaticAdChecks } from "../../components/StaticAdChecks";
+import PredictedPerformanceCard from "../../components/PredictedPerformanceCard";
+import { CollapsibleSection } from "../../components/ui/CollapsibleSection";
+import { getScoreColor } from "../../lib/scoreColors";
+import { getBenchmark } from "../../lib/benchmarks";
 import { HistoryDrawer } from "../../components/HistoryDrawer";
 import { AlertDialog } from "../../components/ui/AlertDialog";
 import { motion, AnimatePresence } from "framer-motion";
@@ -153,7 +165,7 @@ export default function PaidAdAnalyzer() {
   const [isImporting, setIsImporting] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [loadedEntry, setLoadedEntry] = useState<HistoryEntry | null>(null);
-  const [rightTab, setRightTab] = useState<"analysis" | "brief" | "policy">("analysis");
+  const [toolSheet, setToolSheet] = useState<null | "fixit" | "brief" | "policy">(null);
   const [brief, setBrief] = useState<string | null>(null);
   const [briefLoading, setBriefLoading] = useState(false);
   const [briefError, setBriefError] = useState<string | null>(null);
@@ -206,7 +218,7 @@ export default function PaidAdAnalyzer() {
     setBriefLoading(false);
     setCtaRewrites(null);
     setCtaLoading(false);
-    setRightTab("analysis");
+    setToolSheet(null);
     setSecondEyeOutput(null);
     setSecondEyeLoading(false);
     setStaticSecondEyeResult(null);
@@ -426,7 +438,7 @@ export default function PaidAdAnalyzer() {
       setPlatformImprovements(null);
       setBrief(null);
       setBriefError(null);
-      setRightTab("analysis");
+      setToolSheet(null);
       setSecondEyeOutput(null);
       setStaticSecondEyeResult(null);
     }
@@ -514,16 +526,16 @@ export default function PaidAdAnalyzer() {
     : liveResult;
 
   const effectiveStatus = (loadedEntry || loadedFromHistory) ? ("complete" as const) : status;
-  const showRightPanel = effectiveStatus === "complete" && activeResult !== null;
+  const hasResult = effectiveStatus === "complete" && activeResult !== null;
 
   // Report hasResult to TopBar via AppLayout
   useEffect(() => {
     registerCallbacks({
       onNewAnalysis: handleReset,
       onHistoryOpen: () => setHistoryOpen(true),
-      hasResult: showRightPanel,
+      hasResult,
     });
-  }, [registerCallbacks, handleReset, showRightPanel]);
+  }, [registerCallbacks, handleReset, hasResult]);
 
   const handleCopy = async () => {
     if (activeResult) await copyToClipboard(activeResult.markdown);
@@ -545,17 +557,16 @@ export default function PaidAdAnalyzer() {
 
   const handleGenerateBrief = async () => {
     if (!activeResult || briefLoading) return;
+    setToolSheet("brief");
     setBriefLoading(true);
     setBriefError(null);
     try {
       const r = await generateBriefWithClaude(activeResult.markdown, activeResult.fileName, userContext || undefined, sessionMemoryRef.current);
       setBrief(r);
-      setRightTab("brief");
     } catch {
       try {
         const r = await generateBrief(activeResult.markdown, API_KEY);
         setBrief(r);
-        setRightTab("brief");
       } catch (err) {
         setBriefError(err instanceof Error ? err.message : "Failed to generate brief.");
       }
@@ -575,9 +586,9 @@ export default function PaidAdAnalyzer() {
 
   const handleCheckPolicies = async () => {
     if (!activeResult || policyLoading) return;
+    setToolSheet("policy");
     setPolicyLoading(true);
     setPolicyError(null);
-    setRightTab("policy");
     try {
       // Determine policy platform from current platform selection
       const policyPlatform =
@@ -608,7 +619,12 @@ export default function PaidAdAnalyzer() {
 
   // ── Fix It For Me handler ──────────────────────────────────────────────────
   const handleFixIt = async () => {
+    if (fixItResult) {
+      setToolSheet("fixit");
+      return;
+    }
     if (!activeResult?.markdown || !activeResult?.scores || fixItLoading) return;
+    setToolSheet("fixit");
     setFixItLoading(true);
     try {
       const result = await generateFixIt(
@@ -773,120 +789,31 @@ export default function PaidAdAnalyzer() {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="flex h-full" style={{ minHeight: "calc(100vh - 56px)" }}>
+    <div className="flex flex-col h-full" style={{ minHeight: "calc(100vh - 56px)" }}>
       <Helmet>
         <title>Paid Ad Analyzer — Cutsheet</title>
         <meta name="description" content="Score Meta, TikTok, Google, and YouTube ads. Get hook strength, CTA score, and budget recommendations in 30 seconds." />
         <link rel="canonical" href="https://cutsheet.xyz/app/paid" />
       </Helmet>
-      {/* Accessibility: screen reader announcements */}
+      {/* Accessibility */}
       <p className="sr-only" aria-live="polite" aria-atomic="true">{statusMessage}</p>
       <div className="sr-only" aria-live="assertive">
         {status === "complete" && result?.scores ? `Analysis complete. Your ad scored ${result.scores.overall} out of 10.` : ""}
       </div>
-      {/* Main content */}
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        {/* IntentHeader removed — platform pills and toggles stripped */}
 
-        <div ref={leftPanelRef} className="flex-1 flex flex-col overflow-auto">
-          {status === "idle" && !loadedEntry ? (
-            <>
-              <PaidEmptyState
-                onFileSelect={(f) => handleFileWithFormatCheck(f)}
-                onUrlSubmit={async (u) => { setUrlInput(u); await importFromUrl(u); }}
-              />
-            </>
-          ) : (status !== "idle" || loadedEntry) ? (
-            <div className="relative px-4 py-6 md:px-8 flex-1 flex flex-col">
-                      <div className="relative flex flex-col flex-1">
-                {/* Show VisualizePanel IN PLACE OF AnalyzerView when visualize is active */}
-                {status === "complete" && format === "static" && (visualizeOpen || visualizeStatus !== "idle") ? (
-                  <motion.div
-                    key="visualize"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                    className="flex flex-col flex-1"
-                  >
-                    <VisualizePanel
-                      status={visualizeStatus}
-                      result={visualizeResult}
-                      originalImageUrl={thumbnailDataUrl ?? null}
-                      error={visualizeError}
-                      creditData={visualizeCreditData}
-                      onBack={() => { setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); setVisualizeCreditData(null); }}
-                      onClose={() => { setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); setVisualizeCreditData(null); }}
-                      onAnalyzeVersion={handleReanalyze}
-                      onUpgrade={onUpgradeRequired}
-                    />
-                  </motion.div>
-                ) : (
-                  <div className="flex flex-col flex-1">
-                    <AnalyzerView
-                        file={file}
-                        status={effectiveStatus}
-                        statusMessage={statusMessage || STATUS_COPY[status]}
-                        result={activeResult}
-                        error={error}
-                        analysisError={analysisError}
-                        thumbnailDataUrl={activeResult?.thumbnailDataUrl}
-                        format={format}
-                        onFileSelect={(f) => handleFileWithFormatCheck(f)}
-                        onUrlSubmit={async (u) => { setUrlInput(u); await importFromUrl(u); }}
-                        onAnalyze={handleAnalyze}
-                        onReset={handleReset}
-                        onCopy={handleCopy}
-                        onExportPdf={handleExportPdf}
-                        onShare={handleShareLink}
-                        onGenerateBrief={handleGenerateBrief}
-                        onAddToSwipeFile={handleAddToSwipeFile}
-                        copied={copied}
-                        shareLoading={shareLoading}
-                        historyEntries={historyEntries}
-                        onHistoryEntryClick={(entry) => setLoadedEntry(entry)}
-                        platform={platform !== "all" ? platform : (rawUserContext?.platform ?? undefined)}
-                        icon={Zap}
-                      />
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : null}
-        </div>
-      </div>
+      {/* Single column layout */}
+      <div ref={leftPanelRef} className="flex-1 overflow-auto">
+        {status === "idle" && !loadedEntry ? (
+          <PaidEmptyState
+            onFileSelect={(f) => handleFileWithFormatCheck(f)}
+            onUrlSubmit={async (u) => { setUrlInput(u); await importFromUrl(u); }}
+          />
+        ) : (status !== "idle" || loadedEntry) ? (
+          <div className="max-w-[680px] mx-auto w-full px-4 py-6">
 
-      {/* Right panel — ScoreCard */}
-      <div
-        className={`shrink-0 bg-[var(--surface-1)] border-l border-[var(--border-subtle)] overflow-y-auto overflow-x-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-[var(--border-subtle)] ${showRightPanel ? "w-[440px] max-lg:w-full opacity-100" : "w-0 max-lg:w-0 opacity-0"}`}
-      >
-        {/* Fixed header showing active tab name */}
-        {showRightPanel && (
-          <div className="px-4 py-3 border-b border-[var(--border-subtle)] flex items-center justify-between shrink-0">
-            <span className="text-sm font-medium text-[var(--ink)]">
-              {rightTab === 'analysis' ? 'Score Overview' : rightTab === 'brief' ? 'Creative Brief' : 'Policy Check'}
-            </span>
-            {rightTab !== 'analysis' && (
-              <button
-                className="cs-btn-ghost text-xs"
-                onClick={() => setRightTab('analysis')}
-              >
-                ← Scores
-              </button>
-            )}
-          </div>
-        )}
-
-        <AnimatePresence mode="wait">
-          {showRightPanel && activeResult?.scores && rightTab === "analysis" && (
-            <motion.div
-              key="analysis"
-              initial={{ opacity: 0, x: 16 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -16 }}
-              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            >
-              {/* Platform Switcher — format-aware */}
-              <div className="px-4 pt-3 pb-1">
+            {/* 1. Platform Switcher */}
+            {status === "complete" && activeResult?.scores && (
+              <div className="mb-4">
                 <PlatformSwitcher
                   platforms={format === "static" ? PAID_STATIC_PLATFORMS : PAID_AD_PLATFORMS}
                   selected={platform}
@@ -894,238 +821,382 @@ export default function PaidAdAnalyzer() {
                   isSwitching={isPlatformSwitching}
                   disabled={status !== "complete"}
                 />
-              </div>
-              {/* Platform score verdict badge */}
-              {platformScoreResult && platform !== "all" && (
-                <div className="px-4 pb-2">
-                  <div
-                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs"
-                    style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)" }}
-                  >
-                    <span className="font-mono font-bold text-indigo-400">{platformScoreResult.score}/10</span>
-                    <span className="text-zinc-400">{platformScoreResult.verdict}</span>
+                {/* Platform score verdict badge */}
+                {platformScoreResult && platform !== "all" && (
+                  <div className="mt-2">
+                    <div className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs"
+                      style={{ background: 'var(--accent-bg)', border: '1px solid var(--accent-border)' }}>
+                      <span className="font-mono font-bold" style={{ color: 'var(--accent-text)' }}>{platformScoreResult.score}/10</span>
+                      <span style={{ color: 'var(--ink-muted)' }}>{platformScoreResult.verdict}</span>
+                    </div>
                   </div>
+                )}
+              </div>
+            )}
+
+            {/* 2. ScoreHero — the FIRST thing you see */}
+            {status === "complete" && activeResult?.scores && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <div ref={scorecardRef}>
+                  <ScoreHero
+                    score={activeResult.scores.overall}
+                    verdict={activeResult.scores.overall >= 8 ? "Strong" : activeResult.scores.overall >= 4 ? "Average" : "Needs Work"}
+                    benchmark={getBenchmark(rawUserContext?.niche ?? '', rawUserContext?.platform ?? '', format === 'video' ? 'video' : 'static').averageScore}
+                    platform={platform !== "all" ? platform : (rawUserContext?.platform ?? undefined)}
+                    format={format}
+                    dimensions={[
+                      { name: "Hook", score: activeResult.scores.hook },
+                      { name: "Copy", score: activeResult.scores.clarity },
+                      { name: "Visual", score: activeResult.scores.production },
+                      { name: "CTA", score: activeResult.scores.cta },
+                    ]}
+                  />
                 </div>
-              )}
-              <div ref={scorecardRef}>
-                <ScoreCard
-                  scores={activeResult.scores}
-                  hookDetail={activeResult.hookDetail}
-                  improvements={platformScoreResult?.improvements ?? platformImprovements ?? activeResult.improvements}
-                  improvementsLoading={improvementsLoading}
-                  budget={activeResult.budget}
-                  hashtags={activeResult.hashtags}
-                  scenes={activeResult.scenes}
-                  fileName={activeResult.fileName}
-                  analysisTime={analysisCompletedAt ?? undefined}
-                  modelName="Gemini + Claude"
-                  onGenerateBrief={handleGenerateBrief}
-                  onAddToSwipeFile={handleAddToSwipeFile}
-                  onCTARewrite={handleCTARewrite}
-                  ctaRewrites={ctaRewrites}
-                  ctaLoading={ctaLoading}
-                  onShare={handleCopy}
-                  isDark={true}
-                  format={format}
-                  engineBudget={engineBudget}
-                  onNavigateSettings={() => navigate('/settings')}
-                  onReanalyze={() => setReanalyzeMode(true)}
-                  onStartOver={() => setConfirmStartOver(true)}
-                  onCheckPolicies={handleCheckPolicies}
-                  policyLoading={policyLoading}
-                  niche={rawUserContext?.niche}
-                  platform={rawUserContext?.platform}
+              </motion.div>
+            )}
+
+            {/* 3. ActionStrip — immediately actionable */}
+            {status === "complete" && activeResult?.scores && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.06, ease: [0.16, 1, 0.3, 1] }}
+                className="mt-4"
+              >
+                <ActionStrip
+                  overallScore={activeResult.scores.overall}
                   onFixIt={handleFixIt}
-                  fixItResult={fixItResult}
-                  fixItLoading={fixItLoading}
-                  prediction={prediction}
-                  onCompare={() => navigate('/app/competitor')}
+                  onGenerateBrief={handleGenerateBrief}
+                  onCheckPolicies={handleCheckPolicies}
+                  onShare={handleCopy}
                   onVisualize={handleVisualize}
+                  fixItLoading={fixItLoading}
+                  briefLoading={briefLoading}
+                  policyLoading={policyLoading}
                   visualizeLoading={visualizeStatus === "loading"}
-                  canVisualize={true}
+                  canVisualize={format === "static"}
                   isPro={isPro}
                   onUpgradeRequired={onUpgradeRequired}
                 />
-              </div>
-              {/* Second Eye output below scorecard — video only */}
-              {format === "video" && secondEye && (
-                <SecondEyePanel result={secondEyeOutput} loading={secondEyeLoading} />
-              )}
-              {/* Static Design Review below scorecard — static only */}
-              {format === "static" && staticSecondEye && (
-                <StaticSecondEyePanel result={staticSecondEyeResult} loading={staticSecondEyeLoading} />
-              )}
-              {/* Visualize It moved to left panel (below creative) */}
-            </motion.div>
-          )}
+              </motion.div>
+            )}
 
-          {showRightPanel && rightTab === "brief" && (
-            <motion.div
-              key="brief"
-              initial={{ opacity: 0, x: 16 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -16 }}
-              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-              className="flex flex-col h-full"
-            >
-              <div className="px-5 py-2 border-b border-[var(--border-subtle)] flex items-center justify-end">
-                <span className="text-xs text-zinc-500 font-mono">Claude Sonnet</span>
-              </div>
-              {briefLoading && !brief && (
-                <div className="flex-1 flex flex-col items-center justify-center gap-3 px-5">
-                  <div className="w-5 h-5 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
-                  <span className="text-xs text-zinc-500">Generating creative brief...</span>
-                </div>
+            {/* 4. QuickWins — top improvements always visible */}
+            {status === "complete" && activeResult?.scores && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
+                className="mt-4"
+              >
+                <QuickWins
+                  improvements={platformScoreResult?.improvements ?? platformImprovements ?? activeResult.improvements ?? []}
+                  loading={improvementsLoading}
+                />
+              </motion.div>
+            )}
+
+            {/* 5. Media Preview + AnalyzerView */}
+            <div className="mt-6">
+              {status === "complete" && format === "static" && (visualizeOpen || visualizeStatus !== "idle") ? (
+                <motion.div
+                  key="visualize"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  <VisualizePanel
+                    status={visualizeStatus}
+                    result={visualizeResult}
+                    originalImageUrl={thumbnailDataUrl ?? null}
+                    error={visualizeError}
+                    creditData={visualizeCreditData}
+                    onBack={() => { setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); setVisualizeCreditData(null); }}
+                    onClose={() => { setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); setVisualizeCreditData(null); }}
+                    onAnalyzeVersion={handleReanalyze}
+                    onUpgrade={onUpgradeRequired}
+                  />
+                </motion.div>
+              ) : (
+                <AnalyzerView
+                  file={file}
+                  status={effectiveStatus}
+                  statusMessage={statusMessage || STATUS_COPY[status]}
+                  result={activeResult}
+                  error={error}
+                  analysisError={analysisError}
+                  thumbnailDataUrl={activeResult?.thumbnailDataUrl}
+                  onFileSelect={(f) => handleFileWithFormatCheck(f)}
+                  onUrlSubmit={async (u) => { setUrlInput(u); await importFromUrl(u); }}
+                  onAnalyze={handleAnalyze}
+                  onReset={handleReset}
+                  onCopy={handleCopy}
+                  onExportPdf={handleExportPdf}
+                  onShare={handleShareLink}
+                  onGenerateBrief={handleGenerateBrief}
+                  onAddToSwipeFile={handleAddToSwipeFile}
+                  copied={copied}
+                  shareLoading={shareLoading}
+                  historyEntries={historyEntries}
+                  onHistoryEntryClick={(entry) => setLoadedEntry(entry)}
+                  platform={platform !== "all" ? platform : (rawUserContext?.platform ?? undefined)}
+                  icon={Zap}
+                />
               )}
-              {briefError && (
-                <div className="px-5 py-4">
-                  <p className="text-xs text-red-400">{briefError}</p>
-                </div>
-              )}
-              {brief && (
-                <>
-                  <div className="px-5 pt-5 pb-2 flex-1 overflow-y-auto">
-                    <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-4">Creative Brief</p>
-                    <div className="flex flex-col gap-0.5">
-                      {brief.split("\n").map((line, i) => {
-                        const t = line.trim();
-                        if (!t) return null;
-                        if (t.startsWith("## ")) return (
-                          <p key={i} className="text-xs font-semibold text-white mt-4 mb-1">
-                            {t.replace(/^##\s*/, "")}
-                          </p>
-                        );
-                        const boldMatch = t.match(/^\*\*(.+?)\*\*:?\s*(.*)/);
-                        if (boldMatch) return (
-                          <div key={i} className="mb-3">
-                            <p className="text-xs text-zinc-500 font-medium">{boldMatch[1]}</p>
-                            {boldMatch[2] && (
-                              <p className="text-xs text-zinc-300 leading-relaxed mt-0.5">{boldMatch[2]}</p>
-                            )}
-                          </div>
-                        );
-                        if (t.startsWith("- ") || t.startsWith("* ")) return (
-                          <div key={i} className="flex gap-2 items-start ml-1 mb-1">
-                            <span className="w-1 h-1 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
-                            <span className="text-xs text-zinc-400 leading-relaxed">{t.replace(/^[-*]\s*/, "")}</span>
-                          </div>
-                        );
-                        if (t === "---") return <div key={i} className="border-t border-[var(--border-subtle)] my-3" />;
-                        return <p key={i} className="text-xs text-zinc-300 leading-relaxed mb-1">{t}</p>;
-                      })}
-                    </div>
-                  </div>
-                  <div className="p-5 border-t border-[var(--border-subtle)]">
-                    <button
-                      type="button"
-                      onClick={handleBriefCopy}
-                      className="w-full py-2 px-3 bg-transparent border border-white/10 rounded-lg text-zinc-400 text-xs font-medium hover:bg-white/5 hover:text-white hover:border-white/20 transition-all duration-150 cursor-pointer"
+            </div>
+
+            {/* 6. Deep Analysis — collapsible sections */}
+            {status === "complete" && activeResult?.scores && (
+              <div className="mt-6 flex flex-col gap-3">
+                {/* Hook Analysis */}
+                {activeResult.hookDetail && (
+                  <div className="cs-card p-5">
+                    <CollapsibleSection
+                      title="Hook Analysis"
+                      icon={<Lightbulb size={14} />}
+                      trailing={<span className="text-[10px] font-mono" style={{ color: getScoreColor(activeResult.scores.hook) }}>{activeResult.scores.hook}/10</span>}
                     >
-                      {briefCopied ? "Copied!" : "Copy Brief"}
-                    </button>
+                      <HookDetailCard hookDetail={activeResult.hookDetail} format={format} />
+                    </CollapsibleSection>
                   </div>
-                </>
-              )}
-            </motion.div>
-          )}
+                )}
 
-          {/* Policy Check panel */}
-          {showRightPanel && rightTab === "policy" && (
-            <motion.div
-              key="policy"
-              initial={{ opacity: 0, x: 16 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -16 }}
-              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-              className="flex flex-col h-full"
-            >
-              <div className="px-4 py-2 border-b border-[var(--border-subtle)] flex items-center justify-end">
-                <span className="text-xs text-zinc-500 font-mono">Claude Sonnet</span>
-              </div>
-              <div className="flex-1 overflow-y-auto p-4">
-                {policyLoading && !policyResult && (
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 0", gap: 12 }}>
-                    <div style={{ width: 20, height: 20, border: "2px solid rgba(245,158,11,0.3)", borderTopColor: "#f59e0b", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
-                    <span style={{ fontSize: 13, color: "#71717a" }}>Checking policies...</span>
-                    <span style={{ fontSize: 11, color: "#52525b" }}>Evaluating Meta & TikTok compliance</span>
+                {/* Budget Recommendation */}
+                {(engineBudget || activeResult.budget) && (
+                  <div className="cs-card p-5">
+                    <CollapsibleSection title="Budget Recommendation" icon={<DollarSign size={14} />}>
+                      <BudgetCard engineBudget={engineBudget} budget={activeResult.budget} onNavigateSettings={() => navigate('/settings')} />
+                    </CollapsibleSection>
                   </div>
                 )}
-                {policyError && (
-                  <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", fontSize: 13, color: "#ef4444" }}>
-                    {policyError}
-                  </div>
-                )}
-                {policyResult && !policyLoading && (
-                  <PolicyCheckPanel result={policyResult} onClose={() => setRightTab("analysis")} />
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
-        {/* Before/After re-analysis section */}
-        {showRightPanel && rightTab === "analysis" && !comparisonResult && (
-          <div style={{ padding: "0 16px 12px" }}>
-            {!reanalyzeMode ? (
-              <button type="button" onClick={() => setReanalyzeMode(true)}
-                style={{
-                  width: "100%", height: 40, background: "rgba(99,102,241,0.1)",
-                  border: "1px solid rgba(99,102,241,0.3)", borderRadius: 9999,
-                  color: "#818cf8", fontSize: 13, fontWeight: 500, cursor: "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                }}>
-                <RotateCcw size={14} /> Re-analyze improved version →
-              </button>
-            ) : (
-              <div style={{ background: "rgba(99,102,241,0.04)", border: "1px dashed rgba(99,102,241,0.3)", borderRadius: 12, padding: 16 }}>
-                <p style={{ fontSize: 13, fontWeight: 600, color: "#f4f4f5", margin: "0 0 4px" }}>Upload your improved version</p>
-                <p style={{ fontSize: 12, color: "#71717a", margin: "0 0 12px" }}>We'll score it and compare against your original.</p>
-                {comparisonLoading ? (
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "16px 0" }}>
-                    <div style={{ width: 14, height: 14, border: "2px solid rgba(99,102,241,0.3)", borderTopColor: "#6366f1", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
-                    <span style={{ fontSize: 12, color: "#71717a" }}>Analyzing improved version...</span>
-                  </div>
-                ) : (
-                  <div
-                    style={{ height: 64, border: "1px dashed rgba(99,102,241,0.2)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, cursor: "pointer", transition: "all 150ms" }}
-                    onClick={() => {
-                      const input = document.createElement("input");
-                      input.type = "file"; input.accept = "video/*,image/*";
-                      input.onchange = (e) => { const f = (e.target as HTMLInputElement).files?.[0]; if (f) handleReanalyze(f); };
-                      input.click();
-                    }}
-                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)"; }}
-                    onDragLeave={(e) => { e.currentTarget.style.borderColor = "rgba(99,102,241,0.2)"; }}
-                    onDrop={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(99,102,241,0.2)"; const f = e.dataTransfer.files[0]; if (f) handleReanalyze(f); }}
-                  >
-                    <Upload size={14} color="#6366f1" />
-                    <span style={{ fontSize: 12, color: "#6366f1" }}>Drop improved version here</span>
+                {/* Scene Breakdown — video only */}
+                {format === "video" && activeResult.scenes && activeResult.scenes.length > 0 && (
+                  <div className="cs-card p-5">
+                    <CollapsibleSection title="Scene Breakdown" icon={<Film size={14} />}
+                      trailing={<span className="text-[10px]" style={{ color: 'var(--ink-faint)' }}>{activeResult.scenes.length} scenes</span>}>
+                      <SceneBreakdown scenes={activeResult.scenes} />
+                    </CollapsibleSection>
                   </div>
                 )}
-                <button type="button" onClick={() => setReanalyzeMode(false)}
-                  style={{ fontSize: 11, color: "#52525b", background: "none", border: "none", cursor: "pointer", marginTop: 8, width: "100%", textAlign: "center" }}>
-                  ← Keep original
-                </button>
+
+                {/* Predicted Performance */}
+                {prediction && (
+                  <div className="cs-card p-5">
+                    <CollapsibleSection title="Predicted Performance" icon={<TrendingUp size={14} />}>
+                      <PredictedPerformanceCard prediction={prediction} platform={platform} niche={rawUserContext?.niche} />
+                    </CollapsibleSection>
+                  </div>
+                )}
+
+                {/* Hashtags */}
+                {activeResult.hashtags && (activeResult.hashtags.tiktok.length > 0 || activeResult.hashtags.meta.length > 0 || activeResult.hashtags.instagram.length > 0) && (
+                  <div className="cs-card p-5">
+                    <CollapsibleSection
+                      title="Recommended Hashtags"
+                      icon={<Hash size={14} />}
+                      trailing={
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px]" style={{ color: 'var(--ink-faint)' }}>
+                            {[activeResult.hashtags.tiktok, activeResult.hashtags.meta, activeResult.hashtags.instagram].reduce((n, t) => n + t.length, 0)} tags
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const allTags = [
+                                ...activeResult.hashtags!.tiktok.map((t: string) => `#${t}`),
+                                ...activeResult.hashtags!.meta.map((t: string) => `#${t}`),
+                                ...activeResult.hashtags!.instagram.map((t: string) => `#${t}`),
+                              ];
+                              navigator.clipboard.writeText(allTags.join(' '));
+                            }}
+                            className="text-[10px] transition-colors"
+                            style={{ color: 'var(--accent-text)' }}
+                          >
+                            Copy all
+                          </button>
+                        </div>
+                      }
+                    >
+                      {([["TikTok", activeResult.hashtags.tiktok], ["Meta", activeResult.hashtags.meta], ["Instagram", activeResult.hashtags.instagram]] as const).map(
+                        ([plat, tags]) =>
+                          tags.length > 0 && (
+                            <div key={plat} className="mb-3">
+                              <span className="text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--ink-faint)' }}>{plat}</span>
+                              <div className="flex flex-wrap gap-1.5 mt-1.5">
+                                {tags.map((tag) => (
+                                  <button key={tag} className="cs-chip"
+                                    onClick={() => navigator.clipboard.writeText(`#${tag}`)}>
+                                    #{tag}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )
+                      )}
+                    </CollapsibleSection>
+                  </div>
+                )}
+
+                {/* Static Ad Checks — static only */}
+                {format === "static" && activeResult.scores && (
+                  <div className="cs-card p-5">
+                    <CollapsibleSection title="Ad Quality Checks" icon={<ShieldCheck size={14} />}>
+                      <StaticAdChecks scores={activeResult.scores} />
+                    </CollapsibleSection>
+                  </div>
+                )}
               </div>
             )}
-          </div>
-        )}
 
-        {/* Before/After comparison result */}
-        {showRightPanel && comparisonResult && originalScoresSnapshot && activeResult?.scores && (
-          <div style={{ padding: "0 16px 12px" }}>
-            <BeforeAfterComparison
-              originalScores={originalScoresSnapshot}
-              improvedScores={activeResult.scores}
-              comparison={comparisonResult}
-              fileName={activeResult.fileName}
-              onReanalyzeAgain={() => { setComparisonResult(null); setReanalyzeMode(true); }}
-              onStartFresh={handleReset}
-            />
-          </div>
-        )}
+            {/* 7. Second Eye / Design Review */}
+            {status === "complete" && (
+              <div className="mt-4">
+                {format === "video" && <SecondEyePanel result={secondEyeOutput} loading={secondEyeLoading} />}
+                {format === "static" && <StaticSecondEyePanel result={staticSecondEyeResult} loading={staticSecondEyeLoading} />}
+              </div>
+            )}
 
+            {/* 8. Re-analyze section */}
+            {status === "complete" && activeResult?.scores && !comparisonResult && (
+              <div className="mt-4">
+                {!reanalyzeMode ? (
+                  <button type="button" onClick={() => setReanalyzeMode(true)}
+                    className="cs-btn-ghost w-full justify-center h-10"
+                    style={{ borderRadius: 'var(--radius-full)' }}>
+                    <RotateCcw size={14} /> Re-analyze improved version
+                  </button>
+                ) : (
+                  <div className="cs-card p-4">
+                    <p className="text-sm font-semibold mb-1" style={{ color: 'var(--ink)' }}>Upload your improved version</p>
+                    <p className="text-xs mb-3" style={{ color: 'var(--ink-faint)' }}>We'll score it and compare against your original.</p>
+                    {comparisonLoading ? (
+                      <div className="flex items-center justify-center gap-2 py-4">
+                        <div className="w-3.5 h-3.5 border-2 rounded-full animate-spin"
+                          style={{ borderColor: 'var(--accent-bg)', borderTopColor: 'var(--accent)' }} />
+                        <span className="text-xs" style={{ color: 'var(--ink-faint)' }}>Analyzing improved version...</span>
+                      </div>
+                    ) : (
+                      <div className="h-16 border border-dashed rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-all"
+                        style={{ borderColor: 'var(--accent-border)' }}
+                        onClick={() => {
+                          const input = document.createElement("input");
+                          input.type = "file"; input.accept = "video/*,image/*";
+                          input.onchange = (e) => { const f = (e.target as HTMLInputElement).files?.[0]; if (f) handleReanalyze(f); };
+                          input.click();
+                        }}
+                        onDragOver={(e) => { e.preventDefault(); }}
+                        onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleReanalyze(f); }}
+                      >
+                        <Upload size={14} style={{ color: 'var(--accent)' }} />
+                        <span className="text-xs" style={{ color: 'var(--accent)' }}>Drop improved version here</span>
+                      </div>
+                    )}
+                    <button type="button" onClick={() => setReanalyzeMode(false)}
+                      className="text-[11px] mt-2 w-full text-center bg-transparent border-none cursor-pointer"
+                      style={{ color: 'var(--ink-tertiary)' }}>
+                      ← Keep original
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Before/After comparison */}
+            {comparisonResult && originalScoresSnapshot && activeResult?.scores && (
+              <div className="mt-4">
+                <BeforeAfterComparison
+                  originalScores={originalScoresSnapshot}
+                  improvedScores={activeResult.scores}
+                  comparison={comparisonResult}
+                  fileName={activeResult.fileName}
+                  onReanalyzeAgain={() => { setComparisonResult(null); setReanalyzeMode(true); }}
+                  onStartFresh={handleReset}
+                />
+              </div>
+            )}
+
+          </div>
+        ) : null}
       </div>
+
+      {/* ── Tool Sheets (overlay) ── */}
+      <ToolSheet open={toolSheet === "fixit"} onClose={() => setToolSheet(null)} title="Fix This Ad">
+        {fixItResult ? (
+          <FixItPanel result={fixItResult} />
+        ) : fixItLoading ? (
+          <div className="flex items-center gap-3 py-8">
+            <div className="w-4 h-4 border-2 rounded-full animate-spin"
+              style={{ borderColor: 'var(--accent-bg)', borderTopColor: 'var(--accent)' }} />
+            <span className="text-sm" style={{ color: 'var(--ink-muted)' }}>Rewriting your ad...</span>
+          </div>
+        ) : null}
+      </ToolSheet>
+
+      <ToolSheet open={toolSheet === "brief"} onClose={() => setToolSheet(null)} title="Creative Brief">
+        {brief ? (
+          <>
+            <div className="flex flex-col gap-0.5">
+              {brief.split("\n").map((line, i) => {
+                const t = line.trim();
+                if (!t) return null;
+                if (t.startsWith("## ")) return (
+                  <p key={i} className="text-xs font-semibold mt-4 mb-1" style={{ color: 'var(--ink)' }}>
+                    {t.replace(/^##\s*/, "")}
+                  </p>
+                );
+                const boldMatch = t.match(/^\*\*(.+?)\*\*:?\s*(.*)/);
+                if (boldMatch) return (
+                  <div key={i} className="mb-3">
+                    <p className="text-xs font-medium" style={{ color: 'var(--ink-faint)' }}>{boldMatch[1]}</p>
+                    {boldMatch[2] && <p className="text-xs leading-relaxed mt-0.5" style={{ color: 'var(--ink-muted)' }}>{boldMatch[2]}</p>}
+                  </div>
+                );
+                if (t.startsWith("- ") || t.startsWith("* ")) return (
+                  <div key={i} className="flex gap-2 items-start ml-1 mb-1">
+                    <span className="w-1 h-1 rounded-full mt-1.5 shrink-0" style={{ background: 'var(--accent)' }} />
+                    <span className="text-xs leading-relaxed" style={{ color: 'var(--ink-muted)' }}>{t.replace(/^[-*]\s*/, "")}</span>
+                  </div>
+                );
+                if (t === "---") return <div key={i} className="my-3" style={{ borderTop: '1px solid var(--border-subtle)' }} />;
+                return <p key={i} className="text-xs leading-relaxed mb-1" style={{ color: 'var(--ink-muted)' }}>{t}</p>;
+              })}
+            </div>
+            <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+              <button type="button" onClick={handleBriefCopy} className="cs-btn-ghost w-full justify-center">
+                {briefCopied ? "Copied!" : "Copy Brief"}
+              </button>
+            </div>
+          </>
+        ) : briefLoading ? (
+          <div className="flex items-center gap-3 py-8">
+            <div className="w-4 h-4 border-2 rounded-full animate-spin"
+              style={{ borderColor: 'var(--accent-bg)', borderTopColor: 'var(--accent)' }} />
+            <span className="text-sm" style={{ color: 'var(--ink-muted)' }}>Writing your creative brief...</span>
+          </div>
+        ) : briefError ? (
+          <p className="text-xs" style={{ color: 'var(--error)' }}>{briefError}</p>
+        ) : null}
+      </ToolSheet>
+
+      <ToolSheet open={toolSheet === "policy"} onClose={() => setToolSheet(null)} title="Ad Policy Check">
+        {policyResult ? (
+          <PolicyCheckPanel result={policyResult} onClose={() => setToolSheet(null)} />
+        ) : policyLoading ? (
+          <div className="flex items-center gap-3 py-8">
+            <div className="w-4 h-4 border-2 rounded-full animate-spin"
+              style={{ borderColor: 'var(--score-average-bg)', borderTopColor: 'var(--warn)' }} />
+            <span className="text-sm" style={{ color: 'var(--ink-muted)' }}>Checking ad policies...</span>
+          </div>
+        ) : policyError ? (
+          <p className="text-xs" style={{ color: 'var(--error)' }}>{policyError}</p>
+        ) : null}
+      </ToolSheet>
 
       {/* History drawer */}
       <HistoryDrawer
@@ -1140,25 +1211,23 @@ export default function PaidAdAnalyzer() {
 
       {/* Toasts */}
       {shareToast && (
-        <div
-          role="status"
-          aria-live="polite"
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-3 bg-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-xl text-xs font-mono text-zinc-300 shadow-lg z-[100]"
-        >
+        <div role="status" aria-live="polite"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-3 rounded-xl text-xs font-mono shadow-lg z-[100]"
+          style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--ink-muted)' }}>
           Link copied to clipboard
         </div>
       )}
       {rateLimitError && (
-        <div
-          role="alert"
-          aria-live="assertive"
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-3 bg-red-500/15 border border-red-500/30 rounded-xl text-xs font-mono text-red-400 shadow-lg z-[100]"
-        >
+        <div role="alert" aria-live="assertive"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-3 rounded-xl text-xs font-mono shadow-lg z-[100]"
+          style={{ background: 'var(--score-weak-bg)', border: '1px solid var(--score-weak-border)', color: 'var(--error)' }}>
           {rateLimitError}
         </div>
       )}
       {infoToast && (
-        <div role="status" aria-live="polite" className="fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-3 bg-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-xl text-xs font-mono text-zinc-300 shadow-lg z-[100]">
+        <div role="status" aria-live="polite"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-3 rounded-xl text-xs font-mono shadow-lg z-[100]"
+          style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--ink-muted)' }}>
           {infoToast}
         </div>
       )}
