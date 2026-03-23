@@ -46,6 +46,9 @@ interface ReportCardsProps {
   onGenerateBrief?: () => void;
   fixItLoading?: boolean;
   policyLoading?: boolean;
+  // Render slots for components managed by PaidAdAnalyzer
+  designReviewSlot?: React.ReactNode;
+  secondEyeSlot?: React.ReactNode;
 }
 
 const JSON_TITLE_RE = /json|scene|raw\s*data|budget\s*recommend/i;
@@ -236,6 +239,7 @@ export function ReportCards({
   platform, niche, hashtags,
   onFixIt, onVisualize, onCheckPolicies, onCompare, onGenerateBrief,
   fixItLoading, policyLoading,
+  designReviewSlot, secondEyeSlot,
 }: ReportCardsProps) {
   const isImage = file?.type.startsWith("image/") ?? false;
   const fileUrl = useMemo(() => file ? URL.createObjectURL(file) : null, [file]);
@@ -469,6 +473,9 @@ export function ReportCards({
         );
       })}
 
+      {/* Design Review — rendered via slot from PaidAdAnalyzer */}
+      {designReviewSlot}
+
       {/* Emotional Impact / Emotion Arc — show only one (prefer arc on video) */}
       {(() => {
         const emotionSections = centerSections.filter(s => /emotion|arc|impact/i.test(s.title ?? ''));
@@ -629,6 +636,9 @@ export function ReportCards({
           </div>
         );
       })}
+
+      {/* Second Eye Review — rendered via slot from PaidAdAnalyzer (video only) */}
+      {secondEyeSlot}
 
       {/* ─── Sticky action bar ─── */}
       <div className="sticky bottom-0 bg-zinc-950/80 backdrop-blur-xl border-t border-white/5 px-4 md:px-6 py-3 pb-[calc(12px+env(safe-area-inset-bottom,0px))] md:pb-3 flex items-center gap-3 mt-6 -mx-4 md:-mx-8 -mb-6">

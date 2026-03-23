@@ -41,6 +41,8 @@ interface AnalyzerViewProps {
   onCompare?: () => void;
   fixItLoading?: boolean;
   policyLoading?: boolean;
+  designReviewSlot?: React.ReactNode;
+  secondEyeSlot?: React.ReactNode;
 }
 
 export function AnalyzerView({
@@ -74,6 +76,8 @@ export function AnalyzerView({
   onCompare,
   fixItLoading,
   policyLoading,
+  designReviewSlot,
+  secondEyeSlot,
 }: AnalyzerViewProps) {
   return (
     <AnimatePresence mode="wait">
@@ -151,6 +155,8 @@ export function AnalyzerView({
             onGenerateBrief={onGenerateBrief}
             fixItLoading={fixItLoading}
             policyLoading={policyLoading}
+            designReviewSlot={designReviewSlot}
+            secondEyeSlot={secondEyeSlot}
           />
         </div>
       )}

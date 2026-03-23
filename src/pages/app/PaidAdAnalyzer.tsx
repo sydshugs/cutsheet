@@ -928,24 +928,21 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                         onCompare={() => navigate('/app/competitor')}
                         fixItLoading={fixItLoading}
                         policyLoading={policyLoading}
+                        designReviewSlot={
+                          status === "complete" && staticSecondEye ? (
+                            <div className="mt-3">
+                              <StaticSecondEyePanel result={staticSecondEyeResult} loading={staticSecondEyeLoading} />
+                            </div>
+                          ) : undefined
+                        }
+                        secondEyeSlot={
+                          status === "complete" && format === "video" && secondEye ? (
+                            <div className="mt-3">
+                              <SecondEyePanel result={secondEyeOutput} loading={secondEyeLoading} />
+                            </div>
+                          ) : undefined
+                        }
                       />
-                      {/* Design Review — center column, static + video */}
-                      {status === "complete" && (
-                        <div className="px-0 mt-3">
-                          {format === "static" && staticSecondEye && (
-                            <StaticSecondEyePanel result={staticSecondEyeResult} loading={staticSecondEyeLoading} />
-                          )}
-                          {format === "video" && staticSecondEye && (
-                            <StaticSecondEyePanel result={staticSecondEyeResult} loading={staticSecondEyeLoading} />
-                          )}
-                        </div>
-                      )}
-                      {/* Second Eye Review — center column, video only */}
-                      {status === "complete" && format === "video" && secondEye && (
-                        <div className="px-0 mt-3">
-                          <SecondEyePanel result={secondEyeOutput} loading={secondEyeLoading} />
-                        </div>
-                      )}
                   </div>
                 )}
               </div>

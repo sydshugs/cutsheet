@@ -603,7 +603,8 @@ export function ScoreCard({
         <div className="mx-4 mt-3">
           <button
             onClick={onReanalyze}
-            className="w-full flex items-center justify-center gap-2 rounded-xl border border-white/5 bg-zinc-900/50 px-4 py-2.5 text-[12px] font-medium text-zinc-400 hover:border-white/10 hover:text-zinc-200 transition-colors"
+            className="w-full flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[12px] font-medium transition-colors hover:opacity-80"
+            style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.2)' }}
           >
             <RotateCcw size={13} />
             Re-analyze improved version →
@@ -639,7 +640,7 @@ export function ScoreCard({
 
       {/* Overflow menu moved to header row — see Score Overview header above */}
 
-      {/* Re-analyze button moved to PaidAdAnalyzer right panel area */}
+      {/* Re-analyze button is above Predicted Performance */}
 
       {/* Toast notification */}
       {toast && (
