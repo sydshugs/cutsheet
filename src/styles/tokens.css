@@ -18,6 +18,8 @@
   --ink:        rgba(255,255,255,0.92);
   --ink-muted:  rgba(255,255,255,0.5);
   --ink-faint:  rgba(255,255,255,0.25);
+  --ink-tertiary:   rgba(255,255,255,0.35);
+  --ink-quaternary: rgba(255,255,255,0.15);
   --surface-dim: rgba(255,255,255,0.04);
   --label:      #a5b4fc;
   --accent:     #6366F1;
@@ -33,8 +35,9 @@
   --radius:     12px;
   --radius-lg:  16px;
   --radius-xl:  20px;
-  --ease-out:   cubic-bezier(0.16, 1, 0.3, 1);
-  --spring:     cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out:      cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --spring:        cubic-bezier(0.34, 1.56, 0.64, 1);
 
   /* ── Score-band semantic colors ── */
   --score-excellent:        #10B981;
@@ -52,10 +55,22 @@
   --score-average-border:   rgba(245,158,11,0.25);
   --score-weak-border:      rgba(239,68,68,0.25);
 
+  /* ── Verdict action tokens (Kill/Test/Scale) ── */
+  --verdict-scale:       var(--score-excellent);
+  --verdict-scale-bg:    var(--score-excellent-bg);
+  --verdict-test:        var(--score-good);
+  --verdict-test-bg:     var(--score-good-bg);
+  --verdict-kill:        var(--score-weak);
+  --verdict-kill-bg:     var(--score-weak-bg);
+
   /* ── Accent composites ── */
   --accent-subtle:    rgba(99,102,241,0.08);
   --accent-muted:     rgba(99,102,241,0.25);
   --border-accent:    rgba(99,102,241,0.3);
+  --accent-bg:        rgba(99,102,241,0.06);
+  --accent-bg-hover:  rgba(99,102,241,0.10);
+  --accent-border:    rgba(99,102,241,0.20);
+  --accent-text:      #818cf8;
   --overlay:          rgba(0,0,0,0.5);
   --radius-full:      9999px;
 
@@ -96,22 +111,12 @@
   --skeleton-base: rgba(255,255,255,0.04);
   --skeleton-shine: rgba(255,255,255,0.08);
 
-  /* ── Glass system ── */
-  --glass-card-bg: rgba(24, 24, 27, 0.6);
-  --glass-card-blur: blur(20px) saturate(180%);
-  --glass-card-border: rgba(255, 255, 255, 0.08);
-  --glass-card-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
-  --glass-sheet-bg: rgba(15, 15, 18, 0.85);
-  --glass-sheet-blur: blur(24px) saturate(200%);
-  --glass-sheet-border: rgba(255, 255, 255, 0.1);
-
-  /* ── Ambient glow ── */
-  --ambient-glow: radial-gradient(ellipse at 50% 40%, rgba(99,102,241,0.06) 0%, transparent 60%);
-
-  /* ── Grid cells ── */
-  --grid-cell-bg: rgba(255,255,255,0.04);
-  --grid-cell-border: rgba(255,255,255,0.06);
-  --grid-gap-bg: rgba(255,255,255,0.06);
+  /* ── Surface hierarchy (replaces glass system) ── */
+  --surface-1:     #111113;
+  --surface-2:     #18181B;
+  --surface-3:     #1F1F23;
+  --border-subtle: rgba(255,255,255,0.06);
+  --border-focus:  rgba(255,255,255,0.20);
 }
 
 /* ─── ANIMATIONS ──────────────────────────────────────────── */

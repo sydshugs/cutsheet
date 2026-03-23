@@ -41,3 +41,112 @@ a:focus-visible,
   white-space: nowrap;
   border-width: 0;
 }
+
+/* ── Card system ── */
+.cs-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+}
+.cs-card-hover {
+  transition: border-color var(--duration-fast) var(--ease-out);
+}
+.cs-card-hover:hover {
+  border-color: var(--border-hover);
+}
+
+/* ── Button system ── */
+.cs-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-family: var(--sans);
+  color: var(--ink-muted);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+.cs-btn-ghost:hover {
+  background: var(--surface);
+  border-color: var(--border-hover);
+  color: var(--ink);
+  transform: translateY(-1px);
+}
+.cs-btn-ghost:active {
+  transform: translateY(0) scale(0.98);
+}
+.cs-btn-ghost:disabled {
+  opacity: 0.4;
+  cursor: default;
+  transform: none;
+}
+
+.cs-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: var(--sans);
+  color: white;
+  background: var(--accent);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+.cs-btn-primary:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+.cs-btn-primary:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* ── Verdict chip ── */
+.cs-verdict-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--mono);
+}
+
+/* ── Skeleton ── */
+.cs-skeleton {
+  background: linear-gradient(90deg, var(--skeleton-base) 25%, var(--skeleton-shine) 50%, var(--skeleton-base) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+
+/* ── Chip (hashtags, badges) ── */
+.cs-chip {
+  font-size: 12px;
+  font-family: var(--mono);
+  padding: 3px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition: all var(--duration-fast);
+  user-select: none;
+}
+.cs-chip:hover {
+  border-color: var(--border-hover);
+  color: var(--ink);
+}
+.cs-chip:active {
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
+  color: var(--accent-text);
+}
