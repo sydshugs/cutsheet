@@ -4,6 +4,7 @@
 
 import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import { HookAnalysisExpanded } from "./HookAnalysisExpanded";
 import { Copy, CheckCircle, Wand2, Loader2, AlertCircle, TrendingUp, ArrowUpRight, Share2, RotateCcw, ShieldCheck, FileText, Bookmark, Lightbulb, DollarSign, Sparkles, Lock, Film, Hash, Layout, Heart, MessageSquare } from "lucide-react";
 import type { BudgetRecommendation, Hashtags, Scene, HookDetail } from "../services/analyzerService";
 import type { EngineBudgetRecommendation } from "../services/budgetService";
@@ -429,15 +430,20 @@ export function ScoreCard({
                   section.title.toLowerCase().includes(key)
                 );
                 const SIcon = matchedIcon?.[1] ?? FileText;
+                const isHook = section.title.toLowerCase().includes('hook');
                 return (
                   <div key={i} style={{ padding: "0 20px", marginTop: i > 0 ? 12 : 0 }}>
                     <CollapsibleSection
                       title={section.title}
                       icon={<SIcon size={14} />}
                     >
-                      <div className="text-sm text-zinc-400 leading-relaxed [&_strong]:text-zinc-300 [&_strong]:font-medium [&_ul]:list-disc [&_ul]:pl-4 [&_li]:mb-1.5 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_h3]:text-xs [&_h3]:font-semibold [&_h3]:text-zinc-300 [&_h3]:mt-4 [&_h3]:mb-2 [&_em]:text-indigo-300/70">
-                        <ReactMarkdown>{section.content}</ReactMarkdown>
-                      </div>
+                      {isHook ? (
+                        <HookAnalysisExpanded content={section.content} format={format ?? 'static'} />
+                      ) : (
+                        <div className="text-sm text-zinc-400 leading-relaxed [&_strong]:text-zinc-300 [&_strong]:font-medium [&_ul]:list-disc [&_ul]:pl-4 [&_li]:mb-1.5 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_h3]:text-xs [&_h3]:font-semibold [&_h3]:text-zinc-300 [&_h3]:mt-4 [&_h3]:mb-2 [&_em]:text-indigo-300/70">
+                          <ReactMarkdown>{section.content}</ReactMarkdown>
+                        </div>
+                      )}
                     </CollapsibleSection>
                   </div>
                 );
