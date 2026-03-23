@@ -2,7 +2,7 @@
 import { Helmet } from 'react-helmet-async';
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useOutletContext, useNavigate } from "react-router-dom";
-import { TrendingUp, RotateCcw, AlertCircle } from "lucide-react";
+import { TrendingUp, RotateCcw } from "lucide-react";
 import { AnalyzerView } from "../../components/AnalyzerView";
 import { ScoreCard } from "../../components/ScoreCard";
 import { VideoDropzone } from "../../components/VideoDropzone";
@@ -104,7 +104,6 @@ export default function OrganicAnalyzer() {
 
   const [organicFormat, setOrganicFormat] = useState<"video" | "static">("video");
   const [imageMismatch, setImageMismatch] = useState(false);
-  const [formatMismatch, setFormatMismatch] = useState<"video-as-static" | "image-as-video" | null>(null);
 
   // ── User context for personalized AI ──────────────────────────────────────
   const [userContext, setUserContext] = useState<string>('')
@@ -192,21 +191,18 @@ export default function OrganicAnalyzer() {
   const handleFileWithCheck = useCallback((f: File | null) => {
     if (!f) { handleReset(); return; }
     setImageMismatch(false);
-    setFormatMismatch(null);
     const isImage = f.type.startsWith("image/") || [".jpg", ".jpeg", ".png", ".webp"].some(e => f.name.toLowerCase().endsWith(e));
     const isVideo = f.type.startsWith("video/") || [".mp4", ".mov", ".webm"].some(e => f.name.toLowerCase().endsWith(e));
 
-    // Format mismatch: offer to switch format instead of hard-redirecting
-    if (isImage && organicFormat === "video") {
-      setFormatMismatch("image-as-video");
-      // Store file ref for switch action
-      (window as unknown as Record<string, File>).__pendingOrganicFile = f;
-      return;
-    }
-    if (isVideo && organicFormat === "static") {
-      setFormatMismatch("video-as-static");
-      (window as unknown as Record<string, File>).__pendingOrganicFile = f;
-      return;
+    // Auto-switch format silently + show toast (same as Paid Ad)
+    if (isImage && organicFormat !== "static") {
+      setOrganicFormat("static");
+      setInfoToast("Detected static image — analyzing as Static");
+      setTimeout(() => setInfoToast(null), 3000);
+    } else if (isVideo && organicFormat !== "video") {
+      setOrganicFormat("video");
+      setInfoToast("Detected video — analyzing as Video");
+      setTimeout(() => setInfoToast(null), 3000);
     }
 
     setFile(f); reset();
@@ -514,51 +510,12 @@ export default function OrganicAnalyzer() {
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         {/* IntentHeader removed — platform defaults to "all" */}
         <div className="flex-1 flex flex-col overflow-auto">
-          {/* Format mismatch prompt — switch format in-place instead of hard redirect */}
-          {formatMismatch && (
-            <div style={{ display: "flex", justifyContent: "center", padding: "80px 24px" }}>
-              <div style={{ maxWidth: 420, padding: 20, borderRadius: 12, background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.2)" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                  <AlertCircle size={16} color="#6366f1" />
-                  <span style={{ fontSize: 14, fontWeight: 600, color: "#f4f4f5" }}>
-                    {formatMismatch === "image-as-video" ? "That's an image — switch to Static?" : "That's a video — switch to Video?"}
-                  </span>
-                </div>
-                <p style={{ fontSize: 13, color: "#a1a1aa", margin: "0 0 16px", lineHeight: 1.5 }}>
-                  {formatMismatch === "image-as-video"
-                    ? "You're in Video mode but uploaded an image. Switch to Static to analyze Instagram and Facebook posts."
-                    : "You're in Static mode but uploaded a video. Switch to Video to analyze TikTok, Reels, and Shorts."}
-                </p>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button type="button" onClick={() => {
-                    const newFormat = formatMismatch === "image-as-video" ? "static" : "video";
-                    setOrganicFormat(newFormat as "video" | "static");
-                    setFormatMismatch(null);
-                    const pendingFile = (window as unknown as Record<string, File>).__pendingOrganicFile;
-                    if (pendingFile) {
-                      setFile(pendingFile);
-                      reset();
-                      delete (window as unknown as Record<string, File>).__pendingOrganicFile;
-                    }
-                  }}
-                    style={{ flex: 1, height: 40, borderRadius: 9999, border: "none", background: "#6366f1", color: "white", fontSize: 13, fontWeight: 500, cursor: "pointer" }}>
-                    Switch to {formatMismatch === "image-as-video" ? "Static" : "Video"}
-                  </button>
-                  <button type="button" onClick={() => { setFormatMismatch(null); delete (window as unknown as Record<string, File>).__pendingOrganicFile; }}
-                    aria-label="Dismiss format mismatch warning"
-                    style={{ height: 40, padding: "0 16px", borderRadius: 9999, border: "1px solid rgba(255,255,255,0.08)", background: "transparent", color: "#71717a", fontSize: 13, cursor: "pointer" }}>
-                    Dismiss
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-          {!formatMismatch && status === "idle" && !loadedEntry ? (
+          {status === "idle" && !loadedEntry ? (
             <OrganicEmptyState
               onFileSelect={(f) => handleFileWithCheck(f)}
               onUrlSubmit={async (u) => { setUrlInput(u); await importFromUrl(u); }}
             />
-          ) : !formatMismatch ? (
+          ) : (
             <div className={`relative flex flex-col ${(effectiveStatus === "uploading" || effectiveStatus === "processing") ? "h-full" : "px-4 py-6 md:px-8 min-h-full"}`}>
               <div className="pointer-events-none absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-emerald-600/10 blur-[120px]" />
               <div className="pointer-events-none absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-violet-600/[0.08] blur-[100px]" />
@@ -588,7 +545,7 @@ export default function OrganicAnalyzer() {
                 />
               </div>
             </div>
-          ) : null}
+          )}
         </div>
       </div>
 
