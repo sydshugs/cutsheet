@@ -659,39 +659,117 @@ export function ReportCards({
           <span className="text-[13px] text-zinc-400">Checking platform policies...</span>
         </div>
       )}
-      {/* Policy result */}
-      {!policyLoading && policyResult && (
-        <div className="mt-3 rounded-xl border border-white/5 overflow-hidden" style={{ background: 'var(--surface, rgba(255,255,255,0.02))' }}>
-          <div className="flex items-center justify-between px-3.5 py-2.5" style={{ borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
-            <div className="flex items-center gap-2">
-              <ShieldCheck size={14} className="text-amber-400" />
-              <span className="text-[13px] font-medium text-zinc-200">Policy check result</span>
-            </div>
-          </div>
-          <div className="p-3.5">
-            {policyResult.verdict === 'good' ? (
-              <div className="rounded-[9px] p-3" style={{ background: 'rgba(16,185,129,0.06)', border: '0.5px solid rgba(16,185,129,0.2)' }}>
-                <p className="text-[13px] font-medium" style={{ color: '#10b981' }}>No policy violations found</p>
-                <p className="text-xs text-zinc-400 mt-1">This ad appears safe to run.</p>
+      {/* Policy result — full structured inline card */}
+      {!policyLoading && policyResult && !dismissedResults.has('policy') && (() => {
+        const isGood = policyResult.verdict === 'good';
+        const allCategories = [...(policyResult.metaCategories ?? []), ...(policyResult.tiktokCategories ?? [])];
+        const issueCategories = allCategories.filter((c: any) => c.status !== 'clear');
+        const clearCategories = allCategories.filter((c: any) => c.status === 'clear');
+        return (
+          <div className="mt-3 rounded-xl border border-white/5 overflow-hidden" style={{ background: 'var(--surface, rgba(255,255,255,0.02))' }}>
+            {/* Header */}
+            <div className="flex items-center justify-between px-3.5 py-2.5" style={{ borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
+              <div className="flex items-center gap-2">
+                <ShieldCheck size={14} className="text-amber-400" />
+                <span className="text-[13px] font-medium text-zinc-200">Policy check result</span>
               </div>
-            ) : (
-              <>
-                <p className="text-xs font-medium text-red-400 mb-2">
-                  {(policyResult.topFixes?.length ?? 0)} issue{(policyResult.topFixes?.length ?? 0) !== 1 ? 's' : ''} found
-                </p>
-                {policyResult.topFixes?.map((fix, i) => (
-                  <div key={i} className="rounded-[9px] p-2.5 mb-1.5" style={{ background: 'rgba(239,68,68,0.06)', border: '0.5px solid rgba(239,68,68,0.15)' }}>
-                    <p className="text-xs font-medium text-zinc-200">{fix}</p>
+              <div className="flex items-center gap-2">
+                <button onClick={() => { navigator.clipboard.writeText(policyResult.reviewerNotes ?? ''); }} className="text-[11px] font-medium rounded-lg cursor-pointer" style={{ padding: '4px 10px', background: 'rgba(99,102,241,0.08)', border: '0.5px solid rgba(99,102,241,0.2)', color: '#818cf8' }}>Copy report</button>
+                <button onClick={() => setDismissedResults(prev => new Set(prev).add('policy'))} className="w-5 h-5 flex items-center justify-center text-zinc-600 hover:text-zinc-400 cursor-pointer bg-transparent border-none">✕</button>
+              </div>
+            </div>
+
+            {/* Banner */}
+            <div className="flex items-center gap-3 px-3.5 py-3" style={{ background: isGood ? 'rgba(16,185,129,0.06)' : 'rgba(251,191,36,0.06)', borderBottom: `0.5px solid ${isGood ? 'rgba(16,185,129,0.12)' : 'rgba(251,191,36,0.12)'}` }}>
+              {isGood ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" strokeLinecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              )}
+              <div>
+                <p className="text-sm font-medium text-zinc-100">{isGood ? 'Ready to launch' : policyResult.verdictLabel ?? 'Fix before launching'}</p>
+                <p className="text-xs text-zinc-400 mt-0.5">{isGood ? 'No policy violations found' : `${issueCategories.length} item${issueCategories.length !== 1 ? 's' : ''} need attention`}</p>
+              </div>
+            </div>
+
+            {/* Top 3 fixes */}
+            {!isGood && policyResult.topFixes && policyResult.topFixes.length > 0 && (
+              <div className="px-3.5 pt-2.5 pb-1">
+                <span className="text-[10px] text-zinc-500 uppercase tracking-[0.04em] block mb-1.5">Top fixes</span>
+                {policyResult.topFixes.map((fix: string, fi: number) => (
+                  <div key={fi} className="flex items-start gap-2 py-1.5">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" className="shrink-0 mt-0.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <span className="text-xs font-medium text-zinc-200 leading-[1.45]">{fix}</span>
                   </div>
                 ))}
-                {policyResult.reviewerNotes && (
-                  <p className="text-[11px] text-zinc-500 mt-2 leading-relaxed">{policyResult.reviewerNotes}</p>
+              </div>
+            )}
+
+            {/* Issue categories */}
+            {issueCategories.length > 0 && (
+              <div className="px-3.5 pt-2 pb-1">
+                <span className="text-[10px] text-zinc-500 uppercase tracking-[0.04em] block mb-1.5">Policy categories</span>
+                {issueCategories.map((cat: any, ci: number) => {
+                  const statusColor = cat.status === 'rejection' ? '#ef4444' : '#d97706';
+                  const statusBg = cat.status === 'rejection' ? 'rgba(239,68,68,0.1)' : 'rgba(251,191,36,0.12)';
+                  const statusLabel = cat.status === 'rejection' ? 'Rejection' : 'Review';
+                  return (
+                    <div key={ci} className="rounded-[10px] border border-white/5 mb-1.5 overflow-hidden">
+                      <div className="flex items-center gap-2 px-3 py-2.5">
+                        <span className="text-[9px] font-medium rounded-full px-1.5 py-px" style={{ background: statusBg, color: statusColor }}>{statusLabel}</span>
+                        <span className="text-[13px] font-medium text-zinc-200 flex-1">{cat.name}</span>
+                        {cat.riskLevel !== 'low' && (
+                          <span className="text-[9px] font-medium uppercase rounded-full px-1.5 py-px" style={{ background: cat.riskLevel === 'high' ? 'rgba(239,68,68,0.08)' : 'rgba(251,191,36,0.08)', color: cat.riskLevel === 'high' ? '#ef4444' : '#d97706' }}>{cat.riskLevel} risk</span>
+                        )}
+                      </div>
+                      {(cat.finding || cat.fix) && (
+                        <div className="px-3 pb-2.5" style={{ borderTop: '0.5px solid rgba(255,255,255,0.06)' }}>
+                          {cat.finding && <p className="text-xs text-zinc-400 leading-relaxed pt-2 mb-2">{cat.finding}</p>}
+                          {cat.fix && (
+                            <div className="rounded-lg p-2.5" style={{ background: 'rgba(99,102,241,0.06)', border: '0.5px solid rgba(99,102,241,0.15)' }}>
+                              <p className="text-xs text-zinc-200 leading-relaxed">{cat.fix}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Clear items */}
+            {clearCategories.length > 0 && (
+              <div className="px-3.5 pb-2">
+                <button onClick={() => setDismissedResults(prev => { const n = new Set(prev); if (n.has('showClear')) n.delete('showClear'); else n.add('showClear'); return n; })} className="text-xs font-medium cursor-pointer bg-transparent border-none" style={{ color: '#10b981' }}>
+                  {dismissedResults.has('showClear') ? `Hide ${clearCategories.length} clear items` : `Show ${clearCategories.length} clear items`}
+                </button>
+                {dismissedResults.has('showClear') && (
+                  <div className="flex flex-col gap-1 mt-2">
+                    {clearCategories.map((cat: any, ci: number) => (
+                      <div key={ci} className="flex items-center gap-2 bg-white/[0.03] rounded-lg px-3 py-2">
+                        <span className="text-[9px] font-medium rounded-full px-1.5 py-px" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>Clear</span>
+                        <span className="text-xs text-zinc-300">{cat.name}</span>
+                      </div>
+                    ))}
+                  </div>
                 )}
-              </>
+              </div>
+            )}
+
+            {/* Reviewer notes */}
+            {policyResult.reviewerNotes && (
+              <div className="mx-3.5 mb-3.5 bg-white/[0.03] rounded-[10px] p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-medium text-zinc-200">Reviewer Notes</span>
+                  <span className="text-[11px] text-zinc-600">For appeal if flagged</span>
+                </div>
+                <p className="text-xs text-zinc-400 leading-[1.6]">{policyResult.reviewerNotes}</p>
+              </div>
             )}
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ─── Center column analysis sections ─── */}
       {/* Design Review + Second Eye Review rendered by PaidAdAnalyzer */}
