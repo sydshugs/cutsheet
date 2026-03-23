@@ -960,8 +960,16 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
       <div
         className={`shrink-0 bg-zinc-900/50 backdrop-blur-xl border-l border-white/5 overflow-y-auto overflow-x-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-white/5 ${showRightPanel ? "w-[440px] max-lg:w-full opacity-100" : "w-0 max-lg:w-0 opacity-0"}`}
       >
+        <AnimatePresence mode="wait">
         {showRightPanel && activeResult?.scores && rightTab === "analysis" && (
-          <>
+          <motion.div
+            key="analysis"
+            initial={{ opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -16 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="flex flex-col"
+          >
             {/* Platform Switcher + YouTube format moved inside ScoreCard */}
             <div ref={scorecardRef}>
               <ScoreCard
@@ -1039,12 +1047,19 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
             </div>
             {/* Design Review + Second Eye moved to center column */}
             {/* Visualize It moved to left panel (below creative) */}
-          </>
+          </motion.div>
 
         )}
 
         {showRightPanel && rightTab === "brief" && (
-          <div className="flex flex-col h-full">
+          <motion.div
+            key="brief"
+            initial={{ opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -16 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="flex flex-col h-full"
+          >
             <div className="p-5 border-b border-white/5 flex items-center justify-between">
               <button
                 type="button"
@@ -1132,12 +1147,19 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                 </div>
               </>
             )}
-          </div>
+          </motion.div>
         )}
 
         {/* Policy Check panel */}
         {showRightPanel && rightTab === "policy" && (
-          <div className="flex flex-col h-full">
+          <motion.div
+            key="policy"
+            initial={{ opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -16 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="flex flex-col h-full"
+          >
             <div className="p-4 border-b border-white/5 flex items-center justify-between">
               <button
                 type="button"
@@ -1165,12 +1187,19 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                 <PolicyCheckPanel result={policyResult} onClose={() => setRightTab("analysis")} />
               )}
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* AI Rewrite panel */}
         {showRightPanel && rightTab === "ai_rewrite" && (
-          <div className="flex flex-col h-full">
+          <motion.div
+            key="ai_rewrite"
+            initial={{ opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -16 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="flex flex-col h-full"
+          >
             <div className="px-4 py-2.5 border-b border-white/5 flex items-center justify-between">
               <button
                 type="button"
@@ -1319,7 +1348,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                 </div>
               )}
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* Before/After re-analysis upload flow (button is inside ScoreCard) */}
@@ -1374,6 +1403,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
           </div>
         )}
 
+        </AnimatePresence>
       </div>
 
       {/* History drawer */}

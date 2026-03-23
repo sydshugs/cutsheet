@@ -1,5 +1,6 @@
 import type React from "react";
 import { useMemo, useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import { sanitizeFileName } from "../utils/sanitize";
 import {
@@ -397,6 +398,7 @@ export function ReportCards({
       {/* Verdict banner moved to right panel */}
 
       {/* ─── Tools card with click-to-expand detail strip ─── */}
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: 'easeOut', delay: 0 }}>
       {(onFixIt || onVisualize || onCheckPolicies || onCompare) && (() => {
         const tools = [
           { key: 'fix', icon: Wand2, name: 'AI Rewrite', credit: 'free', iconBg: 'rgba(99,102,241,0.1)', hoverIconBg: 'rgba(99,102,241,0.18)', iconColor: '#818cf8', ctaBg: 'rgba(99,102,241,0.12)', ctaBorder: 'rgba(99,102,241,0.25)', ctaColor: '#818cf8', ctaLabel: 'Run AI Rewrite →', desc: 'AI rewrites your ad with all priority fixes applied — tighter hook, CTA added, copy sharpened.', onClick: onFixIt, loading: fixItLoading },
@@ -415,22 +417,51 @@ export function ReportCards({
               {tools.map((t, i) => {
                 const isActive = activeTool === t.key;
                 const Icon = t.icon;
+                const isDisabled = !!t.disabled;
+                const isLoading = !!t.loading;
                 return (
-                  <button
+                  <div
                     key={t.key}
-                    onClick={() => setActiveTool(isActive ? null : t.key)}
-                    className="group flex flex-col items-center gap-2 py-4 px-2 transition-colors duration-150 cursor-pointer hover:bg-white/[0.03]"
-                    style={{
-                      background: isActive ? 'rgba(99,102,241,0.06)' : 'transparent',
-                      borderRight: i < 2 ? '0.5px solid rgba(255,255,255,0.06)' : 'none',
-                    }}
+                    title={isDisabled ? 'Not available for video ads' : undefined}
+                    style={{ borderRight: i < 2 ? '0.5px solid rgba(255,255,255,0.06)' : 'none' }}
                   >
-                    <div className="w-[38px] h-[38px] rounded-[11px] flex items-center justify-center transition-transform duration-150 group-hover:scale-105" style={{ background: t.iconBg }}>
-                      <Icon size={16} style={{ color: t.iconColor }} />
-                    </div>
-                    <span className="text-[11px] font-medium" style={{ color: isActive ? '#818cf8' : '#e4e4e7' }}>{t.name}</span>
-                    <span className="text-[9px] text-zinc-500 bg-white/5 rounded-full px-1.5 py-px">{t.credit}</span>
-                  </button>
+                    <motion.button
+                      onClick={() => !isDisabled && !isLoading && setActiveTool(isActive ? null : t.key)}
+                      whileHover={!isDisabled && !isLoading ? { y: -1 } : {}}
+                      whileTap={!isDisabled && !isLoading ? { y: 0, scale: 0.98 } : {}}
+                      transition={{ duration: 0.15 }}
+                      className="group w-full flex flex-col items-center gap-2 py-4 px-2 border transition-all duration-150 cursor-pointer"
+                      style={{
+                        background: isActive ? 'rgba(99,102,241,0.06)' : 'rgba(255,255,255,0.04)',
+                        borderColor: isActive ? 'rgba(99,102,241,0.3)' : 'rgba(255,255,255,0.08)',
+                        opacity: isDisabled ? 0.35 : 1,
+                        cursor: isDisabled ? 'not-allowed' : isLoading ? 'not-allowed' : 'pointer',
+                        boxShadow: 'none',
+                      }}
+                      onMouseEnter={e => {
+                        if (!isDisabled && !isLoading) {
+                          (e.currentTarget as HTMLButtonElement).style.background = isActive ? 'rgba(99,102,241,0.1)' : 'rgba(255,255,255,0.08)';
+                          (e.currentTarget as HTMLButtonElement).style.borderColor = isActive ? 'rgba(99,102,241,0.4)' : 'rgba(255,255,255,0.15)';
+                          (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+                        }
+                      }}
+                      onMouseLeave={e => {
+                        (e.currentTarget as HTMLButtonElement).style.background = isActive ? 'rgba(99,102,241,0.06)' : 'rgba(255,255,255,0.04)';
+                        (e.currentTarget as HTMLButtonElement).style.borderColor = isActive ? 'rgba(99,102,241,0.3)' : 'rgba(255,255,255,0.08)';
+                        (e.currentTarget as HTMLButtonElement).style.boxShadow = 'none';
+                      }}
+                    >
+                      <div className="w-[38px] h-[38px] rounded-[11px] flex items-center justify-center" style={{ background: t.iconBg }}>
+                        {isLoading ? (
+                          <div className="w-4 h-4 border-2 rounded-full animate-spin" style={{ borderColor: `${t.iconColor}30`, borderTopColor: t.iconColor }} />
+                        ) : (
+                          <Icon size={16} style={{ color: t.iconColor }} />
+                        )}
+                      </div>
+                      <span className="text-[11px] font-medium" style={{ color: isActive ? '#818cf8' : '#e4e4e7' }}>{t.name}</span>
+                      <span className="text-[9px] text-zinc-500 bg-white/5 rounded-full px-1.5 py-px">{t.credit}</span>
+                    </motion.button>
+                  </div>
                 );
               })}
             </div>
@@ -446,19 +477,23 @@ export function ReportCards({
                   </p>
                   <p className="text-xs text-zinc-400 leading-relaxed mt-0.5">{active.desc}</p>
                 </div>
-                <button
+                <motion.button
                   onClick={active.onClick}
                   disabled={active.disabled || active.loading}
-                  className="shrink-0 text-xs font-medium rounded-lg px-4 py-2 whitespace-nowrap transition-opacity hover:opacity-80 disabled:opacity-40"
+                  whileHover={!active.disabled && !active.loading ? { y: -1 } : {}}
+                  whileTap={!active.disabled && !active.loading ? { y: 0, scale: 0.98 } : {}}
+                  transition={{ duration: 0.15 }}
+                  className="shrink-0 text-xs font-medium rounded-lg px-4 py-2 whitespace-nowrap transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
                   style={{ background: active.ctaBg, border: `1px solid ${active.ctaBorder}`, color: active.ctaColor }}
                 >
                   {active.loading ? 'Running...' : active.ctaLabel}
-                </button>
+                </motion.button>
               </div>
             )}
           </div>
         );
       })()}
+      </motion.div>
 
       {/* ─── Inline tool results (Visualize only — Fix It + Policy in right panel) ─── */}
       {/* Visualize loading */}
@@ -499,6 +534,7 @@ export function ReportCards({
       {/* Design Review + Second Eye Review rendered by PaidAdAnalyzer */}
 
       {/* ─── Creative Analysis / Verdict + Second Eye ─── */}
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: 'easeOut', delay: 0.06 }}>
       {(() => {
         const verdictSection = centerSections.find(s => /verdict/i.test(s.title ?? ''));
         const sentences = verdictSection?.content.trim().split(/(?<=[.!])\s+/).filter(s => s.trim()) ?? [];
@@ -537,7 +573,10 @@ export function ReportCards({
         );
       })()}
 
+      </motion.div>
+
       {/* ─── Emotional Impact — redesigned (DE-1) ─── */}
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: 'easeOut', delay: 0.12 }}>
       {(() => {
         const emotionSections = centerSections.filter(s => /emotion.*(?:impact|arc)|emotion\s*arc/i.test(s.title ?? ''));
         const section = emotionSections[0];
@@ -615,7 +654,10 @@ export function ReportCards({
         );
       })()}
 
+      </motion.div>
+
       {/* ─── Motion Test Idea — redesigned (B3-A) ─── */}
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: 'easeOut', delay: 0.18 }}>
       {centerSections.filter(s => /motion.*(?:test|idea)/i.test(s.title ?? '')).map((section, i) => {
         const conceptText = section.content
           .replace(/^MOTION TEST IDEA:\s*/i, '')
@@ -666,7 +708,10 @@ export function ReportCards({
         );
       })}
 
+      </motion.div>
+
       {/* Pacing & Retention — VIDEO ONLY, V1 insight-first layout */}
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: 'easeOut', delay: 0.24 }}>
       {format === 'video' && centerSections.filter(s => /pacing|retention/i.test(s.title ?? '')).map((section, i) => {
         const SectionIcon = getIconForTitle(toSentenceCase(section.title!));
         const c = section.content;
@@ -784,8 +829,12 @@ export function ReportCards({
         );
       })}
 
+      </motion.div>
+
       {/* Second Eye Review — rendered via slot from PaidAdAnalyzer (video only) */}
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: 'easeOut', delay: 0.3 }}>
       {secondEyeSlot}
+      </motion.div>
 
       {/* ─── Sticky action bar ─── */}
       <div className="sticky bottom-0 bg-zinc-950/80 backdrop-blur-xl border-t border-white/5 px-4 md:px-6 py-3 pb-[calc(12px+env(safe-area-inset-bottom,0px))] md:pb-3 flex items-center gap-3 mt-6 -mx-4 md:-mx-8 -mb-6">
