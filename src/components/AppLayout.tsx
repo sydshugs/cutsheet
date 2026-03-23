@@ -1,4 +1,5 @@
 // AppLayout.tsx — layout shell for all /app/* routes
+console.log("[v0] AppLayout module loading...");
 import { useRef, useCallback, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
