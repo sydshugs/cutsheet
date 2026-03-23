@@ -11,9 +11,18 @@ import { verifyAuth, handlePreflight, isProOrTeam } from "./_lib/auth";
 import { checkFeatureCredit } from "./_lib/creditCheck";
 
 const KLING_ENDPOINT = "fal-ai/kling-video/v2.1/standard/image-to-video";
-const DEFAULT_DURATION = 5; // seconds — ~$0.15/clip
-const VALID_ASPECT_RATIOS = ["9:16", "4:5", "16:9"] as const;
-type AspectRatio = (typeof VALID_ASPECT_RATIOS)[number];
+const DEFAULT_DURATION = "5"; // string — Kling API requires "5" or "10"
+// Kling only supports 16:9, 9:16, 1:1
+type KlingAspectRatio = "16:9" | "9:16" | "1:1";
+
+function toKlingRatio(input: string): KlingAspectRatio {
+  if (input === "16:9") return "16:9";
+  if (input === "9:16") return "9:16";
+  if (input === "1:1") return "1:1";
+  if (input === "4:5" || input === "3:4") return "9:16";
+  if (input === "4:3") return "16:9";
+  return "9:16";
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handlePreflight(req, res)) return;
@@ -51,9 +60,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: "imageUrl is required" });
     }
 
-    const safeAspectRatio: AspectRatio = VALID_ASPECT_RATIOS.includes(aspectRatio)
-      ? aspectRatio
-      : "9:16";
+    const safeAspectRatio = toKlingRatio(aspectRatio);
 
     // ── Configure fal.ai client ──────────────────────────────────────────
     const falKey = process.env.FAL_KEY;
@@ -70,9 +77,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const result = await fal.subscribe(KLING_ENDPOINT, {
       input: {
+        prompt: "Bring this image to life with subtle, natural motion. Gentle movement, smooth transitions.",
         image_url: imageUrl,
         duration: DEFAULT_DURATION,
         aspect_ratio: safeAspectRatio,
+        negative_prompt: "blur, distort, low quality, text glitch, morphing faces",
       },
       pollInterval: 2000,
     });
