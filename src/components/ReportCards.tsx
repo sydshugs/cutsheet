@@ -730,7 +730,7 @@ export function ReportCards({
 
       </motion.div>
 
-      {/* ─── Motion Test Idea — redesigned with visual timeline ─── */}
+      {/* ─── Motion Test Idea — Premium redesign with cinematic feel ─── */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: 'easeOut', delay: 0.18 }}>
       {centerSections.filter(s => /motion.*(?:test|idea)/i.test(s.title ?? '')).map((section, i) => {
         const conceptText = section.content
@@ -742,98 +742,139 @@ export function ReportCards({
           .replace(/[-\s]+$/, '')
           .trim();
         
-        // Parse concept into phases for timeline
-        const phases = conceptText.split(/,\s*then\s+|,\s*ending\s+with\s+|,\s*followed\s+by\s+/i).filter(Boolean);
-        const phaseLabels = ['Opening', 'Transition', 'Close'];
-        const phaseColors = ['#818cf8', '#10b981', '#f59e0b'];
+        // Parse concept into phases - ensure we always have 3
+        const rawPhases = conceptText.split(/,\s*then\s+|,\s*ending\s+with\s+|,\s*followed\s+by\s+/i).filter(Boolean);
+        const phases = [
+          rawPhases[0] || 'Opening scene',
+          rawPhases[1] || 'Main transition',
+          rawPhases[2] || 'Product reveal with CTA'
+        ];
         
-        // Infer tags from context
+        const phaseConfig = [
+          { label: 'Opening', time: '0-2s', color: '#818cf8', icon: '01' },
+          { label: 'Transition', time: '2-5s', color: '#10b981', icon: '02' },
+          { label: 'Payoff', time: '5-8s', color: '#f59e0b', icon: '03' },
+        ];
+        
         const platformTag = platform ?? 'Meta';
-        const durationTag = '6–8s loop';
-        const formatTag = format === 'static' ? 'Static → motion' : 'Video remix';
+        const durationTag = '6–8s';
         
         return (
-          <div key={`motion-${i}`} className="rounded-2xl border border-white/[0.06] overflow-hidden mt-4 bg-white/[0.015]">
+          <div key={`motion-${i}`} className="relative rounded-2xl overflow-hidden mt-4" style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.08) 0%, rgba(16,185,129,0.04) 50%, rgba(245,158,11,0.06) 100%)', border: '1px solid rgba(139,92,246,0.15)' }}>
+            {/* Decorative corner glow */}
+            <div className="absolute top-0 right-0 w-40 h-40 rounded-full blur-3xl opacity-30 pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.4), transparent 70%)' }} />
+            
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.05]">
+            <div className="relative flex items-center justify-between px-5 py-4 border-b border-white/[0.06]">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-violet-500/10 flex items-center justify-center">
-                  <Film size={14} className="text-violet-400" />
+                <div className="relative">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500/20 to-indigo-500/20 flex items-center justify-center border border-violet-500/20">
+                    <Film size={18} className="text-violet-400" />
+                  </div>
+                  {/* Pulse ring */}
+                  <div className="absolute inset-0 rounded-xl border border-violet-500/30 animate-ping opacity-30" />
                 </div>
                 <div>
-                  <span className="text-sm font-medium text-zinc-200 block">Motion Test Idea</span>
-                  <span className="text-[10px] text-zinc-600">Transform your static into motion</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-zinc-100">Motion Test Idea</span>
+                    <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-300">AI Generated</span>
+                  </div>
+                  <span className="text-[11px] text-zinc-500">Transform your static into scroll-stopping motion</span>
                 </div>
               </div>
-              <div className="flex items-center gap-1.5">
-                {[platformTag, durationTag].map(tag => (
-                  <span key={tag} className="text-[10px] font-medium bg-white/[0.04] rounded-lg px-2 py-1 text-zinc-500 border border-white/[0.04]">{tag}</span>
-                ))}
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono font-medium bg-white/[0.06] rounded-lg px-2.5 py-1.5 text-zinc-400 border border-white/[0.06]">{platformTag}</span>
+                <span className="text-[10px] font-mono font-medium bg-emerald-500/10 rounded-lg px-2.5 py-1.5 text-emerald-400 border border-emerald-500/15">{durationTag}</span>
               </div>
             </div>
             
-            {/* Body */}
-            <div className="p-5">
-              {/* Storyboard Timeline */}
-              <div className="mb-5">
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-[10px] font-medium uppercase tracking-wide text-zinc-500">Storyboard</span>
-                  <div className="flex-1 h-px bg-white/[0.05]" />
-                  <span className="text-[10px] text-zinc-600">{formatTag}</span>
+            {/* Storyboard section */}
+            <div className="relative p-5">
+              {/* Section label */}
+              <div className="flex items-center gap-3 mb-5">
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded-md bg-white/[0.04] flex items-center justify-center">
+                    <Clapperboard size={11} className="text-zinc-500" />
+                  </div>
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Storyboard</span>
+                </div>
+                <div className="flex-1 h-px bg-gradient-to-r from-white/[0.08] to-transparent" />
+              </div>
+              
+              {/* Timeline visualization */}
+              <div className="relative mb-6">
+                {/* Connecting line */}
+                <div className="absolute top-6 left-6 right-6 h-1 rounded-full overflow-hidden bg-white/[0.04]">
+                  <div className="h-full w-full rounded-full" style={{ background: 'linear-gradient(90deg, #818cf8 0%, #10b981 50%, #f59e0b 100%)' }} />
                 </div>
                 
-                {/* Timeline phases */}
-                <div className="relative">
-                  {/* Progress bar background */}
-                  <div className="absolute top-4 left-4 right-4 h-0.5 bg-white/[0.06] rounded-full" />
-                  {/* Animated gradient progress */}
-                  <div className="absolute top-4 left-4 right-4 h-0.5 rounded-full bg-gradient-to-r from-indigo-500 via-emerald-500 to-amber-500" />
-                  
-                  <div className="grid grid-cols-3 gap-3">
-                    {phases.slice(0, 3).map((phase, pi) => (
-                      <div key={pi} className="relative">
-                        {/* Timeline dot */}
+                {/* Phase cards */}
+                <div className="relative grid grid-cols-3 gap-4">
+                  {phaseConfig.map((config, pi) => (
+                    <div key={pi} className="relative">
+                      {/* Timeline node */}
+                      <div className="flex justify-center mb-4">
                         <div 
-                          className="w-3 h-3 rounded-full border-2 border-zinc-900 mx-auto mb-3 relative z-10"
-                          style={{ backgroundColor: phaseColors[pi] }}
-                        />
-                        {/* Phase card */}
-                        <div 
-                          className="rounded-xl p-3.5 border transition-all hover:border-opacity-30"
+                          className="w-4 h-4 rounded-full border-[3px] relative z-10"
                           style={{ 
-                            background: `linear-gradient(135deg, ${phaseColors[pi]}08, transparent)`,
-                            borderColor: `${phaseColors[pi]}15`
+                            backgroundColor: config.color,
+                            borderColor: '#0a0a0f',
+                            boxShadow: `0 0 12px ${config.color}50`
                           }}
-                        >
-                          <div className="flex items-center gap-1.5 mb-2">
-                            <span 
-                              className="text-[9px] font-bold uppercase tracking-wider"
-                              style={{ color: phaseColors[pi] }}
-                            >
-                              {phaseLabels[pi]}
-                            </span>
-                            <span className="text-[9px] text-zinc-600">{pi === 0 ? '0-2s' : pi === 1 ? '2-5s' : '5-8s'}</span>
-                          </div>
-                          <p className="text-[11px] text-zinc-400 leading-relaxed capitalize">
-                            {phase.trim().replace(/^product and cta$/i, 'Product reveal with clear CTA')}
-                          </p>
-                        </div>
+                        />
                       </div>
-                    ))}
-                  </div>
+                      
+                      {/* Phase card */}
+                      <div 
+                        className="group rounded-xl p-4 transition-all duration-200 hover:scale-[1.02] cursor-default"
+                        style={{ 
+                          background: `linear-gradient(145deg, ${config.color}12, ${config.color}04)`,
+                          border: `1px solid ${config.color}25`,
+                          boxShadow: `0 4px 20px ${config.color}08`
+                        }}
+                      >
+                        {/* Phase number badge */}
+                        <div className="flex items-center justify-between mb-3">
+                          <span 
+                            className="text-[10px] font-bold font-mono px-2 py-0.5 rounded"
+                            style={{ background: `${config.color}20`, color: config.color }}
+                          >
+                            {config.icon}
+                          </span>
+                          <span className="text-[10px] font-mono text-zinc-600">{config.time}</span>
+                        </div>
+                        
+                        {/* Phase label */}
+                        <span 
+                          className="text-xs font-bold uppercase tracking-wide block mb-2"
+                          style={{ color: config.color }}
+                        >
+                          {config.label}
+                        </span>
+                        
+                        {/* Phase description */}
+                        <p className="text-[12px] text-zinc-400 leading-relaxed">
+                          {phases[pi].trim().charAt(0).toUpperCase() + phases[pi].trim().slice(1).replace(/^product and cta$/i, 'Product reveal with clear CTA')}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              {/* Why this works */}
-              <div className="rounded-xl bg-white/[0.02] border border-white/[0.05] p-4 mb-4">
+              {/* Performance insight card */}
+              <div className="rounded-xl p-4 mb-4" style={{ background: 'linear-gradient(135deg, rgba(16,185,129,0.08), rgba(16,185,129,0.02))', border: '1px solid rgba(16,185,129,0.12)' }}>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0 mt-0.5">
-                    <TrendingUp size={12} className="text-emerald-400" />
+                  <div className="w-9 h-9 rounded-xl bg-emerald-500/15 flex items-center justify-center shrink-0">
+                    <TrendingUp size={16} className="text-emerald-400" />
                   </div>
-                  <div>
-                    <p className="text-xs font-medium text-zinc-300 mb-1">Why this works</p>
-                    <p className="text-[11px] text-zinc-500 leading-relaxed">
-                      Motion increases engagement by 2-3x on {platformTag}. This sequence creates visual intrigue, builds emotional connection, then drives action.
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="text-xs font-semibold text-emerald-400">Expected Performance Lift</span>
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300">+2-3x</span>
+                    </div>
+                    <p className="text-[12px] text-zinc-500 leading-relaxed">
+                      Motion ads on {platformTag} drive significantly higher engagement. This 3-act structure captures attention, builds interest, and converts.
                     </p>
                   </div>
                 </div>
@@ -844,10 +885,17 @@ export function ReportCards({
                 <button
                   onClick={onVisualize}
                   disabled={format !== 'static'}
-                  className="group w-full flex items-center justify-center gap-2.5 rounded-xl py-3.5 text-sm font-medium transition-all bg-gradient-to-r from-violet-500/10 to-indigo-500/10 border border-violet-500/20 text-violet-300 hover:from-violet-500/15 hover:to-indigo-500/15 hover:border-violet-500/30 hover:text-violet-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="group relative w-full flex items-center justify-center gap-3 rounded-xl py-4 text-sm font-semibold transition-all overflow-hidden disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(139,92,246,0.15), rgba(99,102,241,0.15))',
+                    border: '1px solid rgba(139,92,246,0.25)'
+                  }}
                 >
-                  <Sparkles size={15} className="group-hover:animate-pulse" />
-                  Visualize This Concept
+                  {/* Hover glow effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-violet-500/0 via-violet-500/10 to-violet-500/0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <Sparkles size={16} className="text-violet-400 group-hover:animate-pulse relative z-10" />
+                  <span className="text-violet-300 group-hover:text-violet-200 relative z-10">Generate Motion Preview</span>
+                  <ChevronRight size={16} className="text-violet-500 group-hover:translate-x-1 transition-transform relative z-10" />
                 </button>
               )}
             </div>
