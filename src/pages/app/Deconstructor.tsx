@@ -126,19 +126,6 @@ function UrlInput({
           {urlError}
         </p>
       )}
-
-      {/* Supported sources */}
-      <div className="flex items-center justify-center gap-4 mt-4">
-        {(["meta", "youtube", "tiktok"] as SourceType[]).map((s) => (
-          <span
-            key={s}
-            className="text-xs text-zinc-500 font-mono"
-            style={{ color: SOURCE_COLORS[s] + "99" }}
-          >
-            {getSourceLabel(s)}
-          </span>
-        ))}
-      </div>
     </div>
   );
 }
@@ -663,9 +650,6 @@ export default function Deconstructor() {
           href="https://cutsheet.xyz/app/deconstructor"
         />
       </Helmet>
-
-      {/* Ambient glow */}
-      <div className="pointer-events-none fixed top-0 right-0 w-[700px] h-[500px] rounded-full bg-amber-500/[0.04] blur-[140px]" />
 
       <div className="relative flex-1 flex flex-col items-center justify-center px-4 py-10 md:py-14">
         {/* Header — visible until result */}
