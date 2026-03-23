@@ -328,7 +328,7 @@ export function ReportCards({
 
   // Render a section's full content (for expanded deep dive)
   const renderSectionContent = (section: { title: string | null; content: string }) => (
-    <div className="text-sm text-zinc-400 leading-relaxed [&_strong]:text-zinc-300 [&_strong]:font-medium [&_ul]:list-disc [&_ul]:pl-4 [&_li]:mb-1.5 [&_code]:bg-white/5 [&_code]:rounded [&_code]:px-1 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_h3]:text-xs [&_h3]:font-semibold [&_h3]:text-zinc-300 [&_h3]:mt-4 [&_h3]:mb-2 [&_em]:text-indigo-300/70">
+    <div className="text-[11px] text-zinc-400 leading-relaxed [&_strong]:text-zinc-300 [&_strong]:font-medium [&_ul]:pl-3.5 [&_li]:mb-1 [&_code]:bg-white/[0.03] [&_code]:rounded [&_code]:px-1 [&_ol]:pl-3.5 [&_p]:mb-1.5 [&_p:last-child]:mb-0 [&_h3]:text-[10px] [&_h3]:font-medium [&_h3]:text-zinc-400 [&_h3]:mt-3 [&_h3]:mb-1.5 [&_em]:text-zinc-400">
       <ReactMarkdown>{section.content}</ReactMarkdown>
     </div>
   );
@@ -392,7 +392,7 @@ export function ReportCards({
 
       {/* Verdict banner moved to right panel */}
 
-      {/* ─── AI Tools Section — prominent interactive tools ─── */}
+      {/* ─── AI Tools Section — glassmorphism cards ─── */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, ease: 'easeOut' }}>
       {(onFixIt || onVisualize || onCheckPolicies || onCompare) && (() => {
         const tools = [
@@ -400,13 +400,9 @@ export function ReportCards({
             key: 'fix', 
             icon: Wand2, 
             name: 'AI Rewrite', 
-            description: 'Get AI-powered copy suggestions to improve your messaging and hooks',
+            description: 'AI-powered copy suggestions',
             credit: 'Free', 
-            iconColor: '#818cf8', 
-            gradientFrom: 'from-indigo-500/20',
-            gradientTo: 'to-violet-500/10',
-            borderColor: 'border-indigo-500/20',
-            hoverBorder: 'hover:border-indigo-500/40',
+            iconColor: '#a5b4fc',
             onClick: onFixIt, 
             loading: fixItLoading 
           },
@@ -414,13 +410,9 @@ export function ReportCards({
             key: 'visualize', 
             icon: Image, 
             name: 'Visualize', 
-            description: 'Transform your static ad into an animated motion concept',
+            description: 'Static to motion concept',
             credit: '1 credit', 
-            iconColor: '#10b981', 
-            gradientFrom: 'from-emerald-500/20',
-            gradientTo: 'to-teal-500/10',
-            borderColor: 'border-emerald-500/20',
-            hoverBorder: 'hover:border-emerald-500/40',
+            iconColor: '#6ee7b7',
             onClick: onVisualize, 
             disabled: format !== 'static' 
           },
@@ -428,13 +420,9 @@ export function ReportCards({
             key: 'policy', 
             icon: ShieldCheck, 
             name: 'Policy Check', 
-            description: 'Scan for potential ad policy violations before you publish',
+            description: 'Scan for violations',
             credit: 'Free', 
-            iconColor: '#f59e0b', 
-            gradientFrom: 'from-amber-500/20',
-            gradientTo: 'to-orange-500/10',
-            borderColor: 'border-amber-500/20',
-            hoverBorder: 'hover:border-amber-500/40',
+            iconColor: '#fcd34d',
             onClick: onCheckPolicies, 
             loading: policyLoading 
           },
@@ -442,14 +430,13 @@ export function ReportCards({
         return (
           <div className="mt-6">
             {/* Section header */}
-            <div className="flex items-center gap-2.5 mb-4">
-              <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">AI Tools</span>
-              <div className="flex-1 h-px bg-gradient-to-r from-white/[0.06] to-transparent" />
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">Tools</span>
+              <div className="flex-1 h-px bg-white/[0.04]" />
             </div>
             
             {/* Tools grid - 3 columns side by side */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2">
               {tools.map((t) => {
                 const Icon = t.icon;
                 const isDisabled = !!t.disabled;
@@ -460,53 +447,32 @@ export function ReportCards({
                     onClick={() => !isDisabled && !isLoading && t.onClick?.()}
                     disabled={isDisabled || isLoading}
                     title={isDisabled ? 'Only available for static ads' : undefined}
-                    className={`group relative flex flex-col items-center text-center p-5 rounded-2xl border ${t.borderColor} bg-gradient-to-b ${t.gradientFrom} ${t.gradientTo} transition-all ${t.hoverBorder} hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 cursor-pointer overflow-hidden`}
+                    className="group relative flex flex-col items-center text-center p-4 rounded-xl border border-white/[0.05] bg-white/[0.02] backdrop-blur-sm transition-all hover:bg-white/[0.04] hover:border-white/[0.08] active:scale-[0.98] disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer"
                   >
-                    {/* Glow effect on hover */}
-                    <div 
-                      className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-                      style={{ 
-                        background: `radial-gradient(circle at 50% 30%, ${t.iconColor}15, transparent 60%)` 
-                      }}
-                    />
-                    
                     {/* Icon */}
                     <div 
-                      className="relative w-14 h-14 rounded-2xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 group-hover:-translate-y-0.5"
-                      style={{ background: `${t.iconColor}20`, boxShadow: `0 8px 24px ${t.iconColor}20` }}
+                      className="relative w-10 h-10 rounded-xl flex items-center justify-center mb-3 transition-transform group-hover:scale-105"
+                      style={{ background: `${t.iconColor}12` }}
                     >
                       {isLoading ? (
                         <div 
-                          className="w-6 h-6 border-2 rounded-full animate-spin" 
-                          style={{ borderColor: `${t.iconColor}40`, borderTopColor: t.iconColor }} 
+                          className="w-4 h-4 border-2 rounded-full animate-spin" 
+                          style={{ borderColor: `${t.iconColor}30`, borderTopColor: t.iconColor }} 
                         />
                       ) : (
-                        <Icon size={24} style={{ color: t.iconColor }} />
+                        <Icon size={18} style={{ color: t.iconColor }} />
                       )}
                     </div>
                     
-                    {/* Badge */}
+                    {/* Name */}
+                    <span className="text-xs font-medium text-zinc-200 mb-0.5">{t.name}</span>
+                    
+                    {/* Credit badge */}
                     <span 
-                      className="relative text-[10px] font-semibold px-2.5 py-1 rounded-full mb-2"
-                      style={{ 
-                        background: t.credit === 'Free' ? 'rgba(16,185,129,0.15)' : 'rgba(139,92,246,0.15)',
-                        color: t.credit === 'Free' ? '#10b981' : '#a78bfa'
-                      }}
+                      className="text-[9px] font-medium text-zinc-500"
                     >
                       {t.credit}
                     </span>
-                    
-                    {/* Name */}
-                    <span className="relative text-sm font-semibold text-zinc-100 mb-1.5">{t.name}</span>
-                    
-                    {/* Description */}
-                    <p className="relative text-[11px] text-zinc-500 leading-relaxed">{t.description}</p>
-                    
-                    {/* Bottom action hint */}
-                    <div className="relative mt-4 flex items-center gap-1 text-[10px] font-medium transition-all opacity-60 group-hover:opacity-100" style={{ color: t.iconColor }}>
-                      <span>Use tool</span>
-                      <ChevronRight size={12} className="transition-transform group-hover:translate-x-0.5" />
-                    </div>
                   </button>
                 );
               })}
@@ -631,96 +597,69 @@ export function ReportCards({
         const secondaryIntensity = intensityMap[secondary] ?? 70;
 
         return (
-          <div className="rounded-2xl border border-white/[0.06] overflow-hidden mt-4 bg-white/[0.015]">
+          <div className="rounded-xl border border-white/[0.05] overflow-hidden mt-4 bg-white/[0.015] backdrop-blur-sm">
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.05]">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-pink-500/10 flex items-center justify-center">
-                  <Heart size={14} className="text-pink-400" />
+            <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.04]">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-md bg-white/[0.04] flex items-center justify-center">
+                  <Heart size={12} className="text-zinc-400" />
                 </div>
-                <span className="text-sm font-medium text-zinc-200">Emotional Impact</span>
+                <span className="text-[12px] font-medium text-zinc-300">Emotional Impact</span>
               </div>
-              <span className="text-[10px] font-medium uppercase tracking-wide text-zinc-500">Viewer Response</span>
             </div>
             
             {/* Body */}
-            <div className="p-5">
-              {/* Primary emotion card */}
-              <div className="rounded-xl bg-gradient-to-br from-indigo-500/[0.08] to-transparent border border-indigo-500/10 p-4 mb-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-medium uppercase tracking-wide text-indigo-400">Primary Emotion</span>
-                  <span className="text-xs font-mono text-indigo-300">{primaryIntensity}%</span>
+            <div className="p-4">
+              {/* Primary emotion */}
+              <div className="rounded-lg bg-white/[0.02] border border-white/[0.04] p-3 mb-3">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[9px] text-zinc-500 uppercase tracking-wide">Primary</span>
+                  <span className="text-[10px] font-mono text-zinc-500">{primaryIntensity}%</span>
                 </div>
-                <p className="text-lg font-semibold text-zinc-100 mb-1">{primary}</p>
-                <p className="text-xs text-zinc-500 leading-relaxed">
-                  This is the dominant feeling viewers experience within the first 2 seconds
-                </p>
+                <p className="text-sm font-medium text-zinc-200">{primary}</p>
                 {/* Intensity bar */}
-                <div className="mt-3 h-1 rounded-full bg-white/[0.06] overflow-hidden">
+                <div className="mt-2 h-0.5 rounded-full bg-white/[0.04] overflow-hidden">
                   <div 
-                    className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-indigo-400" 
-                    style={{ width: `${primaryIntensity}%` }} 
+                    className="h-full rounded-full" 
+                    style={{ width: `${primaryIntensity}%`, background: '#a5b4fc60' }} 
                   />
                 </div>
               </div>
 
               {/* Secondary emotions row */}
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                <div className="rounded-xl bg-white/[0.02] border border-white/[0.05] p-3.5">
-                  <span className="text-[10px] font-medium uppercase tracking-wide text-emerald-400 block mb-1">Secondary</span>
-                  <p className="text-sm font-medium text-zinc-200">{secondary}</p>
-                  <div className="mt-2 h-0.5 rounded-full bg-white/[0.06] overflow-hidden">
-                    <div className="h-full rounded-full bg-emerald-500" style={{ width: `${secondaryIntensity}%` }} />
-                  </div>
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                <div className="rounded-lg bg-white/[0.015] border border-white/[0.04] p-2.5">
+                  <span className="text-[9px] text-zinc-500 uppercase tracking-wide block mb-0.5">Secondary</span>
+                  <p className="text-[11px] font-medium text-zinc-300">{secondary}</p>
                 </div>
-                <div className="rounded-xl bg-white/[0.02] border border-white/[0.05] p-3.5">
-                  <span className="text-[10px] font-medium uppercase tracking-wide text-violet-400 block mb-1">Tertiary</span>
-                  <p className="text-sm font-medium text-zinc-200">{tertiary}</p>
-                  <div className="mt-2 h-0.5 rounded-full bg-white/[0.06] overflow-hidden">
-                    <div className="h-full rounded-full bg-violet-500" style={{ width: '55%' }} />
-                  </div>
+                <div className="rounded-lg bg-white/[0.015] border border-white/[0.04] p-2.5">
+                  <span className="text-[9px] text-zinc-500 uppercase tracking-wide block mb-0.5">Tertiary</span>
+                  <p className="text-[11px] font-medium text-zinc-300">{tertiary}</p>
                 </div>
               </div>
 
-              {/* Emotional journey visualization */}
-              <div className="rounded-xl bg-white/[0.02] border border-white/[0.05] p-4 mb-4">
-                <span className="text-[10px] font-medium uppercase tracking-wide text-zinc-500 block mb-3">Emotional Journey</span>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-indigo-500" />
-                    <span className="text-xs font-medium text-zinc-300">{primary}</span>
-                  </div>
-                  <div className="flex-1 mx-3 h-px bg-gradient-to-r from-indigo-500 via-emerald-500 to-violet-500" />
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-zinc-300">{secondary}</span>
-                    <div className="w-3 h-3 rounded-full bg-emerald-500" />
-                  </div>
-                  <div className="flex-1 mx-3 h-px bg-gradient-to-r from-emerald-500 to-violet-500" />
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-zinc-300">{tertiary}</span>
-                    <div className="w-3 h-3 rounded-full bg-violet-500" />
-                  </div>
-                </div>
+              {/* Emotional journey - simplified */}
+              <div className="flex items-center gap-1.5 text-[10px] text-zinc-400">
+                <span>{primary}</span>
+                <span className="text-zinc-600">→</span>
+                <span>{secondary}</span>
+                <span className="text-zinc-600">→</span>
+                <span>{tertiary}</span>
+              </div>
               </div>
 
               {/* Tone tags */}
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[10px] text-zinc-600 uppercase tracking-wide">Tone:</span>
-                {tones.map(t => (
-                  <span key={t} className="text-[11px] font-medium bg-white/[0.04] rounded-lg px-2.5 py-1 text-zinc-400 border border-white/[0.04]">{t}</span>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {tones.slice(0, 3).map(t => (
+                  <span key={t} className="text-[9px] font-medium bg-white/[0.03] rounded-md px-2 py-0.5 text-zinc-500">{t}</span>
                 ))}
               </div>
 
               {/* CTA mismatch warning */}
               {hasMismatch && (
-                <div className="flex items-start gap-3 rounded-xl p-4 mt-4 bg-amber-500/[0.06] border border-amber-500/15">
-                  <div className="w-6 h-6 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0 mt-0.5">
-                    <AlertCircle size={12} className="text-amber-400" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium text-amber-300 mb-0.5">Missed Conversion Opportunity</p>
-                    <p className="text-[11px] text-zinc-500 leading-relaxed">{mismatchNote}</p>
-                  </div>
+                <div className="flex items-start gap-2 rounded-lg p-2.5 mt-3 bg-white/[0.02] border border-white/[0.04]">
+                  <AlertCircle size={12} className="text-fcd34d/70 shrink-0 mt-0.5" />
+                  <p className="text-[10px] text-zinc-500 leading-relaxed">{mismatchNote}</p>
                 </div>
               )}
             </div>
@@ -750,120 +689,87 @@ export function ReportCards({
           rawPhases[2] || 'Product reveal with CTA'
         ];
         
+        // Subdued color palette
         const phaseConfig = [
-          { label: 'Opening', time: '0-2s', color: '#818cf8', icon: '01' },
-          { label: 'Transition', time: '2-5s', color: '#10b981', icon: '02' },
-          { label: 'Payoff', time: '5-8s', color: '#f59e0b', icon: '03' },
+          { label: 'Opening', time: '0-2s', color: '#a5b4fc' },
+          { label: 'Transition', time: '2-5s', color: '#6ee7b7' },
+          { label: 'Payoff', time: '5-8s', color: '#fcd34d' },
         ];
         
         const platformTag = platform ?? 'Meta';
         const durationTag = '6–8s';
         
         return (
-          <div key={`motion-${i}`} className="relative rounded-2xl overflow-hidden mt-4" style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.08) 0%, rgba(16,185,129,0.04) 50%, rgba(245,158,11,0.06) 100%)', border: '1px solid rgba(139,92,246,0.15)' }}>
-            {/* Decorative corner glow */}
-            <div className="absolute top-0 right-0 w-40 h-40 rounded-full blur-3xl opacity-30 pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.4), transparent 70%)' }} />
-            
+          <div key={`motion-${i}`} className="relative rounded-xl overflow-hidden mt-4 border border-white/[0.05] bg-white/[0.015] backdrop-blur-sm">
             {/* Header */}
-            <div className="relative flex items-center justify-between px-5 py-4 border-b border-white/[0.06]">
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500/20 to-indigo-500/20 flex items-center justify-center border border-violet-500/20">
-                    <Film size={18} className="text-violet-400" />
-                  </div>
+            <div className="relative flex items-center justify-between px-4 py-3 border-b border-white/[0.04]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-white/[0.04] flex items-center justify-center">
+                  <Film size={14} className="text-zinc-400" />
                 </div>
                 <div>
-                  <span className="text-sm font-semibold text-zinc-100 block">Motion Test Idea</span>
-                  <span className="text-[11px] text-zinc-500">Transform your static into scroll-stopping motion</span>
+                  <span className="text-[13px] font-medium text-zinc-200 block">Motion Test Idea</span>
+                  <span className="text-[10px] text-zinc-500">Static to motion</span>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-mono font-medium bg-white/[0.06] rounded-lg px-2.5 py-1.5 text-zinc-400 border border-white/[0.06]">{platformTag}</span>
-                <span className="text-[10px] font-mono font-medium bg-emerald-500/10 rounded-lg px-2.5 py-1.5 text-emerald-400 border border-emerald-500/15">{durationTag}</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[9px] font-medium bg-white/[0.04] rounded-md px-2 py-1 text-zinc-500">{platformTag}</span>
+                <span className="text-[9px] font-medium bg-white/[0.04] rounded-md px-2 py-1 text-zinc-500">{durationTag}</span>
               </div>
             </div>
             
             {/* Storyboard section */}
-            <div className="relative p-5">
-              {/* Phase cards - now above timeline */}
-              <div className="relative mb-4">
-                <div className="grid grid-cols-3 gap-4">
-                  {phaseConfig.map((config, pi) => (
-                    <div key={pi} className="relative">
-                      {/* Phase card */}
-                      <div 
-                        className="group rounded-xl p-4 transition-all duration-200 hover:scale-[1.02] cursor-default h-full"
-                        style={{ 
-                          background: `linear-gradient(145deg, ${config.color}10, ${config.color}04)`,
-                          border: `1px solid ${config.color}20`
-                        }}
+            <div className="relative p-4">
+              {/* Phase cards */}
+              <div className="grid grid-cols-3 gap-2 mb-4">
+                {phaseConfig.map((config, pi) => (
+                  <div 
+                    key={pi} 
+                    className="rounded-lg p-3 border border-white/[0.04] bg-white/[0.02]"
+                  >
+                    {/* Phase header */}
+                    <div className="flex items-center justify-between mb-2">
+                      <span 
+                        className="text-[10px] font-semibold uppercase tracking-wide"
+                        style={{ color: config.color }}
                       >
-                        {/* Phase header */}
-                        <div className="flex items-center justify-between mb-3">
-                          <span 
-                            className="text-xs font-bold uppercase tracking-wide"
-                            style={{ color: config.color }}
-                          >
-                            {config.label}
-                          </span>
-                          <span className="text-[10px] font-mono text-zinc-600">{config.time}</span>
-                        </div>
-                        
-                        {/* Phase description */}
-                        <p className="text-[13px] text-zinc-300 leading-relaxed">
-                          {phases[pi].trim().charAt(0).toUpperCase() + phases[pi].trim().slice(1).replace(/^product and cta$/i, 'Product reveal with clear CTA')}
-                        </p>
-                      </div>
+                        {config.label}
+                      </span>
+                      <span className="text-[9px] font-mono text-zinc-600">{config.time}</span>
                     </div>
-                  ))}
-                </div>
+                    
+                    {/* Phase description */}
+                    <p className="text-[11px] text-zinc-400 leading-relaxed">
+                      {phases[pi].trim().charAt(0).toUpperCase() + phases[pi].trim().slice(1).replace(/^product and cta$/i, 'Product reveal with clear CTA')}
+                    </p>
+                  </div>
+                ))}
               </div>
               
-              {/* Timeline bar - now below cards */}
-              <div className="relative mb-6">
-                <div className="flex items-center gap-0">
+              {/* Timeline bar */}
+              <div className="relative mb-4">
+                <div className="flex items-center h-1 rounded-full overflow-hidden bg-white/[0.04]">
                   {phaseConfig.map((config, pi) => (
-                    <div key={pi} className="flex-1 flex items-center">
-                      {/* Timeline segment */}
-                      <div className="flex-1 h-1.5 rounded-full" style={{ background: config.color }} />
-                      {/* Timeline node */}
-                      {pi < phaseConfig.length - 1 && (
-                        <div 
-                          className="w-3 h-3 rounded-full shrink-0 mx-[-2px] z-10"
-                          style={{ 
-                            backgroundColor: config.color,
-                            boxShadow: `0 0 8px ${config.color}60`
-                          }}
-                        />
-                      )}
-                    </div>
+                    <div 
+                      key={pi} 
+                      className="flex-1 h-full"
+                      style={{ background: `${config.color}50` }} 
+                    />
                   ))}
                 </div>
                 {/* Time labels */}
-                <div className="flex justify-between mt-2 px-1">
-                  <span className="text-[9px] font-mono text-zinc-600">0s</span>
-                  <span className="text-[9px] font-mono text-zinc-600">2s</span>
-                  <span className="text-[9px] font-mono text-zinc-600">5s</span>
-                  <span className="text-[9px] font-mono text-zinc-600">8s</span>
+                <div className="flex justify-between mt-1.5">
+                  <span className="text-[8px] font-mono text-zinc-600">0s</span>
+                  <span className="text-[8px] font-mono text-zinc-600">2s</span>
+                  <span className="text-[8px] font-mono text-zinc-600">5s</span>
+                  <span className="text-[8px] font-mono text-zinc-600">8s</span>
                 </div>
               </div>
 
-              {/* Performance insight card */}
-              <div className="rounded-xl p-4 mb-4" style={{ background: 'linear-gradient(135deg, rgba(16,185,129,0.08), rgba(16,185,129,0.02))', border: '1px solid rgba(16,185,129,0.12)' }}>
-                <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-emerald-500/15 flex items-center justify-center shrink-0">
-                    <TrendingUp size={16} className="text-emerald-400" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <span className="text-xs font-semibold text-emerald-400">Expected Performance Lift</span>
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300">+2-3x</span>
-                    </div>
-                    <p className="text-[12px] text-zinc-500 leading-relaxed">
-                      Motion ads on {platformTag} drive significantly higher engagement. This 3-act structure captures attention, builds interest, and converts.
-                    </p>
-                  </div>
-                </div>
+              {/* Performance insight */}
+              <div className="flex items-center gap-2 text-[10px] text-zinc-500">
+                <TrendingUp size={12} className="text-zinc-500" />
+                <span>Motion ads drive 2-3x higher engagement on {platformTag}</span>
               </div>
               
               {/* Visualize CTA */}
@@ -871,17 +777,10 @@ export function ReportCards({
                 <button
                   onClick={onVisualize}
                   disabled={format !== 'static'}
-                  className="group relative w-full flex items-center justify-center gap-3 rounded-xl py-4 text-sm font-semibold transition-all overflow-hidden disabled:opacity-40 disabled:cursor-not-allowed"
-                  style={{
-                    background: 'linear-gradient(135deg, rgba(139,92,246,0.15), rgba(99,102,241,0.15))',
-                    border: '1px solid rgba(139,92,246,0.25)'
-                  }}
+                  className="group w-full flex items-center justify-center gap-2 rounded-lg py-2.5 mt-3 text-[11px] font-medium transition-all bg-white/[0.03] border border-white/[0.06] text-zinc-400 hover:bg-white/[0.05] hover:text-zinc-300 hover:border-white/[0.1] disabled:opacity-35 disabled:cursor-not-allowed"
                 >
-                  {/* Hover glow effect */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-violet-500/0 via-violet-500/10 to-violet-500/0 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <Sparkles size={16} className="text-violet-400 group-hover:animate-pulse relative z-10" />
-                  <span className="text-violet-300 group-hover:text-violet-200 relative z-10">Generate Motion Preview</span>
-                  <ChevronRight size={16} className="text-violet-500 group-hover:translate-x-1 transition-transform relative z-10" />
+                  <Sparkles size={12} />
+                  <span>Generate Motion Preview</span>
                 </button>
               )}
             </div>

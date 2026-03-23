@@ -89,11 +89,11 @@ const YOUTUBE_FORMAT_BENCHMARK_LABELS: Record<string, string> = {
   'in_feed':       'YouTube In-Feed \u00B7 CTR avg 0.65%',
 };
 
-/** Score color: 8+ emerald, 4–7.9 amber, 0–3.9 red */
+/** Score color: subdued palette — 8+ soft emerald, 4–7.9 soft amber, 0–3.9 soft red */
 function scoreColor(score: number): string {
-  if (score >= 8) return "#10b981";
-  if (score >= 4) return "#f59e0b";
-  return "#ef4444";
+  if (score >= 8) return "#6ee7b7";
+  if (score >= 4) return "#fcd34d";
+  return "#fca5a5";
 }
 
 /** Colorblind-safe indicator: shape that communicates score band without relying on color */
@@ -146,12 +146,12 @@ function BenchmarkBar({ score, benchmark, color, label }: BenchmarkBarProps) {
   return (
     <div className="w-full flex flex-col">
       {/* Labels above bar */}
-      <div className="flex items-center justify-between mb-2.5">
-        <span className="font-mono text-xs" style={{ color }}>
+      <div className="flex items-center justify-between mb-2">
+        <span className="font-mono text-[10px] text-zinc-400">
           You · {score.toFixed(1)}
         </span>
         <span 
-          className="font-mono text-xs text-indigo-400 truncate max-w-[55%] text-right"
+          className="font-mono text-[10px] text-zinc-500 truncate max-w-[55%] text-right"
           title={`${label ?? "Avg"} · ${benchmark.toFixed(1)}`}
         >
           {label ?? "Avg"} · {benchmark.toFixed(1)}
@@ -159,20 +159,20 @@ function BenchmarkBar({ score, benchmark, color, label }: BenchmarkBarProps) {
       </div>
       
       {/* Bar track */}
-      <div className="relative w-full h-1 bg-white/[0.06] rounded-full">
+      <div className="relative w-full h-1 bg-white/[0.04] rounded-full">
         {/* Score fill */}
         <motion.div
           className="absolute h-full rounded-full left-0 top-0"
-          style={{ background: color }}
+          style={{ background: `${color}80` }}
           initial={{ width: 0 }}
           animate={{ width: fillPct }}
           transition={{ duration: 0.5, ease: "easeOut" }}
         />
         {/* Benchmark tick */}
         <div
-          className="absolute w-0.5 h-3 bg-indigo-500 rounded-sm"
+          className="absolute w-0.5 h-2.5 bg-zinc-500 rounded-sm"
           style={{
-            top: -4,
+            top: -3,
             left: tickPct,
             transform: "translateX(-50%)",
           }}
@@ -226,35 +226,35 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
     : "Avg");
 
   return (
-    <div className="flex flex-col items-center w-full px-5 pt-6 pb-4">
-      {/* Score display — cleaner, larger typography */}
+    <div className="flex flex-col items-center w-full px-4 pt-5 pb-4">
+      {/* Score display — cleaner, subdued */}
       <div className="flex items-baseline gap-1">
         <span
           className="font-mono tabular-nums tracking-tight"
           style={{
-            fontSize: 64,
+            fontSize: 48,
             fontWeight: 500,
             lineHeight: 1,
-            color,
+            color: `${color}cc`,
             letterSpacing: '-0.02em',
           }}
         >
           {animatedScore.toFixed(1)}
         </span>
-        <span className="font-mono text-lg text-zinc-600">/10</span>
+        <span className="font-mono text-base text-zinc-600">/10</span>
       </div>
 
-      {/* Verdict label — understated */}
+      {/* Verdict label */}
       <span
-        className="text-sm font-medium mt-1.5 tracking-wide"
-        style={{ color }}
+        className="text-xs font-medium mt-1 tracking-wide"
+        style={{ color: `${color}99` }}
       >
         {verdict}
       </span>
 
       {/* Benchmark bar */}
       {showBenchmark && (
-        <div className="w-full mt-5">
+        <div className="w-full mt-4">
           <BenchmarkBar
             score={score}
             benchmark={resolvedBenchmark!}
@@ -265,38 +265,29 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
         </div>
       )}
 
-      {/* Dimension grid — cleaner cards */}
-      <div className="w-full mt-5 pt-5 border-t border-white/[0.06]">
-        <div className="grid grid-cols-4 gap-2">
+      {/* Dimension grid — minimal */}
+      <div className="w-full mt-4 pt-4 border-t border-white/[0.04]">
+        <div className="grid grid-cols-4 gap-1.5">
           {resolvedDimensions.map((dim, i) => {
             const dimColor = scoreColor(dim.score);
-            const isStrong = dim.score >= 8;
-            const isWeak = dim.score < 4;
             return (
               <motion.div
                 key={dim.name}
-                initial={{ opacity: 0, y: 6 }}
+                initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: i * 0.05, ease: "easeOut" }}
-                className="flex flex-col items-center gap-1.5 py-3 px-1 rounded-xl transition-colors"
+                transition={{ duration: 0.25, delay: i * 0.04, ease: "easeOut" }}
+                className="flex flex-col items-center gap-1 py-2.5 px-1 rounded-lg"
                 style={{
-                  background: 'rgba(255,255,255,0.02)',
+                  background: 'rgba(255,255,255,0.015)',
                 }}
               >
-                <div className="flex items-center gap-1.5">
-                  {/* Score indicator dot */}
-                  <span 
-                    className="w-1.5 h-1.5 rounded-full"
-                    style={{ background: dimColor }}
-                  />
-                  <span
-                    className="font-mono text-sm font-semibold tabular-nums"
-                    style={{ color: dimColor }}
-                  >
-                    {dim.score.toFixed(1)}
-                  </span>
-                </div>
-                <span className="text-[11px] text-zinc-500 text-center leading-tight whitespace-nowrap">
+                <span
+                  className="font-mono text-xs font-medium tabular-nums"
+                  style={{ color: `${dimColor}99` }}
+                >
+                  {dim.score.toFixed(1)}
+                </span>
+                <span className="text-[9px] text-zinc-500 text-center leading-tight whitespace-nowrap">
                   {dim.name}
                 </span>
               </motion.div>

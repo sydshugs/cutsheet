@@ -7,29 +7,29 @@
   font-display: swap;
 }
 
-/* Cutsheet design tokens — refined premium dashboard aesthetic */
+/* Cutsheet design tokens — subdued glassmorphism aesthetic */
 :root {
-  --bg:          #0a0a0a;
-  --surface:    rgba(255,255,255,0.025);
-  --surface-el:  rgba(255,255,255,0.035);
-  --surface-raised: rgba(255,255,255,0.04);
-  --border:     rgba(255,255,255,0.08);
-  --border-strong: rgba(255,255,255,0.12);
-  --border-hover: rgba(255,255,255,0.16);
-  --ink:        rgba(255,255,255,0.95);
-  --ink-secondary: rgba(255,255,255,0.7);
-  --ink-muted:  rgba(255,255,255,0.5);
-  --ink-faint:  rgba(255,255,255,0.3);
-  --surface-dim: rgba(255,255,255,0.02);
-  --label:      #a5b4fc;
+  --bg:          #09090b;
+  --surface:    rgba(255,255,255,0.02);
+  --surface-el:  rgba(255,255,255,0.03);
+  --surface-raised: rgba(255,255,255,0.035);
+  --border:     rgba(255,255,255,0.06);
+  --border-strong: rgba(255,255,255,0.1);
+  --border-hover: rgba(255,255,255,0.14);
+  --ink:        rgba(255,255,255,0.92);
+  --ink-secondary: rgba(255,255,255,0.65);
+  --ink-muted:  rgba(255,255,255,0.45);
+  --ink-faint:  rgba(255,255,255,0.25);
+  --surface-dim: rgba(255,255,255,0.015);
+  --label:      #94a3b8;
   --accent:     #6366F1;
   --accent-rgb: 99, 102, 241;
   --accent-hover: #818cf8;
-  --accent-soft: rgba(99,102,241,0.08);
+  --accent-soft: rgba(99,102,241,0.06);
   --grad:       linear-gradient(135deg, #6366F1, #8B5CF6);
-  --success:    #10B981;
-  --error:      #EF4444;
-  --warn:       #F59E0B;
+  --success:    #34d399;
+  --error:      #f87171;
+  --warn:       #fbbf24;
   --mono:       'Geist Mono', ui-monospace, monospace;
   --sans:       'Geist', -apple-system, system-ui, sans-serif;
   --radius-sm:  8px;
@@ -39,21 +39,21 @@
   --ease-out:   cubic-bezier(0.16, 1, 0.3, 1);
   --spring:     cubic-bezier(0.34, 1.56, 0.64, 1);
 
-  /* ── Score-band semantic colors ── */
-  --score-excellent:        #10B981;
-  --score-good:             #6366F1;
-  --score-average:          #F59E0B;
-  --score-weak:             #EF4444;
+  /* ── Score-band semantic colors — softer palette ── */
+  --score-excellent:        #34d399;
+  --score-good:             #818cf8;
+  --score-average:          #fbbf24;
+  --score-weak:             #f87171;
 
-  --score-excellent-bg:     rgba(16,185,129,0.1);
-  --score-good-bg:          rgba(99,102,241,0.1);
-  --score-average-bg:       rgba(245,158,11,0.1);
-  --score-weak-bg:          rgba(239,68,68,0.1);
+  --score-excellent-bg:     rgba(52,211,153,0.08);
+  --score-good-bg:          rgba(129,140,248,0.08);
+  --score-average-bg:       rgba(251,191,36,0.08);
+  --score-weak-bg:          rgba(248,113,113,0.08);
 
-  --score-excellent-border: rgba(16,185,129,0.25);
-  --score-good-border:      rgba(99,102,241,0.25);
-  --score-average-border:   rgba(245,158,11,0.25);
-  --score-weak-border:      rgba(239,68,68,0.25);
+  --score-excellent-border: rgba(52,211,153,0.2);
+  --score-good-border:      rgba(129,140,248,0.2);
+  --score-average-border:   rgba(251,191,36,0.2);
+  --score-weak-border:      rgba(248,113,113,0.2);
 
   /* ── Accent composites ── */
   --accent-subtle:    rgba(99,102,241,0.08);
@@ -99,28 +99,30 @@
   --skeleton-base: rgba(255,255,255,0.04);
   --skeleton-shine: rgba(255,255,255,0.08);
 
-  /* ── Glass system ── */
-  --glass-card-bg: rgba(18, 18, 20, 0.75);
-  --glass-card-blur: blur(24px) saturate(180%);
-  --glass-card-border: rgba(255, 255, 255, 0.06);
-  --glass-card-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 4px 16px rgba(0,0,0,0.2);
-  --glass-sheet-bg: rgba(12, 12, 14, 0.92);
-  --glass-sheet-blur: blur(32px) saturate(200%);
-  --glass-sheet-border: rgba(255, 255, 255, 0.08);
+  /* ── Glass system — enhanced glassmorphism ── */
+  --glass-card-bg: rgba(15, 15, 18, 0.7);
+  --glass-card-blur: blur(20px) saturate(150%);
+  --glass-card-border: rgba(255, 255, 255, 0.05);
+  --glass-card-shadow: 0 1px 2px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.15);
+  --glass-sheet-bg: rgba(12, 12, 15, 0.88);
+  --glass-sheet-blur: blur(24px) saturate(160%);
+  --glass-sheet-border: rgba(255, 255, 255, 0.06);
+  --glass-subtle-bg: rgba(255, 255, 255, 0.02);
+  --glass-elevated-bg: rgba(255, 255, 255, 0.04);
 
-  /* ── Ambient glow — subtle, premium feel ── */
-  --ambient-glow: radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.03) 0%, transparent 50%);
+  /* ── Ambient glow — very subtle ── */
+  --ambient-glow: radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.02) 0%, transparent 50%);
 
   /* ── Grid cells ── */
-  --grid-cell-bg: rgba(255,255,255,0.02);
-  --grid-cell-border: rgba(255,255,255,0.05);
-  --grid-gap-bg: rgba(255,255,255,0.04);
+  --grid-cell-bg: rgba(255,255,255,0.015);
+  --grid-cell-border: rgba(255,255,255,0.04);
+  --grid-gap-bg: rgba(255,255,255,0.03);
 
-  /* ── Card system — cleaner hierarchy ── */
-  --card-bg: rgba(255,255,255,0.02);
-  --card-border: rgba(255,255,255,0.06);
-  --card-hover-bg: rgba(255,255,255,0.035);
-  --card-hover-border: rgba(255,255,255,0.1);
+  /* ── Card system — glass-forward hierarchy ── */
+  --card-bg: rgba(255,255,255,0.015);
+  --card-border: rgba(255,255,255,0.05);
+  --card-hover-bg: rgba(255,255,255,0.025);
+  --card-hover-border: rgba(255,255,255,0.08);
   
   /* ── Section spacing ── */
   --section-gap: 16px;
