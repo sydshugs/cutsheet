@@ -354,7 +354,7 @@ export function Settings() {
             </div>
             <div style={{ textAlign: "right" }}>
               <span style={{ fontSize: 28, fontWeight: 700, color: "#f4f4f5" }}>
-                ${currentPlan.price}
+                ${currentPlan.priceMonthly}
               </span>
               <span style={{ fontSize: 14, color: "#71717a", fontWeight: 400 }}>/mo</span>
             </div>
@@ -662,39 +662,44 @@ export function Settings() {
       </div>
 
       {/* Billing toggle */}
-      <div className="flex items-center justify-center gap-3 mb-8">
-        <button
-          type="button"
-          onClick={() => setIsAnnual(false)}
-          className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
-          style={{
-            background: !isAnnual ? "rgba(255,255,255,0.08)" : "transparent",
-            color: !isAnnual ? "#f4f4f5" : "#71717a",
-            border: "none",
-            cursor: "pointer",
-          }}
+      <div className="flex items-center justify-center mb-8">
+        <div 
+          className="inline-flex items-center gap-1 p-1 rounded-xl"
+          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
         >
-          Monthly
-        </button>
-        <button
-          type="button"
-          onClick={() => setIsAnnual(true)}
-          className="px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2"
-          style={{
-            background: isAnnual ? "rgba(255,255,255,0.08)" : "transparent",
-            color: isAnnual ? "#f4f4f5" : "#71717a",
-            border: "none",
-            cursor: "pointer",
-          }}
-        >
-          Annually
-          <span 
-            className="px-2 py-0.5 rounded-full text-xs"
-            style={{ background: "rgba(16,185,129,0.15)", color: COLORS.success }}
+          <button
+            type="button"
+            onClick={() => setIsAnnual(false)}
+            className="px-5 py-2 rounded-lg text-sm font-medium transition-all"
+            style={{
+              background: !isAnnual ? "rgba(255,255,255,0.1)" : "transparent",
+              color: !isAnnual ? "#f4f4f5" : "#71717a",
+              border: "none",
+              cursor: "pointer",
+            }}
           >
-            Save 17%
-          </span>
-        </button>
+            Monthly
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsAnnual(true)}
+            className="px-5 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2"
+            style={{
+              background: isAnnual ? "rgba(255,255,255,0.1)" : "transparent",
+              color: isAnnual ? "#f4f4f5" : "#71717a",
+              border: "none",
+              cursor: "pointer",
+            }}
+          >
+            Annually
+          </button>
+        </div>
+        <span 
+          className="ml-3 px-2.5 py-1 rounded-full text-xs font-medium"
+          style={{ background: "rgba(16,185,129,0.15)", color: COLORS.success, border: "1px solid rgba(16,185,129,0.2)" }}
+        >
+          Save 17%
+        </span>
       </div>
 
       {/* Pricing Cards Grid */}
@@ -759,40 +764,53 @@ export function Settings() {
               </div>
 
               {/* CTA Button */}
-              {isCurrentPlan ? (
-                <div 
-                  className="w-full h-10 rounded-xl flex items-center justify-center text-sm font-medium mb-5"
-                  style={{ 
-                    background: "rgba(255,255,255,0.04)", 
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    color: "#71717a",
-                  }}
-                >
-                  Current plan
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => plan.id === "free" ? setBillingView("downgrade-reason") : navigate("/upgrade")}
-                  className="w-full h-10 rounded-xl text-sm font-medium transition-all mb-5"
-                  style={{
-                    background: isRecommended ? COLORS.primary : "rgba(255,255,255,0.06)",
-                    color: isRecommended ? "white" : "#e4e4e7",
-                    border: isRecommended ? "none" : "1px solid rgba(255,255,255,0.1)",
-                    cursor: "pointer",
-                  }}
-                  onMouseEnter={(e) => { 
-                    if (!isRecommended) e.currentTarget.style.background = "rgba(255,255,255,0.1)"; 
-                    else e.currentTarget.style.background = "#4f46e5";
-                  }}
-                  onMouseLeave={(e) => { 
-                    if (!isRecommended) e.currentTarget.style.background = "rgba(255,255,255,0.06)"; 
-                    else e.currentTarget.style.background = COLORS.primary;
-                  }}
-                >
-                  {plan.id === "free" ? "Downgrade" : "Upgrade"}
-                </button>
-              )}
+              {(() => {
+                // Plan hierarchy: team (2) > pro (1) > free (0)
+                const planRank: Record<string, number> = { free: 0, pro: 1, team: 2 };
+                const currentRank = planRank[currentPlanId] ?? 0;
+                const targetRank = planRank[plan.id] ?? 0;
+                const isDowngrade = targetRank < currentRank;
+                const isUpgrade = targetRank > currentRank;
+
+                if (isCurrentPlan) {
+                  return (
+                    <div 
+                      className="w-full h-10 rounded-xl flex items-center justify-center text-sm font-medium mb-5"
+                      style={{ 
+                        background: "rgba(255,255,255,0.04)", 
+                        border: "1px solid rgba(255,255,255,0.08)",
+                        color: "#71717a",
+                      }}
+                    >
+                      Current plan
+                    </div>
+                  );
+                }
+
+                return (
+                  <button
+                    type="button"
+                    onClick={() => isDowngrade ? setBillingView("downgrade-reason") : navigate("/upgrade")}
+                    className="w-full h-10 rounded-xl text-sm font-medium transition-all mb-5"
+                    style={{
+                      background: isUpgrade && isRecommended ? COLORS.primary : "rgba(255,255,255,0.06)",
+                      color: isUpgrade && isRecommended ? "white" : "#e4e4e7",
+                      border: isUpgrade && isRecommended ? "none" : "1px solid rgba(255,255,255,0.1)",
+                      cursor: "pointer",
+                    }}
+                    onMouseEnter={(e) => { 
+                      if (!(isUpgrade && isRecommended)) e.currentTarget.style.background = "rgba(255,255,255,0.1)"; 
+                      else e.currentTarget.style.background = "#4f46e5";
+                    }}
+                    onMouseLeave={(e) => { 
+                      if (!(isUpgrade && isRecommended)) e.currentTarget.style.background = "rgba(255,255,255,0.06)"; 
+                      else e.currentTarget.style.background = COLORS.primary;
+                    }}
+                  >
+                    {isDowngrade ? "Downgrade" : "Upgrade"}
+                  </button>
+                );
+              })()}
 
               {/* Features */}
               <div className="flex flex-col gap-2.5">
