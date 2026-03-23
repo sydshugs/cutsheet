@@ -26,6 +26,8 @@ import {
   type PlatformScore,
 } from "../../services/claudeService";
 import { PlatformSwitcher, PAID_AD_PLATFORMS, PAID_STATIC_PLATFORMS, VIDEO_ONLY_PLATFORMS } from "../../components/PlatformSwitcher";
+import { extractRightPanelSections } from "../../components/ReportCards";
+import { YouTubeFormatSelector, type YouTubeFormat } from "../../components/YouTubeFormatSelector";
 import { generateFixIt, type FixItResult } from "../../services/fixItService";
 import { generatePrediction, type PredictionResult } from "../../services/predictionService";
 import { SecondEyePanel } from "../../components/SecondEyePanel";
@@ -50,7 +52,7 @@ import type { AppSharedContext } from "../../components/AppLayout";
 const API_KEY = ""; // Gemini calls are now server-side via /api/analyze
 
 const PLATFORMS = ["all", "Meta", "TikTok", "Google", "YouTube"] as const;
-type Platform = (typeof PLATFORMS)[number] | "Google" | "Instagram" | "Facebook";
+type Platform = (typeof PLATFORMS)[number] | "Google" | "Instagram" | "Facebook" | "Shorts" | "Reels";
 type Format = "video" | "static";
 
 const STATUS_COPY = {
@@ -124,6 +126,7 @@ export default function PaidAdAnalyzer() {
   // ── Platform / format state ─────────────────────────────────────────────────
   const [platform, setPlatform] = useState<Platform>("all");
   const [format, setFormat] = useState<Format>("video");
+  const [youtubeFormat, setYoutubeFormat] = useState<YouTubeFormat>("skippable");
   // Second Eye + Design Review always on — no toggles
   const secondEye = true;
   const staticSecondEye = true;
@@ -153,7 +156,7 @@ export default function PaidAdAnalyzer() {
   const [isImporting, setIsImporting] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [loadedEntry, setLoadedEntry] = useState<HistoryEntry | null>(null);
-  const [rightTab, setRightTab] = useState<"analysis" | "brief" | "policy">("analysis");
+  const [rightTab, setRightTab] = useState<"analysis" | "brief" | "policy" | "ai_rewrite">("analysis");
   const [brief, setBrief] = useState<string | null>(null);
   const [briefLoading, setBriefLoading] = useState(false);
   const [briefError, setBriefError] = useState<string | null>(null);
@@ -261,10 +264,80 @@ export default function PaidAdAnalyzer() {
 
 
   // ── Build context prefix for Gemini prompt ────────────────────────────────
-  const contextPrefix =
-    platform !== "all"
+  const contextPrefix = (() => {
+    const base = platform !== "all"
       ? `This is a PAID ${format} ad for ${platform}.\nScore and optimize specifically for ${platform} performance.\nApply ${platform}-specific improvement suggestions.\nFocus on CTR, ROAS, and conversion potential.`
       : `This is a PAID ${format} ad.\nScore for performance marketing metrics: CTR, ROAS, conversion potential, and ad spend efficiency.\nApply cross-platform best practices.`;
+
+    // Meta static: remove CTA requirement, score visual signals only
+    if (platform === "Meta" && format === "static") {
+      return base + `\n\nThis is a META PAID STATIC AD (image creative only).
+IMPORTANT: Meta's ad unit places the CTA button, primary text, and headline OUTSIDE this image in Ads Manager.
+Do NOT penalize the absence of in-creative CTA text — it is intentionally absent in most static ads.
+Do NOT score copy depth — the primary copy lives in Ads Manager fields, not in the image.
+Score only what is IN the image: visual thumb-stop power, message clarity at a glance, visual hierarchy, and brand recognition.
+The question is: does this image stop the scroll and communicate the offer before the viewer moves on?
+If a CTA IS present inside the creative, note it as a positive signal ("In-creative CTA detected — complements Meta's native button") but do not penalize its absence.
+For "CTA Effectiveness" scoring: score the image's ability to drive action through visual urgency, offer clarity, and desire — NOT the presence of CTA text.
+Meta's Andromeda algorithm uses the creative as the targeting signal — visual relevance and thumb-stop power directly impact delivery efficiency.`;
+    }
+
+    // YouTube format-specific prompt context
+    if ((platform === "YouTube" || platform === "Shorts") && format === "video") {
+      const ytPrompts: Record<YouTubeFormat, string> = {
+        skippable: `This is a YouTube SKIPPABLE IN-STREAM ad. Viewers can skip after 5 seconds.
+The first 5 seconds are the most critical — brand must be visible and value prop clear before the skip button appears.
+Target VTR: 35%+. Average is 31.9%. Score accordingly.
+CTA should appear before expected drop-off point, not only at the end.
+Score dimensions: Pre-Skip Hook (brand visible + value prop in first 5s), Watch-Through (will viewers stay past 5s?), Message Arc (does story build for viewers who stay?), CTA Timing (CTA placed before expected drop-off).`,
+        non_skippable: `This is a YouTube NON-SKIPPABLE ad (7–15 seconds). Viewers cannot skip.
+One idea. One visual. One takeaway. No wasted moments.
+Brand must be unmistakable within 3 seconds.
+CTA must land within 12 seconds.
+Score dimensions: Message Clarity (single idea in 15s), Brand Visibility (unmistakable within 3s), CTA Efficiency (clear action within 12s), Visual Impact (commands attention).`,
+        bumper: `This is a YouTube BUMPER AD (max 6 seconds, non-skippable).
+No narrative is possible in 6 seconds. Score only on brand recall and impression strength.
+Do NOT score for CTA, copy depth, or story arc — these are impossible in this format.
+The only question: will this 6-second exposure be remembered?
+Score dimensions: Brand Recall (will this be remembered?), Visual Simplicity (one image, no competing elements), Message (single idea communicated instantly), Audio Branding (sonic identity that reinforces recall).`,
+        shorts: `This is a YouTube SHORTS AD (vertical 9:16, non-skippable, under 60s).
+Behavior is similar to TikTok: hold rate and completion are the primary algorithm signals.
+Vertical format and mobile-first composition are required, not optional.
+Score dimensions: Hook (stops scroll in first 3s), Hold Rate (will viewers watch to end?), Format Fit (native 9:16, properly composed for vertical), End Action (drives subscribe, click, or next-video).`,
+        in_feed: `This is a YouTube IN-FEED (Discovery) ad. Users choose to click based on thumbnail + title.
+This is intent-based — the viewer chose to watch. Score for delivering on the implicit promise.
+Thumbnail appeal and title strength matter more here than for any other YouTube format.
+Score dimensions: Thumbnail Appeal (would this get clicked?), Title Strength (creates curiosity or answers search intent?), First 5 Seconds (delivers on thumbnail/title promise?), Watch-Worthiness (worth spending time on?).`,
+      };
+      return base + '\n\n' + ytPrompts[youtubeFormat];
+    }
+
+    // Sound-off check for Meta video
+    if (platform === "Meta" && format === "video") {
+      return base + `\n\nSOUND-OFF CHECK: A significant portion of Meta feed is watched muted.
+Evaluate whether this ad communicates its full message when watched muted.
+Are captions or text overlays present and readable? Does the visual storytelling convey the narrative without sound?
+Would a muted viewer understand the hook, offer, and CTA?
+Score "Message Clarity" as a sound-off readability signal — a great Meta video ad works with AND without sound.
+8-10: Full captions + strong visual narrative. Works perfectly muted.
+5-7: Partial captions or text overlays. Message partially survives mute.
+1-4: Audio-dependent. Muted viewer would miss the core message.`;
+    }
+
+    // Sound-off + audio strategy for TikTok
+    if (platform === "TikTok" && format === "video") {
+      return base + `\n\nAUDIO & CAPTIONS CHECK: TikTok users frequently watch with phone on silent.
+Evaluate TWO aspects of the audio dimension:
+1. AUDIO STRATEGY: Is the sound on-trend? Trending audio, branded sound, voice, or music quality.
+2. SOUND-OFF VIABILITY: Does the ad work muted? Are captions or text overlays present? Does visual storytelling carry the narrative without audio?
+Score "Sound" considering both audio quality AND sound-off viability — a great TikTok ad works with AND without sound.
+8-10: Strong audio strategy + full captions/visual narrative. Works perfectly muted.
+5-7: Decent audio but partial caption coverage. Message partially survives mute.
+1-4: Audio-dependent with no captions. Muted viewer misses the core message.`;
+    }
+
+    return base;
+  })();
 
   // ── Effects ───────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -609,6 +682,7 @@ export default function PaidAdAnalyzer() {
   const handleFixIt = async () => {
     if (!activeResult?.markdown || !activeResult?.scores || fixItLoading) return;
     setFixItLoading(true);
+    setRightTab("ai_rewrite");
     try {
       const result = await generateFixIt(
         activeResult.markdown,
@@ -848,6 +922,31 @@ export default function PaidAdAnalyzer() {
                         onHistoryEntryClick={(entry) => setLoadedEntry(entry)}
                         platform={platform !== "all" ? platform : (rawUserContext?.platform ?? undefined)}
                         icon={Zap}
+                        niche={rawUserContext?.niche}
+                        onFixIt={handleFixIt}
+                        onVisualize={() => setVisualizeOpen(true)}
+                        onCheckPolicies={handleCheckPolicies}
+                        onCompare={() => navigate('/app/competitor')}
+                        fixItLoading={fixItLoading}
+                        fixItResult={fixItResult}
+                        policyLoading={policyLoading}
+                        policyResult={policyResult}
+                        visualizeLoading={visualizeStatus === 'loading'}
+                        visualizeResult={visualizeResult ? { url: visualizeResult.imageUrl ?? visualizeResult.videoUrl, type: visualizeResult.videoUrl ? 'video' : 'image' } : null}
+                        designReviewData={staticSecondEyeResult ? {
+                          flags: staticSecondEyeResult.flags ?? [],
+                          topIssue: staticSecondEyeResult.topIssue,
+                          overallDesignVerdict: staticSecondEyeResult.overallDesignVerdict,
+                        } : undefined}
+                        secondEyeResult={secondEyeOutput}
+                        secondEyeLoading={secondEyeLoading}
+                        secondEyeSlot={
+                          status === "complete" && format === "video" && secondEye ? (
+                            <div className="mt-3">
+                              {/* SecondEyePanel now rendered inside CreativeVerdictAndSecondEye */}
+                            </div>
+                          ) : undefined
+                        }
                       />
                   </div>
                 )}
@@ -863,28 +962,7 @@ export default function PaidAdAnalyzer() {
       >
         {showRightPanel && activeResult?.scores && rightTab === "analysis" && (
           <>
-            {/* Platform Switcher — format-aware */}
-            <div className="px-4 pt-3 pb-1">
-              <PlatformSwitcher
-                platforms={format === "static" ? PAID_STATIC_PLATFORMS : PAID_AD_PLATFORMS}
-                selected={platform}
-                onChange={handlePlatformSwitch}
-                isSwitching={isPlatformSwitching}
-                disabled={status !== "complete"}
-              />
-            </div>
-            {/* Platform score verdict badge */}
-            {platformScoreResult && platform !== "all" && (
-              <div className="px-4 pb-2">
-                <div
-                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs"
-                  style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)" }}
-                >
-                  <span className="font-mono font-bold text-indigo-400">{platformScoreResult.score}/10</span>
-                  <span className="text-zinc-400">{platformScoreResult.verdict}</span>
-                </div>
-              </div>
-            )}
+            {/* Platform Switcher + YouTube format moved inside ScoreCard */}
             <div ref={scorecardRef}>
               <ScoreCard
                 scores={activeResult.scores}
@@ -912,7 +990,9 @@ export default function PaidAdAnalyzer() {
                 onCheckPolicies={handleCheckPolicies}
                 policyLoading={policyLoading}
                 niche={rawUserContext?.niche}
-                platform={rawUserContext?.platform}
+                platform={platform !== "all" ? platform : rawUserContext?.platform}
+                youtubeFormat={(platform === "YouTube" || platform === "Shorts") ? youtubeFormat : undefined}
+                platformScore={platform !== "all" && platformScoreResult ? platformScoreResult.score : undefined}
                 onFixIt={handleFixIt}
                 fixItResult={fixItResult}
                 fixItLoading={fixItLoading}
@@ -922,17 +1002,42 @@ export default function PaidAdAnalyzer() {
                 visualizeLoading={visualizeStatus === "loading"}
                 canVisualize={true}
                 isPro={isPro}
+                briefLoading={briefLoading}
+                hasBrief={!!brief}
+                verdict={activeResult.verdict}
+                analysisSections={extractRightPanelSections(activeResult.markdown)}
+                platformSwitcher={
+                  <>
+                    <PlatformSwitcher
+                      platforms={format === "static" ? PAID_STATIC_PLATFORMS : PAID_AD_PLATFORMS}
+                      selected={platform}
+                      onChange={handlePlatformSwitch}
+                      isSwitching={isPlatformSwitching}
+                      disabled={status !== "complete"}
+                    />
+                    {(platform === "YouTube" || platform === "Shorts") && format === "video" && (
+                      <div className="mt-1">
+                        <YouTubeFormatSelector
+                          selected={youtubeFormat}
+                          onChange={setYoutubeFormat}
+                          disabled={status !== "complete"}
+                        />
+                      </div>
+                    )}
+                    {platformScoreResult && platform !== "all" && (
+                      <div className="mt-1.5 flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs"
+                        style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)" }}
+                      >
+                        <span className="font-mono font-bold text-indigo-400">{platformScoreResult.score}/10</span>
+                        <span className="text-zinc-400">{platformScoreResult.verdict}</span>
+                      </div>
+                    )}
+                  </>
+                }
                 onUpgradeRequired={onUpgradeRequired}
               />
             </div>
-            {/* Second Eye output below scorecard — video only */}
-            {format === "video" && secondEye && (
-              <SecondEyePanel result={secondEyeOutput} loading={secondEyeLoading} />
-            )}
-            {/* Static Design Review below scorecard — static only */}
-            {format === "static" && staticSecondEye && (
-              <StaticSecondEyePanel result={staticSecondEyeResult} loading={staticSecondEyeLoading} />
-            )}
+            {/* Design Review + Second Eye moved to center column */}
             {/* Visualize It moved to left panel (below creative) */}
           </>
 
@@ -964,34 +1069,56 @@ export default function PaidAdAnalyzer() {
             {brief && (
               <>
                 <div className="px-5 pt-5 pb-2 flex-1 overflow-y-auto">
-                  <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-4">Creative Brief</p>
-                  <div className="flex flex-col gap-0.5">
-                    {brief.split("\n").map((line, i) => {
-                      const t = line.trim();
-                      if (!t) return null;
-                      if (t.startsWith("## ")) return (
-                        <p key={i} className="text-xs font-semibold text-white mt-4 mb-1">
-                          {t.replace(/^##\s*/, "")}
-                        </p>
-                      );
-                      const boldMatch = t.match(/^\*\*(.+?)\*\*:?\s*(.*)/);
-                      if (boldMatch) return (
-                        <div key={i} className="mb-3">
-                          <p className="text-xs text-zinc-500 font-medium">{boldMatch[1]}</p>
-                          {boldMatch[2] && (
-                            <p className="text-xs text-zinc-300 leading-relaxed mt-0.5">{boldMatch[2]}</p>
-                          )}
-                        </div>
-                      );
-                      if (t.startsWith("- ") || t.startsWith("* ")) return (
-                        <div key={i} className="flex gap-2 items-start ml-1 mb-1">
-                          <span className="w-1 h-1 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
-                          <span className="text-xs text-zinc-400 leading-relaxed">{t.replace(/^[-*]\s*/, "")}</span>
-                        </div>
-                      );
-                      if (t === "---") return <div key={i} className="border-t border-white/5 my-3" />;
-                      return <p key={i} className="text-xs text-zinc-300 leading-relaxed mb-1">{t}</p>;
-                    })}
+                  <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.06em] mb-4">Creative Brief</p>
+                  <div className="flex flex-col">
+                    {(() => {
+                      // Parse brief into structured sections
+                      const sections: { label: string; lines: string[] }[] = [];
+                      let current: { label: string; lines: string[] } | null = null;
+                      for (const line of brief.split("\n")) {
+                        const t = line.trim();
+                        if (!t || t === "---" || t.startsWith("## ")) continue;
+                        const boldMatch = t.match(/^\*\*(.+?)\*\*:?\s*(.*)/);
+                        if (boldMatch) {
+                          if (current) sections.push(current);
+                          current = { label: boldMatch[1].replace(/:$/, ''), lines: boldMatch[2] ? [boldMatch[2]] : [] };
+                        } else if (current) {
+                          current.lines.push(t.replace(/^[-*]\s*/, ''));
+                        }
+                      }
+                      if (current) sections.push(current);
+
+                      return sections.map((sec, i) => {
+                        const isDo = /^do$/i.test(sec.label);
+                        const isDont = /^don'?t$/i.test(sec.label);
+                        const isHook = /hook/i.test(sec.label);
+                        return (
+                          <div key={i} className={i > 0 ? "border-t border-white/5 pt-3 mt-3" : ""}>
+                            <p className="text-[10px] text-zinc-500 uppercase tracking-[0.05em] mb-1">{sec.label}</p>
+                            {isHook ? (
+                              <ol className="list-decimal list-inside flex flex-col gap-1">
+                                {sec.lines.map((l, j) => (
+                                  <li key={j} className="text-[13px] text-zinc-300 leading-relaxed">{l.replace(/^\d+\.\s*/, '')}</li>
+                                ))}
+                              </ol>
+                            ) : (isDo || isDont) ? (
+                              <div className="flex flex-col gap-1">
+                                {sec.lines.map((l, j) => (
+                                  <div key={j} className="flex items-start gap-2">
+                                    <span className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${isDo ? 'bg-emerald-400' : 'bg-red-400'}`} />
+                                    <span className="text-[13px] text-zinc-300 leading-relaxed">{l}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : sec.lines.length === 1 ? (
+                              <p className="text-[13px] text-zinc-300 leading-relaxed">{sec.lines[0]}</p>
+                            ) : (
+                              <p className="text-[13px] text-zinc-300 leading-relaxed">{sec.lines.join(' · ')}</p>
+                            )}
+                          </div>
+                        );
+                      });
+                    })()}
                   </div>
                 </div>
                 <div className="p-5 border-t border-white/5">
@@ -1015,11 +1142,11 @@ export default function PaidAdAnalyzer() {
               <button
                 type="button"
                 onClick={() => setRightTab("analysis")}
-                className="text-xs text-amber-400 hover:text-amber-300 transition-colors cursor-pointer flex items-center gap-1"
+                className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer flex items-center gap-1.5 bg-transparent border-none"
               >
                 ← Back to Scores
               </button>
-              <span className="text-xs text-zinc-500 font-mono">Claude Sonnet</span>
+              <span className="text-xs text-zinc-600 font-mono">Claude Sonnet</span>
             </div>
             <div className="flex-1 overflow-y-auto p-4">
               {policyLoading && !policyResult && (
@@ -1041,20 +1168,164 @@ export default function PaidAdAnalyzer() {
           </div>
         )}
 
-        {/* Before/After re-analysis section */}
-        {showRightPanel && rightTab === "analysis" && !comparisonResult && (
-          <div style={{ padding: "0 16px 12px" }}>
-            {!reanalyzeMode ? (
-              <button type="button" onClick={() => setReanalyzeMode(true)}
-                style={{
-                  width: "100%", height: 40, background: "rgba(99,102,241,0.1)",
-                  border: "1px solid rgba(99,102,241,0.3)", borderRadius: 9999,
-                  color: "#818cf8", fontSize: 13, fontWeight: 500, cursor: "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                }}>
-                <RotateCcw size={14} /> Re-analyze improved version →
+        {/* AI Rewrite panel */}
+        {showRightPanel && rightTab === "ai_rewrite" && (
+          <div className="flex flex-col h-full">
+            <div className="px-4 py-2.5 border-b border-white/5 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setRightTab("analysis")}
+                className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer flex items-center gap-1.5 bg-transparent border-none"
+              >
+                ← Back to Scores
               </button>
-            ) : (
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              {fixItLoading && !fixItResult && (
+                <div className="flex flex-col items-center justify-center py-10 gap-3">
+                  <div className="w-5 h-5 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
+                  <span className="text-[13px] text-zinc-400">Rewriting your ad...</span>
+                </div>
+              )}
+              {fixItResult && !fixItLoading && (
+                <div>
+                  {/* Header */}
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
+                    <div className="flex items-center gap-2">
+                      <Wand2 size={14} className="text-indigo-400" />
+                      <span className="text-[13px] font-medium text-zinc-200">Your Rewrite</span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const parts = [
+                          fixItResult.rewrittenHook?.copy,
+                          fixItResult.revisedBody,
+                          fixItResult.newCTA?.copy ? `CTA: ${fixItResult.newCTA.copy}` : '',
+                        ].filter(Boolean).join('\n\n');
+                        navigator.clipboard.writeText(parts);
+                      }}
+                      className="text-[11px] font-medium rounded-lg cursor-pointer"
+                      style={{ padding: '4px 10px', background: 'rgba(99,102,241,0.08)', border: '0.5px solid rgba(99,102,241,0.2)', color: '#818cf8' }}
+                    >
+                      Copy All
+                    </button>
+                  </div>
+
+                  {/* Sections */}
+                  <div className="p-4 flex flex-col gap-4">
+                    {/* Rewritten Hook */}
+                    {fixItResult.rewrittenHook && (
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-[22px] h-[22px] rounded-md flex items-center justify-center" style={{ background: 'rgba(99,102,241,0.1)' }}>
+                            <Lightbulb size={11} className="text-indigo-400" />
+                          </div>
+                          <span className="text-xs font-medium text-zinc-200">Rewritten hook</span>
+                        </div>
+                        <p className="text-sm font-medium text-zinc-100 leading-relaxed mb-1">{fixItResult.rewrittenHook.copy}</p>
+                        <p className="text-[11px] text-zinc-500 leading-[1.45]">{fixItResult.rewrittenHook.reasoning}</p>
+                      </div>
+                    )}
+
+                    {/* Revised Body */}
+                    {fixItResult.revisedBody && (
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-[22px] h-[22px] rounded-md flex items-center justify-center" style={{ background: 'rgba(16,185,129,0.1)' }}>
+                            <FileText size={11} className="text-emerald-400" />
+                          </div>
+                          <span className="text-xs font-medium text-zinc-200">Revised body</span>
+                        </div>
+                        {fixItResult.revisedBody.split('\n').filter((l: string) => l.trim()).map((para: string, pi: number) => (
+                          <p key={pi} className="text-[13px] text-zinc-300 leading-[1.6] mb-2 last:mb-0">{para}</p>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* New CTA */}
+                    {fixItResult.newCTA && (
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-[22px] h-[22px] rounded-md flex items-center justify-center" style={{ background: 'rgba(251,191,36,0.1)' }}>
+                            <ArrowUpRight size={11} className="text-amber-400" />
+                          </div>
+                          <span className="text-xs font-medium text-zinc-200">New CTA</span>
+                        </div>
+                        <div className="bg-white/[0.03] rounded-[9px] p-2.5">
+                          <span className="text-[10px] text-zinc-500 uppercase tracking-[0.04em] block mb-1">CTA text</span>
+                          <p className="text-sm font-medium text-zinc-100 mb-1">{fixItResult.newCTA.copy}</p>
+                          <p className="text-[11px] text-zinc-500">Placement: {fixItResult.newCTA.placement}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Text Overlays */}
+                    {fixItResult.textOverlays?.length > 0 && (
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-[22px] h-[22px] rounded-md flex items-center justify-center" style={{ background: 'rgba(129,140,248,0.08)' }}>
+                            <FileText size={11} className="text-indigo-400" />
+                          </div>
+                          <span className="text-xs font-medium text-zinc-200">Text overlays</span>
+                        </div>
+                        <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
+                              <th className="text-[10px] uppercase text-zinc-500 font-medium py-1.5 px-2">Time</th>
+                              <th className="text-[10px] uppercase text-zinc-500 font-medium py-1.5 px-2">Copy</th>
+                              <th className="text-[10px] uppercase text-zinc-500 font-medium py-1.5 px-2">Placement</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {fixItResult.textOverlays.map((ov: any, oi: number) => (
+                              <tr key={oi} style={{ borderBottom: oi < fixItResult.textOverlays.length - 1 ? '0.5px solid rgba(255,255,255,0.06)' : 'none' }}>
+                                <td className="text-[11px] font-mono text-zinc-500 py-2 px-2 whitespace-nowrap align-top">{ov.timestamp}</td>
+                                <td className="text-xs text-zinc-200 py-2 px-2 align-top">{ov.copy}</td>
+                                <td className="text-[11px] text-zinc-500 py-2 px-2 align-top">{ov.placement}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+
+                    {/* Predicted Improvements */}
+                    {fixItResult.predictedImprovements?.length > 0 && (
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-[22px] h-[22px] rounded-md flex items-center justify-center" style={{ background: 'rgba(16,185,129,0.08)' }}>
+                            <TrendingUp size={11} className="text-emerald-400" />
+                          </div>
+                          <span className="text-xs font-medium text-zinc-200">Predicted improvements</span>
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          {fixItResult.predictedImprovements.map((imp: any, ii: number) => (
+                            <div key={ii} className="bg-white/[0.03] rounded-lg p-2.5">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-[11px] font-medium text-zinc-200">{imp.dimension}</span>
+                                <span className="text-[11px] font-mono">
+                                  <span className="text-zinc-500">{imp.oldScore}</span>
+                                  <span className="text-zinc-600 mx-1">→</span>
+                                  <span className="font-medium text-emerald-400">{imp.newScore}</span>
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-zinc-500 leading-[1.45]">{imp.reason}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Before/After re-analysis upload flow (button is inside ScoreCard) */}
+        {showRightPanel && rightTab === "analysis" && !comparisonResult && reanalyzeMode && (
+          <div style={{ padding: "0 16px 12px" }}>
+            {(
               <div style={{ background: "rgba(99,102,241,0.04)", border: "1px dashed rgba(99,102,241,0.3)", borderRadius: 12, padding: 16 }}>
                 <p style={{ fontSize: 13, fontWeight: 600, color: "#f4f4f5", margin: "0 0 4px" }}>Upload your improved version</p>
                 <p style={{ fontSize: 12, color: "#71717a", margin: "0 0 12px" }}>We'll score it and compare against your original.</p>

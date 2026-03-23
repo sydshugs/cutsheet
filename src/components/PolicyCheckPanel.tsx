@@ -52,7 +52,7 @@ function CategoryCard({ category }: { category: PolicyCategory }) {
   return (
     <div
       style={{
-        borderRadius: 10,
+        borderRadius: 12,
         border: `1px solid ${category.status === "rejection" ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.06)"}`,
         background: category.status === "rejection" ? "rgba(239,68,68,0.04)" : "rgba(255,255,255,0.02)",
         overflow: "hidden",

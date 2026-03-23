@@ -24,9 +24,17 @@ export function PlatformSwitcher({
 }: PlatformSwitcherProps) {
   const [hovered, setHovered] = useState<string | null>(null);
 
+  // Single platform: show label only, no tab bar
+  if (platforms.length <= 1) {
+    const label = platforms[0]?.label ?? '';
+    return (
+      <div className="text-[11px] text-zinc-500 py-1">{label}</div>
+    );
+  }
+
   return (
     <div
-      className="flex gap-1 p-1 rounded-xl"
+      className="flex gap-1 p-1 rounded-xl overflow-x-auto scrollbar-none"
       style={{
         background: "var(--surface, rgba(255,255,255,0.03))",
         border: "1px solid var(--border, rgba(255,255,255,0.1))",
@@ -87,18 +95,14 @@ export function PlatformSwitcher({
 
 // Platform lists by analyzer type
 export const PAID_AD_PLATFORMS: PlatformOption[] = [
-  { key: "all", label: "All" },
   { key: "Meta", label: "Meta" },
   { key: "TikTok", label: "TikTok" },
-  { key: "Reels", label: "Reels" },
   { key: "YouTube", label: "YouTube" },
-  { key: "Shorts", label: "Shorts" },
 ];
 
-// Paid static: only Meta + Google serve static image ads
+// Paid static: Meta only
 export const PAID_STATIC_PLATFORMS: PlatformOption[] = [
   { key: "Meta", label: "Meta" },
-  { key: "Google", label: "Google" },
 ];
 
 export const ORGANIC_PLATFORMS: PlatformOption[] = [

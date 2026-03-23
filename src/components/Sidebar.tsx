@@ -37,7 +37,6 @@ const ANALYZE: NavItem[] = [
   { label: "Organic",       sublabel: "TikTok, Reels, Shorts", path: "/app/organic",       icon: TrendingUp },
   { label: "Display",       sublabel: "Google, affiliate",     path: "/app/display",       icon: Monitor },
   { label: "Ad Breakdown",   sublabel: "Teardown any ad URL",   path: "/app/deconstructor", icon: ScanSearch },
-  { label: "Ad Policy Check", sublabel: "Pre-launch policy scan", path: "/app/policy-check", icon: ShieldCheck },
 ];
 
 const COMPARE: NavItem[] = [

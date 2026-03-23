@@ -42,7 +42,7 @@ function ChecklistItem({ label, done, active }: { label: string; done: boolean; 
   return (
     <div className="flex items-center gap-2.5">
       <div className={cn(
-        "w-3.5 h-3.5 rounded-full border flex items-center justify-center flex-shrink-0 transition-all duration-300",
+        "w-[18px] h-[18px] rounded-full border flex items-center justify-center flex-shrink-0 transition-all duration-300",
         done   ? "border-emerald-500 bg-emerald-500/10"
         : active ? "border-indigo-500 bg-indigo-500/10"
         :          "border-white/10 bg-transparent"
@@ -56,7 +56,7 @@ function ChecklistItem({ label, done, active }: { label: string; done: boolean; 
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
             >
-              <svg width="7" height="7" viewBox="0 0 10 10" fill="none">
+              <svg width="9" height="9" viewBox="0 0 10 10" fill="none">
                 <polyline
                   points="1.5,5 4,7.5 8.5,2"
                   stroke="#10b981"
@@ -79,7 +79,7 @@ function ChecklistItem({ label, done, active }: { label: string; done: boolean; 
         </AnimatePresence>
       </div>
       <span className={cn(
-        "text-[11px] transition-colors duration-300",
+        "text-sm transition-colors duration-300",
         done   ? "text-zinc-500"
         : active ? "text-zinc-200"
         :          "text-zinc-600"
@@ -124,7 +124,7 @@ export function ProgressCard({ file, status, onCancel, platform, icon: Icon = Za
       <div className="flex-1 flex items-center justify-center p-6">
         {/* Unified container — split panel */}
         <div className={cn(
-          "w-full max-w-[720px]",
+          "w-full max-w-[720px] min-w-[480px]",
           "bg-[#111113] border border-white/[0.06]",
           "rounded-2xl overflow-hidden",
           "flex flex-col md:flex-row",
@@ -176,20 +176,20 @@ export function ProgressCard({ file, status, onCancel, platform, icon: Icon = Za
           </div>
 
           {/* ── Right half — all progress ── */}
-          <div className="flex-1 flex flex-col p-5 md:p-6 min-h-[360px]">
+          <div className="flex-1 flex flex-col p-6 md:p-7 min-h-[360px]">
 
             {/* Header — Zap icon + label */}
             <div className="flex items-center gap-3 mb-5">
-              <div className="w-8 h-8 bg-indigo-950 border border-indigo-800/40 rounded-full flex items-center justify-center flex-shrink-0">
+              <div className="w-12 h-12 bg-indigo-950 border border-indigo-800/40 rounded-full flex items-center justify-center flex-shrink-0">
                 <motion.div
                   animate={{ opacity: [0.6, 1, 0.6] }}
                   transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
                 >
-                  <Icon className="w-3.5 h-3.5 text-indigo-400" />
+                  <Icon className="w-5 h-5 text-indigo-400" />
                 </motion.div>
               </div>
               <div>
-                <p className="text-sm font-medium text-zinc-100 m-0">Analyzing your ad</p>
+                <p className="text-lg font-medium text-zinc-100 m-0">Analyzing your ad</p>
                 <div className="min-h-[16px]">
                   <AnimatePresence mode="wait">
                     <motion.p
@@ -198,7 +198,7 @@ export function ProgressCard({ file, status, onCancel, platform, icon: Icon = Za
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -2 }}
                       transition={{ duration: 0.2 }}
-                      className="text-[11px] text-zinc-500 m-0"
+                      className="text-[13px] text-zinc-500 m-0"
                     >
                       {stage.label}
                     </motion.p>
@@ -208,19 +208,19 @@ export function ProgressCard({ file, status, onCancel, platform, icon: Icon = Za
             </div>
 
             {/* Metric bars */}
-            <div className="flex flex-col gap-2.5 mb-5">
+            <div className="flex flex-col gap-[10px] mb-5">
               {METRICS.map((metric, i) => {
                 const isActive = stageIndex >= i + 1;
                 const isDone = stageIndex > i + 1;
                 return (
                   <div key={metric} className="flex items-center gap-3">
                     <span className={cn(
-                      "text-[11px] w-[120px] flex-shrink-0 transition-colors duration-300",
+                      "text-[13px] w-[130px] flex-shrink-0 transition-colors duration-300",
                       isActive ? "text-zinc-400" : "text-zinc-700"
                     )}>
                       {metric}
                     </span>
-                    <div className="flex-1 h-[2px] bg-white/[0.07] rounded-full overflow-hidden">
+                    <div className="flex-1 h-[5px] bg-white/[0.07] rounded-full overflow-hidden">
                       {isDone ? (
                         <motion.div
                           initial={{ width: 0 }}
@@ -260,10 +260,10 @@ export function ProgressCard({ file, status, onCancel, platform, icon: Icon = Za
 
             {/* Checklist */}
             <div className="flex-1">
-              <p className="text-[10px] text-zinc-600 uppercase tracking-widest m-0 mb-3">
+              <p className="text-[11px] text-zinc-600 uppercase tracking-[0.06em] m-0 mb-3">
                 What we're checking
               </p>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2.5">
                 {CHECK_ITEMS.map((item, i) => (
                   <ChecklistItem
                     key={item.id}
@@ -279,7 +279,7 @@ export function ProgressCard({ file, status, onCancel, platform, icon: Icon = Za
 
             {/* Overall progress bar — pinned to bottom */}
             <div className="mt-auto pt-4">
-              <div className="w-full h-[2px] bg-white/[0.06] rounded-full overflow-hidden">
+              <div className="w-full h-[3px] bg-white/[0.06] rounded-full overflow-hidden">
                 <motion.div
                   animate={{ width: `${stage.pct}%` }}
                   transition={{ duration: 0.8, ease: "easeOut" }}

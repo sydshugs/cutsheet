@@ -26,7 +26,7 @@ const NICHE_MODIFIERS: Record<string, {
 
 const SCORE_TIERS = {
   strong:  { range: [8, 10], action: 'test'    as const, budgetBase: { min: 50,  max: 150 }, label: 'Test Budget',    advice: 'Strong creative. Start testing at this budget. Scale to 3-5x if CPA holds within the test window.', scaleSignal: 'If CTR > 1.5% and CPA is on target after 48hrs — double budget.' },
-  average: { range: [5, 7],  action: 'limited' as const, budgetBase: { min: 20,  max: 50  }, label: 'Limited Test',   advice: 'Average creative. Cap spend at this range. Address the flagged improvements before scaling.', scaleSignal: 'Fix hook and CTA issues first. Retest before increasing budget.' },
+  average: { range: [5, 7],  action: 'limited' as const, budgetBase: { min: 20,  max: 50  }, label: 'Limited Test',   advice: 'Average creative. Cap spend at this range. Address the flagged improvements before scaling.', scaleSignal: 'Fix hook and CTA issues before scaling.' },
   weak:    { range: [1, 4],  action: 'hold'    as const, budgetBase: { min: 0,   max: 0   }, label: 'Hold Spend',     advice: 'Do not spend on this creative until improvements are made. A weak creative wastes every dollar.', scaleSignal: null },
 };
 

@@ -32,6 +32,24 @@ interface AnalyzerViewProps {
   onModeChange?: (mode: string) => void;
   platform?: string;
   icon?: LucideIcon;
+  // New props for redesigned layout
+  format?: 'video' | 'static';
+  niche?: string;
+  onFixIt?: () => void;
+  onVisualize?: () => void;
+  onCheckPolicies?: () => void;
+  onCompare?: () => void;
+  fixItLoading?: boolean;
+  fixItResult?: { rewrittenHook?: { copy: string; reasoning: string }; revisedBody?: string; newCTA?: { copy: string; placement: string }; textOverlays?: { timestamp: string; copy: string; placement: string }[]; predictedImprovements?: { dimension: string; oldScore: number; newScore: number; reason: string }[] } | null;
+  policyLoading?: boolean;
+  policyResult?: { verdict: string; verdictLabel?: string; topFixes?: string[]; reviewerNotes?: string; metaCategories?: { name: string; status: string; finding?: string; fix?: string; riskLevel?: string }[]; tiktokCategories?: { name: string; status: string; finding?: string; fix?: string; riskLevel?: string }[] } | null;
+  visualizeLoading?: boolean;
+  visualizeResult?: { url?: string; type?: string } | null;
+  designReviewSlot?: React.ReactNode;
+  secondEyeSlot?: React.ReactNode;
+  designReviewData?: { flags: { area: string; severity: string; fix: string; issue: string }[]; topIssue?: string; overallDesignVerdict?: string };
+  secondEyeResult?: { scrollMoment: string | null; flags: { timestamp: string; category: string; severity: string; issue: string; fix: string }[]; whatItCommunicates: string; whatItFails: string } | null;
+  secondEyeLoading?: boolean;
 }
 
 export function AnalyzerView({
@@ -49,6 +67,7 @@ export function AnalyzerView({
   onCopy,
   onExportPdf,
   onShare,
+  onGenerateBrief,
   copied,
   shareLoading,
   historyEntries,
@@ -56,6 +75,23 @@ export function AnalyzerView({
   onModeChange,
   platform,
   icon,
+  format,
+  niche,
+  onFixIt,
+  onVisualize,
+  onCheckPolicies,
+  onCompare,
+  fixItLoading,
+  fixItResult,
+  policyLoading,
+  policyResult,
+  visualizeLoading,
+  visualizeResult,
+  designReviewSlot,
+  secondEyeSlot,
+  designReviewData,
+  secondEyeResult: secondEyeResultProp,
+  secondEyeLoading: secondEyeLoadingProp,
 }: AnalyzerViewProps) {
   return (
     <AnimatePresence mode="wait">
@@ -118,6 +154,30 @@ export function AnalyzerView({
             shareLoading={shareLoading}
             onReset={onReset}
             onFileSelect={onFileSelect}
+            verdict={result.verdict}
+            structuredImprovements={result.structuredImprovements}
+            improvements={result.improvements}
+            scores={result.scores}
+            format={format}
+            platform={platform}
+            niche={niche}
+            hashtags={result.hashtags}
+            onFixIt={onFixIt}
+            onVisualize={onVisualize}
+            onCheckPolicies={onCheckPolicies}
+            onCompare={onCompare}
+            onGenerateBrief={onGenerateBrief}
+            fixItLoading={fixItLoading}
+            fixItResult={fixItResult}
+            policyLoading={policyLoading}
+            policyResult={policyResult}
+            visualizeLoading={visualizeLoading}
+            visualizeResult={visualizeResult}
+            designReviewSlot={designReviewSlot}
+            secondEyeSlot={secondEyeSlot}
+            designReviewData={designReviewData}
+            secondEyeResult={secondEyeResultProp}
+            secondEyeLoading={secondEyeLoadingProp}
           />
         </div>
       )}

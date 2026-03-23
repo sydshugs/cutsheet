@@ -3,12 +3,15 @@
 // Pass 1: Consolidated layout — removed Deep Dive, tabs, Compare link. Reordered sections.
 
 import { useEffect, useState } from "react";
-import { Copy, CheckCircle, Wand2, Loader2, AlertCircle, TrendingUp, ArrowUpRight, Share2, RotateCcw, ShieldCheck, FileText, Bookmark, Lightbulb, DollarSign, Sparkles, Lock, Film, Hash } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import { HookAnalysisExpanded } from "./HookAnalysisExpanded";
+import { VisualHierarchyExpanded } from "./VisualHierarchyExpanded";
+import { CopyAndMessagingExpanded } from "./CopyAndMessagingExpanded";
+import { HashtagsC2 } from "./HashtagsC2";
+import { Copy, CheckCircle, Wand2, Loader2, TrendingUp, ArrowUpRight, Share2, RotateCcw, ShieldCheck, FileText, Bookmark, Lightbulb, DollarSign, Sparkles, Film, Hash, Layout, Heart, MessageSquare } from "lucide-react";
 import type { BudgetRecommendation, Hashtags, Scene, HookDetail } from "../services/analyzerService";
 import type { EngineBudgetRecommendation } from "../services/budgetService";
 import { getBenchmark, type BenchmarkResult } from "../lib/benchmarks";
-import SceneBreakdown from "./SceneBreakdown";
-import { StaticAdChecks } from "./StaticAdChecks";
 import FixItPanel, { type FixItResult } from "./FixItPanel";
 import PredictedPerformanceCard, { type PredictionResult } from "./PredictedPerformanceCard";
 import { CollapsibleSection } from "./ui/CollapsibleSection";
@@ -17,9 +20,7 @@ import { AlertDialog } from "./ui/AlertDialog";
 
 // Sub-components
 import { ScoreHero } from "./ScoreHero";
-import { HookDetailCard } from "./scorecard/HookDetailCard";
 import { BudgetCard } from "./scorecard/BudgetCard";
-import { ScoreAdaptiveCTA } from "./scorecard/ScoreAdaptiveCTA";
 
 interface Scores {
   hook: number;
@@ -57,6 +58,8 @@ interface ScoreCardProps {
   hookDetail?: HookDetail;
   niche?: string;
   platform?: string;
+  youtubeFormat?: string;
+  platformScore?: number; // override overall score when platform-specific score exists
   // Fix It For Me
   onFixIt?: () => void;
   fixItResult?: FixItResult | null;
@@ -74,6 +77,15 @@ interface ScoreCardProps {
   onUpgradeRequired?: (feature: string) => void;
   // Mode — affects hashtag default state (expanded for organic)
   isOrganic?: boolean;
+  // Verdict
+  verdict?: { state: 'not_ready' | 'needs_work' | 'ready'; headline: string; sub: string };
+  // Platform switcher (rendered inside scorecard)
+  platformSwitcher?: React.ReactNode;
+  // Brief loading state
+  briefLoading?: boolean;
+  hasBrief?: boolean;
+  // Analysis sections for right panel (Hook, Hierarchy, Copy, Messaging, Emotional)
+  analysisSections?: { title: string; content: string }[];
 }
 
 /** Score band color for chips/overlays: 9-10 green, 7-8 indigo, 5-6 amber, 1-4 red (scores 0-10). */
@@ -179,6 +191,8 @@ export function ScoreCard({
   hookDetail,
   niche,
   platform,
+  youtubeFormat,
+  platformScore,
   onFixIt,
   fixItResult,
   fixItLoading,
@@ -190,9 +204,15 @@ export function ScoreCard({
   isPro,
   onUpgradeRequired,
   isOrganic = false,
+  verdict,
+  platformSwitcher,
+  briefLoading,
+  hasBrief,
+  analysisSections,
 }: ScoreCardProps) {
-  const { label: overallLabel } = getScoreLabel(scores.overall);
-  const heroVerdict = scores.overall >= 8 ? "Strong" : scores.overall >= 4 ? "Average" : "Needs Work";
+  const displayScore = platformScore ?? scores.overall;
+  const { label: overallLabel } = getScoreLabel(displayScore);
+  const heroVerdict = displayScore >= 8 ? "Strong" : displayScore >= 4 ? "Average" : "Needs Work";
   const benchmark: BenchmarkResult = getBenchmark(niche ?? '', platform ?? '', format === 'video' ? 'video' : 'static');
   const [relativeTime, setRelativeTime] = useState<string>("");
   const [toast, setToast] = useState<string | null>(null);
@@ -267,28 +287,23 @@ export function ScoreCard({
 
   return (
     <div className="scorecard flex flex-col">
-      {/* Header */}
-      <div className="p-5 border-b border-white/5 flex items-center justify-between">
-        <div className="flex flex-col gap-0.5">
-          <span className="text-sm font-semibold text-white">Score Overview</span>
-          {analysisTime && (
-            <span className="text-xs text-zinc-600">{relativeTime}</span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
+      {/* Header — Option A */}
+      <div className="px-5 pt-4 pb-3 flex items-center justify-between">
+        <span className="text-[13px] font-medium text-zinc-200">Score Overview</span>
+        <div className="flex items-center gap-1.5">
           <button
             onClick={handleCopy}
+            aria-label="Copy scores to clipboard"
+            className="inline-flex items-center gap-1.5 text-[11px] rounded-lg cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:outline-none"
             style={{
-              display: "inline-flex", alignItems: "center", gap: 6,
-              background: "var(--surface)", border: "1px solid var(--border)",
-              borderRadius: 8, padding: "6px 12px", fontSize: 12, cursor: "pointer",
-              color: copied ? "var(--success)" : "var(--ink-muted)",
-              borderColor: copied ? "rgba(16,185,129,0.3)" : "var(--border)",
-              transition: "all var(--duration-fast)",
+              padding: '4px 10px',
+              background: 'rgba(255,255,255,0.03)',
+              border: '0.5px solid rgba(255,255,255,0.08)',
+              color: copied ? '#10b981' : '#71717a',
             }}
           >
-            {copied ? <CheckCircle size={13} /> : <Copy size={13} />}
-            {copied ? "Copied!" : "Copy results"}
+            {copied ? <CheckCircle size={11} /> : <Copy size={11} />}
+            {copied ? "Copied!" : "Copy scores"}
           </button>
           {(onGenerateBrief || onAddToSwipeFile || onStartOver || onCheckPolicies || onCompare) && (
             <OverflowMenu
@@ -309,7 +324,33 @@ export function ScoreCard({
         </div>
       </div>
 
-      {/* Analysis content \u2014 Glass card */}
+      {/* Verdict block — Option A */}
+      {verdict && (() => {
+        const vColors = {
+          not_ready: { bg: 'rgba(239,68,68,0.06)', border: 'rgba(239,68,68,0.15)', chipBg: 'rgba(239,68,68,0.12)', color: '#ef4444', label: 'Not ready' },
+          needs_work: { bg: 'rgba(217,119,6,0.06)', border: 'rgba(217,119,6,0.15)', chipBg: 'rgba(217,119,6,0.12)', color: '#d97706', label: 'Needs work' },
+          ready: { bg: 'rgba(16,185,129,0.06)', border: 'rgba(16,185,129,0.15)', chipBg: 'rgba(16,185,129,0.12)', color: '#10b981', label: 'Ready' },
+        };
+        const v = vColors[verdict.state];
+        return (
+          <div className="mx-4 mb-3">
+            <div
+              className="flex items-center gap-2.5 rounded-[9px]"
+              style={{ padding: '10px 12px', background: v.bg, border: `0.5px solid ${v.border}` }}
+            >
+              <span
+                className="text-[10px] font-medium uppercase rounded-full shrink-0"
+                style={{ padding: '2px 8px', background: v.chipBg, color: v.color }}
+              >
+                {v.label}
+              </span>
+              <span className="text-xs text-zinc-400 leading-[1.45]">{verdict.headline}</span>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Analysis content — Glass card */}
       <div style={{
         background: "var(--glass-card-bg)",
         backdropFilter: "var(--glass-card-blur)",
@@ -333,13 +374,21 @@ export function ScoreCard({
         {/* Card content */}
         <div style={{ position: "relative", zIndex: 1 }}>
 
+          {/* Platform switcher — inside glass card at top */}
+          {platformSwitcher && (
+            <div className="px-4 pt-3 pb-1">
+              {platformSwitcher}
+            </div>
+          )}
+
           {/* 1 + 2. ScoreHero — score number + benchmark bar + dimension grid */}
           <ScoreHero
-            score={scores.overall}
+            score={displayScore}
             verdict={heroVerdict}
             benchmark={benchmark.averageScore}
             platform={platform}
             format={format}
+            youtubeFormat={youtubeFormat}
             dimensions={[
               { name: "Hook",   score: scores.hook },
               { name: "Copy",   score: scores.clarity },
@@ -356,105 +405,9 @@ export function ScoreCard({
             </div>
           )}
 
-          {/* 3. ScoreAdaptiveCTA \u2014 always visible */}
-          <div style={{ marginTop: 16, padding: "0 20px" }}>
-            <ScoreAdaptiveCTA
-              overallScore={scores.overall}
-              onShare={onShare}
-              onGenerateBrief={onGenerateBrief}
-            />
-          </div>
+          {/* ScoreAdaptiveCTA moved below Hashtags */}
 
-          {/* 4. Action row \u2014 Fix It / Visualize / Policy Check */}
-          <div
-            style={{ marginTop: 16, padding: "0 20px", display: "flex", gap: 8 }}
-            className="max-md:flex-col"
-          >
-            {/* Fix It For Me */}
-            {onFixIt && (
-              <button
-                type="button"
-                onClick={onFixIt}
-                disabled={fixItLoading}
-                aria-label={scores.overall >= 8 ? "Polish It" : "Fix It For Me"}
-                style={{
-                  flex: 1, height: 40, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                  background: "transparent", border: "1px solid var(--border)",
-                  borderRadius: "var(--radius-sm)", cursor: fixItLoading ? "default" : "pointer",
-                  fontSize: 12, fontFamily: "var(--sans)", color: "var(--ink-muted)",
-                  transition: "all var(--duration-fast)",
-                }}
-                onMouseEnter={(e) => { if (!fixItLoading) { e.currentTarget.style.background = "var(--surface)"; e.currentTarget.style.borderColor = "var(--border-strong)"; }}}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "var(--border)"; }}
-              >
-                {fixItLoading ? <Loader2 size={14} className="animate-spin" /> : <Wand2 size={14} />}
-                {scores.overall >= 8 ? "Polish It" : "Fix It"}
-              </button>
-            )}
-
-            {/* Visualize It */}
-            {canVisualize !== false && (
-              isPro ? (
-                <button
-                  type="button"
-                  onClick={onVisualize}
-                  disabled={visualizeLoading}
-                  aria-label="Visualize It"
-                  style={{
-                    flex: 1, height: 40, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                    background: "transparent", border: "1px solid var(--border)",
-                    borderRadius: "var(--radius-sm)", cursor: visualizeLoading ? "default" : "pointer",
-                    fontSize: 12, fontFamily: "var(--sans)", color: "var(--ink-muted)",
-                    transition: "all var(--duration-fast)",
-                  }}
-                  onMouseEnter={(e) => { if (!visualizeLoading) { e.currentTarget.style.background = "var(--surface)"; e.currentTarget.style.borderColor = "var(--border-strong)"; }}}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "var(--border)"; }}
-                >
-                  {visualizeLoading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-                  Visualize
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => onUpgradeRequired?.("visualize")}
-                  aria-label="Visualize It \u2014 Pro feature"
-                  style={{
-                    flex: 1, height: 40, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                    background: "transparent", border: "1px solid var(--border)",
-                    borderRadius: "var(--radius-sm)", cursor: "pointer",
-                    fontSize: 12, fontFamily: "var(--sans)", color: "var(--ink-faint)",
-                    transition: "all var(--duration-fast)",
-                  }}
-                >
-                  <Lock size={12} />
-                  Visualize
-                  <span style={{ fontSize: 9, fontWeight: 600, padding: "1px 5px", borderRadius: 4, background: "var(--accent-subtle)", color: "var(--accent)" }}>PRO</span>
-                </button>
-              )
-            )}
-
-            {/* Policy Check */}
-            {onCheckPolicies && (
-              <button
-                type="button"
-                onClick={onCheckPolicies}
-                disabled={policyLoading}
-                aria-label="Check Ad Policies"
-                style={{
-                  flex: 1, height: 40, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                  background: "transparent", border: "1px solid var(--border)",
-                  borderRadius: "var(--radius-sm)", cursor: policyLoading ? "default" : "pointer",
-                  fontSize: 12, fontFamily: "var(--sans)", color: "var(--ink-muted)",
-                  transition: "all var(--duration-fast)",
-                }}
-                onMouseEnter={(e) => { if (!policyLoading) { e.currentTarget.style.background = "var(--surface)"; e.currentTarget.style.borderColor = "var(--border-strong)"; }}}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "var(--border)"; }}
-              >
-                {policyLoading ? <Loader2 size={14} className="animate-spin" /> : <ShieldCheck size={14} />}
-                Policies
-              </button>
-            )}
-          </div>
+          {/* Action row (AI Rewrite / Visualize / Policies) moved to center column tools grid */}
 
           {/* 5. Fix It result (if already generated) */}
           {fixItResult && (
@@ -463,152 +416,147 @@ export function ScoreCard({
             </div>
           )}
 
-          {/* ── Collapsible sections ── */}
+          {/* Predicted Performance + Budget moved outside glass card */}
 
-          {/* 6. Hook Analysis */}
-          {hookDetail && (
-            <div style={{ marginTop: 24, padding: "0 20px" }}>
-              <CollapsibleSection
-                title="Hook Analysis"
-                icon={<Lightbulb size={14} />}
-                trailing={
-                  <span className="text-[10px] font-mono" style={{ color: getScoreTokenColor(scores.hook) }}>
-                    {scores.hook}/10
-                  </span>
-                }
-              >
-                <HookDetailCard hookDetail={hookDetail} format={format} />
-              </CollapsibleSection>
-            </div>
-          )}
+          {/* ── Analysis sections (Hook, Hierarchy, Copy, Messaging) ── */}
+          {analysisSections && analysisSections.length > 0 && (() => {
+            // Merge copy inventory + messaging into one combined section
+            const copySection = analysisSections.find(s => /copy/i.test(s.title));
+            const messagingSection = analysisSections.find(s => /messag/i.test(s.title));
+            const combinedContent = [copySection?.content, messagingSection?.content].filter(Boolean).join('\n\n');
+            const hasCombined = copySection || messagingSection;
+            const ctaMissing = hasCombined && /no\s*(explicit\s*)?(cta|call)|cta.*none|none.*cta|flag.*missing/i.test(combinedContent);
 
-          {/* 7. Improvements */}
-          {improvements && improvements.length > 0 && (
-            <div style={{ marginTop: 16, padding: "0 20px" }}>
-              <CollapsibleSection
-                title="Improvements"
-                icon={<AlertCircle size={14} />}
-                trailing={
-                  <span className="text-[10px] text-zinc-500">{improvements.length} items</span>
-                }
-              >
-                <ImprovementsList improvements={improvements} loading={improvementsLoading} />
-              </CollapsibleSection>
-            </div>
-          )}
+            // Filter out copy + messaging from individual rendering
+            const filteredSections = analysisSections.filter(s =>
+              !(/copy/i.test(s.title)) && !(/messag/i.test(s.title))
+            );
 
-          {/* 8. Predicted Performance */}
-          {prediction && (
-            <div style={{ marginTop: 16, padding: "0 20px" }}>
-              <CollapsibleSection
-                title="Predicted Performance"
-                icon={<TrendingUp size={14} />}
-              >
-                <PredictedPerformanceCard prediction={prediction} platform={platform} niche={niche} />
-              </CollapsibleSection>
-            </div>
-          )}
-
-          {/* 9. Budget Recommendation */}
-          {(engineBudget || budget) && (
-            <div style={{ marginTop: 16, padding: "0 20px" }}>
-              <CollapsibleSection
-                title="Budget Recommendation"
-                icon={<DollarSign size={14} />}
-              >
-                <BudgetCard
-                  engineBudget={engineBudget}
-                  budget={budget}
-                  onNavigateSettings={onNavigateSettings}
-                />
-              </CollapsibleSection>
-            </div>
-          )}
-
-          {/* 10. Scene Breakdown \u2014 video only */}
-          {format === "video" && scenes && scenes.length > 0 && (
-            <div style={{ marginTop: 16, padding: "0 20px" }}>
-              <CollapsibleSection
-                title="Scene Breakdown"
-                icon={<Film size={14} />}
-                trailing={<span className="text-[10px] text-zinc-500">{scenes.length} scenes</span>}
-              >
-                <SceneBreakdown scenes={scenes} />
-              </CollapsibleSection>
-            </div>
-          )}
-
-          {/* 11. Static Ad Checks \u2014 static only */}
-          {format === "static" && scores && (
-            <div style={{ marginTop: 16, padding: "0 20px", paddingBottom: 20 }}>
-              <CollapsibleSection title="Ad Quality Checks" icon={<ShieldCheck size={14} />}>
-                <StaticAdChecks scores={scores} />
-              </CollapsibleSection>
-            </div>
-          )}
-
-          {/* 12. Hashtags — collapsed for paid, expanded for organic */}
-          {hashtags && (hashtags.tiktok.length > 0 || hashtags.meta.length > 0 || hashtags.instagram.length > 0) && (
-            <div style={{ marginTop: 16, padding: "0 20px", paddingBottom: 16 }}>
-              <CollapsibleSection
-                title="Recommended Hashtags"
-                icon={<Hash size={14} />}
-                defaultOpen={isOrganic}
-                trailing={
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-zinc-500">
-                      {[hashtags.tiktok, hashtags.meta, hashtags.instagram].reduce((n, t) => n + t.length, 0)} tags
-                    </span>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const allTags = [
-                          ...hashtags.tiktok.map(t => `#${t}`),
-                          ...hashtags.meta.map(t => `#${t}`),
-                          ...hashtags.instagram.map(t => `#${t}`),
-                        ];
-                        navigator.clipboard.writeText(allTags.join(' '));
-                      }}
-                      className="text-[10px] text-indigo-400 hover:text-indigo-300 transition-colors"
+            return (
+            <div style={{ marginTop: 16 }}>
+              {filteredSections.map((section, i) => {
+                const iconMap: Record<string, typeof Lightbulb> = {
+                  hook: Lightbulb, hierarchy: Layout,
+                };
+                const matchedIcon = Object.entries(iconMap).find(([key]) =>
+                  section.title.toLowerCase().includes(key)
+                );
+                const SIcon = matchedIcon?.[1] ?? FileText;
+                const isHook = section.title.toLowerCase().includes('hook');
+                const isHierarchy = section.title.toLowerCase().includes('hierarchy');
+                return (
+                  <div key={i} style={{ padding: "0 20px", marginTop: i > 0 ? 12 : 0 }}>
+                    <CollapsibleSection
+                      title={section.title}
+                      icon={<SIcon size={14} />}
                     >
-                      Copy all
-                    </button>
-                  </div>
-                }
-              >
-                {([["TikTok", hashtags.tiktok], ["Meta", hashtags.meta], ["Instagram", hashtags.instagram]] as const).map(
-                  ([plat, tags]) =>
-                    tags.length > 0 && (
-                      <div key={plat} className="mb-3">
-                        <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">{plat}</span>
-                        <div className="flex flex-wrap gap-1.5 mt-1.5">
-                          {tags.map((tag) => (
-                            <span
-                              key={tag}
-                              className="bg-zinc-800 text-zinc-300 text-xs px-2 py-0.5 rounded-md font-mono hover:bg-zinc-700 transition-colors cursor-default"
-                            >
-                              #{tag}
-                            </span>
-                          ))}
+                      {isHook ? (
+                        <HookAnalysisExpanded content={section.content} format={format ?? 'static'} />
+                      ) : isHierarchy ? (
+                        <VisualHierarchyExpanded content={section.content} />
+                      ) : (
+                        <div className="text-sm text-zinc-400 leading-relaxed [&_strong]:text-zinc-300 [&_strong]:font-medium [&_ul]:list-disc [&_ul]:pl-4 [&_li]:mb-1.5 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_h3]:text-xs [&_h3]:font-semibold [&_h3]:text-zinc-300 [&_h3]:mt-4 [&_h3]:mb-2 [&_em]:text-indigo-300/70">
+                          <ReactMarkdown>{section.content}</ReactMarkdown>
                         </div>
-                      </div>
-                    )
-                )}
-              </CollapsibleSection>
+                      )}
+                    </CollapsibleSection>
+                  </div>
+                );
+              })}
+
+              {/* Combined Copy & Messaging section */}
+              {hasCombined && (
+                <div style={{ padding: "0 20px", marginTop: 12 }}>
+                  <CollapsibleSection
+                    title="Copy & messaging"
+                    icon={<MessageSquare size={14} />}
+                    trailing={ctaMissing ? (
+                      <span className="text-[10px] font-medium rounded-full px-2 py-px" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>No CTA</span>
+                    ) : undefined}
+                  >
+                    <CopyAndMessagingExpanded content={combinedContent} />
+                  </CollapsibleSection>
+                </div>
+              )}
             </div>
+          );
+          })()}
+
+          {/* Recommended Hashtags — C2 layout */}
+          {hashtags && (hashtags.tiktok.length > 0 || hashtags.meta.length > 0 || hashtags.instagram.length > 0) && (
+            <HashtagsC2 hashtags={hashtags} format={format} />
           )}
 
         </div>{/* end card content */}
       </div>{/* end glass card */}
 
+      {/* Re-analyze button — below ScoreHero, above Predicted Performance */}
+      {onReanalyze && (
+        <div className="mx-4 mt-3">
+          <button
+            onClick={onReanalyze}
+            className="w-full flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[12px] font-medium transition-colors hover:opacity-80"
+            style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.2)' }}
+          >
+            <RotateCcw size={13} />
+            Re-analyze improved version →
+          </button>
+        </div>
+      )}
+
+      {/* Predicted Performance — own card, always expanded */}
+      {prediction && (
+        <div className="mx-4 mt-3 rounded-xl border border-white/5 bg-zinc-900/50 p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <TrendingUp size={14} className="text-zinc-500" />
+            <span className="text-xs font-medium text-zinc-200">Predicted Performance</span>
+          </div>
+          <PredictedPerformanceCard prediction={prediction} platform={platform} niche={niche} />
+        </div>
+      )}
+
+      {/* Budget Recommendation — own card, always expanded */}
+      {(engineBudget || budget) && (
+        <div className="mx-4 mt-3 rounded-xl border border-white/5 bg-zinc-900/50 p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <DollarSign size={14} className="text-zinc-500" />
+            <span className="text-xs font-medium text-zinc-200">Budget Recommendation</span>
+          </div>
+          <BudgetCard
+            engineBudget={engineBudget}
+            budget={budget}
+            onNavigateSettings={onNavigateSettings}
+          />
+        </div>
+      )}
+
       {/* Overflow menu moved to header row — see Score Overview header above */}
+
+      {/* Re-analyze button is above Predicted Performance */}
+
+      {/* Generate Brief button — below all sections */}
+      {onGenerateBrief && (
+        <div className="mx-4 mt-3 mb-2">
+          <button
+            onClick={onGenerateBrief}
+            disabled={briefLoading}
+            className="w-full flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[12px] font-medium transition-colors hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', color: '#f59e0b' }}
+          >
+            {briefLoading ? (
+              <><Loader2 size={13} className="animate-spin" /> Generating brief...</>
+            ) : (
+              <><FileText size={13} /> {hasBrief ? 'Regenerate Brief' : 'Generate a Brief'}</>
+            )}
+          </button>
+        </div>
+      )}
 
       {/* Toast notification */}
       {toast && (
         <div style={{
           position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)",
-          background: "var(--success)", color: "white", padding: "8px 20px", borderRadius: 10,
+          background: "var(--success)", color: "white", padding: "8px 20px", borderRadius: 12,
           fontSize: 13, fontWeight: 500, zIndex: 9999, boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
           animation: "fadeIn 200ms ease-out",
         }}>

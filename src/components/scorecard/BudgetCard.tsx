@@ -1,8 +1,13 @@
-// BudgetCard — engine-based budget recommendation display
+// BudgetCard — engine-based budget recommendation display (redesigned)
 
-import { AlertTriangle, AlertCircle, TrendingUp, ArrowUpRight } from "lucide-react";
 import type { EngineBudgetRecommendation } from "../../services/budgetService";
 import type { BudgetRecommendation } from "../../services/analyzerService";
+
+const TIER_STYLES = {
+  hold:    { dot: '#ef4444', label: 'Fix First' },
+  limited: { dot: '#f59e0b', label: 'Limited test' },
+  test:    { dot: '#10b981', label: 'Ready to scale' },
+} as const;
 
 interface BudgetCardProps {
   engineBudget?: EngineBudgetRecommendation | null;
@@ -13,73 +18,76 @@ interface BudgetCardProps {
 export function BudgetCard({ engineBudget, budget, onNavigateSettings }: BudgetCardProps) {
   // Engine-based budget
   if (engineBudget) {
-    const actionColor =
-      engineBudget.action === "hold" ? "#ef4444" :
-      engineBudget.action === "limited" ? "#f59e0b" : "#10b981";
-
-    const actionBg =
-      engineBudget.action === "hold" ? "rgba(239,68,68,0.06)" :
-      engineBudget.action === "limited" ? "rgba(245,158,11,0.06)" : "rgba(16,185,129,0.06)";
-
-    const actionBorder =
-      engineBudget.action === "hold" ? "rgba(239,68,68,0.2)" :
-      engineBudget.action === "limited" ? "rgba(245,158,11,0.2)" : "rgba(16,185,129,0.2)";
+    const tier = TIER_STYLES[engineBudget.action];
 
     return (
-      <div className="px-5 border-t border-white/5 mt-4 pt-4">
-        <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-3">
-          Budget Recommendation
-        </p>
-
-        {/* Main card */}
-        <div style={{ padding: 12, borderRadius: 10, border: `1px solid ${actionBorder}`, background: actionBg }}>
-          {/* Header row */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            {engineBudget.action === "hold" && <AlertTriangle size={16} color={actionColor} />}
-            {engineBudget.action === "limited" && <AlertCircle size={16} color={actionColor} />}
-            {engineBudget.action === "test" && <TrendingUp size={16} color={actionColor} />}
-            <span style={{ fontSize: 13, fontWeight: 600, color: actionColor }}>
-              {engineBudget.label}
-              {engineBudget.dailyBudget && ` · $${engineBudget.dailyBudget.min}–$${engineBudget.dailyBudget.max}/day`}
+      <div>
+        {/* Header — tier dot + label + daily range */}
+        <div className="flex items-center justify-between pb-3 border-b border-white/5">
+          <div className="flex items-center gap-2">
+            {/* Tier dot */}
+            <span
+              className="block w-[7px] h-[7px] rounded-full shrink-0"
+              style={{ background: tier.dot }}
+            />
+            <span className="text-[13px] font-medium text-zinc-200">
+              {tier.label}
             </span>
           </div>
-
-          {/* Platform CPM */}
-          {engineBudget.action !== "hold" && (
-            <p style={{ fontSize: 11, color: "#71717a", marginTop: 6 }}>
-              Platform CPM: {engineBudget.platformCPM}
-            </p>
-          )}
-
-          {/* Advice */}
-          <p style={{ fontSize: 12, color: "#a1a1aa", marginTop: 8, lineHeight: 1.5 }}>
-            {engineBudget.advice}
-          </p>
-
-          {/* Scale signal */}
-          {engineBudget.scaleSignal && (
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 4, marginTop: 8 }}>
-              <ArrowUpRight size={12} color="#818cf8" style={{ marginTop: 2, flexShrink: 0 }} />
-              <span style={{ fontSize: 11, color: "#818cf8", fontStyle: "italic", lineHeight: 1.4 }}>
-                {engineBudget.scaleSignal}
-              </span>
-            </div>
-          )}
-
-          {/* Test duration + ROAS target */}
-          {engineBudget.action !== "hold" && (
-            <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
-              <span style={{ fontSize: 11, color: "#52525b" }}>Test: {engineBudget.testDuration}</span>
-              <span style={{ fontSize: 11, color: "#52525b" }}>ROAS: {engineBudget.roasTarget}</span>
-            </div>
+          {engineBudget.dailyBudget && (
+            <span className="text-[13px] font-mono font-medium text-zinc-300">
+              ${engineBudget.dailyBudget.min}–${engineBudget.dailyBudget.max}/day
+            </span>
           )}
         </div>
 
-        {/* Niche + platform pill */}
-        <div style={{ marginTop: 8, display: "flex", gap: 6 }}>
-          <span style={{ fontSize: 10, color: "#71717a", background: "rgba(255,255,255,0.04)", borderRadius: 9999, padding: "2px 8px" }}>
-            {engineBudget.niche} · {engineBudget.platform === "all" ? "All platforms" : engineBudget.platform}
-          </span>
+        {/* Platform CPM sub-header */}
+        {engineBudget.action !== "hold" && (
+          <p className="text-[10px] text-zinc-500 mt-2">
+            Platform CPM: {engineBudget.platformCPM} · {engineBudget.platform === "all" ? "All platforms" : engineBudget.platform}
+          </p>
+        )}
+
+        {/* Body */}
+        <div className="mt-3 space-y-3">
+          {/* Fix note — indigo block at TOP */}
+          {engineBudget.scaleSignal && (
+            <div
+              className="flex items-start gap-2 rounded-lg px-3 py-2.5"
+              style={{
+                background: 'rgba(99,102,241,0.06)',
+                border: '0.5px solid rgba(99,102,241,0.18)',
+              }}
+            >
+              <span className="text-indigo-400 mt-px shrink-0">↗</span>
+              <p className="text-xs font-medium text-zinc-200 leading-snug">
+                {engineBudget.scaleSignal}
+              </p>
+            </div>
+          )}
+
+          {/* Advice text */}
+          <p className="text-xs text-zinc-400 leading-relaxed">
+            {engineBudget.advice}
+          </p>
+
+          {/* Pills row */}
+          {engineBudget.action !== "hold" && (
+            <div className="flex flex-wrap gap-1.5">
+              <span className="text-[10px] text-zinc-500 bg-white/5 rounded-full px-2 py-px">
+                Test: {engineBudget.testDuration}
+              </span>
+              <span className="text-[10px] text-zinc-500 bg-white/5 rounded-full px-2 py-px">
+                ROAS: {engineBudget.roasTarget}
+              </span>
+              <span
+                className="text-[10px] rounded-full px-2 py-px"
+                style={{ background: 'rgba(16,185,129,0.08)', color: '#10b981' }}
+              >
+                {engineBudget.niche} · {engineBudget.platform === "all" ? "All platforms" : engineBudget.platform}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Missing profile hint */}
@@ -87,19 +95,15 @@ export function BudgetCard({ engineBudget, budget, onNavigateSettings }: BudgetC
           <button
             type="button"
             onClick={onNavigateSettings}
-            style={{
-              marginTop: 8, fontSize: 11, color: "#6366f1",
-              background: "none", border: "none", cursor: "pointer", padding: 0,
-              textDecoration: "underline", textDecorationColor: "rgba(99,102,241,0.3)",
-            }}
+            className="mt-2 text-[11px] text-indigo-400 hover:text-indigo-300 underline decoration-indigo-400/30 bg-transparent border-none cursor-pointer p-0 transition-colors"
           >
-            Set your niche in Settings for personalized budgets &rarr;
+            Set your niche in Settings for personalized budgets →
           </button>
         )}
 
         {/* Footnote */}
         {engineBudget.footnote && (
-          <p style={{ fontSize: 11, color: "#52525b", marginTop: 8 }}>{engineBudget.footnote}</p>
+          <p className="text-[11px] text-zinc-600 mt-2">{engineBudget.footnote}</p>
         )}
       </div>
     );
@@ -107,13 +111,19 @@ export function BudgetCard({ engineBudget, budget, onNavigateSettings }: BudgetC
 
   // Legacy budget fallback
   if (budget) {
+    const legacyTier = budget.verdict === "Boost It" ? TIER_STYLES.test :
+                       budget.verdict === "Test It" ? TIER_STYLES.limited : TIER_STYLES.hold;
     return (
-      <div className="px-5 border-t border-white/5 mt-4 pt-4">
-        <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-3">
-          Budget Recommendation
-        </p>
-        <p className="text-xs text-zinc-400 leading-relaxed">
-          {budget.reason || `${budget.verdict} — ${budget.daily}/day`}
+      <div>
+        <div className="flex items-center gap-2 pb-3 border-b border-white/5">
+          <span className="block w-[7px] h-[7px] rounded-full" style={{ background: legacyTier.dot }} />
+          <span className="text-[13px] font-medium text-zinc-200">{budget.verdict}</span>
+          {budget.daily && (
+            <span className="text-[12px] font-mono text-zinc-400 ml-auto">{budget.daily}/day</span>
+          )}
+        </div>
+        <p className="text-xs text-zinc-400 leading-relaxed mt-3">
+          {budget.reason}
         </p>
       </div>
     );

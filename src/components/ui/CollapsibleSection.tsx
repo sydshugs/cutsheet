@@ -30,7 +30,9 @@ export function CollapsibleSection({
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="w-full flex items-center justify-between gap-2 group"
+        aria-expanded={open}
+        aria-label={`${open ? 'Collapse' : 'Expand'} ${title}`}
+        className="w-full flex items-center justify-between gap-2 group focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:outline-none rounded"
         style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
       >
         <div className="flex items-center gap-2">
