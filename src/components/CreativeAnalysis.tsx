@@ -10,11 +10,11 @@ const STATE_COLORS = {
   ready: { bannerBg: 'rgba(16,185,129,0.06)', border: 'rgba(16,185,129,0.2)', chipBg: 'rgba(16,185,129,0.1)', color: '#10b981', label: 'Ready' },
 } as const;
 
-const CATEGORY_STYLES: Record<string, { bg: string; color: string }> = {
-  hierarchy: { bg: 'rgba(129,140,248,0.1)', color: '#818cf8' },
-  typography: { bg: 'rgba(251,191,36,0.1)', color: '#d97706' },
-  layout: { bg: 'rgba(16,185,129,0.08)', color: '#10b981' },
-  contrast: { bg: 'rgba(239,68,68,0.08)', color: '#ef4444' },
+const CATEGORY_STYLES: Record<string, { bg: string; color: string; hoverBg: string; hoverColor: string; activeBg: string }> = {
+  hierarchy: { bg: 'rgba(129,140,248,0.15)', color: '#a5b4fc', hoverBg: 'rgba(129,140,248,0.22)', hoverColor: '#c4b5fd', activeBg: 'rgba(129,140,248,0.25)' },
+  typography: { bg: 'rgba(251,191,36,0.15)', color: '#fbbf24', hoverBg: 'rgba(251,191,36,0.22)', hoverColor: '#fcd34d', activeBg: 'rgba(251,191,36,0.25)' },
+  layout: { bg: 'rgba(16,185,129,0.15)', color: '#34d399', hoverBg: 'rgba(16,185,129,0.22)', hoverColor: '#6ee7b7', activeBg: 'rgba(16,185,129,0.25)' },
+  contrast: { bg: 'rgba(239,68,68,0.15)', color: '#f87171', hoverBg: 'rgba(239,68,68,0.22)', hoverColor: '#fca5a5', activeBg: 'rgba(239,68,68,0.25)' },
 };
 
 const SEVERITY_DOT: Record<string, string> = {
@@ -112,7 +112,7 @@ export function CreativeAnalysis({
           </div>
         )}
 
-        {/* Category filter pills — Option D: 12px, 6px 16px, radius 99px */}
+        {/* Category filter pills — Option D sizing + hover/active states */}
         {categories.length > 1 && (
           <div className="flex gap-2 flex-wrap mb-3">
             {categories.map(cat => {
@@ -122,12 +122,35 @@ export function CreativeAnalysis({
                 <button
                   key={cat.key}
                   onClick={() => setActiveFilter(cat.key)}
-                  className="flex items-center gap-1.5 cursor-pointer transition-all"
+                  className="flex items-center gap-1.5 cursor-pointer"
                   style={{
                     fontSize: 12, fontWeight: 500, padding: '6px 16px', borderRadius: 99,
-                    background: cat.key === 'all' ? 'rgba(255,255,255,0.04)' : (catStyle?.bg ?? 'rgba(255,255,255,0.04)'),
-                    color: cat.key === 'all' ? (isActive ? '#e4e4e7' : '#71717a') : (catStyle?.color ?? '#71717a'),
+                    transition: 'all 0.15s ease',
+                    background: cat.key === 'all'
+                      ? (isActive ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)')
+                      : (isActive ? (catStyle?.activeBg ?? catStyle?.bg ?? 'rgba(255,255,255,0.04)') : (catStyle?.bg ?? 'rgba(255,255,255,0.04)')),
+                    color: cat.key === 'all'
+                      ? (isActive ? '#e4e4e7' : '#71717a')
+                      : (isActive ? (catStyle?.hoverColor ?? catStyle?.color ?? '#71717a') : (catStyle?.color ?? '#71717a')),
                     border: isActive ? `0.5px solid ${catStyle?.color ?? 'rgba(255,255,255,0.15)'}` : '0.5px solid transparent',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) {
+                      if (cat.key === 'all') {
+                        e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+                        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
+                      } else if (catStyle) {
+                        e.currentTarget.style.background = catStyle.hoverBg;
+                        e.currentTarget.style.color = catStyle.hoverColor;
+                      }
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.background = cat.key === 'all' ? 'rgba(255,255,255,0.04)' : (catStyle?.bg ?? 'rgba(255,255,255,0.04)');
+                      e.currentTarget.style.color = cat.key === 'all' ? '#71717a' : (catStyle?.color ?? '#71717a');
+                      e.currentTarget.style.borderColor = 'transparent';
+                    }
                   }}
                 >
                   {cat.key !== 'all' && (
@@ -154,15 +177,15 @@ export function CreativeAnalysis({
                 {/* Top row: category tag + severity dot */}
                 <div className="flex items-center justify-between">
                   <span
-                    className="text-[9px] font-medium uppercase tracking-wider rounded-full shrink-0"
-                    style={{ padding: '1px 6px', background: catStyle.bg, color: catStyle.color }}
+                    className="text-[11px] font-semibold uppercase rounded-full shrink-0"
+                    style={{ padding: '4px 10px', letterSpacing: '0.03em', background: catStyle.bg, color: catStyle.color }}
                   >
                     {fix.category}
                   </span>
                   <span className="w-[7px] h-[7px] rounded-full shrink-0" style={{ background: dotColor }} />
                 </div>
-                {/* Fix text below */}
-                <span className="text-xs font-medium text-zinc-200">{fix.fix}</span>
+                {/* Fix text below — 14px 500 */}
+                <span className="text-sm font-medium text-zinc-200 leading-normal">{fix.fix}</span>
               </div>
             );
           })}
