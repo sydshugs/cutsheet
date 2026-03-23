@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Check, Download, Copy, Sparkles, AlertCircle } from "lucide-react";
 import type { VisualizeResult, VisualizeStatus, VisualizeCreditData } from "../types/visualize";
+import { MotionPreviewPlayer } from "./MotionPreviewPlayer";
 
 // ─── LOADING STEPS ────────────────────────────────────────────────────────────
 
@@ -309,10 +310,16 @@ export interface VisualizePanelProps {
   onBack?: () => void;
   onAnalyzeVersion?: (file: File) => void;
   onUpgrade?: (feature: string) => void;
+  // Motion preview (Kling animation)
+  videoUrl?: string | null;
+  videoLoading?: boolean;
+  videoError?: string | null;
+  onAnimate?: () => void;
 }
 
 export function VisualizePanel({
   status, result, originalImageUrl, error, creditData, onClose, onBack, onAnalyzeVersion, onUpgrade,
+  videoUrl, videoLoading, videoError, onAnimate,
 }: VisualizePanelProps) {
   const [briefCopied, setBriefCopied] = useState(false);
   const [downloadTouched, setDownloadTouched] = useState(false);
@@ -542,6 +549,23 @@ export function VisualizePanel({
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Motion Preview (Kling animation) */}
+            {result.generatedImageUrl && (
+              <div style={{ marginBottom: 20 }}>
+                <p style={{ fontSize: 12, fontWeight: 600, color: "#818cf8", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
+                  Motion Preview
+                </p>
+                <MotionPreviewPlayer
+                  videoUrl={videoUrl}
+                  stillFrameUrl={result.generatedImageUrl}
+                  isLoading={!!videoLoading}
+                  loadingLabel="Generating 5s video clip..."
+                  onAnimate={!videoUrl && !videoLoading ? onAnimate : undefined}
+                  error={videoError}
+                />
               </div>
             )}
 

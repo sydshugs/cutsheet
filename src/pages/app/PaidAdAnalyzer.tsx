@@ -33,6 +33,7 @@ import { generatePrediction, type PredictionResult } from "../../services/predic
 import { SecondEyePanel } from "../../components/SecondEyePanel";
 import { VisualizePanel } from "../../components/VisualizePanel";
 import { visualizeAd } from "../../lib/visualizeService";
+import { animateImage } from "../../lib/visualizeVideoService";
 import { uploadImageToStorage, removeFromStorage } from "../../lib/storageService";
 import type { VisualizeResult, VisualizeStatus } from "../../types/visualize";
 import { StaticSecondEyePanel } from "../../components/StaticSecondEyePanel";
@@ -147,6 +148,11 @@ export default function PaidAdAnalyzer() {
   const [visualizeResult, setVisualizeResult] = useState<VisualizeResult | null>(null);
   const [visualizeError, setVisualizeError] = useState<string | null>(null);
   const [visualizeCreditData, setVisualizeCreditData] = useState<import("../../types/visualize").VisualizeCreditData | null>(null);
+
+  // ── Motion Preview (Kling animation) state
+  const [motionVideoUrl, setMotionVideoUrl] = useState<string | null>(null);
+  const [motionLoading, setMotionLoading] = useState(false);
+  const [motionError, setMotionError] = useState<string | null>(null);
 
   // ── Local analyzer state ───────────────────────────────────────────────────
   const [file, setFile] = useState<File | null>(null);
@@ -777,6 +783,49 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
     }
   };
 
+  const handleAnimateMotion = async () => {
+    // Use the Gemini-improved image as the seed for Kling animation
+    const seedImageUrl = visualizeResult?.generatedImageUrl;
+    if (!seedImageUrl) return;
+
+    setMotionLoading(true);
+    setMotionError(null);
+    setMotionVideoUrl(null);
+
+    try {
+      // Detect aspect ratio from the original file dimensions (default 9:16 for vertical)
+      let aspectRatio: "9:16" | "4:5" | "16:9" = "9:16";
+      if (file) {
+        const img = new Image();
+        const ratio = await new Promise<number>((resolve) => {
+          img.onload = () => resolve(img.width / img.height);
+          img.onerror = () => resolve(1);
+          img.src = URL.createObjectURL(file);
+        });
+        if (ratio > 1.2) aspectRatio = "16:9";
+        else if (ratio > 0.9) aspectRatio = "4:5";
+      }
+
+      const result = await animateImage({ imageUrl: seedImageUrl, aspectRatio });
+      setMotionVideoUrl(result.videoUrl);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      if (msg === "PRO_REQUIRED") {
+        onUpgradeRequired("visualize_video");
+        return;
+      }
+      if (msg === "CREDIT_LIMIT_REACHED" && err && typeof err === "object" && "creditData" in err) {
+        const creditErr = err as Error & { creditData: import("../../types/visualize").VisualizeCreditData };
+        setVisualizeCreditData(creditErr.creditData);
+        setVisualizeStatus("credit_limit");
+        return;
+      }
+      setMotionError(msg);
+    } finally {
+      setMotionLoading(false);
+    }
+  };
+
   const handleBriefCopy = async () => {
     if (!brief) return;
     await copyToClipboard(brief);
@@ -901,8 +950,12 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                       originalImageUrl={thumbnailDataUrl ?? null}
                       error={visualizeError}
                       creditData={visualizeCreditData}
-                      onBack={() => { setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); setVisualizeCreditData(null); }}
-                      onClose={() => { setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); setVisualizeCreditData(null); }}
+                      onBack={() => { setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); setVisualizeCreditData(null); setMotionVideoUrl(null); setMotionLoading(false); setMotionError(null); }}
+                      onClose={() => { setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); setVisualizeCreditData(null); setMotionVideoUrl(null); setMotionLoading(false); setMotionError(null); }}
+                      videoUrl={motionVideoUrl}
+                      videoLoading={motionLoading}
+                      videoError={motionError}
+                      onAnimate={handleAnimateMotion}
                       onAnalyzeVersion={handleReanalyze}
                       onUpgrade={onUpgradeRequired}
                     />
