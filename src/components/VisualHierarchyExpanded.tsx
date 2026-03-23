@@ -6,13 +6,13 @@ interface VisualHierarchyExpandedProps {
   content: string;
 }
 
-// Subdued color palette for eye-flow steps
+// Brand guide colors for eye-flow steps
 const ACTION_CONFIG: Record<string, { verb: string; color: string }> = {
-  'first': { verb: 'lands on', color: '#a5b4fc' },
-  'second': { verb: 'moves to', color: '#6ee7b7' },
-  'third': { verb: 'scans', color: '#fcd34d' },
-  'fourth': { verb: 'exits or', color: '#fca5a5' },
-  'where': { verb: 'exits at', color: '#fca5a5' },
+  'first': { verb: 'lands on', color: '#818cf8' },
+  'second': { verb: 'moves to', color: '#10b981' },
+  'third': { verb: 'scans', color: '#f59e0b' },
+  'fourth': { verb: 'exits or', color: '#ef4444' },
+  'where': { verb: 'exits at', color: '#ef4444' },
 };
 
 export function VisualHierarchyExpanded({ content }: VisualHierarchyExpandedProps) {
@@ -58,8 +58,8 @@ export function VisualHierarchyExpanded({ content }: VisualHierarchyExpandedProp
     for (const [key, config] of Object.entries(ACTION_CONFIG)) {
       if (lowerElement.includes(key)) return config;
     }
-    // Fallback based on index - subdued colors
-    const colors = ['#a5b4fc', '#6ee7b7', '#fcd34d', '#fca5a5'];
+    // Fallback based on index - brand guide colors
+    const colors = ['#818cf8', '#10b981', '#f59e0b', '#ef4444'];
     const verbs = ['lands on', 'moves to', 'scans', 'exits at'];
     return { color: colors[index] || colors[0], verb: verbs[index] || 'sees' };
   };

@@ -97,8 +97,8 @@ function getTrailingForSection(title: string, content: string): React.ReactNode 
       const v = verdictMatch[1].trim();
       const isStrong = /strong|scroll.?stop/i.test(v);
       const isWeak = /weak/i.test(v);
-      const color = isStrong ? '#6ee7b7' : isWeak ? '#fca5a5' : '#fcd34d';
-      const bg = isStrong ? 'rgba(110,231,183,0.08)' : isWeak ? 'rgba(252,165,165,0.08)' : 'rgba(252,211,77,0.08)';
+      const color = isStrong ? '#10b981' : isWeak ? '#ef4444' : '#f59e0b';
+      const bg = isStrong ? 'rgba(16,185,129,0.1)' : isWeak ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)';
       const label = isStrong ? 'Strong' : isWeak ? 'Weak' : 'Needs work';
       return <span style={{ fontSize: 10, fontWeight: 500, color, background: bg, borderRadius: 99, padding: '2px 7px', lineHeight: '16px' }}>{label}</span>;
     }
@@ -182,8 +182,8 @@ function getScoreBadge(title: string, content: string): { badge: string; color: 
       const isWeak = /weak/i.test(v);
       return {
         badge: isStrong ? 'Strong' : isWeak ? 'Weak' : 'Needs work',
-        color: isStrong ? '#6ee7b7' : isWeak ? '#fca5a5' : '#fcd34d',
-        bg: isStrong ? 'rgba(110,231,183,0.08)' : isWeak ? 'rgba(252,165,165,0.08)' : 'rgba(252,211,77,0.08)',
+        color: isStrong ? '#10b981' : isWeak ? '#ef4444' : '#f59e0b',
+        bg: isStrong ? 'rgba(16,185,129,0.1)' : isWeak ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)',
       };
     }
   }
@@ -402,7 +402,7 @@ export function ReportCards({
             name: 'AI Rewrite', 
             description: 'AI-powered copy suggestions',
             credit: 'Free', 
-            iconColor: '#a5b4fc',
+            iconColor: '#818cf8',
             onClick: onFixIt, 
             loading: fixItLoading 
           },
@@ -412,7 +412,7 @@ export function ReportCards({
             name: 'Visualize', 
             description: 'Static to motion concept',
             credit: '1 credit', 
-            iconColor: '#6ee7b7',
+            iconColor: '#10b981',
             onClick: onVisualize, 
             disabled: format !== 'static' 
           },
@@ -422,7 +422,7 @@ export function ReportCards({
             name: 'Policy Check', 
             description: 'Scan for violations',
             credit: 'Free', 
-            iconColor: '#fcd34d',
+            iconColor: '#f59e0b',
             onClick: onCheckPolicies, 
             loading: policyLoading 
           },
@@ -621,7 +621,7 @@ export function ReportCards({
                 <div className="mt-2 h-0.5 rounded-full bg-white/[0.04] overflow-hidden">
                   <div 
                     className="h-full rounded-full" 
-                    style={{ width: `${primaryIntensity}%`, background: '#a5b4fc60' }} 
+                    style={{ width: `${primaryIntensity}%`, background: '#6366f160' }} 
                   />
                 </div>
               </div>
@@ -657,7 +657,7 @@ export function ReportCards({
               {/* CTA mismatch warning */}
               {hasMismatch && (
                 <div className="flex items-start gap-2 rounded-lg p-2.5 mt-3 bg-white/[0.02] border border-white/[0.04]">
-                  <AlertCircle size={12} style={{ color: '#fcd34d' }} className="shrink-0 mt-0.5 opacity-70" />
+                  <AlertCircle size={12} style={{ color: '#f59e0b' }} className="shrink-0 mt-0.5 opacity-70" />
                   <p className="text-[10px] text-zinc-500 leading-relaxed">{mismatchNote}</p>
                 </div>
               )}
@@ -688,11 +688,11 @@ export function ReportCards({
           rawPhases[2] || 'Product reveal with CTA'
         ];
         
-        // Subdued color palette
+        // Brand guide colors
         const phaseConfig = [
-          { label: 'Opening', time: '0-2s', color: '#a5b4fc' },
-          { label: 'Transition', time: '2-5s', color: '#6ee7b7' },
-          { label: 'Payoff', time: '5-8s', color: '#fcd34d' },
+          { label: 'Opening', time: '0-2s', color: '#818cf8' },
+          { label: 'Transition', time: '2-5s', color: '#10b981' },
+          { label: 'Payoff', time: '5-8s', color: '#f59e0b' },
         ];
         
         const platformTag = platform ?? 'Meta';

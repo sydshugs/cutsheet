@@ -25,18 +25,18 @@
   }
 }
 
-/* Focus indicators */
+/* Focus indicators — brand guide */
 *:focus-visible {
-  outline: 2px solid rgba(99, 102, 241, 0.5);
+  outline: 2px solid #6366f1;
   outline-offset: 2px;
-  border-radius: 6px;
+  border-radius: 4px;
 }
 
 button:focus-visible,
 a:focus-visible,
 [role="button"]:focus-visible,
 [role="radio"]:focus-visible {
-  outline: 2px solid rgba(99, 102, 241, 0.5);
+  outline: 2px solid #6366f1;
   outline-offset: 2px;
 }
 

@@ -4,42 +4,42 @@
 import { useState, useMemo } from "react";
 import { AlertCircle } from "lucide-react";
 
-// Subdued color palette
+// Brand guide colors
 const STATE_COLORS = {
   not_ready: { 
-    bannerBg: 'rgba(252,165,165,0.03)', 
-    border: 'rgba(252,165,165,0.08)', 
-    chipBg: 'rgba(252,165,165,0.08)', 
-    color: '#fca5a5', 
+    bannerBg: 'rgba(239,68,68,0.04)', 
+    border: 'rgba(239,68,68,0.12)', 
+    chipBg: 'rgba(239,68,68,0.1)', 
+    color: '#ef4444', 
     label: 'Not ready' 
   },
   needs_work: { 
-    bannerBg: 'rgba(252,211,77,0.03)', 
-    border: 'rgba(252,211,77,0.08)', 
-    chipBg: 'rgba(252,211,77,0.08)', 
-    color: '#fcd34d', 
+    bannerBg: 'rgba(245,158,11,0.04)', 
+    border: 'rgba(245,158,11,0.12)', 
+    chipBg: 'rgba(245,158,11,0.1)', 
+    color: '#f59e0b', 
     label: 'Needs work' 
   },
   ready: { 
-    bannerBg: 'rgba(110,231,183,0.03)', 
-    border: 'rgba(110,231,183,0.08)', 
-    chipBg: 'rgba(110,231,183,0.08)', 
-    color: '#6ee7b7', 
+    bannerBg: 'rgba(16,185,129,0.04)', 
+    border: 'rgba(16,185,129,0.12)', 
+    chipBg: 'rgba(16,185,129,0.1)', 
+    color: '#10b981', 
     label: 'Ready' 
   },
 } as const;
 
 const CATEGORY_STYLES: Record<string, { bg: string; color: string; dot: string }> = {
-  hierarchy: { bg: 'rgba(165,180,252,0.06)', color: '#a5b4fc', dot: '#a5b4fc' },
-  typography: { bg: 'rgba(252,211,77,0.06)', color: '#fcd34d', dot: '#fcd34d' },
-  layout: { bg: 'rgba(110,231,183,0.06)', color: '#6ee7b7', dot: '#6ee7b7' },
-  contrast: { bg: 'rgba(252,165,165,0.06)', color: '#fca5a5', dot: '#fca5a5' },
+  hierarchy: { bg: 'rgba(129,140,248,0.08)', color: '#818cf8', dot: '#818cf8' },
+  typography: { bg: 'rgba(245,158,11,0.08)', color: '#f59e0b', dot: '#f59e0b' },
+  layout: { bg: 'rgba(16,185,129,0.08)', color: '#10b981', dot: '#10b981' },
+  contrast: { bg: 'rgba(239,68,68,0.08)', color: '#ef4444', dot: '#ef4444' },
 };
 
 const SEVERITY_DOT: Record<string, string> = {
-  high: '#fca5a5',
-  medium: '#fcd34d',
-  low: 'rgba(161,161,170,0.25)',
+  high: '#ef4444',
+  medium: '#f59e0b',
+  low: 'rgba(161,161,170,0.3)',
 };
 
 interface Fix {
@@ -116,7 +116,7 @@ export function CreativeAnalysis({
         {/* Top issue */}
         {topIssue && (
           <div className="flex items-start gap-2 rounded-lg mb-3 p-2.5 bg-white/[0.02] border border-white/[0.04]">
-            <AlertCircle size={12} style={{ color: '#fca5a5' }} className="shrink-0 mt-0.5" />
+            <AlertCircle size={12} style={{ color: '#ef4444' }} className="shrink-0 mt-0.5" />
             <p className="text-[11px] text-zinc-400 leading-relaxed">{topIssue.fix}</p>
           </div>
         )}

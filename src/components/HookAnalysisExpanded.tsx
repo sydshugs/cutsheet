@@ -36,18 +36,18 @@ function parseHookData(content: string) {
   return { verdict, hookType, hookTypeNote, strength, scrollStopFactor, firstImpression, fix, noFix };
 }
 
-// Subdued color palette
+// Brand guide colors
 const STRENGTH_CONFIG = {
-  strong: { percent: 85, color: '#6ee7b7', label: 'Strong', bgColor: 'rgba(110,231,183,0.05)' },
-  moderate: { percent: 55, color: '#fcd34d', label: 'Moderate', bgColor: 'rgba(252,211,77,0.05)' },
-  weak: { percent: 25, color: '#fca5a5', label: 'Weak', bgColor: 'rgba(252,165,165,0.05)' },
+  strong: { percent: 85, color: '#10b981', label: 'Strong', bgColor: 'rgba(16,185,129,0.06)' },
+  moderate: { percent: 55, color: '#f59e0b', label: 'Moderate', bgColor: 'rgba(245,158,11,0.06)' },
+  weak: { percent: 25, color: '#ef4444', label: 'Weak', bgColor: 'rgba(239,68,68,0.06)' },
 };
 
 const SCRUBBER_DOTS = [
-  { ts: '0s', pos: '0%', color: '#6ee7b7' },
-  { ts: '1s', pos: '33%', color: '#6ee7b7' },
-  { ts: '3s', pos: '66%', color: '#fcd34d' },
-  { ts: '5s', pos: '100%', color: '#fca5a5' },
+  { ts: '0s', pos: '0%', color: '#10b981' },
+  { ts: '1s', pos: '33%', color: '#10b981' },
+  { ts: '3s', pos: '66%', color: '#f59e0b' },
+  { ts: '5s', pos: '100%', color: '#ef4444' },
 ];
 
 export function HookAnalysisExpanded({ content, format }: HookAnalysisExpandedProps) {
@@ -116,12 +116,12 @@ export function HookAnalysisExpanded({ content, format }: HookAnalysisExpandedPr
         <div className="flex items-start gap-2.5">
           <div 
             className="w-6 h-6 rounded-md flex items-center justify-center shrink-0 mt-0.5"
-            style={{ background: isStrong ? 'rgba(110,231,183,0.1)' : 'rgba(252,211,77,0.1)' }}
+            style={{ background: isStrong ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)' }}
           >
             {isStrong ? (
-              <CheckCircle2 size={12} style={{ color: '#6ee7b7' }} />
+              <CheckCircle2 size={12} style={{ color: '#10b981' }} />
             ) : (
-              <Sparkles size={12} style={{ color: '#fcd34d' }} />
+              <Sparkles size={12} style={{ color: '#f59e0b' }} />
             )}
           </div>
           <div>
@@ -159,7 +159,7 @@ export function HookAnalysisExpanded({ content, format }: HookAnalysisExpandedPr
             <span className="text-[9px] text-zinc-500 uppercase tracking-wide block mb-2">Timeline</span>
             <div className="relative">
               <div className="h-1.5 rounded-full overflow-hidden bg-white/[0.04]">
-                <div className="h-full rounded-full w-full" style={{ background: 'linear-gradient(90deg, #6ee7b780 0%, #6ee7b780 40%, #fcd34d80 70%, #fca5a580 100%)' }} />
+                <div className="h-full rounded-full w-full" style={{ background: 'linear-gradient(90deg, #10b98180 0%, #10b98180 40%, #f59e0b80 70%, #ef444480 100%)' }} />
               </div>
               <div className="flex justify-between mt-1.5">
                 {SCRUBBER_DOTS.map(dot => (

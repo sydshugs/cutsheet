@@ -89,11 +89,11 @@ const YOUTUBE_FORMAT_BENCHMARK_LABELS: Record<string, string> = {
   'in_feed':       'YouTube In-Feed \u00B7 CTR avg 0.65%',
 };
 
-/** Score color: subdued palette — 8+ soft emerald, 4–7.9 soft amber, 0–3.9 soft red */
+/** Score color (brand guide): 8+ emerald, 4–7.9 amber, 0–3.9 red */
 function scoreColor(score: number): string {
-  if (score >= 8) return "#6ee7b7";
-  if (score >= 4) return "#fcd34d";
-  return "#fca5a5";
+  if (score >= 8) return "#10b981";
+  if (score >= 4) return "#f59e0b";
+  return "#ef4444";
 }
 
 /** Colorblind-safe indicator: shape that communicates score band without relying on color */
@@ -227,27 +227,27 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
 
   return (
     <div className="flex flex-col items-center w-full px-4 pt-5 pb-4">
-      {/* Score display — cleaner, subdued */}
+      {/* Score display — brand guide: Geist Mono, 40px, Bold */}
       <div className="flex items-baseline gap-1">
         <span
           className="font-mono tabular-nums tracking-tight"
           style={{
-            fontSize: 48,
-            fontWeight: 500,
+            fontSize: 40,
+            fontWeight: 700,
             lineHeight: 1,
-            color: `${color}cc`,
-            letterSpacing: '-0.02em',
+            color: color,
+            letterSpacing: '-0.03em',
           }}
         >
           {animatedScore.toFixed(1)}
         </span>
-        <span className="font-mono text-base text-zinc-600">/10</span>
+        <span className="font-mono text-sm text-zinc-500">/10</span>
       </div>
 
-      {/* Verdict label */}
+      {/* Verdict label — brand guide: score color, paired with number */}
       <span
-        className="text-xs font-medium mt-1 tracking-wide"
-        style={{ color: `${color}99` }}
+        className="text-xs font-semibold mt-1.5"
+        style={{ color }}
       >
         {verdict}
       </span>
