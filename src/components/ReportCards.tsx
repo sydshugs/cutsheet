@@ -470,16 +470,8 @@ export function ReportCards({
         );
       })()}
 
-      {/* ─── Inline tool results ─── */}
-      {/* Fix It loading */}
-      {fixItLoading && (
-        <div className="mt-3 rounded-xl border border-white/5 p-5 text-center" style={{ background: 'var(--surface, rgba(255,255,255,0.02))' }}>
-          <div className="w-5 h-5 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mx-auto mb-2" />
-          <span className="text-[13px] text-zinc-400">Rewriting your ad...</span>
-        </div>
-      )}
-      {/* Fix It result — full 5-section inline card */}
-      {!fixItLoading && fixItResult && !dismissedResults.has('fixIt') && (
+      {/* ─── Inline tool results (Visualize only — Fix It + Policy in right panel) ─── */}
+      {false && fixItLoading && fixItResult && !dismissedResults.has('fixIt') && (
         <div className="mt-3 rounded-xl border border-white/5 overflow-hidden" style={{ background: 'var(--surface, rgba(255,255,255,0.02))' }}>
           {/* Header */}
           <div className="flex items-center justify-between px-3.5 py-2.5" style={{ borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
@@ -657,15 +649,15 @@ export function ReportCards({
         </div>
       )}
 
-      {/* Policy loading */}
-      {policyLoading && (
+      {/* Policy loading + result moved to right panel */}
+      {false && policyLoading && (
         <div className="mt-3 rounded-xl border border-white/5 p-5 text-center" style={{ background: 'var(--surface, rgba(255,255,255,0.02))' }}>
           <div className="w-5 h-5 border-2 border-amber-500/30 border-t-amber-500 rounded-full animate-spin mx-auto mb-2" />
           <span className="text-[13px] text-zinc-400">Checking platform policies...</span>
         </div>
       )}
-      {/* Policy result — full structured inline card */}
-      {!policyLoading && policyResult && !dismissedResults.has('policy') && (() => {
+      {/* Policy result moved to right panel */}
+      {false && !policyLoading && policyResult && !dismissedResults.has('policy') && (() => {
         const isGood = policyResult.verdict === 'good';
         const allCategories = [...(policyResult.metaCategories ?? []), ...(policyResult.tiktokCategories ?? [])];
         const issueCategories = allCategories.filter((c: any) => c.status !== 'clear');
