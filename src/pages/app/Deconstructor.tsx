@@ -91,7 +91,7 @@ function UrlInput({
           }}
           onKeyDown={handleKeyDown}
           placeholder="Paste a Meta Ad Library, TikTok Creative Center, or YouTube URL"
-          className="flex-1 bg-transparent text-sm text-white placeholder:text-zinc-500 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 py-2.5 min-w-0"
+          className="flex-1 bg-transparent text-sm text-white placeholder:text-zinc-500 outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40 py-2.5 min-w-0"
           disabled={loading}
           autoFocus
         />
@@ -100,13 +100,13 @@ function UrlInput({
           onClick={handleSubmit}
           disabled={loading || !url.trim()}
           className="shrink-0 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-          style={{ background: "#6366f1" }}
+          style={{ background: "#f59e0b" }}
           onMouseEnter={(e) => {
             if (!loading && url.trim())
-              e.currentTarget.style.background = "#5254cc";
+              e.currentTarget.style.background = "#d97706";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.background = "#6366f1";
+            e.currentTarget.style.background = "#f59e0b";
           }}
         >
           {loading ? (
@@ -665,22 +665,28 @@ export default function Deconstructor() {
       </Helmet>
 
       {/* Ambient glow */}
-      <div className="pointer-events-none fixed top-0 right-0 w-[700px] h-[500px] rounded-full bg-indigo-600/[0.06] blur-[140px]" />
+      <div className="pointer-events-none fixed top-0 right-0 w-[700px] h-[500px] rounded-full bg-amber-500/[0.04] blur-[140px]" />
 
       <div className="relative flex-1 flex flex-col items-center justify-center px-4 py-10 md:py-14">
         {/* Header — visible until result */}
         {!result && (
-          <div className="text-center mb-10">
-            <div style={{ width: 64, height: 64, borderRadius: 16, background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
-              <ScanSearch size={28} color="#6366f1" />
+          <div className="text-center mb-8">
+            <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
+              <ScanSearch size={28} color="#f59e0b" />
             </div>
-            <h1 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginBottom: 12, letterSpacing: "-0.01em" }}>
-              Why does this ad work?
+            <h1 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginBottom: 0 }}>
+              Ad Breakdown
             </h1>
-            <p className="text-sm text-zinc-500 max-w-md mx-auto">
-              Paste any ad URL. Get the full breakdown — hook, triggers,
-              structure, and a brief to make your own version.
+            <p className="text-sm text-zinc-500 max-w-md mx-auto" style={{ marginTop: 10, lineHeight: 1.6 }}>
+              Paste any ad URL. Get a full AI breakdown in 30 seconds.
             </p>
+
+            {/* Feature pills — amber styled */}
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 20 }}>
+              {["Hook analysis", "Psychological triggers", "Creative brief"].map((p) => (
+                <span key={p} style={{ fontSize: 12, color: "#fbbf24", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.15)", borderRadius: 9999, padding: "4px 12px" }}>{p}</span>
+              ))}
+            </div>
           </div>
         )}
 
