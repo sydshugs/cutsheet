@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, CheckCircle, X, Layers, Zap, Users, Check } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getUsageInfo, fetchCreditStatus, FeatureLimitResult } from "../services/usageService";
 import { supabase } from "../lib/supabase";
@@ -126,9 +126,13 @@ type BillingView = "dashboard" | "manage" | "downgrade-reason" | "downgrade-conf
 // ─── SETTINGS PAGE ────────────────────────────────────────────────────────────
 export function Settings() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, subscriptionStatus } = useAuth();
 
-  const [tab, setTab] = useState<Tab>("profile");
+  const initialTab = (searchParams.get("tab") as Tab) || "profile";
+  const [tab, setTab] = useState<Tab>(
+    ["profile", "billing", "usage"].includes(initialTab) ? initialTab : "profile"
+  );
 
   // Profile state
   const [productUpdates, setProductUpdates] = useState(true);
