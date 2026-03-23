@@ -2,7 +2,7 @@
 // Sends the original creative + edit prompt to Gemini for surgical pixel-level changes.
 // Falls back to v1 visual brief on error. Does NOT touch api/visualize.ts.
 
-export const maxDuration = 60; // seconds — image editing takes 15-25s
+export const maxDuration = 30; // seconds — spec requires 30s timeout for image editing
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { GoogleGenAI, Modality } from "@google/genai";
@@ -245,10 +245,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       resolvedBase64 = imageBase64 as string;
     }
 
-    // ── Resize to max 1024px before sending to Gemini ────────────────────
-    // Gemini handles this server-side, but we pre-check to control payload size.
-    // The actual resize happens client-side (uploadImageToStorage already resizes to 1200px).
-    // If the image is over ~5MB base64 after fetch, that's ~3.75MB raw which is fine for Gemini.
+    // ── Image size: client-side resize to max 1024px (spec requirement) ──
+    // uploadImageToStorage(file, 1024, 0.85) handles this before upload.
+    // No server-side resize needed — Gemini accepts the pre-resized image.
 
     // ── Gemini 2.0 Flash — image editing call ────────────────────────────
     let generatedImageUrl: string | undefined;

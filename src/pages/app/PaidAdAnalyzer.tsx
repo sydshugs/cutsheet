@@ -730,7 +730,8 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
     setVisualizeResult(null);
     setVisualizeError(null);
     try {
-      const { signedUrl: imageStorageUrl, storagePath } = await uploadImageToStorage(file, 1200, 0.85);
+      // v2 spec: max 1024px for Gemini image editing to control cost and stay within limits
+      const { signedUrl: imageStorageUrl, storagePath } = await uploadImageToStorage(file, 1024, 0.85);
       const niche = userContext.match(/Niche:\s*(.+)/)?.[1]?.trim() || "general";
       // Meta static ads use platform-native CTA — exclude CTA from generated creative
       const isMetaStatic = platform === "Meta" && format === "static";
