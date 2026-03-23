@@ -1,5 +1,6 @@
 // HashtagsC2 — uses CollapsibleSection for consistent accordion styling
 
+import type React from "react";
 import { useState } from "react";
 import { Hash } from "lucide-react";
 import type { Hashtags } from "../services/analyzerService";
