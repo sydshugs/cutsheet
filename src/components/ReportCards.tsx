@@ -7,7 +7,7 @@ import {
   Copy, FileDown, Share2, Anchor, MessageSquare, MousePointerClick,
   Clapperboard, DollarSign, Hash, Eye, Lightbulb, BarChart3, Heart,
   Layout, Target, Palette, FileText, Upload, Wand2, Image, ShieldCheck,
-  Zap, Film, AlignLeft, AlertCircle, Sparkles,
+  Zap, Film, AlignLeft, AlertCircle, Sparkles, ChevronRight, TrendingUp,
   type LucideIcon,
 } from "lucide-react";
 import type { Verdict, StructuredImprovement } from "../services/analyzerService";
@@ -392,45 +392,127 @@ export function ReportCards({
 
       {/* Verdict banner moved to right panel */}
 
-      {/* ─── Tools row — cleaner horizontal layout ─── */}
+      {/* ─── AI Tools Section — prominent interactive tools ─── */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, ease: 'easeOut' }}>
       {(onFixIt || onVisualize || onCheckPolicies || onCompare) && (() => {
         const tools = [
-          { key: 'fix', icon: Wand2, name: 'AI Rewrite', credit: 'Free', iconColor: '#818cf8', onClick: onFixIt, loading: fixItLoading },
-          { key: 'visualize', icon: Image, name: 'Visualize', credit: '1 credit', iconColor: '#10b981', onClick: onVisualize, disabled: format !== 'static' },
-          { key: 'policy', icon: ShieldCheck, name: 'Policy', credit: 'Free', iconColor: '#f59e0b', onClick: onCheckPolicies, loading: policyLoading },
+          { 
+            key: 'fix', 
+            icon: Wand2, 
+            name: 'AI Rewrite', 
+            description: 'Get AI-powered copy suggestions to improve your messaging and hooks',
+            credit: 'Free', 
+            iconColor: '#818cf8', 
+            gradientFrom: 'from-indigo-500/20',
+            gradientTo: 'to-violet-500/10',
+            borderColor: 'border-indigo-500/20',
+            hoverBorder: 'hover:border-indigo-500/40',
+            onClick: onFixIt, 
+            loading: fixItLoading 
+          },
+          { 
+            key: 'visualize', 
+            icon: Image, 
+            name: 'Visualize', 
+            description: 'Transform your static ad into an animated motion concept',
+            credit: '1 credit', 
+            iconColor: '#10b981', 
+            gradientFrom: 'from-emerald-500/20',
+            gradientTo: 'to-teal-500/10',
+            borderColor: 'border-emerald-500/20',
+            hoverBorder: 'hover:border-emerald-500/40',
+            onClick: onVisualize, 
+            disabled: format !== 'static' 
+          },
+          { 
+            key: 'policy', 
+            icon: ShieldCheck, 
+            name: 'Policy Check', 
+            description: 'Scan for potential ad policy violations before you publish',
+            credit: 'Free', 
+            iconColor: '#f59e0b', 
+            gradientFrom: 'from-amber-500/20',
+            gradientTo: 'to-orange-500/10',
+            borderColor: 'border-amber-500/20',
+            hoverBorder: 'hover:border-amber-500/40',
+            onClick: onCheckPolicies, 
+            loading: policyLoading 
+          },
         ];
         return (
-          <div className="mt-5 grid grid-cols-3 gap-2">
-            {tools.map((t) => {
-              const Icon = t.icon;
-              const isDisabled = !!t.disabled;
-              const isLoading = !!t.loading;
-              return (
-                <button
-                  key={t.key}
-                  onClick={() => !isDisabled && !isLoading && t.onClick?.()}
-                  disabled={isDisabled || isLoading}
-                  title={isDisabled ? 'Not available for video ads' : undefined}
-                  className="group flex flex-col items-center gap-2.5 py-4 px-3 rounded-xl border border-white/[0.06] bg-white/[0.02] transition-all hover:bg-white/[0.04] hover:border-white/[0.1] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-                >
-                  <div 
-                    className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors"
-                    style={{ background: `${t.iconColor}15` }}
+          <div className="mt-6">
+            {/* Section header */}
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">AI Tools</span>
+              <div className="flex-1 h-px bg-gradient-to-r from-white/[0.06] to-transparent" />
+            </div>
+            
+            {/* Tools grid */}
+            <div className="grid grid-cols-1 gap-3">
+              {tools.map((t) => {
+                const Icon = t.icon;
+                const isDisabled = !!t.disabled;
+                const isLoading = !!t.loading;
+                return (
+                  <button
+                    key={t.key}
+                    onClick={() => !isDisabled && !isLoading && t.onClick?.()}
+                    disabled={isDisabled || isLoading}
+                    title={isDisabled ? 'Only available for static ads' : undefined}
+                    className={`group relative flex items-start gap-4 p-4 rounded-2xl border ${t.borderColor} bg-gradient-to-br ${t.gradientFrom} ${t.gradientTo} transition-all ${t.hoverBorder} hover:scale-[1.01] active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 cursor-pointer text-left overflow-hidden`}
                   >
-                    {isLoading ? (
-                      <div className="w-4 h-4 border-2 rounded-full animate-spin" style={{ borderColor: `${t.iconColor}30`, borderTopColor: t.iconColor }} />
-                    ) : (
-                      <Icon size={18} style={{ color: t.iconColor }} />
-                    )}
-                  </div>
-                  <div className="text-center">
-                    <span className="text-xs font-medium text-zinc-200 block">{t.name}</span>
-                    <span className="text-[10px] text-zinc-500">{t.credit}</span>
-                  </div>
-                </button>
-              );
-            })}
+                    {/* Glow effect on hover */}
+                    <div 
+                      className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                      style={{ 
+                        background: `radial-gradient(circle at 30% 50%, ${t.iconColor}10, transparent 50%)` 
+                      }}
+                    />
+                    
+                    {/* Icon */}
+                    <div 
+                      className="relative w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105"
+                      style={{ background: `${t.iconColor}20`, boxShadow: `0 0 20px ${t.iconColor}15` }}
+                    >
+                      {isLoading ? (
+                        <div 
+                          className="w-5 h-5 border-2 rounded-full animate-spin" 
+                          style={{ borderColor: `${t.iconColor}40`, borderTopColor: t.iconColor }} 
+                        />
+                      ) : (
+                        <Icon size={20} style={{ color: t.iconColor }} />
+                      )}
+                    </div>
+                    
+                    {/* Content */}
+                    <div className="relative flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-sm font-semibold text-zinc-100">{t.name}</span>
+                        <span 
+                          className="text-[10px] font-medium px-2 py-0.5 rounded-full"
+                          style={{ 
+                            background: t.credit === 'Free' ? 'rgba(16,185,129,0.15)' : 'rgba(139,92,246,0.15)',
+                            color: t.credit === 'Free' ? '#10b981' : '#a78bfa'
+                          }}
+                        >
+                          {t.credit}
+                        </span>
+                      </div>
+                      <p className="text-xs text-zinc-500 leading-relaxed pr-4">{t.description}</p>
+                    </div>
+                    
+                    {/* Arrow indicator */}
+                    <div className="relative flex items-center self-center">
+                      <ChevronRight 
+                        size={16} 
+                        className="text-zinc-600 transition-all group-hover:text-zinc-400 group-hover:translate-x-0.5" 
+                      />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         );
       })()}
