@@ -120,10 +120,11 @@ export function CreativeAnalysis({
                 <button
                   key={cat.key}
                   onClick={() => setActiveFilter(cat.key)}
-                  className="flex items-center gap-1.5 cursor-pointer"
+                  aria-label={`Filter by ${cat.label}`}
+                  aria-pressed={isActive}
+                  className="flex items-center gap-1.5 cursor-pointer transition-all duration-150 focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:outline-none hover:brightness-125"
                   style={{
                     fontSize: 12, fontWeight: 500, padding: '6px 16px', borderRadius: 99,
-                    transition: 'all 0.15s ease',
                     background: cat.key === 'all'
                       ? (isActive ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)')
                       : (isActive ? (catStyle?.activeBg ?? catStyle?.bg ?? 'rgba(255,255,255,0.04)') : (catStyle?.bg ?? 'rgba(255,255,255,0.04)')),
@@ -131,24 +132,6 @@ export function CreativeAnalysis({
                       ? (isActive ? '#e4e4e7' : '#71717a')
                       : (isActive ? (catStyle?.hoverColor ?? catStyle?.color ?? '#71717a') : (catStyle?.color ?? '#71717a')),
                     border: isActive ? `0.5px solid ${catStyle?.color ?? 'rgba(255,255,255,0.15)'}` : '0.5px solid transparent',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) {
-                      if (cat.key === 'all') {
-                        e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
-                        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
-                      } else if (catStyle) {
-                        e.currentTarget.style.background = catStyle.hoverBg;
-                        e.currentTarget.style.color = catStyle.hoverColor;
-                      }
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.background = cat.key === 'all' ? 'rgba(255,255,255,0.04)' : (catStyle?.bg ?? 'rgba(255,255,255,0.04)');
-                      e.currentTarget.style.color = cat.key === 'all' ? '#71717a' : (catStyle?.color ?? '#71717a');
-                      e.currentTarget.style.borderColor = 'transparent';
-                    }
                   }}
                 >
                   {cat.key !== 'all' && (

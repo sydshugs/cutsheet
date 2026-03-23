@@ -293,7 +293,8 @@ export function ScoreCard({
         <div className="flex items-center gap-1.5">
           <button
             onClick={handleCopy}
-            className="inline-flex items-center gap-1.5 text-[11px] rounded-lg cursor-pointer transition-colors"
+            aria-label="Copy scores to clipboard"
+            className="inline-flex items-center gap-1.5 text-[11px] rounded-lg cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:outline-none"
             style={{
               padding: '4px 10px',
               background: 'rgba(255,255,255,0.03)',

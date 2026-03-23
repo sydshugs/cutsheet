@@ -31,7 +31,6 @@ interface ReportCardsProps {
   scores?: { hook: number; clarity: number; cta: number; production: number; overall: number } | null;
   format: 'video' | 'static';
   platform?: string;
-  niche?: string;
   hashtags?: { tiktok: string[]; meta: string[]; instagram: string[] };
   // Callbacks forwarded from ScoreCard
   onFixIt?: () => void;
@@ -240,7 +239,7 @@ export function ReportCards({
   file, markdown, thumbnailDataUrl, onCopy, onExportPdf, onShare, copied, shareLoading,
   onReset, onFileSelect,
   verdict, structuredImprovements, improvements, scores, format,
-  platform, niche, hashtags,
+  platform, hashtags,
   onFixIt, onVisualize, onCheckPolicies, onCompare, onGenerateBrief,
   fixItLoading, fixItResult, policyLoading, policyResult, visualizeLoading, visualizeResult,
   designReviewSlot, secondEyeSlot,

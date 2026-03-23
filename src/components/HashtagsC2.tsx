@@ -57,15 +57,15 @@ export function HashtagsC2({ hashtags, format }: HashtagsC2Props) {
             <button
               key={plat}
               onClick={() => setActivePlatform(plat)}
-              className="text-[11px] font-medium rounded-full cursor-pointer transition-all duration-150"
+              aria-label={`Show ${plat} hashtags`}
+              aria-pressed={isActive}
+              className="text-[11px] font-medium rounded-full cursor-pointer transition-all duration-150 hover:text-zinc-300 focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:outline-none"
               style={{
                 padding: '4px 12px',
                 background: isActive ? 'rgba(99,102,241,0.1)' : 'rgba(255,255,255,0.03)',
                 color: isActive ? '#818cf8' : '#71717a',
                 border: isActive ? '0.5px solid rgba(99,102,241,0.2)' : '0.5px solid transparent',
               }}
-              onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.color = '#a1a1aa'; }}
-              onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.color = '#71717a'; }}
             >
               {plat}
             </button>
@@ -78,10 +78,8 @@ export function HashtagsC2({ hashtags, format }: HashtagsC2Props) {
         {tags.map(tag => (
           <span
             key={tag}
-            className="text-[11px] rounded-full cursor-pointer transition-all duration-150"
+            className="text-[11px] rounded-full cursor-default transition-all duration-150 hover:bg-indigo-500/10 hover:text-indigo-400"
             style={{ padding: '4px 10px', background: 'rgba(255,255,255,0.04)', color: '#a1a1aa' }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(99,102,241,0.1)'; e.currentTarget.style.color = '#818cf8'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = '#a1a1aa'; }}
           >
             #{tag}
           </span>
