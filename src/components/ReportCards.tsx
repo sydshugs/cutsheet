@@ -386,6 +386,47 @@ export function ReportCards({
 
       {/* Verdict banner moved to right panel */}
 
+      {/* ─── Tools 2x2 grid ─── */}
+      {(onFixIt || onVisualize || onCheckPolicies || onCompare) && (
+        <div className="grid grid-cols-2 gap-2 mt-4">
+          <ToolButton
+            icon={Wand2}
+            label="Fix It"
+            credit="1 credit"
+            iconBg="rgba(99,102,241,0.1)"
+            iconColor="#818cf8"
+            onClick={onFixIt}
+            loading={fixItLoading}
+          />
+          <ToolButton
+            icon={Image}
+            label="Visualize It"
+            credit="1 credit"
+            iconBg="rgba(16,185,129,0.1)"
+            iconColor="#10b981"
+            onClick={onVisualize}
+            disabled={format !== 'static'}
+          />
+          <ToolButton
+            icon={ShieldCheck}
+            label="Policy check"
+            credit="1 credit"
+            iconBg="rgba(251,191,36,0.1)"
+            iconColor="#d97706"
+            onClick={onCheckPolicies}
+            loading={policyLoading}
+          />
+          <ToolButton
+            icon={GitCompare}
+            label="Compare"
+            credit="free"
+            iconBg="rgba(129,140,248,0.1)"
+            iconColor="#818cf8"
+            onClick={onCompare}
+          />
+        </div>
+      )}
+
       {/* ─── Center column analysis sections ─── */}
       {/* Design Review + Second Eye Review rendered by PaidAdAnalyzer */}
 
