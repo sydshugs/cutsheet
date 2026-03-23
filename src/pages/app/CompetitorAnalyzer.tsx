@@ -127,54 +127,62 @@ function DropZone({ onFileSelect, label = "Drop your creative here" }: { onFileS
   };
 
   return (
+    // Outer container with dashed border
     <div
       style={{
-        border: "1.5px dashed rgba(255,255,255,0.08)", borderRadius: 16,
-        background: "rgba(255,255,255,0.02)", padding: "32px 24px",
-        display: "flex", flexDirection: "column", alignItems: "center", gap: 16,
-        transition: "all 150ms",
+        border: "1.5px dashed rgba(255,255,255,0.08)", borderRadius: 20,
+        padding: 12, transition: "all 150ms",
       }}
-      onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = BRAND_BORDER; e.currentTarget.style.background = BRAND_BG; }}
-      onDragLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
-      onDrop={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; const f = e.dataTransfer.files[0]; if (f) onFileSelect(f); }}
+      onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = BRAND_BORDER; }}
+      onDragLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
+      onDrop={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; const f = e.dataTransfer.files[0]; if (f) onFileSelect(f); }}
     >
-      {/* Icon box */}
-      <div style={{ width: 56, height: 56, borderRadius: 14, background: BRAND_BG, border: `1px solid ${BRAND_BORDER}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <Upload size={24} color={BRAND_COLOR} />
-      </div>
-
-      {/* Title and subtitle */}
-      <div style={{ textAlign: "center" }}>
-        <p style={{ fontSize: 16, fontWeight: 500, color: "#f4f4f5", margin: "0 0 6px" }}>{label}</p>
-        <p style={{ fontSize: 13, color: "#71717a", margin: 0 }}>video or static — any ad format</p>
-      </div>
-
-      {/* Format pills */}
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center" }}>
-        {FORMAT_PILLS.map((fmt) => (
-          <span key={fmt} style={{ fontSize: 11, color: "#52525b", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 6, padding: "4px 10px" }}>
-            {fmt}
-          </span>
-        ))}
-      </div>
-
-      {/* Browse button */}
-      <button
-        type="button"
-        onClick={handleClick}
+      {/* Inner container with solid background */}
+      <div
         style={{
-          height: 42, padding: "0 28px", borderRadius: 9999, border: "none",
-          background: BRAND_COLOR, color: "white", fontSize: 14, fontWeight: 500,
-          cursor: "pointer", transition: "all 150ms",
+          background: "rgba(255,255,255,0.025)", borderRadius: 14,
+          padding: "36px 32px",
+          display: "flex", flexDirection: "column", alignItems: "center", gap: 16,
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = BRAND_COLOR_LIGHT; }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = BRAND_COLOR; }}
       >
-        Browse Files
-      </button>
+        {/* Icon box */}
+        <div style={{ width: 56, height: 56, borderRadius: 14, background: BRAND_BG, border: `1px solid ${BRAND_BORDER}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Upload size={24} color={BRAND_COLOR} />
+        </div>
 
-      {/* Max file size note */}
-      <span style={{ fontSize: 11, color: "#52525b" }}>Max 200MB per file</span>
+        {/* Title and subtitle */}
+        <div style={{ textAlign: "center" }}>
+          <p style={{ fontSize: 17, fontWeight: 500, color: "#f4f4f5", margin: "0 0 8px" }}>{label}</p>
+          <p style={{ fontSize: 13, color: "#71717a", margin: 0 }}>video or static — any ad format</p>
+        </div>
+
+        {/* Format pills */}
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+          {FORMAT_PILLS.map((fmt) => (
+            <span key={fmt} style={{ fontSize: 12, color: "#71717a", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "6px 14px" }}>
+              {fmt}
+            </span>
+          ))}
+        </div>
+
+        {/* Browse button */}
+        <button
+          type="button"
+          onClick={handleClick}
+          style={{
+            height: 44, padding: "0 32px", borderRadius: 9999, border: "none",
+            background: BRAND_COLOR, color: "white", fontSize: 14, fontWeight: 500,
+            cursor: "pointer", transition: "all 150ms",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = BRAND_COLOR_LIGHT; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = BRAND_COLOR; }}
+        >
+          Browse Files
+        </button>
+
+        {/* Max file size note */}
+        <span style={{ fontSize: 12, color: "#52525b" }}>Max 200MB per file</span>
+      </div>
     </div>
   );
 }
