@@ -14,7 +14,7 @@ export function ScoreAdaptiveCTA({ overallScore, onShare, onGenerateBrief, brief
   return (
     <div className="px-5 pb-4">
       <AnimatePresence mode="wait">
-        {overallScore >= 8 ? (
+        {overallScore >= 8 ? ( // excellent: share it
           <motion.div
             key="cta-share"
             initial={{ opacity: 0, y: 4 }}
@@ -30,7 +30,7 @@ export function ScoreAdaptiveCTA({ overallScore, onShare, onGenerateBrief, brief
               <Share2 size={15} /> Share Your Score
             </button>
           </motion.div>
-        ) : overallScore >= 5.5 ? (
+        ) : overallScore >= 4 ? ( // mid-range: fix weak spots
           <motion.div
             key="cta-fix"
             initial={{ opacity: 0, y: 4 }}

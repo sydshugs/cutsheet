@@ -502,9 +502,6 @@ export function ScoreCard({
             </div>
           )}
 
-        </div>{/* end card content */}
-      </div>{/* end glass card */}
-
       {/* 13. Overflow menu */}
       {(onGenerateBrief || onAddToSwipeFile || onStartOver || onCheckPolicies || onCompare) && (
         <div style={{ marginTop: 16 }} className="px-5 pb-8 flex justify-end">
