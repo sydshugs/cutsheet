@@ -6,16 +6,9 @@ import {
   Copy, FileDown, Share2, Anchor, MessageSquare, MousePointerClick,
   Clapperboard, DollarSign, Hash, Eye, Lightbulb, BarChart3, Heart,
   Layout, Target, Palette, FileText, Upload, Wand2, Image, ShieldCheck,
-  GitCompare, FileSignature, Zap, Film, AlignLeft, AlertCircle, Sparkles,
+  Zap, Film, AlignLeft, AlertCircle, Sparkles,
   type LucideIcon,
 } from "lucide-react";
-import { CollapsibleSection } from "./ui/CollapsibleSection";
-import { VerdictBanner } from "./ui/VerdictBanner";
-import { ZoneLabel } from "./ui/ZoneLabel";
-import { PriorityFixCard } from "./ui/PriorityFixCard";
-import { DeepDivePreviewCard } from "./ui/DeepDivePreviewCard";
-import { DeepDiveRow } from "./ui/DeepDiveRow";
-import { ToolButton } from "./ui/ToolButton";
 import type { Verdict, StructuredImprovement } from "../services/analyzerService";
 import { CreativeAnalysis } from "./CreativeAnalysis";
 import { CreativeVerdictAndSecondEye } from "./CreativeVerdictAndSecondEye";

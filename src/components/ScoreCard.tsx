@@ -8,7 +8,7 @@ import { HookAnalysisExpanded } from "./HookAnalysisExpanded";
 import { VisualHierarchyExpanded } from "./VisualHierarchyExpanded";
 import { CopyAndMessagingExpanded } from "./CopyAndMessagingExpanded";
 import { HashtagsC2 } from "./HashtagsC2";
-import { Copy, CheckCircle, Wand2, Loader2, AlertCircle, TrendingUp, ArrowUpRight, Share2, RotateCcw, ShieldCheck, FileText, Bookmark, Lightbulb, DollarSign, Sparkles, Lock, Film, Hash, Layout, Heart, MessageSquare } from "lucide-react";
+import { Copy, CheckCircle, Wand2, Loader2, TrendingUp, ArrowUpRight, Share2, RotateCcw, ShieldCheck, FileText, Bookmark, Lightbulb, DollarSign, Sparkles, Film, Hash, Layout, Heart, MessageSquare } from "lucide-react";
 import type { BudgetRecommendation, Hashtags, Scene, HookDetail } from "../services/analyzerService";
 import type { EngineBudgetRecommendation } from "../services/budgetService";
 import { getBenchmark, type BenchmarkResult } from "../lib/benchmarks";
