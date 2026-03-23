@@ -419,6 +419,21 @@ export function ScoreCard({
         </button>
       )}
 
+      {/* Generate Brief button */}
+      {onGenerateBrief && (
+        <button
+          onClick={onGenerateBrief}
+          disabled={briefLoading}
+          className="mx-4 mt-4 w-[calc(100%-2rem)] flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-medium transition-all hover:bg-amber-500/15 bg-amber-500/[0.08] text-amber-400 border border-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {briefLoading ? (
+            <><Loader2 size={14} className="animate-spin" /> Generating...</>
+          ) : (
+            <><FileText size={14} /> {hasBrief ? 'Regenerate Brief' : 'Generate Brief'}</>
+          )}
+        </button>
+      )}
+
       {/* Predicted Performance */}
       {prediction && (
         <div className="mx-4 mt-4 rounded-2xl border border-white/[0.06] bg-white/[0.015] p-5">
@@ -439,21 +454,6 @@ export function ScoreCard({
             onNavigateSettings={onNavigateSettings}
           />
         </div>
-      )}
-
-      {/* Generate Brief button */}
-      {onGenerateBrief && (
-        <button
-          onClick={onGenerateBrief}
-          disabled={briefLoading}
-          className="mx-4 mt-4 mb-4 w-[calc(100%-2rem)] flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-medium transition-all hover:bg-amber-500/15 bg-amber-500/[0.08] text-amber-400 border border-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {briefLoading ? (
-            <><Loader2 size={14} className="animate-spin" /> Generating...</>
-          ) : (
-            <><FileText size={14} /> {hasBrief ? 'Regenerate Brief' : 'Generate Brief'}</>
-          )}
-        </button>
       )}
 
       {/* Toast notification */}
