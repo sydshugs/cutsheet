@@ -5,13 +5,14 @@ import { Helmet } from "react-helmet-async";
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useOutletContext } from "react-router-dom";
 import {
-  Swords, Upload, Search, ExternalLink, Music2, AlertCircle,
+  Swords, Search, ExternalLink, Music2, AlertCircle,
   Check, ChevronLeft, ArrowRight, X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CompetitorResultPanel } from "../../components/CompetitorResult";
 import { analyzeCompetitor, type CompetitorResult } from "../../services/competitorService";
 import type { AppSharedContext } from "../../components/AppLayout";
+import { VideoDropzone } from "../../components/VideoDropzone";
 
 import { sanitizeSearchQuery, sanitizeFileName } from "../../utils/sanitize";
 
@@ -114,78 +115,7 @@ function FilePreview({ file, onRemove }: { file: File; onRemove: () => void }) {
   );
 }
 
-// ─── DROPZONE ───────────────────────────────────────────────────────────────
 
-const FORMAT_PILLS = ["MP4", "MOV", "WEBM", "JPG", "PNG", "WEBP"];
-
-function DropZone({ onFileSelect, label = "Drop your creative here" }: { onFileSelect: (f: File) => void; label?: string }) {
-  const handleClick = () => {
-    const input = document.createElement("input");
-    input.type = "file"; input.accept = "video/*,image/*";
-    input.onchange = (e) => { const f = (e.target as HTMLInputElement).files?.[0]; if (f) onFileSelect(f); };
-    input.click();
-  };
-
-  return (
-    // Outer container with dashed border
-    <div
-      style={{
-        border: "1.5px dashed rgba(255,255,255,0.08)", borderRadius: 20,
-        padding: 12, transition: "all 150ms",
-      }}
-      onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = BRAND_BORDER; }}
-      onDragLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
-      onDrop={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; const f = e.dataTransfer.files[0]; if (f) onFileSelect(f); }}
-    >
-      {/* Inner container with solid background */}
-      <div
-        style={{
-          background: "rgba(255,255,255,0.025)", borderRadius: 14,
-          padding: "36px 32px",
-          display: "flex", flexDirection: "column", alignItems: "center", gap: 16,
-        }}
-      >
-        {/* Icon box */}
-        <div style={{ width: 56, height: 56, borderRadius: 14, background: BRAND_BG, border: `1px solid ${BRAND_BORDER}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <Upload size={24} color={BRAND_COLOR} />
-        </div>
-
-        {/* Title and subtitle */}
-        <div style={{ textAlign: "center" }}>
-          <p style={{ fontSize: 17, fontWeight: 500, color: "#f4f4f5", margin: "0 0 8px" }}>{label}</p>
-          <p style={{ fontSize: 13, color: "#71717a", margin: 0 }}>video or static — any ad format</p>
-        </div>
-
-        {/* Format pills */}
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
-          {FORMAT_PILLS.map((fmt) => (
-            <span key={fmt} style={{ fontSize: 12, color: "#71717a", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "6px 14px" }}>
-              {fmt}
-            </span>
-          ))}
-        </div>
-
-        {/* Browse button */}
-        <button
-          type="button"
-          onClick={handleClick}
-          style={{
-            height: 44, padding: "0 32px", borderRadius: 9999, border: "none",
-            background: BRAND_COLOR, color: "white", fontSize: 14, fontWeight: 500,
-            cursor: "pointer", transition: "all 150ms",
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = BRAND_COLOR_LIGHT; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = BRAND_COLOR; }}
-        >
-          Browse Files
-        </button>
-
-        {/* Max file size note */}
-        <span style={{ fontSize: 12, color: "#52525b" }}>Max 200MB per file</span>
-      </div>
-    </div>
-  );
-}
 
 // ─── META SEARCH ────────────────────────────────────────────────────────────
 
@@ -449,7 +379,11 @@ export default function CompetitorAnalyzer() {
                       </button>
                     </>
                   ) : (
-                    <DropZone onFileSelect={(f) => { setYourFile(f); setStep(1); }} label="Drop your ad or click to browse" />
+                    <VideoDropzone 
+                      file={null} 
+                      onFileSelect={(f) => { if (f) { setYourFile(f); setStep(1); } }} 
+                      acceptImages 
+                    />
                   )}
                 </div>
               </motion.div>
@@ -477,7 +411,11 @@ export default function CompetitorAnalyzer() {
                   ) : (
                     <>
                       {/* Upload dropzone — always visible */}
-                      <DropZone onFileSelect={(f) => { setCompetitorFile(f); setStep(2); }} height={160} label="Drop competitor ad or click to browse" />
+                      <VideoDropzone 
+                        file={null} 
+                        onFileSelect={(f) => { if (f) { setCompetitorFile(f); setStep(2); } }} 
+                        acceptImages 
+                      />
 
                       {/* TikTok Creative Center */}
                       <div onClick={() => window.open("https://ads.tiktok.com/business/creativecenter/inspiration/topads", "_blank")}
