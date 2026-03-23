@@ -179,6 +179,8 @@ EDITING RULES — CRITICAL:
 5. PROOFREAD ALL TEXT. No duplicate words, no repeated phrases, no incomplete sentences. Every text string must be clean.
 
 6. PRESERVE EXISTING PERSUASION PATTERNS. Loss aversion framing, named villains, and urgency triggers that already exist in the original should be preserved — do not remove them. But do NOT add new ones that were not in the original.
+
+7. PRESERVE TYPOGRAPHIC HIGHLIGHT TREATMENTS. If any word in the original uses a brand accent color (e.g. pink, colored highlight, neon), bold weight, or special styling that differs from the surrounding text, that treatment MUST be maintained. When replacing headline text, apply the SAME highlight color to the equivalent high-impact word in the new headline. Never render new headline copy in plain monochrome if the original had color-highlighted words. Match the exact color — do not substitute a different accent.
 ${overrides}
 
 Produce the improved version of the provided image now. Output only the image — no explanation, no description.`;

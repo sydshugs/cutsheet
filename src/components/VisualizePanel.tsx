@@ -351,12 +351,14 @@ export interface VisualizePanelProps {
   videoUrl?: string | null;
   videoLoading?: boolean;
   videoError?: string | null;
+  videoSource?: "improved" | "original" | null;
   onAnimate?: () => void;
+  onAnimateOriginal?: () => void;
 }
 
 export function VisualizePanel({
   status, result, originalImageUrl, error, creditData, onClose, onBack, onAnalyzeVersion, onUpgrade,
-  videoUrl, videoLoading, videoError, onAnimate,
+  videoUrl, videoLoading, videoError, videoSource, onAnimate, onAnimateOriginal,
 }: VisualizePanelProps) {
   const [briefCopied, setBriefCopied] = useState(false);
   const [downloadTouched, setDownloadTouched] = useState(false);
@@ -623,7 +625,7 @@ export function VisualizePanel({
               </div>
             )}
 
-            {/* Motion Preview (Kling animation) */}
+            {/* Motion Preview (Kling animation) — dual entry point */}
             {result.generatedImageUrl && (
               <div style={{ marginBottom: 24 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
@@ -637,14 +639,62 @@ export function VisualizePanel({
                   <span style={{ fontSize: 13, fontWeight: 600, color: "#818cf8", textTransform: "uppercase", letterSpacing: "0.08em" }}>
                     Motion Preview
                   </span>
+                  {videoSource && (
+                    <span style={{ fontSize: 11, color: "#71717a" }}>
+                      — Animating {videoSource === "improved" ? "improved version" : "original"}
+                    </span>
+                  )}
                 </div>
+
+                {/* Dual buttons: show when no video is generating or ready */}
+                {!videoUrl && !videoLoading && (
+                  <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+                    {onAnimate && (
+                      <button
+                        type="button"
+                        onClick={onAnimate}
+                        style={{
+                          flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                          padding: "10px 16px",
+                          background: "rgba(99,102,241,0.12)",
+                          border: "1px solid rgba(99,102,241,0.3)",
+                          borderRadius: 8, cursor: "pointer",
+                          fontSize: 13, fontWeight: 500, color: "#a5b4fc",
+                          transition: "all 150ms",
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(99,102,241,0.2)"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(99,102,241,0.12)"; }}
+                      >
+                        ▷ Animate this version →
+                      </button>
+                    )}
+                    {onAnimateOriginal && (
+                      <button
+                        type="button"
+                        onClick={onAnimateOriginal}
+                        style={{
+                          flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                          padding: "10px 16px",
+                          background: "rgba(255,255,255,0.03)",
+                          border: "1px solid rgba(255,255,255,0.08)",
+                          borderRadius: 8, cursor: "pointer",
+                          fontSize: 13, fontWeight: 500, color: "#71717a",
+                          transition: "all 150ms",
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "#a1a1aa"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; e.currentTarget.style.color = "#71717a"; }}
+                      >
+                        Animate original instead
+                      </button>
+                    )}
+                  </div>
+                )}
+
                 <MotionPreviewPlayer
                   videoUrl={videoUrl}
-                  stillFrameUrl={result.generatedImageUrl}
+                  stillFrameUrl={videoSource === "original" ? (originalImageUrl ?? undefined) : result.generatedImageUrl}
                   isLoading={!!videoLoading}
                   loadingLabel="Generating 5s video clip..."
-                  onAnimate={!videoUrl && !videoLoading ? onAnimate : undefined}
-                  buttonLabel="Animate this version →"
                   error={videoError}
                 />
               </div>

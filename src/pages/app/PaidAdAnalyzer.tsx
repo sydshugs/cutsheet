@@ -153,6 +153,7 @@ export default function PaidAdAnalyzer() {
   const [motionVideoUrl, setMotionVideoUrl] = useState<string | null>(null);
   const [motionLoading, setMotionLoading] = useState(false);
   const [motionError, setMotionError] = useState<string | null>(null);
+  const [motionSource, setMotionSource] = useState<"improved" | "original" | null>(null);
 
   // ── Local analyzer state ───────────────────────────────────────────────────
   const [file, setFile] = useState<File | null>(null);
@@ -830,6 +831,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
     setMotionLoading(true);
     setMotionError(null);
     setMotionVideoUrl(null);
+    setMotionSource("improved");
 
     let tempStoragePath: string | undefined;
     try {
@@ -873,6 +875,43 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
       setMotionLoading(false);
       // Cleanup on error too
       if (tempStoragePath) removeFromStorage(tempStoragePath);
+    }
+  };
+
+  // Animate Original from Visualize panel: uses original uploaded image
+  const handleAnimateOriginalFromPanel = async () => {
+    if (!file) return;
+    setMotionLoading(true);
+    setMotionError(null);
+    setMotionVideoUrl(null);
+    setMotionSource("original");
+
+    try {
+      const { signedUrl } = await uploadImageToStorage(file, 1024, 0.85);
+      let aspectRatio: "9:16" | "4:5" | "16:9" = "9:16";
+      const img = new Image();
+      const ratio = await new Promise<number>((resolve) => {
+        img.onload = () => resolve(img.width / img.height);
+        img.onerror = () => resolve(1);
+        img.src = URL.createObjectURL(file);
+      });
+      if (ratio > 1.2) aspectRatio = "16:9";
+      else if (ratio > 0.9) aspectRatio = "4:5";
+
+      const result = await animateImage({ imageUrl: signedUrl, aspectRatio });
+      setMotionVideoUrl(result.videoUrl);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      if (msg === "PRO_REQUIRED") { onUpgradeRequired("visualize_video"); return; }
+      if (msg === "CREDIT_LIMIT_REACHED" && err && typeof err === "object" && "creditData" in err) {
+        const creditErr = err as Error & { creditData: import("../../types/visualize").VisualizeCreditData };
+        setVisualizeCreditData(creditErr.creditData);
+        setVisualizeStatus("credit_limit");
+        return;
+      }
+      setMotionError(msg);
+    } finally {
+      setMotionLoading(false);
     }
   };
 
@@ -1000,12 +1039,14 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                       originalImageUrl={thumbnailDataUrl ?? null}
                       error={visualizeError}
                       creditData={visualizeCreditData}
-                      onBack={() => { setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); setVisualizeCreditData(null); setMotionVideoUrl(null); setMotionLoading(false); setMotionError(null); }}
-                      onClose={() => { setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); setVisualizeCreditData(null); setMotionVideoUrl(null); setMotionLoading(false); setMotionError(null); }}
+                      onBack={() => { setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); setVisualizeCreditData(null); setMotionVideoUrl(null); setMotionLoading(false); setMotionError(null); setMotionSource(null); }}
+                      onClose={() => { setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); setVisualizeCreditData(null); setMotionVideoUrl(null); setMotionLoading(false); setMotionError(null); setMotionSource(null); }}
                       videoUrl={motionVideoUrl}
                       videoLoading={motionLoading}
                       videoError={motionError}
+                      videoSource={motionSource}
                       onAnimate={handleAnimateVisualized}
+                      onAnimateOriginal={handleAnimateOriginalFromPanel}
                       onAnalyzeVersion={handleReanalyze}
                       onUpgrade={onUpgradeRequired}
                     />
