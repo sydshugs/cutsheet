@@ -154,13 +154,11 @@ export function DashboardIdleView({
             </span>
           </div>
 
-          {/* Format pills */}
-          <div className="flex gap-2 px-4 pb-3.5 flex-wrap">
-            {FORMAT_PILLS.map((f) => (
-              <span key={f} className="text-[11px] text-zinc-600 bg-white/[0.04] rounded-full px-2.5 py-0.5 font-mono">
-                {f}
-              </span>
-            ))}
+          {/* Format line — single muted text instead of 5 pills */}
+          <div className="px-4 pb-3.5">
+            <span className="text-[11px] text-zinc-600 font-mono tracking-wide">
+              {FORMAT_PILLS.join(' · ')} · Max 200MB
+            </span>
           </div>
         </div>
 

@@ -144,22 +144,22 @@ export function CreativeAnalysis({
           </div>
         )}
 
-        {/* Fix cards — Option 3: 12px 14px padding, column layout, 6px gap */}
-        <div className="flex flex-col gap-1.5">
+        {/* Fix cards — tightened: 10px 14px padding, 4px gap */}
+        <div className="flex flex-col gap-1">
           {filteredFixes.map((fix, i) => {
             const catStyle = CATEGORY_STYLES[fix.category] ?? { bg: 'rgba(161,161,170,0.08)', color: '#a1a1aa' };
             const dotColor = SEVERITY_DOT[fix.severity] ?? SEVERITY_DOT.low;
             return (
               <div
                 key={i}
-                className="flex flex-col gap-1.5 rounded-lg"
-                style={{ background: 'rgba(255,255,255,0.03)', padding: '12px 16px' }}
+                className="flex flex-col gap-1 rounded-lg"
+                style={{ background: 'rgba(255,255,255,0.03)', padding: '10px 14px' }}
               >
                 {/* Top row: category tag */}
                 <div className="flex items-center">
                   <span
                     className="text-[11px] font-semibold uppercase rounded-full shrink-0"
-                    style={{ padding: '4px 10px', letterSpacing: '0.03em', background: catStyle.bg, color: catStyle.color }}
+                    style={{ padding: '3px 8px', letterSpacing: '0.03em', background: catStyle.bg, color: catStyle.color }}
                   >
                     {fix.category}
                   </span>

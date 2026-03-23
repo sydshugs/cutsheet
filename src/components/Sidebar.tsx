@@ -198,7 +198,7 @@ function DesktopSidebar({
   const navigate = useNavigate();
   const { user } = useAuth();
   const initial = (user?.email ?? userEmail).charAt(0).toUpperCase() || "U";
-  const width = collapsed ? 64 : 220;
+  const width = collapsed ? 64 : 240;
 
   return (
     <nav

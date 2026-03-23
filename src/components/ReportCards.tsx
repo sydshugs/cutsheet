@@ -348,7 +348,7 @@ export function ReportCards({
               <img
                 src={fileUrl}
                 alt={sanitizeFileName(file.name)}
-                style={{ maxWidth: "100%", maxHeight: 600, objectFit: "contain", borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)" }}
+                style={{ maxWidth: "100%", maxHeight: 420, objectFit: "contain", borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)" }}
               />
             </div>
           ) : (
@@ -409,7 +409,7 @@ export function ReportCards({
         const active = tools.find(t => t.key === activeTool);
         return (
           <div
-            className="mt-4 rounded-xl overflow-hidden transition-colors"
+            className="mt-6 rounded-xl overflow-hidden transition-colors"
             style={{ border: activeTool ? '0.5px solid rgba(99,102,241,0.3)' : '0.5px solid rgba(255,255,255,0.06)', background: 'var(--surface, rgba(255,255,255,0.02))' }}
           >
             {/* 4-column tab row */}
@@ -602,7 +602,12 @@ export function ReportCards({
 
         // Build statement from first sentence
         const sentences = c.split(/\n/).filter(l => l.trim() && !l.startsWith('#') && !l.startsWith('-') && !l.startsWith('*'));
-        const statementRaw = sentences.find(s => s.length > 20)?.replace(/\*\*/g, '').trim() ?? `This ad evokes ${primary} and ${secondary}.`;
+        // Use first meaningful sentence from content; strip markdown bold markers and list prefixes
+        const rawSentence = sentences.find(s => s.length > 20)?.replace(/\*\*/g, '').replace(/^[-*•]\s*/, '').trim();
+        // Only use the raw sentence if it doesn't contain awkward phrasing like "evoked"
+        const statementRaw = (rawSentence && !/evoked\s+and\s+evoked|evokes\s+evoked/i.test(rawSentence))
+          ? rawSentence
+          : `This ad evokes ${primary} and ${secondary}.`;
 
         const EMOTION_COLORS: Record<string, string> = { [primary]: '#818cf8', [secondary]: '#10b981', [tertiary]: '#6366f1' };
 
@@ -847,11 +852,12 @@ export function ReportCards({
         </button>
         <button
           onClick={onExportPdf}
-          className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-white/50 text-sm rounded-xl px-4 py-2 transition-colors"
+          disabled
+          title="PDF export coming soon"
+          className="flex items-center gap-1.5 bg-white/5 text-white/30 text-sm rounded-xl px-4 py-2 opacity-40 cursor-not-allowed select-none"
         >
           <FileDown size={14} />
           Export PDF
-          <span className="text-[9px] text-white/30 ml-0.5">Soon</span>
         </button>
         <button
           onClick={onShare}

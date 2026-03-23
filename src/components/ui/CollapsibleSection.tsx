@@ -56,7 +56,7 @@ export function CollapsibleSection({
           <motion.span
             animate={{ rotate: open ? 180 : 0 }}
             transition={{ duration: 0.2 }}
-            className="text-zinc-600 group-hover:text-zinc-400 transition-colors"
+            className="text-zinc-400 group-hover:text-zinc-200 transition-colors"
           >
             <ChevronDown size={14} />
           </motion.span>

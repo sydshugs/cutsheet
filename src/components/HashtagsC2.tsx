@@ -15,6 +15,8 @@ const PLATFORM_MAP: Record<string, keyof Hashtags> = {
   TikTok: 'tiktok',
 };
 
+const VISIBLE_DEFAULT = 8;
+
 export function HashtagsC2({ hashtags, format }: HashtagsC2Props) {
   // Determine available platforms based on format
   const availablePlatforms = (() => {
@@ -28,9 +30,12 @@ export function HashtagsC2({ hashtags, format }: HashtagsC2Props) {
 
   const [activePlatform, setActivePlatform] = useState(availablePlatforms[0] ?? 'Meta');
   const [copied, setCopied] = useState(false);
+  const [showAll, setShowAll] = useState(false);
 
   const platformKey = PLATFORM_MAP[activePlatform] ?? 'meta';
   const tags = hashtags[platformKey] ?? [];
+  const visibleTags = showAll ? tags : tags.slice(0, VISIBLE_DEFAULT);
+  const hasMore = tags.length > VISIBLE_DEFAULT;
 
   const handleCopy = () => {
     const text = tags.map(t => `#${t}`).join(' ');
@@ -56,7 +61,7 @@ export function HashtagsC2({ hashtags, format }: HashtagsC2Props) {
           return (
             <button
               key={plat}
-              onClick={() => setActivePlatform(plat)}
+              onClick={() => { setActivePlatform(plat); setShowAll(false); }}
               aria-label={`Show ${plat} hashtags`}
               aria-pressed={isActive}
               className="text-[11px] font-medium rounded-full cursor-pointer transition-all duration-150 hover:text-zinc-300 focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:outline-none"
@@ -73,23 +78,33 @@ export function HashtagsC2({ hashtags, format }: HashtagsC2Props) {
         })}
       </div>
 
-      {/* Pills body */}
-      <div className="flex flex-wrap gap-[5px] py-3">
-        {tags.map(tag => (
+      {/* Pills body — tightened padding, limited by default */}
+      <div className="flex flex-wrap gap-1 py-2.5">
+        {visibleTags.map(tag => (
           <span
             key={tag}
             className="text-[11px] rounded-full cursor-default transition-all duration-150 hover:bg-indigo-500/10 hover:text-indigo-400"
-            style={{ padding: '4px 10px', background: 'rgba(255,255,255,0.04)', color: '#a1a1aa' }}
+            style={{ padding: '3px 8px', background: 'rgba(255,255,255,0.04)', color: '#a1a1aa' }}
           >
             #{tag}
           </span>
         ))}
+        {/* Show more / less toggle inline */}
+        {hasMore && (
+          <button
+            onClick={() => setShowAll(v => !v)}
+            className="text-[11px] font-medium rounded-full cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:outline-none"
+            style={{ padding: '3px 8px', background: 'rgba(99,102,241,0.08)', color: '#818cf8', border: '0.5px solid rgba(99,102,241,0.2)' }}
+          >
+            {showAll ? 'Show less' : `+${tags.length - VISIBLE_DEFAULT} more`}
+          </button>
+        )}
       </div>
 
       {/* Footer strip */}
       <div
         className="flex items-center justify-between rounded-lg"
-        style={{ padding: '9px 14px', background: 'rgba(255,255,255,0.03)', borderTop: '0.5px solid rgba(255,255,255,0.06)' }}
+        style={{ padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderTop: '0.5px solid rgba(255,255,255,0.06)' }}
       >
         <span className="text-[11px] text-zinc-500">{tags.length} tags</span>
         <button

@@ -277,17 +277,7 @@ export function ProgressCard({ file, status, onCancel, platform, icon: Icon = Za
               </div>
             </div>
 
-            {/* Overall progress bar — pinned to bottom */}
-            <div className="mt-auto pt-4">
-              <div className="w-full h-[3px] bg-white/[0.06] rounded-full overflow-hidden">
-                <motion.div
-                  animate={{ width: `${stage.pct}%` }}
-                  transition={{ duration: 0.8, ease: "easeOut" }}
-                  className="h-full rounded-full"
-                  style={{ background: "linear-gradient(90deg, #6366f1, #818cf8)" }}
-                />
-              </div>
-            </div>
+            {/* Overall progress bar removed — checklist + metric bars are sufficient */}
           </div>
         </div>
       </div>

@@ -371,7 +371,7 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
                 <span style={{ fontSize: 7, lineHeight: 1 }} aria-hidden="true">{scoreIndicator(dim.score)}</span>
                 {dim.score.toFixed(1)}
               </span>
-              <span style={{ fontSize: 11, color: "#71717a", whiteSpace: "nowrap" }}>
+              <span style={{ fontSize: 12, color: "#a1a1aa", whiteSpace: "nowrap" }}>
                 {dim.name}
               </span>
             </motion.div>
