@@ -1162,20 +1162,10 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
           </div>
         )}
 
-        {/* Before/After re-analysis section */}
-        {showRightPanel && rightTab === "analysis" && !comparisonResult && (
+        {/* Before/After re-analysis upload flow (button is inside ScoreCard) */}
+        {showRightPanel && rightTab === "analysis" && !comparisonResult && reanalyzeMode && (
           <div style={{ padding: "0 16px 12px" }}>
-            {!reanalyzeMode ? (
-              <button type="button" onClick={() => setReanalyzeMode(true)}
-                style={{
-                  width: "100%", height: 40, background: "rgba(99,102,241,0.1)",
-                  border: "1px solid rgba(99,102,241,0.3)", borderRadius: 9999,
-                  color: "#818cf8", fontSize: 13, fontWeight: 500, cursor: "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                }}>
-                <RotateCcw size={14} /> Re-analyze improved version →
-              </button>
-            ) : (
+            {(
               <div style={{ background: "rgba(99,102,241,0.04)", border: "1px dashed rgba(99,102,241,0.3)", borderRadius: 12, padding: 16 }}>
                 <p style={{ fontSize: 13, fontWeight: 600, color: "#f4f4f5", margin: "0 0 4px" }}>Upload your improved version</p>
                 <p style={{ fontSize: 12, color: "#71717a", margin: "0 0 12px" }}>We'll score it and compare against your original.</p>
