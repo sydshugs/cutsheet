@@ -650,7 +650,7 @@ export function ReportCards({
 
       </motion.div>
 
-      {/* ─── Motion Test Idea — redesigned (B3-A) ─── */}
+      {/* ─── Motion Test Idea — redesigned with visual timeline ─── */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: 'easeOut', delay: 0.18 }}>
       {centerSections.filter(s => /motion.*(?:test|idea)/i.test(s.title ?? '')).map((section, i) => {
         const conceptText = section.content
@@ -661,39 +661,113 @@ export function ReportCards({
           .replace(/\*\*/g, '')
           .replace(/[-\s]+$/, '')
           .trim();
+        
+        // Parse concept into phases for timeline
+        const phases = conceptText.split(/,\s*then\s+|,\s*ending\s+with\s+|,\s*followed\s+by\s+/i).filter(Boolean);
+        const phaseLabels = ['Opening', 'Transition', 'Close'];
+        const phaseColors = ['#818cf8', '#10b981', '#f59e0b'];
+        
         // Infer tags from context
-        const platformTag = platform ?? 'Meta feed';
-        const durationTag = format === 'video' ? '6–8s loop' : '6–8s loop';
+        const platformTag = platform ?? 'Meta';
+        const durationTag = '6–8s loop';
         const formatTag = format === 'static' ? 'Static → motion' : 'Video remix';
+        
         return (
           <div key={`motion-${i}`} className="rounded-2xl border border-white/[0.06] overflow-hidden mt-4 bg-white/[0.015]">
             {/* Header */}
-            <div className="flex items-center gap-2 px-5 py-3.5 border-b border-white/[0.05]">
-              <Film size={14} className="text-zinc-500" />
-              <span className="text-xs font-medium text-zinc-300">Motion Test Idea</span>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.05]">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-violet-500/10 flex items-center justify-center">
+                  <Film size={14} className="text-violet-400" />
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-zinc-200 block">Motion Test Idea</span>
+                  <span className="text-[10px] text-zinc-600">Transform your static into motion</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {[platformTag, durationTag].map(tag => (
+                  <span key={tag} className="text-[10px] font-medium bg-white/[0.04] rounded-lg px-2 py-1 text-zinc-500 border border-white/[0.04]">{tag}</span>
+                ))}
+              </div>
             </div>
+            
             {/* Body */}
             <div className="p-5">
-              {/* Concept card */}
-              <div className="rounded-xl p-4 mb-4 bg-indigo-500/[0.05] border border-indigo-500/10">
-                <span className="text-[10px] font-medium text-indigo-400 uppercase tracking-wide block mb-2">Concept</span>
-                <p className="text-[13px] font-medium text-zinc-200 leading-relaxed">{conceptText}</p>
+              {/* Storyboard Timeline */}
+              <div className="mb-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-[10px] font-medium uppercase tracking-wide text-zinc-500">Storyboard</span>
+                  <div className="flex-1 h-px bg-white/[0.05]" />
+                  <span className="text-[10px] text-zinc-600">{formatTag}</span>
+                </div>
+                
+                {/* Timeline phases */}
+                <div className="relative">
+                  {/* Progress bar background */}
+                  <div className="absolute top-4 left-4 right-4 h-0.5 bg-white/[0.06] rounded-full" />
+                  {/* Animated gradient progress */}
+                  <div className="absolute top-4 left-4 right-4 h-0.5 rounded-full bg-gradient-to-r from-indigo-500 via-emerald-500 to-amber-500" />
+                  
+                  <div className="grid grid-cols-3 gap-3">
+                    {phases.slice(0, 3).map((phase, pi) => (
+                      <div key={pi} className="relative">
+                        {/* Timeline dot */}
+                        <div 
+                          className="w-3 h-3 rounded-full border-2 border-zinc-900 mx-auto mb-3 relative z-10"
+                          style={{ backgroundColor: phaseColors[pi] }}
+                        />
+                        {/* Phase card */}
+                        <div 
+                          className="rounded-xl p-3.5 border transition-all hover:border-opacity-30"
+                          style={{ 
+                            background: `linear-gradient(135deg, ${phaseColors[pi]}08, transparent)`,
+                            borderColor: `${phaseColors[pi]}15`
+                          }}
+                        >
+                          <div className="flex items-center gap-1.5 mb-2">
+                            <span 
+                              className="text-[9px] font-bold uppercase tracking-wider"
+                              style={{ color: phaseColors[pi] }}
+                            >
+                              {phaseLabels[pi]}
+                            </span>
+                            <span className="text-[9px] text-zinc-600">{pi === 0 ? '0-2s' : pi === 1 ? '2-5s' : '5-8s'}</span>
+                          </div>
+                          <p className="text-[11px] text-zinc-400 leading-relaxed capitalize">
+                            {phase.trim().replace(/^product and cta$/i, 'Product reveal with clear CTA')}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
-              {/* Tag pills */}
-              <div className="flex flex-wrap gap-2 mb-4">
-                <span className="text-[10px] bg-white/[0.04] rounded-md px-2.5 py-1 text-zinc-500">{platformTag}</span>
-                <span className="text-[10px] bg-white/[0.04] rounded-md px-2.5 py-1 text-zinc-500">{durationTag}</span>
-                <span className="text-[10px] bg-white/[0.04] rounded-md px-2.5 py-1 text-zinc-500">{formatTag}</span>
+
+              {/* Why this works */}
+              <div className="rounded-xl bg-white/[0.02] border border-white/[0.05] p-4 mb-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                    <TrendingUp size={12} className="text-emerald-400" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-zinc-300 mb-1">Why this works</p>
+                    <p className="text-[11px] text-zinc-500 leading-relaxed">
+                      Motion increases engagement by 2-3x on {platformTag}. This sequence creates visual intrigue, builds emotional connection, then drives action.
+                    </p>
+                  </div>
+                </div>
               </div>
+              
               {/* Visualize CTA */}
               {onVisualize && (
                 <button
                   onClick={onVisualize}
                   disabled={format !== 'static'}
-                  className="w-full flex items-center justify-center gap-2 rounded-xl py-3 text-xs font-medium transition-all hover:bg-indigo-500/15 bg-indigo-500/[0.08] border border-indigo-500/20 text-indigo-400 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="group w-full flex items-center justify-center gap-2.5 rounded-xl py-3.5 text-sm font-medium transition-all bg-gradient-to-r from-violet-500/10 to-indigo-500/10 border border-violet-500/20 text-violet-300 hover:from-violet-500/15 hover:to-indigo-500/15 hover:border-violet-500/30 hover:text-violet-200 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  <Sparkles size={14} />
-                  Visualize concept
+                  <Sparkles size={15} className="group-hover:animate-pulse" />
+                  Visualize This Concept
                 </button>
               )}
             </div>
