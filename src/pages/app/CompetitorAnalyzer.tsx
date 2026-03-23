@@ -1,11 +1,12 @@
 // src/pages/app/CompetitorAnalyzer.tsx — Step-based competitor analysis
+// Redesigned to match consistent page style
 
 import { Helmet } from "react-helmet-async";
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useOutletContext } from "react-router-dom";
 import {
   Swords, Upload, Search, ExternalLink, Music2, AlertCircle,
-  Check, ChevronLeft, ArrowRight,
+  Check, ChevronLeft, ArrowRight, X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CompetitorResultPanel } from "../../components/CompetitorResult";
@@ -17,6 +18,12 @@ import { sanitizeSearchQuery, sanitizeFileName } from "../../utils/sanitize";
 const API_KEY = ""; // Gemini calls are now server-side via /api/analyze
 const META_TOKEN = import.meta.env.VITE_META_ACCESS_TOKEN ?? "";
 
+// Brand color for Competitor Analysis: Sky Blue
+const BRAND_COLOR = "#0ea5e9";
+const BRAND_COLOR_LIGHT = "#38bdf8";
+const BRAND_BG = "rgba(14,165,233,0.08)";
+const BRAND_BORDER = "rgba(14,165,233,0.15)";
+
 const PLATFORMS = ["all", "Meta", "TikTok", "Google", "YouTube"] as const;
 const FORMATS = ["video", "static"] as const;
 type Platform = (typeof PLATFORMS)[number];
@@ -25,6 +32,7 @@ type Step = 0 | 1 | 2 | 3; // 0=your ad, 1=competitor, 2=config+compare, 3=resul
 
 const STEP_LABELS = ["Your Ad", "Competitor", "Compare", "Results"];
 const SLIDE = { initial: { opacity: 0, x: 40 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -40 }, transition: { duration: 0.25, ease: [0.16, 1, 0.3, 1] as const } };
+const FEATURE_PILLS = ["Gap analysis", "Win probability", "Action plan"];
 
 // ─── STEP INDICATOR ─────────────────────────────────────────────────────────
 
@@ -36,7 +44,7 @@ function StepIndicator({ step, yourFile, competitorFile, onStepClick }: { step: 
     { num: 3 as Step, label: "Results", done: false },
   ];
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0, padding: "16px 24px 0" }}>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0, padding: "20px 24px 0" }}>
       {steps.map((s, i) => {
         const active = step === s.num;
         const completed = s.done && step > s.num;
@@ -44,28 +52,28 @@ function StepIndicator({ step, yourFile, competitorFile, onStepClick }: { step: 
         return (
           <div key={s.num} style={{ display: "flex", alignItems: "center" }}>
             <div
-              style={{ display: "flex", alignItems: "center", gap: 6, cursor: clickable ? "pointer" : "default", borderRadius: 9999, padding: "2px 4px", transition: "background 150ms" }}
+              style={{ display: "flex", alignItems: "center", gap: 6, cursor: clickable ? "pointer" : "default", borderRadius: 9999, padding: "4px 8px", transition: "background 150ms" }}
               onClick={clickable ? () => onStepClick(s.num) : undefined}
-              onMouseEnter={clickable ? (e) => { e.currentTarget.style.background = "rgba(16,185,129,0.08)"; } : undefined}
+              onMouseEnter={clickable ? (e) => { e.currentTarget.style.background = "rgba(14,165,233,0.08)"; } : undefined}
               onMouseLeave={clickable ? (e) => { e.currentTarget.style.background = "transparent"; } : undefined}
             >
               <div style={{
-                width: 24, height: 24, borderRadius: "50%",
+                width: 26, height: 26, borderRadius: "50%",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: 11, fontWeight: 600,
-                background: completed ? "#10b981" : active ? "#6366f1" : "rgba(255,255,255,0.04)",
-                border: `1px solid ${completed ? "#10b981" : active ? "#6366f1" : "rgba(255,255,255,0.08)"}`,
+                background: completed ? "#10b981" : active ? BRAND_COLOR : "rgba(255,255,255,0.04)",
+                border: `1px solid ${completed ? "#10b981" : active ? BRAND_COLOR : "rgba(255,255,255,0.08)"}`,
                 color: completed || active ? "white" : "#52525b",
                 transition: "all 200ms",
               }}>
                 {completed ? <Check size={12} /> : s.num + 1}
               </div>
-              <span style={{ fontSize: 12, color: active ? "#f4f4f5" : completed ? "#10b981" : "#52525b", fontWeight: active ? 500 : 400, transition: "all 200ms" }}>
+              <span style={{ fontSize: 12, color: active ? "#f4f4f5" : completed ? "#10b981" : "#52525b", fontWeight: active ? 600 : 400, transition: "all 200ms" }}>
                 {s.label}
               </span>
             </div>
             {i < steps.length - 1 && (
-              <div style={{ width: 40, height: 1, background: completed ? "#10b981" : "rgba(255,255,255,0.06)", margin: "0 8px", transition: "background 200ms" }} />
+              <div style={{ width: 32, height: 1, background: completed ? "#10b981" : "rgba(255,255,255,0.06)", margin: "0 6px", transition: "background 200ms" }} />
             )}
           </div>
         );
@@ -81,24 +89,25 @@ function FilePreview({ file, onRemove }: { file: File; onRemove: () => void }) {
   useEffect(() => () => URL.revokeObjectURL(url), [url]);
   const isImage = file.type.startsWith("image/");
   return (
-    <div>
-      <div style={{ borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)", overflow: "hidden", background: "#09090b", display: "flex", justifyContent: "center", maxHeight: 240 }}>
+    <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(16,185,129,0.15)", borderRadius: 12, overflow: "hidden" }}>
+      <div style={{ display: "flex", justifyContent: "center", background: "#0a0a0b", maxHeight: 200 }}>
         {isImage
-          ? <img src={url} alt={sanitizeFileName(file.name)} style={{ maxWidth: "100%", maxHeight: 240, objectFit: "contain" }} />
-          : <video src={url} style={{ maxWidth: "100%", maxHeight: 240, objectFit: "contain" }} />
+          ? <img src={url} alt={sanitizeFileName(file.name)} style={{ maxWidth: "100%", maxHeight: 200, objectFit: "contain" }} />
+          : <video src={url} style={{ maxWidth: "100%", maxHeight: 200, objectFit: "contain" }} />
         }
       </div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Check size={14} color="#10b981" />
           <span style={{ fontSize: 12, color: "#a1a1aa", fontFamily: "var(--font-mono, monospace)" }}>
-            {(() => { const n = sanitizeFileName(file.name); return n.length > 30 ? n.slice(0, 27) + "..." : n; })()}
+            {(() => { const n = sanitizeFileName(file.name); return n.length > 26 ? n.slice(0, 23) + "..." : n; })()}
           </span>
-          <span style={{ fontSize: 10, color: "#52525b", background: "rgba(255,255,255,0.04)", borderRadius: 9999, padding: "2px 8px" }}>
+          <span style={{ fontSize: 10, color: BRAND_COLOR_LIGHT, background: BRAND_BG, borderRadius: 9999, padding: "2px 8px" }}>
             {file.type.startsWith("video/") ? "Video" : "Static"}
           </span>
         </div>
-        <button type="button" onClick={onRemove} style={{ fontSize: 11, color: "#71717a", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
-          Change
+        <button type="button" onClick={onRemove} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#71717a", background: "none", border: "none", cursor: "pointer" }}>
+          <X size={12} /> Remove
         </button>
       </div>
     </div>
@@ -107,12 +116,12 @@ function FilePreview({ file, onRemove }: { file: File; onRemove: () => void }) {
 
 // ─── DROPZONE ───────────────────────────────────────────────────────────────
 
-function DropZone({ onFileSelect, height = 240 }: { onFileSelect: (f: File) => void; height?: number }) {
+function DropZone({ onFileSelect, height = 180, label = "Drop your creative or click to browse" }: { onFileSelect: (f: File) => void; height?: number; label?: string }) {
   return (
     <div
       style={{
-        height, border: "2px dashed rgba(255,255,255,0.08)", borderRadius: 16,
-        background: "rgba(255,255,255,0.02)", display: "flex", flexDirection: "column",
+        height, border: "1.5px dashed rgba(255,255,255,0.1)", borderRadius: 12,
+        background: "rgba(255,255,255,0.015)", display: "flex", flexDirection: "column",
         alignItems: "center", justifyContent: "center", gap: 10, cursor: "pointer", transition: "all 150ms",
       }}
       onClick={() => {
@@ -121,13 +130,15 @@ function DropZone({ onFileSelect, height = 240 }: { onFileSelect: (f: File) => v
         input.onchange = (e) => { const f = (e.target as HTMLInputElement).files?.[0]; if (f) onFileSelect(f); };
         input.click();
       }}
-      onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)"; e.currentTarget.style.background = "rgba(99,102,241,0.05)"; }}
-      onDragLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
-      onDrop={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; const f = e.dataTransfer.files[0]; if (f) onFileSelect(f); }}
+      onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = BRAND_BORDER; e.currentTarget.style.background = BRAND_BG; }}
+      onDragLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; e.currentTarget.style.background = "rgba(255,255,255,0.015)"; }}
+      onDrop={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; e.currentTarget.style.background = "rgba(255,255,255,0.015)"; const f = e.dataTransfer.files[0]; if (f) onFileSelect(f); }}
+      onMouseEnter={(e) => { e.currentTarget.style.borderColor = BRAND_BORDER; e.currentTarget.style.background = BRAND_BG; }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; e.currentTarget.style.background = "rgba(255,255,255,0.015)"; }}
     >
-      <Upload size={28} color="#71717a" />
-      <span style={{ fontSize: 14, color: "#a1a1aa" }}>Drop your creative or click to browse</span>
-      <span style={{ fontSize: 11, color: "#71717a" }}>Video or static image</span>
+      <Upload size={24} color={BRAND_COLOR_LIGHT} />
+      <span style={{ fontSize: 13, color: "#a1a1aa" }}>{label}</span>
+      <span style={{ fontSize: 11, color: "#52525b" }}>MP4 · MOV · PNG · JPG</span>
     </div>
   );
 }
@@ -228,7 +239,7 @@ function MetaSearch({ onFileSelect }: { onFileSelect: (f: File) => void }) {
           )}
         </div>
         <button type="button" onClick={handleSearch} disabled={searching || !query.trim()}
-          style={{ height: 40, padding: "0 16px", borderRadius: 10, border: "none", background: "#6366f1", color: "white", fontSize: 13, fontWeight: 500, cursor: searching ? "wait" : "pointer", opacity: !query.trim() ? 0.5 : 1, display: "flex", alignItems: "center", gap: 6 }}>
+          style={{ height: 40, padding: "0 16px", borderRadius: 10, border: "none", background: BRAND_COLOR, color: "white", fontSize: 13, fontWeight: 500, cursor: searching ? "wait" : "pointer", opacity: !query.trim() ? 0.5 : 1, display: "flex", alignItems: "center", gap: 6 }}>
           <Search size={14} />{searching ? "Searching..." : "Search"}
         </button>
       </div>
@@ -243,17 +254,17 @@ function MetaSearch({ onFileSelect }: { onFileSelect: (f: File) => void }) {
           {results.map((ad) => (
             <div key={ad.id} onClick={() => handleUseAd(ad)}
               style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: 10, cursor: "pointer", transition: "all 150ms", display: "flex", flexDirection: "column", gap: 6 }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(99,102,241,0.3)"; }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = BRAND_BORDER; }}
               onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; }}>
               {ad.ad_snapshot_url && (
                 <div style={{ width: "100%", height: 80, borderRadius: 6, overflow: "hidden", background: "#18181b" }}>
                   <img src={ad.ad_snapshot_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 </div>
               )}
-              {ad.page_name && <span style={{ fontSize: 11, color: "#818cf8", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ad.page_name}</span>}
+              {ad.page_name && <span style={{ fontSize: 11, color: BRAND_COLOR_LIGHT, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ad.page_name}</span>}
               {ad.ad_creative_bodies?.[0] && <span style={{ fontSize: 11, color: "#71717a", lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const }}>{ad.ad_creative_bodies[0].slice(0, 80)}</span>}
               <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: "auto" }}>
-                <ExternalLink size={10} color="#6366f1" /><span style={{ fontSize: 10, color: "#6366f1" }}>Use this ad</span>
+                <ExternalLink size={10} color={BRAND_COLOR} /><span style={{ fontSize: 10, color: BRAND_COLOR }}>Use this ad</span>
               </div>
             </div>
           ))}
@@ -266,7 +277,7 @@ function MetaSearch({ onFileSelect }: { onFileSelect: (f: File) => void }) {
   );
 }
 
-// ─── LOADING CARD ───────────────────────────────────────────────────────────
+// ─── LOADING CARD ────────────���──────────────────────────────────────────────
 
 const STATUS_MSGS = ["Analyzing your ad...", "Analyzing competitor ad...", "Running gap analysis...", "Building action plan..."];
 
@@ -274,14 +285,20 @@ function LoadingCard({ yourName, compName, statusMsg }: { yourName: string; comp
   const [msgIdx, setMsgIdx] = useState(0);
   useEffect(() => { const t = setInterval(() => setMsgIdx(i => (i + 1) % STATUS_MSGS.length), 3000); return () => clearInterval(t); }, []);
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 24px", gap: 24 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-        <span style={{ fontSize: 14, color: "#a1a1aa", fontFamily: "var(--font-mono, monospace)", maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{yourName}</span>
-        <Swords size={20} color="#6366f1" />
-        <span style={{ fontSize: 14, color: "#a1a1aa", fontFamily: "var(--font-mono, monospace)", maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{compName}</span>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 24px", gap: 28 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "8px 14px" }}>
+          <span style={{ fontSize: 13, color: "#a1a1aa", fontFamily: "var(--font-mono, monospace)", maxWidth: 120, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block" }}>{yourName.length > 16 ? yourName.slice(0, 14) + "..." : yourName}</span>
+        </div>
+        <div style={{ width: 40, height: 40, borderRadius: 10, background: BRAND_BG, border: `1px solid ${BRAND_BORDER}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Swords size={18} color={BRAND_COLOR} />
+        </div>
+        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "8px 14px" }}>
+          <span style={{ fontSize: 13, color: "#a1a1aa", fontFamily: "var(--font-mono, monospace)", maxWidth: 120, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block" }}>{compName.length > 16 ? compName.slice(0, 14) + "..." : compName}</span>
+        </div>
       </div>
-      <div style={{ width: 240, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
-        <div style={{ height: "100%", width: "40%", borderRadius: 2, background: "#6366f1", animation: "progressSlide 1.5s ease-in-out infinite" }} />
+      <div style={{ width: 200, height: 3, borderRadius: 2, background: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
+        <div style={{ height: "100%", width: "40%", borderRadius: 2, background: BRAND_COLOR, animation: "progressSlide 1.5s ease-in-out infinite" }} />
       </div>
       <AnimatePresence mode="wait">
         <motion.p key={msgIdx} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.2 }}
@@ -346,142 +363,173 @@ export default function CompetitorAnalyzer() {
       <StepIndicator step={step} yourFile={yourFile} competitorFile={competitorFile} onStepClick={(s) => { setStatus("idle"); setStep(s); }} />
 
       <div className="flex-1 overflow-auto">
-        <div style={{ maxWidth: 580, margin: "0 auto", padding: "clamp(24px, 8vh, 80px) 16px 24px" }}>
+        <div style={{ maxWidth: 600, margin: "0 auto", padding: "clamp(20px, 6vh, 60px) 20px 32px" }}>
           <AnimatePresence mode="wait">
 
-            {/* ── STEP 0: YOUR AD ─────────────────────────────────── */}
+            {/* ── STEP 0: YOUR AD — Centered layout matching other pages ─────────────────────────────────── */}
             {step === 0 && (
-              <motion.div key="s0" {...SLIDE} style={{ paddingTop: 32 }}>
-                <h3 style={{ fontSize: 18, fontWeight: 600, color: "#f4f4f5", margin: "0 0 4px" }}>Upload your ad</h3>
-                <p style={{ fontSize: 13, color: "#71717a", margin: "0 0 20px" }}>The creative you want to benchmark.</p>
-                {yourFile ? (
-                  <>
-                    <FilePreview file={yourFile} onRemove={() => setYourFile(null)} />
-                    <button type="button" onClick={() => setStep(1)}
-                      style={{ width: "100%", height: 48, marginTop: 20, borderRadius: 9999, border: "none", background: "#6366f1", color: "white", fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                      Next — add competitor <ArrowRight size={16} />
-                    </button>
-                  </>
-                ) : (
-                  <DropZone onFileSelect={(f) => { setYourFile(f); setStep(1); }} />
-                )}
+              <motion.div key="s0" {...SLIDE} style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 24 }}>
+                {/* Icon box */}
+                <div style={{ width: 76, height: 76, borderRadius: 14, background: BRAND_BG, border: `1px solid ${BRAND_BORDER}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Swords size={28} color={BRAND_COLOR} />
+                </div>
+
+                {/* Title */}
+                <h1 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>
+                  Competitor Analysis
+                </h1>
+                <p style={{ fontSize: 14, color: "#a1a1aa", textAlign: "center", maxWidth: 380, marginTop: 10, lineHeight: 1.6 }}>
+                  Compare your ad against a competitor. Get gap analysis and a win strategy.
+                </p>
+
+                {/* Feature pills */}
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 20 }}>
+                  {FEATURE_PILLS.map((pill) => (
+                    <span key={pill} style={{ fontSize: 12, color: BRAND_COLOR_LIGHT, background: BRAND_BG, border: `1px solid ${BRAND_BORDER}`, borderRadius: 9999, padding: "4px 12px" }}>
+                      {pill}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Upload section */}
+                <div style={{ width: "100%", maxWidth: 480, marginTop: 32 }}>
+                  <p style={{ fontSize: 11, color: "#52525b", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 10, fontWeight: 500 }}>
+                    Step 1 — Your Ad
+                  </p>
+                  {yourFile ? (
+                    <>
+                      <FilePreview file={yourFile} onRemove={() => setYourFile(null)} />
+                      <button type="button" onClick={() => setStep(1)}
+                        style={{ width: "100%", height: 48, marginTop: 20, borderRadius: 9999, border: "none", background: BRAND_COLOR, color: "white", fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                        Next — add competitor <ArrowRight size={16} />
+                      </button>
+                    </>
+                  ) : (
+                    <DropZone onFileSelect={(f) => { setYourFile(f); setStep(1); }} label="Drop your ad or click to browse" />
+                  )}
+                </div>
               </motion.div>
             )}
 
             {/* ── STEP 1: COMPETITOR AD ───────────────────────────── */}
             {step === 1 && (
-              <motion.div key="s1" {...SLIDE} style={{ paddingTop: 32 }}>
-                <button type="button" onClick={() => setStep(0)} style={{ background: "none", border: "none", color: "#52525b", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, marginBottom: 20 }}>
+              <motion.div key="s1" {...SLIDE} style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 24 }}>
+                <button type="button" onClick={() => setStep(0)} style={{ alignSelf: "flex-start", background: "none", border: "none", color: "#52525b", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, marginBottom: 16 }}>
                   <ChevronLeft size={14} /> Back
                 </button>
-                <h3 style={{ fontSize: 18, fontWeight: 600, color: "#f4f4f5", margin: "0 0 4px" }}>Find a competitor's ad</h3>
-                <p style={{ fontSize: 13, color: "#71717a", margin: "0 0 20px" }}>Upload a competitor's ad to compare against yours.</p>
+                
+                <h3 style={{ fontSize: 18, fontWeight: 600, color: "#f4f4f5", margin: "0 0 6px", textAlign: "center" }}>Add competitor ad</h3>
+                <p style={{ fontSize: 13, color: "#71717a", margin: "0 0 24px", textAlign: "center" }}>Upload a competitor's ad to compare against yours.</p>
 
-                {competitorFile ? (
-                  <>
-                    <FilePreview file={competitorFile} onRemove={() => setCompetitorFile(null)} />
-                    <button type="button" onClick={() => setStep(2)}
-                      style={{ width: "100%", height: 48, marginTop: 20, borderRadius: 9999, border: "none", background: "#6366f1", color: "white", fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                      Next — configure & compare <ArrowRight size={16} />
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    {/* Upload dropzone — always visible */}
-                    <DropZone onFileSelect={(f) => { setCompetitorFile(f); setStep(2); }} height={180} />
+                <div style={{ width: "100%", maxWidth: 480 }}>
+                  {competitorFile ? (
+                    <>
+                      <FilePreview file={competitorFile} onRemove={() => setCompetitorFile(null)} />
+                      <button type="button" onClick={() => setStep(2)}
+                        style={{ width: "100%", height: 48, marginTop: 20, borderRadius: 9999, border: "none", background: BRAND_COLOR, color: "white", fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                        Next — configure & compare <ArrowRight size={16} />
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      {/* Upload dropzone — always visible */}
+                      <DropZone onFileSelect={(f) => { setCompetitorFile(f); setStep(2); }} height={160} label="Drop competitor ad or click to browse" />
 
-                    {/* TikTok Creative Center */}
-                    <div onClick={() => window.open("https://ads.tiktok.com/business/creativecenter/inspiration/topads", "_blank")}
-                      style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "10px 14px", marginTop: 12, display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", transition: "all 150ms" }}
-                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(99,102,241,0.2)"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <Music2 size={14} color="#71717a" /><span style={{ fontSize: 13, color: "#a1a1aa" }}>Find TikTok ads</span>
-                      </div>
-                      <span style={{ fontSize: 12, color: "#6366f1" }}>Creative Center ↗</span>
-                    </div>
-                    <p style={{ fontSize: 11, color: "#52525b", margin: "6px 0 0 0" }}>Download from TikTok Creative Center, then upload above</p>
-
-                    {/* Meta Ad Library search — only when token is available */}
-                    {META_TOKEN && (
-                      <>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "16px 0 12px" }}>
-                          <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
-                          <span style={{ fontSize: 11, color: "#52525b" }}>or search Meta Ad Library</span>
-                          <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
+                      {/* TikTok Creative Center */}
+                      <div onClick={() => window.open("https://ads.tiktok.com/business/creativecenter/inspiration/topads", "_blank")}
+                        style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "10px 14px", marginTop: 12, display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", transition: "all 150ms" }}
+                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = BRAND_BORDER; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <Music2 size={14} color="#71717a" /><span style={{ fontSize: 13, color: "#a1a1aa" }}>Find TikTok ads</span>
                         </div>
-                        <MetaSearch onFileSelect={(f) => { setCompetitorFile(f); setStep(3); }} />
-                      </>
-                    )}
-                  </>
-                )}
+                        <span style={{ fontSize: 12, color: BRAND_COLOR }}>Creative Center ↗</span>
+                      </div>
+                      <p style={{ fontSize: 11, color: "#52525b", margin: "6px 0 0 0" }}>Download from TikTok Creative Center, then upload above</p>
+
+                      {/* Meta Ad Library search — only when token is available */}
+                      {META_TOKEN && (
+                        <>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "16px 0 12px" }}>
+                            <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
+                            <span style={{ fontSize: 11, color: "#52525b" }}>or search Meta Ad Library</span>
+                            <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
+                          </div>
+                          <MetaSearch onFileSelect={(f) => { setCompetitorFile(f); setStep(3); }} />
+                        </>
+                      )}
+                    </>
+                  )}
+                </div>
               </motion.div>
             )}
 
             {/* ── STEP 2: CONFIGURE + COMPARE ────────────────────── */}
             {step === 2 && status !== "analyzing" && status !== "complete" && (
-              <motion.div key="s2" {...SLIDE} style={{ paddingTop: 32 }}>
-                <button type="button" onClick={() => setStep(1)} style={{ background: "none", border: "none", color: "#52525b", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, marginBottom: 20 }}>
+              <motion.div key="s2" {...SLIDE} style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 24 }}>
+                <button type="button" onClick={() => setStep(1)} style={{ alignSelf: "flex-start", background: "none", border: "none", color: "#52525b", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, marginBottom: 16 }}>
                   <ChevronLeft size={14} /> Back
                 </button>
-                <h3 style={{ fontSize: 18, fontWeight: 600, color: "#f4f4f5", margin: "0 0 16px" }}>Configure & compare</h3>
+                <h3 style={{ fontSize: 18, fontWeight: 600, color: "#f4f4f5", margin: "0 0 20px", textAlign: "center" }}>Ready to compare</h3>
 
-                {/* Both file previews side by side */}
-                <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
-                  {[{ label: "Your Ad", file: yourFile }, { label: "Competitor", file: competitorFile }].map(({ label, file: f }) => (
-                    <div key={label} style={{ flex: 1, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: 10 }}>
-                      <p style={{ fontSize: 11, color: "#52525b", margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</p>
-                      <span style={{ fontSize: 12, color: "#a1a1aa", fontFamily: "var(--font-mono, monospace)" }}>
-                        {f ? (f.name.length > 20 ? f.name.slice(0, 17) + "..." : f.name) : "—"}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Platform + format selectors */}
-                <div style={{ marginBottom: 16 }}>
-                  <p style={{ fontSize: 12, color: "#52525b", marginBottom: 8 }}>Platform</p>
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                    {PLATFORMS.map((p) => (
-                      <button key={p} type="button" onClick={() => setPlatform(p)}
-                        style={{ height: 32, padding: "0 14px", borderRadius: 9999, fontSize: 13, cursor: "pointer", background: platform === p ? "#6366f1" : "rgba(255,255,255,0.04)", border: `1px solid ${platform === p ? "#6366f1" : "rgba(255,255,255,0.08)"}`, color: platform === p ? "white" : "#71717a", fontWeight: platform === p ? 500 : 400, transition: "all 150ms" }}>
-                        {p === "all" ? "All" : p}
-                      </button>
+                <div style={{ width: "100%", maxWidth: 520 }}>
+                  {/* Both file previews side by side */}
+                  <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
+                    {[{ label: "Your Ad", file: yourFile }, { label: "Competitor", file: competitorFile }].map(({ label, file: f }) => (
+                      <div key={label} style={{ flex: 1, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: 12 }}>
+                        <p style={{ fontSize: 10, color: "#52525b", margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 500 }}>{label}</p>
+                        <span style={{ fontSize: 12, color: "#a1a1aa", fontFamily: "var(--font-mono, monospace)" }}>
+                          {f ? (f.name.length > 20 ? f.name.slice(0, 17) + "..." : f.name) : "—"}
+                        </span>
+                      </div>
                     ))}
                   </div>
-                </div>
-                <div style={{ marginBottom: 24 }}>
-                  <p style={{ fontSize: 12, color: "#52525b", marginBottom: 8 }}>Format</p>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    {FORMATS.map((f) => (
-                      <button key={f} type="button" onClick={() => setFormat(f)}
-                        style={{ height: 32, padding: "0 14px", borderRadius: 9999, fontSize: 13, cursor: "pointer", background: format === f ? "#6366f1" : "rgba(255,255,255,0.04)", border: `1px solid ${format === f ? "#6366f1" : "rgba(255,255,255,0.08)"}`, color: format === f ? "white" : "#71717a", fontWeight: format === f ? 500 : 400, transition: "all 150ms" }}>
-                        {f.charAt(0).toUpperCase() + f.slice(1)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
 
-                {error && (
-                  <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", marginBottom: 16 }}>
-                    <p style={{ fontSize: 12, color: "#ef4444", margin: 0, lineHeight: 1.5 }}>{error}</p>
-                    <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-                      <button type="button" onClick={handleRetry}
-                        style={{ height: 32, padding: "0 16px", borderRadius: 9999, border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.1)", color: "#ef4444", fontSize: 12, fontWeight: 500, cursor: "pointer", transition: "all 150ms" }}>
-                        Retry
-                      </button>
-                      <button type="button" onClick={handleReset}
-                        style={{ height: 32, padding: "0 16px", borderRadius: 9999, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", color: "#71717a", fontSize: 12, fontWeight: 500, cursor: "pointer", transition: "all 150ms" }}>
-                        Start over
-                      </button>
+                  {/* Platform + format selectors */}
+                  <div style={{ marginBottom: 16 }}>
+                    <p style={{ fontSize: 11, color: "#52525b", marginBottom: 8, fontWeight: 500 }}>Platform</p>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                      {PLATFORMS.map((p) => (
+                        <button key={p} type="button" onClick={() => setPlatform(p)}
+                          style={{ height: 34, padding: "0 14px", borderRadius: 8, fontSize: 13, cursor: "pointer", background: platform === p ? BRAND_COLOR : "rgba(255,255,255,0.03)", border: `1px solid ${platform === p ? BRAND_COLOR : "rgba(255,255,255,0.08)"}`, color: platform === p ? "white" : "#71717a", fontWeight: platform === p ? 500 : 400, transition: "all 150ms" }}>
+                          {p === "all" ? "All" : p}
+                        </button>
+                      ))}
                     </div>
                   </div>
-                )}
+                  <div style={{ marginBottom: 24 }}>
+                    <p style={{ fontSize: 11, color: "#52525b", marginBottom: 8, fontWeight: 500 }}>Format</p>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      {FORMATS.map((f) => (
+                        <button key={f} type="button" onClick={() => setFormat(f)}
+                          style={{ height: 34, padding: "0 14px", borderRadius: 8, fontSize: 13, cursor: "pointer", background: format === f ? BRAND_COLOR : "rgba(255,255,255,0.03)", border: `1px solid ${format === f ? BRAND_COLOR : "rgba(255,255,255,0.08)"}`, color: format === f ? "white" : "#71717a", fontWeight: format === f ? 500 : 400, transition: "all 150ms" }}>
+                          {f.charAt(0).toUpperCase() + f.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
-                <button type="button" onClick={handleAnalyze} disabled={!yourFile || !competitorFile || !canAnalyze}
-                  style={{ width: "100%", height: 52, borderRadius: 9999, border: "none", background: "#6366f1", color: "white", fontSize: 15, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "all 150ms" }}>
-                  <Swords size={18} /> Compare Ads
-                </button>
+                  {error && (
+                    <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.15)", marginBottom: 16 }}>
+                      <p style={{ fontSize: 12, color: "#ef4444", margin: 0, lineHeight: 1.5 }}>{error}</p>
+                      <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                        <button type="button" onClick={handleRetry}
+                          style={{ height: 32, padding: "0 16px", borderRadius: 8, border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.1)", color: "#ef4444", fontSize: 12, fontWeight: 500, cursor: "pointer", transition: "all 150ms" }}>
+                          Retry
+                        </button>
+                        <button type="button" onClick={handleReset}
+                          style={{ height: 32, padding: "0 16px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", color: "#71717a", fontSize: 12, fontWeight: 500, cursor: "pointer", transition: "all 150ms" }}>
+                          Start over
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  <button type="button" onClick={handleAnalyze} disabled={!yourFile || !competitorFile || !canAnalyze}
+                    style={{ width: "100%", height: 50, borderRadius: 9999, border: "none", background: BRAND_COLOR, color: "white", fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "all 150ms" }}>
+                    <Swords size={18} /> Compare Ads
+                  </button>
+                </div>
               </motion.div>
             )}
 
@@ -494,10 +542,15 @@ export default function CompetitorAnalyzer() {
 
             {/* ── STEP 3: RESULTS ─────────────────────────────────── */}
             {step === 3 && result && (
-              <motion.div key="s3" {...SLIDE} style={{ paddingTop: 16 }}>
-                <button type="button" onClick={handleReset} style={{ background: "none", border: "none", color: "#52525b", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, marginBottom: 16 }}>
-                  <ChevronLeft size={14} /> Compare another
-                </button>
+              <motion.div key="s3" {...SLIDE} style={{ paddingTop: 20 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+                  <button type="button" onClick={handleReset} style={{ background: "none", border: "none", color: "#52525b", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
+                    <ChevronLeft size={14} /> Compare another
+                  </button>
+                  <span style={{ fontSize: 11, color: BRAND_COLOR_LIGHT, background: BRAND_BG, border: `1px solid ${BRAND_BORDER}`, borderRadius: 9999, padding: "4px 12px" }}>
+                    Analysis complete
+                  </span>
+                </div>
                 <CompetitorResultPanel result={result} yourFileName={yourFile?.name ?? "Your Ad"} competitorFileName={competitorFile?.name ?? "Competitor"} />
               </motion.div>
             )}
