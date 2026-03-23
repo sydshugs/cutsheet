@@ -46,27 +46,23 @@ export function VisualHierarchyExpanded({ content }: VisualHierarchyExpandedProp
 
   return (
     <div>
-      {/* Numbered eye-flow steps */}
+      {/* Eye-flow steps — cleaner card style */}
       {steps.length > 0 && (
-        <div className="flex flex-col">
+        <div className="flex flex-col gap-2">
           {steps.map((step, i) => (
             <div
               key={i}
-              className="flex items-start gap-2.5 py-2.5"
-              style={{ borderBottom: i < steps.length - 1 ? '0.5px solid rgba(255,255,255,0.05)' : 'none' }}
+              className="flex items-start gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.03] transition-colors"
             >
-              {/* Number circle */}
-              <div
-                className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5"
-                style={{ background: 'rgba(255,255,255,0.05)', border: '0.5px solid rgba(255,255,255,0.08)' }}
-              >
-                <span className="text-[10px] font-medium text-zinc-400">{i + 1}</span>
+              {/* Step number */}
+              <div className="w-6 h-6 rounded-lg bg-white/[0.05] flex items-center justify-center shrink-0">
+                <span className="text-[11px] font-semibold text-zinc-400">{i + 1}</span>
               </div>
               {/* Content */}
-              <div className="flex-1 min-w-0">
-                <span className="text-xs font-medium text-zinc-200">{step.element}</span>
+              <div className="flex-1 min-w-0 pt-0.5">
+                <span className="text-[13px] font-medium text-zinc-200">{step.element}</span>
                 {step.description && (
-                  <span className="text-[11px] text-zinc-500 block mt-0.5 leading-relaxed">{step.description}</span>
+                  <span className="text-[11px] text-zinc-500 block mt-1 leading-relaxed">{step.description}</span>
                 )}
               </div>
             </div>
@@ -74,24 +70,21 @@ export function VisualHierarchyExpanded({ content }: VisualHierarchyExpandedProp
         </div>
       )}
 
-      {/* Warning note — if hierarchy has issues */}
+      {/* Warning note */}
       {hasIssue && warnings.length > 0 && (
-        <div
-          className="flex items-start gap-2 rounded-lg mt-3"
-          style={{ background: 'rgba(239,68,68,0.06)', border: '0.5px solid rgba(239,68,68,0.15)', padding: '8px 10px' }}
-        >
-          <AlertCircle size={12} className="text-red-400 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-2.5 rounded-xl mt-3 p-3.5 bg-red-500/[0.04] border border-red-500/10">
+          <AlertCircle size={14} className="text-red-400 shrink-0 mt-0.5" />
           <div className="flex-1">
             {warnings.map((w, i) => (
-              <p key={i} className="text-[11px] text-zinc-400 leading-relaxed">{w}</p>
+              <p key={i} className="text-xs text-zinc-400 leading-relaxed">{w}</p>
             ))}
           </div>
         </div>
       )}
 
-      {/* Fallback if no steps parsed */}
+      {/* Fallback */}
       {steps.length === 0 && (
-        <p className="text-xs text-zinc-400 leading-relaxed">{content.replace(/\*\*/g, '').trim()}</p>
+        <p className="text-[13px] text-zinc-400 leading-relaxed">{content.replace(/\*\*/g, '').trim()}</p>
       )}
     </div>
   );

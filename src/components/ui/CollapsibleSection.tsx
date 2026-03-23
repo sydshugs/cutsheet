@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 
 interface CollapsibleSectionProps {
   title: string;
@@ -26,40 +26,46 @@ export function CollapsibleSection({
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <div className={className}>
+    <div 
+      className={`rounded-xl transition-colors ${className}`}
+      style={{ 
+        background: open ? 'rgba(255,255,255,0.02)' : 'transparent',
+      }}
+    >
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         aria-expanded={open}
         aria-label={`${open ? 'Collapse' : 'Expand'} ${title}`}
-        className="w-full flex items-center justify-between gap-2 group focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:outline-none rounded"
-        style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
+        className="w-full flex items-center justify-between gap-3 group focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:outline-none rounded-xl py-3 px-0.5 hover:bg-white/[0.02] transition-colors"
+        style={{ background: "none", border: "none", cursor: "pointer" }}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
+          {/* Chevron indicator */}
+          <motion.span
+            animate={{ rotate: open ? 90 : 0 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className="text-zinc-500 group-hover:text-zinc-400 transition-colors"
+          >
+            <ChevronRight size={14} />
+          </motion.span>
           {icon && (
             <span
               className="flex-shrink-0 transition-colors"
-              style={{ color: open ? "var(--accent)" : "#52525b" }}
+              style={{ color: open ? "#a5b4fc" : "#52525b" }}
             >
               {icon}
             </span>
           )}
           <span
-            className="text-[13px] tracking-normal"
-            style={{ fontWeight: open ? 600 : 500, color: open ? "var(--ink)" : "rgba(255,255,255,0.5)" }}
+            className="text-[13px] tracking-normal transition-colors"
+            style={{ fontWeight: 500, color: open ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.6)" }}
           >
             {title}
           </span>
         </div>
         <div className="flex items-center gap-2">
           {trailing}
-          <motion.span
-            animate={{ rotate: open ? 180 : 0 }}
-            transition={{ duration: 0.2 }}
-            className="text-zinc-400 group-hover:text-zinc-200 transition-colors"
-          >
-            <ChevronDown size={14} />
-          </motion.span>
         </div>
       </button>
 
@@ -72,7 +78,7 @@ export function CollapsibleSection({
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
             style={{ overflow: "hidden" }}
           >
-            <div className="pt-3">{children}</div>
+            <div className="px-1 pb-4 pt-1">{children}</div>
           </motion.div>
         )}
       </AnimatePresence>

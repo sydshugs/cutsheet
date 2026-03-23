@@ -144,79 +144,39 @@ function BenchmarkBar({ score, benchmark, color, label }: BenchmarkBarProps) {
   const tickPct = `${(benchmark / 10) * 100}%`;
 
   return (
-    <div style={{ width: "100%", display: "flex", flexDirection: "column" }}>
-      {/* Bar track — position:relative, NOT overflow:hidden so tick can overflow */}
-      <div
-        style={{
-          width: "100%",
-          height: 4,
-          background: "rgba(255,255,255,0.07)",
-          borderRadius: 9999,
-          position: "relative",
-          marginTop: 16,
-        }}
-      >
-        {/* Score fill */}
-        <motion.div
-          style={{
-            height: "100%",
-            background: color,
-            borderRadius: 9999,
-            position: "absolute",
-            left: 0,
-            top: 0,
-          }}
-          initial={{ width: 0 }}
-          animate={{ width: fillPct }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-        />
-        {/* Benchmark tick — overflows the track vertically */}
-        <div
-          style={{
-            position: "absolute",
-            width: 2,
-            height: 14,
-            background: "#6366f1",
-            borderRadius: 2,
-            top: -5,
-            left: tickPct,
-            transform: "translateX(-50%)",
-          }}
-        />
-      </div>
-
-      {/* Labels below bar */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          marginTop: 6,
-        }}
-      >
-        <span
-          style={{
-            fontSize: 12,
-            color: color,
-            fontFamily: "var(--mono)",
-          }}
-        >
+    <div className="w-full flex flex-col">
+      {/* Labels above bar */}
+      <div className="flex items-center justify-between mb-2.5">
+        <span className="font-mono text-xs" style={{ color }}>
           You · {score.toFixed(1)}
         </span>
-        <span
-          style={{
-            fontSize: 12,
-            color: "#6366f1",
-            fontFamily: "var(--mono)",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            maxWidth: "55%",
-            textAlign: "right",
-          }}
+        <span 
+          className="font-mono text-xs text-indigo-400 truncate max-w-[55%] text-right"
           title={`${label ?? "Avg"} · ${benchmark.toFixed(1)}`}
         >
           {label ?? "Avg"} · {benchmark.toFixed(1)}
         </span>
+      </div>
+      
+      {/* Bar track */}
+      <div className="relative w-full h-1 bg-white/[0.06] rounded-full">
+        {/* Score fill */}
+        <motion.div
+          className="absolute h-full rounded-full left-0 top-0"
+          style={{ background: color }}
+          initial={{ width: 0 }}
+          animate={{ width: fillPct }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+        />
+        {/* Benchmark tick */}
+        <div
+          className="absolute w-0.5 h-3 bg-indigo-500 rounded-sm"
+          style={{
+            top: -4,
+            left: tickPct,
+            transform: "translateX(-50%)",
+          }}
+        />
       </div>
     </div>
   );
@@ -266,117 +226,83 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
     : "Avg");
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        width: "100%",
-        padding: "24px 16px 8px",
-      }}
-    >
-      {/* 1. Score number + /10 */}
-      <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+    <div className="flex flex-col items-center w-full px-5 pt-6 pb-4">
+      {/* Score display — cleaner, larger typography */}
+      <div className="flex items-baseline gap-1">
         <span
+          className="font-mono tabular-nums tracking-tight"
           style={{
-            fontFamily: "var(--mono)",
-            fontSize: 56,
-            fontWeight: 600,
+            fontSize: 64,
+            fontWeight: 500,
             lineHeight: 1,
             color,
-            fontVariantNumeric: "tabular-nums",
+            letterSpacing: '-0.02em',
           }}
         >
           {animatedScore.toFixed(1)}
         </span>
-        <span
-          style={{
-            fontFamily: "var(--mono)",
-            fontSize: 16,
-            color: "#71717a",
-          }}
-        >
-          /10
-        </span>
+        <span className="font-mono text-lg text-zinc-600">/10</span>
       </div>
 
-      {/* 2. Verdict label */}
+      {/* Verdict label — understated */}
       <span
-        style={{
-          fontSize: 14,
-          fontWeight: 500,
-          color,
-          marginTop: 4,
-        }}
+        className="text-sm font-medium mt-1.5 tracking-wide"
+        style={{ color }}
       >
         {verdict}
       </span>
 
-      {/* 3. Benchmark bar (conditional) */}
+      {/* Benchmark bar */}
       {showBenchmark && (
-        <BenchmarkBar
-          score={score}
-          benchmark={resolvedBenchmark!}
-          color={color}
-          platform={platform}
-          label={benchmarkLabel}
-        />
+        <div className="w-full mt-5">
+          <BenchmarkBar
+            score={score}
+            benchmark={resolvedBenchmark!}
+            color={color}
+            platform={platform}
+            label={benchmarkLabel}
+          />
+        </div>
       )}
 
-      {/* 4. Divider */}
-      <div
-        style={{
-          width: "100%",
-          height: 1,
-          background: "rgba(255,255,255,0.06)",
-          margin: "16px 0",
-        }}
-      />
-
-      {/* 5. Dimension grid */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
-          width: "100%",
-        }}
-      >
-        {resolvedDimensions.map((dim, i) => {
-          const dimColor = scoreColor(dim.score);
-          return (
-            <motion.div
-              key={dim.name}
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.28, delay: i * 0.08, ease: "easeOut" }}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 2,
-              }}
-            >
-              <span
+      {/* Dimension grid — cleaner cards */}
+      <div className="w-full mt-5 pt-5 border-t border-white/[0.06]">
+        <div className="grid grid-cols-4 gap-2">
+          {resolvedDimensions.map((dim, i) => {
+            const dimColor = scoreColor(dim.score);
+            const isStrong = dim.score >= 8;
+            const isWeak = dim.score < 4;
+            return (
+              <motion.div
+                key={dim.name}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: i * 0.05, ease: "easeOut" }}
+                className="flex flex-col items-center gap-1.5 py-3 px-1 rounded-xl transition-colors"
                 style={{
-                  fontFamily: "var(--mono)",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  color: dimColor,
-                  fontVariantNumeric: "tabular-nums",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 3,
+                  background: 'rgba(255,255,255,0.02)',
                 }}
               >
-                <span style={{ fontSize: 7, lineHeight: 1 }} aria-hidden="true">{scoreIndicator(dim.score)}</span>
-                {dim.score.toFixed(1)}
-              </span>
-              <span style={{ fontSize: 12, color: "#a1a1aa", whiteSpace: "nowrap" }}>
-                {dim.name}
-              </span>
-            </motion.div>
-          );
-        })}
+                <div className="flex items-center gap-1.5">
+                  {/* Score indicator dot */}
+                  <span 
+                    className="w-1.5 h-1.5 rounded-full"
+                    style={{ background: dimColor }}
+                  />
+                  <span
+                    className="font-mono text-sm font-semibold tabular-nums"
+                    style={{ color: dimColor }}
+                  >
+                    {dim.score.toFixed(1)}
+                  </span>
+                </div>
+                <span className="text-[11px] text-zinc-500 text-center leading-tight whitespace-nowrap">
+                  {dim.name}
+                </span>
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

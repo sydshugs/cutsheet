@@ -339,16 +339,16 @@ export function ReportCards({
   }, [hashtags]);
 
   return (
-    <div className="flex flex-col">
-      {/* ─── Media preview ─── */}
+    <div className="flex flex-col gap-4">
+      {/* Media preview — cleaner card */}
       {file && fileUrl && (
-        <div>
+        <div className="rounded-2xl overflow-hidden border border-white/[0.06] bg-black/20">
           {isImage ? (
-            <div style={{ display: "flex", justifyContent: "center" }}>
+            <div className="flex justify-center p-4">
               <img
                 src={fileUrl}
                 alt={sanitizeFileName(file.name)}
-                style={{ maxWidth: "100%", maxHeight: 420, objectFit: "contain", borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)" }}
+                className="max-w-full max-h-[420px] object-contain rounded-xl"
               />
             </div>
           ) : (
@@ -357,23 +357,22 @@ export function ReportCards({
               src={fileUrl}
               poster={thumbnailDataUrl ?? undefined}
               controls
-              className="rounded-2xl border border-white/5 overflow-hidden max-h-[320px] w-full object-contain bg-black"
+              className="w-full max-h-[360px] object-contain"
             />
           )}
-          <p className="text-xs text-zinc-500 font-mono mt-2 truncate" title={file.name}>
-            {(() => { const n = sanitizeFileName(file.name); return n.length > 40 ? n.slice(0, 37) + "\u2026" : n; })()} · {(file.size / 1024 / 1024).toFixed(1)} MB
-          </p>
+          {/* File info bar */}
+          <div className="flex items-center justify-between px-4 py-3 border-t border-white/[0.05] bg-white/[0.02]">
+            <p className="text-xs text-zinc-500 font-mono truncate" title={file.name}>
+              {(() => { const n = sanitizeFileName(file.name); return n.length > 35 ? n.slice(0, 32) + "…" : n; })()} 
+            </p>
+            <span className="text-xs text-zinc-600">{(file.size / 1024 / 1024).toFixed(1)} MB</span>
+          </div>
         </div>
       )}
 
-      {/* ─── Mini dropzone ─── */}
+      {/* Upload another — cleaner button style */}
       {onReset && onFileSelect && (
-        <div
-          style={{
-            marginTop: 12, height: 52, border: "1px dashed rgba(99,102,241,0.3)", borderRadius: 10,
-            display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-            cursor: "pointer", transition: "all 150ms", background: "rgba(99,102,241,0.03)",
-          }}
+        <button
           onClick={() => {
             const input = document.createElement("input");
             input.type = "file";
@@ -384,112 +383,54 @@ export function ReportCards({
             };
             input.click();
           }}
-          onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)"; e.currentTarget.style.background = "rgba(99,102,241,0.05)"; }}
-          onDragLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "transparent"; }}
-          onDrop={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "transparent"; const f = e.dataTransfer.files[0]; if (f) { onReset(); setTimeout(() => onFileSelect(f), 50); } }}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "transparent"; }}
+          className="flex items-center justify-center gap-2 h-12 rounded-xl border border-dashed border-white/[0.08] hover:border-indigo-500/30 hover:bg-indigo-500/[0.03] transition-all cursor-pointer"
         >
-          <Upload size={14} style={{ color: "#818cf8" }} />
-          <span style={{ fontSize: 12, color: "#a1a1aa" }}>Analyze another creative</span>
-        </div>
+          <Upload size={14} className="text-indigo-400" />
+          <span className="text-xs text-zinc-400">Analyze another creative</span>
+        </button>
       )}
 
       {/* Verdict banner moved to right panel */}
 
-      {/* ─── Tools card with click-to-expand detail strip ─── */}
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: 'easeOut', delay: 0 }}>
+      {/* ─── Tools row — cleaner horizontal layout ─── */}
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, ease: 'easeOut' }}>
       {(onFixIt || onVisualize || onCheckPolicies || onCompare) && (() => {
         const tools = [
-          { key: 'fix', icon: Wand2, name: 'AI Rewrite', credit: 'free', iconBg: 'rgba(99,102,241,0.1)', hoverIconBg: 'rgba(99,102,241,0.18)', iconColor: '#818cf8', ctaBg: 'rgba(99,102,241,0.12)', ctaBorder: 'rgba(99,102,241,0.25)', ctaColor: '#818cf8', ctaLabel: 'Run AI Rewrite →', desc: 'AI rewrites your ad with all priority fixes applied — tighter hook, CTA added, copy sharpened.', onClick: onFixIt, loading: fixItLoading },
-          { key: 'visualize', icon: Image, name: 'Visualize It', credit: '1 credit', iconBg: 'rgba(16,185,129,0.1)', hoverIconBg: 'rgba(16,185,129,0.18)', iconColor: '#10b981', ctaBg: 'rgba(16,185,129,0.08)', ctaBorder: 'rgba(16,185,129,0.2)', ctaColor: '#10b981', ctaLabel: 'Run Visualize →', desc: 'Turn your static image into a short animated video using AI — ready to test as motion creative.', onClick: onVisualize, disabled: format !== 'static' },
-          { key: 'policy', icon: ShieldCheck, name: 'Policy check', credit: 'free', iconBg: 'rgba(251,191,36,0.1)', hoverIconBg: 'rgba(251,191,36,0.18)', iconColor: '#d97706', ctaBg: 'rgba(251,191,36,0.08)', ctaBorder: 'rgba(251,191,36,0.2)', ctaColor: '#d97706', ctaLabel: 'Run Policy check →', desc: 'Scans your ad against Meta, TikTok, and Google platform policies and flags violations.', onClick: onCheckPolicies, loading: policyLoading },
-          // Compare removed from tools grid
+          { key: 'fix', icon: Wand2, name: 'AI Rewrite', credit: 'Free', iconColor: '#818cf8', onClick: onFixIt, loading: fixItLoading },
+          { key: 'visualize', icon: Image, name: 'Visualize', credit: '1 credit', iconColor: '#10b981', onClick: onVisualize, disabled: format !== 'static' },
+          { key: 'policy', icon: ShieldCheck, name: 'Policy', credit: 'Free', iconColor: '#f59e0b', onClick: onCheckPolicies, loading: policyLoading },
         ];
-        const active = tools.find(t => t.key === activeTool);
         return (
-          <div
-            className="mt-6 rounded-xl overflow-hidden transition-colors"
-            style={{ border: activeTool ? '0.5px solid rgba(99,102,241,0.3)' : '0.5px solid rgba(255,255,255,0.06)', background: 'var(--surface, rgba(255,255,255,0.02))' }}
-          >
-            {/* 4-column tab row */}
-            <div className="grid grid-cols-3" style={{ borderBottom: active ? '0.5px solid rgba(255,255,255,0.06)' : 'none' }}>
-              {tools.map((t, i) => {
-                const isActive = activeTool === t.key;
-                const Icon = t.icon;
-                const isDisabled = !!t.disabled;
-                const isLoading = !!t.loading;
-                return (
-                  <div
-                    key={t.key}
-                    title={isDisabled ? 'Not available for video ads' : undefined}
-                    style={{ borderRight: i < 2 ? '0.5px solid rgba(255,255,255,0.06)' : 'none' }}
-                  >
-                    <motion.button
-                      onClick={() => !isDisabled && !isLoading && setActiveTool(isActive ? null : t.key)}
-                      whileHover={!isDisabled && !isLoading ? { y: -1 } : {}}
-                      whileTap={!isDisabled && !isLoading ? { y: 0, scale: 0.98 } : {}}
-                      transition={{ duration: 0.15 }}
-                      className="group w-full flex flex-col items-center gap-2 py-4 px-2 border transition-all duration-150 cursor-pointer"
-                      style={{
-                        background: isActive ? 'rgba(99,102,241,0.06)' : 'rgba(255,255,255,0.04)',
-                        borderColor: isActive ? 'rgba(99,102,241,0.3)' : 'rgba(255,255,255,0.08)',
-                        opacity: isDisabled ? 0.35 : 1,
-                        cursor: isDisabled ? 'not-allowed' : isLoading ? 'not-allowed' : 'pointer',
-                        boxShadow: 'none',
-                      }}
-                      onMouseEnter={e => {
-                        if (!isDisabled && !isLoading) {
-                          (e.currentTarget as HTMLButtonElement).style.background = isActive ? 'rgba(99,102,241,0.1)' : 'rgba(255,255,255,0.08)';
-                          (e.currentTarget as HTMLButtonElement).style.borderColor = isActive ? 'rgba(99,102,241,0.4)' : 'rgba(255,255,255,0.15)';
-                          (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
-                        }
-                      }}
-                      onMouseLeave={e => {
-                        (e.currentTarget as HTMLButtonElement).style.background = isActive ? 'rgba(99,102,241,0.06)' : 'rgba(255,255,255,0.04)';
-                        (e.currentTarget as HTMLButtonElement).style.borderColor = isActive ? 'rgba(99,102,241,0.3)' : 'rgba(255,255,255,0.08)';
-                        (e.currentTarget as HTMLButtonElement).style.boxShadow = 'none';
-                      }}
-                    >
-                      <div className="w-[38px] h-[38px] rounded-[11px] flex items-center justify-center" style={{ background: t.iconBg }}>
-                        {isLoading ? (
-                          <div className="w-4 h-4 border-2 rounded-full animate-spin" style={{ borderColor: `${t.iconColor}30`, borderTopColor: t.iconColor }} />
-                        ) : (
-                          <Icon size={16} style={{ color: t.iconColor }} />
-                        )}
-                      </div>
-                      <span className="text-[11px] font-medium" style={{ color: isActive ? '#818cf8' : '#e4e4e7' }}>{t.name}</span>
-                      <span className="text-[9px] text-zinc-500 bg-white/5 rounded-full px-1.5 py-px">{t.credit}</span>
-                    </motion.button>
-                  </div>
-                );
-              })}
-            </div>
-            {/* Detail strip */}
-            {active && (
-              <div className="flex items-center gap-3.5 px-4 py-3.5" style={{ animation: 'fadeIn 150ms ease' }}>
-                <div className="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: active.iconBg }}>
-                  <active.icon size={18} style={{ color: active.iconColor }} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-medium text-zinc-200">
-                    {active.name} <span className="text-[10px] text-zinc-500 font-normal ml-1">{active.credit}</span>
-                  </p>
-                  <p className="text-xs text-zinc-400 leading-relaxed mt-0.5">{active.desc}</p>
-                </div>
-                <motion.button
-                  onClick={active.onClick}
-                  disabled={active.disabled || active.loading}
-                  whileHover={!active.disabled && !active.loading ? { y: -1 } : {}}
-                  whileTap={!active.disabled && !active.loading ? { y: 0, scale: 0.98 } : {}}
-                  transition={{ duration: 0.15 }}
-                  className="shrink-0 text-xs font-medium rounded-lg px-4 py-2 whitespace-nowrap transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
-                  style={{ background: active.ctaBg, border: `1px solid ${active.ctaBorder}`, color: active.ctaColor }}
+          <div className="mt-5 grid grid-cols-3 gap-2">
+            {tools.map((t) => {
+              const Icon = t.icon;
+              const isDisabled = !!t.disabled;
+              const isLoading = !!t.loading;
+              return (
+                <button
+                  key={t.key}
+                  onClick={() => !isDisabled && !isLoading && t.onClick?.()}
+                  disabled={isDisabled || isLoading}
+                  title={isDisabled ? 'Not available for video ads' : undefined}
+                  className="group flex flex-col items-center gap-2.5 py-4 px-3 rounded-xl border border-white/[0.06] bg-white/[0.02] transition-all hover:bg-white/[0.04] hover:border-white/[0.1] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                 >
-                  {active.loading ? 'Running...' : active.ctaLabel}
-                </motion.button>
-              </div>
-            )}
+                  <div 
+                    className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors"
+                    style={{ background: `${t.iconColor}15` }}
+                  >
+                    {isLoading ? (
+                      <div className="w-4 h-4 border-2 rounded-full animate-spin" style={{ borderColor: `${t.iconColor}30`, borderTopColor: t.iconColor }} />
+                    ) : (
+                      <Icon size={18} style={{ color: t.iconColor }} />
+                    )}
+                  </div>
+                  <div className="text-center">
+                    <span className="text-xs font-medium text-zinc-200 block">{t.name}</span>
+                    <span className="text-[10px] text-zinc-500">{t.credit}</span>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         );
       })()}

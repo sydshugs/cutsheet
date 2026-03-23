@@ -47,15 +47,24 @@ export function HashtagsC2({ hashtags, format }: HashtagsC2Props) {
   if (availablePlatforms.length === 0) return null;
 
   return (
-    <div style={{ marginTop: 16, padding: "0 20px", paddingBottom: 8 }}>
+    <div className="mt-5 px-5 pb-5">
       {/* Header */}
-      <div className="flex items-center gap-2 mb-0">
-        <Hash size={14} className="text-zinc-500" />
-        <span className="text-xs font-medium text-zinc-200">Recommended hashtags</span>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <Hash size={14} className="text-zinc-500" />
+          <span className="text-xs font-medium text-zinc-300">Hashtags</span>
+        </div>
+        <button
+          onClick={handleCopy}
+          className="text-[11px] font-medium cursor-pointer transition-colors hover:text-indigo-300"
+          style={{ color: copied ? '#10b981' : '#818cf8', background: 'none', border: 'none' }}
+        >
+          {copied ? 'Copied' : 'Copy all'}
+        </button>
       </div>
 
-      {/* Platform chip row */}
-      <div className="flex gap-1.5 py-2.5" style={{ borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
+      {/* Platform tabs */}
+      <div className="flex gap-1 mb-3">
         {availablePlatforms.map(plat => {
           const isActive = activePlatform === plat;
           return (
@@ -64,12 +73,11 @@ export function HashtagsC2({ hashtags, format }: HashtagsC2Props) {
               onClick={() => { setActivePlatform(plat); setShowAll(false); }}
               aria-label={`Show ${plat} hashtags`}
               aria-pressed={isActive}
-              className="text-[11px] font-medium rounded-full cursor-pointer transition-all duration-150 hover:text-zinc-300 focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:outline-none"
+              className="text-[11px] font-medium px-3 py-1.5 rounded-lg cursor-pointer transition-all hover:bg-white/[0.05] focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:outline-none"
               style={{
-                padding: '4px 12px',
-                background: isActive ? 'rgba(99,102,241,0.1)' : 'rgba(255,255,255,0.03)',
-                color: isActive ? '#818cf8' : '#71717a',
-                border: isActive ? '0.5px solid rgba(99,102,241,0.2)' : '0.5px solid transparent',
+                background: isActive ? 'rgba(255,255,255,0.06)' : 'transparent',
+                color: isActive ? '#e4e4e7' : '#71717a',
+                border: 'none',
               }}
             >
               {plat}
@@ -78,43 +86,28 @@ export function HashtagsC2({ hashtags, format }: HashtagsC2Props) {
         })}
       </div>
 
-      {/* Pills body — tightened padding, limited by default */}
-      <div className="flex flex-wrap gap-1 py-2.5">
+      {/* Tags */}
+      <div className="flex flex-wrap gap-1.5">
         {visibleTags.map(tag => (
           <span
             key={tag}
-            className="text-[11px] rounded-full cursor-default transition-all duration-150 hover:bg-indigo-500/10 hover:text-indigo-400"
-            style={{ padding: '3px 8px', background: 'rgba(255,255,255,0.04)', color: '#a1a1aa' }}
+            className="text-[11px] px-2.5 py-1 rounded-md bg-white/[0.03] text-zinc-400 hover:bg-white/[0.05] hover:text-zinc-300 transition-colors cursor-default"
           >
             #{tag}
           </span>
         ))}
-        {/* Show more / less toggle inline */}
         {hasMore && (
           <button
             onClick={() => setShowAll(v => !v)}
-            className="text-[11px] font-medium rounded-full cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:outline-none"
-            style={{ padding: '3px 8px', background: 'rgba(99,102,241,0.08)', color: '#818cf8', border: '0.5px solid rgba(99,102,241,0.2)' }}
+            className="text-[11px] font-medium px-2.5 py-1 rounded-md cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:outline-none bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/15 border-none"
           >
-            {showAll ? 'Show less' : `+${tags.length - VISIBLE_DEFAULT} more`}
+            {showAll ? 'Less' : `+${tags.length - VISIBLE_DEFAULT}`}
           </button>
         )}
       </div>
 
-      {/* Footer strip */}
-      <div
-        className="flex items-center justify-between rounded-lg"
-        style={{ padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderTop: '0.5px solid rgba(255,255,255,0.06)' }}
-      >
-        <span className="text-[11px] text-zinc-500">{tags.length} tags</span>
-        <button
-          onClick={handleCopy}
-          className="text-[11px] font-medium cursor-pointer transition-colors bg-transparent border-none"
-          style={{ color: copied ? '#10b981' : '#818cf8' }}
-        >
-          {copied ? 'Copied!' : 'Copy all →'}
-        </button>
-      </div>
+      {/* Tag count */}
+      <p className="text-[10px] text-zinc-600 mt-2">{tags.length} tags for {activePlatform}</p>
     </div>
   );
 }

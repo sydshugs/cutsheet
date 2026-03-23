@@ -287,23 +287,21 @@ export function ScoreCard({
 
   return (
     <div className="scorecard flex flex-col">
-      {/* Header — Option A */}
-      <div className="px-5 pt-4 pb-3 flex items-center justify-between">
-        <span className="text-[13px] font-medium text-zinc-200">Score Overview</span>
-        <div className="flex items-center gap-1.5">
+      {/* Header — cleaner, minimal */}
+      <div className="px-5 pt-5 pb-4 flex items-center justify-between border-b border-white/[0.05]">
+        <span className="text-sm font-medium text-zinc-300">Score Overview</span>
+        <div className="flex items-center gap-2">
           <button
             onClick={handleCopy}
             aria-label="Copy scores to clipboard"
-            className="inline-flex items-center gap-1.5 text-[11px] rounded-lg cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:outline-none"
+            className="inline-flex items-center gap-1.5 text-xs font-medium rounded-lg cursor-pointer transition-all hover:bg-white/[0.06] focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:outline-none px-2.5 py-1.5"
             style={{
-              padding: '4px 10px',
-              background: 'rgba(255,255,255,0.03)',
-              border: '0.5px solid rgba(255,255,255,0.08)',
+              background: 'transparent',
               color: copied ? '#10b981' : '#71717a',
             }}
           >
-            {copied ? <CheckCircle size={11} /> : <Copy size={11} />}
-            {copied ? "Copied!" : "Copy scores"}
+            {copied ? <CheckCircle size={12} /> : <Copy size={12} />}
+            {copied ? "Copied" : "Copy"}
           </button>
           {(onGenerateBrief || onAddToSwipeFile || onStartOver || onCheckPolicies || onCompare) && (
             <OverflowMenu
@@ -324,62 +322,30 @@ export function ScoreCard({
         </div>
       </div>
 
-      {/* Verdict block — Option A */}
+      {/* Verdict block — cleaner inline style */}
       {verdict && (() => {
         const vColors = {
-          not_ready: { bg: 'rgba(239,68,68,0.06)', border: 'rgba(239,68,68,0.15)', chipBg: 'rgba(239,68,68,0.12)', color: '#ef4444', label: 'Not ready' },
-          needs_work: { bg: 'rgba(217,119,6,0.06)', border: 'rgba(217,119,6,0.15)', chipBg: 'rgba(217,119,6,0.12)', color: '#d97706', label: 'Needs work' },
-          ready: { bg: 'rgba(16,185,129,0.06)', border: 'rgba(16,185,129,0.15)', chipBg: 'rgba(16,185,129,0.12)', color: '#10b981', label: 'Ready' },
+          not_ready: { color: '#ef4444', label: 'Not ready' },
+          needs_work: { color: '#f59e0b', label: 'Needs work' },
+          ready: { color: '#10b981', label: 'Ready' },
         };
         const v = vColors[verdict.state];
         return (
-          <div className="mx-4 mb-3">
-            <div
-              className="flex items-center gap-2.5 rounded-[9px]"
-              style={{ padding: '10px 12px', background: v.bg, border: `0.5px solid ${v.border}` }}
-            >
-              <span
-                className="text-[10px] font-medium uppercase rounded-full shrink-0"
-                style={{ padding: '2px 8px', background: v.chipBg, color: v.color }}
-              >
-                {v.label}
-              </span>
-              <span className="text-xs text-zinc-400 leading-[1.45]">{verdict.headline}</span>
-            </div>
+          <div className="mx-5 mt-4 mb-2 flex items-center gap-3">
+            <span className="w-2 h-2 rounded-full shrink-0" style={{ background: v.color }} />
+            <span className="text-sm text-zinc-400 leading-relaxed">{verdict.headline}</span>
           </div>
         );
       })()}
 
-      {/* Analysis content — Glass card */}
-      <div style={{
-        background: "var(--glass-card-bg)",
-        backdropFilter: "var(--glass-card-blur)",
-        WebkitBackdropFilter: "var(--glass-card-blur)",
-        border: "1px solid var(--glass-card-border)",
-        boxShadow: "var(--glass-card-shadow)",
-        borderRadius: "var(--radius-lg)",
-        overflow: "hidden",
-        position: "relative",
-        margin: "12px 16px 0",
-      }}>
-        {/* Ambient glow */}
-        <div style={{
-          position: "absolute",
-          inset: 0,
-          background: "var(--ambient-glow)",
-          pointerEvents: "none",
-          zIndex: 0,
-        }} />
-
-        {/* Card content */}
-        <div style={{ position: "relative", zIndex: 1 }}>
-
-          {/* Platform switcher — inside glass card at top */}
-          {platformSwitcher && (
-            <div className="px-4 pt-3 pb-1">
-              {platformSwitcher}
-            </div>
-          )}
+      {/* Main content card — cleaner styling */}
+      <div className="mx-4 mt-3 rounded-2xl overflow-hidden border border-white/[0.06] bg-white/[0.015]">
+        {/* Platform switcher */}
+        {platformSwitcher && (
+          <div className="px-4 pt-4 pb-2 border-b border-white/[0.05]">
+            {platformSwitcher}
+          </div>
+        )}
 
           {/* 1 + 2. ScoreHero — score number + benchmark bar + dimension grid */}
           <ScoreHero

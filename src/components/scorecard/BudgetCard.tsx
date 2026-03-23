@@ -1,12 +1,13 @@
 // BudgetCard — engine-based budget recommendation display (redesigned)
 
+import { AlertCircle, TrendingUp, Pause } from "lucide-react";
 import type { EngineBudgetRecommendation } from "../../services/budgetService";
 import type { BudgetRecommendation } from "../../services/analyzerService";
 
 const TIER_STYLES = {
-  hold:    { dot: '#ef4444', label: 'Fix First' },
-  limited: { dot: '#f59e0b', label: 'Limited test' },
-  test:    { dot: '#10b981', label: 'Ready to scale' },
+  hold:    { color: '#ef4444', label: 'Fix First', icon: Pause },
+  limited: { color: '#f59e0b', label: 'Test Budget', icon: AlertCircle },
+  test:    { color: '#10b981', label: 'Ready to Scale', icon: TrendingUp },
 } as const;
 
 interface BudgetCardProps {
@@ -19,91 +20,75 @@ export function BudgetCard({ engineBudget, budget, onNavigateSettings }: BudgetC
   // Engine-based budget
   if (engineBudget) {
     const tier = TIER_STYLES[engineBudget.action];
+    const TierIcon = tier.icon;
 
     return (
       <div>
-        {/* Header — tier dot + label + daily range */}
-        <div className="flex items-center justify-between pb-3 border-b border-white/5">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            {/* Tier dot */}
-            <span
-              className="block w-[7px] h-[7px] rounded-full shrink-0"
-              style={{ background: tier.dot }}
-            />
-            <span className="text-[13px] font-medium text-zinc-200">
-              {tier.label}
-            </span>
+            <div 
+              className="w-6 h-6 rounded-lg flex items-center justify-center"
+              style={{ background: `${tier.color}15` }}
+            >
+              <TierIcon size={12} style={{ color: tier.color }} />
+            </div>
+            <span className="text-sm font-medium text-zinc-200">{tier.label}</span>
           </div>
           {engineBudget.dailyBudget && (
-            <span className="text-[13px] font-mono font-medium text-zinc-300">
+            <span className="text-sm font-mono font-medium text-zinc-300">
               ${engineBudget.dailyBudget.min}–${engineBudget.dailyBudget.max}/day
             </span>
           )}
         </div>
 
-        {/* Platform CPM sub-header */}
-        {engineBudget.action !== "hold" && (
-          <p className="text-[10px] text-zinc-500 mt-2">
-            Platform CPM: {engineBudget.platformCPM} · {engineBudget.platform === "all" ? "All platforms" : engineBudget.platform}
-          </p>
-        )}
-
-        {/* Body */}
-        <div className="mt-3 space-y-3">
-          {/* Fix note — indigo block at TOP */}
+        {/* Main recommendation card */}
+        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+          {/* Scale signal */}
           {engineBudget.scaleSignal && (
-            <div
-              className="flex items-start gap-2 rounded-lg px-3 py-2.5"
-              style={{
-                background: 'rgba(99,102,241,0.06)',
-                border: '0.5px solid rgba(99,102,241,0.18)',
-              }}
-            >
-              <span className="text-indigo-400 mt-px shrink-0">↗</span>
-              <p className="text-xs font-medium text-zinc-200 leading-snug">
+            <div className="flex items-start gap-2.5 mb-3 pb-3 border-b border-white/[0.05]">
+              <TrendingUp size={14} className="text-indigo-400 mt-0.5 shrink-0" />
+              <p className="text-[13px] font-medium text-zinc-200 leading-relaxed">
                 {engineBudget.scaleSignal}
               </p>
             </div>
           )}
 
-          {/* Advice text */}
+          {/* Advice */}
           <p className="text-xs text-zinc-400 leading-relaxed">
             {engineBudget.advice}
           </p>
 
-          {/* Pills row */}
+          {/* Meta pills */}
           {engineBudget.action !== "hold" && (
-            <div className="flex flex-wrap gap-1.5">
-              <span className="text-[10px] text-zinc-500 bg-white/5 rounded-full px-2 py-px">
-                Test: {engineBudget.testDuration}
+            <div className="flex flex-wrap gap-1.5 mt-3">
+              <span className="text-[10px] text-zinc-500 bg-white/[0.04] rounded-md px-2 py-1">
+                {engineBudget.testDuration}
               </span>
-              <span className="text-[10px] text-zinc-500 bg-white/5 rounded-full px-2 py-px">
-                ROAS: {engineBudget.roasTarget}
+              <span className="text-[10px] text-zinc-500 bg-white/[0.04] rounded-md px-2 py-1">
+                ROAS {engineBudget.roasTarget}
               </span>
-              <span
-                className="text-[10px] rounded-full px-2 py-px"
-                style={{ background: 'rgba(16,185,129,0.08)', color: '#10b981' }}
-              >
-                {engineBudget.niche} · {engineBudget.platform === "all" ? "All platforms" : engineBudget.platform}
+              <span className="text-[10px] text-emerald-400 bg-emerald-500/10 rounded-md px-2 py-1">
+                {engineBudget.niche}
               </span>
             </div>
           )}
         </div>
 
-        {/* Missing profile hint */}
+        {/* Footnote */}
+        {engineBudget.footnote && (
+          <p className="text-[10px] text-zinc-600 mt-3">{engineBudget.footnote}</p>
+        )}
+
+        {/* Settings hint */}
         {engineBudget.niche === "Other" && onNavigateSettings && (
           <button
             type="button"
             onClick={onNavigateSettings}
-            className="mt-2 text-[11px] text-indigo-400 hover:text-indigo-300 underline decoration-indigo-400/30 bg-transparent border-none cursor-pointer p-0 transition-colors"
+            className="mt-2 text-[11px] text-indigo-400 hover:text-indigo-300 bg-transparent border-none cursor-pointer p-0 transition-colors"
           >
-            Set your niche in Settings for personalized budgets →
+            Set niche for personalized budgets →
           </button>
-        )}
-
-        {/* Footnote */}
-        {engineBudget.footnote && (
-          <p className="text-[11px] text-zinc-600 mt-2">{engineBudget.footnote}</p>
         )}
       </div>
     );

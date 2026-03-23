@@ -7,29 +7,32 @@
   font-display: swap;
 }
 
-/* Cutsheet design tokens — match prototype + landing */
+/* Cutsheet design tokens — refined premium dashboard aesthetic */
 :root {
-  --bg:          #09090b;
-  --surface:    rgba(255,255,255,0.04);
-  --surface-el:  rgba(255,255,255,0.05);
-  --border:     rgba(255,255,255,0.10);
-  --border-strong: rgba(255,255,255,0.18);
-  --border-hover: rgba(255,255,255,0.2);
-  --ink:        rgba(255,255,255,0.92);
+  --bg:          #0a0a0a;
+  --surface:    rgba(255,255,255,0.025);
+  --surface-el:  rgba(255,255,255,0.035);
+  --surface-raised: rgba(255,255,255,0.04);
+  --border:     rgba(255,255,255,0.08);
+  --border-strong: rgba(255,255,255,0.12);
+  --border-hover: rgba(255,255,255,0.16);
+  --ink:        rgba(255,255,255,0.95);
+  --ink-secondary: rgba(255,255,255,0.7);
   --ink-muted:  rgba(255,255,255,0.5);
-  --ink-faint:  rgba(255,255,255,0.25);
-  --surface-dim: rgba(255,255,255,0.04);
+  --ink-faint:  rgba(255,255,255,0.3);
+  --surface-dim: rgba(255,255,255,0.02);
   --label:      #a5b4fc;
   --accent:     #6366F1;
   --accent-rgb: 99, 102, 241;
-  --accent-hover: #5254CC;
+  --accent-hover: #818cf8;
+  --accent-soft: rgba(99,102,241,0.08);
   --grad:       linear-gradient(135deg, #6366F1, #8B5CF6);
   --success:    #10B981;
   --error:      #EF4444;
   --warn:       #F59E0B;
-  --mono:       'Geist Mono', monospace;
-  --sans:       'Geist', sans-serif;
-  --radius-sm:  6px;
+  --mono:       'Geist Mono', ui-monospace, monospace;
+  --sans:       'Geist', -apple-system, system-ui, sans-serif;
+  --radius-sm:  8px;
   --radius:     12px;
   --radius-lg:  16px;
   --radius-xl:  20px;
@@ -97,21 +100,31 @@
   --skeleton-shine: rgba(255,255,255,0.08);
 
   /* ── Glass system ── */
-  --glass-card-bg: rgba(24, 24, 27, 0.6);
-  --glass-card-blur: blur(20px) saturate(180%);
-  --glass-card-border: rgba(255, 255, 255, 0.08);
-  --glass-card-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
-  --glass-sheet-bg: rgba(15, 15, 18, 0.85);
-  --glass-sheet-blur: blur(24px) saturate(200%);
-  --glass-sheet-border: rgba(255, 255, 255, 0.1);
+  --glass-card-bg: rgba(18, 18, 20, 0.75);
+  --glass-card-blur: blur(24px) saturate(180%);
+  --glass-card-border: rgba(255, 255, 255, 0.06);
+  --glass-card-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 4px 16px rgba(0,0,0,0.2);
+  --glass-sheet-bg: rgba(12, 12, 14, 0.92);
+  --glass-sheet-blur: blur(32px) saturate(200%);
+  --glass-sheet-border: rgba(255, 255, 255, 0.08);
 
-  /* ── Ambient glow ── */
-  --ambient-glow: radial-gradient(ellipse at 50% 40%, rgba(99,102,241,0.06) 0%, transparent 60%);
+  /* ── Ambient glow — subtle, premium feel ── */
+  --ambient-glow: radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.03) 0%, transparent 50%);
 
   /* ── Grid cells ── */
-  --grid-cell-bg: rgba(255,255,255,0.04);
-  --grid-cell-border: rgba(255,255,255,0.06);
-  --grid-gap-bg: rgba(255,255,255,0.06);
+  --grid-cell-bg: rgba(255,255,255,0.02);
+  --grid-cell-border: rgba(255,255,255,0.05);
+  --grid-gap-bg: rgba(255,255,255,0.04);
+
+  /* ── Card system — cleaner hierarchy ── */
+  --card-bg: rgba(255,255,255,0.02);
+  --card-border: rgba(255,255,255,0.06);
+  --card-hover-bg: rgba(255,255,255,0.035);
+  --card-hover-border: rgba(255,255,255,0.1);
+  
+  /* ── Section spacing ── */
+  --section-gap: 16px;
+  --content-gap: 12px;
 }
 
 /* ─── ANIMATIONS ──────────────────────────────────────────── */

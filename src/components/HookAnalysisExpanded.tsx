@@ -38,15 +38,15 @@ function parseHookData(content: string) {
 }
 
 const STRENGTH_STYLES = {
-  strong: { width: '80%', color: '#10b981' },
-  moderate: { width: '55%', color: '#d97706' },
-  weak: { width: '30%', color: '#ef4444' },
+  strong: { width: '85%', color: '#10b981', label: 'Strong' },
+  moderate: { width: '55%', color: '#f59e0b', label: 'Moderate' },
+  weak: { width: '25%', color: '#ef4444', label: 'Weak' },
 };
 
 const SCRUBBER_DOTS = [
   { ts: '0s', pos: '0%', color: '#10b981' },
   { ts: '1s', pos: '33%', color: '#10b981' },
-  { ts: '3s', pos: '66%', color: '#d97706' },
+  { ts: '3s', pos: '66%', color: '#f59e0b' },
   { ts: '5s', pos: '100%', color: '#ef4444' },
 ];
 
@@ -55,8 +55,8 @@ export function HookAnalysisExpanded({ content, format }: HookAnalysisExpandedPr
   const bar = STRENGTH_STYLES[data.strength];
 
   const fixColors = data.verdict === 'strong'
-    ? { bg: 'rgba(16,185,129,0.06)', border: 'rgba(16,185,129,0.18)', label: '#10b981', labelText: 'No fix needed' }
-    : { bg: 'rgba(251,191,36,0.06)', border: 'rgba(251,191,36,0.18)', label: '#d97706', labelText: 'FIX' };
+    ? { bg: 'rgba(16,185,129,0.04)', border: 'rgba(16,185,129,0.12)', label: '#10b981', labelText: 'No fix needed' }
+    : { bg: 'rgba(245,158,11,0.04)', border: 'rgba(245,158,11,0.12)', label: '#f59e0b', labelText: 'Suggested fix' };
 
   // Parse video moments from content
   const moments = (() => {
@@ -81,34 +81,31 @@ export function HookAnalysisExpanded({ content, format }: HookAnalysisExpandedPr
 
   return (
     <div>
-      {/* D3 Split Panel — shared between static and video */}
-      <div className="grid mb-3" style={{ gridTemplateColumns: '1fr 0.5px 1fr', borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
+      {/* Header metrics — cleaner 2-column layout */}
+      <div className="grid grid-cols-2 gap-3 mb-4">
         {/* Hook type */}
-        <div className="p-4">
-          <span className="text-[10px] text-zinc-500 uppercase tracking-[0.04em] block mb-1.5">Hook type</span>
-          <span className="text-lg font-medium leading-tight" style={{ color: '#818cf8' }}>
+        <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.05]">
+          <span className="text-[10px] text-zinc-500 uppercase tracking-wide block mb-1.5">Type</span>
+          <span className="text-sm font-medium text-indigo-400">
             {data.hookType.split(/[—–-]/)[0].trim()}
           </span>
-          {data.hookTypeNote && (
-            <span className="text-[10px] text-zinc-500 block mt-1">{data.hookTypeNote}</span>
-          )}
         </div>
-        {/* Divider */}
-        <div style={{ background: 'rgba(255,255,255,0.06)' }} />
         {/* Strength */}
-        <div className="p-4">
-          <span className="text-[10px] text-zinc-500 uppercase tracking-[0.04em] block mb-1.5">Strength</span>
-          <span className="text-base font-medium capitalize" style={{ color: bar.color }}>{data.strength}</span>
-          <div className="h-1 rounded-full mt-2 overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
-            <div className="h-full rounded-full transition-all" style={{ width: bar.width, background: bar.color }} />
+        <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.05]">
+          <span className="text-[10px] text-zinc-500 uppercase tracking-wide block mb-1.5">Strength</span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium capitalize" style={{ color: bar.color }}>{bar.label}</span>
+          </div>
+          <div className="h-1 rounded-full mt-2 bg-white/[0.04]">
+            <div className="h-full rounded-full transition-all duration-500" style={{ width: bar.width, background: bar.color }} />
           </div>
         </div>
       </div>
 
-      {/* Fix block */}
-      <div className="rounded-lg mb-2" style={{ background: fixColors.bg, border: `0.5px solid ${fixColors.border}`, padding: '12px 14px' }}>
-        <span className="text-[10px] font-medium uppercase tracking-[0.04em] block mb-1" style={{ color: fixColors.label }}>{fixColors.labelText}</span>
-        <p className="text-xs font-medium text-zinc-200">{data.noFix ? 'Hook is performing well — no changes needed.' : data.fix}</p>
+      {/* Fix suggestion */}
+      <div className="rounded-xl p-3.5 mb-4" style={{ background: fixColors.bg, border: `1px solid ${fixColors.border}` }}>
+        <span className="text-[10px] font-medium uppercase tracking-wide mb-1.5 block" style={{ color: fixColors.label }}>{fixColors.labelText}</span>
+        <p className="text-[13px] font-medium text-zinc-300 leading-relaxed">{data.noFix ? 'Hook is performing well — no changes needed.' : data.fix}</p>
       </div>
 
       {format === 'static' ? (

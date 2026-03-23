@@ -1,26 +1,44 @@
 // CreativeAnalysis — combined Creative Verdict + Design Review
-// Amber-tinted banner with verdict + filterable fix cards
+// Cleaner card-based layout with minimal visual noise
 
 import { useState, useMemo } from "react";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, ArrowRight } from "lucide-react";
 
 const STATE_COLORS = {
-  not_ready: { bannerBg: 'rgba(239,68,68,0.06)', border: 'rgba(239,68,68,0.2)', chipBg: 'rgba(239,68,68,0.1)', color: '#ef4444', label: 'Not ready' },
-  needs_work: { bannerBg: 'rgba(217,119,6,0.06)', border: 'rgba(217,119,6,0.25)', chipBg: 'rgba(217,119,6,0.12)', color: '#d97706', label: 'Needs work' },
-  ready: { bannerBg: 'rgba(16,185,129,0.06)', border: 'rgba(16,185,129,0.2)', chipBg: 'rgba(16,185,129,0.1)', color: '#10b981', label: 'Ready' },
+  not_ready: { 
+    bannerBg: 'rgba(239,68,68,0.04)', 
+    border: 'rgba(239,68,68,0.12)', 
+    chipBg: 'rgba(239,68,68,0.1)', 
+    color: '#ef4444', 
+    label: 'Not ready' 
+  },
+  needs_work: { 
+    bannerBg: 'rgba(245,158,11,0.04)', 
+    border: 'rgba(245,158,11,0.12)', 
+    chipBg: 'rgba(245,158,11,0.1)', 
+    color: '#f59e0b', 
+    label: 'Needs work' 
+  },
+  ready: { 
+    bannerBg: 'rgba(16,185,129,0.04)', 
+    border: 'rgba(16,185,129,0.12)', 
+    chipBg: 'rgba(16,185,129,0.1)', 
+    color: '#10b981', 
+    label: 'Ready' 
+  },
 } as const;
 
-const CATEGORY_STYLES: Record<string, { bg: string; color: string; hoverBg: string; hoverColor: string; activeBg: string }> = {
-  hierarchy: { bg: 'rgba(129,140,248,0.15)', color: '#a5b4fc', hoverBg: 'rgba(129,140,248,0.22)', hoverColor: '#c4b5fd', activeBg: 'rgba(129,140,248,0.25)' },
-  typography: { bg: 'rgba(251,191,36,0.15)', color: '#fbbf24', hoverBg: 'rgba(251,191,36,0.22)', hoverColor: '#fcd34d', activeBg: 'rgba(251,191,36,0.25)' },
-  layout: { bg: 'rgba(16,185,129,0.15)', color: '#34d399', hoverBg: 'rgba(16,185,129,0.22)', hoverColor: '#6ee7b7', activeBg: 'rgba(16,185,129,0.25)' },
-  contrast: { bg: 'rgba(239,68,68,0.15)', color: '#f87171', hoverBg: 'rgba(239,68,68,0.22)', hoverColor: '#fca5a5', activeBg: 'rgba(239,68,68,0.25)' },
+const CATEGORY_STYLES: Record<string, { bg: string; color: string; dot: string }> = {
+  hierarchy: { bg: 'rgba(129,140,248,0.08)', color: '#a5b4fc', dot: '#818cf8' },
+  typography: { bg: 'rgba(251,191,36,0.08)', color: '#fcd34d', dot: '#fbbf24' },
+  layout: { bg: 'rgba(16,185,129,0.08)', color: '#6ee7b7', dot: '#10b981' },
+  contrast: { bg: 'rgba(239,68,68,0.08)', color: '#fca5a5', dot: '#ef4444' },
 };
 
 const SEVERITY_DOT: Record<string, string> = {
   high: '#ef4444',
   medium: '#f59e0b',
-  low: 'rgba(161,161,170,0.2)',
+  low: 'rgba(161,161,170,0.3)',
 };
 
 interface Fix {
@@ -66,53 +84,51 @@ export function CreativeAnalysis({
   const filteredFixes = activeFilter === 'all' ? fixes : fixes.filter(f => f.category === activeFilter);
 
   return (
-    <div
-      className="rounded-xl overflow-hidden mt-3"
-      style={{ border: `0.5px solid ${stateStyle.border}` }}
-    >
-      {/* Banner — Option 3 spacing: 18px 20px */}
+    <div className="rounded-2xl overflow-hidden mt-4 border border-white/[0.06] bg-white/[0.01]">
+      {/* Header — cleaner, more spacious */}
       <div
+        className="px-5 py-4"
         style={{
           background: stateStyle.bannerBg,
-          borderBottom: `0.5px solid ${stateStyle.border}`,
-          padding: '20px',
+          borderBottom: `1px solid ${stateStyle.border}`,
         }}
       >
-        {/* Row 1: chip + score */}
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-3 mb-2">
+          {/* Status indicator dot */}
           <span
-            className="text-[10px] font-medium uppercase tracking-[0.04em] rounded-full"
-            style={{ padding: '2px 9px', background: stateStyle.chipBg, color: stateStyle.color }}
+            className="w-2 h-2 rounded-full"
+            style={{ background: stateStyle.color }}
+          />
+          <span
+            className="text-xs font-medium uppercase tracking-wide"
+            style={{ color: stateStyle.color }}
           >
             {stateStyle.label}
           </span>
-          {/* Score removed per design review */}
         </div>
-        {/* Row 2: verdict sentence — 16px */}
-        <p className="text-base font-medium text-zinc-100 leading-[1.4]">
+        <p className="text-[15px] font-medium text-zinc-100 leading-relaxed">
           {verdictOneLiner}
         </p>
       </div>
 
-      {/* Body — Option 3 spacing: 18px 20px */}
-      <div style={{ background: 'var(--surface, rgba(255,255,255,0.02))', padding: '20px' }}>
-        {/* Top issue block — fix text 14px */}
+      {/* Body */}
+      <div className="p-5">
+        {/* Top issue — prominent card */}
         {topIssue && (
-          <div
-            className="flex items-start gap-2.5 rounded-[9px] mb-3"
-            style={{ background: 'rgba(239,68,68,0.06)', border: '0.5px solid rgba(239,68,68,0.15)', padding: '12px 16px' }}
-          >
-            <AlertCircle size={14} className="text-red-400 shrink-0 mt-px" />
-            <div>
-              <span className="text-[10px] font-medium text-red-400 block">Top issue</span>
-              <p className="text-sm font-medium text-zinc-200 mt-0.5">{topIssue.fix}</p>
+          <div className="flex items-start gap-3 rounded-xl mb-4 p-4 bg-red-500/[0.06] border border-red-500/10">
+            <div className="w-6 h-6 rounded-lg bg-red-500/10 flex items-center justify-center shrink-0">
+              <AlertCircle size={14} className="text-red-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <span className="text-[10px] font-semibold text-red-400 uppercase tracking-wide">Priority fix</span>
+              <p className="text-sm font-medium text-zinc-200 mt-1 leading-relaxed">{topIssue.fix}</p>
             </div>
           </div>
         )}
 
-        {/* Category filter pills — Option D sizing + hover/active states */}
+        {/* Category filters — cleaner pill style */}
         {categories.length > 1 && (
-          <div className="flex gap-2 flex-wrap mb-3">
+          <div className="flex gap-1.5 flex-wrap mb-4">
             {categories.map(cat => {
               const isActive = activeFilter === cat.key;
               const catStyle = CATEGORY_STYLES[cat.key];
@@ -122,20 +138,15 @@ export function CreativeAnalysis({
                   onClick={() => setActiveFilter(cat.key)}
                   aria-label={`Filter by ${cat.label}`}
                   aria-pressed={isActive}
-                  className="flex items-center gap-1.5 cursor-pointer transition-all duration-150 focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:outline-none hover:brightness-125"
+                  className="flex items-center gap-1.5 cursor-pointer transition-all duration-150 focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:outline-none text-xs font-medium px-3 py-1.5 rounded-lg"
                   style={{
-                    fontSize: 12, fontWeight: 500, padding: '6px 16px', borderRadius: 99,
-                    background: cat.key === 'all'
-                      ? (isActive ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)')
-                      : (isActive ? (catStyle?.activeBg ?? catStyle?.bg ?? 'rgba(255,255,255,0.04)') : (catStyle?.bg ?? 'rgba(255,255,255,0.04)')),
-                    color: cat.key === 'all'
-                      ? (isActive ? '#e4e4e7' : '#71717a')
-                      : (isActive ? (catStyle?.hoverColor ?? catStyle?.color ?? '#71717a') : (catStyle?.color ?? '#71717a')),
-                    border: isActive ? `0.5px solid ${catStyle?.color ?? 'rgba(255,255,255,0.15)'}` : '0.5px solid transparent',
+                    background: isActive ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)',
+                    color: isActive ? '#e4e4e7' : '#71717a',
+                    border: isActive ? '1px solid rgba(255,255,255,0.12)' : '1px solid transparent',
                   }}
                 >
-                  {cat.key !== 'all' && (
-                    <span className="w-[5px] h-[5px] rounded-full shrink-0" style={{ background: catStyle?.color }} />
+                  {cat.key !== 'all' && catStyle && (
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: catStyle.dot }} />
                   )}
                   {cat.label}
                 </button>
@@ -144,38 +155,35 @@ export function CreativeAnalysis({
           </div>
         )}
 
-        {/* Fix cards — tightened: 10px 14px padding, 4px gap */}
-        <div className="flex flex-col gap-1">
+        {/* Fix list — cleaner row style */}
+        <div className="flex flex-col gap-2">
           {filteredFixes.map((fix, i) => {
-            const catStyle = CATEGORY_STYLES[fix.category] ?? { bg: 'rgba(161,161,170,0.08)', color: '#a1a1aa' };
-            const dotColor = SEVERITY_DOT[fix.severity] ?? SEVERITY_DOT.low;
+            const catStyle = CATEGORY_STYLES[fix.category] ?? { bg: 'rgba(161,161,170,0.08)', color: '#a1a1aa', dot: '#71717a' };
             return (
               <div
                 key={i}
-                className="flex flex-col gap-1 rounded-lg"
-                style={{ background: 'rgba(255,255,255,0.03)', padding: '10px 14px' }}
+                className="flex items-start gap-3 p-3.5 rounded-xl bg-white/[0.02] hover:bg-white/[0.035] transition-colors"
               >
-                {/* Top row: category tag */}
-                <div className="flex items-center">
-                  <span
-                    className="text-[11px] font-semibold uppercase rounded-full shrink-0"
-                    style={{ padding: '3px 8px', letterSpacing: '0.03em', background: catStyle.bg, color: catStyle.color }}
-                  >
+                {/* Category dot */}
+                <span 
+                  className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" 
+                  style={{ background: catStyle.dot }}
+                />
+                <div className="flex-1 min-w-0">
+                  <span className="text-[10px] font-medium uppercase tracking-wide text-zinc-500 mb-1 block">
                     {fix.category}
                   </span>
+                  <span className="text-[13px] font-medium text-zinc-300 leading-relaxed">{fix.fix}</span>
                 </div>
-                {/* Fix text below — 14px 500 */}
-                <span className="text-sm font-medium text-zinc-200 leading-normal">{fix.fix}</span>
               </div>
             );
           })}
         </div>
 
-        {/* Overall note — Option 3: 12px 14px padding */}
+        {/* Overall note */}
         {overallNote && (
-          <div className="mt-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)', padding: '12px 16px' }}>
-            <span className="text-[10px] text-zinc-500 uppercase tracking-[0.05em] block mb-1">Overall</span>
-            <p className="text-xs text-zinc-400 leading-relaxed">{overallNote}</p>
+          <div className="mt-4 pt-4 border-t border-white/[0.05]">
+            <p className="text-xs text-zinc-500 leading-relaxed">{overallNote}</p>
           </div>
         )}
       </div>
