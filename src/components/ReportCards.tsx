@@ -6,7 +6,7 @@ import {
   Copy, FileDown, Share2, Anchor, MessageSquare, MousePointerClick,
   Clapperboard, DollarSign, Hash, Eye, Lightbulb, BarChart3, Heart,
   Layout, Target, Palette, FileText, Upload, Wand2, Image, ShieldCheck,
-  GitCompare, FileSignature, Zap, Film, AlignLeft,
+  GitCompare, FileSignature, Zap, Film, AlignLeft, AlertCircle, Sparkles,
   type LucideIcon,
 } from "lucide-react";
 import { CollapsibleSection } from "./ui/CollapsibleSection";
@@ -398,10 +398,10 @@ export function ReportCards({
       {/* ─── Tools card with click-to-expand detail strip ─── */}
       {(onFixIt || onVisualize || onCheckPolicies || onCompare) && (() => {
         const tools = [
-          { key: 'fix', icon: Wand2, name: 'AI Rewrite', credit: '1 credit', iconBg: 'rgba(99,102,241,0.1)', iconColor: '#818cf8', ctaBg: 'rgba(99,102,241,0.12)', ctaBorder: 'rgba(99,102,241,0.25)', ctaColor: '#818cf8', ctaLabel: 'Run AI Rewrite →', desc: 'AI rewrites your ad with all priority fixes applied — tighter hook, CTA added, copy sharpened.', onClick: onFixIt, loading: fixItLoading },
-          { key: 'visualize', icon: Image, name: 'Visualize It', credit: '1 credit', iconBg: 'rgba(16,185,129,0.1)', iconColor: '#10b981', ctaBg: 'rgba(16,185,129,0.08)', ctaBorder: 'rgba(16,185,129,0.2)', ctaColor: '#10b981', ctaLabel: 'Run Visualize →', desc: 'Turn your static image into a short animated video using AI — ready to test as motion creative.', onClick: onVisualize, disabled: format !== 'static' },
-          { key: 'policy', icon: ShieldCheck, name: 'Policy check', credit: '1 credit', iconBg: 'rgba(251,191,36,0.1)', iconColor: '#d97706', ctaBg: 'rgba(251,191,36,0.08)', ctaBorder: 'rgba(251,191,36,0.2)', ctaColor: '#d97706', ctaLabel: 'Run Policy check →', desc: 'Scans your ad against Meta, TikTok, and Google platform policies and flags violations.', onClick: onCheckPolicies, loading: policyLoading },
-          { key: 'compare', icon: GitCompare, name: 'Compare', credit: 'free', iconBg: 'rgba(129,140,248,0.08)', iconColor: '#818cf8', ctaBg: 'rgba(129,140,248,0.08)', ctaBorder: 'rgba(129,140,248,0.2)', ctaColor: '#818cf8', ctaLabel: 'Run Compare →', desc: 'Upload a second ad and get a side-by-side score comparison.', onClick: onCompare },
+          { key: 'fix', icon: Wand2, name: 'AI Rewrite', credit: '1 credit', iconBg: 'rgba(99,102,241,0.1)', hoverIconBg: 'rgba(99,102,241,0.18)', iconColor: '#818cf8', ctaBg: 'rgba(99,102,241,0.12)', ctaBorder: 'rgba(99,102,241,0.25)', ctaColor: '#818cf8', ctaLabel: 'Run AI Rewrite →', desc: 'AI rewrites your ad with all priority fixes applied — tighter hook, CTA added, copy sharpened.', onClick: onFixIt, loading: fixItLoading },
+          { key: 'visualize', icon: Image, name: 'Visualize It', credit: '1 credit', iconBg: 'rgba(16,185,129,0.1)', hoverIconBg: 'rgba(16,185,129,0.18)', iconColor: '#10b981', ctaBg: 'rgba(16,185,129,0.08)', ctaBorder: 'rgba(16,185,129,0.2)', ctaColor: '#10b981', ctaLabel: 'Run Visualize →', desc: 'Turn your static image into a short animated video using AI — ready to test as motion creative.', onClick: onVisualize, disabled: format !== 'static' },
+          { key: 'policy', icon: ShieldCheck, name: 'Policy check', credit: '1 credit', iconBg: 'rgba(251,191,36,0.1)', hoverIconBg: 'rgba(251,191,36,0.18)', iconColor: '#d97706', ctaBg: 'rgba(251,191,36,0.08)', ctaBorder: 'rgba(251,191,36,0.2)', ctaColor: '#d97706', ctaLabel: 'Run Policy check →', desc: 'Scans your ad against Meta, TikTok, and Google platform policies and flags violations.', onClick: onCheckPolicies, loading: policyLoading },
+          { key: 'compare', icon: GitCompare, name: 'Compare', credit: 'free', iconBg: 'rgba(129,140,248,0.08)', hoverIconBg: 'rgba(129,140,248,0.15)', iconColor: '#818cf8', ctaBg: 'rgba(129,140,248,0.08)', ctaBorder: 'rgba(129,140,248,0.2)', ctaColor: '#818cf8', ctaLabel: 'Run Compare →', desc: 'Upload a second ad and get a side-by-side score comparison.', onClick: onCompare },
         ];
         const active = tools.find(t => t.key === activeTool);
         return (
@@ -491,77 +491,123 @@ export function ReportCards({
         );
       })()}
 
-      {/* Emotional Impact / Emotion Arc — show only one (prefer arc on video) */}
+      {/* ─── Emotional Impact — redesigned (DE-1) ─── */}
       {(() => {
         const emotionSections = centerSections.filter(s => /emotion|arc|impact/i.test(s.title ?? ''));
-        // On video: prefer Emotion Arc, skip Emotional Impact to avoid dupes
-        const filtered = format === 'video'
-          ? emotionSections.filter(s => /arc/i.test(s.title ?? '') || emotionSections.length === 1)
-          : emotionSections.filter(s => !/arc/i.test(s.title ?? '') || emotionSections.length === 1);
-        // Only show first match to prevent duplicates
-        return filtered.slice(0, 1);
-      })().map((section, i) => {
-        const title = toSentenceCase(section.title!);
-        const SectionIcon = getIconForTitle(title);
-        const isArc = /arc/i.test(section.title ?? '');
-        // For emotion arc, render as chip sequence
-        if (isArc || format === 'video') {
-          // Try arrow chain first: "Curiosity → Discovery → Satisfaction"
-          const chain = section.content.match(/([A-Z][a-z]+(?:\s*→\s*[A-Z][a-z]+)+)/);
-          let emotions = chain ? chain[1].split(/\s*→\s*/) : [];
-          // Fallback: try to extract from bold labels or numbered list
-          if (emotions.length === 0) {
-            const boldItems = section.content.match(/\*\*([A-Z][a-z]+(?:\s*\/\s*[A-Z][a-z]+)?)\*\*/g);
-            if (boldItems) emotions = boldItems.map(b => b.replace(/\*\*/g, ''));
-          }
-          return (
-            <div key={`emotion-${i}`} className="bg-zinc-900/50 rounded-2xl border border-white/5 p-5 mt-3">
-              <div className="flex items-center gap-2 mb-3">
-                <SectionIcon size={14} className="text-zinc-500" />
-                <span className="text-xs font-medium text-zinc-200">{isArc ? 'Emotion arc' : title}</span>
+        const section = emotionSections[0];
+        if (!section) return null;
+        const c = section.content;
+
+        // Parse emotions from content
+        const primaryMatch = c.match(/(?:Primary|Main)\s*(?:emotion|feeling)?:?\s*\*?\*?\s*([A-Z][a-z]+(?:\s*\/\s*[A-Z][a-z]+)?)/i);
+        const primary = primaryMatch?.[1]?.trim() ?? 'Trust';
+        // Try arrow chain for video arc
+        const chain = c.match(/([A-Z][a-z]+(?:\s*→\s*[A-Z][a-z]+)+)/);
+        const arcEmotions = chain ? chain[1].split(/\s*→\s*/) : [];
+        const secondary = arcEmotions[1] ?? c.match(/(?:Secondary|second)\s*(?:emotion)?:?\s*\*?\*?\s*([A-Z][a-z]+)/i)?.[1]?.trim() ?? 'Aspiration';
+        const tertiary = arcEmotions[2] ?? 'Relief';
+
+        // Parse tone
+        const toneMatch = c.match(/(?:Tone|style):?\s*\*?\*?\s*([^\n]+)/i);
+        const tones = toneMatch ? toneMatch[1].replace(/\*\*/g, '').split(/[,\/·]/).map(t => t.trim()).filter(Boolean) : ['Professional'];
+
+        // Parse CTA mismatch
+        const hasMismatch = /no\s*(clear\s*)?(cta|call.to.action)|mismatch|nowhere to go|no.*path.*act/i.test(c);
+        const mismatchNote = hasMismatch ? (c.match(/(?:mismatch|no.*cta)[^.]*\.\s*([^.]+)/i)?.[1]?.trim() ?? 'No CTA to channel the emotion') : undefined;
+
+        // Build statement from first sentence
+        const sentences = c.split(/\n/).filter(l => l.trim() && !l.startsWith('#') && !l.startsWith('-') && !l.startsWith('*'));
+        const statementRaw = sentences.find(s => s.length > 20)?.replace(/\*\*/g, '').trim() ?? `This ad evokes ${primary} and ${secondary}.`;
+
+        const EMOTION_COLORS: Record<string, string> = { [primary]: '#818cf8', [secondary]: '#10b981', [tertiary]: '#6366f1' };
+
+        return (
+          <div className="rounded-xl border border-white/5 overflow-hidden mt-3" style={{ background: 'var(--surface, rgba(255,255,255,0.02))' }}>
+            {/* Header */}
+            <div className="flex items-center gap-2 px-4 py-3" style={{ borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
+              <Heart size={14} className="text-zinc-500" />
+              <span className="text-[13px] font-medium text-zinc-200">Emotional impact</span>
+            </div>
+            {/* Body */}
+            <div className="px-4 py-4">
+              {/* Spectrum bar */}
+              <div className="h-1.5 rounded-full mb-1.5" style={{ background: 'linear-gradient(90deg, #818cf8 0%, #10b981 50%, #6366f1 100%)' }} />
+              <div className="flex justify-between mb-3.5">
+                <span className="text-[11px] font-medium" style={{ color: '#818cf8' }}>{primary}</span>
+                <span className="text-[11px] font-medium" style={{ color: '#10b981' }}>{secondary}</span>
+                <span className="text-[11px] font-medium" style={{ color: '#6366f1' }}>{tertiary}</span>
               </div>
-              {emotions.length > 0 ? (
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {emotions.map((e, j) => (
-                    <span key={j} className="flex items-center gap-1.5">
-                      <span className="text-[11px] bg-white/5 rounded-full px-2.5 py-0.5 text-zinc-300">{e}</span>
-                      {j < emotions.length - 1 && <span className="text-[11px] text-zinc-600">→</span>}
-                    </span>
-                  ))}
+
+              {/* Statement with colored emotion words */}
+              <p className="text-sm text-zinc-400 leading-[1.65] mb-3">
+                {statementRaw.split(/\b/).map((word, wi) => {
+                  const cleanWord = word.replace(/[.,!?]/g, '');
+                  const emotionColor = EMOTION_COLORS[cleanWord];
+                  return emotionColor
+                    ? <strong key={wi} style={{ color: emotionColor, fontWeight: 600 }}>{word}</strong>
+                    : <span key={wi}>{word}</span>;
+                })}
+              </p>
+
+              {/* Tone pills */}
+              <div className="flex gap-1.5 mb-3">
+                {tones.map(t => (
+                  <span key={t} className="text-[11px] bg-white/5 rounded-full px-2.5 py-0.5 text-zinc-400">{t}</span>
+                ))}
+              </div>
+
+              {/* CTA mismatch warning */}
+              {hasMismatch && (
+                <div className="flex items-center gap-2 rounded-[9px] px-3 py-2" style={{ background: 'rgba(239,68,68,0.06)', border: '0.5px solid rgba(239,68,68,0.15)' }}>
+                  <AlertCircle size={11} className="text-red-400 shrink-0" />
+                  <span className="text-[10px] font-medium text-red-400 shrink-0">CTA mismatch</span>
+                  <span className="text-[11px] text-zinc-400">{mismatchNote}</span>
                 </div>
-              ) : (
-                renderSectionContent(section)
               )}
             </div>
-          );
-        }
-        // Static: 2-up tiles
-        return (
-          <div key={`emotion-${i}`} className="bg-zinc-900/50 rounded-2xl border border-white/5 p-5 mt-3">
-            <div className="flex items-center gap-2 mb-3">
-              <SectionIcon size={14} className="text-zinc-500" />
-              <span className="text-xs font-medium text-zinc-200">{title}</span>
-            </div>
-            {renderSectionContent(section)}
           </div>
         );
-      })}
+      })()}
 
-      {/* Motion Test Idea — always visible */}
+      {/* ─── Motion Test Idea — redesigned (B3-A) ─── */}
       {centerSections.filter(s => /motion|test/i.test(s.title ?? '')).map((section, i) => {
-        const title = toSentenceCase(section.title!);
-        const SectionIcon = getIconForTitle(title);
+        const conceptText = section.content.replace(/^MOTION TEST IDEA:\s*/i, '').replace(/\*\*/g, '').replace(/[-\s]+$/, '').trim();
+        // Infer tags from context
+        const platformTag = platform ?? 'Meta feed';
+        const durationTag = format === 'video' ? '6–8s loop' : '6–8s loop';
+        const formatTag = format === 'static' ? 'Static → motion' : 'Video remix';
         return (
-          <div key={`motion-${i}`} className="bg-zinc-900/50 rounded-2xl border border-white/5 p-5 mt-3">
-            <div className="flex items-center gap-2 mb-3">
-              <SectionIcon size={14} className="text-zinc-500" />
-              <span className="text-xs font-medium text-zinc-200">{title}</span>
+          <div key={`motion-${i}`} className="rounded-xl border border-white/5 overflow-hidden mt-3" style={{ background: 'var(--surface, rgba(255,255,255,0.02))' }}>
+            {/* Header */}
+            <div className="flex items-center gap-2 px-4 py-3" style={{ borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
+              <Film size={14} className="text-zinc-500" />
+              <span className="text-[13px] font-medium text-zinc-200">Motion test idea</span>
             </div>
-            <div className="bg-white/[0.03] rounded-[9px] p-3">
-              <span className="text-[10px] text-zinc-500 uppercase tracking-[0.05em] block mb-1.5">Concept</span>
-              <p className="text-xs font-medium text-zinc-200 leading-relaxed">
-                {section.content.replace(/^MOTION TEST IDEA:\s*/i, '').replace(/\*\*/g, '').replace(/[-\s]+$/, '').trim()}
-              </p>
+            {/* Body */}
+            <div className="px-4 py-3.5">
+              {/* Indigo concept card */}
+              <div className="rounded-[9px] px-3.5 py-3 mb-2.5" style={{ background: 'rgba(99,102,241,0.05)', border: '0.5px solid rgba(99,102,241,0.15)' }}>
+                <span className="text-[10px] font-medium text-indigo-400 uppercase tracking-[0.05em] block mb-1.5">Concept</span>
+                <p className="text-[13px] font-medium text-zinc-200 leading-[1.55]">{conceptText}</p>
+              </div>
+              {/* Tag pills */}
+              <div className="flex gap-[5px] mb-3">
+                <span className="text-[10px] bg-white/5 rounded-full px-2 py-px text-zinc-500">{platformTag}</span>
+                <span className="text-[10px] bg-white/5 rounded-full px-2 py-px text-zinc-500">{durationTag}</span>
+                <span className="text-[10px] bg-white/5 rounded-full px-2 py-px text-zinc-500">{formatTag}</span>
+              </div>
+              {/* Visualize It CTA */}
+              {onVisualize && (
+                <button
+                  onClick={onVisualize}
+                  disabled={format !== 'static'}
+                  className="w-full flex items-center justify-center gap-2 rounded-[9px] py-2.5 text-xs font-medium transition-opacity hover:opacity-80 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+                  style={{ background: 'rgba(99,102,241,0.1)', border: '0.5px solid rgba(99,102,241,0.2)', color: '#818cf8' }}
+                >
+                  <Sparkles size={13} />
+                  Visualize this concept → 1 credit
+                </button>
+              )}
             </div>
           </div>
         );
