@@ -111,12 +111,17 @@
   --skeleton-base: rgba(255,255,255,0.04);
   --skeleton-shine: rgba(255,255,255,0.08);
 
-  /* ── Surface hierarchy (replaces glass system) ── */
+  /* ── Surface hierarchy (replaces glass system for results page) ── */
   --surface-1:     #111113;
   --surface-2:     #18181B;
   --surface-3:     #1F1F23;
   --border-subtle: rgba(255,255,255,0.06);
   --border-focus:  rgba(255,255,255,0.20);
+
+  /* ── Glass system (kept for shared components: SlideSheet, etc.) ── */
+  --glass-sheet-bg: rgba(15, 15, 18, 0.85);
+  --glass-sheet-blur: blur(24px) saturate(200%);
+  --glass-sheet-border: rgba(255, 255, 255, 0.1);
 }
 
 /* ─── ANIMATIONS ──────────────────────────────────────────── */
