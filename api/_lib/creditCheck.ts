@@ -10,6 +10,7 @@ import type { SubscriptionTier } from "./auth";
 const PRO_MONTHLY_LIMITS: Record<string, number> = {
   analyze: Infinity,
   visualize: 10,
+  visualize_video: 5,
   script: 10,
   fixIt: 20,
   policyCheck: 30,
@@ -21,6 +22,7 @@ const PRO_MONTHLY_LIMITS: Record<string, number> = {
 const TEAM_MONTHLY_LIMITS: Record<string, number> = {
   analyze: Infinity,
   visualize: 25,
+  visualize_video: 15,
   script: 25,
   fixIt: 50,
   policyCheck: 75,
