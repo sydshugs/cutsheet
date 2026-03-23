@@ -448,8 +448,8 @@ export function ReportCards({
               <div className="flex-1 h-px bg-gradient-to-r from-white/[0.06] to-transparent" />
             </div>
             
-            {/* Tools grid */}
-            <div className="grid grid-cols-1 gap-3">
+            {/* Tools grid - 3 columns side by side */}
+            <div className="grid grid-cols-3 gap-3">
               {tools.map((t) => {
                 const Icon = t.icon;
                 const isDisabled = !!t.disabled;
@@ -460,54 +460,52 @@ export function ReportCards({
                     onClick={() => !isDisabled && !isLoading && t.onClick?.()}
                     disabled={isDisabled || isLoading}
                     title={isDisabled ? 'Only available for static ads' : undefined}
-                    className={`group relative flex items-start gap-4 p-4 rounded-2xl border ${t.borderColor} bg-gradient-to-br ${t.gradientFrom} ${t.gradientTo} transition-all ${t.hoverBorder} hover:scale-[1.01] active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 cursor-pointer text-left overflow-hidden`}
+                    className={`group relative flex flex-col items-center text-center p-5 rounded-2xl border ${t.borderColor} bg-gradient-to-b ${t.gradientFrom} ${t.gradientTo} transition-all ${t.hoverBorder} hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 cursor-pointer overflow-hidden`}
                   >
                     {/* Glow effect on hover */}
                     <div 
                       className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
                       style={{ 
-                        background: `radial-gradient(circle at 30% 50%, ${t.iconColor}10, transparent 50%)` 
+                        background: `radial-gradient(circle at 50% 30%, ${t.iconColor}15, transparent 60%)` 
                       }}
                     />
                     
                     {/* Icon */}
                     <div 
-                      className="relative w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105"
-                      style={{ background: `${t.iconColor}20`, boxShadow: `0 0 20px ${t.iconColor}15` }}
+                      className="relative w-14 h-14 rounded-2xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 group-hover:-translate-y-0.5"
+                      style={{ background: `${t.iconColor}20`, boxShadow: `0 8px 24px ${t.iconColor}20` }}
                     >
                       {isLoading ? (
                         <div 
-                          className="w-5 h-5 border-2 rounded-full animate-spin" 
+                          className="w-6 h-6 border-2 rounded-full animate-spin" 
                           style={{ borderColor: `${t.iconColor}40`, borderTopColor: t.iconColor }} 
                         />
                       ) : (
-                        <Icon size={20} style={{ color: t.iconColor }} />
+                        <Icon size={24} style={{ color: t.iconColor }} />
                       )}
                     </div>
                     
-                    {/* Content */}
-                    <div className="relative flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-semibold text-zinc-100">{t.name}</span>
-                        <span 
-                          className="text-[10px] font-medium px-2 py-0.5 rounded-full"
-                          style={{ 
-                            background: t.credit === 'Free' ? 'rgba(16,185,129,0.15)' : 'rgba(139,92,246,0.15)',
-                            color: t.credit === 'Free' ? '#10b981' : '#a78bfa'
-                          }}
-                        >
-                          {t.credit}
-                        </span>
-                      </div>
-                      <p className="text-xs text-zinc-500 leading-relaxed pr-4">{t.description}</p>
-                    </div>
+                    {/* Badge */}
+                    <span 
+                      className="relative text-[10px] font-semibold px-2.5 py-1 rounded-full mb-2"
+                      style={{ 
+                        background: t.credit === 'Free' ? 'rgba(16,185,129,0.15)' : 'rgba(139,92,246,0.15)',
+                        color: t.credit === 'Free' ? '#10b981' : '#a78bfa'
+                      }}
+                    >
+                      {t.credit}
+                    </span>
                     
-                    {/* Arrow indicator */}
-                    <div className="relative flex items-center self-center">
-                      <ChevronRight 
-                        size={16} 
-                        className="text-zinc-600 transition-all group-hover:text-zinc-400 group-hover:translate-x-0.5" 
-                      />
+                    {/* Name */}
+                    <span className="relative text-sm font-semibold text-zinc-100 mb-1.5">{t.name}</span>
+                    
+                    {/* Description */}
+                    <p className="relative text-[11px] text-zinc-500 leading-relaxed">{t.description}</p>
+                    
+                    {/* Bottom action hint */}
+                    <div className="relative mt-4 flex items-center gap-1 text-[10px] font-medium transition-all opacity-60 group-hover:opacity-100" style={{ color: t.iconColor }}>
+                      <span>Use tool</span>
+                      <ChevronRight size={12} className="transition-transform group-hover:translate-x-0.5" />
                     </div>
                   </button>
                 );
