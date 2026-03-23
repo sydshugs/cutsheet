@@ -36,7 +36,7 @@ interface ReportCardsProps {
   structuredImprovements?: StructuredImprovement[];
   improvements?: string[];
   scores?: { hook: number; clarity: number; cta: number; production: number; overall: number } | null;
-  format?: 'video' | 'static';
+  format: 'video' | 'static';
   platform?: string;
   niche?: string;
   hashtags?: { tiktok: string[]; meta: string[]; instagram: string[] };
@@ -58,7 +58,7 @@ interface ReportCardsProps {
   // Design review data for CreativeAnalysis
   designReviewData?: { flags: { area: string; severity: string; fix: string; issue: string }[]; topIssue?: string; overallDesignVerdict?: string };
   // Second eye data for combined video component
-  secondEyeResult?: any;
+  secondEyeResult?: { scrollMoment: string | null; flags: { timestamp: string; category: string; severity: string; issue: string; fix: string }[]; whatItCommunicates: string; whatItFails: string } | null;
   secondEyeLoading?: boolean;
 }
 
@@ -246,7 +246,7 @@ export function extractRightPanelSections(markdown: string): { title: string; co
 export function ReportCards({
   file, markdown, thumbnailDataUrl, onCopy, onExportPdf, onShare, copied, shareLoading,
   onReset, onFileSelect,
-  verdict, structuredImprovements, improvements, scores, format = 'video',
+  verdict, structuredImprovements, improvements, scores, format,
   platform, niche, hashtags,
   onFixIt, onVisualize, onCheckPolicies, onCompare, onGenerateBrief,
   fixItLoading, fixItResult, policyLoading, policyResult, visualizeLoading, visualizeResult,
@@ -260,8 +260,6 @@ export function ReportCards({
   const [showAllFixes, setShowAllFixes] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [activeTool, setActiveTool] = useState<string | null>(null);
-  const [dismissedResults, setDismissedResults] = useState<Set<string>>(new Set());
-  const [copiedAll, setCopiedAll] = useState(false);
 
   useEffect(() => {
     return () => { if (fileUrl) URL.revokeObjectURL(fileUrl); };
@@ -471,150 +469,6 @@ export function ReportCards({
       })()}
 
       {/* ─── Inline tool results (Visualize only — Fix It + Policy in right panel) ─── */}
-      {false && fixItLoading && fixItResult && !dismissedResults.has('fixIt') && (
-        <div className="mt-3 rounded-xl border border-white/5 overflow-hidden" style={{ background: 'var(--surface, rgba(255,255,255,0.02))' }}>
-          {/* Header */}
-          <div className="flex items-center justify-between px-3.5 py-2.5" style={{ borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
-            <div className="flex items-center gap-2">
-              <Wand2 size={14} className="text-indigo-400" />
-              <span className="text-[13px] font-medium text-zinc-200">AI Rewrite result</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => {
-                  const parts = [
-                    fixItResult.rewrittenHook?.copy,
-                    fixItResult.revisedBody,
-                    fixItResult.newCTA?.copy ? `CTA: ${fixItResult.newCTA.copy}` : '',
-                  ].filter(Boolean).join('\n\n');
-                  navigator.clipboard.writeText(parts);
-                  setCopiedAll(true);
-                  setTimeout(() => setCopiedAll(false), 2000);
-                }}
-                className="text-[11px] font-medium rounded-lg cursor-pointer"
-                style={{ padding: '4px 10px', background: 'rgba(99,102,241,0.08)', border: '0.5px solid rgba(99,102,241,0.2)', color: copiedAll ? '#10b981' : '#818cf8' }}
-              >
-                {copiedAll ? 'Copied!' : 'Copy all'}
-              </button>
-              <button onClick={() => setDismissedResults(prev => new Set(prev).add('fixIt'))} className="w-5 h-5 flex items-center justify-center text-zinc-600 hover:text-zinc-400 cursor-pointer bg-transparent border-none">✕</button>
-            </div>
-          </div>
-
-          {/* Section 1: Rewritten hook */}
-          {fixItResult.rewrittenHook && (
-            <div style={{ borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
-              <div className="flex items-center gap-2 px-3.5 py-2.5">
-                <div className="w-[22px] h-[22px] rounded-md flex items-center justify-center" style={{ background: 'rgba(99,102,241,0.1)' }}>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#818cf8" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-                </div>
-                <span className="text-xs font-medium text-zinc-200">Rewritten hook</span>
-              </div>
-              <div className="px-3.5 pb-3">
-                <p className="text-sm font-medium text-zinc-100 leading-relaxed mb-1">{fixItResult.rewrittenHook.copy}</p>
-                <p className="text-[11px] text-zinc-500 leading-[1.45]">{fixItResult.rewrittenHook.reasoning}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Section 2: Revised body */}
-          {fixItResult.revisedBody && (
-            <div style={{ borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
-              <div className="flex items-center gap-2 px-3.5 py-2.5">
-                <div className="w-[22px] h-[22px] rounded-md flex items-center justify-center" style={{ background: 'rgba(16,185,129,0.1)' }}>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>
-                </div>
-                <span className="text-xs font-medium text-zinc-200">Revised body</span>
-              </div>
-              <div className="px-3.5 pb-3">
-                {fixItResult.revisedBody.split('\n').filter(l => l.trim()).map((para, pi) => (
-                  <p key={pi} className="text-[13px] text-zinc-300 leading-[1.6] mb-2 last:mb-0">
-                    {para.startsWith('- ') ? <span className="flex items-start gap-2"><span className="w-1 h-1 rounded-full bg-zinc-500 mt-2 shrink-0" />{para.slice(2)}</span> : para}
-                  </p>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Section 3: New CTA */}
-          {fixItResult.newCTA && (
-            <div style={{ borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
-              <div className="flex items-center gap-2 px-3.5 py-2.5">
-                <div className="w-[22px] h-[22px] rounded-md flex items-center justify-center" style={{ background: 'rgba(251,191,36,0.1)' }}>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                </div>
-                <span className="text-xs font-medium text-zinc-200">New CTA</span>
-              </div>
-              <div className="px-3.5 pb-3">
-                <div className="bg-white/[0.03] rounded-[9px] p-2.5">
-                  <span className="text-[10px] text-zinc-500 uppercase tracking-[0.04em] block mb-1">CTA text</span>
-                  <p className="text-sm font-medium text-zinc-100 mb-1">{fixItResult.newCTA.copy}</p>
-                  <p className="text-[11px] text-zinc-500">Placement: {fixItResult.newCTA.placement}</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Section 4: Text overlays */}
-          {fixItResult.textOverlays && fixItResult.textOverlays.length > 0 && (
-            <div style={{ borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
-              <div className="flex items-center gap-2 px-3.5 py-2.5">
-                <div className="w-[22px] h-[22px] rounded-md flex items-center justify-center" style={{ background: 'rgba(129,140,248,0.08)' }}>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#818cf8" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="7" y1="8" x2="17" y2="8"/><line x1="7" y1="12" x2="14" y2="12"/></svg>
-                </div>
-                <span className="text-xs font-medium text-zinc-200">Text overlays</span>
-              </div>
-              <div className="px-3.5 pb-3">
-                <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
-                      <th className="text-[10px] uppercase text-zinc-500 font-medium py-1.5 px-2">Time</th>
-                      <th className="text-[10px] uppercase text-zinc-500 font-medium py-1.5 px-2">Copy</th>
-                      <th className="text-[10px] uppercase text-zinc-500 font-medium py-1.5 px-2">Placement</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {fixItResult.textOverlays.map((ov, oi) => (
-                      <tr key={oi} style={{ borderBottom: oi < fixItResult.textOverlays!.length - 1 ? '0.5px solid rgba(255,255,255,0.06)' : 'none' }}>
-                        <td className="text-[11px] font-mono text-zinc-500 py-2 px-2 whitespace-nowrap align-top">{ov.timestamp}</td>
-                        <td className="text-xs text-zinc-200 py-2 px-2 align-top">{ov.copy}</td>
-                        <td className="text-[11px] text-zinc-500 py-2 px-2 align-top">{ov.placement}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {/* Section 5: Predicted improvements */}
-          {fixItResult.predictedImprovements && fixItResult.predictedImprovements.length > 0 && (
-            <div>
-              <div className="flex items-center gap-2 px-3.5 py-2.5">
-                <div className="w-[22px] h-[22px] rounded-md flex items-center justify-center" style={{ background: 'rgba(16,185,129,0.08)' }}>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-                </div>
-                <span className="text-xs font-medium text-zinc-200">Predicted improvements</span>
-              </div>
-              <div className="px-3.5 pb-3 flex flex-col gap-1.5">
-                {fixItResult.predictedImprovements.map((imp, ii) => (
-                  <div key={ii} className="bg-white/[0.03] rounded-lg p-2.5">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[11px] font-medium text-zinc-200">{imp.dimension}</span>
-                      <span className="text-[11px] font-mono">
-                        <span className="text-zinc-500">{imp.oldScore}</span>
-                        <span className="text-zinc-600 mx-1">→</span>
-                        <span className="font-medium" style={{ color: '#10b981' }}>{imp.newScore}</span>
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-zinc-500 leading-[1.45]">{imp.reason}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Visualize loading */}
       {visualizeLoading && (
         <div className="mt-3 rounded-xl border border-white/5 p-5 text-center" style={{ background: 'var(--surface, rgba(255,255,255,0.02))' }}>
@@ -648,125 +502,6 @@ export function ReportCards({
           </div>
         </div>
       )}
-
-      {/* Policy loading + result moved to right panel */}
-      {false && policyLoading && (
-        <div className="mt-3 rounded-xl border border-white/5 p-5 text-center" style={{ background: 'var(--surface, rgba(255,255,255,0.02))' }}>
-          <div className="w-5 h-5 border-2 border-amber-500/30 border-t-amber-500 rounded-full animate-spin mx-auto mb-2" />
-          <span className="text-[13px] text-zinc-400">Checking platform policies...</span>
-        </div>
-      )}
-      {/* Policy result moved to right panel */}
-      {false && !policyLoading && policyResult && !dismissedResults.has('policy') && (() => {
-        const isGood = policyResult.verdict === 'good';
-        const allCategories = [...(policyResult.metaCategories ?? []), ...(policyResult.tiktokCategories ?? [])];
-        const issueCategories = allCategories.filter((c: any) => c.status !== 'clear');
-        const clearCategories = allCategories.filter((c: any) => c.status === 'clear');
-        return (
-          <div className="mt-3 rounded-xl border border-white/5 overflow-hidden" style={{ background: 'var(--surface, rgba(255,255,255,0.02))' }}>
-            {/* Header */}
-            <div className="flex items-center justify-between px-3.5 py-2.5" style={{ borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
-              <div className="flex items-center gap-2">
-                <ShieldCheck size={14} className="text-amber-400" />
-                <span className="text-[13px] font-medium text-zinc-200">Policy check result</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <button onClick={() => { navigator.clipboard.writeText(policyResult.reviewerNotes ?? ''); }} className="text-[11px] font-medium rounded-lg cursor-pointer" style={{ padding: '4px 10px', background: 'rgba(99,102,241,0.08)', border: '0.5px solid rgba(99,102,241,0.2)', color: '#818cf8' }}>Copy report</button>
-                <button onClick={() => setDismissedResults(prev => new Set(prev).add('policy'))} className="w-5 h-5 flex items-center justify-center text-zinc-600 hover:text-zinc-400 cursor-pointer bg-transparent border-none">✕</button>
-              </div>
-            </div>
-
-            {/* Banner */}
-            <div className="flex items-center gap-3 px-3.5 py-3" style={{ background: isGood ? 'rgba(16,185,129,0.06)' : 'rgba(251,191,36,0.06)', borderBottom: `0.5px solid ${isGood ? 'rgba(16,185,129,0.12)' : 'rgba(251,191,36,0.12)'}` }}>
-              {isGood ? (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-              ) : (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" strokeLinecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-              )}
-              <div>
-                <p className="text-sm font-medium text-zinc-100">{isGood ? 'Ready to launch' : policyResult.verdictLabel ?? 'Fix before launching'}</p>
-                <p className="text-xs text-zinc-400 mt-0.5">{isGood ? 'No policy violations found' : `${issueCategories.length} item${issueCategories.length !== 1 ? 's' : ''} need attention`}</p>
-              </div>
-            </div>
-
-            {/* Top 3 fixes */}
-            {!isGood && policyResult.topFixes && policyResult.topFixes.length > 0 && (
-              <div className="px-3.5 pt-2.5 pb-1">
-                <span className="text-[10px] text-zinc-500 uppercase tracking-[0.04em] block mb-1.5">Top fixes</span>
-                {policyResult.topFixes.map((fix: string, fi: number) => (
-                  <div key={fi} className="flex items-start gap-2 py-1.5">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" className="shrink-0 mt-0.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                    <span className="text-xs font-medium text-zinc-200 leading-[1.45]">{fix}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Issue categories */}
-            {issueCategories.length > 0 && (
-              <div className="px-3.5 pt-2 pb-1">
-                <span className="text-[10px] text-zinc-500 uppercase tracking-[0.04em] block mb-1.5">Policy categories</span>
-                {issueCategories.map((cat: any, ci: number) => {
-                  const statusColor = cat.status === 'rejection' ? '#ef4444' : '#d97706';
-                  const statusBg = cat.status === 'rejection' ? 'rgba(239,68,68,0.1)' : 'rgba(251,191,36,0.12)';
-                  const statusLabel = cat.status === 'rejection' ? 'Rejection' : 'Review';
-                  return (
-                    <div key={ci} className="rounded-[10px] border border-white/5 mb-1.5 overflow-hidden">
-                      <div className="flex items-center gap-2 px-3 py-2.5">
-                        <span className="text-[9px] font-medium rounded-full px-1.5 py-px" style={{ background: statusBg, color: statusColor }}>{statusLabel}</span>
-                        <span className="text-[13px] font-medium text-zinc-200 flex-1">{cat.name}</span>
-                        {cat.riskLevel !== 'low' && (
-                          <span className="text-[9px] font-medium uppercase rounded-full px-1.5 py-px" style={{ background: cat.riskLevel === 'high' ? 'rgba(239,68,68,0.08)' : 'rgba(251,191,36,0.08)', color: cat.riskLevel === 'high' ? '#ef4444' : '#d97706' }}>{cat.riskLevel} risk</span>
-                        )}
-                      </div>
-                      {(cat.finding || cat.fix) && (
-                        <div className="px-3 pb-2.5" style={{ borderTop: '0.5px solid rgba(255,255,255,0.06)' }}>
-                          {cat.finding && <p className="text-xs text-zinc-400 leading-relaxed pt-2 mb-2">{cat.finding}</p>}
-                          {cat.fix && (
-                            <div className="rounded-lg p-2.5" style={{ background: 'rgba(99,102,241,0.06)', border: '0.5px solid rgba(99,102,241,0.15)' }}>
-                              <p className="text-xs text-zinc-200 leading-relaxed">{cat.fix}</p>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Clear items */}
-            {clearCategories.length > 0 && (
-              <div className="px-3.5 pb-2">
-                <button onClick={() => setDismissedResults(prev => { const n = new Set(prev); if (n.has('showClear')) n.delete('showClear'); else n.add('showClear'); return n; })} className="text-xs font-medium cursor-pointer bg-transparent border-none" style={{ color: '#10b981' }}>
-                  {dismissedResults.has('showClear') ? `Hide ${clearCategories.length} clear items` : `Show ${clearCategories.length} clear items`}
-                </button>
-                {dismissedResults.has('showClear') && (
-                  <div className="flex flex-col gap-1 mt-2">
-                    {clearCategories.map((cat: any, ci: number) => (
-                      <div key={ci} className="flex items-center gap-2 bg-white/[0.03] rounded-lg px-3 py-2">
-                        <span className="text-[9px] font-medium rounded-full px-1.5 py-px" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>Clear</span>
-                        <span className="text-xs text-zinc-300">{cat.name}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Reviewer notes */}
-            {policyResult.reviewerNotes && (
-              <div className="mx-3.5 mb-3.5 bg-white/[0.03] rounded-[10px] p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-zinc-200">Reviewer Notes</span>
-                  <span className="text-[11px] text-zinc-600">For appeal if flagged</span>
-                </div>
-                <p className="text-xs text-zinc-400 leading-[1.6]">{policyResult.reviewerNotes}</p>
-              </div>
-            )}
-          </div>
-        );
-      })()}
 
       {/* ─── Center column analysis sections ─── */}
       {/* Design Review + Second Eye Review rendered by PaidAdAnalyzer */}

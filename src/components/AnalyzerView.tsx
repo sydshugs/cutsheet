@@ -40,15 +40,15 @@ interface AnalyzerViewProps {
   onCheckPolicies?: () => void;
   onCompare?: () => void;
   fixItLoading?: boolean;
-  fixItResult?: any;
+  fixItResult?: { rewrittenHook?: { copy: string; reasoning: string }; revisedBody?: string; newCTA?: { copy: string; placement: string }; textOverlays?: { timestamp: string; copy: string; placement: string }[]; predictedImprovements?: { dimension: string; oldScore: number; newScore: number; reason: string }[] } | null;
   policyLoading?: boolean;
-  policyResult?: any;
+  policyResult?: { verdict: string; verdictLabel?: string; topFixes?: string[]; reviewerNotes?: string; metaCategories?: { name: string; status: string; finding?: string; fix?: string; riskLevel?: string }[]; tiktokCategories?: { name: string; status: string; finding?: string; fix?: string; riskLevel?: string }[] } | null;
   visualizeLoading?: boolean;
-  visualizeResult?: any;
+  visualizeResult?: { url?: string; type?: string } | null;
   designReviewSlot?: React.ReactNode;
   secondEyeSlot?: React.ReactNode;
   designReviewData?: { flags: { area: string; severity: string; fix: string; issue: string }[]; topIssue?: string; overallDesignVerdict?: string };
-  secondEyeResult?: any;
+  secondEyeResult?: { scrollMoment: string | null; flags: { timestamp: string; category: string; severity: string; issue: string; fix: string }[]; whatItCommunicates: string; whatItFails: string } | null;
   secondEyeLoading?: boolean;
 }
 

@@ -12,8 +12,6 @@ import { Copy, CheckCircle, Wand2, Loader2, AlertCircle, TrendingUp, ArrowUpRigh
 import type { BudgetRecommendation, Hashtags, Scene, HookDetail } from "../services/analyzerService";
 import type { EngineBudgetRecommendation } from "../services/budgetService";
 import { getBenchmark, type BenchmarkResult } from "../lib/benchmarks";
-import SceneBreakdown from "./SceneBreakdown";
-import { StaticAdChecks } from "./StaticAdChecks";
 import FixItPanel, { type FixItResult } from "./FixItPanel";
 import PredictedPerformanceCard, { type PredictionResult } from "./PredictedPerformanceCard";
 import { CollapsibleSection } from "./ui/CollapsibleSection";
@@ -22,9 +20,7 @@ import { AlertDialog } from "./ui/AlertDialog";
 
 // Sub-components
 import { ScoreHero } from "./ScoreHero";
-import { HookDetailCard } from "./scorecard/HookDetailCard";
 import { BudgetCard } from "./scorecard/BudgetCard";
-import { ScoreAdaptiveCTA } from "./scorecard/ScoreAdaptiveCTA";
 
 interface Scores {
   hook: number;
