@@ -110,17 +110,17 @@ export function HookAnalysisExpanded({ content, format }: HookAnalysisExpandedPr
 
       {format === 'static' ? (
         /* STATIC: 2-up tiles */
-        <div className="grid grid-cols-2 gap-1.5">
+        <div className="grid grid-cols-2 gap-2">
           {data.scrollStopFactor && (
-            <div className="bg-white/[0.03] rounded-lg" style={{ padding: '9px 11px' }}>
-              <span className="text-[10px] text-zinc-500 uppercase tracking-[0.04em] block mb-1">Scroll-stop</span>
-              <span className="text-[11px] text-zinc-400 leading-[1.45]">{data.scrollStopFactor}</span>
+            <div className="rounded-xl bg-white/[0.02] border border-white/[0.05] p-3">
+              <span className="text-[10px] text-zinc-500 uppercase tracking-wide block mb-1.5">Scroll-stop</span>
+              <span className="text-xs text-zinc-400 leading-relaxed">{data.scrollStopFactor}</span>
             </div>
           )}
           {data.firstImpression && (
-            <div className="bg-white/[0.03] rounded-lg" style={{ padding: '9px 11px' }}>
-              <span className="text-[10px] text-zinc-500 uppercase tracking-[0.04em] block mb-1">First impression</span>
-              <span className="text-[11px] text-zinc-400 leading-[1.45]">{data.firstImpression}</span>
+            <div className="rounded-xl bg-white/[0.02] border border-white/[0.05] p-3">
+              <span className="text-[10px] text-zinc-500 uppercase tracking-wide block mb-1.5">First impression</span>
+              <span className="text-xs text-zinc-400 leading-relaxed">{data.firstImpression}</span>
             </div>
           )}
         </div>
@@ -143,20 +143,20 @@ export function HookAnalysisExpanded({ content, format }: HookAnalysisExpandedPr
             </div>
           </div>
 
-          {/* C-style timestamp rows */}
+          {/* Timestamp rows */}
           {moments.length > 0 && (
-            <div className="flex flex-col gap-1 mb-2">
+            <div className="flex flex-col gap-2 mb-4">
               {moments.map((m, i) => (
-                <div key={i} className="flex bg-white/[0.03] rounded-[9px] overflow-hidden">
-                  <div className="w-[38px] flex items-center justify-center shrink-0" style={{ borderRight: '0.5px solid rgba(255,255,255,0.06)' }}>
+                <div key={i} className="flex rounded-xl bg-white/[0.02] border border-white/[0.05] overflow-hidden">
+                  <div className="w-12 flex items-center justify-center shrink-0 border-r border-white/[0.05]">
                     <span className="text-[10px] font-medium font-mono" style={{ color: m.color }}>{m.ts}</span>
                   </div>
-                  <div className="flex-1 py-2 px-3">
+                  <div className="flex-1 py-2.5 px-3">
                     <span className="text-[10px] text-zinc-500 block mb-0.5">{m.label}</span>
-                    <span className="text-xs font-medium text-zinc-200 leading-snug">{m.text}</span>
+                    <span className="text-[13px] font-medium text-zinc-200 leading-relaxed">{m.text}</span>
                     {m.flag && (
-                      <div className="flex items-center gap-1 mt-1">
-                        <span className="w-1 h-1 rounded-full" style={{ background: m.flag === 'retention_strong' ? '#10b981' : '#ef4444' }} />
+                      <div className="flex items-center gap-1.5 mt-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full" style={{ background: m.flag === 'retention_strong' ? '#10b981' : '#ef4444' }} />
                         <span className="text-[10px] font-medium" style={{ color: m.flag === 'retention_strong' ? '#10b981' : '#ef4444' }}>
                           {m.flag === 'retention_strong' ? 'Retention strong' : 'Drop-off risk'}
                         </span>
@@ -169,14 +169,14 @@ export function HookAnalysisExpanded({ content, format }: HookAnalysisExpandedPr
           )}
 
           {/* Meta tiles */}
-          <div className="grid grid-cols-2 gap-1.5">
-            <div className="bg-white/[0.03] rounded-lg" style={{ padding: '9px 11px' }}>
-              <span className="text-[10px] text-zinc-500 uppercase tracking-[0.04em] block mb-1">Hook type</span>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="rounded-xl bg-white/[0.02] border border-white/[0.05] p-3">
+              <span className="text-[10px] text-zinc-500 uppercase tracking-wide block mb-1.5">Hook type</span>
               <span className="text-xs font-medium text-zinc-200">{data.hookType.split(/[—–-]/)[0].trim()}</span>
             </div>
-            <div className="bg-white/[0.03] rounded-lg" style={{ padding: '9px 11px' }}>
-              <span className="text-[10px] text-zinc-500 uppercase tracking-[0.04em] block mb-1">Strength</span>
-              <span className="text-xs font-medium capitalize" style={{ color: bar.color }}>{data.strength}</span>
+            <div className="rounded-xl bg-white/[0.02] border border-white/[0.05] p-3">
+              <span className="text-[10px] text-zinc-500 uppercase tracking-wide block mb-1.5">Strength</span>
+              <span className="text-xs font-medium capitalize" style={{ color: bar.color }}>{bar.label}</span>
               <div className="h-1 bg-white/5 rounded-full mt-2 overflow-hidden">
                 <div className="h-full rounded-full" style={{ width: bar.width, background: bar.color }} />
               </div>

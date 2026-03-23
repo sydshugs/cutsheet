@@ -72,12 +72,12 @@ function Card({ children, className, style }: { children: React.ReactNode; class
   return (
     <div
       style={{
-        background: "var(--surface)",
-        border: "1px solid var(--border)",
-        borderRadius: "var(--radius)",
+        background: "rgba(255,255,255,0.015)",
+        border: "1px solid rgba(255,255,255,0.06)",
+        borderRadius: "16px",
         ...style,
       }}
-      className={cn("p-4", className)}
+      className={cn("p-5", className)}
     >
       {children}
     </div>
@@ -102,25 +102,19 @@ export default function FixItPanel({ result, onCopyAll }: FixItPanelProps) {
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         className="flex flex-col gap-4"
       >
-        {/* ── Header ─────────────────────────────────────────────── */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Wand2 size={20} style={{ color: "var(--accent)" }} />
-            <h2 className="text-lg font-semibold" style={{ color: "var(--ink)" }}>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center">
+              <Wand2 size={18} className="text-indigo-400" />
+            </div>
+            <h2 className="text-base font-semibold text-zinc-200">
               Your Rewrite
             </h2>
           </div>
           <button
             onClick={handleCopyAll}
-            className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium",
-              "transition-colors cursor-pointer",
-            )}
-            style={{
-              background: "var(--surface-el)",
-              color: "var(--ink-muted)",
-              border: "1px solid var(--border)",
-            }}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer bg-white/[0.04] text-zinc-400 border border-white/[0.05] hover:bg-white/[0.06] hover:text-zinc-300"
           >
             <Copy size={14} />
             Copy All

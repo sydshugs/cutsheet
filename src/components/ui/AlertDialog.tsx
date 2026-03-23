@@ -67,47 +67,22 @@ export function AlertDialog({
         aria-modal="true"
         aria-labelledby="alert-dialog-title"
         onClick={(e) => e.stopPropagation()}
-        style={{
-          position: "relative",
-          background: "var(--surface-el, #141419)",
-          border: "1px solid var(--border, rgba(255,255,255,0.1))",
-          borderRadius: "var(--radius, 16px)",
-          padding: "24px",
-          maxWidth: "400px",
-          width: "calc(100% - 32px)",
-        }}
+        className="relative bg-zinc-900/95 border border-white/[0.08] rounded-2xl p-6 max-w-[400px] w-[calc(100%-32px)] shadow-2xl"
       >
         <h3
           id="alert-dialog-title"
-          style={{
-            margin: 0,
-            fontSize: "16px",
-            fontWeight: 600,
-            color: "var(--ink, rgba(255,255,255,0.92))",
-            fontFamily: "var(--sans)",
-          }}
+          className="m-0 text-base font-semibold text-zinc-100"
         >
           {title}
         </h3>
-        <p
-          style={{
-            margin: "8px 0 20px",
-            fontSize: "13px",
-            lineHeight: 1.5,
-            color: "var(--ink-muted, rgba(255,255,255,0.5))",
-            fontFamily: "var(--sans)",
-          }}
-        >
+        <p className="mt-2 mb-5 text-[13px] leading-relaxed text-zinc-400">
           {description}
         </p>
-        <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+        <div className="flex gap-2 justify-end">
           <button
             type="button"
             onClick={onClose}
-            className={cn(
-              "px-4 py-2 rounded-lg text-[13px] font-medium transition-colors",
-              "bg-transparent text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-white/5"
-            )}
+            className="px-4 py-2.5 rounded-xl text-sm font-medium transition-all bg-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.04]"
           >
             {cancelLabel}
           </button>
@@ -119,10 +94,10 @@ export function AlertDialog({
               onClose();
             }}
             className={cn(
-              "px-4 py-2 rounded-lg text-[13px] font-medium transition-colors",
+              "px-5 py-2.5 rounded-xl text-sm font-medium transition-all",
               variant === "destructive"
-                ? "bg-red-500/15 text-red-400 hover:bg-red-500/25"
-                : "bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)]"
+                ? "bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20"
+                : "bg-indigo-500 text-white hover:bg-indigo-400 shadow-lg shadow-indigo-500/20"
             )}
           >
             {confirmLabel}

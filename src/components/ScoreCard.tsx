@@ -438,13 +438,12 @@ export function ScoreCard({
           );
           })()}
 
-          {/* Recommended Hashtags — C2 layout */}
+          {/* Recommended Hashtags */}
           {hashtags && (hashtags.tiktok.length > 0 || hashtags.meta.length > 0 || hashtags.instagram.length > 0) && (
             <HashtagsC2 hashtags={hashtags} format={format} />
           )}
 
-        </div>{/* end card content */}
-      </div>{/* end glass card */}
+      </div>{/* end main card */}
 
       {/* Re-analyze button */}
       {onReanalyze && (
@@ -496,12 +495,7 @@ export function ScoreCard({
 
       {/* Toast notification */}
       {toast && (
-        <div style={{
-          position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)",
-          background: "var(--success)", color: "white", padding: "8px 20px", borderRadius: 12,
-          fontSize: 13, fontWeight: 500, zIndex: 9999, boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
-          animation: "fadeIn 200ms ease-out",
-        }}>
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-emerald-500 text-white px-5 py-2.5 rounded-xl text-sm font-medium z-[9999] shadow-lg shadow-emerald-500/25 animate-[fadeIn_200ms_ease-out]">
           {toast}
         </div>
       )}

@@ -47,24 +47,24 @@ export function HashtagsC2({ hashtags, format }: HashtagsC2Props) {
   if (availablePlatforms.length === 0) return null;
 
   return (
-    <div className="mt-5 px-5 pb-5">
+    <div className="mt-4 mx-4 rounded-2xl border border-white/[0.06] bg-white/[0.015] p-5">
       {/* Header */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Hash size={14} className="text-zinc-500" />
-          <span className="text-xs font-medium text-zinc-300">Hashtags</span>
+          <span className="text-xs font-medium text-zinc-400 uppercase tracking-wide">Hashtags</span>
         </div>
         <button
           onClick={handleCopy}
-          className="text-[11px] font-medium cursor-pointer transition-colors hover:text-indigo-300"
-          style={{ color: copied ? '#10b981' : '#818cf8', background: 'none', border: 'none' }}
+          className="text-xs font-medium cursor-pointer transition-colors px-3 py-1.5 rounded-lg hover:bg-white/[0.03]"
+          style={{ color: copied ? '#10b981' : '#818cf8', background: 'transparent', border: 'none' }}
         >
-          {copied ? 'Copied' : 'Copy all'}
+          {copied ? 'Copied!' : 'Copy all'}
         </button>
       </div>
 
       {/* Platform tabs */}
-      <div className="flex gap-1 mb-3">
+      <div className="flex gap-1.5 mb-4 p-1 rounded-xl bg-white/[0.02]">
         {availablePlatforms.map(plat => {
           const isActive = activePlatform === plat;
           return (
@@ -73,7 +73,7 @@ export function HashtagsC2({ hashtags, format }: HashtagsC2Props) {
               onClick={() => { setActivePlatform(plat); setShowAll(false); }}
               aria-label={`Show ${plat} hashtags`}
               aria-pressed={isActive}
-              className="text-[11px] font-medium px-3 py-1.5 rounded-lg cursor-pointer transition-all hover:bg-white/[0.05] focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:outline-none"
+              className="text-[11px] font-medium flex-1 py-2 rounded-lg cursor-pointer transition-all focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:outline-none"
               style={{
                 background: isActive ? 'rgba(255,255,255,0.06)' : 'transparent',
                 color: isActive ? '#e4e4e7' : '#71717a',
@@ -87,11 +87,11 @@ export function HashtagsC2({ hashtags, format }: HashtagsC2Props) {
       </div>
 
       {/* Tags */}
-      <div className="flex flex-wrap gap-1.5">
+      <div className="flex flex-wrap gap-2">
         {visibleTags.map(tag => (
           <span
             key={tag}
-            className="text-[11px] px-2.5 py-1 rounded-md bg-white/[0.03] text-zinc-400 hover:bg-white/[0.05] hover:text-zinc-300 transition-colors cursor-default"
+            className="text-xs px-3 py-1.5 rounded-lg bg-white/[0.03] text-zinc-400 hover:bg-white/[0.05] hover:text-zinc-300 transition-colors cursor-default border border-white/[0.04]"
           >
             #{tag}
           </span>
@@ -99,15 +99,15 @@ export function HashtagsC2({ hashtags, format }: HashtagsC2Props) {
         {hasMore && (
           <button
             onClick={() => setShowAll(v => !v)}
-            className="text-[11px] font-medium px-2.5 py-1 rounded-md cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:outline-none bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/15 border-none"
+            className="text-xs font-medium px-3 py-1.5 rounded-lg cursor-pointer transition-all focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:outline-none bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/15 border border-indigo-500/20"
           >
-            {showAll ? 'Less' : `+${tags.length - VISIBLE_DEFAULT}`}
+            {showAll ? 'Show less' : `+${tags.length - VISIBLE_DEFAULT} more`}
           </button>
         )}
       </div>
 
       {/* Tag count */}
-      <p className="text-[10px] text-zinc-600 mt-2">{tags.length} tags for {activePlatform}</p>
+      <p className="text-[10px] text-zinc-600 mt-3">{tags.length} tags optimized for {activePlatform}</p>
     </div>
   );
 }

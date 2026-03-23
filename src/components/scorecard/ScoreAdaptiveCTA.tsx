@@ -12,78 +12,69 @@ interface ScoreAdaptiveCTAProps {
 
 export function ScoreAdaptiveCTA({ overallScore, onShare, onGenerateBrief, briefLoading }: ScoreAdaptiveCTAProps) {
   return (
-    <div className="px-5 pb-3">
+    <div className="px-5 pb-4">
       <AnimatePresence mode="wait">
         {overallScore >= 8 ? (
           <motion.div
             key="cta-share"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.2 }}
           >
             <button
               type="button"
               onClick={() => onShare?.()}
-              className="w-full h-11 rounded-full border-none text-[13px] font-semibold cursor-pointer flex items-center justify-center gap-2 transition-colors duration-150"
-              style={{ background: "rgba(16,185,129,0.15)", color: "#10b981", border: "1px solid rgba(16,185,129,0.3)" }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(16,185,129,0.25)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(16,185,129,0.15)"; }}
+              className="w-full py-3.5 rounded-xl text-sm font-medium cursor-pointer flex items-center justify-center gap-2.5 transition-all bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/15 hover:border-emerald-500/30"
             >
-              <Share2 size={14} /> Share Your Score
+              <Share2 size={15} /> Share Your Score
             </button>
           </motion.div>
         ) : overallScore >= 5.5 ? (
           <motion.div
             key="cta-fix"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.2 }}
           >
             <button
               type="button"
               onClick={() => onGenerateBrief?.()}
               disabled={briefLoading}
-              className="w-full h-11 rounded-full border-none text-[13px] font-semibold cursor-pointer flex items-center justify-center gap-2 transition-colors duration-150 disabled:opacity-70 disabled:cursor-not-allowed"
-              style={{ background: "#4f46e5", color: "white" }}
-              onMouseEnter={(e) => { if (!briefLoading) e.currentTarget.style.background = "#4338ca"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "#4f46e5"; }}
+              className="w-full py-3.5 rounded-xl text-sm font-medium cursor-pointer flex items-center justify-center gap-2.5 transition-all bg-indigo-500 text-white hover:bg-indigo-400 shadow-lg shadow-indigo-500/20 disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {briefLoading ? (
-                <><Loader2 size={14} className="animate-spin" /> Generating brief...</>
+                <><Loader2 size={15} className="animate-spin" /> Generating...</>
               ) : (
-                <><FileText size={14} /> Generate a New Brief</>
+                <><FileText size={15} /> Generate Brief</>
               )}
             </button>
-            <p className="text-[11px] text-zinc-500 text-center mt-1.5">
+            <p className="text-[11px] text-zinc-600 text-center mt-2">
               AI-powered creative brief based on your score
             </p>
           </motion.div>
         ) : (
           <motion.div
             key="cta-brief"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.2 }}
           >
             <button
               type="button"
               onClick={() => onGenerateBrief?.()}
               disabled={briefLoading}
-              className="w-full h-11 rounded-full border-none text-[13px] font-semibold cursor-pointer flex items-center justify-center gap-2 transition-colors duration-150 disabled:opacity-70 disabled:cursor-not-allowed"
-              style={{ background: "rgba(245,158,11,0.15)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.3)" }}
-              onMouseEnter={(e) => { if (!briefLoading) e.currentTarget.style.background = "rgba(245,158,11,0.25)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(245,158,11,0.15)"; }}
+              className="w-full py-3.5 rounded-xl text-sm font-medium cursor-pointer flex items-center justify-center gap-2.5 transition-all bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/15 hover:border-amber-500/30 disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {briefLoading ? (
-                <><Loader2 size={14} className="animate-spin" /> Generating brief...</>
+                <><Loader2 size={15} className="animate-spin" /> Generating...</>
               ) : (
-                <><FileText size={14} /> Generate a New Brief</>
+                <><FileText size={15} /> Generate Brief</>
               )}
             </button>
-            <p className="text-[11px] text-zinc-500 text-center mt-1.5">
+            <p className="text-[11px] text-zinc-600 text-center mt-2">
               AI-powered creative brief based on your score
             </p>
           </motion.div>
