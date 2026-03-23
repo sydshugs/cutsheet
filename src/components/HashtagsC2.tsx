@@ -1,5 +1,6 @@
 // HashtagsC2 — collapsible hashtag section matching other accordion sections
 
+import type { MouseEvent } from "react";
 import { useState } from "react";
 import { Hash, ChevronRight } from "lucide-react";
 import type { Hashtags } from "../services/analyzerService";
@@ -38,7 +39,7 @@ export function HashtagsC2({ hashtags, format }: HashtagsC2Props) {
   const visibleTags = showAll ? tags : tags.slice(0, VISIBLE_DEFAULT);
   const hasMore = tags.length > VISIBLE_DEFAULT;
 
-  const handleCopy = (e: React.MouseEvent) => {
+  const handleCopy = (e: MouseEvent) => {
     e.stopPropagation();
     const text = tags.map(t => `#${t}`).join(' ');
     navigator.clipboard.writeText(text);
