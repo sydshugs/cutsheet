@@ -102,7 +102,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const geminiKey = process.env.GEMINI_API_KEY ?? process.env.VITE_GEMINI_API_KEY;
       if (geminiKey) {
         const genai = new GoogleGenerativeAI(geminiKey);
-        const model = genai.getGenerativeModel({ model: "gemini-2.0-flash" });
+        const model = genai.getGenerativeModel({
+          model: "gemini-2.0-flash",
+          generationConfig: { temperature: 0 },
+        });
 
         const nicheRiskContext: Record<string, string> = {
           supplements: "HIGH-RISK NICHE: Supplements. Extra scrutiny required: health claims, before/after imagery, efficacy promises, missing FDA disclaimers, unsubstantiated ingredient claims, 'doctor recommended' without proof.",

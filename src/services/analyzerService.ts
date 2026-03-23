@@ -67,6 +67,17 @@ Your analysis must be:
 - Written like a human expert briefing a creative team, not a robot summarizing content.
 - Focused on performance signals: hook strength, message clarity, CTA, retention, emotion.
 
+SCORING RULES — DETERMINISTIC:
+You are a scoring engine. Apply these criteria mechanically and consistently.
+For the same input, always produce the same score. Do not vary your assessment based on phrasing — score only what is visually and factually present.
+Scores must be integers 1–10. No decimals. No ranges. No "around" or "approximately."
+
+Scoring scale:
+1–3: Significant problems. Multiple critical issues present.
+4–6: Functional but weak. Core elements present but underperforming.
+7–8: Solid. Meets platform best practices with minor improvements possible.
+9–10: Excellent. Exceeds platform benchmarks. Production-ready.
+
 You will return analysis in exact structured markdown format. Do not add commentary before or after the structured output. Return only the markdown.`;
 
 // ─── ANALYSIS PROMPT ─────────────────────────────────────────────────────────
@@ -742,7 +753,7 @@ export async function analyzeVideo(
       prompt,
       systemInstruction: SYSTEM_PROMPT,
       maxOutputTokens: MAX_TOKENS,
-      temperature: 0.1,
+      temperature: 0,
       topP: 0.8,
       topK: 40,
     });
@@ -905,7 +916,7 @@ ${markdownB}`;
     prompt,
     systemInstruction: `You are a senior creative strategist specializing in ${nicheLabel} advertising on ${platformLabel}. Your comparisons are calibrated to ${platformLabel} benchmarks for ${nicheLabel}. Every insight must reference specific scores. Never give generic advice that could apply to any two ads.`,
     maxOutputTokens: 2048,
-    temperature: 0.4,
+    temperature: 0,
   });
 }
 
@@ -1007,6 +1018,6 @@ Rank these ads from strongest to weakest and give a one sentence reason for each
     prompt,
     systemInstruction: "You are a performance marketing creative analyst. You rank video ads from strongest to weakest and give one sentence per ad.",
     maxOutputTokens: 2048,
-    temperature: 0.4,
+    temperature: 0,
   });
 }

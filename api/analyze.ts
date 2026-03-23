@@ -57,7 +57,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       prompt,
       systemInstruction,
       maxOutputTokens = 8192,
-      temperature = 0.1,
+      temperature = 0,
       topP = 0.8,
       topK = 40,
     } = (req.body ?? {}) as AnalyzeRequest;

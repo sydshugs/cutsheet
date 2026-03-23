@@ -99,7 +99,7 @@ export async function runComparison(
       "Authorization": `Bearer ${session.access_token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ prompt, maxOutputTokens: 8192, temperature: 0.3 }),
+    body: JSON.stringify({ prompt, maxOutputTokens: 8192, temperature: 0 }),
   });
 
   if (!response.ok) {
