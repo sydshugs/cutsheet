@@ -62,14 +62,69 @@ interface ScorecardData {
   hookVerdict?: string;
 }
 
+// Patterns to detect CTA/urgency-related content that should be excluded for paid static / organic
+const CTA_URGENCY_RE = /\bcta\b|call.to.action|shop\s*now|learn\s*more|buy\s*now|get\s*started|sign\s*up|urgency|limited.time|act\s*now|hurry|\boff\b.*banner|discount.*overlay|promo.*badge|offer.*callout/i;
+
+/** Filter weaknesses and improvements based on quadrant exclusion rules. */
+function filterForQuadrant(
+  ctx: VisualizeContextInput,
+  weaknesses: ScorecardData["weaknesses"],
+  improvements: string[],
+): { filteredWeaknesses: ScorecardData["weaknesses"]; filteredImprovements: string[] } {
+  // Paid static + all organic: exclude CTA-related items
+  const excludeCta = ctx.excludeCta || ctx.adType === "organic" || (ctx.adType === "paid" && ctx.format === "static");
+
+  if (!excludeCta) {
+    return { filteredWeaknesses: weaknesses, filteredImprovements: improvements };
+  }
+
+  return {
+    filteredWeaknesses: weaknesses.filter((w) => !CTA_URGENCY_RE.test(w.name)),
+    filteredImprovements: improvements.filter((imp) => !CTA_URGENCY_RE.test(imp)),
+  };
+}
+
+/** Build CRITICAL OVERRIDES block that goes at the very end of the prompt to supersede everything. */
+function buildOverrides(ctx: VisualizeContextInput): string {
+  const overrides: string[] = [];
+
+  if (ctx.adType === "paid" && ctx.format === "static") {
+    overrides.push(
+      "Do NOT add a CTA button, CTA text, or any call-to-action element to the image — the platform places CTA buttons outside the creative.",
+      "Do NOT add urgency copy (limited time, act now, % off banners) — these belong in the ad platform headline/description fields, not the image.",
+      "Do NOT add offer callouts, promo badges, or discount overlays unless one already exists in the original image.",
+      "Do NOT add primary text, headline, or description copy — these live outside the creative in Ads Manager.",
+    );
+  } else if (ctx.adType === "organic") {
+    overrides.push(
+      "Do NOT add a CTA button — organic content has no CTA button on any platform.",
+      "Do NOT add urgency copy, offer banners, promo badges, or any paid ad conventions.",
+      "The output must look like organic content, not an advertisement.",
+    );
+  } else if (ctx.adType === "paid" && ctx.format === "video") {
+    overrides.push(
+      "Do NOT overlay a CTA button graphic on the video frame — the platform adds CTA buttons natively.",
+    );
+  }
+
+  if (overrides.length === 0) return "";
+
+  return `\n\n---\n\nCRITICAL OVERRIDES — these rules supersede EVERYTHING above, including weaknesses and improvements:\n${overrides.map((o, i) => `${i + 1}. ${o}`).join("\n")}`;
+}
+
 function buildV2EditPrompt(ctx: VisualizeContextInput, scorecard: ScorecardData): string {
   const quadrantContext = getQuadrantContext(ctx);
 
-  const weakLines = scorecard.weaknesses
+  // Filter out CTA/urgency items from weaknesses and improvements for this quadrant
+  const { filteredWeaknesses, filteredImprovements } = filterForQuadrant(
+    ctx, scorecard.weaknesses, scorecard.improvements,
+  );
+
+  const weakLines = filteredWeaknesses
     .map((w) => `- ${w.name}: scored ${w.score}/10`)
     .join("\n");
 
-  const improvementLines = scorecard.improvements
+  const improvementLines = filteredImprovements
     .slice(0, 4)
     .map((imp, i) => `${i + 1}. ${imp}`)
     .join("\n");
@@ -78,6 +133,9 @@ function buildV2EditPrompt(ctx: VisualizeContextInput, scorecard: ScorecardData)
     scorecard.hookVerdict && scorecard.hookVerdict !== "Strong"
       ? `\nHOOK IS ${scorecard.hookVerdict.toUpperCase()}: The opening visual/headline is not stopping the scroll. Fix the hook — make the first thing the eye lands on impossible to ignore.\n`
       : "";
+
+  // Build the CRITICAL OVERRIDES block that goes at the very end
+  const overrides = buildOverrides(ctx);
 
   return `You are editing an existing ad creative. Make ONLY the specific improvements listed below.
 Do NOT redesign the entire image. Preserve all elements that are already working.
@@ -88,10 +146,10 @@ ${quadrantContext}
 ---
 
 The ad scored ${scorecard.overallScore}/10. The specific weaknesses to fix:
-${weakLines}
+${weakLines || "- No critical weaknesses identified — refine overall quality."}
 
 Specific improvements from the analysis:
-${improvementLines}
+${improvementLines || "- Refine visual impact and clarity."}
 ${hookWarning}
 ---
 
@@ -120,7 +178,8 @@ EDITING RULES — CRITICAL:
 
 5. PROOFREAD ALL TEXT. No duplicate words, no repeated phrases, no incomplete sentences. Every text string must be clean.
 
-6. PRESERVE PSYCHOLOGICALLY STRONG ELEMENTS. Binary choice CTAs, loss aversion framing, named villains, urgency triggers — these are high-value persuasion patterns. Do NOT remove them. Only intensify them.
+6. PRESERVE EXISTING PERSUASION PATTERNS. Loss aversion framing, named villains, and urgency triggers that already exist in the original should be preserved — do not remove them. But do NOT add new ones that were not in the original.
+${overrides}
 
 Produce the improved version of the provided image now. Output only the image — no explanation, no description.`;
 }
@@ -227,11 +286,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       hookVerdict,
     });
 
-    // ── Derive summary for UI (no AI call needed) ────────────────────────
-    const improvementSummary = weaknesses.length
-      ? `This ad scored ${overallScore}/10 overall. The weakest areas were ${weaknesses.map((d) => `${d.name} (${d.score}/10)`).join(" and ")}. The improved version surgically edits these while preserving everything that was already working.`
+    // Diagnostic: log context resolution and prompt length (never log full prompt in prod)
+    console.info("[visualize-v2] Context: adType=%s, format=%s, platform=%s, excludeCta=%s",
+      ctx.adType, ctx.format, ctx.platform, ctx.excludeCta);
+    console.info("[visualize-v2] Prompt length: %d chars, weaknesses: %d, improvements: %d",
+      editPrompt.length, weaknesses.length, improvements.length);
+
+    // ── Derive summary + changesApplied for UI (no AI call needed) ────────
+    // Filter weaknesses and improvements through the same quadrant rules used in the prompt
+    const { filteredWeaknesses, filteredImprovements } = filterForQuadrant(ctx, weaknesses, improvements);
+
+    const improvementSummary = filteredWeaknesses.length
+      ? `This ad scored ${overallScore}/10 overall. The weakest areas were ${filteredWeaknesses.map((d) => `${d.name} (${d.score}/10)`).join(" and ")}. The improved version surgically edits these while preserving everything that was already working.`
       : `This ad scored ${overallScore}/10 overall. The improved version refines the creative with targeted edits from the analysis.`;
-    const changesApplied = improvements.slice(0, 6);
+    const changesApplied = filteredImprovements.slice(0, 6);
 
     // ── Resolve image to base64 ──────────────────────────────────────────
     let resolvedBase64: string;
