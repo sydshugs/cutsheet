@@ -90,7 +90,7 @@ const PLANS = [
     name: "Pro",
     description: "For marketers & creators",
     priceMonthly: 29,
-    priceYearly: 290,
+    priceYearly: 295, // $29 × 12 = $348, with 15% off = $295.80 → $295
     icon: "zap",
     recommended: true,
     features: [
@@ -107,7 +107,7 @@ const PLANS = [
     name: "Team",
     description: "For agencies & teams",
     priceMonthly: 49,
-    priceYearly: 490,
+    priceYearly: 499, // $49 × 12 = $588, with 15% off = $499.80 → $499
     icon: "users",
     features: [
       { label: "Everything in Pro", included: true },
@@ -680,26 +680,29 @@ export function Settings() {
           >
             Monthly
           </button>
-          <button
-            type="button"
-            onClick={() => setIsAnnual(true)}
-            className="px-5 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2"
-            style={{
-              background: isAnnual ? "rgba(255,255,255,0.1)" : "transparent",
-              color: isAnnual ? "#f4f4f5" : "#71717a",
-              border: "none",
-              cursor: "pointer",
-            }}
-          >
-            Annually
-          </button>
+          {/* Annually button with Save badge above */}
+          <div className="relative">
+            <span 
+              className="absolute -top-6 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap"
+              style={{ background: "rgba(16,185,129,0.15)", color: COLORS.success, border: "1px solid rgba(16,185,129,0.2)" }}
+            >
+              Save 15%
+            </span>
+            <button
+              type="button"
+              onClick={() => setIsAnnual(true)}
+              className="px-5 py-2 rounded-lg text-sm font-medium transition-all"
+              style={{
+                background: isAnnual ? "rgba(255,255,255,0.1)" : "transparent",
+                color: isAnnual ? "#f4f4f5" : "#71717a",
+                border: "none",
+                cursor: "pointer",
+              }}
+            >
+              Annually
+            </button>
+          </div>
         </div>
-        <span 
-          className="ml-3 px-2.5 py-1 rounded-full text-xs font-medium"
-          style={{ background: "rgba(16,185,129,0.15)", color: COLORS.success, border: "1px solid rgba(16,185,129,0.2)" }}
-        >
-          Save 17%
-        </span>
       </div>
 
       {/* Pricing Cards Grid */}
