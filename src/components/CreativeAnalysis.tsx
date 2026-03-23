@@ -86,9 +86,7 @@ export function CreativeAnalysis({
           >
             {stateStyle.label}
           </span>
-          <span className="text-[11px] font-medium font-mono" style={{ color: stateStyle.color }}>
-            {score} / 10
-          </span>
+          {/* Score removed per design review */}
         </div>
         {/* Row 2: verdict sentence — 16px */}
         <p className="text-base font-medium text-zinc-100 leading-[1.4]">
@@ -174,15 +172,14 @@ export function CreativeAnalysis({
                 className="flex flex-col gap-1.5 rounded-lg"
                 style={{ background: 'rgba(255,255,255,0.03)', padding: '12px 14px' }}
               >
-                {/* Top row: category tag + severity dot */}
-                <div className="flex items-center justify-between">
+                {/* Top row: category tag */}
+                <div className="flex items-center">
                   <span
                     className="text-[11px] font-semibold uppercase rounded-full shrink-0"
                     style={{ padding: '4px 10px', letterSpacing: '0.03em', background: catStyle.bg, color: catStyle.color }}
                   >
                     {fix.category}
                   </span>
-                  <span className="w-[7px] h-[7px] rounded-full shrink-0" style={{ background: dotColor }} />
                 </div>
                 {/* Fix text below — 14px 500 */}
                 <span className="text-sm font-medium text-zinc-200 leading-normal">{fix.fix}</span>
