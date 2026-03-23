@@ -3,7 +3,7 @@
 // Used by all three animation scenarios (static motion preview, video hook animate, v2 animate).
 // DO NOT touch api/visualize.ts or api/visualize-v2.ts.
 
-export const maxDuration = 60; // Kling generation can take 30-50s
+export const maxDuration = 180; // Kling via fal.ai polling takes 60-120s
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { fal } from "@fal-ai/client";
