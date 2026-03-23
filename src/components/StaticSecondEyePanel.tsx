@@ -1,88 +1,155 @@
-// src/components/StaticSecondEyePanel.tsx — Design Review (redesigned)
-// Fix-first hierarchy, category filter bar, severity dots
+// src/components/StaticSecondEyePanel.tsx — Design Review (Premium redesign)
+// Visual-first design tool with clear hierarchy, impact indicators, and actionable fixes
+
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { PenTool, CheckCircle, AlertCircle, ChevronDown } from "lucide-react";
+import { 
+  PenTool, CheckCircle, AlertCircle, ChevronDown, ChevronRight,
+  Layers, Type, Move, Contrast, Sparkles, TrendingUp, Eye
+} from "lucide-react";
 import type { StaticSecondEyeResult, StaticSecondEyeFlag } from "../services/claudeService";
 
-// ─── CATEGORY + SEVERITY CONFIG ──────────────────────────────────────────────
+// ─── CATEGORY CONFIG ─────────────────────────────────────────────────────────
 
-const AREA_STYLES: Record<
+const AREA_CONFIG: Record<
   StaticSecondEyeFlag["area"],
-  { label: string; bg: string; color: string }
+  { label: string; icon: typeof Layers; color: string; gradient: string }
 > = {
-  hierarchy:  { label: "Hierarchy",  bg: "rgba(129,140,248,0.08)", color: "#818cf8" },
-  typography: { label: "Typography", bg: "rgba(251,191,36,0.1)",   color: "#d97706" },
-  layout:     { label: "Layout",     bg: "rgba(16,185,129,0.08)",  color: "#10b981" },
-  contrast:   { label: "Contrast",   bg: "rgba(239,68,68,0.08)",   color: "#ef4444" },
+  hierarchy:  { label: "Hierarchy",  icon: Layers,   color: "#818cf8", gradient: "from-indigo-500/15 to-indigo-500/5" },
+  typography: { label: "Typography", icon: Type,     color: "#f59e0b", gradient: "from-amber-500/15 to-amber-500/5" },
+  layout:     { label: "Layout",     icon: Move,     color: "#10b981", gradient: "from-emerald-500/15 to-emerald-500/5" },
+  contrast:   { label: "Contrast",   icon: Contrast, color: "#ef4444", gradient: "from-red-500/15 to-red-500/5" },
 };
 
-const SEVERITY_DOT: Record<StaticSecondEyeFlag["severity"], string> = {
-  critical: "#ef4444",
-  warning:  "#f59e0b",
-  note:     "rgba(113,113,122,0.5)",
+const SEVERITY_CONFIG = {
+  critical: { color: "#ef4444", label: "Critical", bgColor: "rgba(239,68,68,0.1)" },
+  warning:  { color: "#f59e0b", label: "Warning", bgColor: "rgba(245,158,11,0.1)" },
+  note:     { color: "#71717a", label: "Note", bgColor: "rgba(113,113,122,0.1)" },
 };
 
 // ─── SHIMMER ─────────────────────────────────────────────────────────────────
 
-function ShimmerRow({ width }: { width: string }) {
+function ShimmerCard() {
   return (
-    <div
-      style={{
-        height: 44,
-        borderRadius: 8,
-        background: "linear-gradient(90deg, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.02) 75%)",
-        backgroundSize: "200% 100%",
-        animation: "shimmer 1.5s infinite",
-        width,
-      }}
-    />
-  );
-}
-
-// ─── TOP ISSUE BLOCK ─────────────────────────────────────────────────────────
-
-function TopIssueBlock({ topIssue, topFlag }: { topIssue: string; topFlag?: StaticSecondEyeFlag }) {
-  // Use the first critical flag's fix as the headline if available, otherwise show topIssue as-is
-  const fixText = topFlag?.fix;
-  const issueText = topFlag?.issue ?? topIssue;
-
-  return (
-    <div
-      style={{
-        background: "rgba(239,68,68,0.07)",
-        border: "0.5px solid rgba(239,68,68,0.2)",
-        borderRadius: 12,
-        padding: "12px 16px",
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-        <AlertCircle size={11} color="#ef4444" />
-        <span style={{ fontSize: 10, color: "#ef4444", fontWeight: 500 }}>Top issue</span>
+    <div className="rounded-xl bg-white/[0.02] border border-white/[0.05] p-4">
+      <div className="flex gap-3">
+        <div className="w-10 h-10 rounded-lg bg-white/[0.04] animate-pulse" />
+        <div className="flex-1 space-y-2">
+          <div className="h-3 w-24 rounded bg-white/[0.04] animate-pulse" />
+          <div className="h-4 w-full rounded bg-white/[0.04] animate-pulse" />
+        </div>
       </div>
-      {fixText ? (
-        <>
-          <p style={{ fontSize: 13, fontWeight: 500, color: "#e4e4e7", margin: "6px 0 0", lineHeight: 1.5 }}>
-            {fixText}
-          </p>
-          <p style={{ fontSize: 12, color: "#71717a", margin: "4px 0 0", lineHeight: 1.5 }}>
-            {issueText}
-          </p>
-        </>
-      ) : (
-        <p style={{ fontSize: 13, color: "#ef4444", margin: "6px 0 0", lineHeight: 1.5 }}>
-          {topIssue}
-        </p>
-      )}
     </div>
   );
 }
 
-// ─── CATEGORY FILTER BAR ─────────────────────────────────────────────────────
+// ─── VERDICT HEADER ──────────────────────────────────────────────────────────
+
+function VerdictHeader({ 
+  isReady, 
+  summary, 
+  fixCount 
+}: { 
+  isReady: boolean; 
+  summary: string; 
+  fixCount: number;
+}) {
+  return (
+    <div 
+      className={`relative rounded-2xl p-5 overflow-hidden ${
+        isReady 
+          ? 'bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border border-emerald-500/20' 
+          : 'bg-gradient-to-br from-red-500/10 to-amber-500/5 border border-red-500/20'
+      }`}
+    >
+      {/* Background glow */}
+      <div 
+        className="absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl opacity-40 pointer-events-none"
+        style={{ background: isReady ? '#10b981' : '#ef4444' }}
+      />
+      
+      <div className="relative flex items-start gap-4">
+        {/* Status indicator */}
+        <div 
+          className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
+            isReady ? 'bg-emerald-500/20' : 'bg-red-500/20'
+          }`}
+        >
+          {isReady ? (
+            <CheckCircle size={24} className="text-emerald-400" />
+          ) : (
+            <AlertCircle size={24} className="text-red-400" />
+          )}
+        </div>
+        
+        <div className="flex-1 min-w-0">
+          {/* Status badge */}
+          <div className="flex items-center gap-2 mb-2">
+            <span 
+              className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                isReady 
+                  ? 'bg-emerald-500/20 text-emerald-400' 
+                  : 'bg-red-500/20 text-red-400'
+              }`}
+            >
+              {isReady ? 'Ready to publish' : 'Needs attention'}
+            </span>
+            {!isReady && fixCount > 0 && (
+              <span className="text-[10px] text-zinc-500">{fixCount} fixes suggested</span>
+            )}
+          </div>
+          
+          {/* Summary */}
+          <p className="text-sm text-zinc-300 leading-relaxed">{summary}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── PRIORITY FIX CARD ───────────────────────────────────────────────────────
+
+function PriorityFixCard({ flag }: { flag: StaticSecondEyeFlag }) {
+  const area = AREA_CONFIG[flag.area];
+  const Icon = area.icon;
+  
+  return (
+    <div className="relative rounded-xl overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(239,68,68,0.08), rgba(245,158,11,0.05))', border: '1px solid rgba(239,68,68,0.15)' }}>
+      {/* Priority banner */}
+      <div className="flex items-center gap-2 px-4 py-2 bg-red-500/10 border-b border-red-500/10">
+        <Sparkles size={12} className="text-red-400" />
+        <span className="text-[10px] font-bold uppercase tracking-wider text-red-400">Priority Fix</span>
+        <span className="text-[10px] text-zinc-600">- Will have the biggest impact</span>
+      </div>
+      
+      <div className="p-4">
+        <div className="flex items-start gap-3">
+          <div 
+            className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+            style={{ background: `${area.color}20` }}
+          >
+            <Icon size={18} style={{ color: area.color }} />
+          </div>
+          <div className="flex-1">
+            <span className="text-[10px] font-medium uppercase tracking-wide block mb-1" style={{ color: area.color }}>
+              {area.label}
+            </span>
+            <p className="text-[15px] font-semibold text-zinc-100 leading-snug">{flag.fix}</p>
+            {flag.issue && (
+              <p className="text-xs text-zinc-500 mt-2 leading-relaxed">{flag.issue}</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── CATEGORY SECTION ────────────────────────────────────────────────────────
 
 type FilterCategory = "all" | StaticSecondEyeFlag["area"];
 
-function CategoryFilterBar({
+function CategoryTabs({
   flags,
   active,
   onFilter,
@@ -91,53 +158,36 @@ function CategoryFilterBar({
   active: FilterCategory;
   onFilter: (cat: FilterCategory) => void;
 }) {
-  // Count per category
   const counts: Record<string, number> = { all: flags.length };
   for (const f of flags) counts[f.area] = (counts[f.area] ?? 0) + 1;
 
-  const categories: { key: FilterCategory; label: string; color?: string; bg?: string }[] = [
-    { key: "all", label: "All" },
-    ...(counts.hierarchy ? [{ key: "hierarchy" as const, ...AREA_STYLES.hierarchy }] : []),
-    ...(counts.typography ? [{ key: "typography" as const, ...AREA_STYLES.typography }] : []),
-    ...(counts.layout ? [{ key: "layout" as const, ...AREA_STYLES.layout }] : []),
-    ...(counts.contrast ? [{ key: "contrast" as const, ...AREA_STYLES.contrast }] : []),
+  const categories: { key: FilterCategory; label: string; color?: string; icon?: typeof Layers }[] = [
+    { key: "all", label: `All ${flags.length}` },
+    ...(counts.hierarchy ? [{ key: "hierarchy" as const, ...AREA_CONFIG.hierarchy }] : []),
+    ...(counts.typography ? [{ key: "typography" as const, ...AREA_CONFIG.typography }] : []),
+    ...(counts.layout ? [{ key: "layout" as const, ...AREA_CONFIG.layout }] : []),
+    ...(counts.contrast ? [{ key: "contrast" as const, ...AREA_CONFIG.contrast }] : []),
   ];
 
   return (
-    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+    <div className="flex gap-2 flex-wrap">
       {categories.map((cat) => {
         const isActive = active === cat.key;
-        const count = counts[cat.key] ?? 0;
+        const Icon = cat.icon;
         return (
           <button
             key={cat.key}
             type="button"
             onClick={() => onFilter(cat.key)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 4,
-              fontSize: 10,
-              fontWeight: 500,
-              padding: "2px 8px",
-              borderRadius: 99,
-              cursor: "pointer",
-              transition: "all 150ms",
-              background: cat.key === "all"
-                ? "rgba(255,255,255,0.04)"
-                : cat.bg ?? "rgba(255,255,255,0.04)",
-              color: cat.key === "all"
-                ? (isActive ? "#e4e4e7" : "#71717a")
-                : cat.color ?? "#71717a",
-              border: isActive
-                ? `0.5px solid ${cat.color ?? "rgba(255,255,255,0.15)"}`
-                : "0.5px solid transparent",
-            }}
+            className={`flex items-center gap-1.5 text-[11px] font-medium px-3 py-1.5 rounded-lg transition-all ${
+              isActive 
+                ? 'bg-white/[0.08] border-white/[0.15]' 
+                : 'bg-white/[0.02] border-white/[0.05] hover:bg-white/[0.04]'
+            } border`}
+            style={{ color: isActive && cat.color ? cat.color : isActive ? '#e4e4e7' : '#71717a' }}
           >
-            {cat.key !== "all" && (
-              <span style={{ width: 5, height: 5, borderRadius: "50%", background: cat.color, flexShrink: 0 }} />
-            )}
-            {cat.label ?? cat.key}
+            {Icon && <Icon size={12} />}
+            {cat.label}
           </button>
         );
       })}
@@ -145,9 +195,9 @@ function CategoryFilterBar({
   );
 }
 
-// ─── FLAG CARD ───────────────────────────────────────────────────────────────
+// ─── FIX CARD ────────────────────────────────────────────────────────────────
 
-function DesignReviewCard({
+function FixCard({
   flag,
   index,
   isExpanded,
@@ -158,77 +208,151 @@ function DesignReviewCard({
   isExpanded: boolean;
   onClick: () => void;
 }) {
-  const area = AREA_STYLES[flag.area];
-  const sevColor = SEVERITY_DOT[flag.severity];
+  const area = AREA_CONFIG[flag.area];
+  const severity = SEVERITY_CONFIG[flag.severity];
+  const Icon = area.icon;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25, delay: index * 0.04 }}
+      transition={{ duration: 0.2, delay: index * 0.03 }}
       onClick={onClick}
-      style={{
-        border: isExpanded ? "1px solid rgba(255,255,255,0.15)" : "0.5px solid rgba(255,255,255,0.06)",
-        background: isExpanded ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.01)",
-        borderRadius: 8,
-        padding: "10px 12px",
-        cursor: "pointer",
-        transition: "border-color 150ms, background 150ms",
-      }}
+      className={`group relative rounded-xl cursor-pointer transition-all duration-200 overflow-hidden ${
+        isExpanded 
+          ? 'bg-white/[0.04] border-white/[0.12]' 
+          : 'bg-white/[0.015] border-white/[0.05] hover:bg-white/[0.03] hover:border-white/[0.08]'
+      } border`}
     >
-      {/* Top row: tag + severity dot */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <span
-          style={{
-            fontSize: 10,
-            fontWeight: 500,
-            color: area.color,
-            background: area.bg,
-            borderRadius: 99,
-            padding: "2px 8px",
-            lineHeight: "16px",
-          }}
-        >
-          {area.label}
-        </span>
-        <span
-          style={{ width: 6, height: 6, borderRadius: "50%", background: sevColor, flexShrink: 0 }}
-          title={flag.severity}
-        />
-      </div>
-
-      {/* Fix — always visible, primary, no label */}
-      <p style={{ fontSize: 13, color: "#e4e4e7", fontWeight: 500, margin: "8px 0 0", lineHeight: 1.5 }}>
-        {flag.fix}
-      </p>
-
-      {/* Issue — expandable */}
-      <div
-        style={{
-          maxHeight: isExpanded ? 100 : 0,
-          overflow: "hidden",
-          transition: "max-height 200ms ease-in-out",
-        }}
-      >
-        <div style={{ borderTop: "0.5px solid rgba(255,255,255,0.06)", marginTop: 8, paddingTop: 8 }}>
-          <p style={{ fontSize: 12, color: "#71717a", margin: 0, lineHeight: 1.55 }}>
-            {flag.issue}
-          </p>
+      <div className="p-4">
+        <div className="flex items-start gap-3">
+          {/* Icon */}
+          <div 
+            className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-transform group-hover:scale-105"
+            style={{ background: `${area.color}15` }}
+          >
+            <Icon size={16} style={{ color: area.color }} />
+          </div>
+          
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            {/* Header */}
+            <div className="flex items-center gap-2 mb-1">
+              <span 
+                className="text-[10px] font-semibold uppercase tracking-wide"
+                style={{ color: area.color }}
+              >
+                {area.label}
+              </span>
+              <span 
+                className="w-1.5 h-1.5 rounded-full"
+                style={{ background: severity.color }}
+                title={severity.label}
+              />
+            </div>
+            
+            {/* Fix text */}
+            <p className="text-[13px] font-medium text-zinc-200 leading-snug pr-6">{flag.fix}</p>
+          </div>
+          
+          {/* Expand indicator */}
+          <ChevronDown 
+            size={14} 
+            className={`text-zinc-600 shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+          />
         </div>
-      </div>
-
-      {/* Expand indicator */}
-      <div style={{ display: "flex", justifyContent: "center", marginTop: 4 }}>
-        <ChevronDown
-          size={12}
-          color="#3f3f46"
-          style={{
-            transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)",
-            transition: "transform 200ms",
-          }}
-        />
+        
+        {/* Expanded content */}
+        <AnimatePresence>
+          {isExpanded && flag.issue && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <div className="mt-3 pt-3 border-t border-white/[0.05] ml-12">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <Eye size={10} className="text-zinc-600" />
+                  <span className="text-[10px] text-zinc-600 uppercase tracking-wide">Why this matters</span>
+                </div>
+                <p className="text-xs text-zinc-500 leading-relaxed">{flag.issue}</p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </motion.div>
+  );
+}
+
+// ─── IMPACT SUMMARY ──────────────────────────────────────────────────────────
+
+function ImpactSummary({ flags }: { flags: StaticSecondEyeFlag[] }) {
+  const criticalCount = flags.filter(f => f.severity === 'critical').length;
+  const warningCount = flags.filter(f => f.severity === 'warning').length;
+  const noteCount = flags.filter(f => f.severity === 'note').length;
+  
+  const impactScore = Math.max(0, 100 - (criticalCount * 25) - (warningCount * 10) - (noteCount * 3));
+  
+  return (
+    <div className="rounded-xl bg-white/[0.02] border border-white/[0.05] p-4">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <TrendingUp size={14} className="text-zinc-500" />
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Expected Impact</span>
+        </div>
+        <span className="text-sm font-bold text-zinc-300">{impactScore}/100</span>
+      </div>
+      
+      {/* Impact bar */}
+      <div className="h-2 rounded-full bg-white/[0.04] overflow-hidden mb-3">
+        <div 
+          className="h-full rounded-full transition-all duration-500"
+          style={{ 
+            width: `${impactScore}%`,
+            background: impactScore >= 70 ? '#10b981' : impactScore >= 40 ? '#f59e0b' : '#ef4444'
+          }}
+        />
+      </div>
+      
+      {/* Severity breakdown */}
+      <div className="flex items-center gap-4">
+        {criticalCount > 0 && (
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-red-500" />
+            <span className="text-[11px] text-zinc-500">{criticalCount} critical</span>
+          </div>
+        )}
+        {warningCount > 0 && (
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-amber-500" />
+            <span className="text-[11px] text-zinc-500">{warningCount} warnings</span>
+          </div>
+        )}
+        {noteCount > 0 && (
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-zinc-500" />
+            <span className="text-[11px] text-zinc-500">{noteCount} notes</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── OVERALL VERDICT ─────────────────────────────────────────────────────────
+
+function OverallVerdict({ verdict }: { verdict: string }) {
+  return (
+    <div className="rounded-xl bg-gradient-to-br from-white/[0.03] to-transparent border border-white/[0.05] p-4">
+      <div className="flex items-center gap-2 mb-2">
+        <PenTool size={12} className="text-zinc-500" />
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Designer's Take</span>
+      </div>
+      <p className="text-[13px] text-zinc-400 leading-relaxed italic">"{verdict}"</p>
+    </div>
   );
 }
 
@@ -248,6 +372,7 @@ export function StaticSecondEyePanel({
 
   const hasFlags = result && result.flags.length > 0;
   const isEmpty = result && result.flags.length === 0;
+  const isReady = isEmpty || (result && !result.flags.some(f => f.severity === 'critical'));
 
   const visibleFlags = result
     ? activeFilter === "all"
@@ -255,42 +380,26 @@ export function StaticSecondEyePanel({
       : result.flags.filter(f => f.area === activeFilter)
     : [];
 
-  const handleCardClick = (index: number) => {
-    setExpandedIndex(prev => (prev === index ? null : index));
-  };
-
-  const handleFilter = (cat: FilterCategory) => {
-    setActiveFilter(cat);
-    setExpandedIndex(null);
-  };
-
-  // Find the first critical flag for the top issue block
-  const topCriticalFlag = result?.flags.find(f => f.severity === "critical");
+  // Skip priority fix in main list
+  const priorityFlag = result?.flags.find(f => f.severity === "critical");
+  const remainingFlags = visibleFlags.filter(f => f !== priorityFlag);
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
-      style={{
-        margin: "20px 16px 16px",
-        borderRadius: 12,
-        background: "rgba(255,255,255,0.02)",
-        border: "1px solid rgba(255,255,255,0.06)",
-        padding: 16,
-      }}
+      className="mx-4 mt-5 mb-4"
     >
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <PenTool size={14} color="#71717a" />
-          <span style={{ fontSize: 13, fontWeight: 600, color: "#f4f4f5" }}>
-            Design Review
-          </span>
+      {/* Section Header */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-8 h-8 rounded-xl bg-violet-500/10 flex items-center justify-center">
+          <PenTool size={14} className="text-violet-400" />
         </div>
-        <span style={{ fontSize: 11, color: "#52525b", fontStyle: "italic" }}>
-          Typography & layout
-        </span>
+        <div>
+          <h3 className="text-sm font-semibold text-zinc-100">Design Review</h3>
+          <span className="text-[11px] text-zinc-600">Visual polish & layout analysis</span>
+        </div>
       </div>
 
       <AnimatePresence mode="wait">
@@ -301,87 +410,77 @@ export function StaticSecondEyePanel({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            style={{ display: "flex", flexDirection: "column", gap: 8 }}
+            className="space-y-3"
           >
-            <ShimmerRow width="100%" />
-            <ShimmerRow width="92%" />
-            <ShimmerRow width="96%" />
-            <style>{`@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
+            <ShimmerCard />
+            <ShimmerCard />
+            <ShimmerCard />
           </motion.div>
         )}
 
-        {/* Empty */}
+        {/* Empty - All Good */}
         {isEmpty && (
           <motion.div
             key="empty"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              padding: "20px 0",
-              gap: 6,
-            }}
+            className="rounded-2xl bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border border-emerald-500/20 p-6 text-center"
           >
-            <CheckCircle size={24} color="#10b981" />
-            <span style={{ fontSize: 14, color: "#f4f4f5", fontWeight: 500 }}>
-              Design looks clean
-            </span>
-            <span style={{ fontSize: 12, color: "#71717a" }}>
-              No major typography or layout issues found.
-            </span>
+            <div className="w-14 h-14 rounded-2xl bg-emerald-500/15 flex items-center justify-center mx-auto mb-4">
+              <CheckCircle size={28} className="text-emerald-400" />
+            </div>
+            <h4 className="text-lg font-semibold text-zinc-100 mb-1">Design looks great</h4>
+            <p className="text-sm text-zinc-500">No typography, layout, or contrast issues detected.</p>
           </motion.div>
         )}
 
-        {/* Flags */}
+        {/* Has Fixes */}
         {hasFlags && result && (
           <motion.div
             key="flags"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            style={{ display: "flex", flexDirection: "column", gap: 8 }}
+            className="space-y-4"
           >
-            {/* 1. Top issue block */}
-            {result.topIssue && (
-              <TopIssueBlock topIssue={result.topIssue} topFlag={topCriticalFlag} />
-            )}
-
-            {/* 2. Category filter bar */}
-            <CategoryFilterBar
-              flags={result.flags}
-              active={activeFilter}
-              onFilter={handleFilter}
+            {/* Verdict header */}
+            <VerdictHeader 
+              isReady={!!isReady} 
+              summary={result.topIssue || 'Your design has a few areas for improvement.'} 
+              fixCount={result.flags.length}
             />
 
-            {/* 3. Flag cards */}
-            {visibleFlags.map((flag, i) => (
-              <DesignReviewCard
-                key={`${flag.area}-${i}`}
-                flag={flag}
-                index={i}
-                isExpanded={expandedIndex === i}
-                onClick={() => handleCardClick(i)}
-              />
-            ))}
+            {/* Priority fix */}
+            {priorityFlag && <PriorityFixCard flag={priorityFlag} />}
 
-            {/* 4. Overall summary */}
+            {/* Category tabs */}
+            <CategoryTabs 
+              flags={result.flags} 
+              active={activeFilter} 
+              onFilter={(cat) => {
+                setActiveFilter(cat);
+                setExpandedIndex(null);
+              }} 
+            />
+
+            {/* Fix cards */}
+            <div className="space-y-2">
+              {remainingFlags.map((flag, i) => (
+                <FixCard
+                  key={`${flag.area}-${i}`}
+                  flag={flag}
+                  index={i}
+                  isExpanded={expandedIndex === i}
+                  onClick={() => setExpandedIndex(prev => prev === i ? null : i)}
+                />
+              ))}
+            </div>
+
+            {/* Impact summary */}
+            <ImpactSummary flags={result.flags} />
+
+            {/* Overall verdict */}
             {result.overallDesignVerdict && (
-              <div
-                style={{
-                  background: "rgba(255,255,255,0.03)",
-                  borderRadius: 12,
-                  padding: "10px 14px",
-                  marginTop: 4,
-                }}
-              >
-                <span style={{ fontSize: 10, color: "#52525b", letterSpacing: "0.05em", textTransform: "uppercase" as const }}>
-                  Overall
-                </span>
-                <p style={{ fontSize: 12, color: "#a1a1aa", margin: "4px 0 0", lineHeight: 1.6 }}>
-                  {result.overallDesignVerdict}
-                </p>
-              </div>
+              <OverallVerdict verdict={result.overallDesignVerdict} />
             )}
           </motion.div>
         )}
