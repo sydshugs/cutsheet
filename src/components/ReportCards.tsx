@@ -524,7 +524,7 @@ export function ReportCards({
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: 'easeOut', delay: 0.06 }}>
       {(() => {
         const verdictSection = centerSections.find(s => /verdict/i.test(s.title ?? ''));
-        const sentences = verdictSection?.content.trim().split(/(?<=[.!])\s+/).filter(s => s.trim()) ?? [];
+        const sentences = verdictSection?.content?.trim().split(/(?<=[.!])\s+/).filter(s => s.trim()) ?? [];
         const oneLiner = effectiveVerdict?.headline ?? sentences[0] ?? 'Analysis complete';
         const vState = (effectiveVerdict?.state ?? (scores?.overall && scores.overall >= 8 ? 'ready' : scores?.overall && scores.overall >= 5 ? 'needs_work' : 'not_ready')) as 'not_ready' | 'needs_work' | 'ready';
         const detail = sentences.slice(1, 3).join(' ');
