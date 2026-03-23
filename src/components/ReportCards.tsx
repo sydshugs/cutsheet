@@ -401,7 +401,7 @@ export function ReportCards({
           { key: 'fix', icon: Wand2, name: 'AI Rewrite', credit: '1 credit', iconBg: 'rgba(99,102,241,0.1)', hoverIconBg: 'rgba(99,102,241,0.18)', iconColor: '#818cf8', ctaBg: 'rgba(99,102,241,0.12)', ctaBorder: 'rgba(99,102,241,0.25)', ctaColor: '#818cf8', ctaLabel: 'Run AI Rewrite →', desc: 'AI rewrites your ad with all priority fixes applied — tighter hook, CTA added, copy sharpened.', onClick: onFixIt, loading: fixItLoading },
           { key: 'visualize', icon: Image, name: 'Visualize It', credit: '1 credit', iconBg: 'rgba(16,185,129,0.1)', hoverIconBg: 'rgba(16,185,129,0.18)', iconColor: '#10b981', ctaBg: 'rgba(16,185,129,0.08)', ctaBorder: 'rgba(16,185,129,0.2)', ctaColor: '#10b981', ctaLabel: 'Run Visualize →', desc: 'Turn your static image into a short animated video using AI — ready to test as motion creative.', onClick: onVisualize, disabled: format !== 'static' },
           { key: 'policy', icon: ShieldCheck, name: 'Policy check', credit: '1 credit', iconBg: 'rgba(251,191,36,0.1)', hoverIconBg: 'rgba(251,191,36,0.18)', iconColor: '#d97706', ctaBg: 'rgba(251,191,36,0.08)', ctaBorder: 'rgba(251,191,36,0.2)', ctaColor: '#d97706', ctaLabel: 'Run Policy check →', desc: 'Scans your ad against Meta, TikTok, and Google platform policies and flags violations.', onClick: onCheckPolicies, loading: policyLoading },
-          { key: 'compare', icon: GitCompare, name: 'Compare', credit: 'free', iconBg: 'rgba(129,140,248,0.08)', hoverIconBg: 'rgba(129,140,248,0.15)', iconColor: '#818cf8', ctaBg: 'rgba(129,140,248,0.08)', ctaBorder: 'rgba(129,140,248,0.2)', ctaColor: '#818cf8', ctaLabel: 'Run Compare →', desc: 'Upload a second ad and get a side-by-side score comparison.', onClick: onCompare },
+          // Compare removed from tools grid
         ];
         const active = tools.find(t => t.key === activeTool);
         return (
@@ -410,7 +410,7 @@ export function ReportCards({
             style={{ border: activeTool ? '0.5px solid rgba(99,102,241,0.3)' : '0.5px solid rgba(255,255,255,0.06)', background: 'var(--surface, rgba(255,255,255,0.02))' }}
           >
             {/* 4-column tab row */}
-            <div className="grid grid-cols-4" style={{ borderBottom: active ? '0.5px solid rgba(255,255,255,0.06)' : 'none' }}>
+            <div className="grid grid-cols-3" style={{ borderBottom: active ? '0.5px solid rgba(255,255,255,0.06)' : 'none' }}>
               {tools.map((t, i) => {
                 const isActive = activeTool === t.key;
                 const Icon = t.icon;
@@ -421,7 +421,7 @@ export function ReportCards({
                     className="group flex flex-col items-center gap-2 py-4 px-2 transition-colors duration-150 cursor-pointer hover:bg-white/[0.03]"
                     style={{
                       background: isActive ? 'rgba(99,102,241,0.06)' : 'transparent',
-                      borderRight: i < 3 ? '0.5px solid rgba(255,255,255,0.06)' : 'none',
+                      borderRight: i < 2 ? '0.5px solid rgba(255,255,255,0.06)' : 'none',
                     }}
                   >
                     <div className="w-[38px] h-[38px] rounded-[11px] flex items-center justify-center transition-transform duration-150 group-hover:scale-105" style={{ background: t.iconBg }}>
