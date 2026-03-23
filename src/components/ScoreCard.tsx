@@ -384,65 +384,55 @@ export function ScoreCard({
 
           {/* Predicted Performance + Budget moved outside glass card */}
 
-          {/* ── Analysis sections (Hook, Hierarchy, Copy, Messaging) ── */}
+          {/* Analysis sections — cleaner spacing */}
           {analysisSections && analysisSections.length > 0 && (() => {
-            // Merge copy inventory + messaging into one combined section
             const copySection = analysisSections.find(s => /copy/i.test(s.title));
             const messagingSection = analysisSections.find(s => /messag/i.test(s.title));
             const combinedContent = [copySection?.content, messagingSection?.content].filter(Boolean).join('\n\n');
             const hasCombined = copySection || messagingSection;
             const ctaMissing = hasCombined && /no\s*(explicit\s*)?(cta|call)|cta.*none|none.*cta|flag.*missing/i.test(combinedContent);
 
-            // Filter out copy + messaging from individual rendering
             const filteredSections = analysisSections.filter(s =>
               !(/copy/i.test(s.title)) && !(/messag/i.test(s.title))
             );
 
             return (
-            <div style={{ marginTop: 16 }}>
+            <div className="px-4 pt-4 space-y-1">
               {filteredSections.map((section, i) => {
-                const iconMap: Record<string, typeof Lightbulb> = {
-                  hook: Lightbulb, hierarchy: Layout,
-                };
-                const matchedIcon = Object.entries(iconMap).find(([key]) =>
-                  section.title.toLowerCase().includes(key)
-                );
+                const iconMap: Record<string, typeof Lightbulb> = { hook: Lightbulb, hierarchy: Layout };
+                const matchedIcon = Object.entries(iconMap).find(([key]) => section.title.toLowerCase().includes(key));
                 const SIcon = matchedIcon?.[1] ?? FileText;
                 const isHook = section.title.toLowerCase().includes('hook');
                 const isHierarchy = section.title.toLowerCase().includes('hierarchy');
                 return (
-                  <div key={i} style={{ padding: "0 20px", marginTop: i > 0 ? 12 : 0 }}>
-                    <CollapsibleSection
-                      title={section.title}
-                      icon={<SIcon size={14} />}
-                    >
-                      {isHook ? (
-                        <HookAnalysisExpanded content={section.content} format={format ?? 'static'} />
-                      ) : isHierarchy ? (
-                        <VisualHierarchyExpanded content={section.content} />
-                      ) : (
-                        <div className="text-sm text-zinc-400 leading-relaxed [&_strong]:text-zinc-300 [&_strong]:font-medium [&_ul]:list-disc [&_ul]:pl-4 [&_li]:mb-1.5 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_h3]:text-xs [&_h3]:font-semibold [&_h3]:text-zinc-300 [&_h3]:mt-4 [&_h3]:mb-2 [&_em]:text-indigo-300/70">
-                          <ReactMarkdown>{section.content}</ReactMarkdown>
-                        </div>
-                      )}
-                    </CollapsibleSection>
-                  </div>
+                  <CollapsibleSection
+                    key={i}
+                    title={section.title}
+                    icon={<SIcon size={14} />}
+                  >
+                    {isHook ? (
+                      <HookAnalysisExpanded content={section.content} format={format ?? 'static'} />
+                    ) : isHierarchy ? (
+                      <VisualHierarchyExpanded content={section.content} />
+                    ) : (
+                      <div className="text-[13px] text-zinc-400 leading-relaxed [&_strong]:text-zinc-300 [&_strong]:font-medium [&_ul]:list-disc [&_ul]:pl-4 [&_li]:mb-1.5 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:mb-2 [&_p:last-child]:mb-0">
+                        <ReactMarkdown>{section.content}</ReactMarkdown>
+                      </div>
+                    )}
+                  </CollapsibleSection>
                 );
               })}
 
-              {/* Combined Copy & Messaging section */}
               {hasCombined && (
-                <div style={{ padding: "0 20px", marginTop: 12 }}>
-                  <CollapsibleSection
-                    title="Copy & messaging"
-                    icon={<MessageSquare size={14} />}
-                    trailing={ctaMissing ? (
-                      <span className="text-[10px] font-medium rounded-full px-2 py-px" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>No CTA</span>
-                    ) : undefined}
-                  >
-                    <CopyAndMessagingExpanded content={combinedContent} />
-                  </CollapsibleSection>
-                </div>
+                <CollapsibleSection
+                  title="Copy & messaging"
+                  icon={<MessageSquare size={14} />}
+                  trailing={ctaMissing ? (
+                    <span className="text-[10px] font-medium rounded-md px-2 py-0.5 bg-red-500/10 text-red-400">No CTA</span>
+                  ) : undefined}
+                >
+                  <CopyAndMessagingExpanded content={combinedContent} />
+                </CollapsibleSection>
               )}
             </div>
           );
@@ -456,37 +446,30 @@ export function ScoreCard({
         </div>{/* end card content */}
       </div>{/* end glass card */}
 
-      {/* Re-analyze button — below ScoreHero, above Predicted Performance */}
+      {/* Re-analyze button */}
       {onReanalyze && (
-        <div className="mx-4 mt-3">
-          <button
-            onClick={onReanalyze}
-            className="w-full flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[12px] font-medium transition-colors hover:opacity-80"
-            style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.2)' }}
-          >
-            <RotateCcw size={13} />
-            Re-analyze improved version →
-          </button>
-        </div>
+        <button
+          onClick={onReanalyze}
+          className="mx-4 mt-4 w-[calc(100%-2rem)] flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-medium transition-all hover:bg-indigo-500/15 bg-indigo-500/[0.08] text-indigo-400 border border-indigo-500/20"
+        >
+          <RotateCcw size={14} />
+          Re-analyze improved version
+        </button>
       )}
 
-      {/* Predicted Performance — own card, always expanded */}
+      {/* Predicted Performance */}
       {prediction && (
-        <div className="mx-4 mt-3 rounded-xl border border-white/5 bg-zinc-900/50 p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <TrendingUp size={14} className="text-zinc-500" />
-            <span className="text-xs font-medium text-zinc-200">Predicted Performance</span>
-          </div>
+        <div className="mx-4 mt-4 rounded-2xl border border-white/[0.06] bg-white/[0.015] p-5">
           <PredictedPerformanceCard prediction={prediction} platform={platform} niche={niche} />
         </div>
       )}
 
-      {/* Budget Recommendation — own card, always expanded */}
+      {/* Budget Recommendation */}
       {(engineBudget || budget) && (
-        <div className="mx-4 mt-3 rounded-xl border border-white/5 bg-zinc-900/50 p-4">
-          <div className="flex items-center gap-2 mb-3">
+        <div className="mx-4 mt-4 rounded-2xl border border-white/[0.06] bg-white/[0.015] p-5">
+          <div className="flex items-center gap-2 mb-4">
             <DollarSign size={14} className="text-zinc-500" />
-            <span className="text-xs font-medium text-zinc-200">Budget Recommendation</span>
+            <span className="text-xs font-medium text-zinc-400 uppercase tracking-wide">Budget</span>
           </div>
           <BudgetCard
             engineBudget={engineBudget}
@@ -496,26 +479,19 @@ export function ScoreCard({
         </div>
       )}
 
-      {/* Overflow menu moved to header row — see Score Overview header above */}
-
-      {/* Re-analyze button is above Predicted Performance */}
-
-      {/* Generate Brief button — below all sections */}
+      {/* Generate Brief button */}
       {onGenerateBrief && (
-        <div className="mx-4 mt-3 mb-2">
-          <button
-            onClick={onGenerateBrief}
-            disabled={briefLoading}
-            className="w-full flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[12px] font-medium transition-colors hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', color: '#f59e0b' }}
-          >
-            {briefLoading ? (
-              <><Loader2 size={13} className="animate-spin" /> Generating brief...</>
-            ) : (
-              <><FileText size={13} /> {hasBrief ? 'Regenerate Brief' : 'Generate a Brief'}</>
-            )}
-          </button>
-        </div>
+        <button
+          onClick={onGenerateBrief}
+          disabled={briefLoading}
+          className="mx-4 mt-4 mb-4 w-[calc(100%-2rem)] flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-medium transition-all hover:bg-amber-500/15 bg-amber-500/[0.08] text-amber-400 border border-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {briefLoading ? (
+            <><Loader2 size={14} className="animate-spin" /> Generating...</>
+          ) : (
+            <><FileText size={14} /> {hasBrief ? 'Regenerate Brief' : 'Generate Brief'}</>
+          )}
+        </button>
       )}
 
       {/* Toast notification */}

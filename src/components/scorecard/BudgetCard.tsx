@@ -98,16 +98,19 @@ export function BudgetCard({ engineBudget, budget, onNavigateSettings }: BudgetC
   if (budget) {
     const legacyTier = budget.verdict === "Boost It" ? TIER_STYLES.test :
                        budget.verdict === "Test It" ? TIER_STYLES.limited : TIER_STYLES.hold;
+    const LegacyIcon = legacyTier.icon;
     return (
       <div>
-        <div className="flex items-center gap-2 pb-3 border-b border-white/5">
-          <span className="block w-[7px] h-[7px] rounded-full" style={{ background: legacyTier.dot }} />
+        <div className="flex items-center gap-2.5 pb-3 border-b border-white/[0.05]">
+          <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: `${legacyTier.color}15` }}>
+            <LegacyIcon size={12} style={{ color: legacyTier.color }} />
+          </div>
           <span className="text-[13px] font-medium text-zinc-200">{budget.verdict}</span>
           {budget.daily && (
-            <span className="text-[12px] font-mono text-zinc-400 ml-auto">{budget.daily}/day</span>
+            <span className="text-xs font-mono text-zinc-400 ml-auto">{budget.daily}/day</span>
           )}
         </div>
-        <p className="text-xs text-zinc-400 leading-relaxed mt-3">
+        <p className="text-[13px] text-zinc-400 leading-relaxed mt-3">
           {budget.reason}
         </p>
       </div>

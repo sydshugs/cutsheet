@@ -553,46 +553,45 @@ export function ReportCards({
         const EMOTION_COLORS: Record<string, string> = { [primary]: '#818cf8', [secondary]: '#10b981', [tertiary]: '#6366f1' };
 
         return (
-          <div className="rounded-xl border border-white/5 overflow-hidden mt-3" style={{ background: 'var(--surface, rgba(255,255,255,0.02))' }}>
+          <div className="rounded-2xl border border-white/[0.06] overflow-hidden mt-4 bg-white/[0.015]">
             {/* Header */}
-            <div className="flex items-center gap-2 px-4 py-3" style={{ borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
+            <div className="flex items-center gap-2 px-5 py-3.5 border-b border-white/[0.05]">
               <Heart size={14} className="text-zinc-500" />
-              <span className="text-[13px] font-medium text-zinc-200">Emotional impact</span>
+              <span className="text-xs font-medium text-zinc-300">Emotional Impact</span>
             </div>
             {/* Body */}
-            <div className="px-4 py-4">
-              {/* Spectrum bar */}
-              <div className="h-1.5 rounded-full mb-1.5" style={{ background: 'linear-gradient(90deg, #818cf8 0%, #10b981 50%, #6366f1 100%)' }} />
-              <div className="flex justify-between mb-3.5">
-                <span className="text-xs font-medium" style={{ color: '#818cf8' }}>{primary}</span>
-                <span className="text-xs font-medium" style={{ color: '#10b981' }}>{secondary}</span>
-                <span className="text-xs font-medium" style={{ color: '#6366f1' }}>{tertiary}</span>
+            <div className="p-5">
+              {/* Emotion spectrum */}
+              <div className="h-1 rounded-full mb-2" style={{ background: 'linear-gradient(90deg, #818cf8 0%, #10b981 50%, #6366f1 100%)' }} />
+              <div className="flex justify-between mb-4">
+                <span className="text-[11px] font-medium" style={{ color: '#818cf8' }}>{primary}</span>
+                <span className="text-[11px] font-medium" style={{ color: '#10b981' }}>{secondary}</span>
+                <span className="text-[11px] font-medium" style={{ color: '#6366f1' }}>{tertiary}</span>
               </div>
 
-              {/* Statement with colored emotion words */}
-              <p className="text-sm text-zinc-400 leading-[1.65] mb-3">
+              {/* Statement */}
+              <p className="text-[13px] text-zinc-400 leading-relaxed mb-4">
                 {statementRaw.split(/\b/).map((word, wi) => {
                   const cleanWord = word.replace(/[.,!?]/g, '');
                   const emotionColor = EMOTION_COLORS[cleanWord];
                   return emotionColor
-                    ? <strong key={wi} style={{ color: emotionColor, fontWeight: 600 }}>{word}</strong>
+                    ? <strong key={wi} style={{ color: emotionColor, fontWeight: 500 }}>{word}</strong>
                     : <span key={wi}>{word}</span>;
                 })}
               </p>
 
               {/* Tone pills */}
-              <div className="flex gap-1.5 mb-3">
+              <div className="flex flex-wrap gap-1.5">
                 {tones.map(t => (
-                  <span key={t} className="text-[11px] bg-white/5 rounded-full px-2.5 py-0.5 text-zinc-400">{t}</span>
+                  <span key={t} className="text-[11px] bg-white/[0.04] rounded-md px-2.5 py-1 text-zinc-500">{t}</span>
                 ))}
               </div>
 
               {/* CTA mismatch warning */}
               {hasMismatch && (
-                <div className="flex items-center gap-2 rounded-[9px] px-3 py-2" style={{ background: 'rgba(239,68,68,0.06)', border: '0.5px solid rgba(239,68,68,0.15)' }}>
-                  <AlertCircle size={11} className="text-red-400 shrink-0" />
-                  <span className="text-[10px] font-medium text-red-400 shrink-0">CTA mismatch</span>
-                  <span className="text-[11px] text-zinc-400">{mismatchNote}</span>
+                <div className="flex items-center gap-2.5 rounded-xl p-3 mt-4 bg-red-500/[0.05] border border-red-500/10">
+                  <AlertCircle size={12} className="text-red-400 shrink-0" />
+                  <span className="text-xs text-zinc-400">{mismatchNote}</span>
                 </div>
               )}
             </div>
@@ -618,35 +617,34 @@ export function ReportCards({
         const durationTag = format === 'video' ? '6–8s loop' : '6–8s loop';
         const formatTag = format === 'static' ? 'Static → motion' : 'Video remix';
         return (
-          <div key={`motion-${i}`} className="rounded-xl border border-white/5 overflow-hidden mt-3" style={{ background: 'var(--surface, rgba(255,255,255,0.02))' }}>
+          <div key={`motion-${i}`} className="rounded-2xl border border-white/[0.06] overflow-hidden mt-4 bg-white/[0.015]">
             {/* Header */}
-            <div className="flex items-center gap-2 px-4 py-3" style={{ borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
+            <div className="flex items-center gap-2 px-5 py-3.5 border-b border-white/[0.05]">
               <Film size={14} className="text-zinc-500" />
-              <span className="text-[13px] font-medium text-zinc-200">Motion test idea</span>
+              <span className="text-xs font-medium text-zinc-300">Motion Test Idea</span>
             </div>
             {/* Body */}
-            <div className="px-4 py-3.5">
-              {/* Indigo concept card */}
-              <div className="rounded-[9px] px-3.5 py-3 mb-2.5" style={{ background: 'rgba(99,102,241,0.05)', border: '0.5px solid rgba(99,102,241,0.15)' }}>
-                <span className="text-[10px] font-medium text-indigo-400 uppercase tracking-[0.05em] block mb-1.5">Concept</span>
-                <p className="text-[13px] font-medium text-zinc-200 leading-[1.55]">{conceptText}</p>
+            <div className="p-5">
+              {/* Concept card */}
+              <div className="rounded-xl p-4 mb-4 bg-indigo-500/[0.05] border border-indigo-500/10">
+                <span className="text-[10px] font-medium text-indigo-400 uppercase tracking-wide block mb-2">Concept</span>
+                <p className="text-[13px] font-medium text-zinc-200 leading-relaxed">{conceptText}</p>
               </div>
               {/* Tag pills */}
-              <div className="flex gap-[5px] mb-3">
-                <span className="text-[10px] bg-white/5 rounded-full px-2 py-px text-zinc-500">{platformTag}</span>
-                <span className="text-[10px] bg-white/5 rounded-full px-2 py-px text-zinc-500">{durationTag}</span>
-                <span className="text-[10px] bg-white/5 rounded-full px-2 py-px text-zinc-500">{formatTag}</span>
+              <div className="flex flex-wrap gap-2 mb-4">
+                <span className="text-[10px] bg-white/[0.04] rounded-md px-2.5 py-1 text-zinc-500">{platformTag}</span>
+                <span className="text-[10px] bg-white/[0.04] rounded-md px-2.5 py-1 text-zinc-500">{durationTag}</span>
+                <span className="text-[10px] bg-white/[0.04] rounded-md px-2.5 py-1 text-zinc-500">{formatTag}</span>
               </div>
-              {/* Visualize It CTA */}
+              {/* Visualize CTA */}
               {onVisualize && (
                 <button
                   onClick={onVisualize}
                   disabled={format !== 'static'}
-                  className="w-full flex items-center justify-center gap-2 rounded-[9px] py-2.5 text-xs font-medium transition-opacity hover:opacity-80 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
-                  style={{ background: 'rgba(99,102,241,0.1)', border: '0.5px solid rgba(99,102,241,0.2)', color: '#818cf8' }}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl py-3 text-xs font-medium transition-all hover:bg-indigo-500/15 bg-indigo-500/[0.08] border border-indigo-500/20 text-indigo-400 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  <Sparkles size={13} />
-                  Visualize this concept → 1 credit
+                  <Sparkles size={14} />
+                  Visualize concept
                 </button>
               )}
             </div>
@@ -685,57 +683,57 @@ export function ReportCards({
         const keyInsight = sentences.find(s => s.length > 15 && s.length < 100)?.replace(/\*\*/g, '').trim() ?? '';
 
         return (
-          <div key={`pacing-${i}`} className="rounded-xl border border-white/5 overflow-hidden mt-3" style={{ background: 'var(--surface, rgba(255,255,255,0.02))' }}>
+          <div key={`pacing-${i}`} className="rounded-2xl border border-white/[0.06] overflow-hidden mt-4 bg-white/[0.015]">
             {/* Header */}
-            <div className="flex items-center gap-2 px-4 py-3" style={{ borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
+            <div className="flex items-center gap-2 px-5 py-3.5 border-b border-white/[0.05]">
               <SectionIcon size={14} className="text-zinc-500" />
-              <span className="text-[13px] font-medium text-zinc-200">Pacing & retention</span>
+              <span className="text-xs font-medium text-zinc-300">Pacing & Retention</span>
               {pacing && (
-                <span className="ml-auto text-[10px] font-medium rounded-full px-1.5 py-px"
+                <span className="ml-auto text-[10px] font-medium rounded-md px-2 py-0.5"
                   style={{ color: pacingColor, background: `${pacingColor}15` }}>{pacing}</span>
               )}
             </div>
 
             {/* Key insight banner */}
             {keyInsight && (
-              <div className="flex items-start gap-2.5 px-3.5 py-3" style={{ background: 'rgba(251,191,36,0.06)', borderBottom: '0.5px solid rgba(251,191,36,0.12)' }}>
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'rgba(251,191,36,0.12)' }}>
+              <div className="flex items-start gap-3 px-5 py-4 bg-amber-500/[0.04] border-b border-amber-500/10">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-amber-500/10">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
                 </div>
                 <div>
-                  <span className="text-[10px] font-medium uppercase tracking-[0.04em] block mb-1" style={{ color: '#d97706' }}>Key insight</span>
-                  <p className="text-xs font-medium text-zinc-200 leading-[1.45]">{keyInsight}</p>
+                  <span className="text-[10px] font-medium uppercase tracking-wide block mb-1.5 text-amber-500">Key insight</span>
+                  <p className="text-[13px] font-medium text-zinc-200 leading-relaxed">{keyInsight}</p>
                 </div>
               </div>
             )}
 
-            <div className="px-4 py-3.5">
+            <div className="p-5">
               {/* Meta tiles */}
-              <div className="grid grid-cols-2 gap-1.5 mb-3">
+              <div className="grid grid-cols-2 gap-3 mb-4">
                 {avgScene && (
-                  <div className="bg-white/[0.03] rounded-lg" style={{ padding: '9px 12px' }}>
-                    <span className="text-[10px] text-zinc-500 uppercase tracking-[0.04em] block mb-1">Avg scene</span>
+                  <div className="rounded-xl bg-white/[0.03] p-3.5">
+                    <span className="text-[10px] text-zinc-500 uppercase tracking-wide block mb-1.5">Avg scene</span>
                     <span className="text-[13px] font-medium text-zinc-200">{avgScene}</span>
                   </div>
                 )}
                 {pacing && (
-                  <div className="bg-white/[0.03] rounded-lg" style={{ padding: '9px 12px' }}>
-                    <span className="text-[10px] text-zinc-500 uppercase tracking-[0.04em] block mb-1">Pacing</span>
+                  <div className="rounded-xl bg-white/[0.03] p-3.5">
+                    <span className="text-[10px] text-zinc-500 uppercase tracking-wide block mb-1.5">Pacing</span>
                     <span className="text-[13px] font-medium" style={{ color: pacingColor }}>{pacing}</span>
                   </div>
                 )}
               </div>
 
               {/* Retention curve bar */}
-              <div className="mb-3">
-                <span className="text-[10px] text-zinc-500 uppercase tracking-[0.04em] block mb-1.5">Retention curve</span>
-                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+              <div className="mb-4">
+                <span className="text-[10px] text-zinc-500 uppercase tracking-wide block mb-2">Retention curve</span>
+                <div className="h-1 rounded-full overflow-hidden bg-white/[0.06]">
                   <div className="h-full rounded-full w-full" style={{ background: 'linear-gradient(90deg, #ef4444 0%, #ef4444 10%, #10b981 25%, #10b981 55%, #d97706 70%, #ef4444 90%, #ef4444 100%)' }} />
                 </div>
-                <div className="flex justify-between mt-1">
+                <div className="flex justify-between mt-1.5">
                   <span className="text-[9px] font-mono text-zinc-600">0s</span>
                   <span className="text-[9px] font-mono text-zinc-600">25%</span>
-                  <span className="text-[9px] font-mono text-zinc-500">50% ★</span>
+                  <span className="text-[9px] font-mono text-zinc-500">50%</span>
                   <span className="text-[9px] font-mono text-zinc-600">75%</span>
                   <span className="text-[9px] font-mono text-zinc-600">100%</span>
                 </div>
@@ -743,24 +741,24 @@ export function ReportCards({
 
               {/* Retention hooks prose */}
               {retention && (
-                <p className="text-xs text-zinc-400 leading-relaxed mb-3">{retention}</p>
+                <p className="text-[13px] text-zinc-400 leading-relaxed mb-4">{retention}</p>
               )}
 
               {/* Drop-off risk rows */}
               {dropOffs.length > 0 && (
                 <div>
-                  <span className="text-[10px] text-zinc-500 uppercase tracking-[0.04em] block mb-1.5">Drop-off risk moments</span>
-                  <div className="flex flex-col gap-1">
+                  <span className="text-[10px] text-zinc-500 uppercase tracking-wide block mb-2">Drop-off risk</span>
+                  <div className="flex flex-col gap-2">
                     {dropOffs.map((d, j) => {
-                      const sevColor = d.severity === 'high' ? '#ef4444' : d.severity === 'medium' ? '#f59e0b' : 'rgba(161,161,170,0.2)';
+                      const sevColor = d.severity === 'high' ? '#ef4444' : d.severity === 'medium' ? '#f59e0b' : 'rgba(161,161,170,0.3)';
                       return (
-                        <div key={j} className="flex items-start gap-2.5 bg-white/[0.03] rounded-lg" style={{ padding: '8px 10px' }}>
-                          <span className="text-[10px] font-medium font-mono min-w-[52px] shrink-0 mt-0.5" style={{ color: sevColor }}>{d.timestamp}</span>
+                        <div key={j} className="flex items-start gap-3 rounded-xl bg-white/[0.02] border border-white/[0.05] p-3">
+                          <span className="text-[10px] font-medium font-mono min-w-[50px] shrink-0 mt-0.5" style={{ color: sevColor }}>{d.timestamp}</span>
                           <div className="flex-1 min-w-0">
-                            <span className="text-xs font-medium text-zinc-200 block">{d.risk}</span>
-                            {d.note && <span className="text-[11px] text-zinc-500 block mt-0.5">{d.note}</span>}
+                            <span className="text-[13px] font-medium text-zinc-200 block">{d.risk}</span>
+                            {d.note && <span className="text-xs text-zinc-500 block mt-1">{d.note}</span>}
                           </div>
-                          <span className="w-[7px] h-[7px] rounded-full shrink-0 mt-1.5" style={{ background: sevColor }} />
+                          <span className="w-2 h-2 rounded-full shrink-0 mt-1.5" style={{ background: sevColor }} />
                         </div>
                       );
                     })}
@@ -782,31 +780,31 @@ export function ReportCards({
       {secondEyeSlot}
       </motion.div>
 
-      {/* ─── Sticky action bar ─── */}
-      <div className="sticky bottom-0 bg-zinc-950/80 backdrop-blur-xl border-t border-white/5 px-4 md:px-6 py-3 pb-[calc(12px+env(safe-area-inset-bottom,0px))] md:pb-3 flex items-center gap-3 mt-6 -mx-4 md:-mx-8 -mb-6">
+      {/* Sticky action bar */}
+      <div className="sticky bottom-0 bg-zinc-950/90 backdrop-blur-xl border-t border-white/[0.05] px-5 md:px-6 py-3.5 pb-[calc(14px+env(safe-area-inset-bottom,0px))] md:pb-3.5 flex items-center gap-3 mt-8 -mx-4 md:-mx-8 -mb-6">
         <button
           onClick={onCopy}
-          className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-white text-sm rounded-xl px-4 py-2 transition-colors"
+          className="flex items-center gap-2 bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 text-xs font-medium rounded-xl px-4 py-2.5 transition-colors border border-white/[0.05]"
         >
           <Copy size={14} />
-          {copied ? "Copied!" : "Copy Report"}
+          {copied ? "Copied!" : "Copy"}
         </button>
         <button
           onClick={onExportPdf}
           disabled
           title="PDF export coming soon"
-          className="flex items-center gap-1.5 bg-white/5 text-white/30 text-sm rounded-xl px-4 py-2 opacity-40 cursor-not-allowed select-none"
+          className="flex items-center gap-2 bg-white/[0.04] text-zinc-500 text-xs font-medium rounded-xl px-4 py-2.5 opacity-50 cursor-not-allowed select-none border border-white/[0.05]"
         >
           <FileDown size={14} />
-          Export PDF
+          PDF
         </button>
         <button
           onClick={onShare}
           disabled={shareLoading}
-          className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl px-4 py-2 transition-colors disabled:opacity-50 ml-auto"
+          className="flex items-center gap-2 bg-indigo-500 hover:bg-indigo-400 text-white text-xs font-medium rounded-xl px-5 py-2.5 transition-all disabled:opacity-50 ml-auto shadow-lg shadow-indigo-500/20"
         >
           <Share2 size={14} />
-          {shareLoading ? "Creating…" : "Share"}
+          {shareLoading ? "Sharing..." : "Share"}
         </button>
       </div>
     </div>

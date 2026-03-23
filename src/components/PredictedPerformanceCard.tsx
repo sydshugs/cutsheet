@@ -1,6 +1,6 @@
 // src/components/PredictedPerformanceCard.tsx — Predicted Performance (redesigned)
 import { useState } from 'react'
-import { ChevronRight, TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { ChevronDown, TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 export interface PredictionResult {

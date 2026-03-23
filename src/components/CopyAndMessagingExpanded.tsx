@@ -70,42 +70,41 @@ export function CopyAndMessagingExpanded({ content }: CopyAndMessagingExpandedPr
 
   return (
     <div>
-      {/* Copy checklist rows */}
+      {/* Copy checklist — cleaner card rows */}
       {data.elements.length > 0 && (
-        <div className="flex flex-col gap-1 mb-3">
+        <div className="flex flex-col gap-2 mb-4">
           {data.elements.map((el, i) => {
             const pass = el.present;
             return (
               <div
                 key={i}
-                className="flex items-center gap-2.5 rounded-lg"
+                className="flex items-center gap-3 rounded-xl p-3"
                 style={{
-                  padding: '8px 11px',
-                  background: pass ? 'rgba(255,255,255,0.03)' : 'rgba(239,68,68,0.06)',
-                  border: pass ? 'none' : '0.5px solid rgba(239,68,68,0.15)',
+                  background: pass ? 'rgba(255,255,255,0.02)' : 'rgba(239,68,68,0.04)',
+                  border: pass ? '1px solid rgba(255,255,255,0.05)' : '1px solid rgba(239,68,68,0.1)',
                 }}
               >
-                {/* Icon */}
+                {/* Status icon */}
                 <div
-                  className="w-4 h-4 rounded-full flex items-center justify-center shrink-0"
-                  style={{ background: pass ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)' }}
+                  className="w-5 h-5 rounded-lg flex items-center justify-center shrink-0"
+                  style={{ background: pass ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)' }}
                 >
                   {pass ? (
-                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
                   ) : (
-                    <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
                   )}
                 </div>
                 {/* Label */}
-                <span className="text-xs font-medium flex-1" style={{ color: pass ? '#e4e4e7' : '#ef4444' }}>
+                <span className="text-[13px] font-medium flex-1" style={{ color: pass ? '#e4e4e7' : '#fca5a5' }}>
                   {el.label}
                 </span>
                 {/* Value */}
                 <span
-                  className="text-[11px] text-right max-w-[150px] truncate"
-                  style={{ color: pass ? '#71717a' : '#ef4444' }}
+                  className="text-xs text-right max-w-[140px] truncate"
+                  style={{ color: pass ? '#71717a' : '#f87171' }}
                 >
-                  {pass ? el.value : 'Conversion blocker'}
+                  {pass ? el.value : 'Missing'}
                 </span>
               </div>
             );
@@ -115,40 +114,40 @@ export function CopyAndMessagingExpanded({ content }: CopyAndMessagingExpandedPr
 
       {/* Messaging section */}
       {(data.format || data.coreClaim || data.proofPoints) && (
-        <>
-          <span className="text-[10px] text-zinc-500 uppercase tracking-[0.05em] block mb-2 mt-1">Messaging</span>
-          <div className="flex flex-col gap-1.5">
+        <div className="rounded-xl border border-white/[0.05] bg-white/[0.02] p-4">
+          <span className="text-[10px] text-zinc-500 uppercase tracking-wide block mb-3">Messaging</span>
+          <div className="flex flex-col gap-2.5">
             {data.format && (
-              <div className="flex items-start gap-2.5">
-                <span className="text-[11px] text-zinc-500 w-[80px] shrink-0">Format</span>
-                <span className="text-xs font-medium text-zinc-200 leading-snug">{data.format}</span>
+              <div className="flex items-start gap-3">
+                <span className="text-[11px] text-zinc-500 w-20 shrink-0">Format</span>
+                <span className="text-[13px] font-medium text-zinc-200 leading-relaxed">{data.format}</span>
               </div>
             )}
             {data.coreClaim && (
-              <div className="flex items-start gap-2.5">
-                <span className="text-[11px] text-zinc-500 w-[80px] shrink-0">Core claim</span>
-                <span className="text-xs font-medium text-zinc-200 leading-snug">{data.coreClaim}</span>
+              <div className="flex items-start gap-3">
+                <span className="text-[11px] text-zinc-500 w-20 shrink-0">Claim</span>
+                <span className="text-[13px] font-medium text-zinc-200 leading-relaxed">{data.coreClaim}</span>
               </div>
             )}
             {data.proofPoints && (
-              <div className="flex items-start gap-2.5">
-                <span className="text-[11px] text-zinc-500 w-[80px] shrink-0">Proof points</span>
-                <span className="text-xs font-medium text-zinc-200 leading-snug">{data.proofPoints}</span>
+              <div className="flex items-start gap-3">
+                <span className="text-[11px] text-zinc-500 w-20 shrink-0">Proof</span>
+                <span className="text-[13px] font-medium text-zinc-200 leading-relaxed">{data.proofPoints}</span>
               </div>
             )}
-            <div className="flex items-start gap-2.5">
-              <span className="text-[11px] text-zinc-500 w-[80px] shrink-0">CTA</span>
-              <span className="text-xs font-medium leading-snug" style={{ color: data.ctaMissing ? '#ef4444' : '#e4e4e7' }}>
+            <div className="flex items-start gap-3">
+              <span className="text-[11px] text-zinc-500 w-20 shrink-0">CTA</span>
+              <span className="text-[13px] font-medium leading-relaxed" style={{ color: data.ctaMissing ? '#f87171' : '#e4e4e7' }}>
                 {data.ctaMissing ? 'None — conversion blocker' : data.ctaText}
               </span>
             </div>
           </div>
-        </>
+        </div>
       )}
 
       {/* Fallback */}
       {data.elements.length === 0 && !data.format && !data.coreClaim && (
-        <p className="text-xs text-zinc-400 leading-relaxed">{content.replace(/\*\*/g, '').trim()}</p>
+        <p className="text-[13px] text-zinc-400 leading-relaxed">{content.replace(/\*\*/g, '').trim()}</p>
       )}
     </div>
   );
