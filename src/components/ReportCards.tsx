@@ -5,7 +5,7 @@ import ReactMarkdown from "react-markdown";
 import { sanitizeFileName } from "../utils/sanitize";
 import {
   Copy, FileDown, Share2, Anchor, MessageSquare, MousePointerClick,
-  Clapperboard, DollarSign, Hash, Eye, Lightbulb, BarChart3, Heart,
+  Clapperboard, DollarSign, Hash, Eye, Lightbulb, BarChart3,
   Layout, Target, Palette, FileText, Upload, Wand2, Image, ShieldCheck,
   Zap, Film, AlignLeft, AlertCircle, Sparkles, ChevronRight, TrendingUp,
   type LucideIcon,
@@ -557,112 +557,6 @@ export function ReportCards({
             fixes={fixes}
             overallNote={designReviewData?.overallDesignVerdict ?? (detail || undefined)}
           />
-        );
-      })()}
-
-      </motion.div>
-
-      {/* ─── Emotional Impact — redesigned (DE-1) ─── */}
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: 'easeOut', delay: 0.12 }}>
-      {(() => {
-        const emotionSections = centerSections.filter(s => /emotion.*(?:impact|arc)|emotion\s*arc/i.test(s.title ?? ''));
-        const section = emotionSections[0];
-        if (!section) return null;
-        const c = section.content;
-
-        // Parse emotions - look for capitalized emotion words after "Primary:" or similar
-        const primaryMatch = c.match(/(?:Primary|Main|Dominant)\s*(?:emotion|feeling)?:?\s*\*?\*?\s*([A-Z][a-z]+(?:\s*\/\s*[A-Z][a-z]+)?)/i);
-        const primary = primaryMatch?.[1]?.trim() ?? 'Trust';
-        
-        // Try arrow chain for video arc (e.g., "Curiosity → Aspiration → Relief")
-        const chain = c.match(/([A-Z][a-z]+(?:\s*→\s*[A-Z][a-z]+)+)/);
-        const arcEmotions = chain ? chain[1].split(/\s*→\s*/) : [];
-        const secondary = arcEmotions[1] ?? c.match(/(?:Secondary|second)\s*(?:emotion)?:?\s*\*?\*?\s*([A-Z][a-z]+)/i)?.[1]?.trim() ?? 'Aspiration';
-        const tertiary = arcEmotions[2] ?? c.match(/(?:Tertiary|third)\s*(?:emotion)?:?\s*\*?\*?\s*([A-Z][a-z]+)/i)?.[1]?.trim() ?? 'Relief';
-
-        // Parse tone
-        const toneMatch = c.match(/(?:Tone|style):?\s*\*?\*?\s*([^\n]+)/i);
-        const tones = toneMatch ? toneMatch[1].replace(/\*\*/g, '').split(/[,\/·]/).map(t => t.trim()).filter(Boolean) : ['Professional'];
-
-        // Parse CTA mismatch
-        const hasMismatch = /no\s*(clear\s*)?(cta|call.to.action)|mismatch|nowhere to go|no.*path.*act/i.test(c);
-        const mismatchNote = hasMismatch ? (c.match(/(?:mismatch|no.*cta)[^.]*\.\s*([^.]+)/i)?.[1]?.trim() ?? 'Consider adding a clear call-to-action to convert this emotional engagement') : undefined;
-
-        // Emotion intensity scoring (mock based on word analysis)
-        const intensityMap: Record<string, number> = {
-          'Trust': 75, 'Aspiration': 85, 'Relief': 60, 'Excitement': 90, 'Curiosity': 80,
-          'Fear': 70, 'Joy': 88, 'Confidence': 78, 'Urgency': 82, 'Comfort': 65
-        };
-        const primaryIntensity = intensityMap[primary] ?? 75;
-        const secondaryIntensity = intensityMap[secondary] ?? 70;
-
-        return (
-          <div className="rounded-xl border border-white/[0.05] overflow-hidden mt-4 bg-white/[0.015] backdrop-blur-sm">
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.04]">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-md bg-white/[0.04] flex items-center justify-center">
-                  <Heart size={12} className="text-zinc-400" />
-                </div>
-                <span className="text-[12px] font-medium text-zinc-300">Emotional Impact</span>
-              </div>
-            </div>
-            
-            {/* Body */}
-            <div className="p-4">
-              {/* Primary emotion */}
-              <div className="rounded-lg bg-white/[0.02] border border-white/[0.04] p-3 mb-3">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[9px] text-zinc-500 uppercase tracking-wide">Primary</span>
-                  <span className="text-[10px] font-mono text-zinc-500">{primaryIntensity}%</span>
-                </div>
-                <p className="text-sm font-medium text-zinc-200">{primary}</p>
-                {/* Intensity bar */}
-                <div className="mt-2 h-0.5 rounded-full bg-white/[0.04] overflow-hidden">
-                  <div 
-                    className="h-full rounded-full" 
-                    style={{ width: `${primaryIntensity}%`, background: '#6366f160' }} 
-                  />
-                </div>
-              </div>
-
-              {/* Secondary emotions row */}
-              <div className="grid grid-cols-2 gap-2 mb-3">
-                <div className="rounded-lg bg-white/[0.015] border border-white/[0.04] p-2.5">
-                  <span className="text-[9px] text-zinc-500 uppercase tracking-wide block mb-0.5">Secondary</span>
-                  <p className="text-[11px] font-medium text-zinc-300">{secondary}</p>
-                </div>
-                <div className="rounded-lg bg-white/[0.015] border border-white/[0.04] p-2.5">
-                  <span className="text-[9px] text-zinc-500 uppercase tracking-wide block mb-0.5">Tertiary</span>
-                  <p className="text-[11px] font-medium text-zinc-300">{tertiary}</p>
-                </div>
-              </div>
-
-              {/* Emotional journey - simplified */}
-              <div className="flex items-center gap-1.5 text-[10px] text-zinc-400">
-                <span>{primary}</span>
-                <span className="text-zinc-600">→</span>
-                <span>{secondary}</span>
-                <span className="text-zinc-600">→</span>
-                <span>{tertiary}</span>
-              </div>
-
-              {/* Tone tags */}
-              <div className="flex items-center gap-1.5 flex-wrap mt-3">
-                {tones.slice(0, 3).map(t => (
-                  <span key={t} className="text-[9px] font-medium bg-white/[0.03] rounded-md px-2 py-0.5 text-zinc-500">{t}</span>
-                ))}
-              </div>
-
-              {/* CTA mismatch warning */}
-              {hasMismatch && (
-                <div className="flex items-start gap-2 rounded-lg p-2.5 mt-3 bg-white/[0.02] border border-white/[0.04]">
-                  <AlertCircle size={12} style={{ color: '#f59e0b' }} className="shrink-0 mt-0.5 opacity-70" />
-                  <p className="text-[10px] text-zinc-500 leading-relaxed">{mismatchNote}</p>
-                </div>
-              )}
-            </div>
-          </div>
         );
       })()}
 
