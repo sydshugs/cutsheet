@@ -285,27 +285,21 @@ export function ScoreCard({
 
   return (
     <div className="scorecard flex flex-col">
-      {/* Header */}
-      <div className="p-5 border-b border-white/5 flex items-center justify-between">
-        <div className="flex flex-col gap-0.5">
-          <span className="text-sm font-semibold text-white">Score Overview</span>
-          {analysisTime && (
-            <span className="text-xs text-zinc-600">{relativeTime}</span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
+      {/* Header — Option A */}
+      <div className="px-5 pt-4 pb-3 flex items-center justify-between">
+        <span className="text-[13px] font-medium text-zinc-200">Score Overview</span>
+        <div className="flex items-center gap-1.5">
           <button
             onClick={handleCopy}
+            className="inline-flex items-center gap-1.5 text-[11px] rounded-lg cursor-pointer transition-colors"
             style={{
-              display: "inline-flex", alignItems: "center", gap: 6,
-              background: "var(--surface)", border: "1px solid var(--border)",
-              borderRadius: 8, padding: "6px 12px", fontSize: 12, cursor: "pointer",
-              color: copied ? "var(--success)" : "var(--ink-muted)",
-              borderColor: copied ? "rgba(16,185,129,0.3)" : "var(--border)",
-              transition: "all var(--duration-fast)",
+              padding: '4px 10px',
+              background: 'rgba(255,255,255,0.03)',
+              border: '0.5px solid rgba(255,255,255,0.08)',
+              color: copied ? '#10b981' : '#71717a',
             }}
           >
-            {copied ? <CheckCircle size={13} /> : <Copy size={13} />}
+            {copied ? <CheckCircle size={11} /> : <Copy size={11} />}
             {copied ? "Copied!" : "Copy scores"}
           </button>
           {(onGenerateBrief || onAddToSwipeFile || onStartOver || onCheckPolicies || onCompare) && (
@@ -327,28 +321,31 @@ export function ScoreCard({
         </div>
       </div>
 
-      {/* Verdict chip — below header, above score */}
-      {verdict && (
-        <div className="mx-4 mt-3">
-          <div className="flex items-center gap-2.5 rounded-xl px-3.5 py-2.5"
-            style={{
-              background: verdict.state === 'ready' ? 'rgba(16,185,129,0.06)' : verdict.state === 'needs_work' ? 'rgba(251,191,36,0.06)' : 'rgba(239,68,68,0.06)',
-              border: `0.5px solid ${verdict.state === 'ready' ? 'rgba(16,185,129,0.15)' : verdict.state === 'needs_work' ? 'rgba(251,191,36,0.15)' : 'rgba(239,68,68,0.15)'}`,
-            }}
-          >
-            <span
-              className="text-[10px] font-medium rounded-full px-2 py-0.5 shrink-0 leading-4"
-              style={{
-                color: verdict.state === 'ready' ? '#10b981' : verdict.state === 'needs_work' ? '#d97706' : '#ef4444',
-                background: verdict.state === 'ready' ? 'rgba(16,185,129,0.12)' : verdict.state === 'needs_work' ? 'rgba(251,191,36,0.12)' : 'rgba(239,68,68,0.12)',
-              }}
+      {/* Verdict block — Option A */}
+      {verdict && (() => {
+        const vColors = {
+          not_ready: { bg: 'rgba(239,68,68,0.06)', border: 'rgba(239,68,68,0.15)', chipBg: 'rgba(239,68,68,0.12)', color: '#ef4444', label: 'Not ready' },
+          needs_work: { bg: 'rgba(217,119,6,0.06)', border: 'rgba(217,119,6,0.15)', chipBg: 'rgba(217,119,6,0.12)', color: '#d97706', label: 'Needs work' },
+          ready: { bg: 'rgba(16,185,129,0.06)', border: 'rgba(16,185,129,0.15)', chipBg: 'rgba(16,185,129,0.12)', color: '#10b981', label: 'Ready' },
+        };
+        const v = vColors[verdict.state];
+        return (
+          <div className="mx-4 mb-3">
+            <div
+              className="flex items-center gap-2.5 rounded-[9px]"
+              style={{ padding: '10px 12px', background: v.bg, border: `0.5px solid ${v.border}` }}
             >
-              {verdict.state === 'ready' ? 'Ready to run' : verdict.state === 'needs_work' ? 'Needs work' : 'Not ready'}
-            </span>
-            <span className="text-[11px] text-zinc-400 leading-snug line-clamp-2">{verdict.headline}</span>
+              <span
+                className="text-[10px] font-medium uppercase rounded-full shrink-0"
+                style={{ padding: '2px 8px', background: v.chipBg, color: v.color }}
+              >
+                {v.label}
+              </span>
+              <span className="text-xs text-zinc-400 leading-[1.45]">{verdict.headline}</span>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Analysis content — Glass card */}
       <div style={{
