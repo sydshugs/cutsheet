@@ -109,65 +109,245 @@ export function MotionPreviewPlayer({
     );
   }
 
-  // ── Loading: staged messages + animated timeline cards ───────────────────
+  // ── Loading: enhanced visual presentation ───────────────────
   if (isLoading) {
+    // Calculate progress percentage (estimate based on typical 90s generation)
+    const estimatedTotal = 90;
+    const progressPercent = Math.min((elapsed / estimatedTotal) * 100, 95);
+    
     return (
       <div style={{
-        borderRadius: 12, background: "#18181b",
+        borderRadius: 16, 
+        background: "linear-gradient(180deg, rgba(24,24,27,0.98) 0%, rgba(24,24,27,1) 100%)",
         border: "1px solid rgba(255,255,255,0.06)",
         overflow: "hidden",
+        position: "relative",
       }}>
-        {/* Spinner + staged message */}
+        {/* Subtle animated gradient overlay */}
+        <div style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 120,
+          background: "radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.08) 0%, transparent 70%)",
+          pointerEvents: "none",
+          animation: "pulse-glow 3s ease-in-out infinite",
+        }} />
+
+        {/* Main content */}
         <div style={{
           display: "flex", flexDirection: "column", alignItems: "center",
-          gap: 10, padding: "28px 20px 20px",
+          gap: 16, padding: "32px 24px 24px",
+          position: "relative",
         }}>
-          <Loader2
-            size={20} color="#6366f1"
-            style={{ animation: "spin 1s linear infinite" }}
-          />
-          <span style={{ fontSize: 13, color: "#71717a", textAlign: "center", transition: "opacity 300ms" }}>
-            {getStagedMessage(elapsed)}
-          </span>
+          {/* Animated spinner with ring */}
+          <div style={{ position: "relative", width: 48, height: 48 }}>
+            {/* Outer ring - slow rotation */}
+            <svg 
+              width="48" height="48" 
+              style={{ 
+                position: "absolute", 
+                animation: "spin-slow 8s linear infinite",
+              }}
+            >
+              <circle
+                cx="24" cy="24" r="22"
+                fill="none"
+                stroke="rgba(99,102,241,0.15)"
+                strokeWidth="2"
+                strokeDasharray="8 4"
+              />
+            </svg>
+            {/* Inner spinner */}
+            <svg 
+              width="48" height="48" 
+              style={{ 
+                position: "absolute",
+                animation: "spin 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite",
+              }}
+            >
+              <circle
+                cx="24" cy="24" r="16"
+                fill="none"
+                stroke="url(#spinner-gradient)"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeDasharray="70 30"
+              />
+              <defs>
+                <linearGradient id="spinner-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#818cf8" />
+                  <stop offset="100%" stopColor="#6366f1" stopOpacity="0.3" />
+                </linearGradient>
+              </defs>
+            </svg>
+            {/* Center dot pulse */}
+            <div style={{
+              position: "absolute",
+              top: "50%", left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: 8, height: 8,
+              borderRadius: "50%",
+              background: "#818cf8",
+              animation: "pulse-dot 2s ease-in-out infinite",
+            }} />
+          </div>
+
+          {/* Status message with fade transition */}
+          <div style={{ textAlign: "center" }}>
+            <p style={{ 
+              fontSize: 14, 
+              fontWeight: 500, 
+              color: "#e4e4e7", 
+              marginBottom: 4,
+              animation: "fade-in 0.3s ease-out",
+            }}>
+              {getStagedMessage(elapsed)}
+            </p>
+            <p style={{ fontSize: 12, color: "#52525b" }}>
+              This typically takes 1-2 minutes
+            </p>
+          </div>
         </div>
 
-        {/* Animated timeline cards */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, padding: "0 16px 16px" }}>
-          {PHASE_CONFIG.map((phase) => {
-            const isLit = elapsed >= phase.activateAt;
-            return (
-              <div
-                key={phase.label}
-                style={{
-                  padding: "10px 12px",
-                  borderRadius: 8,
-                  border: `1px solid ${isLit ? "rgba(99,102,241,0.35)" : "rgba(255,255,255,0.06)"}`,
-                  background: isLit ? "rgba(99,102,241,0.06)" : "rgba(255,255,255,0.02)",
-                  transition: "border-color 600ms ease, background-color 600ms ease",
-                }}
-              >
-                <span style={{
-                  fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em",
-                  color: isLit ? "#818cf8" : "#52525b",
-                  transition: "color 600ms ease",
-                }}>
-                  {phase.label}
-                </span>
-              </div>
-            );
-          })}
+        {/* Progress bar section */}
+        <div style={{ padding: "0 24px 20px" }}>
+          {/* Progress bar track */}
+          <div style={{
+            height: 4,
+            borderRadius: 2,
+            background: "rgba(255,255,255,0.06)",
+            overflow: "hidden",
+            marginBottom: 16,
+          }}>
+            {/* Progress bar fill with shimmer */}
+            <div style={{
+              height: "100%",
+              borderRadius: 2,
+              background: "linear-gradient(90deg, #6366f1 0%, #818cf8 50%, #6366f1 100%)",
+              backgroundSize: "200% 100%",
+              width: `${progressPercent}%`,
+              transition: "width 1s ease-out",
+              animation: "shimmer 2s ease-in-out infinite",
+              position: "relative",
+            }}>
+              {/* Glow effect */}
+              <div style={{
+                position: "absolute",
+                right: 0,
+                top: -2,
+                bottom: -2,
+                width: 20,
+                background: "linear-gradient(90deg, transparent, rgba(129,140,248,0.6))",
+                filter: "blur(4px)",
+              }} />
+            </div>
+          </div>
+
+          {/* Phase cards */}
+          <div style={{ 
+            display: "grid", 
+            gridTemplateColumns: "1fr 1fr 1fr", 
+            gap: 10,
+          }}>
+            {PHASE_CONFIG.map((phase, index) => {
+              const isLit = elapsed >= phase.activateAt;
+              const isActive = isLit && (index === PHASE_CONFIG.length - 1 || elapsed < PHASE_CONFIG[index + 1].activateAt);
+              const phaseColors = ["#3b82f6", "#eab308", "#ef4444"]; // blue, yellow, red
+              const color = phaseColors[index];
+              
+              return (
+                <div
+                  key={phase.label}
+                  style={{
+                    padding: "12px 14px",
+                    borderRadius: 10,
+                    border: `1px solid ${isActive ? `${color}50` : isLit ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.04)"}`,
+                    background: isActive 
+                      ? `linear-gradient(135deg, ${color}15 0%, ${color}08 100%)` 
+                      : isLit 
+                        ? "rgba(255,255,255,0.03)" 
+                        : "rgba(255,255,255,0.01)",
+                    transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
+                    position: "relative",
+                    overflow: "hidden",
+                  }}
+                >
+                  {/* Active phase indicator dot */}
+                  {isActive && (
+                    <div style={{
+                      position: "absolute",
+                      top: 12,
+                      right: 12,
+                      width: 6,
+                      height: 6,
+                      borderRadius: "50%",
+                      background: color,
+                      animation: "pulse-dot 1.5s ease-in-out infinite",
+                    }} />
+                  )}
+                  <span style={{
+                    fontSize: 11, 
+                    fontWeight: 600, 
+                    textTransform: "uppercase", 
+                    letterSpacing: "0.06em",
+                    color: isActive ? color : isLit ? "#a1a1aa" : "#52525b",
+                    transition: "color 0.5s ease",
+                  }}>
+                    {phase.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Elapsed timer */}
+        {/* Footer with elapsed time */}
         <div style={{
-          display: "flex", justifyContent: "center", paddingBottom: 16,
+          display: "flex", 
+          alignItems: "center", 
+          justifyContent: "center",
+          gap: 8,
+          padding: "12px 24px 16px",
+          borderTop: "1px solid rgba(255,255,255,0.04)",
         }}>
-          <span style={{ fontSize: 11, fontFamily: "var(--mono)", color: "#3f3f46" }}>
+          <div style={{
+            width: 6, height: 6,
+            borderRadius: "50%",
+            background: "#22c55e",
+            animation: "pulse-dot 2s ease-in-out infinite",
+          }} />
+          <span style={{ 
+            fontSize: 12, 
+            fontFamily: "var(--mono)", 
+            color: "#52525b",
+            letterSpacing: "0.02em",
+          }}>
             {elapsed}s elapsed
           </span>
         </div>
 
-        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+        <style>{`
+          @keyframes spin { to { transform: rotate(360deg) } }
+          @keyframes spin-slow { to { transform: rotate(-360deg) } }
+          @keyframes pulse-glow {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+          }
+          @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+          }
+          @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+          }
+          @keyframes fade-in {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+        `}</style>
       </div>
     );
   }
