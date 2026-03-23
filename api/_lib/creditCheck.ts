@@ -65,6 +65,11 @@ export async function checkFeatureCredit(
   feature: string,
   increment = true,
 ): Promise<CreditCheckResult> {
+  // Dev bypass: skip credit checks in local development (never runs on Vercel)
+  if (process.env.NODE_ENV === "development" || process.env.VERCEL_ENV === undefined) {
+    return { allowed: true, remaining: 999, used: 0, limit: 999 };
+  }
+
   const limit = getFeatureLimit(tier, feature);
 
   // Unlimited (e.g., analyze for Pro/Team)
