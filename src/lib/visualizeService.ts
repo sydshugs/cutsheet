@@ -103,23 +103,9 @@ async function callVisualizeV1(payload: VisualizeRequest, token: string): Promis
 
 // ── Public API ───────────────────────────────────────────────────────────────
 
-/** Call Visualize v2 (image editing), falling back to v1 (image generation) on error.
- *  Auth errors (401, 403, 429) are NOT retried — they bubble up immediately. */
+/** Call Visualize v2 (image editing). No v1 fallback — v2 handles its own
+ *  fallback to visual brief internally. This prevents double credit deduction. */
 export async function visualizeAd(payload: VisualizeRequest): Promise<VisualizeResult> {
   const token = await getAuthToken();
-
-  try {
-    const result = await callVisualizeV2(payload, token);
-    return result;
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : "";
-    // Don't fall back on auth/billing errors — those apply to v1 too
-    if (msg === "PRO_REQUIRED" || msg === "CREDIT_LIMIT_REACHED" || msg === "RATE_LIMITED") {
-      throw err;
-    }
-
-    // V2 failed (model error, timeout, etc.) — silently fall back to v1
-    console.warn("[visualizeService] v2 failed, falling back to v1:", msg);
-    return callVisualizeV1(payload, token);
-  }
+  return callVisualizeV2(payload, token);
 }

@@ -202,8 +202,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(403).json({ error: "PRO_REQUIRED", feature: "visualize" });
     }
 
-    // ── Monthly credit check (same credit pool as v1) ────────────────────
-    const credit = await checkFeatureCredit(user.id, user.tier, "visualize");
+    // ── Monthly credit check (CHECK ONLY — don't deduct yet) ─────────────
+    const credit = await checkFeatureCredit(user.id, user.tier, "visualize", false);
     if (!credit.allowed) {
       const now = new Date();
       const resetDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
@@ -392,6 +392,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // Fall back to visual brief (same behavior as v1 fallback)
       visualBrief = editPrompt;
     }
+
+    // ── Deduct 1 visualize credit ONLY on successful generation ──────────
+    const deductResult = await checkFeatureCredit(user.id, user.tier, "visualize", true);
+    console.info("[visualize-v2] Credit deducted: used=%d, limit=%d, remaining=%d",
+      deductResult.used, deductResult.limit, deductResult.remaining);
 
     return res.status(200).json({
       generatedImageUrl,
