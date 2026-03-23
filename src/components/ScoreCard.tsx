@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { HookAnalysisExpanded } from "./HookAnalysisExpanded";
 import { VisualHierarchyExpanded } from "./VisualHierarchyExpanded";
+import { CopyAndMessagingExpanded } from "./CopyAndMessagingExpanded";
 import { Copy, CheckCircle, Wand2, Loader2, AlertCircle, TrendingUp, ArrowUpRight, Share2, RotateCcw, ShieldCheck, FileText, Bookmark, Lightbulb, DollarSign, Sparkles, Lock, Film, Hash, Layout, Heart, MessageSquare } from "lucide-react";
 import type { BudgetRecommendation, Hashtags, Scene, HookDetail } from "../services/analyzerService";
 import type { EngineBudgetRecommendation } from "../services/budgetService";
@@ -420,12 +421,24 @@ export function ScoreCard({
           {/* Predicted Performance + Budget moved outside glass card */}
 
           {/* ── Analysis sections (Hook, Hierarchy, Copy, Messaging) ── */}
-          {analysisSections && analysisSections.length > 0 && (
+          {analysisSections && analysisSections.length > 0 && (() => {
+            // Merge copy inventory + messaging into one combined section
+            const copySection = analysisSections.find(s => /copy/i.test(s.title));
+            const messagingSection = analysisSections.find(s => /messag/i.test(s.title));
+            const combinedContent = [copySection?.content, messagingSection?.content].filter(Boolean).join('\n\n');
+            const hasCombined = copySection || messagingSection;
+            const ctaMissing = hasCombined && /no\s*(explicit\s*)?(cta|call)|cta.*none|none.*cta|flag.*missing/i.test(combinedContent);
+
+            // Filter out copy + messaging from individual rendering
+            const filteredSections = analysisSections.filter(s =>
+              !(/copy/i.test(s.title)) && !(/messag/i.test(s.title))
+            );
+
+            return (
             <div style={{ marginTop: 16 }}>
-              {analysisSections.map((section, i) => {
+              {filteredSections.map((section, i) => {
                 const iconMap: Record<string, typeof Lightbulb> = {
-                  hook: Lightbulb, hierarchy: Layout, copy: FileText,
-                  messag: MessageSquare,
+                  hook: Lightbulb, hierarchy: Layout,
                 };
                 const matchedIcon = Object.entries(iconMap).find(([key]) =>
                   section.title.toLowerCase().includes(key)
@@ -452,8 +465,24 @@ export function ScoreCard({
                   </div>
                 );
               })}
+
+              {/* Combined Copy & Messaging section */}
+              {hasCombined && (
+                <div style={{ padding: "0 20px", marginTop: 12 }}>
+                  <CollapsibleSection
+                    title="Copy & messaging"
+                    icon={<MessageSquare size={14} />}
+                    trailing={ctaMissing ? (
+                      <span className="text-[10px] font-medium rounded-full px-2 py-px" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>No CTA</span>
+                    ) : undefined}
+                  >
+                    <CopyAndMessagingExpanded content={combinedContent} />
+                  </CollapsibleSection>
+                </div>
+              )}
             </div>
-          )}
+          );
+          })()}
 
           {/* Recommended Hashtags */}
           {hashtags && (hashtags.tiktok.length > 0 || hashtags.meta.length > 0 || hashtags.instagram.length > 0) && (
