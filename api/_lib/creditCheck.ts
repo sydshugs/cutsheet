@@ -82,6 +82,9 @@ export async function checkFeatureCredit(
     return { allowed: false, remaining: 0, used: 0, limit: 0, reason: "TIER_BLOCKED" };
   }
 
+  // Redis key format: credit:{tier}:{userId}:{feature}:{YYYY-MM}
+  // To reset during testing, delete keys matching: credit:*:{userId}:*:YYYY-MM
+  // Example: credit:team:abc123:visualize:2026-03
   const redis = Redis.fromEnv();
   const month = getYearMonth();
   const key = `credit:${tier}:${userId}:${feature}:${month}`;
