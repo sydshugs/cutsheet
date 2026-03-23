@@ -22,15 +22,15 @@ interface PredictedPerformanceCardProps {
 }
 
 const VS_AVG_CONFIG = {
-  above: { label: 'Above Average', bg: 'rgba(16,185,129,0.12)', text: '#10b981' },
-  at:    { label: 'Average',       bg: 'rgba(245,158,11,0.12)', text: '#f59e0b' },
-  below: { label: 'Below Average', bg: 'rgba(239,68,68,0.12)',  text: '#ef4444' },
+  above: { label: 'Above Average', bg: 'var(--score-excellent-bg)', text: 'var(--success)' },
+  at:    { label: 'Average',       bg: 'var(--score-average-bg)',   text: 'var(--warn)' },
+  below: { label: 'Below Average', bg: 'var(--score-weak-bg)',      text: 'var(--error)' },
 } as const
 
 const CONFIDENCE_CONFIG = {
-  Low:    { bg: 'rgba(245,158,11,0.12)', text: '#f59e0b' },
-  Medium: { bg: 'rgba(99,102,241,0.12)', text: '#6366f1' },
-  High:   { bg: 'rgba(16,185,129,0.12)', text: '#10b981' },
+  Low:    { bg: 'var(--score-average-bg)', text: 'var(--warn)' },
+  Medium: { bg: 'var(--accent-bg)',        text: 'var(--accent)' },
+  High:   { bg: 'var(--score-excellent-bg)', text: 'var(--success)' },
 } as const
 
 function AnimatedPercent({ value, suffix = '%' }: { value: number; suffix?: string }) {
@@ -110,7 +110,7 @@ export default function PredictedPerformanceCard({
         onClick={() => setCardOpen((prev) => !prev)}
         style={{
           width: '100%',
-          background: 'linear-gradient(135deg, rgba(99,102,241,0.05), rgba(139,92,246,0.05))',
+          background: 'linear-gradient(135deg, var(--accent-bg), var(--accent-subtle))',
           borderBottom: cardOpen ? '1px solid var(--border)' : 'none',
           borderTop: 'none', borderLeft: 'none', borderRight: 'none',
           cursor: 'pointer', textAlign: 'left',
@@ -127,7 +127,7 @@ export default function PredictedPerformanceCard({
           <span className="text-[11px] font-medium" style={{ color: 'var(--ink-muted)', fontFamily: 'var(--mono)' }}>
             {prediction.ctr.low}–{prediction.ctr.high}% CTR
           </span>
-          <motion.span animate={{ rotate: cardOpen ? 180 : 0 }} transition={{ duration: 0.2 }} style={{ color: '#52525b' }}>
+          <motion.span animate={{ rotate: cardOpen ? 180 : 0 }} transition={{ duration: 0.2 }} style={{ color: 'var(--ink-tertiary)' }}>
             <ChevronDown size={14} />
           </motion.span>
         </div>
@@ -223,14 +223,14 @@ export default function PredictedPerformanceCard({
                   {/* Positive signals */}
                   {prediction.positiveSignals.map((signal, i) => (
                     <div key={`pos-${i}`} className="flex items-start gap-2">
-                      <span className="mt-0.5 text-[12px]" style={{ color: '#10b981' }}>&#10003;</span>
+                      <span className="mt-0.5 text-[12px]" style={{ color: 'var(--success)' }}>&#10003;</span>
                       <span className="text-[12px]" style={{ color: 'var(--ink-muted)' }}>{signal}</span>
                     </div>
                   ))}
                   {/* Negative signals */}
                   {prediction.negativeSignals.map((signal, i) => (
                     <div key={`neg-${i}`} className="flex items-start gap-2">
-                      <span className="mt-0.5 text-[12px]" style={{ color: '#f59e0b' }}>&#9888;</span>
+                      <span className="mt-0.5 text-[12px]" style={{ color: 'var(--warn)' }}>&#9888;</span>
                       <span className="text-[12px]" style={{ color: 'var(--ink-muted)' }}>{signal}</span>
                     </div>
                   ))}

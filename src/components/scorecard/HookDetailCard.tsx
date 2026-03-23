@@ -2,20 +2,21 @@
 // Shows: Hook Type pill + Hook Verdict pill, First Glance, Hook Strength, Scroll-Stop Factor, Hook Fix
 
 import type { HookDetail } from "../../services/analyzerService";
+import { getScoreColor, getScoreBg, getScoreBorder } from "../../lib/scoreColors";
 
 interface HookDetailCardProps {
   hookDetail: HookDetail;
   format: "video" | "static";
 }
 
-const VERDICT_STYLES: Record<string, { bg: string; color: string; border: string }> = {
-  "Scroll-Stopper": { bg: "rgba(16,185,129,0.1)", color: "#10b981", border: "rgba(16,185,129,0.2)" },
-  "Needs Work":     { bg: "rgba(245,158,11,0.1)", color: "#f59e0b", border: "rgba(245,158,11,0.2)" },
+const VERDICT_SCORE: Record<string, number> = {
+  "Scroll-Stopper": 9,
+  "Needs Work":     5,
 };
-const DEFAULT_VERDICT = { bg: "rgba(239,68,68,0.1)", color: "#ef4444", border: "rgba(239,68,68,0.2)" };
+const DEFAULT_VERDICT_SCORE = 3;
 
 export function HookDetailCard({ hookDetail }: HookDetailCardProps) {
-  const vs = VERDICT_STYLES[hookDetail.verdict] ?? DEFAULT_VERDICT;
+  const score = VERDICT_SCORE[hookDetail.verdict] ?? DEFAULT_VERDICT_SCORE;
 
   return (
     <div className="px-5 py-3 border-t border-white/5">
@@ -27,13 +28,13 @@ export function HookDetailCard({ hookDetail }: HookDetailCardProps) {
       <div className="flex items-center gap-2 mb-2.5 flex-wrap">
         <span
           className="text-[10px] font-mono rounded-md px-1.5 py-0.5"
-          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "#a1a1aa" }}
+          style={{ background: "var(--border-subtle)", border: "1px solid var(--border)", color: "var(--ink-muted)" }}
         >
           {hookDetail.hookType}
         </span>
         <span
           className="text-[10px] font-medium rounded-full px-2 py-0.5"
-          style={{ background: vs.bg, color: vs.color, border: `1px solid ${vs.border}` }}
+          style={{ background: getScoreBg(score), color: getScoreColor(score), border: `1px solid ${getScoreBorder(score)}` }}
         >
           {hookDetail.verdict}
         </span>
@@ -67,7 +68,7 @@ export function HookDetailCard({ hookDetail }: HookDetailCardProps) {
       {hookDetail.hookFix && (
         <div
           className="text-[11px] leading-relaxed rounded-lg px-2.5 py-1.5 mt-2"
-          style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.12)", color: "#f59e0b" }}
+          style={{ background: "var(--score-average-bg)", border: "1px solid var(--score-average-border)", color: "var(--warn)" }}
         >
           💡 {hookDetail.hookFix}
         </div>

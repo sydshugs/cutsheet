@@ -128,7 +128,7 @@ export default function FixItPanel({ result, onCopyAll }: FixItPanelProps) {
         </div>
 
         {/* ── Rewritten Hook ─────────────────────────────────────── */}
-        <Card style={{ borderColor: "rgba(16,185,129,0.3)" }}>
+        <Card style={{ borderColor: "var(--score-excellent-border)" }}>
           <div className="flex items-center gap-2 mb-2">
             <Sparkles size={16} style={{ color: "var(--success)" }} />
             <span className="text-sm font-semibold" style={{ color: "var(--success)" }}>

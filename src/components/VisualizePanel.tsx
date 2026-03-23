@@ -42,24 +42,24 @@ function LoadingSteps() {
             style={{
               display: "flex", alignItems: "center", gap: 10,
               opacity: isActive ? 1 : isDone ? 0.5 : 0.25,
-              transition: "opacity 400ms ease",
+              transition: `opacity var(--duration-slow) ease`,
             }}
           >
             {isDone ? (
-              <Check size={14} color="#10b981" strokeWidth={2.5} />
+              <Check size={14} color="var(--success)" strokeWidth={2.5} />
             ) : isActive ? (
               <div style={{
                 width: 14, height: 14,
-                border: "2px solid rgba(99,102,241,0.3)",
-                borderTopColor: "#6366f1",
+                border: "2px solid var(--accent-bg-hover)",
+                borderTopColor: "var(--accent)",
                 borderRadius: "50%",
                 flexShrink: 0,
                 animation: "spin 0.7s linear infinite",
               }} />
             ) : (
-              <div style={{ width: 14, height: 14, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.12)", flexShrink: 0 }} />
+              <div style={{ width: 14, height: 14, borderRadius: "50%", border: "1px solid var(--border-strong)", flexShrink: 0 }} />
             )}
-            <span style={{ fontSize: 12, color: isActive ? "#e4e4e7" : "#71717a" }}>
+            <span style={{ fontSize: 12, color: isActive ? "var(--ink)" : "var(--ink-faint)" }}>
               {step.label}
             </span>
           </div>
@@ -77,16 +77,16 @@ function ShimmerBlock({ height = 400 }: { height?: number }) {
       style={{
         width: "100%",
         height,
-        borderRadius: 12,
-        background: "rgba(255,255,255,0.03)",
-        border: "1px solid rgba(255,255,255,0.06)",
+        borderRadius: "var(--radius)",
+        background: "var(--surface)",
+        border: "1px solid var(--border-subtle)",
         overflow: "hidden",
         position: "relative",
       }}
     >
       <div style={{
         position: "absolute", inset: 0,
-        background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%)",
+        background: "linear-gradient(90deg, transparent 0%, var(--border) 50%, transparent 100%)",
         animation: "shimmer 1.8s ease-in-out infinite",
       }} />
     </div>
@@ -100,14 +100,14 @@ function ImagePanel({
 }: { src: string; label: string; height?: number }) {
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
-      <span style={{ fontSize: 11, fontWeight: 600, color: "#71717a", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+      <span style={{ fontSize: 11, fontWeight: 600, color: "var(--ink-faint)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
         {label}
       </span>
       <div style={{
         height,
-        borderRadius: 12,
-        background: "#18181b",
-        border: "1px solid rgba(255,255,255,0.06)",
+        borderRadius: "var(--radius)",
+        background: "var(--surface-2)",
+        border: "1px solid var(--border-subtle)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -131,7 +131,7 @@ function VisualBriefPanel({
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <span style={{ fontSize: 11, fontWeight: 600, color: "#71717a", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+        <span style={{ fontSize: 11, fontWeight: 600, color: "var(--ink-faint)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
           After (Visual Brief)
         </span>
         <button
@@ -139,10 +139,10 @@ function VisualBriefPanel({
           onClick={onCopy}
           style={{
             display: "flex", alignItems: "center", gap: 5,
-            background: "none", border: "1px solid rgba(255,255,255,0.1)",
-            borderRadius: 6, padding: "3px 8px", cursor: "pointer",
-            fontSize: 11, color: "#818cf8",
-            transition: "all 150ms",
+            background: "none", border: "1px solid var(--border)",
+            borderRadius: "var(--radius-sm)", padding: "3px 8px", cursor: "pointer",
+            fontSize: 11, color: "var(--accent-text)",
+            transition: `all var(--duration-fast)`,
           }}
         >
           <Copy size={11} />
@@ -150,22 +150,22 @@ function VisualBriefPanel({
         </button>
       </div>
       <div style={{
-        borderRadius: 12,
-        background: "#18181b",
-        border: "1px solid rgba(255,255,255,0.06)",
-        borderLeft: "3px solid #6366f1",
+        borderRadius: "var(--radius)",
+        background: "var(--surface-2)",
+        border: "1px solid var(--border-subtle)",
+        borderLeft: "3px solid var(--accent)",
         padding: "16px 20px",
         overflow: "auto",
         maxHeight: 420,
       }}>
-        <p style={{ fontSize: 11, fontWeight: 600, color: "#818cf8", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+        <p style={{ fontSize: 11, fontWeight: 600, color: "var(--accent-text)", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.06em" }}>
           Visual Brief — share with your designer
         </p>
-        <p style={{ fontSize: 13, color: "#d4d4d8", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>
+        <p style={{ fontSize: 13, color: "var(--ink-muted)", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>
           {brief}
         </p>
       </div>
-      <p style={{ fontSize: 11, color: "#52525b", marginTop: 2 }}>
+      <p style={{ fontSize: 11, color: "var(--ink-tertiary)", marginTop: 2 }}>
         Image generation unavailable — showing design brief instead
       </p>
     </div>
@@ -200,26 +200,26 @@ function CreditLimitPanel({
       <div style={{ position: "relative", width: 56, height: 56 }}>
         <div style={{
           position: "absolute", inset: -10,
-          background: "radial-gradient(circle, rgba(99,102,241,0.22) 0%, transparent 70%)",
+          background: "radial-gradient(circle, var(--accent-bg-hover) 0%, transparent 70%)",
           borderRadius: "50%",
         }} />
         <div style={{
           width: 56, height: 56, borderRadius: "50%",
-          background: "linear-gradient(135deg, rgba(99,102,241,0.18), rgba(139,92,246,0.18))",
-          border: "1px solid rgba(99,102,241,0.28)",
+          background: "linear-gradient(135deg, var(--accent-bg), var(--accent-subtle))",
+          border: "1px solid var(--accent-border)",
           display: "flex", alignItems: "center", justifyContent: "center",
           position: "relative",
         }}>
-          <Sparkles size={22} color="#818cf8" />
+          <Sparkles size={22} color="var(--accent-text)" />
         </div>
       </div>
 
       {/* Copy */}
       <div style={{ maxWidth: 316 }}>
-        <p style={{ fontSize: 18, fontWeight: 600, color: "#f4f4f5", lineHeight: 1.35, marginBottom: 7 }}>
+        <p style={{ fontSize: 18, fontWeight: 600, color: "var(--ink)", lineHeight: 1.35, marginBottom: 7 }}>
           You've maxed out Visualize this month
         </p>
-        <p style={{ fontSize: 13, color: "#71717a", lineHeight: 1.65 }}>
+        <p style={{ fontSize: 13, color: "var(--ink-faint)", lineHeight: 1.65 }}>
           {body}
         </p>
       </div>
@@ -227,15 +227,15 @@ function CreditLimitPanel({
       {/* Credit progress bar */}
       <div style={{ width: "100%", maxWidth: 280 }}>
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 7 }}>
-          <span style={{ fontSize: 11, color: "#52525b", fontFamily: "var(--mono)" }}>
+          <span style={{ fontSize: 11, color: "var(--ink-tertiary)", fontFamily: "var(--mono)" }}>
             {creditData.used} / {creditData.limit} used
           </span>
-          <span style={{ fontSize: 11, color: "#52525b" }}>Resets {resetLabel}</span>
+          <span style={{ fontSize: 11, color: "var(--ink-tertiary)" }}>Resets {resetLabel}</span>
         </div>
-        <div style={{ height: 4, borderRadius: 999, background: "rgba(255,255,255,0.07)", overflow: "hidden" }}>
+        <div style={{ height: 4, borderRadius: 999, background: "var(--border)", overflow: "hidden" }}>
           <div style={{
             height: "100%", width: `${fillPct}%`, borderRadius: 999,
-            background: "linear-gradient(90deg, #6366f1, #8b5cf6)",
+            background: "var(--grad)",
           }} />
         </div>
       </div>
@@ -248,9 +248,9 @@ function CreditLimitPanel({
             style={{
               display: "flex", alignItems: "center", justifyContent: "center",
               width: "100%", padding: "11px 24px",
-              background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-              borderRadius: 9999, fontSize: 14, fontWeight: 600, color: "#fff",
-              textDecoration: "none", boxShadow: "0 2px 14px rgba(99,102,241,0.32)",
+              background: "var(--grad)",
+              borderRadius: "var(--radius-full)", fontSize: 14, fontWeight: 600, color: "#fff",
+              textDecoration: "none", boxShadow: "var(--shadow-glow)",
             }}
           >
             Contact us for custom limits
@@ -259,22 +259,18 @@ function CreditLimitPanel({
           <button
             type="button"
             onClick={() => onUpgrade?.(isPro ? "team" : "pro")}
+            className="cs-btn-primary"
             style={{
               width: "100%", padding: "11px 24px",
-              background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-              border: "none", borderRadius: 9999,
-              fontSize: 14, fontWeight: 600, color: "#fff", cursor: "pointer",
-              boxShadow: "0 2px 14px rgba(99,102,241,0.32)",
-              transition: "opacity 150ms",
+              borderRadius: "var(--radius-full)",
+              fontSize: 14, fontWeight: 600,
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.87"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
           >
             {isPro ? "Upgrade to Team — 25 Visualizes/month" : "Upgrade to Pro — 10 Visualizes/month"}
           </button>
         )}
 
-        <p style={{ fontSize: 12, color: "#3f3f46" }}>
+        <p style={{ fontSize: 12, color: "var(--ink-quaternary)" }}>
           or wait until {resetLabel} for credits to reset
         </p>
       </div>
@@ -284,12 +280,12 @@ function CreditLimitPanel({
         onClick={onClose}
         style={{
           marginTop: -4, padding: "4px 14px", fontSize: 11,
-          background: "none", border: "1px solid rgba(255,255,255,0.06)",
-          borderRadius: 6, color: "#3f3f46", cursor: "pointer",
-          transition: "color 150ms",
+          background: "none", border: "1px solid var(--border-subtle)",
+          borderRadius: "var(--radius-sm)", color: "var(--ink-quaternary)", cursor: "pointer",
+          transition: `color var(--duration-fast)`,
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.color = "#71717a"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.color = "#3f3f46"; }}
+        onMouseEnter={(e) => { e.currentTarget.style.color = "var(--ink-faint)"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.color = "var(--ink-quaternary)"; }}
       >
         Dismiss
       </button>
@@ -357,9 +353,9 @@ export function VisualizePanel({
       transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
       style={{
         margin: "0 16px 16px",
-        borderRadius: 16,
-        background: "rgba(255,255,255,0.02)",
-        border: "1px solid rgba(255,255,255,0.07)",
+        borderRadius: "var(--radius-lg)",
+        background: "var(--surface)",
+        border: "1px solid var(--border)",
         padding: 20,
         overflow: "hidden",
       }}
@@ -377,7 +373,7 @@ export function VisualizePanel({
           onClick={onBack}
           style={{
             display: "flex", alignItems: "center", gap: 6,
-            color: "#a1a1aa", fontSize: 13,
+            color: "var(--ink-muted)", fontSize: 13,
             background: "transparent", border: "none", cursor: "pointer",
             marginBottom: 16, padding: 0,
           }}
@@ -390,17 +386,17 @@ export function VisualizePanel({
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 16 }}>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <Sparkles size={15} color="#818cf8" />
-            <span style={{ fontSize: 14, fontWeight: 600, color: "#f4f4f5" }}>Visualized Improvement</span>
+            <Sparkles size={15} color="var(--accent-text)" />
+            <span style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>Visualized Improvement</span>
             <span style={{
-              fontSize: 10, fontWeight: 500, color: "#52525b",
-              background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
+              fontSize: 10, fontWeight: 500, color: "var(--ink-tertiary)",
+              background: "var(--surface)", border: "1px solid var(--border)",
               borderRadius: 4, padding: "2px 6px",
             }}>
               MVP — Static Ads
             </span>
           </div>
-          <p style={{ fontSize: 12, color: "#71717a", marginTop: 3 }}>
+          <p style={{ fontSize: 12, color: "var(--ink-faint)", marginTop: 3 }}>
             AI-generated based on your scorecard
           </p>
         </div>
@@ -409,12 +405,12 @@ export function VisualizePanel({
           onClick={onClose}
           style={{
             background: "none", border: "none", cursor: "pointer",
-            color: "#52525b", padding: 4, borderRadius: 6,
+            color: "var(--ink-tertiary)", padding: 4, borderRadius: "var(--radius-sm)",
             display: "flex", alignItems: "center",
-            transition: "color 150ms",
+            transition: `color var(--duration-fast)`,
           }}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#a1a1aa"; }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#52525b"; }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--ink-muted)"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--ink-tertiary)"; }}
         >
           <X size={16} />
         </button>
@@ -433,10 +429,10 @@ export function VisualizePanel({
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
               {originalImageUrl && (
                 <div style={{ flex: 1, minWidth: 200 }}>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: "#71717a", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 8 }}>Before</span>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: "var(--ink-faint)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 8 }}>Before</span>
                   <div style={{
-                    height: 300, borderRadius: 12, background: "#18181b",
-                    border: "1px solid rgba(255,255,255,0.06)",
+                    height: 300, borderRadius: "var(--radius)", background: "var(--surface-2)",
+                    border: "1px solid var(--border-subtle)",
                     display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden",
                   }}>
                     <img src={originalImageUrl} alt="Original" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
@@ -444,7 +440,7 @@ export function VisualizePanel({
                 </div>
               )}
               <div style={{ flex: 1, minWidth: 200 }}>
-                <span style={{ fontSize: 11, fontWeight: 600, color: "#71717a", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 8 }}>After</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: "var(--ink-faint)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 8 }}>After</span>
                 <ShimmerBlock height={300} />
               </div>
             </div>
@@ -458,8 +454,8 @@ export function VisualizePanel({
               ? <CreditLimitPanel creditData={creditData} onClose={onClose} onUpgrade={onUpgrade} />
               : (
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, padding: "40px 24px", textAlign: "center" }}>
-                  <p style={{ fontSize: 15, color: "#a1a1aa" }}>You've reached your Visualize credit limit for this month.</p>
-                  <button type="button" onClick={onClose} style={{ padding: "6px 16px", fontSize: 12, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "#a1a1aa", cursor: "pointer" }}>Dismiss</button>
+                  <p style={{ fontSize: 15, color: "var(--ink-muted)" }}>You've reached your Visualize credit limit for this month.</p>
+                  <button type="button" onClick={onClose} style={{ padding: "6px 16px", fontSize: 12, background: "var(--border-subtle)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", color: "var(--ink-muted)", cursor: "pointer" }}>Dismiss</button>
                 </div>
               )
             }
@@ -471,11 +467,11 @@ export function VisualizePanel({
           <motion.div key="error" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <div style={{
               display: "flex", flexDirection: "column", alignItems: "center", gap: 12,
-              background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)",
-              borderRadius: 12, padding: "24px 20px", textAlign: "center",
+              background: "var(--score-weak-bg)", border: "1px solid var(--score-weak-border)",
+              borderRadius: "var(--radius)", padding: "24px 20px", textAlign: "center",
             }}>
-              <AlertCircle size={20} color="#ef4444" />
-              <span style={{ fontSize: 14, color: "#fca5a5", lineHeight: 1.5 }}>
+              <AlertCircle size={20} color="var(--error)" />
+              <span style={{ fontSize: 14, color: "var(--ink-muted)", lineHeight: 1.5 }}>
                 {error === "RATE_LIMITED"
                   ? "You've used all your Visualize credits this month. Credits reset on the 1st."
                   : "Generation failed — please try again."}
@@ -485,8 +481,8 @@ export function VisualizePanel({
                 onClick={onClose}
                 style={{
                   marginTop: 4, padding: "6px 16px", fontSize: 12,
-                  background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: 8, color: "#a1a1aa", cursor: "pointer",
+                  background: "var(--border-subtle)", border: "1px solid var(--border)",
+                  borderRadius: "var(--radius-sm)", color: "var(--ink-muted)", cursor: "pointer",
                 }}
               >
                 Dismiss
@@ -518,11 +514,11 @@ export function VisualizePanel({
             {/* What Changed */}
             {(result.improvementSummary || (result.changesApplied?.length ?? 0) > 0) && (
               <div style={{ marginBottom: 20 }}>
-                <p style={{ fontSize: 12, fontWeight: 600, color: "#818cf8", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
+                <p style={{ fontSize: 12, fontWeight: 600, color: "var(--accent-text)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
                   What Changed
                 </p>
                 {result.improvementSummary && (
-                  <p style={{ fontSize: 13, color: "#a1a1aa", lineHeight: 1.65, marginBottom: 12 }}>
+                  <p style={{ fontSize: 13, color: "var(--ink-muted)", lineHeight: 1.65, marginBottom: 12 }}>
                     {result.improvementSummary}
                   </p>
                 )}
@@ -536,8 +532,8 @@ export function VisualizePanel({
                         transition={{ duration: 0.25, delay: i * 0.06 }}
                         style={{ display: "flex", alignItems: "flex-start", gap: 8 }}
                       >
-                        <Check size={13} color="#10b981" strokeWidth={2.5} style={{ flexShrink: 0, marginTop: 2 }} />
-                        <span style={{ fontSize: 13, color: "#d4d4d8", lineHeight: 1.5 }}>{change}</span>
+                        <Check size={13} color="var(--success)" strokeWidth={2.5} style={{ flexShrink: 0, marginTop: 2 }} />
+                        <span style={{ fontSize: 13, color: "var(--ink-muted)", lineHeight: 1.5 }}>{change}</span>
                       </motion.div>
                     ))}
                   </div>
@@ -546,7 +542,7 @@ export function VisualizePanel({
             )}
 
             {/* Action row */}
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 16 }}>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", borderTop: "1px solid var(--border-subtle)", paddingTop: 16 }}>
               {result.generatedImageUrl && (
                 <button
                   type="button"
@@ -554,11 +550,11 @@ export function VisualizePanel({
                   style={{
                     display: "flex", alignItems: "center", gap: 6,
                     padding: "8px 14px",
-                    background: downloadTouched ? "rgba(99,102,241,0.2)" : "rgba(99,102,241,0.12)",
-                    border: "1px solid rgba(99,102,241,0.35)",
-                    borderRadius: 8, cursor: "pointer",
-                    fontSize: 13, fontWeight: 500, color: "#818cf8",
-                    transition: "all 150ms",
+                    background: downloadTouched ? "var(--accent-bg-hover)" : "var(--accent-bg)",
+                    border: "1px solid var(--accent-border)",
+                    borderRadius: "var(--radius-sm)", cursor: "pointer",
+                    fontSize: 13, fontWeight: 500, color: "var(--accent-text)",
+                    transition: `all var(--duration-fast)`,
                   }}
                 >
                   <Download size={13} />
@@ -571,11 +567,11 @@ export function VisualizePanel({
                 style={{
                   display: "flex", alignItems: "center", gap: 6,
                   padding: "8px 14px",
-                  background: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: 8, cursor: "pointer",
-                  fontSize: 13, color: "#a1a1aa",
-                  transition: "all 150ms",
+                  background: "var(--surface)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "var(--radius-sm)", cursor: "pointer",
+                  fontSize: 13, color: "var(--ink-muted)",
+                  transition: `all var(--duration-fast)`,
                 }}
               >
                 <Copy size={13} />
@@ -588,11 +584,11 @@ export function VisualizePanel({
                   style={{
                     display: "flex", alignItems: "center", gap: 6,
                     padding: "8px 14px",
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    borderRadius: 8, cursor: "pointer",
-                    fontSize: 13, color: "#a1a1aa",
-                    transition: "all 150ms",
+                    background: "var(--surface)",
+                    border: "1px solid var(--border)",
+                    borderRadius: "var(--radius-sm)", cursor: "pointer",
+                    fontSize: 13, color: "var(--ink-muted)",
+                    transition: `all var(--duration-fast)`,
                   }}
                 >
                   Analyze This Version
