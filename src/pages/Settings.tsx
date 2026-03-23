@@ -353,30 +353,73 @@ export function Settings() {
             </div>
           </div>
 
-          {/* Credit Usage Section */}
+          {/* Credit Usage Section - Manus style */}
           {isPro && (
             <>
               <div style={DIVIDER} />
               <div className="mt-5">
-                <div className="flex items-center justify-between mb-4">
-                  <span style={{ fontSize: 11, fontWeight: 600, color: "#71717a", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                    Credit Usage
-                  </span>
-                  <span style={{ fontSize: 11, color: "#52525b" }}>
-                    Resets {resetDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                {/* Credits summary row like Manus */}
+                <div className="flex items-center gap-2 mb-4">
+                  <div 
+                    style={{ 
+                      width: 28, height: 28, borderRadius: 8,
+                      background: "rgba(255,255,255,0.04)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a1a1aa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                    </svg>
+                  </div>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: "#a1a1aa" }}>Credits</span>
+                  <div style={{ flex: 1 }} />
+                  <span style={{ fontSize: 18, fontWeight: 600, color: "#f4f4f5", fontFamily: "var(--mono)" }}>
+                    {Object.values(credits || {}).reduce((acc, cr) => {
+                      if (cr?.limit === null) return acc;
+                      return acc + (cr?.remaining ?? 0);
+                    }, 0).toLocaleString()}
                   </span>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  {FEATURE_ROWS.map(({ key, label }) => (
+
+                {/* Credit breakdown like Manus */}
+                <div 
+                  className="rounded-xl p-4 mb-4"
+                  style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}
+                >
+                  <div className="flex items-center justify-between mb-3 pb-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                    <span style={{ fontSize: 12, color: "#71717a" }}>Monthly credits</span>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: "#a1a1aa", fontFamily: "var(--mono)" }}>
+                      {credits?.analyze?.limit === null ? "Unlimited" : `${(credits?.analyze?.limit ?? 0) - (credits?.analyze?.remaining ?? 0)} / ${credits?.analyze?.limit ?? 0}`}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#71717a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                        <line x1="16" y1="2" x2="16" y2="6"/>
+                        <line x1="8" y1="2" x2="8" y2="6"/>
+                        <line x1="3" y1="10" x2="21" y2="10"/>
+                      </svg>
+                      <span style={{ fontSize: 12, color: "#71717a" }}>Daily refresh</span>
+                    </div>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: "#a1a1aa", fontFamily: "var(--mono)" }}>
+                      Resets {resetDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Feature credits grid */}
+                <div className="grid grid-cols-2 gap-2">
+                  {FEATURE_ROWS.filter(f => f.key !== "analyze").map(({ key, label }) => (
                     <div 
                       key={key} 
-                      className="flex items-center justify-between p-3 rounded-xl"
-                      style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}
+                      className="flex items-center justify-between p-2.5 rounded-lg"
+                      style={{ background: "rgba(255,255,255,0.015)" }}
                     >
                       <span
                         style={{
-                          fontSize: 12,
-                          color: credits?.[key]?.reason === "TIER_BLOCKED" ? "#52525b" : "#a1a1aa",
+                          fontSize: 11,
+                          color: credits?.[key]?.reason === "TIER_BLOCKED" ? "#52525b" : "#71717a",
                         }}
                       >
                         {label}
@@ -447,6 +490,63 @@ export function Settings() {
             )}
           </div>
         </div>
+
+        {/* Recent Activity / Invoices - Like Manus */}
+        {isPro && (
+          <div style={CARD_STYLE}>
+            <div className="flex items-center justify-between mb-4">
+              <span style={{ fontSize: 13, fontWeight: 600, color: "#f4f4f5" }}>
+                Recent activity
+              </span>
+              <button
+                type="button"
+                onClick={() => setBillingView("manage")}
+                className="text-xs font-medium transition-colors flex items-center gap-1"
+                style={{ color: "#71717a", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = COLORS.primaryLight; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = "#71717a"; }}
+              >
+                View all invoices
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </button>
+            </div>
+            
+            {/* Invoice table header */}
+            <div 
+              className="grid grid-cols-3 gap-4 px-3 py-2 rounded-lg mb-2"
+              style={{ background: "rgba(255,255,255,0.02)" }}
+            >
+              <span style={{ fontSize: 11, fontWeight: 500, color: "#52525b", textTransform: "uppercase", letterSpacing: "0.05em" }}>Date</span>
+              <span style={{ fontSize: 11, fontWeight: 500, color: "#52525b", textTransform: "uppercase", letterSpacing: "0.05em" }}>Amount</span>
+              <span style={{ fontSize: 11, fontWeight: 500, color: "#52525b", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "right" }}>Invoice</span>
+            </div>
+            
+            {/* Sample invoice rows */}
+            {[
+              { date: renewalDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }), amount: `$${currentPlan.price}.00` },
+            ].map((invoice, i) => (
+              <div 
+                key={i}
+                className="grid grid-cols-3 gap-4 px-3 py-3 rounded-lg transition-colors"
+                style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}
+              >
+                <span style={{ fontSize: 13, color: "#a1a1aa" }}>{invoice.date}</span>
+                <span style={{ fontSize: 13, color: "#f4f4f5", fontFamily: "var(--mono)" }}>{invoice.amount}</span>
+                <button
+                  type="button"
+                  className="text-xs font-medium transition-colors text-right"
+                  style={{ color: COLORS.primaryLight, background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                  onMouseEnter={(e) => { e.currentTarget.style.textDecoration = "underline"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.textDecoration = "none"; }}
+                >
+                  Download
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Plan Features */}
         <div style={CARD_STYLE}>
@@ -670,101 +770,130 @@ export function Settings() {
 
   const DowngradeReason = () => (
     <motion.div
-      style={{ maxWidth: 560 }}
-      initial={{ opacity: 0, x: 16 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -16 }}
+      style={{ maxWidth: 520 }}
+      initial={{ opacity: 0, scale: 0.98 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.98 }}
       transition={{ duration: 0.2 }}
     >
-      <button
-        type="button"
-        onClick={() => setBillingView("manage")}
-        className="flex items-center gap-2 mb-6 transition-colors"
-        style={{ color: "#71717a", background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 13, fontWeight: 500 }}
-        onMouseEnter={(e) => (e.currentTarget.style.color = "#a1a1aa")}
-        onMouseLeave={(e) => (e.currentTarget.style.color = "#71717a")}
+      <div 
+        style={{ 
+          ...CARD_STYLE, 
+          padding: 32,
+          background: "rgba(24,24,27,0.98)",
+          border: "1px solid rgba(255,255,255,0.08)",
+          position: "relative",
+        }}
       >
-        <ArrowLeft size={14} /> Back to manage
-      </button>
+        {/* Close button like Manus */}
+        <button
+          type="button"
+          onClick={() => setBillingView("manage")}
+          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
+          style={{ background: "transparent", border: "none", cursor: "pointer", color: "#71717a" }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = "#a1a1aa"; e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = "#71717a"; e.currentTarget.style.background = "transparent"; }}
+        >
+          <X size={18} />
+        </button>
 
-      <div style={CARD_STYLE}>
-        <h2 style={{ fontSize: 18, fontWeight: 600, color: "#f4f4f5", marginBottom: 4 }}>
+        {/* Brand icon like Manus */}
+        <div 
+          className="mb-6"
+          style={{ 
+            width: 48, height: 48, borderRadius: 12,
+            background: "rgba(255,255,255,0.06)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a1a1aa" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+            <path d="M2 17l10 5 10-5"/>
+            <path d="M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+
+        <h2 style={{ fontSize: 22, fontWeight: 600, color: "#f4f4f5", marginBottom: 8 }}>
           Why are you downgrading?
         </h2>
-        <p style={{ fontSize: 13, color: "#71717a", marginBottom: 24 }}>
-          Your feedback helps us improve Cutsheet.
+        <p style={{ fontSize: 14, color: "#71717a", marginBottom: 28 }}>
+          Your feedback helps us improve Cutsheet
         </p>
 
-        <div className="flex flex-col gap-2.5">
-          {DOWNGRADE_REASONS.map((reason) => (
+        {/* Reason options in a contained box like Manus */}
+        <div 
+          className="rounded-xl p-1 mb-6"
+          style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}
+        >
+          {DOWNGRADE_REASONS.map((reason, i) => (
             <button
               key={reason}
               type="button"
               onClick={() => setDowngradeReason(reason)}
-              className="flex items-center gap-3 py-3.5 px-4 rounded-xl text-left transition-all w-full"
+              className="flex items-center gap-3 py-3 px-4 text-left transition-all w-full rounded-lg"
               style={{
-                background: downgradeReason === reason ? "rgba(99,102,241,0.08)" : "rgba(255,255,255,0.02)",
-                border: downgradeReason === reason
-                  ? "1px solid rgba(99,102,241,0.3)"
-                  : "1px solid rgba(255,255,255,0.06)",
+                background: downgradeReason === reason ? "rgba(255,255,255,0.04)" : "transparent",
                 cursor: "pointer",
+                borderBottom: i < DOWNGRADE_REASONS.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
+                borderRadius: i === 0 ? "8px 8px 0 0" : i === DOWNGRADE_REASONS.length - 1 ? "0 0 8px 8px" : 0,
               }}
             >
-              {/* Radio circle */}
+              {/* Clean radio circle like Manus */}
               <span
                 className="shrink-0 flex items-center justify-center rounded-full"
                 style={{
                   width: 18,
                   height: 18,
                   border: downgradeReason === reason
-                    ? `2px solid ${COLORS.primary}`
-                    : "2px solid rgba(255,255,255,0.15)",
+                    ? "2px solid #f4f4f5"
+                    : "1.5px solid rgba(255,255,255,0.2)",
+                  background: "transparent",
                   transition: "all 0.15s ease",
                 }}
               >
                 {downgradeReason === reason && (
                   <span
                     className="rounded-full"
-                    style={{ width: 8, height: 8, background: COLORS.primary, display: "block" }}
+                    style={{ width: 8, height: 8, background: "#f4f4f5", display: "block" }}
                   />
                 )}
               </span>
-              <span style={{ fontSize: 14, color: downgradeReason === reason ? "#f4f4f5" : "#a1a1aa" }}>
+              <span style={{ fontSize: 14, color: "#e4e4e7" }}>
                 {reason}
               </span>
             </button>
           ))}
         </div>
 
-        <div className="flex gap-3 mt-6">
-          <button
-            type="button"
-            onClick={() => setBillingView("manage")}
-            className="flex-1 h-11 rounded-xl text-sm font-medium transition-all"
-            style={{
-              border: "1px solid rgba(255,255,255,0.08)",
-              color: "#a1a1aa",
-              background: "rgba(255,255,255,0.02)",
-              cursor: "pointer",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
-          >
-            Keep current plan
-          </button>
+        {/* Action buttons - Manus style with dark/light contrast */}
+        <div className="flex gap-3 justify-center">
           <button
             type="button"
             onClick={() => downgradeReason && setBillingView("downgrade-confirm")}
-            className="flex-1 h-11 rounded-xl text-sm font-medium transition-all"
+            className="px-6 h-10 rounded-lg text-sm font-medium transition-all"
             style={{
-              background: downgradeReason ? COLORS.error : "rgba(239,68,68,0.2)",
-              color: "white",
-              border: "none",
+              background: downgradeReason ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.04)",
+              color: downgradeReason ? "#e4e4e7" : "#71717a",
+              border: "1px solid rgba(255,255,255,0.1)",
               cursor: downgradeReason ? "pointer" : "default",
-              opacity: downgradeReason ? 1 : 0.5,
             }}
           >
-            Continue
+            Confirm downgrade
+          </button>
+          <button
+            type="button"
+            onClick={() => setBillingView("manage")}
+            className="px-6 h-10 rounded-lg text-sm font-medium transition-all"
+            style={{
+              background: "#f4f4f5",
+              color: "#18181b",
+              border: "none",
+              cursor: "pointer",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#e4e4e7"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "#f4f4f5"; }}
+          >
+            Keep current plan
           </button>
         </div>
       </div>
@@ -773,60 +902,83 @@ export function Settings() {
 
   const DowngradeConfirm = () => (
     <motion.div
-      style={{ maxWidth: 560 }}
-      initial={{ opacity: 0, x: 16 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -16 }}
+      style={{ maxWidth: 520 }}
+      initial={{ opacity: 0, scale: 0.98 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.98 }}
       transition={{ duration: 0.2 }}
     >
-      <button
-        type="button"
-        onClick={() => setBillingView("downgrade-reason")}
-        className="flex items-center gap-2 mb-6 transition-colors"
-        style={{ color: "#71717a", background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 13, fontWeight: 500 }}
-        onMouseEnter={(e) => (e.currentTarget.style.color = "#a1a1aa")}
-        onMouseLeave={(e) => (e.currentTarget.style.color = "#71717a")}
+      <div 
+        style={{ 
+          ...CARD_STYLE, 
+          padding: 32,
+          background: "rgba(24,24,27,0.98)",
+          border: "1px solid rgba(255,255,255,0.08)",
+          position: "relative",
+        }}
       >
-        <ArrowLeft size={14} /> Back
-      </button>
+        {/* Close button */}
+        <button
+          type="button"
+          onClick={() => setBillingView("downgrade-reason")}
+          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
+          style={{ background: "transparent", border: "none", cursor: "pointer", color: "#71717a" }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = "#a1a1aa"; e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = "#71717a"; e.currentTarget.style.background = "transparent"; }}
+        >
+          <X size={18} />
+        </button>
 
-      <div style={CARD_STYLE}>
-        <h2 style={{ fontSize: 18, fontWeight: 600, color: "#f4f4f5", marginBottom: 4 }}>
+        {/* Brand icon */}
+        <div 
+          className="mb-6"
+          style={{ 
+            width: 48, height: 48, borderRadius: 12,
+            background: "rgba(255,255,255,0.06)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a1a1aa" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+            <path d="M2 17l10 5 10-5"/>
+            <path d="M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+
+        <h2 style={{ fontSize: 22, fontWeight: 600, color: "#f4f4f5", marginBottom: 8 }}>
           Continue downgrading to Free?
         </h2>
-        <p style={{ fontSize: 13, color: "#71717a", marginBottom: 24 }}>
-          Changes take effect at the end of your current billing cycle.
+        <p style={{ fontSize: 14, color: "#71717a", marginBottom: 28 }}>
+          If you downgrade, the changes will take effect next billing cycle:
         </p>
 
-        {/* Consequences list */}
-        <div
-          className="rounded-xl p-4 flex flex-col gap-3"
-          style={{ background: "rgba(239,68,68,0.04)", border: "1px solid rgba(239,68,68,0.1)" }}
+        {/* Consequences list - Manus style with X icons */}
+        <div 
+          className="rounded-xl p-4 mb-6 flex flex-col gap-3"
+          style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}
         >
-          <p style={{ fontSize: 12, fontWeight: 600, color: COLORS.error, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-            What you'll lose
-          </p>
           {DOWNGRADE_CONSEQUENCES.map((c) => (
             <div key={c} className="flex items-start gap-3">
-              <X size={14} color={COLORS.error} style={{ marginTop: 2, flexShrink: 0 }} />
-              <span style={{ fontSize: 13, color: "#a1a1aa", lineHeight: 1.4 }}>{c}</span>
+              <X size={16} color={COLORS.error} style={{ marginTop: 1, flexShrink: 0 }} />
+              <span style={{ fontSize: 14, color: "#e4e4e7", lineHeight: 1.5 }}>{c}</span>
             </div>
           ))}
         </div>
 
-        <div className="flex gap-3 mt-6">
+        {/* Action buttons - Manus style */}
+        <div className="flex gap-3 justify-center">
           <button
             type="button"
             onClick={() => setBillingView("dashboard")}
-            className="flex-1 h-11 rounded-xl text-sm font-medium transition-all"
+            className="px-6 h-10 rounded-lg text-sm font-medium transition-all"
             style={{
-              border: "1px solid rgba(255,255,255,0.08)",
-              color: "#a1a1aa",
-              background: "rgba(255,255,255,0.02)",
+              background: "rgba(255,255,255,0.08)",
+              color: "#e4e4e7",
+              border: "1px solid rgba(255,255,255,0.1)",
               cursor: "pointer",
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}
           >
             Keep current plan
           </button>
@@ -835,10 +987,17 @@ export function Settings() {
             onClick={() => {
               window.location.href = "mailto:support@cutsheet.app?subject=Downgrade%20Request&body=Hi%2C%20I%27d%20like%20to%20downgrade%20my%20subscription%20to%20Free.%20My%20email%20is%20" + encodeURIComponent(user?.email ?? "");
             }}
-            className="flex-1 h-11 rounded-xl text-sm font-medium transition-all"
-            style={{ background: COLORS.error, color: "white", border: "none", cursor: "pointer" }}
+            className="px-6 h-10 rounded-lg text-sm font-medium transition-all"
+            style={{ 
+              background: COLORS.error, 
+              color: "white", 
+              border: "none", 
+              cursor: "pointer" 
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#dc2626"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = COLORS.error; }}
           >
-            Contact support
+            Confirm downgrade
           </button>
         </div>
       </div>
