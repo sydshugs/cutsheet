@@ -5,6 +5,23 @@ import { supabase } from "../lib/supabase";
 
 export type SubscriptionTier = 'free' | 'pro' | 'team';
 
+// ─── DEV-ONLY TIER OVERRIDE ──────────────────────────────────────────────────
+// Set VITE_TEST_TIER=pro|team in .env.local to bypass credit checks locally.
+// Only active in development (import.meta.env.DEV). Never affects production.
+const DEV_TIER_OVERRIDE: SubscriptionTier | null =
+  import.meta.env.DEV && import.meta.env.VITE_TEST_TIER
+    ? (import.meta.env.VITE_TEST_TIER as SubscriptionTier)
+    : null;
+
+function getDevLimits(tier: SubscriptionTier, feature: string): FeatureLimitResult {
+  const limits =
+    tier === 'team' ? TEAM_MONTHLY_LIMITS
+    : tier === 'pro' ? PRO_MONTHLY_LIMITS
+    : FREE_DAILY_LIMITS;
+  const limit = limits[feature] ?? 0;
+  return { allowed: limit > 0, remaining: limit === Infinity ? null : limit, limit, reason: 'DEV_OVERRIDE', tier };
+}
+
 export const FREE_DAILY_LIMITS: Record<string, number> = {
   analyze: 3,
   fixIt: 1,
@@ -53,6 +70,12 @@ export const checkFeatureLimit = async (
   feature: string,
   increment = true
 ): Promise<FeatureLimitResult> => {
+  // Dev-only tier override — skip API call entirely
+  if (DEV_TIER_OVERRIDE) {
+    console.info(`[usageService] DEV override: tier=${DEV_TIER_OVERRIDE}, feature=${feature}`);
+    return getDevLimits(DEV_TIER_OVERRIDE, feature);
+  }
+
   const { data: { session } } = await supabase.auth.getSession();
   if (!session?.access_token) {
     return { allowed: false, remaining: null, limit: null, reason: "NOT_AUTHENTICATED" };
@@ -88,6 +111,14 @@ export const checkFeatureLimit = async (
  */
 export const fetchCreditStatus = async (): Promise<Record<string, FeatureLimitResult>> => {
   const features = ["analyze", "visualize", "script", "fixIt", "policyCheck", "deconstruct", "brief"];
+
+  // Dev-only tier override — return fake limits for all features
+  if (DEV_TIER_OVERRIDE) {
+    console.info(`[usageService] DEV override: tier=${DEV_TIER_OVERRIDE}, batch credit status`);
+    return Object.fromEntries(
+      features.map((f) => [f, getDevLimits(DEV_TIER_OVERRIDE!, f)])
+    );
+  }
 
   const { data: { session } } = await supabase.auth.getSession();
   if (!session?.access_token) {
