@@ -280,20 +280,7 @@ export default function PaidAdAnalyzer() {
     }
   }, [status]);
 
-  // Compute budget recommendation from engine when analysis completes
-  useEffect(() => {
-    if (status === "complete" && result?.scores) {
-      const niche = userContext.match(/Niche:\s*(.+)/)?.[1]?.trim() || 'Other';
-      const budget = generateBudgetRecommendation(
-        result.scores.overall,
-        platform,
-        niche,
-        format
-      );
-      setEngineBudget(budget);
-    }
-  }, [status, result, platform, format, userContext]);
-
+  // History save effect — kept separate due to different dependencies
   useEffect(() => {
     if (status === "complete" && result) {
       const key = `${result.fileName}-${result.timestamp.toISOString()}`;
@@ -330,61 +317,75 @@ export default function PaidAdAnalyzer() {
     }
   }, [status, result, addHistoryEntry, increment, isPro, FREE_LIMIT, onUpgradeRequired, thumbnailDataUrl]); // eslint-disable-line
 
-  // Second Eye trigger: fires when analysis completes and secondEye is on
+  // Combined post-analysis effect — runs all post-analysis jobs in parallel
   useEffect(() => {
-    if (status === "complete" && result && secondEye) {
-      if (secondEyeLoading) return;
-      const run = async () => {
-        setSecondEyeLoading(true);
-        setSecondEyeOutput(null);
-        try {
-          const output = await generateSecondEyeReview(
-            result.markdown,
-            result.fileName,
-            result.scores ? { hook: result.scores.hook, overall: result.scores.overall } : undefined,
-            result.improvements,
-            userContext || undefined,
-            sessionMemoryRef.current
-          );
-          setSecondEyeOutput(output);
-        } catch (err) {
-          console.error('Second Eye failed:', err);
-          setSecondEyeOutput(null);
-        } finally {
-          setSecondEyeLoading(false);
-        }
-      };
-      run();
-    }
-  }, [status, result, secondEye]); // eslint-disable-line
+    if (status !== "complete" || !result) return;
 
-  // Static Second Eye trigger: fires when analysis completes and staticSecondEye is on
-  useEffect(() => {
-    if (status === "complete" && result && staticSecondEye && format === "static") {
-      if (staticSecondEyeLoading) return;
-      const run = async () => {
-        setStaticSecondEyeLoading(true);
-        setStaticSecondEyeResult(null);
-        try {
-          const output = await generateStaticSecondEye(
-            result.markdown,
-            result.fileName,
-            result.scores ? { overall: result.scores.overall, cta: result.scores.cta } : undefined,
-            result.improvements,
-            userContext || undefined,
-            sessionMemoryRef.current
-          );
-          setStaticSecondEyeResult(output);
-        } catch (err) {
-          console.error('Static Second Eye failed:', err);
-          setStaticSecondEyeResult(null);
-        } finally {
-          setStaticSecondEyeLoading(false);
-        }
-      };
-      run();
+    // Budget — synchronous, fire immediately
+    if (result.scores) {
+      const niche = userContext.match(/Niche:\s*(.+)/)?.[1]?.trim() || 'Other';
+      setEngineBudget(generateBudgetRecommendation(result.scores.overall, platform, niche, format));
     }
-  }, [status, result, staticSecondEye, format]); // eslint-disable-line
+
+    // Async operations — fire in parallel
+    const promises: Promise<void>[] = [];
+
+    // Second Eye (video only)
+    if (secondEye && format === 'video' && !secondEyeLoading) {
+      promises.push(
+        (async () => {
+          setSecondEyeLoading(true);
+          setSecondEyeOutput(null);
+          try {
+            const output = await generateSecondEyeReview(
+              result.markdown,
+              result.fileName,
+              result.scores ? { hook: result.scores.hook, overall: result.scores.overall } : undefined,
+              result.improvements,
+              userContext || undefined,
+              sessionMemoryRef.current
+            );
+            setSecondEyeOutput(output);
+          } catch (err) {
+            console.error('Second Eye failed:', err);
+            setSecondEyeOutput(null);
+          } finally {
+            setSecondEyeLoading(false);
+          }
+        })()
+      );
+    }
+
+    // Static Second Eye (static only)
+    if (staticSecondEye && format === 'static' && !staticSecondEyeLoading) {
+      promises.push(
+        (async () => {
+          setStaticSecondEyeLoading(true);
+          setStaticSecondEyeResult(null);
+          try {
+            const output = await generateStaticSecondEye(
+              result.markdown,
+              result.fileName,
+              result.scores ? { overall: result.scores.overall, cta: result.scores.cta } : undefined,
+              result.improvements,
+              userContext || undefined,
+              sessionMemoryRef.current
+            );
+            setStaticSecondEyeResult(output);
+          } catch (err) {
+            console.error('Static Second Eye failed:', err);
+            setStaticSecondEyeResult(null);
+          } finally {
+            setStaticSecondEyeLoading(false);
+          }
+        })()
+      );
+    }
+
+    if (promises.length > 0) {
+      Promise.allSettled(promises);
+    }
+  }, [status, result]); // eslint-disable-line
 
   // Platform switch: re-generate improvements + platform score when platform changes
   const handlePlatformSwitch = useCallback(async (newPlatform: string) => {
