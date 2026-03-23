@@ -2,42 +2,13 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Eye, ArrowRight, CheckCircle } from "lucide-react";
 import type { SecondEyeResult, SecondEyeFlag } from "../services/claudeService";
-
-// ─── CATEGORY CONFIG ─────────────────────────────────────────────────────────
-
-const CATEGORY_META: Record<
-  SecondEyeFlag["category"],
-  { label: string; bg: string; text: string }
-> = {
-  scroll_trigger: { label: "Scroll risk", bg: "rgba(239,68,68,0.1)", text: "#ef4444" },
-  sound_off:     { label: "Sound-off",   bg: "rgba(99,102,241,0.1)", text: "#818cf8" },
-  pacing:        { label: "Pacing",       bg: "rgba(245,158,11,0.1)", text: "#f59e0b" },
-  clarity:       { label: "Clarity",      bg: "rgba(16,185,129,0.1)", text: "#10b981" },
-};
-
-const SEVERITY_STYLES: Record<
-  SecondEyeFlag["severity"],
-  { borderColor: string; bg: string }
-> = {
-  critical: { borderColor: "#ef4444", bg: "rgba(239,68,68,0.04)" },
-  warning:  { borderColor: "#f59e0b", bg: "rgba(245,158,11,0.04)" },
-  note:     { borderColor: "#71717a", bg: "rgba(255,255,255,0.02)" },
-};
+import { SEVERITY_STYLES, CATEGORY_META } from "../lib/severityConfig";
 
 // ─── SHIMMER ROWS (loading state) ────────────────────────────────────────────
 
 function ShimmerRow({ width }: { width: string }) {
   return (
-    <div
-      style={{
-        height: 56,
-        borderRadius: 8,
-        background: "linear-gradient(90deg, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.02) 75%)",
-        backgroundSize: "200% 100%",
-        animation: "shimmer 1.5s infinite",
-        width,
-      }}
-    />
+    <div className="cs-skeleton" style={{ height: 56, width }} />
   );
 }
 
@@ -55,7 +26,7 @@ function FlagRow({ flag, index }: { flag: SecondEyeFlag; index: number }) {
       style={{
         borderLeft: `2px solid ${sev.borderColor}`,
         background: sev.bg,
-        borderRadius: 8,
+        borderRadius: "var(--radius-sm)",
         padding: "10px 12px",
       }}
     >
@@ -65,9 +36,9 @@ function FlagRow({ flag, index }: { flag: SecondEyeFlag; index: number }) {
           style={{
             fontSize: 10,
             fontWeight: 500,
-            color: cat.text,
+            color: cat.color,
             background: cat.bg,
-            borderRadius: 9999,
+            borderRadius: "var(--radius-full)",
             padding: "2px 8px",
             lineHeight: "16px",
           }}
@@ -77,8 +48,8 @@ function FlagRow({ flag, index }: { flag: SecondEyeFlag; index: number }) {
         <span
           style={{
             fontSize: 11,
-            fontFamily: "var(--font-geist-mono, 'Geist Mono', monospace)",
-            color: "#52525b",
+            fontFamily: "var(--mono)",
+            color: "var(--ink-tertiary)",
             flexShrink: 0,
           }}
         >
@@ -87,14 +58,14 @@ function FlagRow({ flag, index }: { flag: SecondEyeFlag; index: number }) {
       </div>
 
       {/* Issue */}
-      <p style={{ fontSize: 13, color: "#a1a1aa", margin: "4px 0 0", lineHeight: 1.5 }}>
+      <p style={{ fontSize: 13, color: "var(--ink-muted)", margin: "4px 0 0", lineHeight: 1.5 }}>
         {flag.issue}
       </p>
 
       {/* Fix */}
       <div style={{ display: "flex", alignItems: "flex-start", gap: 4, marginTop: 6 }}>
-        <ArrowRight size={10} color="#6366f1" style={{ marginTop: 3, flexShrink: 0 }} />
-        <span style={{ fontSize: 12, color: "#71717a", fontStyle: "italic", lineHeight: 1.4 }}>
+        <ArrowRight size={10} color="var(--accent)" style={{ marginTop: 3, flexShrink: 0 }} />
+        <span style={{ fontSize: 12, color: "var(--ink-faint)", fontStyle: "italic", lineHeight: 1.4 }}>
           {flag.fix}
         </span>
       </div>
@@ -123,21 +94,21 @@ export function SecondEyePanel({
       transition={{ duration: 0.35 }}
       style={{
         margin: "0 16px 16px",
-        borderRadius: 12,
-        background: "rgba(255,255,255,0.02)",
-        border: "1px solid rgba(255,255,255,0.06)",
+        borderRadius: "var(--radius)",
+        background: "var(--surface)",
+        border: "1px solid var(--border-subtle)",
         padding: 16,
       }}
     >
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Eye size={14} color="#71717a" />
-          <span style={{ fontSize: 13, fontWeight: 600, color: "#f4f4f5" }}>
+          <Eye size={14} color="var(--ink-faint)" />
+          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>
             Second Eye Review
           </span>
         </div>
-        <span style={{ fontSize: 11, color: "#52525b", fontStyle: "italic" }}>
+        <span style={{ fontSize: 11, color: "var(--ink-tertiary)", fontStyle: "italic" }}>
           Fresh viewer perspective
         </span>
       </div>
@@ -173,11 +144,11 @@ export function SecondEyePanel({
               gap: 6,
             }}
           >
-            <CheckCircle size={24} color="#10b981" />
-            <span style={{ fontSize: 14, color: "#f4f4f5", fontWeight: 500 }}>
+            <CheckCircle size={24} color="var(--success)" />
+            <span style={{ fontSize: 14, color: "var(--ink)", fontWeight: 500 }}>
               No major issues found
             </span>
-            <span style={{ fontSize: 12, color: "#71717a" }}>
+            <span style={{ fontSize: 12, color: "var(--ink-faint)" }}>
               This looks clean to a first-time viewer.
             </span>
           </motion.div>
@@ -198,8 +169,8 @@ export function SecondEyePanel({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.35 }}
                 style={{
-                  background: "rgba(239,68,68,0.06)",
-                  border: "1px solid rgba(239,68,68,0.2)",
+                  background: "var(--score-weak-bg)",
+                  border: "1px solid var(--score-weak-border)",
                   borderRadius: 10,
                   padding: 12,
                 }}
@@ -210,23 +181,23 @@ export function SecondEyePanel({
                       width: 8,
                       height: 8,
                       borderRadius: "50%",
-                      background: "#ef4444",
+                      background: "var(--error)",
                       flexShrink: 0,
                     }}
                   />
-                  <span style={{ fontSize: 11, color: "#71717a" }}>Would scroll at</span>
+                  <span style={{ fontSize: 11, color: "var(--ink-faint)" }}>Would scroll at</span>
                   <span
                     style={{
                       fontSize: 12,
-                      fontFamily: "var(--font-geist-mono, 'Geist Mono', monospace)",
-                      color: "#ef4444",
+                      fontFamily: "var(--mono)",
+                      color: "var(--error)",
                       fontWeight: 500,
                     }}
                   >
                     {result.scrollMoment.match(/^[\d:]+/)?.[0] ?? ""}
                   </span>
                 </div>
-                <p style={{ fontSize: 13, color: "#ef4444", margin: "6px 0 0", lineHeight: 1.5 }}>
+                <p style={{ fontSize: 13, color: "var(--error)", margin: "6px 0 0", lineHeight: 1.5 }}>
                   {result.scrollMoment.replace(/^[\d:]+\s*[-—–]?\s*/, "")}
                 </p>
               </motion.div>
@@ -255,9 +226,9 @@ export function SecondEyePanel({
                     title={result.whatItCommunicates}
                     style={{
                       fontSize: 12,
-                      color: "#71717a",
-                      background: "rgba(255,255,255,0.03)",
-                      borderRadius: 8,
+                      color: "var(--ink-faint)",
+                      background: "var(--surface)",
+                      borderRadius: "var(--radius-sm)",
                       padding: "6px 10px",
                       flex: "1 1 auto",
                       minWidth: 0,
@@ -276,9 +247,9 @@ export function SecondEyePanel({
                     title={result.whatItFails}
                     style={{
                       fontSize: 12,
-                      color: "#a1a1aa",
-                      background: "rgba(239,68,68,0.06)",
-                      borderRadius: 8,
+                      color: "var(--ink-muted)",
+                      background: "var(--score-weak-bg)",
+                      borderRadius: "var(--radius-sm)",
                       padding: "6px 10px",
                       flex: "1 1 auto",
                       minWidth: 0,

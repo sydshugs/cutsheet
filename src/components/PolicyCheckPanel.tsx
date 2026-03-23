@@ -9,38 +9,38 @@ import { formatPolicyReportAsText } from "../lib/policyCheckService";
 
 const VERDICT_CONFIG = {
   good: {
-    bg: "rgba(16,185,129,0.08)",
-    border: "rgba(16,185,129,0.25)",
-    color: "#10b981",
+    bg: "var(--score-excellent-bg)",
+    border: "var(--score-excellent-border)",
+    color: "var(--success)",
     icon: ShieldCheck,
     label: "Good to launch",
   },
   fix: {
-    bg: "rgba(245,158,11,0.08)",
-    border: "rgba(245,158,11,0.25)",
-    color: "#f59e0b",
+    bg: "var(--score-average-bg)",
+    border: "var(--score-average-border)",
+    color: "var(--warn)",
     icon: ShieldAlert,
     label: "Fix before launching",
   },
   high_risk: {
-    bg: "rgba(239,68,68,0.08)",
-    border: "rgba(239,68,68,0.25)",
-    color: "#ef4444",
+    bg: "var(--score-weak-bg)",
+    border: "var(--score-weak-border)",
+    color: "var(--error)",
     icon: ShieldX,
     label: "High rejection risk",
   },
 } as const;
 
 const STATUS_CONFIG = {
-  clear: { color: "#10b981", bg: "rgba(16,185,129,0.1)", label: "✅ Clear" },
-  review: { color: "#f59e0b", bg: "rgba(245,158,11,0.1)", label: "⚠️ Review" },
-  rejection: { color: "#ef4444", bg: "rgba(239,68,68,0.1)", label: "🚨 Likely Rejection" },
+  clear:     { color: "var(--success)", bg: "var(--score-excellent-bg)", label: "✅ Clear" },
+  review:    { color: "var(--warn)",    bg: "var(--score-average-bg)",   label: "⚠️ Review" },
+  rejection: { color: "var(--error)",   bg: "var(--score-weak-bg)",      label: "🚨 Likely Rejection" },
 } as const;
 
 const RISK_COLOR = {
-  low: "#10b981",
-  medium: "#f59e0b",
-  high: "#ef4444",
+  low:    "var(--success)",
+  medium: "var(--warn)",
+  high:   "var(--error)",
 } as const;
 
 // ─── CATEGORY CARD ────────────────────────────────────────────────────────────
@@ -53,8 +53,8 @@ function CategoryCard({ category }: { category: PolicyCategory }) {
     <div
       style={{
         borderRadius: 10,
-        border: `1px solid ${category.status === "rejection" ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.06)"}`,
-        background: category.status === "rejection" ? "rgba(239,68,68,0.04)" : "rgba(255,255,255,0.02)",
+        border: `1px solid ${category.status === "rejection" ? "var(--score-weak-border)" : "var(--border-subtle)"}`,
+        background: category.status === "rejection" ? "var(--score-weak-bg)" : "var(--surface)",
         overflow: "hidden",
         transition: "all 150ms",
       }}
@@ -71,20 +71,20 @@ function CategoryCard({ category }: { category: PolicyCategory }) {
       >
         <span
           style={{
-            fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 9999,
+            fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: "var(--radius-full)",
             background: statusCfg.bg, color: statusCfg.color, flexShrink: 0,
           }}
         >
           {statusCfg.label}
         </span>
-        <span style={{ fontSize: 13, fontWeight: 500, color: "#f4f4f5", flex: 1 }}>
+        <span style={{ fontSize: 13, fontWeight: 500, color: "var(--ink)", flex: 1 }}>
           {category.name}
         </span>
         {category.status !== "clear" && (
           <span
             style={{
               fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 4,
-              background: `${RISK_COLOR[category.riskLevel]}22`,
+              background: `color-mix(in srgb, ${RISK_COLOR[category.riskLevel]} 13%, transparent)`,
               color: RISK_COLOR[category.riskLevel], flexShrink: 0, textTransform: "uppercase",
             }}
           >
@@ -92,27 +92,27 @@ function CategoryCard({ category }: { category: PolicyCategory }) {
           </span>
         )}
         {expanded
-          ? <ChevronUp size={14} color="#52525b" style={{ flexShrink: 0 }} />
-          : <ChevronDown size={14} color="#52525b" style={{ flexShrink: 0 }} />
+          ? <ChevronUp size={14} color="var(--ink-tertiary)" style={{ flexShrink: 0 }} />
+          : <ChevronDown size={14} color="var(--ink-tertiary)" style={{ flexShrink: 0 }} />
         }
       </button>
 
       {/* Expanded content */}
       {expanded && (
         <div style={{ padding: "0 14px 14px" }}>
-          <p style={{ fontSize: 13, color: "#a1a1aa", margin: "0 0 10px", lineHeight: 1.5 }}>
+          <p style={{ fontSize: 13, color: "var(--ink-muted)", margin: "0 0 10px", lineHeight: 1.5 }}>
             {category.finding}
           </p>
           {category.status !== "clear" && (
             <div
               style={{
-                padding: "10px 12px", borderRadius: 8,
-                background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.15)",
+                padding: "10px 12px", borderRadius: "var(--radius-sm)",
+                background: "var(--accent-bg)", border: "1px solid var(--accent-border)",
               }}
             >
               <div style={{ display: "flex", gap: 6, alignItems: "flex-start" }}>
-                <Wrench size={13} color="#818cf8" style={{ marginTop: 1, flexShrink: 0 }} />
-                <p style={{ fontSize: 13, color: "#818cf8", margin: 0, lineHeight: 1.5 }}>
+                <Wrench size={13} color="var(--accent-text)" style={{ marginTop: 1, flexShrink: 0 }} />
+                <p style={{ fontSize: 13, color: "var(--accent-text)", margin: 0, lineHeight: 1.5 }}>
                   {category.fix}
                 </p>
               </div>
@@ -137,7 +137,7 @@ function CategoryGroup({
 
   return (
     <div>
-      <p style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#52525b", margin: "0 0 8px" }}>
+      <p style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--ink-tertiary)", margin: "0 0 8px" }}>
         {title}
       </p>
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -148,7 +148,7 @@ function CategoryGroup({
               type="button"
               onClick={() => setShowClear((v) => !v)}
               style={{
-                display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#52525b",
+                display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--ink-tertiary)",
                 background: "none", border: "none", cursor: "pointer", padding: "4px 0",
                 textDecoration: "underline", textUnderlineOffset: 2,
               }}
@@ -197,7 +197,7 @@ export function PolicyCheckPanel({ result, onClose }: PolicyCheckPanelProps) {
       {/* Verdict banner */}
       <div
         style={{
-          padding: "14px 16px", borderRadius: 12,
+          padding: "14px 16px", borderRadius: "var(--radius)",
           background: verdictCfg.bg, border: `1px solid ${verdictCfg.border}`,
           display: "flex", alignItems: "center", gap: 12,
         }}
@@ -208,7 +208,7 @@ export function PolicyCheckPanel({ result, onClose }: PolicyCheckPanelProps) {
             {verdictCfg.label}
           </p>
           {flaggedCount > 0 && (
-            <p style={{ fontSize: 12, color: "#71717a", margin: 0 }}>
+            <p style={{ fontSize: 12, color: "var(--ink-faint)", margin: 0 }}>
               {flaggedCount} item{flaggedCount !== 1 ? "s" : ""} need{flaggedCount === 1 ? "s" : ""} attention
               {showTabs ? ` on ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` : ""}
             </p>
@@ -221,11 +221,11 @@ export function PolicyCheckPanel({ result, onClose }: PolicyCheckPanelProps) {
             title="Copy report"
             style={{
               display: "flex", alignItems: "center", gap: 5, height: 32, padding: "0 10px",
-              borderRadius: 8, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
-              color: "#a1a1aa", fontSize: 12, cursor: "pointer",
+              borderRadius: "var(--radius-sm)", background: "var(--border-subtle)", border: "1px solid var(--border)",
+              color: "var(--ink-muted)", fontSize: 12, cursor: "pointer",
             }}
           >
-            {copied ? <Check size={13} color="#10b981" /> : <Copy size={13} />}
+            {copied ? <Check size={13} color="var(--success)" /> : <Copy size={13} />}
             {copied ? "Copied" : "Copy Report"}
           </button>
           {onClose && (
@@ -233,8 +233,8 @@ export function PolicyCheckPanel({ result, onClose }: PolicyCheckPanelProps) {
               type="button"
               onClick={onClose}
               style={{
-                height: 32, width: 32, borderRadius: 8, background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.08)", color: "#52525b", fontSize: 18,
+                height: 32, width: 32, borderRadius: "var(--radius-sm)", background: "var(--surface)",
+                border: "1px solid var(--border)", color: "var(--ink-tertiary)", fontSize: 18,
                 cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
               }}
             >
@@ -248,17 +248,17 @@ export function PolicyCheckPanel({ result, onClose }: PolicyCheckPanelProps) {
       {result.topFixes.length > 0 && result.verdict !== "good" && (
         <div
           style={{
-            padding: "14px 16px", borderRadius: 12,
-            background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)",
+            padding: "14px 16px", borderRadius: "var(--radius)",
+            background: "var(--score-average-bg)", border: "1px solid var(--score-average-border)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
-            <AlertTriangle size={14} color="#f59e0b" />
-            <span style={{ fontSize: 13, fontWeight: 600, color: "#f59e0b" }}>Top 3 Fixes</span>
+            <AlertTriangle size={14} color="var(--warn)" />
+            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--warn)" }}>Top 3 Fixes</span>
           </div>
           <ol style={{ margin: 0, paddingLeft: 18, display: "flex", flexDirection: "column", gap: 6 }}>
             {result.topFixes.map((fix, i) => (
-              <li key={i} style={{ fontSize: 13, color: "#a1a1aa", lineHeight: 1.5 }}>
+              <li key={i} style={{ fontSize: 13, color: "var(--ink-muted)", lineHeight: 1.5 }}>
                 {fix}
               </li>
             ))}
@@ -278,11 +278,11 @@ export function PolicyCheckPanel({ result, onClose }: PolicyCheckPanelProps) {
                 type="button"
                 onClick={() => setActiveTab(p)}
                 style={{
-                  height: 32, padding: "0 14px", borderRadius: 9999, fontSize: 13,
+                  height: 32, padding: "0 14px", borderRadius: "var(--radius-full)", fontSize: 13,
                   cursor: "pointer", transition: "all 150ms",
-                  background: activeTab === p ? "#6366f1" : "rgba(255,255,255,0.04)",
-                  border: `1px solid ${activeTab === p ? "#6366f1" : "rgba(255,255,255,0.08)"}`,
-                  color: activeTab === p ? "white" : "#71717a",
+                  background: activeTab === p ? "var(--accent)" : "var(--surface)",
+                  border: `1px solid ${activeTab === p ? "var(--accent)" : "var(--border)"}`,
+                  color: activeTab === p ? "white" : "var(--ink-faint)",
                   display: "flex", alignItems: "center", gap: 6,
                 }}
               >
@@ -290,9 +290,9 @@ export function PolicyCheckPanel({ result, onClose }: PolicyCheckPanelProps) {
                 {flags > 0 && (
                   <span
                     style={{
-                      fontSize: 10, fontWeight: 700, padding: "1px 5px", borderRadius: 9999,
-                      background: activeTab === p ? "rgba(255,255,255,0.2)" : "rgba(239,68,68,0.2)",
-                      color: activeTab === p ? "white" : "#ef4444",
+                      fontSize: 10, fontWeight: 700, padding: "1px 5px", borderRadius: "var(--radius-full)",
+                      background: activeTab === p ? "rgba(255,255,255,0.2)" : "var(--score-weak-bg)",
+                      color: activeTab === p ? "white" : "var(--error)",
                     }}
                   >
                     {flags}
@@ -314,8 +314,8 @@ export function PolicyCheckPanel({ result, onClose }: PolicyCheckPanelProps) {
       {result.reviewerNotes && (
         <div
           style={{
-            borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)",
-            background: "rgba(255,255,255,0.02)",
+            borderRadius: "var(--radius)", border: "1px solid var(--border-subtle)",
+            background: "var(--surface)",
             overflow: "hidden",
           }}
         >
@@ -327,17 +327,17 @@ export function PolicyCheckPanel({ result, onClose }: PolicyCheckPanelProps) {
               background: "none", border: "none", cursor: "pointer", textAlign: "left",
             }}
           >
-            <FileText size={14} color="#52525b" />
-            <span style={{ fontSize: 13, fontWeight: 500, color: "#a1a1aa", flex: 1 }}>Reviewer Notes</span>
-            <span style={{ fontSize: 11, color: "#52525b" }}>For appeal if flagged</span>
+            <FileText size={14} color="var(--ink-tertiary)" />
+            <span style={{ fontSize: 13, fontWeight: 500, color: "var(--ink-muted)", flex: 1 }}>Reviewer Notes</span>
+            <span style={{ fontSize: 11, color: "var(--ink-tertiary)" }}>For appeal if flagged</span>
             {notesExpanded
-              ? <ChevronUp size={14} color="#52525b" />
-              : <ChevronDown size={14} color="#52525b" />
+              ? <ChevronUp size={14} color="var(--ink-tertiary)" />
+              : <ChevronDown size={14} color="var(--ink-tertiary)" />
             }
           </button>
           {notesExpanded && (
             <div style={{ padding: "0 14px 14px" }}>
-              <p style={{ fontSize: 13, color: "#71717a", margin: 0, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
+              <p style={{ fontSize: 13, color: "var(--ink-faint)", margin: 0, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
                 {result.reviewerNotes}
               </p>
             </div>
