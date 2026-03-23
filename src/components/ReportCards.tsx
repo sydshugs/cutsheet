@@ -13,6 +13,7 @@ import {
 import type { Verdict, StructuredImprovement } from "../services/analyzerService";
 import { CreativeAnalysis } from "./CreativeAnalysis";
 import { CreativeVerdictAndSecondEye } from "./CreativeVerdictAndSecondEye";
+import { MotionPreviewPlayer } from "./MotionPreviewPlayer";
 
 interface ReportCardsProps {
   file: File | null;
@@ -36,6 +37,10 @@ interface ReportCardsProps {
   // Callbacks forwarded from ScoreCard
   onFixIt?: () => void;
   onVisualize?: () => void;
+  onMotionPreview?: () => void;
+  motionVideoUrl?: string | null;
+  motionLoading?: boolean;
+  motionError?: string | null;
   onCheckPolicies?: () => void;
   onCompare?: () => void;
   onGenerateBrief?: () => void;
@@ -241,7 +246,8 @@ export function ReportCards({
   onReset, onFileSelect,
   verdict, structuredImprovements, improvements, scores, format,
   platform, hashtags,
-  onFixIt, onVisualize, onCheckPolicies, onCompare, onGenerateBrief,
+  onFixIt, onVisualize, onMotionPreview, motionVideoUrl, motionLoading, motionError,
+  onCheckPolicies, onCompare, onGenerateBrief,
   fixItLoading, fixItResult, policyLoading, policyResult, visualizeLoading, visualizeResult,
   designReviewSlot, secondEyeSlot,
   designReviewData,
@@ -664,16 +670,18 @@ export function ReportCards({
                 <span>Motion ads drive 2-3x higher engagement on {platformTag}</span>
               </div>
               
-              {/* Visualize CTA */}
-              {onVisualize && (
-                <button
-                  onClick={onVisualize}
-                  disabled={format !== 'static'}
-                  className="group w-full flex items-center justify-center gap-2 rounded-lg py-2.5 mt-3 text-[11px] font-medium transition-all bg-white/[0.03] border border-white/[0.06] text-zinc-400 hover:bg-white/[0.05] hover:text-zinc-300 hover:border-white/[0.1] disabled:opacity-35 disabled:cursor-not-allowed"
-                >
-                  <Sparkles size={12} />
-                  <span>Generate Motion Preview</span>
-                </button>
+              {/* Motion Preview — animates original image, no Gemini edit */}
+              {format === 'static' && (
+                <div className="mt-3">
+                  <MotionPreviewPlayer
+                    videoUrl={motionVideoUrl}
+                    stillFrameUrl={thumbnailDataUrl}
+                    isLoading={!!motionLoading}
+                    loadingLabel="Generating 5s video clip..."
+                    onAnimate={!motionVideoUrl && !motionLoading ? onMotionPreview : undefined}
+                    error={motionError}
+                  />
+                </div>
               )}
             </div>
           </div>

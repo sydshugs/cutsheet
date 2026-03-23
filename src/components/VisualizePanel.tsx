@@ -564,6 +564,7 @@ export function VisualizePanel({
                   isLoading={!!videoLoading}
                   loadingLabel="Generating 5s video clip..."
                   onAnimate={!videoUrl && !videoLoading ? onAnimate : undefined}
+                  buttonLabel="Animate this version →"
                   error={videoError}
                 />
               </div>

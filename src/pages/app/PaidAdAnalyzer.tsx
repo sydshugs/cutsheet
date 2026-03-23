@@ -783,8 +783,47 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
     }
   };
 
-  const handleAnimateMotion = async () => {
-    // Use the Gemini-improved image as the seed for Kling animation
+  // Motion Preview: animates the ORIGINAL uploaded image (no Gemini edit)
+  const handleMotionPreview = async () => {
+    if (!file) return;
+    setMotionLoading(true);
+    setMotionError(null);
+    setMotionVideoUrl(null);
+
+    try {
+      // Upload original image to get a URL for Kling
+      const { signedUrl } = await uploadImageToStorage(file, 1024, 0.85);
+
+      let aspectRatio: "9:16" | "4:5" | "16:9" = "9:16";
+      const img = new Image();
+      const ratio = await new Promise<number>((resolve) => {
+        img.onload = () => resolve(img.width / img.height);
+        img.onerror = () => resolve(1);
+        img.src = URL.createObjectURL(file);
+      });
+      if (ratio > 1.2) aspectRatio = "16:9";
+      else if (ratio > 0.9) aspectRatio = "4:5";
+
+      const result = await animateImage({ imageUrl: signedUrl, aspectRatio });
+      setMotionVideoUrl(result.videoUrl);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      if (msg === "PRO_REQUIRED") { onUpgradeRequired("visualize_video"); return; }
+      if (msg === "CREDIT_LIMIT_REACHED" && err && typeof err === "object" && "creditData" in err) {
+        const creditErr = err as Error & { creditData: import("../../types/visualize").VisualizeCreditData };
+        setVisualizeCreditData(creditErr.creditData);
+        setVisualizeStatus("credit_limit");
+        setVisualizeOpen(true);
+        return;
+      }
+      setMotionError(msg);
+    } finally {
+      setMotionLoading(false);
+    }
+  };
+
+  // Animate Visualized: uses Gemini-improved image from Visualize v2
+  const handleAnimateVisualized = async () => {
     const seedImageUrl = visualizeResult?.generatedImageUrl;
     if (!seedImageUrl) return;
 
@@ -955,7 +994,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                       videoUrl={motionVideoUrl}
                       videoLoading={motionLoading}
                       videoError={motionError}
-                      onAnimate={handleAnimateMotion}
+                      onAnimate={handleAnimateVisualized}
                       onAnalyzeVersion={handleReanalyze}
                       onUpgrade={onUpgradeRequired}
                     />
@@ -989,6 +1028,10 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                         niche={rawUserContext?.niche}
                         onFixIt={handleFixIt}
                         onVisualize={handleVisualize}
+                        onMotionPreview={handleMotionPreview}
+                        motionVideoUrl={motionVideoUrl}
+                        motionLoading={motionLoading}
+                        motionError={motionError}
                         onCheckPolicies={handleCheckPolicies}
                         onCompare={() => navigate('/app/competitor')}
                         fixItLoading={fixItLoading}

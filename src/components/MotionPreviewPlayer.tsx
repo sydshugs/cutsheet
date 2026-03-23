@@ -7,6 +7,7 @@ export interface MotionPreviewPlayerProps {
   isLoading: boolean;
   loadingLabel?: string;
   onAnimate?: () => void;
+  buttonLabel?: string;
   error?: string | null;
 }
 
@@ -16,6 +17,7 @@ export function MotionPreviewPlayer({
   isLoading,
   loadingLabel = "Generating 5s video clip...",
   onAnimate,
+  buttonLabel,
   error,
 }: MotionPreviewPlayerProps) {
   // ── Result: video ready ───────────────────────────────────────────────────
@@ -134,7 +136,7 @@ export function MotionPreviewPlayer({
         }}
       >
         <Play size={14} />
-        Generate Motion Preview
+        {buttonLabel ?? "Generate Motion Preview"}
       </button>
     );
   }

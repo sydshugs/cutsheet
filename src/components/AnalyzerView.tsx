@@ -37,6 +37,10 @@ interface AnalyzerViewProps {
   niche?: string;
   onFixIt?: () => void;
   onVisualize?: () => void;
+  onMotionPreview?: () => void;
+  motionVideoUrl?: string | null;
+  motionLoading?: boolean;
+  motionError?: string | null;
   onCheckPolicies?: () => void;
   onCompare?: () => void;
   fixItLoading?: boolean;
@@ -79,6 +83,10 @@ export function AnalyzerView({
   niche,
   onFixIt,
   onVisualize,
+  onMotionPreview,
+  motionVideoUrl,
+  motionLoading,
+  motionError,
   onCheckPolicies,
   onCompare,
   fixItLoading,
@@ -164,6 +172,10 @@ export function AnalyzerView({
             hashtags={result.hashtags}
             onFixIt={onFixIt}
             onVisualize={onVisualize}
+            onMotionPreview={onMotionPreview}
+            motionVideoUrl={motionVideoUrl}
+            motionLoading={motionLoading}
+            motionError={motionError}
             onCheckPolicies={onCheckPolicies}
             onCompare={onCompare}
             onGenerateBrief={onGenerateBrief}
