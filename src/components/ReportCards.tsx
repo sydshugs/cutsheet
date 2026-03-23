@@ -246,6 +246,7 @@ export function ReportCards({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [showAllFixes, setShowAllFixes] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const [activeTool, setActiveTool] = useState<string | null>(null);
 
   useEffect(() => {
     return () => { if (fileUrl) URL.revokeObjectURL(fileUrl); };
@@ -390,46 +391,69 @@ export function ReportCards({
 
       {/* Verdict banner moved to right panel */}
 
-      {/* ─── Tools 2x2 grid ─── */}
-      {(onFixIt || onVisualize || onCheckPolicies || onCompare) && (
-        <div className="grid grid-cols-2 gap-2 mt-4">
-          <ToolButton
-            icon={Wand2}
-            label="Fix It"
-            credit="1 credit"
-            iconBg="rgba(99,102,241,0.1)"
-            iconColor="#818cf8"
-            onClick={onFixIt}
-            loading={fixItLoading}
-          />
-          <ToolButton
-            icon={Image}
-            label="Visualize It"
-            credit="1 credit"
-            iconBg="rgba(16,185,129,0.1)"
-            iconColor="#10b981"
-            onClick={onVisualize}
-            disabled={format !== 'static'}
-          />
-          <ToolButton
-            icon={ShieldCheck}
-            label="Policy check"
-            credit="1 credit"
-            iconBg="rgba(251,191,36,0.1)"
-            iconColor="#d97706"
-            onClick={onCheckPolicies}
-            loading={policyLoading}
-          />
-          <ToolButton
-            icon={GitCompare}
-            label="Compare"
-            credit="free"
-            iconBg="rgba(129,140,248,0.1)"
-            iconColor="#818cf8"
-            onClick={onCompare}
-          />
-        </div>
-      )}
+      {/* ─── Tools card with click-to-expand detail strip ─── */}
+      {(onFixIt || onVisualize || onCheckPolicies || onCompare) && (() => {
+        const tools = [
+          { key: 'fix', icon: Wand2, name: 'Fix It', credit: '1 credit', iconBg: 'rgba(99,102,241,0.1)', iconColor: '#818cf8', ctaBg: 'rgba(99,102,241,0.12)', ctaBorder: 'rgba(99,102,241,0.25)', ctaColor: '#818cf8', ctaLabel: 'Run Fix It →', desc: 'AI rewrites your ad with all priority fixes applied — tighter hook, CTA added, copy sharpened.', onClick: onFixIt, loading: fixItLoading },
+          { key: 'visualize', icon: Image, name: 'Visualize It', credit: '1 credit', iconBg: 'rgba(16,185,129,0.1)', iconColor: '#10b981', ctaBg: 'rgba(16,185,129,0.08)', ctaBorder: 'rgba(16,185,129,0.2)', ctaColor: '#10b981', ctaLabel: 'Run Visualize →', desc: 'Turn your static image into a short animated video using AI — ready to test as motion creative.', onClick: onVisualize, disabled: format !== 'static' },
+          { key: 'policy', icon: ShieldCheck, name: 'Policy check', credit: '1 credit', iconBg: 'rgba(251,191,36,0.1)', iconColor: '#d97706', ctaBg: 'rgba(251,191,36,0.08)', ctaBorder: 'rgba(251,191,36,0.2)', ctaColor: '#d97706', ctaLabel: 'Run Policy check →', desc: 'Scans your ad against Meta, TikTok, and Google platform policies and flags violations.', onClick: onCheckPolicies, loading: policyLoading },
+          { key: 'compare', icon: GitCompare, name: 'Compare', credit: 'free', iconBg: 'rgba(129,140,248,0.08)', iconColor: '#818cf8', ctaBg: 'rgba(129,140,248,0.08)', ctaBorder: 'rgba(129,140,248,0.2)', ctaColor: '#818cf8', ctaLabel: 'Run Compare →', desc: 'Upload a second ad and get a side-by-side score comparison.', onClick: onCompare },
+        ];
+        const active = tools.find(t => t.key === activeTool);
+        return (
+          <div
+            className="mt-4 rounded-xl overflow-hidden transition-colors"
+            style={{ border: activeTool ? '0.5px solid rgba(99,102,241,0.3)' : '0.5px solid rgba(255,255,255,0.06)', background: 'var(--surface, rgba(255,255,255,0.02))' }}
+          >
+            {/* 4-column tab row */}
+            <div className="grid grid-cols-4" style={{ borderBottom: active ? '0.5px solid rgba(255,255,255,0.06)' : 'none' }}>
+              {tools.map((t, i) => {
+                const isActive = activeTool === t.key;
+                const Icon = t.icon;
+                return (
+                  <button
+                    key={t.key}
+                    onClick={() => setActiveTool(isActive ? null : t.key)}
+                    className="flex flex-col items-center gap-2 py-4 px-2 transition-colors cursor-pointer"
+                    style={{
+                      background: isActive ? 'rgba(99,102,241,0.06)' : 'transparent',
+                      borderRight: i < 3 ? '0.5px solid rgba(255,255,255,0.06)' : 'none',
+                    }}
+                  >
+                    <div className="w-[38px] h-[38px] rounded-[11px] flex items-center justify-center transition-transform hover:scale-105" style={{ background: t.iconBg }}>
+                      <Icon size={16} style={{ color: t.iconColor }} />
+                    </div>
+                    <span className="text-[11px] font-medium" style={{ color: isActive ? '#818cf8' : '#e4e4e7' }}>{t.name}</span>
+                    <span className="text-[9px] text-zinc-500 bg-white/5 rounded-full px-1.5 py-px">{t.credit}</span>
+                  </button>
+                );
+              })}
+            </div>
+            {/* Detail strip */}
+            {active && (
+              <div className="flex items-center gap-3.5 px-4 py-3.5" style={{ animation: 'fadeIn 150ms ease' }}>
+                <div className="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: active.iconBg }}>
+                  <active.icon size={18} style={{ color: active.iconColor }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-medium text-zinc-200">
+                    {active.name} <span className="text-[10px] text-zinc-500 font-normal ml-1">{active.credit}</span>
+                  </p>
+                  <p className="text-xs text-zinc-400 leading-relaxed mt-0.5">{active.desc}</p>
+                </div>
+                <button
+                  onClick={active.onClick}
+                  disabled={active.disabled || active.loading}
+                  className="shrink-0 text-xs font-medium rounded-lg px-4 py-2 whitespace-nowrap transition-opacity hover:opacity-80 disabled:opacity-40"
+                  style={{ background: active.ctaBg, border: `1px solid ${active.ctaBorder}`, color: active.ctaColor }}
+                >
+                  {active.loading ? 'Running...' : active.ctaLabel}
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* ─── Center column analysis sections ─── */}
       {/* Design Review + Second Eye Review rendered by PaidAdAnalyzer */}
