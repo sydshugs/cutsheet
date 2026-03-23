@@ -73,21 +73,21 @@ function PaidEmptyState({
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px", minHeight: "calc(100vh - 120px)" }}>
       {/* Section icon */}
-      <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <Zap size={28} color="#6366f1" />
+      <div style={{ width: 76, height: 76, borderRadius: 14, background: "var(--accent-bg)", border: "1px solid var(--accent-border)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Zap size={28} color="var(--accent)" />
       </div>
 
-      <h1 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>
+      <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--ink)", marginTop: 20, marginBottom: 0 }}>
         Score your paid ad
       </h1>
-      <p style={{ fontSize: 14, color: "#a1a1aa", textAlign: "center", maxWidth: 320, marginTop: 10, lineHeight: 1.6 }}>
+      <p style={{ fontSize: 14, color: "var(--ink-muted)", textAlign: "center", maxWidth: 320, marginTop: 10, lineHeight: 1.6 }}>
         Upload a video or static creative. Get a full AI breakdown in 30 seconds.
       </p>
 
       {/* Feature pills */}
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 20 }}>
         {PILLS.map((pill) => (
-          <span key={pill} style={{ fontSize: 12, color: "#818cf8", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)", borderRadius: 9999, padding: "4px 12px" }}>
+          <span key={pill} style={{ fontSize: 12, color: "var(--accent-text)", background: "var(--accent-bg)", border: "1px solid var(--accent-border)", borderRadius: 9999, padding: "4px 12px" }}>
             {pill}
           </span>
         ))}
@@ -797,10 +797,7 @@ export default function PaidAdAnalyzer() {
             </>
           ) : (status !== "idle" || loadedEntry) ? (
             <div className="relative px-4 py-6 md:px-8 flex-1 flex flex-col">
-              {/* Ambient glow */}
-              <div className="pointer-events-none absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-indigo-600/10 blur-[120px]" />
-              <div className="pointer-events-none absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-violet-600/[0.08] blur-[100px]" />
-              <div className="relative flex flex-col flex-1">
+                      <div className="relative flex flex-col flex-1">
                 {/* Show VisualizePanel IN PLACE OF AnalyzerView when visualize is active */}
                 {status === "complete" && format === "static" && (visualizeOpen || visualizeStatus !== "idle") ? (
                   <motion.div
@@ -859,187 +856,211 @@ export default function PaidAdAnalyzer() {
 
       {/* Right panel — ScoreCard */}
       <div
-        className={`shrink-0 bg-zinc-900/50 backdrop-blur-xl border-l border-white/5 overflow-y-auto overflow-x-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-white/5 ${showRightPanel ? "w-[440px] max-lg:w-full opacity-100" : "w-0 max-lg:w-0 opacity-0"}`}
+        className={`shrink-0 bg-[var(--surface-1)] border-l border-[var(--border-subtle)] overflow-y-auto overflow-x-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-[var(--border-subtle)] ${showRightPanel ? "w-[440px] max-lg:w-full opacity-100" : "w-0 max-lg:w-0 opacity-0"}`}
       >
-        {showRightPanel && activeResult?.scores && rightTab === "analysis" && (
-          <>
-            {/* Platform Switcher — format-aware */}
-            <div className="px-4 pt-3 pb-1">
-              <PlatformSwitcher
-                platforms={format === "static" ? PAID_STATIC_PLATFORMS : PAID_AD_PLATFORMS}
-                selected={platform}
-                onChange={handlePlatformSwitch}
-                isSwitching={isPlatformSwitching}
-                disabled={status !== "complete"}
-              />
-            </div>
-            {/* Platform score verdict badge */}
-            {platformScoreResult && platform !== "all" && (
-              <div className="px-4 pb-2">
-                <div
-                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs"
-                  style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)" }}
-                >
-                  <span className="font-mono font-bold text-indigo-400">{platformScoreResult.score}/10</span>
-                  <span className="text-zinc-400">{platformScoreResult.verdict}</span>
-                </div>
-              </div>
+        {/* Fixed header showing active tab name */}
+        {showRightPanel && (
+          <div className="px-4 py-3 border-b border-[var(--border-subtle)] flex items-center justify-between shrink-0">
+            <span className="text-sm font-medium text-[var(--ink)]">
+              {rightTab === 'analysis' ? 'Score Overview' : rightTab === 'brief' ? 'Creative Brief' : 'Policy Check'}
+            </span>
+            {rightTab !== 'analysis' && (
+              <button
+                className="cs-btn-ghost text-xs"
+                onClick={() => setRightTab('analysis')}
+              >
+                ← Scores
+              </button>
             )}
-            <div ref={scorecardRef}>
-              <ScoreCard
-                scores={activeResult.scores}
-                hookDetail={activeResult.hookDetail}
-                improvements={platformScoreResult?.improvements ?? platformImprovements ?? activeResult.improvements}
-                improvementsLoading={improvementsLoading}
-                budget={activeResult.budget}
-                hashtags={activeResult.hashtags}
-                scenes={activeResult.scenes}
-                fileName={activeResult.fileName}
-                analysisTime={analysisCompletedAt ?? undefined}
-                modelName="Gemini + Claude"
-                onGenerateBrief={handleGenerateBrief}
-                onAddToSwipeFile={handleAddToSwipeFile}
-                onCTARewrite={handleCTARewrite}
-                ctaRewrites={ctaRewrites}
-                ctaLoading={ctaLoading}
-                onShare={handleCopy}
-                isDark={true}
-                format={format}
-                engineBudget={engineBudget}
-                onNavigateSettings={() => navigate('/settings')}
-                onReanalyze={() => setReanalyzeMode(true)}
-                onStartOver={() => setConfirmStartOver(true)}
-                onCheckPolicies={handleCheckPolicies}
-                policyLoading={policyLoading}
-                niche={rawUserContext?.niche}
-                platform={rawUserContext?.platform}
-                onFixIt={handleFixIt}
-                fixItResult={fixItResult}
-                fixItLoading={fixItLoading}
-                prediction={prediction}
-                onCompare={() => navigate('/app/competitor')}
-                onVisualize={handleVisualize}
-                visualizeLoading={visualizeStatus === "loading"}
-                canVisualize={true}
-                isPro={isPro}
-                onUpgradeRequired={onUpgradeRequired}
-              />
-            </div>
-            {/* Second Eye output below scorecard — video only */}
-            {format === "video" && secondEye && (
-              <SecondEyePanel result={secondEyeOutput} loading={secondEyeLoading} />
-            )}
-            {/* Static Design Review below scorecard — static only */}
-            {format === "static" && staticSecondEye && (
-              <StaticSecondEyePanel result={staticSecondEyeResult} loading={staticSecondEyeLoading} />
-            )}
-            {/* Visualize It moved to left panel (below creative) */}
-          </>
-
+          </div>
         )}
 
-        {showRightPanel && rightTab === "brief" && (
-          <div className="flex flex-col h-full">
-            <div className="p-5 border-b border-white/5 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setRightTab("analysis")}
-                className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer flex items-center gap-1"
-              >
-                ← Back to Scores
-              </button>
-              <span className="text-xs text-zinc-500 font-mono">Claude Sonnet</span>
-            </div>
-            {briefLoading && !brief && (
-              <div className="flex-1 flex flex-col items-center justify-center gap-3 px-5">
-                <div className="w-5 h-5 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
-                <span className="text-xs text-zinc-500">Generating creative brief...</span>
+        <AnimatePresence mode="wait">
+          {showRightPanel && activeResult?.scores && rightTab === "analysis" && (
+            <motion.div
+              key="analysis"
+              initial={{ opacity: 0, x: 16 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -16 }}
+              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            >
+              {/* Platform Switcher — format-aware */}
+              <div className="px-4 pt-3 pb-1">
+                <PlatformSwitcher
+                  platforms={format === "static" ? PAID_STATIC_PLATFORMS : PAID_AD_PLATFORMS}
+                  selected={platform}
+                  onChange={handlePlatformSwitch}
+                  isSwitching={isPlatformSwitching}
+                  disabled={status !== "complete"}
+                />
               </div>
-            )}
-            {briefError && (
-              <div className="px-5 py-4">
-                <p className="text-xs text-red-400">{briefError}</p>
-              </div>
-            )}
-            {brief && (
-              <>
-                <div className="px-5 pt-5 pb-2 flex-1 overflow-y-auto">
-                  <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-4">Creative Brief</p>
-                  <div className="flex flex-col gap-0.5">
-                    {brief.split("\n").map((line, i) => {
-                      const t = line.trim();
-                      if (!t) return null;
-                      if (t.startsWith("## ")) return (
-                        <p key={i} className="text-xs font-semibold text-white mt-4 mb-1">
-                          {t.replace(/^##\s*/, "")}
-                        </p>
-                      );
-                      const boldMatch = t.match(/^\*\*(.+?)\*\*:?\s*(.*)/);
-                      if (boldMatch) return (
-                        <div key={i} className="mb-3">
-                          <p className="text-xs text-zinc-500 font-medium">{boldMatch[1]}</p>
-                          {boldMatch[2] && (
-                            <p className="text-xs text-zinc-300 leading-relaxed mt-0.5">{boldMatch[2]}</p>
-                          )}
-                        </div>
-                      );
-                      if (t.startsWith("- ") || t.startsWith("* ")) return (
-                        <div key={i} className="flex gap-2 items-start ml-1 mb-1">
-                          <span className="w-1 h-1 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
-                          <span className="text-xs text-zinc-400 leading-relaxed">{t.replace(/^[-*]\s*/, "")}</span>
-                        </div>
-                      );
-                      if (t === "---") return <div key={i} className="border-t border-white/5 my-3" />;
-                      return <p key={i} className="text-xs text-zinc-300 leading-relaxed mb-1">{t}</p>;
-                    })}
+              {/* Platform score verdict badge */}
+              {platformScoreResult && platform !== "all" && (
+                <div className="px-4 pb-2">
+                  <div
+                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs"
+                    style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)" }}
+                  >
+                    <span className="font-mono font-bold text-indigo-400">{platformScoreResult.score}/10</span>
+                    <span className="text-zinc-400">{platformScoreResult.verdict}</span>
                   </div>
                 </div>
-                <div className="p-5 border-t border-white/5">
-                  <button
-                    type="button"
-                    onClick={handleBriefCopy}
-                    className="w-full py-2 px-3 bg-transparent border border-white/10 rounded-lg text-zinc-400 text-xs font-medium hover:bg-white/5 hover:text-white hover:border-white/20 transition-all duration-150 cursor-pointer"
-                  >
-                    {briefCopied ? "Copied!" : "Copy Brief"}
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        )}
+              )}
+              <div ref={scorecardRef}>
+                <ScoreCard
+                  scores={activeResult.scores}
+                  hookDetail={activeResult.hookDetail}
+                  improvements={platformScoreResult?.improvements ?? platformImprovements ?? activeResult.improvements}
+                  improvementsLoading={improvementsLoading}
+                  budget={activeResult.budget}
+                  hashtags={activeResult.hashtags}
+                  scenes={activeResult.scenes}
+                  fileName={activeResult.fileName}
+                  analysisTime={analysisCompletedAt ?? undefined}
+                  modelName="Gemini + Claude"
+                  onGenerateBrief={handleGenerateBrief}
+                  onAddToSwipeFile={handleAddToSwipeFile}
+                  onCTARewrite={handleCTARewrite}
+                  ctaRewrites={ctaRewrites}
+                  ctaLoading={ctaLoading}
+                  onShare={handleCopy}
+                  isDark={true}
+                  format={format}
+                  engineBudget={engineBudget}
+                  onNavigateSettings={() => navigate('/settings')}
+                  onReanalyze={() => setReanalyzeMode(true)}
+                  onStartOver={() => setConfirmStartOver(true)}
+                  onCheckPolicies={handleCheckPolicies}
+                  policyLoading={policyLoading}
+                  niche={rawUserContext?.niche}
+                  platform={rawUserContext?.platform}
+                  onFixIt={handleFixIt}
+                  fixItResult={fixItResult}
+                  fixItLoading={fixItLoading}
+                  prediction={prediction}
+                  onCompare={() => navigate('/app/competitor')}
+                  onVisualize={handleVisualize}
+                  visualizeLoading={visualizeStatus === "loading"}
+                  canVisualize={true}
+                  isPro={isPro}
+                  onUpgradeRequired={onUpgradeRequired}
+                />
+              </div>
+              {/* Second Eye output below scorecard — video only */}
+              {format === "video" && secondEye && (
+                <SecondEyePanel result={secondEyeOutput} loading={secondEyeLoading} />
+              )}
+              {/* Static Design Review below scorecard — static only */}
+              {format === "static" && staticSecondEye && (
+                <StaticSecondEyePanel result={staticSecondEyeResult} loading={staticSecondEyeLoading} />
+              )}
+              {/* Visualize It moved to left panel (below creative) */}
+            </motion.div>
+          )}
 
-        {/* Policy Check panel */}
-        {showRightPanel && rightTab === "policy" && (
-          <div className="flex flex-col h-full">
-            <div className="p-4 border-b border-white/5 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setRightTab("analysis")}
-                className="text-xs text-amber-400 hover:text-amber-300 transition-colors cursor-pointer flex items-center gap-1"
-              >
-                ← Back to Scores
-              </button>
-              <span className="text-xs text-zinc-500 font-mono">Claude Sonnet</span>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4">
-              {policyLoading && !policyResult && (
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 0", gap: 12 }}>
-                  <div style={{ width: 20, height: 20, border: "2px solid rgba(245,158,11,0.3)", borderTopColor: "#f59e0b", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
-                  <span style={{ fontSize: 13, color: "#71717a" }}>Checking policies...</span>
-                  <span style={{ fontSize: 11, color: "#52525b" }}>Evaluating Meta & TikTok compliance</span>
+          {showRightPanel && rightTab === "brief" && (
+            <motion.div
+              key="brief"
+              initial={{ opacity: 0, x: 16 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -16 }}
+              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              className="flex flex-col h-full"
+            >
+              <div className="px-5 py-2 border-b border-[var(--border-subtle)] flex items-center justify-end">
+                <span className="text-xs text-zinc-500 font-mono">Claude Sonnet</span>
+              </div>
+              {briefLoading && !brief && (
+                <div className="flex-1 flex flex-col items-center justify-center gap-3 px-5">
+                  <div className="w-5 h-5 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
+                  <span className="text-xs text-zinc-500">Generating creative brief...</span>
                 </div>
               )}
-              {policyError && (
-                <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", fontSize: 13, color: "#ef4444" }}>
-                  {policyError}
+              {briefError && (
+                <div className="px-5 py-4">
+                  <p className="text-xs text-red-400">{briefError}</p>
                 </div>
               )}
-              {policyResult && !policyLoading && (
-                <PolicyCheckPanel result={policyResult} onClose={() => setRightTab("analysis")} />
+              {brief && (
+                <>
+                  <div className="px-5 pt-5 pb-2 flex-1 overflow-y-auto">
+                    <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-4">Creative Brief</p>
+                    <div className="flex flex-col gap-0.5">
+                      {brief.split("\n").map((line, i) => {
+                        const t = line.trim();
+                        if (!t) return null;
+                        if (t.startsWith("## ")) return (
+                          <p key={i} className="text-xs font-semibold text-white mt-4 mb-1">
+                            {t.replace(/^##\s*/, "")}
+                          </p>
+                        );
+                        const boldMatch = t.match(/^\*\*(.+?)\*\*:?\s*(.*)/);
+                        if (boldMatch) return (
+                          <div key={i} className="mb-3">
+                            <p className="text-xs text-zinc-500 font-medium">{boldMatch[1]}</p>
+                            {boldMatch[2] && (
+                              <p className="text-xs text-zinc-300 leading-relaxed mt-0.5">{boldMatch[2]}</p>
+                            )}
+                          </div>
+                        );
+                        if (t.startsWith("- ") || t.startsWith("* ")) return (
+                          <div key={i} className="flex gap-2 items-start ml-1 mb-1">
+                            <span className="w-1 h-1 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
+                            <span className="text-xs text-zinc-400 leading-relaxed">{t.replace(/^[-*]\s*/, "")}</span>
+                          </div>
+                        );
+                        if (t === "---") return <div key={i} className="border-t border-[var(--border-subtle)] my-3" />;
+                        return <p key={i} className="text-xs text-zinc-300 leading-relaxed mb-1">{t}</p>;
+                      })}
+                    </div>
+                  </div>
+                  <div className="p-5 border-t border-[var(--border-subtle)]">
+                    <button
+                      type="button"
+                      onClick={handleBriefCopy}
+                      className="w-full py-2 px-3 bg-transparent border border-white/10 rounded-lg text-zinc-400 text-xs font-medium hover:bg-white/5 hover:text-white hover:border-white/20 transition-all duration-150 cursor-pointer"
+                    >
+                      {briefCopied ? "Copied!" : "Copy Brief"}
+                    </button>
+                  </div>
+                </>
               )}
-            </div>
-          </div>
-        )}
+            </motion.div>
+          )}
+
+          {/* Policy Check panel */}
+          {showRightPanel && rightTab === "policy" && (
+            <motion.div
+              key="policy"
+              initial={{ opacity: 0, x: 16 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -16 }}
+              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              className="flex flex-col h-full"
+            >
+              <div className="px-4 py-2 border-b border-[var(--border-subtle)] flex items-center justify-end">
+                <span className="text-xs text-zinc-500 font-mono">Claude Sonnet</span>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4">
+                {policyLoading && !policyResult && (
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 0", gap: 12 }}>
+                    <div style={{ width: 20, height: 20, border: "2px solid rgba(245,158,11,0.3)", borderTopColor: "#f59e0b", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+                    <span style={{ fontSize: 13, color: "#71717a" }}>Checking policies...</span>
+                    <span style={{ fontSize: 11, color: "#52525b" }}>Evaluating Meta & TikTok compliance</span>
+                  </div>
+                )}
+                {policyError && (
+                  <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", fontSize: 13, color: "#ef4444" }}>
+                    {policyError}
+                  </div>
+                )}
+                {policyResult && !policyLoading && (
+                  <PolicyCheckPanel result={policyResult} onClose={() => setRightTab("analysis")} />
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Before/After re-analysis section */}
         {showRightPanel && rightTab === "analysis" && !comparisonResult && (

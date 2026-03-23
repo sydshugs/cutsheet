@@ -1,4 +1,5 @@
 import { useMemo, useEffect, useRef } from "react";
+import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import { sanitizeFileName } from "../utils/sanitize";
 import { Copy, FileDown, Share2, Anchor, MessageSquare, MousePointerClick, Clapperboard, DollarSign, Hash, Eye, Lightbulb, BarChart3, Heart, Layout, Target, Palette, FileText, type LucideIcon } from "lucide-react";
@@ -140,7 +141,7 @@ export function ReportCards({ file, markdown, thumbnailDataUrl, onCopy, onExport
                   maxHeight: 600,
                   objectFit: "contain",
                   borderRadius: 12,
-                  border: "1px solid rgba(255,255,255,0.06)",
+                  border: "1px solid var(--border-subtle)",
                 }}
               />
             </div>
@@ -162,17 +163,8 @@ export function ReportCards({ file, markdown, thumbnailDataUrl, onCopy, onExport
       {/* Mini dropzone — between media and analysis */}
       {onReset && onFileSelect && (
         <div
-          style={{
-            marginTop: 12,
-            height: 52,
-            border: "1px dashed rgba(255,255,255,0.08)",
-            borderRadius: 10,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-            transition: "all 150ms",
-          }}
+          className="mt-3 h-[52px] border border-dashed border-[var(--border-subtle)] rounded-[10px] flex items-center justify-center cursor-pointer hover:border-[var(--border-hover)] hover:bg-[var(--surface)] transition-all"
+          style={{ transitionDuration: 'var(--duration-fast)' }}
           onClick={() => {
             const input = document.createElement("input");
             input.type = "file";
@@ -183,13 +175,24 @@ export function ReportCards({ file, markdown, thumbnailDataUrl, onCopy, onExport
             };
             input.click();
           }}
-          onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)"; e.currentTarget.style.background = "rgba(99,102,241,0.05)"; }}
-          onDragLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "transparent"; }}
-          onDrop={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "transparent"; const f = e.dataTransfer.files[0]; if (f) { onReset(); setTimeout(() => onFileSelect(f), 50); } }}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "transparent"; }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            e.currentTarget.style.borderColor = 'var(--accent-border)';
+            e.currentTarget.style.background = 'var(--accent-bg)';
+          }}
+          onDragLeave={(e) => {
+            e.currentTarget.style.borderColor = '';
+            e.currentTarget.style.background = '';
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            e.currentTarget.style.borderColor = '';
+            e.currentTarget.style.background = '';
+            const f = e.dataTransfer.files[0];
+            if (f) { onReset(); setTimeout(() => onFileSelect(f), 50); }
+          }}
         >
-          <span style={{ fontSize: 11, color: "#52525b" }}>Drop new creative or click to browse</span>
+          <span className="text-[11px]" style={{ color: 'var(--ink-tertiary)' }}>Drop new creative or click to browse</span>
         </div>
       )}
 
@@ -209,38 +212,52 @@ export function ReportCards({ file, markdown, thumbnailDataUrl, onCopy, onExport
 
           if (title) {
             return (
-              <div key={i} className="bg-zinc-900/50 rounded-2xl border border-white/5 p-5">
-                <CollapsibleSection
-                  title={title}
-                  defaultOpen={i < 3}
-                  icon={<SectionIcon size={14} />}
-                >
-                  {content}
-                </CollapsibleSection>
-              </div>
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: i * 0.06, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <div className="cs-card p-5">
+                  <CollapsibleSection
+                    title={title}
+                    defaultOpen={i < 3}
+                    icon={<SectionIcon size={14} />}
+                  >
+                    {content}
+                  </CollapsibleSection>
+                </div>
+              </motion.div>
             );
           }
 
           return (
-            <div key={i} className="bg-zinc-900/50 rounded-2xl border border-white/5 p-5">
-              {content}
-            </div>
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: i * 0.06, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <div className="cs-card p-5">
+                {content}
+              </div>
+            </motion.div>
           );
         })}
       </div>
 
       {/* Sticky action bar */}
-      <div className="sticky bottom-0 bg-zinc-950/80 backdrop-blur-xl border-t border-white/5 px-4 md:px-6 py-3 flex items-center gap-3 mt-6 -mx-4 md:-mx-8 -mb-6">
+      <div className="sticky bottom-0 bg-[var(--bg)] border-t border-[var(--border-subtle)] px-4 md:px-6 py-3 flex items-center gap-3 mt-6 -mx-4 md:-mx-8 -mb-6">
         <button
           onClick={onCopy}
-          className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-white text-sm rounded-xl px-4 py-2 transition-colors"
+          className="cs-btn-ghost flex items-center gap-1.5"
         >
           <Copy size={14} />
           {copied ? "Copied!" : "Copy Report"}
         </button>
         <button
           onClick={onExportPdf}
-          className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-white text-sm rounded-xl px-4 py-2 transition-colors"
+          className="cs-btn-ghost flex items-center gap-1.5"
         >
           <FileDown size={14} />
           Export PDF
@@ -248,7 +265,7 @@ export function ReportCards({ file, markdown, thumbnailDataUrl, onCopy, onExport
         <button
           onClick={onShare}
           disabled={shareLoading}
-          className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl px-4 py-2 transition-colors disabled:opacity-50 ml-auto"
+          className="cs-btn-primary ml-auto flex items-center gap-1.5"
         >
           <Share2 size={14} />
           {shareLoading ? "Creating…" : "Share"}
