@@ -808,30 +808,30 @@ export function ReportCards({
       {secondEyeSlot}
       </motion.div>
 
-      {/* Sticky action bar */}
-      <div className="sticky bottom-0 bg-zinc-950/90 backdrop-blur-xl border-t border-white/[0.05] px-5 md:px-6 py-3.5 pb-[calc(14px+env(safe-area-inset-bottom,0px))] md:pb-3.5 flex items-center gap-3 mt-8 -mx-4 md:-mx-8 -mb-6">
+      {/* Sticky action bar - matching screenshot design */}
+      <div className="sticky bottom-0 bg-zinc-950/95 backdrop-blur-xl border-t border-white/[0.06] px-5 md:px-6 py-3 pb-[calc(12px+env(safe-area-inset-bottom,0px))] md:pb-3 flex items-center gap-2 mt-8 -mx-4 md:-mx-8 -mb-6">
         <button
           onClick={onCopy}
-          className="flex items-center gap-2 bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 text-xs font-medium rounded-xl px-4 py-2.5 transition-colors border border-white/[0.05]"
+          className="flex items-center gap-1.5 bg-transparent hover:bg-white/[0.04] text-zinc-400 hover:text-zinc-200 text-xs font-medium rounded-lg px-3.5 py-2 transition-colors border border-white/[0.06] cursor-pointer"
         >
-          <Copy size={14} />
+          <Copy size={13} />
           {copied ? "Copied!" : "Copy"}
         </button>
         <button
           onClick={onExportPdf}
           disabled
           title="PDF export coming soon"
-          className="flex items-center gap-2 bg-white/[0.04] text-zinc-500 text-xs font-medium rounded-xl px-4 py-2.5 opacity-50 cursor-not-allowed select-none border border-white/[0.05]"
+          className="flex items-center gap-1.5 bg-transparent text-zinc-500 text-xs font-medium rounded-lg px-3.5 py-2 opacity-40 cursor-not-allowed select-none border border-white/[0.04]"
         >
-          <FileDown size={14} />
+          <FileDown size={13} />
           PDF
         </button>
         <button
           onClick={onShare}
           disabled={shareLoading}
-          className="flex items-center gap-2 bg-indigo-500 hover:bg-indigo-400 text-white text-xs font-medium rounded-xl px-5 py-2.5 transition-all disabled:opacity-50 ml-auto shadow-lg shadow-indigo-500/20"
+          className="flex items-center gap-1.5 bg-indigo-500 hover:bg-indigo-400 text-white text-xs font-medium rounded-lg px-4 py-2 transition-all disabled:opacity-50 ml-auto shadow-md shadow-indigo-500/25 cursor-pointer"
         >
-          <Share2 size={14} />
+          <Share2 size={13} />
           {shareLoading ? "Sharing..." : "Share"}
         </button>
       </div>

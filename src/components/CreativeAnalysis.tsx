@@ -10,28 +10,28 @@ import { motion, AnimatePresence } from "framer-motion";
 const STATE_COLORS = {
   not_ready: { 
     bannerBg: 'rgba(239,68,68,0.06)', 
-    border: 'rgba(239,68,68,0.15)', 
-    chipBg: 'rgba(239,68,68,0.12)', 
+    border: 'rgba(239,68,68,0.12)', 
+    chipBg: 'rgba(239,68,68,0.15)', 
     color: '#ef4444', 
-    label: 'Not Ready',
+    label: 'NOT READY',
     icon: AlertCircle,
     gradient: 'linear-gradient(135deg, rgba(239,68,68,0.08) 0%, rgba(239,68,68,0.02) 100%)'
   },
   needs_work: { 
     bannerBg: 'rgba(245,158,11,0.06)', 
-    border: 'rgba(245,158,11,0.15)', 
-    chipBg: 'rgba(245,158,11,0.12)', 
+    border: 'rgba(245,158,11,0.12)', 
+    chipBg: 'rgba(245,158,11,0.15)', 
     color: '#f59e0b', 
-    label: 'Needs Work',
+    label: 'NEEDS WORK',
     icon: Zap,
     gradient: 'linear-gradient(135deg, rgba(245,158,11,0.08) 0%, rgba(245,158,11,0.02) 100%)'
   },
   ready: { 
     bannerBg: 'rgba(16,185,129,0.06)', 
-    border: 'rgba(16,185,129,0.15)', 
-    chipBg: 'rgba(16,185,129,0.12)', 
+    border: 'rgba(16,185,129,0.12)', 
+    chipBg: 'rgba(16,185,129,0.15)', 
     color: '#10b981', 
-    label: 'Ready to Run',
+    label: 'READY',
     icon: CheckCircle2,
     gradient: 'linear-gradient(135deg, rgba(16,185,129,0.08) 0%, rgba(16,185,129,0.02) 100%)'
   },
@@ -73,11 +73,11 @@ const CATEGORY_STYLES: Record<string, { bg: string; bgActive: string; color: str
   },
 };
 
-// Severity styling for visual priority indication
+// Severity styling for visual priority indication - matching screenshot
 const SEVERITY_STYLES: Record<string, { color: string; bg: string; label: string; priority: number }> = {
-  high: { color: '#ef4444', bg: 'rgba(239,68,68,0.1)', label: 'High Priority', priority: 1 },
-  medium: { color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', label: 'Medium', priority: 2 },
-  low: { color: '#71717a', bg: 'rgba(113,113,122,0.1)', label: 'Optional', priority: 3 },
+  high: { color: '#ef4444', bg: 'rgba(239,68,68,0.12)', label: 'HIGH PRIORITY', priority: 1 },
+  medium: { color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', label: 'MEDIUM', priority: 2 },
+  low: { color: '#71717a', bg: 'rgba(113,113,122,0.12)', label: 'OPTIONAL', priority: 3 },
 };
 
 interface Fix {
@@ -149,35 +149,35 @@ export function CreativeAnalysis({
       className="rounded-xl overflow-hidden mt-4 border bg-white/[0.015] backdrop-blur-sm"
       style={{ borderColor: stateStyle.border }}
     >
-      {/* Header — Enhanced visual hierarchy */}
+      {/* Header — Enhanced visual hierarchy matching screenshot */}
       <div
         className="px-5 py-4"
         style={{ background: stateStyle.gradient }}
       >
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1">
-            {/* Status badge */}
-            <div className="flex items-center gap-2 mb-2">
+            {/* Status badge row */}
+            <div className="flex items-center gap-3 mb-3">
               <div 
-                className="flex items-center gap-1.5 px-2 py-1 rounded-md"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md"
                 style={{ background: stateStyle.chipBg }}
               >
-                <StateIcon size={11} style={{ color: stateStyle.color }} />
+                <StateIcon size={12} style={{ color: stateStyle.color }} />
                 <span
-                  className="text-[10px] font-semibold uppercase tracking-wider"
+                  className="text-[10px] font-bold tracking-[0.08em]"
                   style={{ color: stateStyle.color }}
                 >
                   {stateStyle.label}
                 </span>
               </div>
               {highSeverityCount > 0 && verdictState !== 'ready' && (
-                <span className="text-[10px] font-medium text-zinc-500">
+                <span className="text-[10px] text-zinc-500">
                   {highSeverityCount} critical {highSeverityCount === 1 ? 'fix' : 'fixes'}
                 </span>
               )}
             </div>
             {/* Main verdict headline */}
-            <p className="text-[14px] font-medium text-zinc-100 leading-relaxed">
+            <p className="text-[15px] font-semibold text-zinc-100 leading-relaxed">
               {verdictOneLiner}
             </p>
           </div>
@@ -186,33 +186,39 @@ export function CreativeAnalysis({
 
       {/* Body */}
       <div className="p-4">
-        {/* Priority fix callout — Enhanced visual prominence */}
+        {/* Priority fix callout — Enhanced visual prominence matching screenshot */}
         {topIssue && (
           <motion.div 
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.1 }}
-            className="rounded-lg mb-4 p-3 border"
+            className="rounded-xl mb-4 overflow-hidden border"
             style={{ 
-              background: 'linear-gradient(135deg, rgba(239,68,68,0.06) 0%, rgba(239,68,68,0.02) 100%)',
-              borderColor: 'rgba(239,68,68,0.15)'
+              background: 'linear-gradient(135deg, rgba(239,68,68,0.06) 0%, rgba(245,158,11,0.03) 100%)',
+              borderColor: 'rgba(239,68,68,0.12)'
             }}
           >
-            <div className="flex items-start gap-3">
+            {/* Priority banner */}
+            <div 
+              className="flex items-center gap-2 px-3 py-1.5"
+              style={{ background: 'rgba(239,68,68,0.08)', borderBottom: '1px solid rgba(239,68,68,0.08)' }}
+            >
+              <AlertCircle size={11} className="text-red-400" />
+              <span className="text-[9px] font-bold tracking-[0.06em] text-red-400">PRIORITY FIX</span>
+              <ArrowRight size={10} className="text-red-400/50" />
+            </div>
+            <div className="flex items-start gap-3 p-3.5">
               <div 
-                className="w-6 h-6 rounded-md flex items-center justify-center shrink-0"
-                style={{ background: 'rgba(239,68,68,0.12)' }}
+                className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                style={{ background: `${CATEGORY_STYLES[topIssue.category]?.bg ?? 'rgba(239,68,68,0.1)'}` }}
               >
-                <AlertCircle size={13} style={{ color: '#ef4444' }} />
+                {(() => {
+                  const CatIcon = CATEGORY_STYLES[topIssue.category]?.icon ?? AlertCircle;
+                  return <CatIcon size={14} style={{ color: CATEGORY_STYLES[topIssue.category]?.color ?? '#ef4444' }} />;
+                })()}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-red-400">
-                    Priority Fix
-                  </span>
-                  <ArrowRight size={10} className="text-red-400/60" />
-                </div>
-                <p className="text-[12px] text-zinc-300 leading-relaxed font-medium">
+                <p className="text-[13px] text-zinc-200 leading-relaxed font-medium">
                   {topIssue.fix}
                 </p>
               </div>
@@ -220,49 +226,51 @@ export function CreativeAnalysis({
           </motion.div>
         )}
 
-        {/* Category filters — Enhanced with icons and better interaction */}
+        {/* Category filters — Styled to match screenshot with count badges */}
         {categories.length > 1 && (
-          <div className="flex gap-1.5 flex-wrap mb-4 pb-3 border-b border-white/[0.04]">
+          <div className="flex gap-2 flex-wrap mb-4">
             {categories.map(cat => {
               const isActive = activeFilter === cat.key;
               const catStyle = CATEGORY_STYLES[cat.key];
               const CatIcon = cat.icon;
+              const count = cat.key === 'all' ? fixes.length : categoryCounts[cat.key];
               return (
                 <button
                   key={cat.key}
                   onClick={() => setActiveFilter(cat.key)}
                   aria-label={`Filter by ${cat.label}`}
                   aria-pressed={isActive}
-                  className="flex items-center gap-1.5 cursor-pointer transition-all text-[11px] font-medium px-2.5 py-1.5 rounded-lg border"
+                  className="flex items-center gap-1.5 cursor-pointer transition-all text-[11px] font-medium px-3 py-1.5 rounded-lg"
                   style={{
                     background: isActive 
-                      ? (catStyle?.bgActive ?? 'rgba(255,255,255,0.08)') 
-                      : 'transparent',
-                    borderColor: isActive 
-                      ? (catStyle?.color ?? 'rgba(255,255,255,0.12)') + '30'
-                      : 'transparent',
+                      ? 'rgba(255,255,255,0.08)' 
+                      : 'rgba(255,255,255,0.02)',
+                    border: isActive 
+                      ? '1px solid rgba(255,255,255,0.12)'
+                      : '1px solid rgba(255,255,255,0.04)',
                     color: isActive 
-                      ? (catStyle?.color ?? '#e4e4e7') 
+                      ? '#f4f4f5' 
                       : '#71717a',
                   }}
                 >
                   {CatIcon && (
                     <CatIcon 
-                      size={11} 
+                      size={12} 
                       style={{ 
-                        color: isActive ? catStyle?.color : '#52525b',
-                        opacity: isActive ? 1 : 0.7
+                        color: isActive ? (catStyle?.color ?? '#f4f4f5') : '#52525b',
                       }} 
                     />
                   )}
-                  {cat.label}
-                  {cat.key !== 'all' && categoryCounts[cat.key] && (
-                    <span 
-                      className="text-[9px] font-mono ml-0.5 opacity-60"
-                    >
-                      {categoryCounts[cat.key]}
-                    </span>
-                  )}
+                  <span>{cat.key === 'all' ? 'All' : cat.label}</span>
+                  <span 
+                    className="text-[10px] font-medium ml-0.5 px-1.5 py-0.5 rounded"
+                    style={{
+                      background: isActive ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.04)',
+                      color: isActive ? (catStyle?.color ?? '#f4f4f5') : '#52525b',
+                    }}
+                  >
+                    {count}
+                  </span>
                 </button>
               );
             })}

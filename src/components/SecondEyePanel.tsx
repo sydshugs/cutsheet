@@ -11,10 +11,10 @@ const TAG_STYLES: Record<
   SecondEyeFlag["category"],
   { label: string; bg: string; color: string; dot: string }
 > = {
-  scroll_trigger: { label: "Scroll risk", bg: "rgba(239,68,68,0.1)", color: "#ef4444", dot: "#ef4444" },
-  sound_off:      { label: "Sound-off",   bg: "rgba(99,102,241,0.12)", color: "#818cf8", dot: "#818cf8" },
-  pacing:         { label: "Pacing",       bg: "rgba(245,158,11,0.1)", color: "#f59e0b", dot: "#f59e0b" },
-  clarity:        { label: "Clarity",      bg: "rgba(245,158,11,0.12)", color: "#f59e0b", dot: "#f59e0b" },
+  scroll_trigger: { label: "Scroll risk", bg: "rgba(239,68,68,0.12)", color: "#ef4444", dot: "#ef4444" },
+  sound_off:      { label: "Sound-off",   bg: "rgba(16,185,129,0.12)", color: "#10b981", dot: "#10b981" },
+  pacing:         { label: "Pacing",      bg: "rgba(168,85,247,0.12)", color: "#a855f7", dot: "#a855f7" },
+  clarity:        { label: "Clarity",     bg: "rgba(59,130,246,0.12)", color: "#3b82f6", dot: "#3b82f6" },
 };
 
 // ─── SHIMMER (loading) ───────────────────────────────────────────────────────
@@ -43,24 +43,28 @@ function ScrollAlert({ scrollMoment }: { scrollMoment: string }) {
   return (
     <div
       style={{
-        borderRadius: 12,
-        padding: "10px 14px",
-        background: "rgba(239,68,68,0.08)",
-        border: "0.5px solid rgba(239,68,68,0.25)",
+        borderRadius: 10,
+        padding: "12px 14px",
+        background: "linear-gradient(135deg, rgba(239,68,68,0.08) 0%, rgba(239,68,68,0.03) 100%)",
+        border: "1px solid rgba(239,68,68,0.15)",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <span
           style={{
             fontSize: 10,
-            fontWeight: 500,
+            fontWeight: 600,
             color: "#ef4444",
             background: "rgba(239,68,68,0.15)",
-            borderRadius: 99,
-            padding: "2px 8px",
-            lineHeight: "16px",
+            borderRadius: 6,
+            padding: "3px 10px",
+            lineHeight: "14px",
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
           }}
         >
+          <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#ef4444" }} />
           Would scroll
         </span>
         <span
@@ -75,7 +79,7 @@ function ScrollAlert({ scrollMoment }: { scrollMoment: string }) {
         </span>
       </div>
       {reason && (
-        <p style={{ fontSize: 12, color: "#a1a1aa", margin: "6px 0 0", lineHeight: 1.5 }}>
+        <p style={{ fontSize: 12, color: "#a1a1aa", margin: "8px 0 0", lineHeight: 1.55 }}>
           {reason}
         </p>
       )}
@@ -208,6 +212,7 @@ function FlagCard({
   onClick: () => void;
 }) {
   const cat = TAG_STYLES[flag.category];
+  const isScrollRisk = flag.category === 'scroll_trigger';
 
   return (
     <motion.div
@@ -216,10 +221,18 @@ function FlagCard({
       transition={{ duration: 0.25, delay: index * 0.04 }}
       onClick={onClick}
       style={{
-        border: isActive ? "1px solid rgba(255,255,255,0.15)" : "0.5px solid rgba(255,255,255,0.06)",
-        background: isActive ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.01)",
-        borderRadius: 8,
-        padding: "10px 12px",
+        border: isActive 
+          ? "1px solid rgba(255,255,255,0.12)" 
+          : isScrollRisk 
+            ? "1px solid rgba(239,68,68,0.1)" 
+            : "1px solid rgba(255,255,255,0.05)",
+        background: isActive 
+          ? "rgba(255,255,255,0.025)" 
+          : isScrollRisk
+            ? "linear-gradient(135deg, rgba(239,68,68,0.03) 0%, rgba(255,255,255,0.01) 100%)"
+            : "rgba(255,255,255,0.01)",
+        borderRadius: 10,
+        padding: "12px 14px",
         cursor: "pointer",
         transition: "border-color 150ms, background 150ms",
       }}
@@ -229,14 +242,25 @@ function FlagCard({
         <span
           style={{
             fontSize: 10,
-            fontWeight: 500,
+            fontWeight: 600,
             color: cat.color,
             background: cat.bg,
-            borderRadius: 99,
-            padding: "2px 8px",
-            lineHeight: "16px",
+            borderRadius: 6,
+            padding: "3px 8px",
+            lineHeight: "14px",
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
           }}
         >
+          <span 
+            style={{ 
+              width: 5, 
+              height: 5, 
+              borderRadius: "50%", 
+              background: cat.dot,
+            }} 
+          />
           {cat.label}
         </span>
         <span
@@ -245,8 +269,8 @@ function FlagCard({
             fontFamily: "var(--mono)",
             color: "#52525b",
             background: "rgba(255,255,255,0.04)",
-            borderRadius: 8,
-            padding: "2px 7px",
+            borderRadius: 6,
+            padding: "3px 8px",
           }}
         >
           {flag.timestamp}
@@ -254,11 +278,11 @@ function FlagCard({
       </div>
 
       {/* Fix label + fix text (always visible, primary) */}
-      <div style={{ marginTop: 8 }}>
-        <span style={{ fontSize: 10, color: "#52525b", letterSpacing: "0.05em", textTransform: "uppercase" as const }}>
+      <div style={{ marginTop: 10 }}>
+        <span style={{ fontSize: 9, color: "#52525b", letterSpacing: "0.06em", textTransform: "uppercase" as const, fontWeight: 500 }}>
           FIX
         </span>
-        <p style={{ fontSize: 13, color: "#e4e4e7", fontWeight: 500, margin: "3px 0 0", lineHeight: 1.5 }}>
+        <p style={{ fontSize: 13, color: "#e4e4e7", fontWeight: 500, margin: "4px 0 0", lineHeight: 1.55 }}>
           {flag.fix}
         </p>
       </div>
@@ -266,20 +290,20 @@ function FlagCard({
       {/* Issue (expandable) */}
       <div
         style={{
-          maxHeight: isActive ? 100 : 0,
+          maxHeight: isActive ? 120 : 0,
           overflow: "hidden",
           transition: "max-height 200ms ease-in-out",
         }}
       >
-        <div style={{ borderTop: "0.5px solid rgba(255,255,255,0.06)", marginTop: 8, paddingTop: 8 }}>
-          <p style={{ fontSize: 12, color: "#71717a", margin: 0, lineHeight: 1.5 }}>
+        <div style={{ borderTop: "1px solid rgba(255,255,255,0.04)", marginTop: 10, paddingTop: 10 }}>
+          <p style={{ fontSize: 12, color: "#71717a", margin: 0, lineHeight: 1.55 }}>
             {flag.issue}
           </p>
         </div>
       </div>
 
       {/* Expand indicator */}
-      <div style={{ display: "flex", justifyContent: "center", marginTop: 4 }}>
+      <div style={{ display: "flex", justifyContent: "center", marginTop: 6 }}>
         <ChevronDown
           size={12}
           color="#3f3f46"
@@ -319,15 +343,15 @@ export function SecondEyePanel({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
       style={{
-        margin: "20px 16px 16px",
+        margin: "16px",
         borderRadius: 12,
-        background: "rgba(255,255,255,0.02)",
-        border: "1px solid rgba(255,255,255,0.06)",
+        background: "rgba(255,255,255,0.015)",
+        border: "1px solid rgba(255,255,255,0.05)",
         padding: 16,
       }}
     >
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Eye size={14} color="#71717a" />
           <span style={{ fontSize: 13, fontWeight: 600, color: "#f4f4f5" }}>
@@ -409,60 +433,73 @@ export function SecondEyePanel({
               />
             ))}
 
-            {/* Summary */}
+            {/* Summary - What video communicates/misses */}
             {(result.whatItCommunicates || result.whatItFails) && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: result.flags.length * 0.04 }}
                 style={{
-                  display: "flex",
-                  gap: 8,
-                  marginTop: 4,
-                  flexWrap: "wrap",
+                  marginTop: 12,
+                  padding: "12px 14px",
+                  background: "rgba(255,255,255,0.015)",
+                  borderRadius: 10,
+                  border: "1px solid rgba(255,255,255,0.04)",
                 }}
               >
                 {result.whatItCommunicates && (
-                  <span
-                    title={result.whatItCommunicates}
-                    style={{
-                      fontSize: 12,
-                      color: "#71717a",
-                      background: "rgba(255,255,255,0.03)",
-                      borderRadius: 8,
-                      padding: "6px 10px",
-                      flex: "1 1 auto",
-                      minWidth: 0,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    Communicates: {result.whatItCommunicates.length > 60
-                      ? result.whatItCommunicates.slice(0, 60) + "\u2026"
-                      : result.whatItCommunicates}
-                  </span>
+                  <div style={{ marginBottom: result.whatItFails ? 10 : 0 }}>
+                    <span 
+                      style={{ 
+                        fontSize: 9, 
+                        fontWeight: 500, 
+                        color: "#10b981", 
+                        textTransform: "uppercase" as const, 
+                        letterSpacing: "0.05em",
+                        display: "block",
+                        marginBottom: 4,
+                      }}
+                    >
+                      Communicates
+                    </span>
+                    <p
+                      style={{
+                        fontSize: 12,
+                        color: "#a1a1aa",
+                        margin: 0,
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      {result.whatItCommunicates}
+                    </p>
+                  </div>
                 )}
                 {result.whatItFails && (
-                  <span
-                    title={result.whatItFails}
-                    style={{
-                      fontSize: 12,
-                      color: "#a1a1aa",
-                      background: "rgba(239,68,68,0.06)",
-                      borderRadius: 8,
-                      padding: "6px 10px",
-                      flex: "1 1 auto",
-                      minWidth: 0,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    Misses: {result.whatItFails.length > 60
-                      ? result.whatItFails.slice(0, 60) + "\u2026"
-                      : result.whatItFails}
-                  </span>
+                  <div>
+                    <span 
+                      style={{ 
+                        fontSize: 9, 
+                        fontWeight: 500, 
+                        color: "#ef4444", 
+                        textTransform: "uppercase" as const, 
+                        letterSpacing: "0.05em",
+                        display: "block",
+                        marginBottom: 4,
+                      }}
+                    >
+                      Misses
+                    </span>
+                    <p
+                      style={{
+                        fontSize: 12,
+                        color: "#a1a1aa",
+                        margin: 0,
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      {result.whatItFails}
+                    </p>
+                  </div>
                 )}
               </motion.div>
             )}
