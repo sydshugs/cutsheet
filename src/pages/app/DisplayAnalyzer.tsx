@@ -3,7 +3,8 @@
 import { Helmet } from "react-helmet-async";
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useOutletContext } from "react-router-dom";
-import { Monitor, Upload, Eye, Download, X, Plus, CheckCircle, ShieldCheck, Sparkles, Lock } from "lucide-react";
+import { Monitor, Eye, Download, X, Plus, CheckCircle, ShieldCheck, Sparkles, Lock } from "lucide-react";
+import { VideoDropzone } from "../../components/VideoDropzone";
 import { sanitizeFileName } from "../../utils/sanitize";
 import { SuiteCohesionCard } from "../../components/SuiteCohesionCard";
 import { DisplayScoreCard, type DisplayResult } from "../../components/DisplayScoreCard";
@@ -42,7 +43,7 @@ const NETWORKS = [
 
 // ─── EMPTY STATE ─────────────────────────────────────────────────────────────
 
-function EmptyState({ onFileSelect }: { onFileSelect: (f: File) => void }) {
+function EmptyState({ onFileSelect }: { onFileSelect: (f: File | null) => void }) {
   const PILLS = ["Format detection", "Placement scoring", "Real-life mockup"];
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px", minHeight: "calc(100vh - 120px)" }}>
@@ -61,35 +62,9 @@ function EmptyState({ onFileSelect }: { onFileSelect: (f: File) => void }) {
         ))}
       </div>
 
-      {/* Dropzone */}
+      {/* Dropzone — using shared VideoDropzone component */}
       <div style={{ width: "100%", maxWidth: 520, marginTop: 32 }}>
-        <div
-          style={{
-            height: 200, border: "2px dashed rgba(255,255,255,0.08)", borderRadius: 16,
-            background: "rgba(255,255,255,0.02)", display: "flex", flexDirection: "column",
-            alignItems: "center", justifyContent: "center", gap: 10, cursor: "pointer", transition: "all 150ms",
-          }}
-          onClick={() => {
-            const input = document.createElement("input");
-            input.type = "file"; input.accept = "image/jpeg,image/png,image/webp,image/gif";
-            input.onchange = (e) => { const f = (e.target as HTMLInputElement).files?.[0]; if (f) onFileSelect(f); };
-            input.click();
-          }}
-          onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(6,182,212,0.5)"; e.currentTarget.style.background = "rgba(6,182,212,0.05)"; }}
-          onDragLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
-          onDrop={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; const f = e.dataTransfer.files[0]; if (f) onFileSelect(f); }}
-        >
-          <Upload size={28} color="#71717a" />
-          <span style={{ fontSize: 14, color: "#a1a1aa" }}>Drop your banner ad here</span>
-          <button
-            type="button"
-            style={{ marginTop: 4, padding: "8px 20px", borderRadius: 9999, border: "none", background: "#06b6d4", color: "white", fontSize: 13, fontWeight: 500, cursor: "pointer" }}
-            onClick={(e) => { e.stopPropagation(); const input = document.createElement("input"); input.type = "file"; input.accept = "image/jpeg,image/png,image/webp,image/gif"; input.onchange = (ev) => { const f = (ev.target as HTMLInputElement).files?.[0]; if (f) onFileSelect(f); }; input.click(); }}
-          >
-            Browse Files
-          </button>
-          <span style={{ fontSize: 11, color: "#71717a" }}>JPG · PNG · WEBP · GIF</span>
-        </div>
+        <VideoDropzone onFileSelect={onFileSelect} file={null} acceptImages />
       </div>
     </div>
   );
@@ -272,7 +247,17 @@ Return JSON only:
   };
 
   // Format detection on file drop
-  const handleFileSelect = async (f: File) => {
+  const handleFileSelect = async (f: File | null) => {
+    if (!f) {
+      setFile(null);
+      setDimensions(null);
+      setDetectedFormat(null);
+      setResult(null);
+      setMockupUrl(null);
+      setError(null);
+      setStatus("idle");
+      return;
+    }
     setFile(f);
     setResult(null);
     setMockupUrl(null);
