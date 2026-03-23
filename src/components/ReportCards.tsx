@@ -202,7 +202,7 @@ function getScoreBadge(title: string, content: string): { badge: string; color: 
 // ─── Section classification: center column vs right panel ────────────────────
 
 /** Sections that render in the CENTER COLUMN */
-const CENTER_SECTION_RE = [/verdict/i, /emotion|arc|impact/i, /motion|test/i, /pacing|retention/i, /transcript/i];
+const CENTER_SECTION_RE = [/verdict/i, /emotion.*(?:impact|arc)|emotion\s*arc/i, /motion.*(?:test|idea)/i, /pacing|retention/i, /transcript/i];
 
 /** Sections that render in the RIGHT PANEL (ScoreCard) */
 const RIGHT_PANEL_RE = [/hook/i, /hierarchy/i, /copy.*inventory/i, /messag/i];
@@ -493,7 +493,7 @@ export function ReportCards({
 
       {/* ─── Emotional Impact — redesigned (DE-1) ─── */}
       {(() => {
-        const emotionSections = centerSections.filter(s => /emotion|arc|impact/i.test(s.title ?? ''));
+        const emotionSections = centerSections.filter(s => /emotion.*(?:impact|arc)|emotion\s*arc/i.test(s.title ?? ''));
         const section = emotionSections[0];
         if (!section) return null;
         const c = section.content;
@@ -533,9 +533,9 @@ export function ReportCards({
               {/* Spectrum bar */}
               <div className="h-1.5 rounded-full mb-1.5" style={{ background: 'linear-gradient(90deg, #818cf8 0%, #10b981 50%, #6366f1 100%)' }} />
               <div className="flex justify-between mb-3.5">
-                <span className="text-[11px] font-medium" style={{ color: '#818cf8' }}>{primary}</span>
-                <span className="text-[11px] font-medium" style={{ color: '#10b981' }}>{secondary}</span>
-                <span className="text-[11px] font-medium" style={{ color: '#6366f1' }}>{tertiary}</span>
+                <span className="text-xs font-medium" style={{ color: '#818cf8' }}>{primary}</span>
+                <span className="text-xs font-medium" style={{ color: '#10b981' }}>{secondary}</span>
+                <span className="text-xs font-medium" style={{ color: '#6366f1' }}>{tertiary}</span>
               </div>
 
               {/* Statement with colored emotion words */}
@@ -570,8 +570,15 @@ export function ReportCards({
       })()}
 
       {/* ─── Motion Test Idea — redesigned (B3-A) ─── */}
-      {centerSections.filter(s => /motion|test/i.test(s.title ?? '')).map((section, i) => {
-        const conceptText = section.content.replace(/^MOTION TEST IDEA:\s*/i, '').replace(/\*\*/g, '').replace(/[-\s]+$/, '').trim();
+      {centerSections.filter(s => /motion.*(?:test|idea)/i.test(s.title ?? '')).map((section, i) => {
+        const conceptText = section.content
+          .replace(/^MOTION TEST IDEA:\s*/i, '')
+          .replace(/^-\s*Primary emotion.*$/gim, '')
+          .replace(/^-\s*Tone:.*$/gim, '')
+          .replace(/^-\s*Does the emotion.*$/gim, '')
+          .replace(/\*\*/g, '')
+          .replace(/[-\s]+$/, '')
+          .trim();
         // Infer tags from context
         const platformTag = platform ?? 'Meta feed';
         const durationTag = format === 'video' ? '6–8s loop' : '6–8s loop';
