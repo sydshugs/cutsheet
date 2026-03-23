@@ -497,7 +497,7 @@ export function ReportCards({
             <div className="bg-white/[0.03] rounded-[9px] p-3">
               <span className="text-[10px] text-zinc-500 uppercase tracking-[0.05em] block mb-1.5">Concept</span>
               <p className="text-xs font-medium text-zinc-200 leading-relaxed">
-                {section.content.replace(/^MOTION TEST IDEA:\s*/i, '').replace(/\*\*/g, '').trim()}
+                {section.content.replace(/^MOTION TEST IDEA:\s*/i, '').replace(/\*\*/g, '').replace(/[-\s]+$/, '').trim()}
               </p>
             </div>
           </div>

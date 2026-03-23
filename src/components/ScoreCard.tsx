@@ -598,31 +598,42 @@ export function ScoreCard({
         </div>{/* end card content */}
       </div>{/* end glass card */}
 
-      {/* Predicted Performance — own card */}
-      {prediction && (
-        <div className="mx-4 mt-2 rounded-xl border border-white/5 bg-zinc-900/50 p-4">
-          <CollapsibleSection
-            title="Predicted Performance"
-            icon={<TrendingUp size={14} />}
+      {/* Re-analyze button — below ScoreHero, above Predicted Performance */}
+      {onReanalyze && (
+        <div className="mx-4 mt-3">
+          <button
+            onClick={onReanalyze}
+            className="w-full flex items-center justify-center gap-2 rounded-xl border border-white/5 bg-zinc-900/50 px-4 py-2.5 text-[12px] font-medium text-zinc-400 hover:border-white/10 hover:text-zinc-200 transition-colors"
           >
-            <PredictedPerformanceCard prediction={prediction} platform={platform} niche={niche} />
-          </CollapsibleSection>
+            <RotateCcw size={13} />
+            Re-analyze improved version →
+          </button>
         </div>
       )}
 
-      {/* Budget Recommendation — own card */}
+      {/* Predicted Performance — own card, always expanded */}
+      {prediction && (
+        <div className="mx-4 mt-3 rounded-xl border border-white/5 bg-zinc-900/50 p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <TrendingUp size={14} className="text-zinc-500" />
+            <span className="text-xs font-medium text-zinc-200">Predicted Performance</span>
+          </div>
+          <PredictedPerformanceCard prediction={prediction} platform={platform} niche={niche} />
+        </div>
+      )}
+
+      {/* Budget Recommendation — own card, always expanded */}
       {(engineBudget || budget) && (
-        <div className="mx-4 mt-2 rounded-xl border border-white/5 bg-zinc-900/50 p-4">
-          <CollapsibleSection
-            title="Budget Recommendation"
-            icon={<DollarSign size={14} />}
-          >
-            <BudgetCard
-              engineBudget={engineBudget}
-              budget={budget}
-              onNavigateSettings={onNavigateSettings}
-            />
-          </CollapsibleSection>
+        <div className="mx-4 mt-3 rounded-xl border border-white/5 bg-zinc-900/50 p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <DollarSign size={14} className="text-zinc-500" />
+            <span className="text-xs font-medium text-zinc-200">Budget Recommendation</span>
+          </div>
+          <BudgetCard
+            engineBudget={engineBudget}
+            budget={budget}
+            onNavigateSettings={onNavigateSettings}
+          />
         </div>
       )}
 
