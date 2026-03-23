@@ -138,7 +138,7 @@ function ImprovementsList({ improvements, loading }: { improvements: string[]; l
           className="text-[11px] mt-2 cursor-pointer bg-transparent border-none p-0 font-medium transition-colors"
           style={{ color: "var(--accent)" }}
         >
-          {expanded ? "Show less" : `Show all ${improvements.length} \u2192`}
+          {expanded ? "Show less" : `Show all ${improvements.length} improvements`}
         </button>
       )}
     </div>
@@ -356,7 +356,7 @@ export function ScoreCard({
               className="cs-btn-ghost flex-1 h-10 justify-center"
             >
               {fixItLoading ? <Loader2 size={14} className="animate-spin" /> : <Wand2 size={14} />}
-              {scores.overall >= 8 ? "Polish It" : "Fix It"}
+              {scores.overall >= 8 ? "Polish It" : "Fix This Ad"}
             </button>
           )}
 
@@ -371,7 +371,7 @@ export function ScoreCard({
                 className="cs-btn-ghost flex-1 h-10 justify-center"
               >
                 {visualizeLoading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-                Visualize
+                See Improved
               </button>
             ) : (
               <button
@@ -381,7 +381,7 @@ export function ScoreCard({
                 className="cs-btn-ghost flex-1 h-10 justify-center opacity-40"
               >
                 <Lock size={12} />
-                Visualize
+                See Improved
                 <span style={{ fontSize: 9, fontWeight: 600, padding: "1px 5px", borderRadius: 4, background: "var(--accent-subtle)", color: "var(--accent)" }}>PRO</span>
               </button>
             )
@@ -397,7 +397,7 @@ export function ScoreCard({
               className="cs-btn-ghost flex-1 h-10 justify-center"
             >
               {policyLoading ? <Loader2 size={14} className="animate-spin" /> : <ShieldCheck size={14} />}
-              Policies
+              Ad Policies
             </button>
           )}
         </div>

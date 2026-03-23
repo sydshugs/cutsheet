@@ -37,14 +37,14 @@ export function CollapsibleSection({
           {icon && (
             <span
               className="flex-shrink-0 transition-colors"
-              style={{ color: open ? "var(--accent)" : "#52525b" }}
+              style={{ color: open ? "var(--accent)" : "var(--ink-faint)" }}
             >
               {icon}
             </span>
           )}
           <span
             className="text-[13px] tracking-normal"
-            style={{ fontWeight: open ? 600 : 500, color: open ? "var(--ink)" : "rgba(255,255,255,0.5)" }}
+            style={{ fontWeight: open ? 600 : 500, color: open ? "var(--ink)" : "var(--ink-muted)" }}
           >
             {title}
           </span>
