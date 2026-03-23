@@ -333,8 +333,10 @@ GOOD: "HIGH CTA — Add a contrasting CTA button below the headline"
 ---
 
 ## 🎥 MOTION TEST IDEA
-If this static ad could work as a video or motion graphic, describe the concept in one sentence:
-MOTION TEST IDEA: [one sentence describing how to adapt this as a short video ad]
+If this static ad could work as a video or motion graphic, describe the concept in one sentence.
+Focus ONLY on visual motion: product reveals, text animations, parallax, zoom transitions, brand element movement.
+Do NOT reference CTA buttons, Shop Now text, urgency copy, discount overlays, or any conversion mechanics — those belong to the ad platform, not the creative.
+MOTION TEST IDEA: [one sentence describing how to adapt this as a short video ad — visual motion only, no CTA or urgency elements]
 
 ---
 

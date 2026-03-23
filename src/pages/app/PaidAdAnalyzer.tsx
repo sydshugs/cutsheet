@@ -34,7 +34,7 @@ import { SecondEyePanel } from "../../components/SecondEyePanel";
 import { VisualizePanel } from "../../components/VisualizePanel";
 import { visualizeAd } from "../../lib/visualizeService";
 import { animateImage } from "../../lib/visualizeVideoService";
-import { uploadImageToStorage, removeFromStorage } from "../../lib/storageService";
+import { uploadImageToStorage, uploadDataUriToStorage, removeFromStorage } from "../../lib/storageService";
 import type { VisualizeResult, VisualizeStatus } from "../../types/visualize";
 import { StaticSecondEyePanel } from "../../components/StaticSecondEyePanel";
 import { PolicyCheckPanel } from "../../components/PolicyCheckPanel";
@@ -824,14 +824,20 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
 
   // Animate Visualized: uses Gemini-improved image from Visualize v2
   const handleAnimateVisualized = async () => {
-    const seedImageUrl = visualizeResult?.generatedImageUrl;
-    if (!seedImageUrl) return;
+    const seedDataUri = visualizeResult?.generatedImageUrl;
+    if (!seedDataUri) return;
 
     setMotionLoading(true);
     setMotionError(null);
     setMotionVideoUrl(null);
 
+    let tempStoragePath: string | undefined;
     try {
+      // Gemini returns a data: URI — Kling needs a public URL.
+      // Upload to Supabase temp storage first.
+      const { signedUrl, storagePath } = await uploadDataUriToStorage(seedDataUri);
+      tempStoragePath = storagePath;
+
       // Detect aspect ratio from the original file dimensions (default 9:16 for vertical)
       let aspectRatio: "9:16" | "4:5" | "16:9" = "9:16";
       if (file) {
@@ -845,8 +851,11 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
         else if (ratio > 0.9) aspectRatio = "4:5";
       }
 
-      const result = await animateImage({ imageUrl: seedImageUrl, aspectRatio });
+      const result = await animateImage({ imageUrl: signedUrl, aspectRatio });
       setMotionVideoUrl(result.videoUrl);
+
+      // Cleanup temp image from Supabase
+      if (tempStoragePath) removeFromStorage(tempStoragePath);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
       if (msg === "PRO_REQUIRED") {
@@ -862,6 +871,8 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
       setMotionError(msg);
     } finally {
       setMotionLoading(false);
+      // Cleanup on error too
+      if (tempStoragePath) removeFromStorage(tempStoragePath);
     }
   };
 

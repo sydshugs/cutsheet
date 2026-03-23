@@ -31,6 +31,33 @@ export async function uploadImageToStorage(
   return { signedUrl: signedData.signedUrl, storagePath };
 }
 
+/** Upload a data URI (e.g. from Gemini) to Supabase Storage and return a public signed URL. */
+export async function uploadDataUriToStorage(
+  dataUri: string,
+): Promise<{ signedUrl: string; storagePath: string }> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user?.id) throw new Error('Not authenticated');
+
+  // Convert data URI to blob
+  const res = await fetch(dataUri);
+  const blob = await res.blob();
+
+  const storagePath = `visualize-temp/${session.user.id}/${Date.now()}.png`;
+
+  const { error: uploadError } = await supabase.storage
+    .from('uploads')
+    .upload(storagePath, blob, { cacheControl: '300', upsert: false, contentType: blob.type || 'image/png' });
+  if (uploadError) throw new Error(`Storage upload failed: ${uploadError.message}`);
+
+  // 5-minute signed URL — just needs to survive the Kling API call
+  const { data: signedData, error: urlError } = await supabase.storage
+    .from('uploads')
+    .createSignedUrl(storagePath, 300);
+  if (urlError || !signedData?.signedUrl) throw new Error('Failed to create signed URL');
+
+  return { signedUrl: signedData.signedUrl, storagePath };
+}
+
 /** Remove an uploaded file (best-effort, never throws). */
 export async function removeFromStorage(storagePath: string): Promise<void> {
   try {
