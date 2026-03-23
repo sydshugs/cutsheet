@@ -46,7 +46,7 @@ interface ReportCardsProps {
   onCompare?: () => void;
   onGenerateBrief?: () => void;
   fixItLoading?: boolean;
-  fixItResult?: { rewrites?: { headline?: string; body?: string; cta?: string } } | null;
+  fixItResult?: { rewrittenHook?: { copy: string; reasoning: string }; revisedBody?: string; newCTA?: { copy: string; placement: string }; textOverlays?: { timestamp: string; copy: string; placement: string }[]; predictedImprovements?: { dimension: string; oldScore: number; newScore: number; reason: string }[] } | null;
   policyLoading?: boolean;
   policyResult?: { verdict: string; topFixes?: string[]; reviewerNotes?: string; metaCategories?: { name: string; status: string; finding?: string; fix?: string }[]; tiktokCategories?: { name: string; status: string; finding?: string; fix?: string }[] } | null;
   visualizeLoading?: boolean;
@@ -255,6 +255,8 @@ export function ReportCards({
   const [showAllFixes, setShowAllFixes] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [activeTool, setActiveTool] = useState<string | null>(null);
+  const [dismissedResults, setDismissedResults] = useState<Set<string>>(new Set());
+  const [copiedAll, setCopiedAll] = useState(false);
 
   useEffect(() => {
     return () => { if (fileUrl) URL.revokeObjectURL(fileUrl); };
@@ -471,33 +473,148 @@ export function ReportCards({
           <span className="text-[13px] text-zinc-400">Rewriting your ad...</span>
         </div>
       )}
-      {/* Fix It result */}
-      {!fixItLoading && fixItResult && (
+      {/* Fix It result — full 5-section inline card */}
+      {!fixItLoading && fixItResult && !dismissedResults.has('fixIt') && (
         <div className="mt-3 rounded-xl border border-white/5 overflow-hidden" style={{ background: 'var(--surface, rgba(255,255,255,0.02))' }}>
+          {/* Header */}
           <div className="flex items-center justify-between px-3.5 py-2.5" style={{ borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
             <div className="flex items-center gap-2">
               <Wand2 size={14} className="text-indigo-400" />
               <span className="text-[13px] font-medium text-zinc-200">AI Rewrite result</span>
             </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  const parts = [
+                    fixItResult.rewrittenHook?.copy,
+                    fixItResult.revisedBody,
+                    fixItResult.newCTA?.copy ? `CTA: ${fixItResult.newCTA.copy}` : '',
+                  ].filter(Boolean).join('\n\n');
+                  navigator.clipboard.writeText(parts);
+                  setCopiedAll(true);
+                  setTimeout(() => setCopiedAll(false), 2000);
+                }}
+                className="text-[11px] font-medium rounded-lg cursor-pointer"
+                style={{ padding: '4px 10px', background: 'rgba(99,102,241,0.08)', border: '0.5px solid rgba(99,102,241,0.2)', color: copiedAll ? '#10b981' : '#818cf8' }}
+              >
+                {copiedAll ? 'Copied!' : 'Copy all'}
+              </button>
+              <button onClick={() => setDismissedResults(prev => new Set(prev).add('fixIt'))} className="w-5 h-5 flex items-center justify-center text-zinc-600 hover:text-zinc-400 cursor-pointer bg-transparent border-none">✕</button>
+            </div>
           </div>
-          <div className="p-3.5">
-            {fixItResult.rewrites && Object.entries(fixItResult.rewrites).filter(([, v]) => v).map(([key, value]) => (
-              <div key={key} className="mb-3 last:mb-0">
-                <span className="text-[10px] text-zinc-500 uppercase tracking-[0.04em] block mb-1">{key}</span>
-                <p className="text-[13px] font-medium text-emerald-300 leading-snug">{value}</p>
+
+          {/* Section 1: Rewritten hook */}
+          {fixItResult.rewrittenHook && (
+            <div style={{ borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
+              <div className="flex items-center gap-2 px-3.5 py-2.5">
+                <div className="w-[22px] h-[22px] rounded-md flex items-center justify-center" style={{ background: 'rgba(99,102,241,0.1)' }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#818cf8" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                </div>
+                <span className="text-xs font-medium text-zinc-200">Rewritten hook</span>
               </div>
-            ))}
-            <button
-              onClick={() => {
-                const text = Object.values(fixItResult.rewrites ?? {}).filter(Boolean).join('\n\n');
-                navigator.clipboard.writeText(text);
-              }}
-              className="w-full mt-3 flex items-center justify-center gap-2 rounded-[9px] py-2.5 text-xs font-medium cursor-pointer transition-opacity hover:opacity-80"
-              style={{ background: 'rgba(99,102,241,0.1)', border: '0.5px solid rgba(99,102,241,0.2)', color: '#818cf8' }}
-            >
-              Copy rewritten version →
-            </button>
-          </div>
+              <div className="px-3.5 pb-3">
+                <p className="text-sm font-medium text-zinc-100 leading-relaxed mb-1">{fixItResult.rewrittenHook.copy}</p>
+                <p className="text-[11px] text-zinc-500 leading-[1.45]">{fixItResult.rewrittenHook.reasoning}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Section 2: Revised body */}
+          {fixItResult.revisedBody && (
+            <div style={{ borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
+              <div className="flex items-center gap-2 px-3.5 py-2.5">
+                <div className="w-[22px] h-[22px] rounded-md flex items-center justify-center" style={{ background: 'rgba(16,185,129,0.1)' }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>
+                </div>
+                <span className="text-xs font-medium text-zinc-200">Revised body</span>
+              </div>
+              <div className="px-3.5 pb-3">
+                {fixItResult.revisedBody.split('\n').filter(l => l.trim()).map((para, pi) => (
+                  <p key={pi} className="text-[13px] text-zinc-300 leading-[1.6] mb-2 last:mb-0">
+                    {para.startsWith('- ') ? <span className="flex items-start gap-2"><span className="w-1 h-1 rounded-full bg-zinc-500 mt-2 shrink-0" />{para.slice(2)}</span> : para}
+                  </p>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Section 3: New CTA */}
+          {fixItResult.newCTA && (
+            <div style={{ borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
+              <div className="flex items-center gap-2 px-3.5 py-2.5">
+                <div className="w-[22px] h-[22px] rounded-md flex items-center justify-center" style={{ background: 'rgba(251,191,36,0.1)' }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </div>
+                <span className="text-xs font-medium text-zinc-200">New CTA</span>
+              </div>
+              <div className="px-3.5 pb-3">
+                <div className="bg-white/[0.03] rounded-[9px] p-2.5">
+                  <span className="text-[10px] text-zinc-500 uppercase tracking-[0.04em] block mb-1">CTA text</span>
+                  <p className="text-sm font-medium text-zinc-100 mb-1">{fixItResult.newCTA.copy}</p>
+                  <p className="text-[11px] text-zinc-500">Placement: {fixItResult.newCTA.placement}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Section 4: Text overlays */}
+          {fixItResult.textOverlays && fixItResult.textOverlays.length > 0 && (
+            <div style={{ borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
+              <div className="flex items-center gap-2 px-3.5 py-2.5">
+                <div className="w-[22px] h-[22px] rounded-md flex items-center justify-center" style={{ background: 'rgba(129,140,248,0.08)' }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#818cf8" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="7" y1="8" x2="17" y2="8"/><line x1="7" y1="12" x2="14" y2="12"/></svg>
+                </div>
+                <span className="text-xs font-medium text-zinc-200">Text overlays</span>
+              </div>
+              <div className="px-3.5 pb-3">
+                <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
+                      <th className="text-[10px] uppercase text-zinc-500 font-medium py-1.5 px-2">Time</th>
+                      <th className="text-[10px] uppercase text-zinc-500 font-medium py-1.5 px-2">Copy</th>
+                      <th className="text-[10px] uppercase text-zinc-500 font-medium py-1.5 px-2">Placement</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {fixItResult.textOverlays.map((ov, oi) => (
+                      <tr key={oi} style={{ borderBottom: oi < fixItResult.textOverlays!.length - 1 ? '0.5px solid rgba(255,255,255,0.06)' : 'none' }}>
+                        <td className="text-[11px] font-mono text-zinc-500 py-2 px-2 whitespace-nowrap align-top">{ov.timestamp}</td>
+                        <td className="text-xs text-zinc-200 py-2 px-2 align-top">{ov.copy}</td>
+                        <td className="text-[11px] text-zinc-500 py-2 px-2 align-top">{ov.placement}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Section 5: Predicted improvements */}
+          {fixItResult.predictedImprovements && fixItResult.predictedImprovements.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 px-3.5 py-2.5">
+                <div className="w-[22px] h-[22px] rounded-md flex items-center justify-center" style={{ background: 'rgba(16,185,129,0.08)' }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                </div>
+                <span className="text-xs font-medium text-zinc-200">Predicted improvements</span>
+              </div>
+              <div className="px-3.5 pb-3 flex flex-col gap-1.5">
+                {fixItResult.predictedImprovements.map((imp, ii) => (
+                  <div key={ii} className="bg-white/[0.03] rounded-lg p-2.5">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[11px] font-medium text-zinc-200">{imp.dimension}</span>
+                      <span className="text-[11px] font-mono">
+                        <span className="text-zinc-500">{imp.oldScore}</span>
+                        <span className="text-zinc-600 mx-1">→</span>
+                        <span className="font-medium" style={{ color: '#10b981' }}>{imp.newScore}</span>
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-zinc-500 leading-[1.45]">{imp.reason}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
