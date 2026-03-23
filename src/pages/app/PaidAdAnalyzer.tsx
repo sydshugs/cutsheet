@@ -927,7 +927,11 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                         onCheckPolicies={handleCheckPolicies}
                         onCompare={() => navigate('/app/competitor')}
                         fixItLoading={fixItLoading}
+                        fixItResult={fixItResult}
                         policyLoading={policyLoading}
+                        policyResult={policyResult}
+                        visualizeLoading={visualizeStatus === 'loading'}
+                        visualizeResult={visualizeResult ? { url: visualizeResult.imageUrl ?? visualizeResult.videoUrl, type: visualizeResult.videoUrl ? 'video' : 'image' } : null}
                         designReviewData={staticSecondEyeResult ? {
                           flags: staticSecondEyeResult.flags ?? [],
                           topIssue: staticSecondEyeResult.topIssue,

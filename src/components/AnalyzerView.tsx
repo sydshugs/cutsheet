@@ -40,7 +40,11 @@ interface AnalyzerViewProps {
   onCheckPolicies?: () => void;
   onCompare?: () => void;
   fixItLoading?: boolean;
+  fixItResult?: any;
   policyLoading?: boolean;
+  policyResult?: any;
+  visualizeLoading?: boolean;
+  visualizeResult?: any;
   designReviewSlot?: React.ReactNode;
   secondEyeSlot?: React.ReactNode;
   designReviewData?: { flags: { area: string; severity: string; fix: string; issue: string }[]; topIssue?: string; overallDesignVerdict?: string };
@@ -76,7 +80,11 @@ export function AnalyzerView({
   onCheckPolicies,
   onCompare,
   fixItLoading,
+  fixItResult,
   policyLoading,
+  policyResult,
+  visualizeLoading,
+  visualizeResult,
   designReviewSlot,
   secondEyeSlot,
   designReviewData,
@@ -156,7 +164,11 @@ export function AnalyzerView({
             onCompare={onCompare}
             onGenerateBrief={onGenerateBrief}
             fixItLoading={fixItLoading}
+            fixItResult={fixItResult}
             policyLoading={policyLoading}
+            policyResult={policyResult}
+            visualizeLoading={visualizeLoading}
+            visualizeResult={visualizeResult}
             designReviewSlot={designReviewSlot}
             secondEyeSlot={secondEyeSlot}
             designReviewData={designReviewData}

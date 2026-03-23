@@ -46,7 +46,11 @@ interface ReportCardsProps {
   onCompare?: () => void;
   onGenerateBrief?: () => void;
   fixItLoading?: boolean;
+  fixItResult?: { rewrites?: { headline?: string; body?: string; cta?: string } } | null;
   policyLoading?: boolean;
+  policyResult?: { verdict: string; topFixes?: string[]; reviewerNotes?: string; metaCategories?: { name: string; status: string; finding?: string; fix?: string }[]; tiktokCategories?: { name: string; status: string; finding?: string; fix?: string }[] } | null;
+  visualizeLoading?: boolean;
+  visualizeResult?: { url?: string; type?: string } | null;
   // Render slots for components managed by PaidAdAnalyzer
   designReviewSlot?: React.ReactNode;
   secondEyeSlot?: React.ReactNode;
@@ -241,7 +245,7 @@ export function ReportCards({
   verdict, structuredImprovements, improvements, scores, format = 'video',
   platform, niche, hashtags,
   onFixIt, onVisualize, onCheckPolicies, onCompare, onGenerateBrief,
-  fixItLoading, policyLoading,
+  fixItLoading, fixItResult, policyLoading, policyResult, visualizeLoading, visualizeResult,
   designReviewSlot, secondEyeSlot,
   designReviewData,
 }: ReportCardsProps) {
@@ -398,9 +402,9 @@ export function ReportCards({
       {/* ─── Tools card with click-to-expand detail strip ─── */}
       {(onFixIt || onVisualize || onCheckPolicies || onCompare) && (() => {
         const tools = [
-          { key: 'fix', icon: Wand2, name: 'AI Rewrite', credit: '1 credit', iconBg: 'rgba(99,102,241,0.1)', hoverIconBg: 'rgba(99,102,241,0.18)', iconColor: '#818cf8', ctaBg: 'rgba(99,102,241,0.12)', ctaBorder: 'rgba(99,102,241,0.25)', ctaColor: '#818cf8', ctaLabel: 'Run AI Rewrite →', desc: 'AI rewrites your ad with all priority fixes applied — tighter hook, CTA added, copy sharpened.', onClick: onFixIt, loading: fixItLoading },
+          { key: 'fix', icon: Wand2, name: 'AI Rewrite', credit: 'free', iconBg: 'rgba(99,102,241,0.1)', hoverIconBg: 'rgba(99,102,241,0.18)', iconColor: '#818cf8', ctaBg: 'rgba(99,102,241,0.12)', ctaBorder: 'rgba(99,102,241,0.25)', ctaColor: '#818cf8', ctaLabel: 'Run AI Rewrite →', desc: 'AI rewrites your ad with all priority fixes applied — tighter hook, CTA added, copy sharpened.', onClick: onFixIt, loading: fixItLoading },
           { key: 'visualize', icon: Image, name: 'Visualize It', credit: '1 credit', iconBg: 'rgba(16,185,129,0.1)', hoverIconBg: 'rgba(16,185,129,0.18)', iconColor: '#10b981', ctaBg: 'rgba(16,185,129,0.08)', ctaBorder: 'rgba(16,185,129,0.2)', ctaColor: '#10b981', ctaLabel: 'Run Visualize →', desc: 'Turn your static image into a short animated video using AI — ready to test as motion creative.', onClick: onVisualize, disabled: format !== 'static' },
-          { key: 'policy', icon: ShieldCheck, name: 'Policy check', credit: '1 credit', iconBg: 'rgba(251,191,36,0.1)', hoverIconBg: 'rgba(251,191,36,0.18)', iconColor: '#d97706', ctaBg: 'rgba(251,191,36,0.08)', ctaBorder: 'rgba(251,191,36,0.2)', ctaColor: '#d97706', ctaLabel: 'Run Policy check →', desc: 'Scans your ad against Meta, TikTok, and Google platform policies and flags violations.', onClick: onCheckPolicies, loading: policyLoading },
+          { key: 'policy', icon: ShieldCheck, name: 'Policy check', credit: 'free', iconBg: 'rgba(251,191,36,0.1)', hoverIconBg: 'rgba(251,191,36,0.18)', iconColor: '#d97706', ctaBg: 'rgba(251,191,36,0.08)', ctaBorder: 'rgba(251,191,36,0.2)', ctaColor: '#d97706', ctaLabel: 'Run Policy check →', desc: 'Scans your ad against Meta, TikTok, and Google platform policies and flags violations.', onClick: onCheckPolicies, loading: policyLoading },
           // Compare removed from tools grid
         ];
         const active = tools.find(t => t.key === activeTool);
@@ -458,6 +462,119 @@ export function ReportCards({
           </div>
         );
       })()}
+
+      {/* ─── Inline tool results ─── */}
+      {/* Fix It loading */}
+      {fixItLoading && (
+        <div className="mt-3 rounded-xl border border-white/5 p-5 text-center" style={{ background: 'var(--surface, rgba(255,255,255,0.02))' }}>
+          <div className="w-5 h-5 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mx-auto mb-2" />
+          <span className="text-[13px] text-zinc-400">Rewriting your ad...</span>
+        </div>
+      )}
+      {/* Fix It result */}
+      {!fixItLoading && fixItResult && (
+        <div className="mt-3 rounded-xl border border-white/5 overflow-hidden" style={{ background: 'var(--surface, rgba(255,255,255,0.02))' }}>
+          <div className="flex items-center justify-between px-3.5 py-2.5" style={{ borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
+            <div className="flex items-center gap-2">
+              <Wand2 size={14} className="text-indigo-400" />
+              <span className="text-[13px] font-medium text-zinc-200">AI Rewrite result</span>
+            </div>
+          </div>
+          <div className="p-3.5">
+            {fixItResult.rewrites && Object.entries(fixItResult.rewrites).filter(([, v]) => v).map(([key, value]) => (
+              <div key={key} className="mb-3 last:mb-0">
+                <span className="text-[10px] text-zinc-500 uppercase tracking-[0.04em] block mb-1">{key}</span>
+                <p className="text-[13px] font-medium text-emerald-300 leading-snug">{value}</p>
+              </div>
+            ))}
+            <button
+              onClick={() => {
+                const text = Object.values(fixItResult.rewrites ?? {}).filter(Boolean).join('\n\n');
+                navigator.clipboard.writeText(text);
+              }}
+              className="w-full mt-3 flex items-center justify-center gap-2 rounded-[9px] py-2.5 text-xs font-medium cursor-pointer transition-opacity hover:opacity-80"
+              style={{ background: 'rgba(99,102,241,0.1)', border: '0.5px solid rgba(99,102,241,0.2)', color: '#818cf8' }}
+            >
+              Copy rewritten version →
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Visualize loading */}
+      {visualizeLoading && (
+        <div className="mt-3 rounded-xl border border-white/5 p-5 text-center" style={{ background: 'var(--surface, rgba(255,255,255,0.02))' }}>
+          <div className="w-5 h-5 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin mx-auto mb-2" />
+          <span className="text-[13px] text-zinc-400">Generating visualization...</span>
+        </div>
+      )}
+      {/* Visualize result */}
+      {!visualizeLoading && visualizeResult?.url && (
+        <div className="mt-3 rounded-xl border border-white/5 overflow-hidden" style={{ background: 'var(--surface, rgba(255,255,255,0.02))' }}>
+          <div className="flex items-center justify-between px-3.5 py-2.5" style={{ borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
+            <div className="flex items-center gap-2">
+              <Image size={14} className="text-emerald-400" />
+              <span className="text-[13px] font-medium text-zinc-200">Visualize It result</span>
+            </div>
+          </div>
+          <div className="p-3.5">
+            {visualizeResult.type?.startsWith('video') ? (
+              <video src={visualizeResult.url} controls className="w-full rounded-[9px]" />
+            ) : (
+              <img src={visualizeResult.url} alt="Visualized ad" className="w-full rounded-[9px]" />
+            )}
+            <a
+              href={visualizeResult.url}
+              download
+              className="w-full mt-3 flex items-center justify-center gap-2 rounded-[9px] py-2.5 text-xs font-medium cursor-pointer transition-opacity hover:opacity-80 no-underline"
+              style={{ background: 'rgba(16,185,129,0.1)', border: '0.5px solid rgba(16,185,129,0.2)', color: '#10b981' }}
+            >
+              Download →
+            </a>
+          </div>
+        </div>
+      )}
+
+      {/* Policy loading */}
+      {policyLoading && (
+        <div className="mt-3 rounded-xl border border-white/5 p-5 text-center" style={{ background: 'var(--surface, rgba(255,255,255,0.02))' }}>
+          <div className="w-5 h-5 border-2 border-amber-500/30 border-t-amber-500 rounded-full animate-spin mx-auto mb-2" />
+          <span className="text-[13px] text-zinc-400">Checking platform policies...</span>
+        </div>
+      )}
+      {/* Policy result */}
+      {!policyLoading && policyResult && (
+        <div className="mt-3 rounded-xl border border-white/5 overflow-hidden" style={{ background: 'var(--surface, rgba(255,255,255,0.02))' }}>
+          <div className="flex items-center justify-between px-3.5 py-2.5" style={{ borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
+            <div className="flex items-center gap-2">
+              <ShieldCheck size={14} className="text-amber-400" />
+              <span className="text-[13px] font-medium text-zinc-200">Policy check result</span>
+            </div>
+          </div>
+          <div className="p-3.5">
+            {policyResult.verdict === 'good' ? (
+              <div className="rounded-[9px] p-3" style={{ background: 'rgba(16,185,129,0.06)', border: '0.5px solid rgba(16,185,129,0.2)' }}>
+                <p className="text-[13px] font-medium" style={{ color: '#10b981' }}>No policy violations found</p>
+                <p className="text-xs text-zinc-400 mt-1">This ad appears safe to run.</p>
+              </div>
+            ) : (
+              <>
+                <p className="text-xs font-medium text-red-400 mb-2">
+                  {(policyResult.topFixes?.length ?? 0)} issue{(policyResult.topFixes?.length ?? 0) !== 1 ? 's' : ''} found
+                </p>
+                {policyResult.topFixes?.map((fix, i) => (
+                  <div key={i} className="rounded-[9px] p-2.5 mb-1.5" style={{ background: 'rgba(239,68,68,0.06)', border: '0.5px solid rgba(239,68,68,0.15)' }}>
+                    <p className="text-xs font-medium text-zinc-200">{fix}</p>
+                  </div>
+                ))}
+                {policyResult.reviewerNotes && (
+                  <p className="text-[11px] text-zinc-500 mt-2 leading-relaxed">{policyResult.reviewerNotes}</p>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ─── Center column analysis sections ─── */}
       {/* Design Review + Second Eye Review rendered by PaidAdAnalyzer */}
