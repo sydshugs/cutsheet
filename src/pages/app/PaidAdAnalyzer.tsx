@@ -1,5 +1,4 @@
 // src/pages/app/PaidAdAnalyzer.tsx
-console.log("[v0] PaidAdAnalyzer module loading...");
 import { Helmet } from 'react-helmet-async';
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useOutletContext, useNavigate, Link } from "react-router-dom";

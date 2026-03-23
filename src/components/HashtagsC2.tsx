@@ -6,8 +6,6 @@ import { Hash } from "lucide-react";
 import type { Hashtags } from "../services/analyzerService";
 import { CollapsibleSection } from "./ui/CollapsibleSection";
 
-console.log("[v0] HashtagsC2 module loaded");
-
 interface HashtagsC2Props {
   hashtags: Hashtags;
   format?: 'video' | 'static';

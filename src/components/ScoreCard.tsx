@@ -6,8 +6,6 @@ import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { HookAnalysisExpanded } from "./HookAnalysisExpanded";
 import { HashtagsC2 } from "./HashtagsC2";
-
-console.log("[v0] ScoreCard module loaded");
 import { Copy, CheckCircle, Loader2, ArrowUpRight, Share2, RotateCcw, FileText, Bookmark, Lightbulb, DollarSign, Hash } from "lucide-react";
 import type { BudgetRecommendation, Hashtags, Scene, HookDetail } from "../services/analyzerService";
 import type { EngineBudgetRecommendation } from "../services/budgetService";
