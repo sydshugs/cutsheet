@@ -61,7 +61,7 @@ function PlatformCard({ score, index }: { score: PlatformScore; index: number })
 
       {/* Signals */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, margin: '10px 0 10px' }}>
-        {score.signals.map((sig) => (
+        {(score.signals ?? []).map((sig) => (
           <span
             key={sig.label}
             style={{
@@ -88,7 +88,7 @@ function PlatformCard({ score, index }: { score: PlatformScore; index: number })
 
       {/* Improvements */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        {score.improvements.map((imp, i) => (
+        {(score.improvements ?? []).map((imp, i) => (
           <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
             <ArrowRight size={10} color="#6366f1" style={{ marginTop: 3, flexShrink: 0 }} />
             <span style={{ fontSize: 12, color: '#a1a1aa', lineHeight: 1.5 }}>{imp}</span>
