@@ -22,11 +22,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: "requestId is required" });
     }
 
+    // ── DEV MOCK: resolve immediately with placeholder ──────────────────
+    if (requestId === "dev-mock-request") {
+      return res.status(200).json({
+        status: "done",
+        videoUrl: "https://v3.fal.media/files/placeholder/dev-mock-video.mp4",
+        duration: 5,
+      });
+    }
+
     const falKey = process.env.FAL_KEY;
     if (!falKey) return res.status(500).json({ error: "Server configuration error" });
 
     fal.config({ credentials: falKey });
 
+    console.info("[visualize-video-status] Checking status for requestId=%s", requestId);
     const status = await fal.queue.status(KLING_ENDPOINT, {
       requestId,
       logs: false,

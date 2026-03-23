@@ -786,7 +786,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
 
   // Motion Preview: animates the ORIGINAL uploaded image (no Gemini edit)
   const handleMotionPreview = async () => {
-    if (!file) return;
+    if (!file || motionLoading) return; // guard against double-clicks
     setMotionLoading(true);
     setMotionError(null);
     setMotionVideoUrl(null);
@@ -825,6 +825,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
 
   // Animate Visualized: uses Gemini-improved image from Visualize v2
   const handleAnimateVisualized = async () => {
+    if (motionLoading) return; // guard against double-clicks
     const seedDataUri = visualizeResult?.generatedImageUrl;
     if (!seedDataUri) return;
 
@@ -880,7 +881,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
 
   // Animate Original from Visualize panel: uses original uploaded image
   const handleAnimateOriginalFromPanel = async () => {
-    if (!file) return;
+    if (!file || motionLoading) return; // guard against double-clicks
     setMotionLoading(true);
     setMotionError(null);
     setMotionVideoUrl(null);

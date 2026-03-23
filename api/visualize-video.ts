@@ -58,6 +58,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const safeAspectRatio = toKlingRatio(aspectRatio);
 
+    // ── DEV MOCK: skip fal.ai entirely in development ─────────────────────
+    if (process.env.NODE_ENV === "development" || process.env.VERCEL_ENV === undefined) {
+      console.info("[visualize-video] DEV MOCK — returning fake requestId");
+      return res.status(200).json({ requestId: "dev-mock-request" });
+    }
+
     const falKey = process.env.FAL_KEY;
     if (!falKey) {
       console.error("[visualize-video] FAL_KEY is not set");
@@ -79,7 +85,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
     });
 
-    console.info("[visualize-video] Job submitted: request_id=%s", request_id);
+    // ── Spend logging ─────────────────────────────────────────────────────
+    console.info("KLING_JOB_SUBMITTED", {
+      userId: user.id,
+      requestId: request_id,
+      estimatedCost: "$0.28",
+      aspectRatio: safeAspectRatio,
+      timestamp: new Date().toISOString(),
+    });
 
     return res.status(200).json({ requestId: request_id });
   } catch (err) {
