@@ -116,29 +116,65 @@ function FilePreview({ file, onRemove }: { file: File; onRemove: () => void }) {
 
 // ─── DROPZONE ───────────────────────────────────────────────────────────────
 
-function DropZone({ onFileSelect, height = 180, label = "Drop your creative or click to browse" }: { onFileSelect: (f: File) => void; height?: number; label?: string }) {
+const FORMAT_PILLS = ["MP4", "MOV", "WEBM", "JPG", "PNG", "WEBP"];
+
+function DropZone({ onFileSelect, label = "Drop your creative here" }: { onFileSelect: (f: File) => void; label?: string }) {
+  const handleClick = () => {
+    const input = document.createElement("input");
+    input.type = "file"; input.accept = "video/*,image/*";
+    input.onchange = (e) => { const f = (e.target as HTMLInputElement).files?.[0]; if (f) onFileSelect(f); };
+    input.click();
+  };
+
   return (
     <div
       style={{
-        height, border: "1.5px dashed rgba(255,255,255,0.1)", borderRadius: 12,
-        background: "rgba(255,255,255,0.015)", display: "flex", flexDirection: "column",
-        alignItems: "center", justifyContent: "center", gap: 10, cursor: "pointer", transition: "all 150ms",
-      }}
-      onClick={() => {
-        const input = document.createElement("input");
-        input.type = "file"; input.accept = "video/*,image/*";
-        input.onchange = (e) => { const f = (e.target as HTMLInputElement).files?.[0]; if (f) onFileSelect(f); };
-        input.click();
+        border: "1.5px dashed rgba(255,255,255,0.08)", borderRadius: 16,
+        background: "rgba(255,255,255,0.02)", padding: "32px 24px",
+        display: "flex", flexDirection: "column", alignItems: "center", gap: 16,
+        transition: "all 150ms",
       }}
       onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = BRAND_BORDER; e.currentTarget.style.background = BRAND_BG; }}
-      onDragLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; e.currentTarget.style.background = "rgba(255,255,255,0.015)"; }}
-      onDrop={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; e.currentTarget.style.background = "rgba(255,255,255,0.015)"; const f = e.dataTransfer.files[0]; if (f) onFileSelect(f); }}
-      onMouseEnter={(e) => { e.currentTarget.style.borderColor = BRAND_BORDER; e.currentTarget.style.background = BRAND_BG; }}
-      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; e.currentTarget.style.background = "rgba(255,255,255,0.015)"; }}
+      onDragLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
+      onDrop={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; const f = e.dataTransfer.files[0]; if (f) onFileSelect(f); }}
     >
-      <Upload size={24} color={BRAND_COLOR_LIGHT} />
-      <span style={{ fontSize: 13, color: "#a1a1aa" }}>{label}</span>
-      <span style={{ fontSize: 11, color: "#52525b" }}>MP4 · MOV · PNG · JPG</span>
+      {/* Icon box */}
+      <div style={{ width: 56, height: 56, borderRadius: 14, background: BRAND_BG, border: `1px solid ${BRAND_BORDER}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Upload size={24} color={BRAND_COLOR} />
+      </div>
+
+      {/* Title and subtitle */}
+      <div style={{ textAlign: "center" }}>
+        <p style={{ fontSize: 16, fontWeight: 500, color: "#f4f4f5", margin: "0 0 6px" }}>{label}</p>
+        <p style={{ fontSize: 13, color: "#71717a", margin: 0 }}>video or static — any ad format</p>
+      </div>
+
+      {/* Format pills */}
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center" }}>
+        {FORMAT_PILLS.map((fmt) => (
+          <span key={fmt} style={{ fontSize: 11, color: "#52525b", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 6, padding: "4px 10px" }}>
+            {fmt}
+          </span>
+        ))}
+      </div>
+
+      {/* Browse button */}
+      <button
+        type="button"
+        onClick={handleClick}
+        style={{
+          height: 42, padding: "0 28px", borderRadius: 9999, border: "none",
+          background: BRAND_COLOR, color: "white", fontSize: 14, fontWeight: 500,
+          cursor: "pointer", transition: "all 150ms",
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = BRAND_COLOR_LIGHT; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = BRAND_COLOR; }}
+      >
+        Browse Files
+      </button>
+
+      {/* Max file size note */}
+      <span style={{ fontSize: 11, color: "#52525b" }}>Max 200MB per file</span>
     </div>
   );
 }
