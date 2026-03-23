@@ -3,6 +3,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { getScoreColor, getVerdict, getVerdictColor, getVerdictBg, getVerdictCopy } from '../lib/scoreColors';
 
 /** Platforms that do NOT support static image ads — benchmark should be hidden for these */
 const STATIC_INCOMPATIBLE_PLATFORMS = new Set(['TikTok', 'YouTube', 'YouTube Shorts', 'Instagram Reels']);
@@ -58,13 +59,6 @@ const PLATFORM_DIMENSIONS: Record<string, [string, string, string, string]> = {
   'Shorts':          ['Hook', 'Pacing', 'Visual', 'End Screen'],
   'all':             ['Hook', 'Copy', 'Visual', 'CTA'],
 };
-
-/** Score color: 8+ emerald, 4–7.9 amber, 0–3.9 red */
-function scoreColor(score: number): string {
-  if (score >= 8) return "#10b981";
-  if (score >= 4) return "#f59e0b";
-  return "#ef4444";
-}
 
 /** Count-up animation from 0 → target over `duration` ms */
 function useCountUp(target: number, duration = 600): number {
@@ -139,7 +133,7 @@ function BenchmarkBar({ score, benchmark, color, label }: BenchmarkBarProps) {
             position: "absolute",
             width: 2,
             height: 14,
-            background: "#6366f1",
+            background: "var(--accent)",
             borderRadius: 2,
             top: -5,
             left: tickPct,
@@ -168,7 +162,7 @@ function BenchmarkBar({ score, benchmark, color, label }: BenchmarkBarProps) {
         <span
           style={{
             fontSize: 12,
-            color: "#6366f1",
+            color: "var(--accent)",
             fontFamily: "var(--mono)",
           }}
         >
@@ -181,9 +175,15 @@ function BenchmarkBar({ score, benchmark, color, label }: BenchmarkBarProps) {
 
 // ── ScoreHero ──────────────────────────────────────────────────────────────────
 
-export function ScoreHero({ score, verdict, benchmark, dimensions, platform, format }: ScoreHeroProps) {
+export function ScoreHero({ score, verdict: _verdict, benchmark, dimensions, platform, format }: ScoreHeroProps) {
   const animatedScore = useCountUp(score, 600);
-  const color = scoreColor(score);
+  const color = getScoreColor(score);
+
+  // Verdict computed internally using shared utility
+  const verdict = getVerdict(score);
+  const verdictColor = getVerdictColor(verdict);
+  const verdictBg = getVerdictBg(verdict);
+  const verdictCopy = getVerdictCopy(verdict);
 
   // Hide benchmark for platforms that don't serve the current format
   const platformIncompatible = format === 'static' && platform != null && STATIC_INCOMPATIBLE_PLATFORMS.has(platform);
@@ -241,24 +241,34 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
           style={{
             fontFamily: "var(--mono)",
             fontSize: 16,
-            color: "#71717a",
+            color: "var(--ink-faint)",
           }}
         >
           /10
         </span>
       </div>
 
-      {/* 2. Verdict label */}
-      <span
-        style={{
-          fontSize: 14,
-          fontWeight: 500,
-          color,
-          marginTop: 4,
-        }}
-      >
-        {verdict}
-      </span>
+      {/* 2. Verdict chip + copy — gap-2 between score and chip */}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, marginTop: 8 }}>
+        <span
+          className="cs-verdict-chip"
+          style={{
+            color: verdictColor,
+            background: verdictBg,
+          }}
+        >
+          {verdict}
+        </span>
+        <span
+          style={{
+            fontSize: 11,
+            color: "var(--ink-muted)",
+            textAlign: "center",
+          }}
+        >
+          {verdictCopy}
+        </span>
+      </div>
 
       {/* 3. Benchmark bar (conditional) */}
       {showBenchmark && (
@@ -276,7 +286,7 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
         style={{
           width: "100%",
           height: 1,
-          background: "rgba(255,255,255,0.06)",
+          background: "var(--border-subtle)",
           margin: "16px 0",
         }}
       />
@@ -286,11 +296,12 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(4, 1fr)",
+          gap: 8,
           width: "100%",
         }}
       >
         {resolvedDimensions.map((dim, i) => {
-          const dimColor = scoreColor(dim.score);
+          const dimColor = getScoreColor(dim.score);
           return (
             <motion.div
               key={dim.name}
@@ -302,6 +313,10 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
                 flexDirection: "column",
                 alignItems: "center",
                 gap: 2,
+                background: "var(--surface)",
+                border: "1px solid var(--border-subtle)",
+                borderRadius: "var(--radius-sm)",
+                padding: 12,
               }}
             >
               <span
@@ -315,7 +330,7 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
               >
                 {dim.score.toFixed(1)}
               </span>
-              <span style={{ fontSize: 10, color: "#71717a" }}>
+              <span style={{ fontSize: 10, color: "var(--ink-faint)" }}>
                 {dim.name}
               </span>
             </motion.div>

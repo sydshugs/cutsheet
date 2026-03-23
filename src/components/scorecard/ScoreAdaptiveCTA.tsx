@@ -1,7 +1,8 @@
-// ScoreAdaptiveCTA — primary CTA that adapts based on overall score (3A hypothesis)
+// ScoreAdaptiveCTA — verdict-driven action strip using Kill/Test/Scale framing
 
-import { Share2, Sparkles, FileText } from "lucide-react";
+import { Share2, FileText, Wand2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { getVerdict, getVerdictColor, getVerdictBg, getVerdictCopy, type Verdict } from '../../lib/scoreColors';
 
 interface ScoreAdaptiveCTAProps {
   overallScore: number;
@@ -10,73 +11,127 @@ interface ScoreAdaptiveCTAProps {
 }
 
 export function ScoreAdaptiveCTA({ overallScore, onShare, onGenerateBrief }: ScoreAdaptiveCTAProps) {
+  const verdict: Verdict = getVerdict(overallScore);
+  const verdictColor = getVerdictColor(verdict);
+  const verdictBg = getVerdictBg(verdict);
+  const verdictCopy = getVerdictCopy(verdict);
+
   return (
-    <div className="px-5 pb-3">
+    <div
+      style={{
+        borderRadius: "var(--radius-sm)",
+        background: verdictBg,
+        border: `1px solid`,
+        borderColor: verdictColor,
+        padding: "12px 16px",
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+      }}
+    >
+      {/* Verdict copy line */}
+      <p
+        style={{
+          fontSize: 12,
+          color: verdictColor,
+          margin: 0,
+          fontWeight: 500,
+          fontFamily: "var(--sans)",
+        }}
+      >
+        {verdictCopy}
+      </p>
+
+      {/* Action buttons */}
       <AnimatePresence mode="wait">
-        {overallScore >= 8 ? (
+        {verdict === 'Scale' ? (
           <motion.div
-            key="cta-share"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            key="cta-scale"
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.18 }}
+            className="flex gap-2"
           >
-            <button
-              type="button"
-              onClick={() => onShare?.()}
-              className="w-full h-11 rounded-full border-none text-[13px] font-semibold cursor-pointer flex items-center justify-center gap-2 transition-colors duration-150"
-              style={{ background: "rgba(16,185,129,0.15)", color: "#10b981", border: "1px solid rgba(16,185,129,0.3)" }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(16,185,129,0.25)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(16,185,129,0.15)"; }}
-            >
-              <Share2 size={14} /> Share Your Score
-            </button>
+            {onShare && (
+              <button
+                type="button"
+                onClick={onShare}
+                className="cs-btn-primary flex-1 justify-center h-9"
+              >
+                <Share2 size={13} />
+                Share Score
+              </button>
+            )}
+            {onGenerateBrief && (
+              <button
+                type="button"
+                onClick={onGenerateBrief}
+                className="cs-btn-ghost flex-1 justify-center h-9"
+              >
+                <FileText size={13} />
+                Generate Brief
+              </button>
+            )}
           </motion.div>
-        ) : overallScore >= 5.5 ? (
+        ) : verdict === 'Test' ? (
           <motion.div
-            key="cta-fix"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            key="cta-test"
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.18 }}
+            className="flex flex-col gap-2"
           >
-            <button
-              type="button"
-              onClick={() => {
-                const impSection = document.getElementById("improvements-section");
-                if (impSection) impSection.scrollIntoView({ behavior: "smooth" });
+            {onGenerateBrief && (
+              <button
+                type="button"
+                onClick={onGenerateBrief}
+                className="cs-btn-primary w-full justify-center h-9"
+              >
+                <FileText size={13} />
+                Generate Brief
+              </button>
+            )}
+            <p
+              style={{
+                fontSize: 11,
+                color: "var(--ink-muted)",
+                margin: 0,
+                textAlign: "center",
               }}
-              className="w-full h-11 rounded-full border-none text-[13px] font-semibold cursor-pointer flex items-center justify-center gap-2 transition-colors duration-150"
-              style={{ background: "#4f46e5", color: "white" }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "#4338ca"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "#4f46e5"; }}
             >
-              <Sparkles size={14} /> Fix the Weak Spots
-            </button>
-            <p className="text-[11px] text-zinc-500 text-center mt-1.5">
-              Jump to improvements below
+              AI-powered brief to fix weak areas first
             </p>
           </motion.div>
         ) : (
           <motion.div
-            key="cta-brief"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            key="cta-kill"
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.18 }}
+            className="flex flex-col gap-2"
           >
-            <button
-              type="button"
-              onClick={() => onGenerateBrief?.()}
-              className="w-full h-11 rounded-full border-none text-[13px] font-semibold cursor-pointer flex items-center justify-center gap-2 transition-colors duration-150"
-              style={{ background: "rgba(245,158,11,0.15)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.3)" }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(245,158,11,0.25)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(245,158,11,0.15)"; }}
+            {onGenerateBrief && (
+              <button
+                type="button"
+                onClick={onGenerateBrief}
+                className="cs-btn-ghost w-full justify-center h-9"
+              >
+                <Wand2 size={13} />
+                Fix This Ad
+              </button>
+            )}
+            <p
+              style={{
+                fontSize: 11,
+                color: "var(--ink-muted)",
+                margin: 0,
+                textAlign: "center",
+              }}
             >
-              <FileText size={14} /> Generate a New Brief
-            </button>
-            <p className="text-[11px] text-zinc-500 text-center mt-1.5">
-              AI-powered creative brief based on your score
+              Generate a new creative brief from scratch
             </p>
           </motion.div>
         )}
