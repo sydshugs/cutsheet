@@ -117,8 +117,8 @@ export default function PredictedPerformanceCard({
         style={{
           background: 'rgba(255,255,255,0.02)',
           border: '0.5px solid rgba(255,255,255,0.06)',
-          borderRadius: 10,
-          padding: '14px 16px',
+          borderRadius: 12,
+          padding: '16px',
         }}
       >
         {/* CTR range — primary metric */}

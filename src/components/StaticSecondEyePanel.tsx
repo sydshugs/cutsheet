@@ -52,8 +52,8 @@ function TopIssueBlock({ topIssue, topFlag }: { topIssue: string; topFlag?: Stat
       style={{
         background: "rgba(239,68,68,0.07)",
         border: "0.5px solid rgba(239,68,68,0.2)",
-        borderRadius: 10,
-        padding: "11px 14px",
+        borderRadius: 12,
+        padding: "12px 16px",
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
@@ -370,7 +370,7 @@ export function StaticSecondEyePanel({
               <div
                 style={{
                   background: "rgba(255,255,255,0.03)",
-                  borderRadius: 10,
+                  borderRadius: 12,
                   padding: "10px 14px",
                   marginTop: 4,
                 }}

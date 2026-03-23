@@ -43,7 +43,7 @@ function ScrollAlert({ scrollMoment }: { scrollMoment: string }) {
   return (
     <div
       style={{
-        borderRadius: 10,
+        borderRadius: 12,
         padding: "10px 14px",
         background: "rgba(239,68,68,0.08)",
         border: "0.5px solid rgba(239,68,68,0.25)",
@@ -245,7 +245,7 @@ function FlagCard({
             fontFamily: "var(--mono)",
             color: "#52525b",
             background: "rgba(255,255,255,0.04)",
-            borderRadius: 6,
+            borderRadius: 8,
             padding: "2px 7px",
           }}
         >

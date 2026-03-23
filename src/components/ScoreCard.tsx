@@ -556,7 +556,7 @@ export function ScoreCard({
       {toast && (
         <div style={{
           position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)",
-          background: "var(--success)", color: "white", padding: "8px 20px", borderRadius: 10,
+          background: "var(--success)", color: "white", padding: "8px 20px", borderRadius: 12,
           fontSize: 13, fontWeight: 500, zIndex: 9999, boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
           animation: "fadeIn 200ms ease-out",
         }}>

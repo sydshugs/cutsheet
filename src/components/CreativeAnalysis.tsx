@@ -75,7 +75,7 @@ export function CreativeAnalysis({
         style={{
           background: stateStyle.bannerBg,
           borderBottom: `0.5px solid ${stateStyle.border}`,
-          padding: '18px 20px',
+          padding: '20px',
         }}
       >
         {/* Row 1: chip + score */}
@@ -95,12 +95,12 @@ export function CreativeAnalysis({
       </div>
 
       {/* Body — Option 3 spacing: 18px 20px */}
-      <div style={{ background: 'var(--surface, rgba(255,255,255,0.02))', padding: '18px 20px' }}>
+      <div style={{ background: 'var(--surface, rgba(255,255,255,0.02))', padding: '20px' }}>
         {/* Top issue block — fix text 14px */}
         {topIssue && (
           <div
             className="flex items-start gap-2.5 rounded-[9px] mb-3"
-            style={{ background: 'rgba(239,68,68,0.06)', border: '0.5px solid rgba(239,68,68,0.15)', padding: '12px 14px' }}
+            style={{ background: 'rgba(239,68,68,0.06)', border: '0.5px solid rgba(239,68,68,0.15)', padding: '12px 16px' }}
           >
             <AlertCircle size={14} className="text-red-400 shrink-0 mt-px" />
             <div>
@@ -153,7 +153,7 @@ export function CreativeAnalysis({
               <div
                 key={i}
                 className="flex flex-col gap-1.5 rounded-lg"
-                style={{ background: 'rgba(255,255,255,0.03)', padding: '12px 14px' }}
+                style={{ background: 'rgba(255,255,255,0.03)', padding: '12px 16px' }}
               >
                 {/* Top row: category tag */}
                 <div className="flex items-center">
@@ -173,7 +173,7 @@ export function CreativeAnalysis({
 
         {/* Overall note — Option 3: 12px 14px padding */}
         {overallNote && (
-          <div className="mt-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)', padding: '12px 14px' }}>
+          <div className="mt-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)', padding: '12px 16px' }}>
             <span className="text-[10px] text-zinc-500 uppercase tracking-[0.05em] block mb-1">Overall</span>
             <p className="text-xs text-zinc-400 leading-relaxed">{overallNote}</p>
           </div>
