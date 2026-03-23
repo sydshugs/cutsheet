@@ -771,14 +771,9 @@ export function ReportCards({
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500/20 to-indigo-500/20 flex items-center justify-center border border-violet-500/20">
                     <Film size={18} className="text-violet-400" />
                   </div>
-                  {/* Pulse ring */}
-                  <div className="absolute inset-0 rounded-xl border border-violet-500/30 animate-ping opacity-30" />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-zinc-100">Motion Test Idea</span>
-                    <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-300">AI Generated</span>
-                  </div>
+                  <span className="text-sm font-semibold text-zinc-100 block">Motion Test Idea</span>
                   <span className="text-[11px] text-zinc-500">Transform your static into scroll-stopping motion</span>
                 </div>
               </div>
@@ -790,75 +785,66 @@ export function ReportCards({
             
             {/* Storyboard section */}
             <div className="relative p-5">
-              {/* Section label */}
-              <div className="flex items-center gap-3 mb-5">
-                <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 rounded-md bg-white/[0.04] flex items-center justify-center">
-                    <Clapperboard size={11} className="text-zinc-500" />
-                  </div>
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Storyboard</span>
-                </div>
-                <div className="flex-1 h-px bg-gradient-to-r from-white/[0.08] to-transparent" />
-              </div>
-              
-              {/* Timeline visualization */}
-              <div className="relative mb-6">
-                {/* Connecting line */}
-                <div className="absolute top-6 left-6 right-6 h-1 rounded-full overflow-hidden bg-white/[0.04]">
-                  <div className="h-full w-full rounded-full" style={{ background: 'linear-gradient(90deg, #818cf8 0%, #10b981 50%, #f59e0b 100%)' }} />
-                </div>
-                
-                {/* Phase cards */}
-                <div className="relative grid grid-cols-3 gap-4">
+              {/* Phase cards - now above timeline */}
+              <div className="relative mb-4">
+                <div className="grid grid-cols-3 gap-4">
                   {phaseConfig.map((config, pi) => (
                     <div key={pi} className="relative">
-                      {/* Timeline node */}
-                      <div className="flex justify-center mb-4">
-                        <div 
-                          className="w-4 h-4 rounded-full border-[3px] relative z-10"
-                          style={{ 
-                            backgroundColor: config.color,
-                            borderColor: '#0a0a0f',
-                            boxShadow: `0 0 12px ${config.color}50`
-                          }}
-                        />
-                      </div>
-                      
                       {/* Phase card */}
                       <div 
-                        className="group rounded-xl p-4 transition-all duration-200 hover:scale-[1.02] cursor-default"
+                        className="group rounded-xl p-4 transition-all duration-200 hover:scale-[1.02] cursor-default h-full"
                         style={{ 
-                          background: `linear-gradient(145deg, ${config.color}12, ${config.color}04)`,
-                          border: `1px solid ${config.color}25`,
-                          boxShadow: `0 4px 20px ${config.color}08`
+                          background: `linear-gradient(145deg, ${config.color}10, ${config.color}04)`,
+                          border: `1px solid ${config.color}20`
                         }}
                       >
-                        {/* Phase number badge */}
+                        {/* Phase header */}
                         <div className="flex items-center justify-between mb-3">
                           <span 
-                            className="text-[10px] font-bold font-mono px-2 py-0.5 rounded"
-                            style={{ background: `${config.color}20`, color: config.color }}
+                            className="text-xs font-bold uppercase tracking-wide"
+                            style={{ color: config.color }}
                           >
-                            {config.icon}
+                            {config.label}
                           </span>
                           <span className="text-[10px] font-mono text-zinc-600">{config.time}</span>
                         </div>
                         
-                        {/* Phase label */}
-                        <span 
-                          className="text-xs font-bold uppercase tracking-wide block mb-2"
-                          style={{ color: config.color }}
-                        >
-                          {config.label}
-                        </span>
-                        
                         {/* Phase description */}
-                        <p className="text-[12px] text-zinc-400 leading-relaxed">
+                        <p className="text-[13px] text-zinc-300 leading-relaxed">
                           {phases[pi].trim().charAt(0).toUpperCase() + phases[pi].trim().slice(1).replace(/^product and cta$/i, 'Product reveal with clear CTA')}
                         </p>
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+              
+              {/* Timeline bar - now below cards */}
+              <div className="relative mb-6">
+                <div className="flex items-center gap-0">
+                  {phaseConfig.map((config, pi) => (
+                    <div key={pi} className="flex-1 flex items-center">
+                      {/* Timeline segment */}
+                      <div className="flex-1 h-1.5 rounded-full" style={{ background: config.color }} />
+                      {/* Timeline node */}
+                      {pi < phaseConfig.length - 1 && (
+                        <div 
+                          className="w-3 h-3 rounded-full shrink-0 mx-[-2px] z-10"
+                          style={{ 
+                            backgroundColor: config.color,
+                            boxShadow: `0 0 8px ${config.color}60`
+                          }}
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {/* Time labels */}
+                <div className="flex justify-between mt-2 px-1">
+                  <span className="text-[9px] font-mono text-zinc-600">0s</span>
+                  <span className="text-[9px] font-mono text-zinc-600">2s</span>
+                  <span className="text-[9px] font-mono text-zinc-600">5s</span>
+                  <span className="text-[9px] font-mono text-zinc-600">8s</span>
                 </div>
               </div>
 
