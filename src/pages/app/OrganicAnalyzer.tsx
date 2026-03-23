@@ -3,7 +3,6 @@ import { Helmet } from 'react-helmet-async';
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useOutletContext, useNavigate } from "react-router-dom";
 import { TrendingUp, RotateCcw, AlertCircle } from "lucide-react";
-import { FeaturePill } from "../../components/ui/FeaturePill";
 import { AnalyzerView } from "../../components/AnalyzerView";
 import { ScoreCard } from "../../components/ScoreCard";
 import { VideoDropzone } from "../../components/VideoDropzone";
@@ -58,16 +57,12 @@ const STATUS_COPY = {
 // ─── EMPTY STATE ──────────────────────────────────────────────────────────────
 
 function OrganicEmptyState({
-  onFileSelect, onUrlSubmit, format, onFormatChange,
+  onFileSelect, onUrlSubmit,
 }: {
   onFileSelect: (f: File | null) => void;
   onUrlSubmit?: (url: string) => void;
-  format: "video" | "static";
-  onFormatChange: (f: "video" | "static") => void;
 }) {
-  const VIDEO_PILLS = ["Retention score", "Platform fit", "Shareability"];
-  const STATIC_PILLS = ["Visual hierarchy", "Caption strength", "Shareability"];
-  const PILLS = format === "static" ? STATIC_PILLS : VIDEO_PILLS;
+  const PILLS = ["Retention score", "Platform fit", "Shareability"];
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px", minHeight: "calc(100vh - 120px)" }}>
       <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -76,36 +71,22 @@ function OrganicEmptyState({
       <h1 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>
         Score your organic content
       </h1>
-      {/* Format selector */}
-      <div style={{ display: "flex", gap: 4, marginTop: 16, padding: 4, borderRadius: 12, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)" }}>
-        {(["video", "static"] as const).map((f) => (
-          <button
-            key={f}
-            type="button"
-            onClick={() => onFormatChange(f)}
-            style={{
-              padding: "6px 16px", borderRadius: 8, border: "none", cursor: "pointer",
-              fontSize: 13, fontWeight: 500, transition: "all 150ms",
-              background: format === f ? "#10b981" : "transparent",
-              color: format === f ? "white" : "#71717a",
-            }}
-          >
-            {f === "video" ? "Video" : "Static"}
-          </button>
-        ))}
-      </div>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 14 }}>
-        {PILLS.map((pill) => (
-          <FeaturePill key={pill} label={pill} />
-        ))}
-      </div>
-      <p style={{ fontSize: 14, color: "#a1a1aa", textAlign: "center", maxWidth: 320, marginTop: 14, lineHeight: 1.6 }}>
-        {format === "static"
-          ? "Upload your Instagram or Facebook post image. Get scored on visual impact, caption strength, and shareability."
-          : "Upload your TikTok, Reel, YouTube Short, or static post. Get scored on retention, shareability, and algorithm signals."}
+      <p style={{ fontSize: 14, color: "#a1a1aa", textAlign: "center", maxWidth: 320, marginTop: 10, lineHeight: 1.6 }}>
+        Upload a video or static creative. Get a full AI breakdown in 30 seconds.
       </p>
+
+      {/* Feature pills — green styled like paid page purple */}
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 20 }}>
+        {PILLS.map((pill) => (
+          <span key={pill} style={{ fontSize: 12, color: "#34d399", background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.15)", borderRadius: 9999, padding: "4px 12px" }}>
+            {pill}
+          </span>
+        ))}
+      </div>
+
+      {/* Dropzone */}
       <div style={{ width: "100%", maxWidth: 520, marginTop: 32 }}>
-        <VideoDropzone onFileSelect={onFileSelect} file={null} onUrlSubmit={onUrlSubmit} acceptImages={format === "static"} />
+        <VideoDropzone onFileSelect={onFileSelect} file={null} onUrlSubmit={onUrlSubmit} acceptImages />
       </div>
     </div>
   );
@@ -576,8 +557,6 @@ export default function OrganicAnalyzer() {
             <OrganicEmptyState
               onFileSelect={(f) => handleFileWithCheck(f)}
               onUrlSubmit={async (u) => { setUrlInput(u); await importFromUrl(u); }}
-              format={organicFormat}
-              onFormatChange={setOrganicFormat}
             />
           ) : !formatMismatch ? (
             <div className={`relative flex flex-col ${(effectiveStatus === "uploading" || effectiveStatus === "processing") ? "h-full" : "px-4 py-6 md:px-8 min-h-full"}`}>
