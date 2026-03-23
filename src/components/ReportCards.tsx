@@ -682,7 +682,7 @@ export function ReportCards({
 
       </motion.div>
 
-      {/* Pacing & Retention — VIDEO ONLY, V1 insight-first layout */}
+      {/* Pacing & Retention — VIDEO ONLY, redesigned to match branding */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: 'easeOut', delay: 0.24 }}>
       {format === 'video' && centerSections.filter(s => /pacing|retention/i.test(s.title ?? '')).map((section, i) => {
         const SectionIcon = getIconForTitle(toSentenceCase(section.title!));
@@ -705,88 +705,83 @@ export function ReportCards({
               return { timestamp: ts, risk: parts[0] ?? rest, note: parts[1] ?? '', severity: isHigh ? 'high' : 'medium' };
             })
           : [];
-        const pacingColor = /fast/i.test(pacing ?? '') ? '#6ee7b7' : /slow/i.test(pacing ?? '') ? '#fca5a5' : '#fcd34d';
+        const pacingColor = /fast/i.test(pacing ?? '') ? '#10b981' : /slow/i.test(pacing ?? '') ? '#ef4444' : '#f59e0b';
+        const pacingBg = /fast/i.test(pacing ?? '') ? 'rgba(16,185,129,0.1)' : /slow/i.test(pacing ?? '') ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)';
         // Key insight: first non-label sentence
         const sentences = c.split('\n').filter(l => l.trim() && !l.startsWith('#') && !l.startsWith('-') && !l.startsWith('*') && !/^\*\*/.test(l));
         const keyInsight = sentences.find(s => s.length > 15 && s.length < 100)?.replace(/\*\*/g, '').trim() ?? '';
 
         return (
-          <div key={`pacing-${i}`} className="rounded-2xl border border-white/[0.06] overflow-hidden mt-4 bg-white/[0.015]">
+          <div key={`pacing-${i}`} className="rounded-2xl border border-white/[0.06] overflow-hidden mt-5 bg-white/[0.015]">
             {/* Header */}
-            <div className="flex items-center gap-2 px-5 py-3.5 border-b border-white/[0.05]">
-              <SectionIcon size={14} className="text-zinc-500" />
-              <span className="text-xs font-medium text-zinc-300">Pacing & Retention</span>
+            <div className="flex items-center gap-3 px-5 py-4 border-b border-white/[0.06]">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.15)' }}>
+                <SectionIcon size={16} className="text-indigo-400" />
+              </div>
+              <span className="text-sm font-semibold text-zinc-200">Pacing & Retention</span>
               {pacing && (
-                <span className="ml-auto text-[10px] font-medium rounded-md px-2 py-0.5"
-                  style={{ color: pacingColor, background: `${pacingColor}15` }}>{pacing}</span>
+                <span className="ml-auto text-xs font-semibold rounded-lg px-3 py-1.5"
+                  style={{ color: pacingColor, background: pacingBg }}>{pacing}</span>
               )}
             </div>
 
-            {/* Key insight banner */}
-            {keyInsight && (
-              <div className="flex items-start gap-3 px-5 py-4 bg-amber-500/[0.04] border-b border-amber-500/10">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-amber-500/10">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-                </div>
-                <div>
-                  <span className="text-[10px] font-medium uppercase tracking-wide block mb-1.5 text-amber-500">Key insight</span>
-                  <p className="text-[13px] font-medium text-zinc-200 leading-relaxed">{keyInsight}</p>
-                </div>
-              </div>
-            )}
-
             <div className="p-5">
               {/* Meta tiles */}
-              <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="grid grid-cols-2 gap-3 mb-5">
                 {avgScene && (
-                  <div className="rounded-xl bg-white/[0.03] p-3.5">
-                    <span className="text-[10px] text-zinc-500 uppercase tracking-wide block mb-1.5">Avg scene</span>
-                    <span className="text-[13px] font-medium text-zinc-200">{avgScene}</span>
+                  <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold block mb-2">Avg Scene</span>
+                    <span className="text-[14px] font-medium text-zinc-100 leading-snug">{avgScene}</span>
                   </div>
                 )}
                 {pacing && (
-                  <div className="rounded-xl bg-white/[0.03] p-3.5">
-                    <span className="text-[10px] text-zinc-500 uppercase tracking-wide block mb-1.5">Pacing</span>
-                    <span className="text-[13px] font-medium" style={{ color: pacingColor }}>{pacing}</span>
+                  <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold block mb-2">Pacing</span>
+                    <span className="text-[14px] font-semibold" style={{ color: pacingColor }}>{pacing}</span>
                   </div>
                 )}
               </div>
 
               {/* Retention curve bar */}
-              <div className="mb-4">
-                <span className="text-[10px] text-zinc-500 uppercase tracking-wide block mb-2">Retention curve</span>
-                <div className="h-1 rounded-full overflow-hidden bg-white/[0.06]">
-                  <div className="h-full rounded-full w-full" style={{ background: 'linear-gradient(90deg, #ef4444 0%, #ef4444 10%, #10b981 25%, #10b981 55%, #d97706 70%, #ef4444 90%, #ef4444 100%)' }} />
+              <div className="mb-5">
+                <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold block mb-3">Retention Curve</span>
+                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                  <div className="h-full rounded-full w-full" style={{ background: 'linear-gradient(90deg, #ef4444 0%, #f59e0b 20%, #10b981 40%, #10b981 60%, #f59e0b 80%, #ef4444 100%)' }} />
                 </div>
-                <div className="flex justify-between mt-1.5">
-                  <span className="text-[9px] font-mono text-zinc-600">0s</span>
-                  <span className="text-[9px] font-mono text-zinc-600">25%</span>
-                  <span className="text-[9px] font-mono text-zinc-500">50%</span>
-                  <span className="text-[9px] font-mono text-zinc-600">75%</span>
-                  <span className="text-[9px] font-mono text-zinc-600">100%</span>
+                <div className="flex justify-between mt-2.5">
+                  {['0s', '25%', '50%', '75%', '100%'].map((label, idx) => (
+                    <span key={idx} className="text-[10px] font-mono text-zinc-500">{label}</span>
+                  ))}
                 </div>
               </div>
 
               {/* Retention hooks prose */}
               {retention && (
-                <p className="text-[13px] text-zinc-400 leading-relaxed mb-4">{retention}</p>
+                <p className="text-[13px] text-zinc-400 leading-[1.7] mb-5">{retention}</p>
               )}
 
               {/* Drop-off risk rows */}
               {dropOffs.length > 0 && (
                 <div>
-                  <span className="text-[10px] text-zinc-500 uppercase tracking-wide block mb-2">Drop-off risk</span>
-                  <div className="flex flex-col gap-2">
+                  <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold block mb-3">Drop-off Risk</span>
+                  <div className="flex flex-col gap-2.5">
                     {dropOffs.map((d, j) => {
-                      const sevColor = d.severity === 'high' ? '#ef4444' : d.severity === 'medium' ? '#f59e0b' : 'rgba(161,161,170,0.3)';
+                      const sevColor = d.severity === 'high' ? '#ef4444' : d.severity === 'medium' ? '#f59e0b' : 'rgba(161,161,170,0.4)';
+                      const sevBg = d.severity === 'high' ? 'rgba(239,68,68,0.08)' : d.severity === 'medium' ? 'rgba(245,158,11,0.06)' : 'rgba(255,255,255,0.02)';
+                      const sevBorder = d.severity === 'high' ? 'rgba(239,68,68,0.15)' : d.severity === 'medium' ? 'rgba(245,158,11,0.12)' : 'rgba(255,255,255,0.06)';
                       return (
-                        <div key={j} className="flex items-start gap-3 rounded-xl bg-white/[0.02] border border-white/[0.05] p-3">
-                          <span className="text-[10px] font-medium font-mono min-w-[50px] shrink-0 mt-0.5" style={{ color: sevColor }}>{d.timestamp}</span>
+                        <div key={j} className="flex items-start gap-3.5 rounded-xl p-4" style={{ background: sevBg, border: `1px solid ${sevBorder}` }}>
+                          <span 
+                            className="text-[11px] font-semibold font-mono px-2.5 py-1 rounded-md shrink-0"
+                            style={{ color: sevColor, background: `${sevColor}15` }}
+                          >
+                            {d.timestamp}
+                          </span>
                           <div className="flex-1 min-w-0">
-                            <span className="text-[13px] font-medium text-zinc-200 block">{d.risk}</span>
-                            {d.note && <span className="text-xs text-zinc-500 block mt-1">{d.note}</span>}
+                            <span className="text-[13px] font-medium text-zinc-200 block leading-snug">{d.risk}</span>
+                            {d.note && <span className="text-xs text-zinc-500 block mt-1.5">{d.note}</span>}
                           </div>
-                          <span className="w-2 h-2 rounded-full shrink-0 mt-1.5" style={{ background: sevColor }} />
+                          <span className="w-2.5 h-2.5 rounded-full shrink-0 mt-1" style={{ background: sevColor }} />
                         </div>
                       );
                     })}
