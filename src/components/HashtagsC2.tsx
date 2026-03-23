@@ -1,10 +1,8 @@
-// HashtagsC2 — uses CollapsibleSection for consistent accordion styling
+// HashtagsC2 — collapsible hashtag section matching other accordion sections
 
-import type React from "react";
 import { useState } from "react";
-import { Hash } from "lucide-react";
+import { Hash, ChevronRight } from "lucide-react";
 import type { Hashtags } from "../services/analyzerService";
-import { CollapsibleSection } from "./ui/CollapsibleSection";
 
 interface HashtagsC2Props {
   hashtags: Hashtags;
@@ -30,6 +28,7 @@ export function HashtagsC2({ hashtags, format }: HashtagsC2Props) {
     return platforms;
   })();
 
+  const [isOpen, setIsOpen] = useState(false);
   const [activePlatform, setActivePlatform] = useState(availablePlatforms[0] ?? 'Meta');
   const [copied, setCopied] = useState(false);
   const [showAll, setShowAll] = useState(false);
@@ -40,7 +39,7 @@ export function HashtagsC2({ hashtags, format }: HashtagsC2Props) {
   const hasMore = tags.length > VISIBLE_DEFAULT;
 
   const handleCopy = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent toggle when clicking copy
+    e.stopPropagation();
     const text = tags.map(t => `#${t}`).join(' ');
     navigator.clipboard.writeText(text);
     setCopied(true);
@@ -51,10 +50,41 @@ export function HashtagsC2({ hashtags, format }: HashtagsC2Props) {
 
   return (
     <div className="px-4 pt-1">
-      <CollapsibleSection
-        title="Hashtags"
-        icon={<Hash size={14} />}
-        trailing={
+      <div 
+        className="rounded-2xl transition-all"
+        style={{ 
+          background: isOpen ? 'rgba(255,255,255,0.015)' : 'transparent',
+          border: isOpen ? '1px solid rgba(255,255,255,0.05)' : '1px solid transparent',
+        }}
+      >
+        {/* Header button */}
+        <button
+          type="button"
+          onClick={() => setIsOpen(prev => !prev)}
+          aria-expanded={isOpen}
+          className="w-full flex items-center justify-between gap-3 group focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:outline-none rounded-2xl py-3.5 px-4 hover:bg-white/[0.02] transition-all"
+          style={{ background: "none", border: "none", cursor: "pointer" }}
+        >
+          <div className="flex items-center gap-3">
+            <span
+              className="text-zinc-600 group-hover:text-zinc-500 transition-all"
+              style={{ transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)', display: 'inline-block' }}
+            >
+              <ChevronRight size={14} />
+            </span>
+            <span
+              className="flex-shrink-0 transition-colors"
+              style={{ color: isOpen ? "#a5b4fc" : "#71717a" }}
+            >
+              <Hash size={14} />
+            </span>
+            <span
+              className="text-[13px] tracking-normal transition-colors"
+              style={{ fontWeight: 500, color: isOpen ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.5)" }}
+            >
+              Hashtags
+            </span>
+          </div>
           <div className="flex items-center gap-2">
             <span className="text-[10px] text-zinc-600">({tags.length})</span>
             <button
@@ -65,54 +95,59 @@ export function HashtagsC2({ hashtags, format }: HashtagsC2Props) {
               {copied ? 'Copied!' : 'Copy all'}
             </button>
           </div>
-        }
-      >
-        {/* Platform tabs */}
-        <div className="flex gap-1.5 mb-4 p-1 rounded-xl bg-white/[0.02]">
-          {availablePlatforms.map(plat => {
-            const isActive = activePlatform === plat;
-            return (
-              <button
-                key={plat}
-                onClick={() => { setActivePlatform(plat); setShowAll(false); }}
-                aria-label={`Show ${plat} hashtags`}
-                aria-pressed={isActive}
-                className="text-[11px] font-medium flex-1 py-2 rounded-lg cursor-pointer transition-all focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:outline-none"
-                style={{
-                  background: isActive ? 'rgba(255,255,255,0.06)' : 'transparent',
-                  color: isActive ? '#e4e4e7' : '#71717a',
-                  border: 'none',
-                }}
-              >
-                {plat}
-              </button>
-            );
-          })}
-        </div>
+        </button>
 
-        {/* Tags */}
-        <div className="flex flex-wrap gap-2">
-          {visibleTags.map(tag => (
-            <span
-              key={tag}
-              className="text-xs px-3 py-1.5 rounded-lg bg-white/[0.03] text-zinc-400 hover:bg-white/[0.05] hover:text-zinc-300 transition-colors cursor-default border border-white/[0.04]"
-            >
-              #{tag}
-            </span>
-          ))}
-          {hasMore && (
-            <button
-              onClick={() => setShowAll(v => !v)}
-              className="text-xs font-medium px-3 py-1.5 rounded-lg cursor-pointer transition-all focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:outline-none bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/15 border border-indigo-500/20"
-            >
-              {showAll ? 'Show less' : `+${tags.length - VISIBLE_DEFAULT} more`}
-            </button>
-          )}
-        </div>
+        {/* Collapsible content */}
+        {isOpen && (
+          <div className="px-4 pb-4 pt-0">
+            {/* Platform tabs */}
+            <div className="flex gap-1.5 mb-4 p-1 rounded-xl bg-white/[0.02]">
+              {availablePlatforms.map(plat => {
+                const isActive = activePlatform === plat;
+                return (
+                  <button
+                    key={plat}
+                    onClick={() => { setActivePlatform(plat); setShowAll(false); }}
+                    aria-label={`Show ${plat} hashtags`}
+                    aria-pressed={isActive}
+                    className="text-[11px] font-medium flex-1 py-2 rounded-lg cursor-pointer transition-all focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:outline-none"
+                    style={{
+                      background: isActive ? 'rgba(255,255,255,0.06)' : 'transparent',
+                      color: isActive ? '#e4e4e7' : '#71717a',
+                      border: 'none',
+                    }}
+                  >
+                    {plat}
+                  </button>
+                );
+              })}
+            </div>
 
-        {/* Tag count */}
-        <p className="text-[10px] text-zinc-600 mt-3">{tags.length} tags optimized for {activePlatform}</p>
-      </CollapsibleSection>
+            {/* Tags */}
+            <div className="flex flex-wrap gap-2">
+              {visibleTags.map(tag => (
+                <span
+                  key={tag}
+                  className="text-xs px-3 py-1.5 rounded-lg bg-white/[0.03] text-zinc-400 hover:bg-white/[0.05] hover:text-zinc-300 transition-colors cursor-default border border-white/[0.04]"
+                >
+                  #{tag}
+                </span>
+              ))}
+              {hasMore && (
+                <button
+                  onClick={() => setShowAll(v => !v)}
+                  className="text-xs font-medium px-3 py-1.5 rounded-lg cursor-pointer transition-all focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:outline-none bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/15 border border-indigo-500/20"
+                >
+                  {showAll ? 'Show less' : `+${tags.length - VISIBLE_DEFAULT} more`}
+                </button>
+              )}
+            </div>
+
+            {/* Tag count */}
+            <p className="text-[10px] text-zinc-600 mt-3">{tags.length} tags optimized for {activePlatform}</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

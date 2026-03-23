@@ -1,4 +1,3 @@
-console.log("[v0] main.tsx loading...");
 import { StrictMode, lazy, Suspense, useEffect } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import { createRoot } from "react-dom/client";
