@@ -996,6 +996,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                 canVisualize={true}
                 isPro={isPro}
                 briefLoading={briefLoading}
+                hasBrief={!!brief}
                 verdict={activeResult.verdict}
                 analysisSections={extractRightPanelSections(activeResult.markdown)}
                 platformSwitcher={

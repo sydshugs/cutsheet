@@ -83,6 +83,7 @@ interface ScoreCardProps {
   platformSwitcher?: React.ReactNode;
   // Brief loading state
   briefLoading?: boolean;
+  hasBrief?: boolean;
   // Analysis sections for right panel (Hook, Hierarchy, Copy, Messaging, Emotional)
   analysisSections?: { title: string; content: string }[];
 }
@@ -206,6 +207,7 @@ export function ScoreCard({
   verdict,
   platformSwitcher,
   briefLoading,
+  hasBrief,
   analysisSections,
 }: ScoreCardProps) {
   const displayScore = platformScore ?? scores.overall;
@@ -402,15 +404,7 @@ export function ScoreCard({
             </div>
           )}
 
-          {/* 3. ScoreAdaptiveCTA \u2014 always visible */}
-          <div style={{ marginTop: 16, padding: "0 20px" }}>
-            <ScoreAdaptiveCTA
-              overallScore={displayScore}
-              onShare={onShare}
-              onGenerateBrief={onGenerateBrief}
-              briefLoading={briefLoading}
-            />
-          </div>
+          {/* ScoreAdaptiveCTA moved below Hashtags */}
 
           {/* Action row (AI Rewrite / Visualize / Policies) moved to center column tools grid */}
 
@@ -549,6 +543,24 @@ export function ScoreCard({
       {/* Overflow menu moved to header row — see Score Overview header above */}
 
       {/* Re-analyze button is above Predicted Performance */}
+
+      {/* Generate Brief button — below all sections */}
+      {onGenerateBrief && (
+        <div className="mx-4 mt-3 mb-2">
+          <button
+            onClick={onGenerateBrief}
+            disabled={briefLoading}
+            className="w-full flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[12px] font-medium transition-colors hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', color: '#f59e0b' }}
+          >
+            {briefLoading ? (
+              <><Loader2 size={13} className="animate-spin" /> Generating brief...</>
+            ) : (
+              <><FileText size={13} /> {hasBrief ? 'Regenerate Brief' : 'Generate a Brief'}</>
+            )}
+          </button>
+        </div>
+      )}
 
       {/* Toast notification */}
       {toast && (
