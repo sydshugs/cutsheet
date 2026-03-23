@@ -1,7 +1,7 @@
-// HookAnalysisExpanded — D3 layout, format-aware
-// Shared: D3 split panel (Hook type | Strength)
-// Static: Fix block → 2-up tiles (scroll-stop + first impression)
-// Video: Fix block → scrubber bar → C-style timestamp rows → meta tiles
+// HookAnalysisExpanded — Redesigned for clarity and visual hierarchy
+// Cleaner layout with focused sections and better scanability
+
+import { Eye, Zap, Target, CheckCircle2, AlertTriangle, Sparkles } from 'lucide-react';
 
 interface HookAnalysisExpandedProps {
   content: string;
@@ -21,7 +21,6 @@ function parseHookData(content: string) {
   const strengthRaw = strengthMatch?.[1]?.trim() ?? '';
   const strength: 'strong' | 'moderate' | 'weak' = /strong|scroll.?stop/i.test(strengthRaw) ? 'strong' : /weak/i.test(strengthRaw) ? 'weak' : 'moderate';
 
-  // Hook type note — extract explanation after the type
   const hookTypeNote = hookTypeMatch?.[1]?.match(/[—–-]\s*(.+)/)?.[1]?.replace(/\*\*/g, '').trim() ?? '';
 
   const scrollStopMatch = c.match(/Scroll.?stop.*?:\s*\[?([^\]\n]+(?:\n(?!\*\*|-\s)[^\n]+)?)\]?/i);
@@ -37,10 +36,10 @@ function parseHookData(content: string) {
   return { verdict, hookType, hookTypeNote, strength, scrollStopFactor, firstImpression, fix, noFix };
 }
 
-const STRENGTH_STYLES = {
-  strong: { width: '85%', color: '#10b981', label: 'Strong' },
-  moderate: { width: '55%', color: '#f59e0b', label: 'Moderate' },
-  weak: { width: '25%', color: '#ef4444', label: 'Weak' },
+const STRENGTH_CONFIG = {
+  strong: { percent: 85, color: '#10b981', label: 'Strong', bgColor: 'rgba(16,185,129,0.08)' },
+  moderate: { percent: 55, color: '#f59e0b', label: 'Moderate', bgColor: 'rgba(245,158,11,0.08)' },
+  weak: { percent: 25, color: '#ef4444', label: 'Weak', bgColor: 'rgba(239,68,68,0.08)' },
 };
 
 const SCRUBBER_DOTS = [
@@ -52,13 +51,10 @@ const SCRUBBER_DOTS = [
 
 export function HookAnalysisExpanded({ content, format }: HookAnalysisExpandedProps) {
   const data = parseHookData(content);
-  const bar = STRENGTH_STYLES[data.strength];
+  const strengthConfig = STRENGTH_CONFIG[data.strength];
+  const isStrong = data.verdict === 'strong';
 
-  const fixColors = data.verdict === 'strong'
-    ? { bg: 'rgba(16,185,129,0.04)', border: 'rgba(16,185,129,0.12)', label: '#10b981', labelText: 'No fix needed' }
-    : { bg: 'rgba(245,158,11,0.04)', border: 'rgba(245,158,11,0.12)', label: '#f59e0b', labelText: 'Suggested fix' };
-
-  // Parse video moments from content
+  // Parse video moments
   const moments = (() => {
     if (format !== 'video') return [];
     const lines = content.split('\n').filter(l => l.trim() && !l.startsWith('#'));
@@ -80,84 +76,168 @@ export function HookAnalysisExpanded({ content, format }: HookAnalysisExpandedPr
   })();
 
   return (
-    <div>
-      {/* Header metrics — cleaner 2-column layout */}
-      <div className="grid grid-cols-2 gap-3 mb-4">
-        {/* Hook type */}
-        <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.05]">
-          <span className="text-[10px] text-zinc-500 uppercase tracking-wide block mb-1.5">Type</span>
-          <span className="text-sm font-medium text-indigo-400">
-            {data.hookType.split(/[—–-]/)[0].trim()}
-          </span>
-        </div>
-        {/* Strength */}
-        <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.05]">
-          <span className="text-[10px] text-zinc-500 uppercase tracking-wide block mb-1.5">Strength</span>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium capitalize" style={{ color: bar.color }}>{bar.label}</span>
+    <div className="space-y-4">
+      {/* Hero stat card — Strength score as the focal point */}
+      <div 
+        className="relative rounded-2xl p-5 overflow-hidden"
+        style={{ background: strengthConfig.bgColor, border: `1px solid ${strengthConfig.color}20` }}
+      >
+        {/* Background glow */}
+        <div 
+          className="absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl opacity-30"
+          style={{ background: strengthConfig.color }}
+        />
+        
+        <div className="relative flex items-start justify-between">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <Zap size={14} style={{ color: strengthConfig.color }} />
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Hook Strength</span>
+            </div>
+            <div className="flex items-baseline gap-3">
+              <span className="text-3xl font-bold" style={{ color: strengthConfig.color }}>{strengthConfig.percent}</span>
+              <span className="text-lg text-zinc-500">/100</span>
+            </div>
+            <span 
+              className="inline-block mt-2 text-xs font-semibold px-2.5 py-1 rounded-full"
+              style={{ background: `${strengthConfig.color}20`, color: strengthConfig.color }}
+            >
+              {strengthConfig.label}
+            </span>
           </div>
-          <div className="h-1 rounded-full mt-2 bg-white/[0.04]">
-            <div className="h-full rounded-full transition-all duration-500" style={{ width: bar.width, background: bar.color }} />
+          
+          {/* Circular progress indicator */}
+          <div className="relative w-16 h-16">
+            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+              <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="3" />
+              <circle 
+                cx="18" cy="18" r="15" fill="none" 
+                stroke={strengthConfig.color} strokeWidth="3"
+                strokeLinecap="round"
+                strokeDasharray={`${strengthConfig.percent} 100`}
+                style={{ transition: 'stroke-dasharray 0.5s ease' }}
+              />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              {isStrong ? (
+                <CheckCircle2 size={18} style={{ color: strengthConfig.color }} />
+              ) : (
+                <AlertTriangle size={18} style={{ color: strengthConfig.color }} />
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Fix suggestion */}
-      <div className="rounded-xl p-3.5 mb-4" style={{ background: fixColors.bg, border: `1px solid ${fixColors.border}` }}>
-        <span className="text-[10px] font-medium uppercase tracking-wide mb-1.5 block" style={{ color: fixColors.label }}>{fixColors.labelText}</span>
-        <p className="text-[13px] font-medium text-zinc-300 leading-relaxed">{data.noFix ? 'Hook is performing well — no changes needed.' : data.fix}</p>
+      {/* Hook type pill */}
+      <div className="flex items-center gap-3 p-4 rounded-xl bg-white/[0.02] border border-white/[0.05]">
+        <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center shrink-0">
+          <Target size={18} className="text-indigo-400" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <span className="text-[10px] text-zinc-500 uppercase tracking-wide block mb-0.5">Hook Type</span>
+          <span className="text-sm font-semibold text-zinc-200">{data.hookType.split(/[—–-]/)[0].trim()}</span>
+        </div>
+      </div>
+
+      {/* Recommendation callout */}
+      <div 
+        className="rounded-xl p-4"
+        style={{ 
+          background: isStrong ? 'rgba(16,185,129,0.06)' : 'rgba(245,158,11,0.06)', 
+          border: `1px solid ${isStrong ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)'}` 
+        }}
+      >
+        <div className="flex items-start gap-3">
+          <div 
+            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
+            style={{ background: isStrong ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)' }}
+          >
+            {isStrong ? (
+              <CheckCircle2 size={16} className="text-emerald-400" />
+            ) : (
+              <Sparkles size={16} className="text-amber-400" />
+            )}
+          </div>
+          <div>
+            <span 
+              className="text-xs font-semibold block mb-1"
+              style={{ color: isStrong ? '#10b981' : '#f59e0b' }}
+            >
+              {isStrong ? 'No Changes Needed' : 'Suggested Improvement'}
+            </span>
+            <p className="text-[13px] text-zinc-400 leading-relaxed">
+              {data.noFix ? 'Your hook is performing well. It effectively captures attention and drives engagement.' : data.fix}
+            </p>
+          </div>
+        </div>
       </div>
 
       {format === 'static' ? (
-        /* STATIC: 2-up tiles */
-        <div className="grid grid-cols-2 gap-2">
-          {data.scrollStopFactor && (
-            <div className="rounded-xl bg-white/[0.02] border border-white/[0.05] p-3">
-              <span className="text-[10px] text-zinc-500 uppercase tracking-wide block mb-1.5">Scroll-stop</span>
-              <span className="text-xs text-zinc-400 leading-relaxed">{data.scrollStopFactor}</span>
-            </div>
-          )}
-          {data.firstImpression && (
-            <div className="rounded-xl bg-white/[0.02] border border-white/[0.05] p-3">
-              <span className="text-[10px] text-zinc-500 uppercase tracking-wide block mb-1.5">First impression</span>
-              <span className="text-xs text-zinc-400 leading-relaxed">{data.firstImpression}</span>
-            </div>
-          )}
+        /* STATIC: Visual insights cards */
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Eye size={12} className="text-zinc-500" />
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Visual Insights</span>
+          </div>
+          
+          <div className="grid grid-cols-1 gap-3">
+            {data.scrollStopFactor && (
+              <div className="rounded-xl bg-gradient-to-br from-cyan-500/[0.06] to-transparent border border-cyan-500/10 p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-cyan-400">Scroll-Stop Factor</span>
+                </div>
+                <p className="text-sm text-zinc-300 leading-relaxed">{data.scrollStopFactor}</p>
+              </div>
+            )}
+            {data.firstImpression && (
+              <div className="rounded-xl bg-gradient-to-br from-violet-500/[0.06] to-transparent border border-violet-500/10 p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-violet-400" />
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-violet-400">First Impression</span>
+                </div>
+                <p className="text-sm text-zinc-300 leading-relaxed">{data.firstImpression}</p>
+              </div>
+            )}
+          </div>
         </div>
       ) : (
-        /* VIDEO: Scrubber → C-style rows → meta tiles */
+        /* VIDEO: Timeline view */
         <>
           {/* Scrubber bar */}
-          <div className="relative mb-3.5 mt-2">
-            <div className="relative h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
-              <div className="h-full rounded-full w-full" style={{ background: 'linear-gradient(90deg, #10b981 0%, #10b981 40%, #d97706 70%, #ef4444 100%)' }} />
-            </div>
-            {/* Dots */}
-            <div className="relative h-6 mt-[-3px]">
-              {SCRUBBER_DOTS.map(dot => (
-                <div key={dot.ts} className="absolute flex flex-col items-center" style={{ left: dot.pos, transform: 'translateX(-50%)' }}>
-                  <div className="w-2 h-2 rounded-full" style={{ background: dot.color, border: '1.5px solid var(--bg, #08080F)' }} />
-                  <span className="text-[9px] font-mono mt-1" style={{ color: dot.color }}>{dot.ts}</span>
-                </div>
-              ))}
+          <div className="rounded-xl bg-white/[0.02] border border-white/[0.05] p-4">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 block mb-3">Attention Timeline</span>
+            <div className="relative">
+              <div className="h-2 rounded-full overflow-hidden bg-white/[0.04]">
+                <div className="h-full rounded-full w-full" style={{ background: 'linear-gradient(90deg, #10b981 0%, #10b981 40%, #d97706 70%, #ef4444 100%)' }} />
+              </div>
+              <div className="relative h-6 mt-1">
+                {SCRUBBER_DOTS.map(dot => (
+                  <div key={dot.ts} className="absolute flex flex-col items-center" style={{ left: dot.pos, transform: 'translateX(-50%)' }}>
+                    <div className="w-2.5 h-2.5 rounded-full border-2 border-zinc-900" style={{ background: dot.color }} />
+                    <span className="text-[9px] font-mono mt-1" style={{ color: dot.color }}>{dot.ts}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* Timestamp rows */}
+          {/* Timestamp moments */}
           {moments.length > 0 && (
-            <div className="flex flex-col gap-2 mb-4">
+            <div className="space-y-2">
               {moments.map((m, i) => (
                 <div key={i} className="flex rounded-xl bg-white/[0.02] border border-white/[0.05] overflow-hidden">
-                  <div className="w-12 flex items-center justify-center shrink-0 border-r border-white/[0.05]">
-                    <span className="text-[10px] font-medium font-mono" style={{ color: m.color }}>{m.ts}</span>
+                  <div className="w-14 flex items-center justify-center shrink-0 border-r border-white/[0.05]" style={{ background: `${m.color}10` }}>
+                    <span className="text-xs font-bold font-mono" style={{ color: m.color }}>{m.ts}</span>
                   </div>
-                  <div className="flex-1 py-2.5 px-3">
+                  <div className="flex-1 py-3 px-4">
                     <span className="text-[10px] text-zinc-500 block mb-0.5">{m.label}</span>
-                    <span className="text-[13px] font-medium text-zinc-200 leading-relaxed">{m.text}</span>
+                    <span className="text-sm text-zinc-200 leading-relaxed">{m.text}</span>
                     {m.flag && (
-                      <div className="flex items-center gap-1.5 mt-1.5">
+                      <div className="flex items-center gap-1.5 mt-2">
                         <span className="w-1.5 h-1.5 rounded-full" style={{ background: m.flag === 'retention_strong' ? '#10b981' : '#ef4444' }} />
-                        <span className="text-[10px] font-medium" style={{ color: m.flag === 'retention_strong' ? '#10b981' : '#ef4444' }}>
+                        <span className="text-[10px] font-semibold" style={{ color: m.flag === 'retention_strong' ? '#10b981' : '#ef4444' }}>
                           {m.flag === 'retention_strong' ? 'Retention strong' : 'Drop-off risk'}
                         </span>
                       </div>
@@ -167,21 +247,6 @@ export function HookAnalysisExpanded({ content, format }: HookAnalysisExpandedPr
               ))}
             </div>
           )}
-
-          {/* Meta tiles */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="rounded-xl bg-white/[0.02] border border-white/[0.05] p-3">
-              <span className="text-[10px] text-zinc-500 uppercase tracking-wide block mb-1.5">Hook type</span>
-              <span className="text-xs font-medium text-zinc-200">{data.hookType.split(/[—–-]/)[0].trim()}</span>
-            </div>
-            <div className="rounded-xl bg-white/[0.02] border border-white/[0.05] p-3">
-              <span className="text-[10px] text-zinc-500 uppercase tracking-wide block mb-1.5">Strength</span>
-              <span className="text-xs font-medium capitalize" style={{ color: bar.color }}>{bar.label}</span>
-              <div className="h-1 bg-white/5 rounded-full mt-2 overflow-hidden">
-                <div className="h-full rounded-full" style={{ width: bar.width, background: bar.color }} />
-              </div>
-            </div>
-          </div>
         </>
       )}
     </div>
