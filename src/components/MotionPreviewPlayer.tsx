@@ -1,5 +1,48 @@
 // src/components/MotionPreviewPlayer.tsx — Shared video preview for all Kling animation scenarios
+import { useEffect, useState, useRef } from "react";
 import { Loader2, Play } from "lucide-react";
+
+// ── Staged loading messages ─────────────────────────────────────────────────
+
+const STAGED_MESSAGES = [
+  { after: 0,  text: "Sending to Kling..." },
+  { after: 5,  text: "Generating your 5s clip..." },
+  { after: 15, text: "Still working — Kling clips take 1–2 minutes..." },
+  { after: 40, text: "Almost there — this is normal for motion generation..." },
+  { after: 90, text: "Taking longer than usual — still running..." },
+] as const;
+
+const PHASE_CONFIG = [
+  { label: "Opening",    activateAt: 0  },
+  { label: "Transition", activateAt: 20 },
+  { label: "Payoff",     activateAt: 50 },
+] as const;
+
+function useElapsedSeconds(isActive: boolean) {
+  const [elapsed, setElapsed] = useState(0);
+  const startRef = useRef(Date.now());
+
+  useEffect(() => {
+    if (!isActive) { setElapsed(0); return; }
+    startRef.current = Date.now();
+    const interval = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - startRef.current) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isActive]);
+
+  return elapsed;
+}
+
+function getStagedMessage(elapsed: number): string {
+  let msg = STAGED_MESSAGES[0].text;
+  for (const stage of STAGED_MESSAGES) {
+    if (elapsed >= stage.after) msg = stage.text;
+  }
+  return msg;
+}
+
+// ── Props ───────────────────────────────────────────────────────────────────
 
 export interface MotionPreviewPlayerProps {
   videoUrl?: string | null;
@@ -15,12 +58,13 @@ export function MotionPreviewPlayer({
   videoUrl,
   stillFrameUrl,
   isLoading,
-  loadingLabel = "Generating 5s video clip...",
   onAnimate,
   buttonLabel,
   error,
 }: MotionPreviewPlayerProps) {
-  // ── Result: video ready ───────────────────────────────────────────────────
+  const elapsed = useElapsedSeconds(isLoading);
+
+  // ── Result: video ready ─────────────────────────────────────────────────
   if (videoUrl) {
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -40,7 +84,6 @@ export function MotionPreviewPlayer({
           />
         </div>
 
-        {/* Still frame fallback */}
         {stillFrameUrl && (
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <span style={{
@@ -50,21 +93,15 @@ export function MotionPreviewPlayer({
               Still frame
             </span>
             <div style={{
-              borderRadius: 12,
-              overflow: "hidden",
-              background: "#18181b",
-              border: "1px solid rgba(255,255,255,0.06)",
+              borderRadius: 12, overflow: "hidden",
+              background: "#18181b", border: "1px solid rgba(255,255,255,0.06)",
             }}>
-              <img
-                src={stillFrameUrl}
-                alt="Still frame"
-                style={{ width: "100%", display: "block", objectFit: "contain" }}
-              />
+              <img src={stillFrameUrl} alt="Still frame"
+                style={{ width: "100%", display: "block", objectFit: "contain" }} />
             </div>
           </div>
         )}
 
-        {/* Attribution */}
         <span style={{ fontSize: 11, color: "#52525b", textAlign: "right" }}>
           Powered by Kling v2.1
         </span>
@@ -72,27 +109,70 @@ export function MotionPreviewPlayer({
     );
   }
 
-  // ── Loading: generating video ─────────────────────────────────────────────
+  // ── Loading: staged messages + animated timeline cards ───────────────────
   if (isLoading) {
     return (
       <div style={{
-        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-        gap: 12, padding: "32px 20px",
         borderRadius: 12, background: "#18181b",
         border: "1px solid rgba(255,255,255,0.06)",
+        overflow: "hidden",
       }}>
-        <Loader2
-          size={20}
-          color="#6366f1"
-          style={{ animation: "spin 1s linear infinite" }}
-        />
-        <span style={{ fontSize: 13, color: "#a1a1aa" }}>{loadingLabel}</span>
+        {/* Spinner + staged message */}
+        <div style={{
+          display: "flex", flexDirection: "column", alignItems: "center",
+          gap: 10, padding: "28px 20px 20px",
+        }}>
+          <Loader2
+            size={20} color="#6366f1"
+            style={{ animation: "spin 1s linear infinite" }}
+          />
+          <span style={{ fontSize: 13, color: "#71717a", textAlign: "center", transition: "opacity 300ms" }}>
+            {getStagedMessage(elapsed)}
+          </span>
+        </div>
+
+        {/* Animated timeline cards */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, padding: "0 16px 16px" }}>
+          {PHASE_CONFIG.map((phase) => {
+            const isLit = elapsed >= phase.activateAt;
+            return (
+              <div
+                key={phase.label}
+                style={{
+                  padding: "10px 12px",
+                  borderRadius: 8,
+                  border: `1px solid ${isLit ? "rgba(99,102,241,0.35)" : "rgba(255,255,255,0.06)"}`,
+                  background: isLit ? "rgba(99,102,241,0.06)" : "rgba(255,255,255,0.02)",
+                  transition: "border-color 600ms ease, background-color 600ms ease",
+                }}
+              >
+                <span style={{
+                  fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em",
+                  color: isLit ? "#818cf8" : "#52525b",
+                  transition: "color 600ms ease",
+                }}>
+                  {phase.label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Elapsed timer */}
+        <div style={{
+          display: "flex", justifyContent: "center", paddingBottom: 16,
+        }}>
+          <span style={{ fontSize: 11, fontFamily: "var(--mono)", color: "#3f3f46" }}>
+            {elapsed}s elapsed
+          </span>
+        </div>
+
         <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
       </div>
     );
   }
 
-  // ── Error state ───────────────────────────────────────────────────────────
+  // ── Error state ─────────────────────────────────────────────────────────
   if (error) {
     return (
       <div style={{
@@ -109,7 +189,7 @@ export function MotionPreviewPlayer({
     );
   }
 
-  // ── Pre-generation: show animate button ───────────────────────────────────
+  // ── Pre-generation: show animate button ─────────────────────────────────
   if (onAnimate) {
     return (
       <button
