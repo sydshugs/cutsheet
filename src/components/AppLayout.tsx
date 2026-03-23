@@ -11,6 +11,7 @@ import { useSupabaseHistory } from "../hooks/useSupabaseHistory";
 import { useSwipeFile, type SwipeItem } from "../hooks/useSwipeFile";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
+import { getAvatarUrl } from "./UserAvatar";
 import { themes } from "../theme";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import { OfflineBanner } from "./OfflineBanner";
@@ -150,7 +151,9 @@ export default function AppLayout() {
           onMobileMenuToggle={() => setMobileOpen((p) => !p)}
           showMobileMenu={mobileOpen}
           userName={userEmail}
+          userEmail={userEmail}
           userPlan={tier}
+          avatarUrl={getAvatarUrl(user)}
           hasResult={hasAnalysisResult}
           onLogout={async () => { await supabase.auth.signOut(); navigate("/login"); }}
         />

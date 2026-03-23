@@ -278,31 +278,7 @@ function DesktopSidebar({
 
       {/* Bottom */}
       <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "8px 8px 12px", display: "flex", flexDirection: "column", gap: 2 }}>
-        {/* Pro plan badge */}
-        {!collapsed && (
-          <div style={{
-            margin: "4px 4px 6px", padding: "8px 12px", borderRadius: 8,
-            background: isPro ? "rgba(99,102,241,0.08)" : "rgba(255,255,255,0.03)",
-            border: `1px solid ${isPro ? "rgba(99,102,241,0.2)" : "rgba(255,255,255,0.06)"}`,
-            display: "flex", alignItems: "center", gap: 8,
-          }}>
-            <div style={{
-              width: 6, height: 6, borderRadius: "50%",
-              background: isPro ? "#6366f1" : "#52525b",
-            }} />
-            <span style={{ fontSize: 12, fontWeight: 500, color: isPro ? "#818cf8" : "#71717a" }}>
-              {isTeam ? "Team Plan" : isPro ? "Pro Plan" : "Free Plan"}
-            </span>
-          </div>
-        )}
-        {collapsed && (
-          <div style={{ display: "flex", justifyContent: "center", margin: "4px 0 6px" }}>
-            <div style={{
-              width: 8, height: 8, borderRadius: "50%",
-              background: isPro ? "#6366f1" : "#52525b",
-            }} title={isTeam ? "Team Plan" : isPro ? "Pro Plan" : "Free Plan"} />
-          </div>
-        )}
+        {/* Plan badge moved to TopBar */}
 
         {/* Help & Support */}
         <a
