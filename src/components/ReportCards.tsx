@@ -737,87 +737,120 @@ export function ReportCards({
         );
       })}
 
-      {/* Pacing & Retention — VIDEO ONLY, structured layout */}
+      {/* Pacing & Retention — VIDEO ONLY, V1 insight-first layout */}
       {format === 'video' && centerSections.filter(s => /pacing|retention/i.test(s.title ?? '')).map((section, i) => {
-        const title = toSentenceCase(section.title!);
-        const SectionIcon = getIconForTitle(title);
+        const SectionIcon = getIconForTitle(toSentenceCase(section.title!));
         const c = section.content;
 
-        // Parse structured fields from markdown
         const avgScene = c.match(/Average scene length:\s*\*?\*?\s*([^\n*]+)/i)?.[1]?.trim();
         const pacing = c.match(/Overall pacing:\s*\*?\*?\s*([^\n*]+)/i)?.[1]?.trim();
         const retentionMatch = c.match(/Retention hooks?:\s*\*?\*?\s*([^\n]+(?:\n(?!\*\*|-\s)[^\n]+)*)/i);
         const retention = retentionMatch?.[1]?.trim();
         const dropOffMatch = c.match(/Drop.off risk.*?:\s*\*?\*?\s*([^\n]+(?:\n(?!\*\*|##)[^\n]+)*)/i);
         const dropOffText = dropOffMatch?.[1]?.trim();
-
-        // Parse drop-off moments from bullet list
         const dropOffs = dropOffText
           ? dropOffText.split('\n').filter(l => l.trim()).map(l => {
               const clean = l.replace(/^[-*]\s*/, '').trim();
               const tsMatch = clean.match(/^(\d+:\d+[–-]\d+:\d+|\d+:\d+s?)/);
               const ts = tsMatch?.[1] ?? 'Overall';
               const rest = clean.replace(tsMatch?.[0] ?? '', '').replace(/^[\s:—–-]+/, '').trim();
-              return { timestamp: ts, text: rest };
+              const parts = rest.split(/[—–-]/).map(p => p.trim()).filter(Boolean);
+              const isHigh = /drop|risk|scroll|lose|static|kill/i.test(rest);
+              return { timestamp: ts, risk: parts[0] ?? rest, note: parts[1] ?? '', severity: isHigh ? 'high' : 'medium' };
             })
           : [];
-
-        const pacingChipColor = /fast/i.test(pacing ?? '') ? '#10b981' : /slow/i.test(pacing ?? '') ? '#ef4444' : '#d97706';
+        const pacingColor = /fast/i.test(pacing ?? '') ? '#10b981' : /slow/i.test(pacing ?? '') ? '#ef4444' : '#d97706';
+        // Key insight: first non-label sentence
+        const sentences = c.split('\n').filter(l => l.trim() && !l.startsWith('#') && !l.startsWith('-') && !l.startsWith('*') && !/^\*\*/.test(l));
+        const keyInsight = sentences.find(s => s.length > 15 && s.length < 100)?.replace(/\*\*/g, '').trim() ?? '';
 
         return (
-          <div key={`pacing-${i}`} className="bg-zinc-900/50 rounded-2xl border border-white/5 p-5 mt-3">
+          <div key={`pacing-${i}`} className="rounded-xl border border-white/5 overflow-hidden mt-3" style={{ background: 'var(--surface, rgba(255,255,255,0.02))' }}>
             {/* Header */}
-            <div className="flex items-center gap-2 mb-3">
+            <div className="flex items-center gap-2 px-4 py-3" style={{ borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
               <SectionIcon size={14} className="text-zinc-500" />
-              <span className="text-xs font-medium text-zinc-200">{title}</span>
+              <span className="text-[13px] font-medium text-zinc-200">Pacing & retention</span>
               {pacing && (
                 <span className="ml-auto text-[10px] font-medium rounded-full px-1.5 py-px"
-                  style={{ color: pacingChipColor, background: `${pacingChipColor}15` }}>
-                  {pacing}
-                </span>
+                  style={{ color: pacingColor, background: `${pacingColor}15` }}>{pacing}</span>
               )}
             </div>
 
-            {/* 2-up tile grid */}
-            <div className="grid grid-cols-2 gap-2 mb-3">
-              {avgScene && (
-                <div className="bg-white/[0.03] rounded-lg p-2.5">
-                  <span className="text-[10px] text-zinc-500 uppercase tracking-[0.05em] block mb-1">Avg scene length</span>
-                  <span className="text-[13px] font-medium text-zinc-200">{avgScene}</span>
+            {/* Key insight banner */}
+            {keyInsight && (
+              <div className="flex items-start gap-2.5 px-3.5 py-3" style={{ background: 'rgba(251,191,36,0.06)', borderBottom: '0.5px solid rgba(251,191,36,0.12)' }}>
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'rgba(251,191,36,0.12)' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
                 </div>
-              )}
-              {pacing && (
-                <div className="bg-white/[0.03] rounded-lg p-2.5">
-                  <span className="text-[10px] text-zinc-500 uppercase tracking-[0.05em] block mb-1">Overall pacing</span>
-                  <span className="text-[13px] font-medium text-zinc-200">{pacing}</span>
-                </div>
-              )}
-              {retention && (
-                <div className="bg-white/[0.03] rounded-lg p-2.5 col-span-2">
-                  <span className="text-[10px] text-zinc-500 uppercase tracking-[0.05em] block mb-1">Retention hooks</span>
-                  <span className="text-xs text-zinc-300 leading-relaxed">{retention}</span>
-                </div>
-              )}
-            </div>
-
-            {/* Drop-off risk moments */}
-            {dropOffs.length > 0 && (
-              <div>
-                <span className="text-[10px] text-zinc-500 uppercase tracking-[0.05em] block mb-2">Drop-off risk moments</span>
-                <div className="flex flex-col gap-[5px]">
-                  {dropOffs.map((d, j) => (
-                    <div key={j} className="flex items-start gap-2.5 bg-white/[0.03] rounded-lg px-2.5 py-2">
-                      <span className="text-[11px] font-mono text-zinc-500 min-w-[52px] shrink-0">{d.timestamp}</span>
-                      <span className="text-xs text-zinc-300 flex-1 leading-relaxed">{d.text}</span>
-                      <span className="w-1.5 h-1.5 rounded-full bg-red-400 mt-1.5 shrink-0" />
-                    </div>
-                  ))}
+                <div>
+                  <span className="text-[10px] font-medium uppercase tracking-[0.04em] block mb-1" style={{ color: '#d97706' }}>Key insight</span>
+                  <p className="text-xs font-medium text-zinc-200 leading-[1.45]">{keyInsight}</p>
                 </div>
               </div>
             )}
 
-            {/* Fallback if parsing fails */}
-            {!avgScene && !pacing && !retention && dropOffs.length === 0 && renderSectionContent(section)}
+            <div className="px-4 py-3.5">
+              {/* Meta tiles */}
+              <div className="grid grid-cols-2 gap-1.5 mb-3">
+                {avgScene && (
+                  <div className="bg-white/[0.03] rounded-lg" style={{ padding: '9px 12px' }}>
+                    <span className="text-[10px] text-zinc-500 uppercase tracking-[0.04em] block mb-1">Avg scene</span>
+                    <span className="text-[13px] font-medium text-zinc-200">{avgScene}</span>
+                  </div>
+                )}
+                {pacing && (
+                  <div className="bg-white/[0.03] rounded-lg" style={{ padding: '9px 12px' }}>
+                    <span className="text-[10px] text-zinc-500 uppercase tracking-[0.04em] block mb-1">Pacing</span>
+                    <span className="text-[13px] font-medium" style={{ color: pacingColor }}>{pacing}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Retention curve bar */}
+              <div className="mb-3">
+                <span className="text-[10px] text-zinc-500 uppercase tracking-[0.04em] block mb-1.5">Retention curve</span>
+                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                  <div className="h-full rounded-full w-full" style={{ background: 'linear-gradient(90deg, #ef4444 0%, #ef4444 10%, #10b981 25%, #10b981 55%, #d97706 70%, #ef4444 90%, #ef4444 100%)' }} />
+                </div>
+                <div className="flex justify-between mt-1">
+                  <span className="text-[9px] font-mono text-zinc-600">0s</span>
+                  <span className="text-[9px] font-mono text-zinc-600">25%</span>
+                  <span className="text-[9px] font-mono text-zinc-500">50% ★</span>
+                  <span className="text-[9px] font-mono text-zinc-600">75%</span>
+                  <span className="text-[9px] font-mono text-zinc-600">100%</span>
+                </div>
+              </div>
+
+              {/* Retention hooks prose */}
+              {retention && (
+                <p className="text-xs text-zinc-400 leading-relaxed mb-3">{retention}</p>
+              )}
+
+              {/* Drop-off risk rows */}
+              {dropOffs.length > 0 && (
+                <div>
+                  <span className="text-[10px] text-zinc-500 uppercase tracking-[0.04em] block mb-1.5">Drop-off risk moments</span>
+                  <div className="flex flex-col gap-1">
+                    {dropOffs.map((d, j) => {
+                      const sevColor = d.severity === 'high' ? '#ef4444' : d.severity === 'medium' ? '#f59e0b' : 'rgba(161,161,170,0.2)';
+                      return (
+                        <div key={j} className="flex items-start gap-2.5 bg-white/[0.03] rounded-lg" style={{ padding: '8px 10px' }}>
+                          <span className="text-[10px] font-medium font-mono min-w-[52px] shrink-0 mt-0.5" style={{ color: sevColor }}>{d.timestamp}</span>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-xs font-medium text-zinc-200 block">{d.risk}</span>
+                            {d.note && <span className="text-[11px] text-zinc-500 block mt-0.5">{d.note}</span>}
+                          </div>
+                          <span className="w-[7px] h-[7px] rounded-full shrink-0 mt-1.5" style={{ background: sevColor }} />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Fallback */}
+              {!avgScene && !pacing && !retention && dropOffs.length === 0 && renderSectionContent(section)}
+            </div>
           </div>
         );
       })}
