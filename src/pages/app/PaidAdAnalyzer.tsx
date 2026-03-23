@@ -924,7 +924,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                         icon={Zap}
                         niche={rawUserContext?.niche}
                         onFixIt={handleFixIt}
-                        onVisualize={() => setVisualizeOpen(true)}
+                        onVisualize={handleVisualize}
                         onCheckPolicies={handleCheckPolicies}
                         onCompare={() => navigate('/app/competitor')}
                         fixItLoading={fixItLoading}
