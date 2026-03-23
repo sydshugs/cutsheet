@@ -8,7 +8,7 @@ import {
   Clapperboard, DollarSign, Hash, Eye, Lightbulb, BarChart3,
   Layout, Target, Palette, FileText, Upload, Wand2, Image, ShieldCheck,
   Zap, Film, AlignLeft, AlertCircle, Sparkles, ChevronRight, TrendingUp,
-  type LucideIcon,
+  Heart, type LucideIcon,
 } from "lucide-react";
 import type { Verdict, StructuredImprovement } from "../services/analyzerService";
 import { CreativeAnalysis } from "./CreativeAnalysis";

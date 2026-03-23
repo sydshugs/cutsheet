@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext.tsx";
 import { ProtectedRoute } from "./components/ProtectedRoute.tsx";
+import { ChunkErrorBoundary } from "./components/ChunkErrorBoundary.tsx";
 import "./index.css";
 
 // ── Critical path (landing + auth) — eagerly loaded ──────────────────────────
@@ -43,6 +44,8 @@ function ScrollToTop() {
   const { pathname, hash } = useLocation();
   useEffect(() => {
     if (!hash) window.scrollTo(0, 0);
+    // Clear chunk-reload guard on successful navigation so future deploys can auto-reload
+    sessionStorage.removeItem("chunk-reload");
   }, [pathname, hash]);
   return null;
 }
@@ -63,6 +66,7 @@ createRoot(document.getElementById("root")!).render(
     <BrowserRouter>
       <AuthProvider>
         <ScrollToTop />
+        <ChunkErrorBoundary>
         <Suspense fallback={<RouteLoader />}>
         <Routes>
           {/* Public — eagerly loaded */}
@@ -102,6 +106,7 @@ createRoot(document.getElementById("root")!).render(
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
         </Suspense>
+        </ChunkErrorBoundary>
       </AuthProvider>
     </BrowserRouter>
     </HelmetProvider>
