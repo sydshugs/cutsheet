@@ -14,6 +14,9 @@ export interface VisualizeRequest {
   platform: string;
   niche: string;
   adType: "static" | "display";
+  /** When true, the generated creative must NOT add any CTA button or CTA text.
+   *  Used for Meta static ads where the CTA is placed by the platform. */
+  excludeCta?: boolean;
 }
 
 export interface VisualizeResult {

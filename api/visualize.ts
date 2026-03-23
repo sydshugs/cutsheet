@@ -29,6 +29,7 @@ function buildVisualizePrompt(params: {
   improvements: string[];
   adFormat: "static" | "video_frame";
   hookVerdict?: string;
+  excludeCta?: boolean;
 }): string {
   const weakDimensions = params.dimensionScores
     .filter((d) => d.score < 7)
@@ -77,11 +78,13 @@ CRITICAL STYLE RULES — READ CAREFULLY:
    - If there are people in the original, keep the same ethnic diversity and age range
 
 3. SURGICAL FIXES ONLY. Change only what the analysis flagged as weak:
-   - If the CTA is weak → make the CTA more compelling and prominent
    - If the headline is generic → replace it with something specific and benefit-driven
    - If the visual hierarchy is confused → clarify what the eye should land on first
    - If the hook is weak → make the opening visual more arresting
    - Do NOT redesign elements that scored 8+ — leave them alone
+   - Do NOT add a CTA button or CTA text to the image. CTA buttons are placed by the ad platform (Meta, Google, etc.), not embedded in the creative itself. Focus improvements on hook strength, visual hierarchy, and message clarity only.${params.excludeCta ? `
+
+CTA-FREE MODE IS ON: This platform handles the CTA outside the creative. Do NOT add any call-to-action text, button, or overlay to the image. Zero CTA elements in the output.` : ""}
 
 4. TEXT IN THE AD must be readable, specific, and benefit-driven. No placeholder text. No generic copy like "Shop Now" or "Learn More" unless that was the original.
 
@@ -127,7 +130,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   // ── Input validation ─────────────────────────────────────────────────────
-  const { imageStorageUrl, imageBase64, imageMediaType, analysisResult, platform, niche, adType } = req.body ?? {};
+  const { imageStorageUrl, imageBase64, imageMediaType, analysisResult, platform, niche, adType, excludeCta } = req.body ?? {};
 
   if (!imageStorageUrl && !imageBase64) return res.status(400).json({ error: "imageStorageUrl or imageBase64 is required" });
   if (!analysisResult) return res.status(400).json({ error: "analysisResult is required" });
@@ -173,6 +176,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     improvements,
     adFormat,
     hookVerdict,
+    excludeCta: !!excludeCta,
   });
 
   // Derive improvement summary and changes from scorecard data (no Claude call needed)

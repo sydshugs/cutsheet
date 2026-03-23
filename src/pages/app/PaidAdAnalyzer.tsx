@@ -732,6 +732,8 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
     try {
       const { signedUrl: imageStorageUrl, storagePath } = await uploadImageToStorage(file, 1200, 0.85);
       const niche = userContext.match(/Niche:\s*(.+)/)?.[1]?.trim() || "general";
+      // Meta static ads use platform-native CTA — exclude CTA from generated creative
+      const isMetaStatic = platform === "Meta" && format === "static";
       const result = await visualizeAd({
         imageStorageUrl,
         imageMediaType: "image/jpeg",
@@ -743,6 +745,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
         platform: platform === "all" ? "general" : platform,
         niche,
         adType: "static",
+        excludeCta: isMetaStatic,
       });
       setVisualizeResult(result);
       setVisualizeStatus("complete");
