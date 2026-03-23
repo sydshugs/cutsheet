@@ -97,22 +97,40 @@ function ShimmerBlock({ height = 400 }: { height?: number }) {
 // ─── IMAGE PANEL ─────────────────────────────────────────────────────────────
 
 function ImagePanel({
-  src, label, height = 400,
-}: { src: string; label: string; height?: number }) {
+  src, label, height = 400, isAfter = false,
+}: { src: string; label: string; height?: number; isAfter?: boolean }) {
+  const labelColor = isAfter ? "#10b981" : "#71717a";
+  const borderColor = isAfter ? "rgba(16,185,129,0.2)" : "rgba(255,255,255,0.06)";
+  
   return (
-    <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
-      <span style={{ fontSize: 11, fontWeight: 600, color: "#71717a", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-        {label}
-      </span>
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 10, minWidth: 280 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <span style={{ 
+          fontSize: 11, fontWeight: 600, color: labelColor, 
+          textTransform: "uppercase", letterSpacing: "0.1em" 
+        }}>
+          {label}
+        </span>
+        {isAfter && (
+          <span style={{
+            fontSize: 10, fontWeight: 500, color: "#10b981",
+            background: "rgba(16,185,129,0.1)",
+            padding: "3px 8px", borderRadius: 6,
+          }}>
+            AI Improved
+          </span>
+        )}
+      </div>
       <div style={{
         height,
-        borderRadius: 12,
-        background: "#18181b",
-        border: "1px solid rgba(255,255,255,0.06)",
+        borderRadius: 14,
+        background: "#0f0f11",
+        border: `1px solid ${borderColor}`,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         overflow: "hidden",
+        position: "relative",
       }}>
         <img
           src={src}
@@ -194,46 +212,64 @@ function CreditLimitPanel({
 
   return (
     <div style={{
-      display: "flex", flexDirection: "column", alignItems: "center", gap: 20,
-      padding: "36px 24px 28px", textAlign: "center",
+      display: "flex", flexDirection: "column", alignItems: "center", gap: 24,
+      padding: "48px 32px 36px", textAlign: "center",
     }}>
-      {/* Gradient sparkle — positive signal, not an error indicator */}
-      <div style={{ position: "relative", width: 56, height: 56 }}>
+      {/* Gradient sparkle — keeping the icon style as requested */}
+      <div style={{ position: "relative", width: 64, height: 64 }}>
         <div style={{
-          position: "absolute", inset: -10,
+          position: "absolute", inset: -12,
           background: "radial-gradient(circle, rgba(99,102,241,0.22) 0%, transparent 70%)",
           borderRadius: "50%",
         }} />
         <div style={{
-          width: 56, height: 56, borderRadius: "50%",
+          width: 64, height: 64, borderRadius: "50%",
           background: "linear-gradient(135deg, rgba(99,102,241,0.18), rgba(139,92,246,0.18))",
           border: "1px solid rgba(99,102,241,0.28)",
           display: "flex", alignItems: "center", justifyContent: "center",
           position: "relative",
         }}>
-          <Sparkles size={22} color="#818cf8" />
+          <Sparkles size={26} color="#818cf8" />
         </div>
       </div>
 
       {/* Copy */}
-      <div style={{ maxWidth: 316 }}>
-        <p style={{ fontSize: 18, fontWeight: 600, color: "#f4f4f5", lineHeight: 1.35, marginBottom: 7 }}>
+      <div style={{ maxWidth: 360 }}>
+        <p style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", lineHeight: 1.35, marginBottom: 10 }}>
           You've maxed out Visualize this month
         </p>
-        <p style={{ fontSize: 13, color: "#71717a", lineHeight: 1.65 }}>
+        <p style={{ fontSize: 14, color: "#71717a", lineHeight: 1.7 }}>
           {body}
         </p>
       </div>
 
-      {/* Credit progress bar */}
-      <div style={{ width: "100%", maxWidth: 280 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 7 }}>
-          <span style={{ fontSize: 11, color: "#52525b", fontFamily: "var(--mono)" }}>
-            {creditData.used} / {creditData.limit} used
+      {/* Credit progress card */}
+      <div style={{ 
+        width: "100%", maxWidth: 320, 
+        padding: "16px 20px",
+        background: "rgba(255,255,255,0.025)",
+        border: "1px solid rgba(255,255,255,0.06)",
+        borderRadius: 14,
+      }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+            <span style={{ fontSize: 22, fontWeight: 700, color: "#f4f4f5", fontFamily: "var(--mono)" }}>
+              {creditData.used}
+            </span>
+            <span style={{ fontSize: 14, color: "#52525b", fontFamily: "var(--mono)" }}>
+              / {creditData.limit}
+            </span>
+            <span style={{ fontSize: 12, color: "#52525b", marginLeft: 4 }}>used</span>
+          </div>
+          <span style={{ 
+            fontSize: 11, fontWeight: 500, color: "#71717a",
+            background: "rgba(255,255,255,0.04)",
+            padding: "4px 10px", borderRadius: 6,
+          }}>
+            Resets {resetLabel}
           </span>
-          <span style={{ fontSize: 11, color: "#52525b" }}>Resets {resetLabel}</span>
         </div>
-        <div style={{ height: 4, borderRadius: 999, background: "rgba(255,255,255,0.07)", overflow: "hidden" }}>
+        <div style={{ height: 6, borderRadius: 999, background: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
           <div style={{
             height: "100%", width: `${fillPct}%`, borderRadius: 999,
             background: "linear-gradient(90deg, #6366f1, #8b5cf6)",
@@ -242,16 +278,17 @@ function CreditLimitPanel({
       </div>
 
       {/* CTA */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, width: "100%", maxWidth: 300 }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, width: "100%", maxWidth: 320 }}>
         {isTeam ? (
           <a
             href="mailto:support@cutsheet.xyz?subject=Custom Visualize limits"
             style={{
               display: "flex", alignItems: "center", justifyContent: "center",
-              width: "100%", padding: "11px 24px",
+              width: "100%", padding: "14px 28px",
               background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-              borderRadius: 9999, fontSize: 14, fontWeight: 600, color: "#fff",
-              textDecoration: "none", boxShadow: "0 2px 14px rgba(99,102,241,0.32)",
+              borderRadius: 12, fontSize: 15, fontWeight: 600, color: "#fff",
+              textDecoration: "none", boxShadow: "0 4px 20px rgba(99,102,241,0.35)",
+              transition: "all 150ms",
             }}
           >
             Contact us for custom limits
@@ -261,39 +298,39 @@ function CreditLimitPanel({
             type="button"
             onClick={() => onUpgrade?.(isPro ? "team" : "pro")}
             style={{
-              width: "100%", padding: "11px 24px",
+              width: "100%", padding: "14px 28px",
               background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-              border: "none", borderRadius: 9999,
-              fontSize: 14, fontWeight: 600, color: "#fff", cursor: "pointer",
-              boxShadow: "0 2px 14px rgba(99,102,241,0.32)",
-              transition: "opacity 150ms",
+              border: "none", borderRadius: 12,
+              fontSize: 15, fontWeight: 600, color: "#fff", cursor: "pointer",
+              boxShadow: "0 4px 20px rgba(99,102,241,0.35)",
+              transition: "all 150ms",
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.87"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 6px 24px rgba(99,102,241,0.4)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(99,102,241,0.35)"; }}
           >
             {isPro ? "Upgrade to Team — 25 Visualizes/month" : "Upgrade to Pro — 10 Visualizes/month"}
           </button>
         )}
 
-        <p style={{ fontSize: 12, color: "#3f3f46" }}>
+        <p style={{ fontSize: 13, color: "#52525b" }}>
           or wait until {resetLabel} for credits to reset
         </p>
-      </div>
 
-      <button
-        type="button"
-        onClick={onClose}
-        style={{
-          marginTop: -4, padding: "4px 14px", fontSize: 11,
-          background: "none", border: "1px solid rgba(255,255,255,0.06)",
-          borderRadius: 6, color: "#3f3f46", cursor: "pointer",
-          transition: "color 150ms",
-        }}
-        onMouseEnter={(e) => { e.currentTarget.style.color = "#71717a"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.color = "#3f3f46"; }}
-      >
-        Dismiss
-      </button>
+        <button
+          type="button"
+          onClick={onClose}
+          style={{
+            marginTop: 4, padding: "8px 20px", fontSize: 13, fontWeight: 500,
+            background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: 8, color: "#71717a", cursor: "pointer",
+            transition: "all 150ms",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "#a1a1aa"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; e.currentTarget.style.color = "#71717a"; }}
+        >
+          Dismiss
+        </button>
+      </div>
     </div>
   );
 }
@@ -505,14 +542,19 @@ export function VisualizePanel({
         {/* ── Complete ──────────────────────────────────────── */}
         {status === "complete" && result && (
           <motion.div key="complete" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            {/* Before / After images */}
-            <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: 20 }}>
+            {/* Before / After comparison */}
+            <div style={{ 
+              display: "grid", 
+              gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", 
+              gap: 20, 
+              marginBottom: 24,
+            }}>
               {originalImageUrl && (
                 <ImagePanel src={originalImageUrl} label="Before" height={380} />
               )}
 
               {result.generatedImageUrl ? (
-                <ImagePanel src={result.generatedImageUrl} label="After" height={380} />
+                <ImagePanel src={result.generatedImageUrl} label="After" height={380} isAfter />
               ) : result.visualBrief ? (
                 <VisualBriefPanel
                   brief={result.visualBrief}
@@ -522,29 +564,58 @@ export function VisualizePanel({
               ) : null}
             </div>
 
-            {/* What Changed */}
+            {/* What Changed - Redesigned card */}
             {(result.improvementSummary || (result.changesApplied?.length ?? 0) > 0) && (
-              <div style={{ marginBottom: 20 }}>
-                <p style={{ fontSize: 12, fontWeight: 600, color: "#818cf8", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
-                  What Changed
-                </p>
+              <div style={{ 
+                marginBottom: 24,
+                padding: "20px 24px",
+                background: "rgba(16,185,129,0.03)",
+                border: "1px solid rgba(16,185,129,0.1)",
+                borderRadius: 16,
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+                  <div style={{
+                    width: 32, height: 32, borderRadius: 10,
+                    background: "rgba(16,185,129,0.1)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    <Check size={16} color="#10b981" strokeWidth={2.5} />
+                  </div>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "#10b981", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                    What Changed
+                  </span>
+                </div>
+                
                 {result.improvementSummary && (
-                  <p style={{ fontSize: 13, color: "#a1a1aa", lineHeight: 1.65, marginBottom: 12 }}>
+                  <p style={{ fontSize: 14, color: "#d4d4d8", lineHeight: 1.7, marginBottom: 16 }}>
                     {result.improvementSummary}
                   </p>
                 )}
+                
                 {result.changesApplied?.length > 0 && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                     {result.changesApplied.map((change, i) => (
                       <motion.div
                         key={i}
-                        initial={{ opacity: 0, x: -6 }}
+                        initial={{ opacity: 0, x: -8 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.25, delay: i * 0.06 }}
-                        style={{ display: "flex", alignItems: "flex-start", gap: 8 }}
+                        transition={{ duration: 0.3, delay: i * 0.08 }}
+                        style={{ 
+                          display: "flex", alignItems: "flex-start", gap: 12,
+                          padding: "12px 14px",
+                          background: "rgba(255,255,255,0.025)",
+                          borderRadius: 10,
+                        }}
                       >
-                        <Check size={13} color="#10b981" strokeWidth={2.5} style={{ flexShrink: 0, marginTop: 2 }} />
-                        <span style={{ fontSize: 13, color: "#d4d4d8", lineHeight: 1.5 }}>{change}</span>
+                        <div style={{
+                          width: 20, height: 20, borderRadius: 6,
+                          background: "rgba(16,185,129,0.15)",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          flexShrink: 0, marginTop: 1,
+                        }}>
+                          <Check size={12} color="#10b981" strokeWidth={2.5} />
+                        </div>
+                        <span style={{ fontSize: 13, color: "#e4e4e7", lineHeight: 1.6 }}>{change}</span>
                       </motion.div>
                     ))}
                   </div>
@@ -554,10 +625,19 @@ export function VisualizePanel({
 
             {/* Motion Preview (Kling animation) */}
             {result.generatedImageUrl && (
-              <div style={{ marginBottom: 20 }}>
-                <p style={{ fontSize: 12, fontWeight: 600, color: "#818cf8", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
-                  Motion Preview
-                </p>
+              <div style={{ marginBottom: 24 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                  <div style={{
+                    width: 28, height: 28, borderRadius: 8,
+                    background: "rgba(99,102,241,0.1)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    <Sparkles size={14} color="#818cf8" />
+                  </div>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "#818cf8", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                    Motion Preview
+                  </span>
+                </div>
                 <MotionPreviewPlayer
                   videoUrl={videoUrl}
                   stillFrameUrl={result.generatedImageUrl}
@@ -570,23 +650,29 @@ export function VisualizePanel({
               </div>
             )}
 
-            {/* Action row */}
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 16 }}>
+            {/* Action row - Redesigned buttons */}
+            <div style={{ 
+              display: "flex", gap: 10, flexWrap: "wrap", 
+              paddingTop: 20,
+              borderTop: "1px solid rgba(255,255,255,0.06)",
+            }}>
               {result.generatedImageUrl && (
                 <button
                   type="button"
                   onClick={handleDownload}
                   style={{
-                    display: "flex", alignItems: "center", gap: 6,
-                    padding: "8px 14px",
-                    background: downloadTouched ? "rgba(99,102,241,0.2)" : "rgba(99,102,241,0.12)",
-                    border: "1px solid rgba(99,102,241,0.35)",
-                    borderRadius: 8, cursor: "pointer",
-                    fontSize: 13, fontWeight: 500, color: "#818cf8",
+                    display: "flex", alignItems: "center", gap: 8,
+                    height: 42, padding: "0 18px",
+                    background: downloadTouched ? "rgba(99,102,241,0.25)" : "rgba(99,102,241,0.12)",
+                    border: "1px solid rgba(99,102,241,0.3)",
+                    borderRadius: 10, cursor: "pointer",
+                    fontSize: 13, fontWeight: 500, color: "#a5b4fc",
                     transition: "all 150ms",
                   }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(99,102,241,0.2)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = downloadTouched ? "rgba(99,102,241,0.25)" : "rgba(99,102,241,0.12)"; }}
                 >
-                  <Download size={13} />
+                  <Download size={14} />
                   Download Improved Version
                 </button>
               )}
@@ -594,16 +680,18 @@ export function VisualizePanel({
                 type="button"
                 onClick={handleCopyBrief}
                 style={{
-                  display: "flex", alignItems: "center", gap: 6,
-                  padding: "8px 14px",
-                  background: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: 8, cursor: "pointer",
-                  fontSize: 13, color: "#a1a1aa",
+                  display: "flex", alignItems: "center", gap: 8,
+                  height: 42, padding: "0 18px",
+                  background: briefCopied ? "rgba(16,185,129,0.1)" : "rgba(255,255,255,0.04)",
+                  border: `1px solid ${briefCopied ? "rgba(16,185,129,0.2)" : "rgba(255,255,255,0.1)"}`,
+                  borderRadius: 10, cursor: "pointer",
+                  fontSize: 13, fontWeight: 500, color: briefCopied ? "#10b981" : "#a1a1aa",
                   transition: "all 150ms",
                 }}
+                onMouseEnter={(e) => { if (!briefCopied) e.currentTarget.style.background = "rgba(255,255,255,0.06)"; }}
+                onMouseLeave={(e) => { if (!briefCopied) e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
               >
-                <Copy size={13} />
+                {briefCopied ? <Check size={14} /> : <Copy size={14} />}
                 {briefCopied ? "Copied!" : "Copy Visual Brief"}
               </button>
               {result.generatedImageUrl && onAnalyzeVersion && (
@@ -611,14 +699,16 @@ export function VisualizePanel({
                   type="button"
                   onClick={handleAnalyzeVersion}
                   style={{
-                    display: "flex", alignItems: "center", gap: 6,
-                    padding: "8px 14px",
+                    display: "flex", alignItems: "center", gap: 8,
+                    height: 42, padding: "0 18px",
                     background: "rgba(255,255,255,0.04)",
                     border: "1px solid rgba(255,255,255,0.1)",
-                    borderRadius: 8, cursor: "pointer",
-                    fontSize: 13, color: "#a1a1aa",
+                    borderRadius: 10, cursor: "pointer",
+                    fontSize: 13, fontWeight: 500, color: "#a1a1aa",
                     transition: "all 150ms",
                   }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
                 >
                   Analyze This Version
                 </button>
