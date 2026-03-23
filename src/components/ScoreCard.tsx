@@ -5,10 +5,8 @@
 import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { HookAnalysisExpanded } from "./HookAnalysisExpanded";
-import { VisualHierarchyExpanded } from "./VisualHierarchyExpanded";
-import { CopyAndMessagingExpanded } from "./CopyAndMessagingExpanded";
 import { HashtagsC2 } from "./HashtagsC2";
-import { Copy, CheckCircle, Wand2, Loader2, TrendingUp, ArrowUpRight, Share2, RotateCcw, ShieldCheck, FileText, Bookmark, Lightbulb, DollarSign, Sparkles, Film, Hash, Layout, Heart, MessageSquare } from "lucide-react";
+import { Copy, CheckCircle, Loader2, ArrowUpRight, Share2, RotateCcw, FileText, Bookmark, Lightbulb, DollarSign, Hash } from "lucide-react";
 import type { BudgetRecommendation, Hashtags, Scene, HookDetail } from "../services/analyzerService";
 import type { EngineBudgetRecommendation } from "../services/budgetService";
 import { getBenchmark, type BenchmarkResult } from "../lib/benchmarks";
@@ -384,56 +382,21 @@ export function ScoreCard({
 
           {/* Predicted Performance + Budget moved outside glass card */}
 
-          {/* Analysis sections — cleaner spacing */}
+          {/* Analysis sections — only Hook analysis */}
           {analysisSections && analysisSections.length > 0 && (() => {
-            const copySection = analysisSections.find(s => /copy/i.test(s.title));
-            const messagingSection = analysisSections.find(s => /messag/i.test(s.title));
-            const combinedContent = [copySection?.content, messagingSection?.content].filter(Boolean).join('\n\n');
-            const hasCombined = copySection || messagingSection;
-            const ctaMissing = hasCombined && /no\s*(explicit\s*)?(cta|call)|cta.*none|none.*cta|flag.*missing/i.test(combinedContent);
-
-            const filteredSections = analysisSections.filter(s =>
-              !(/copy/i.test(s.title)) && !(/messag/i.test(s.title))
-            );
+            // Only show Hook analysis section
+            const hookSection = analysisSections.find(s => /hook/i.test(s.title));
+            
+            if (!hookSection) return null;
 
             return (
             <div className="px-4 pt-4 space-y-1">
-              {filteredSections.map((section, i) => {
-                const iconMap: Record<string, typeof Lightbulb> = { hook: Lightbulb, hierarchy: Layout };
-                const matchedIcon = Object.entries(iconMap).find(([key]) => section.title.toLowerCase().includes(key));
-                const SIcon = matchedIcon?.[1] ?? FileText;
-                const isHook = section.title.toLowerCase().includes('hook');
-                const isHierarchy = section.title.toLowerCase().includes('hierarchy');
-                return (
-                  <CollapsibleSection
-                    key={i}
-                    title={section.title}
-                    icon={<SIcon size={14} />}
-                  >
-                    {isHook ? (
-                      <HookAnalysisExpanded content={section.content} format={format ?? 'static'} />
-                    ) : isHierarchy ? (
-                      <VisualHierarchyExpanded content={section.content} />
-                    ) : (
-                      <div className="text-[13px] text-zinc-400 leading-relaxed [&_strong]:text-zinc-300 [&_strong]:font-medium [&_ul]:list-disc [&_ul]:pl-4 [&_li]:mb-1.5 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:mb-2 [&_p:last-child]:mb-0">
-                        <ReactMarkdown>{section.content}</ReactMarkdown>
-                      </div>
-                    )}
-                  </CollapsibleSection>
-                );
-              })}
-
-              {hasCombined && (
-                <CollapsibleSection
-                  title="Copy & messaging"
-                  icon={<MessageSquare size={14} />}
-                  trailing={ctaMissing ? (
-                    <span className="text-[10px] font-medium rounded-md px-2 py-0.5 bg-red-500/10 text-red-400">No CTA</span>
-                  ) : undefined}
-                >
-                  <CopyAndMessagingExpanded content={combinedContent} />
-                </CollapsibleSection>
-              )}
+              <CollapsibleSection
+                title={hookSection.title}
+                icon={<Lightbulb size={14} />}
+              >
+                <HookAnalysisExpanded content={hookSection.content} format={format ?? 'static'} />
+              </CollapsibleSection>
             </div>
           );
           })()}
