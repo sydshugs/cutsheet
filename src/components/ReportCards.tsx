@@ -18,6 +18,7 @@ import { DeepDiveRow } from "./ui/DeepDiveRow";
 import { ToolButton } from "./ui/ToolButton";
 import type { Verdict, StructuredImprovement } from "../services/analyzerService";
 import { CreativeAnalysis } from "./CreativeAnalysis";
+import { CreativeVerdictAndSecondEye } from "./CreativeVerdictAndSecondEye";
 
 interface ReportCardsProps {
   file: File | null;
@@ -56,6 +57,9 @@ interface ReportCardsProps {
   secondEyeSlot?: React.ReactNode;
   // Design review data for CreativeAnalysis
   designReviewData?: { flags: { area: string; severity: string; fix: string; issue: string }[]; topIssue?: string; overallDesignVerdict?: string };
+  // Second eye data for combined video component
+  secondEyeResult?: any;
+  secondEyeLoading?: boolean;
 }
 
 const JSON_TITLE_RE = /json|scene|raw\s*data|budget\s*recommend/i;
@@ -248,6 +252,7 @@ export function ReportCards({
   fixItLoading, fixItResult, policyLoading, policyResult, visualizeLoading, visualizeResult,
   designReviewSlot, secondEyeSlot,
   designReviewData,
+  secondEyeResult: secondEyeData, secondEyeLoading: secondEyeDataLoading,
 }: ReportCardsProps) {
   const isImage = file?.type.startsWith("image/") ?? false;
   const fileUrl = useMemo(() => file ? URL.createObjectURL(file) : null, [file]);
@@ -774,31 +779,41 @@ export function ReportCards({
       {/* ─── Center column analysis sections ─── */}
       {/* Design Review + Second Eye Review rendered by PaidAdAnalyzer */}
 
-      {/* ─── Creative Analysis (combined verdict + design review) ─── */}
+      {/* ─── Creative Analysis / Verdict + Second Eye ─── */}
       {(() => {
-        // Build CreativeAnalysis data from verdict + design review
         const verdictSection = centerSections.find(s => /verdict/i.test(s.title ?? ''));
         const sentences = verdictSection?.content.trim().split(/(?<=[.!])\s+/).filter(s => s.trim()) ?? [];
         const oneLiner = effectiveVerdict?.headline ?? sentences[0] ?? 'Analysis complete';
-        const vState = effectiveVerdict?.state ?? (scores?.overall && scores.overall >= 8 ? 'ready' : scores?.overall && scores.overall >= 5 ? 'needs_work' : 'not_ready');
+        const vState = (effectiveVerdict?.state ?? (scores?.overall && scores.overall >= 8 ? 'ready' : scores?.overall && scores.overall >= 5 ? 'needs_work' : 'not_ready')) as 'not_ready' | 'needs_work' | 'ready';
+        const detail = sentences.slice(1, 3).join(' ');
 
-        // Build fixes from design review data
+        // Video: combined verdict + second eye
+        if (format === 'video') {
+          return (
+            <CreativeVerdictAndSecondEye
+              verdictState={vState}
+              verdictOneLiner={oneLiner}
+              verdictDetail={detail}
+              secondEyeResult={secondEyeData}
+              secondEyeLoading={secondEyeDataLoading}
+            />
+          );
+        }
+
+        // Static: CreativeAnalysis (verdict + design review)
         const fixes = (designReviewData?.flags ?? []).map(f => ({
-          fix: f.fix,
-          category: f.area,
+          fix: f.fix, category: f.area,
           severity: f.severity === 'critical' ? 'high' : f.severity === 'warning' ? 'medium' : 'low',
         }));
-
         const topFix = designReviewData?.flags?.find(f => f.severity === 'critical') ?? designReviewData?.flags?.[0];
-
         return (
           <CreativeAnalysis
-            verdictState={vState as 'not_ready' | 'needs_work' | 'ready'}
+            verdictState={vState}
             verdictOneLiner={oneLiner}
             score={scores?.overall ?? 0}
             topIssue={topFix ? { fix: topFix.fix, category: topFix.area } : undefined}
             fixes={fixes}
-            overallNote={designReviewData?.overallDesignVerdict ?? (sentences.slice(1, 3).join(' ') || undefined)}
+            overallNote={designReviewData?.overallDesignVerdict ?? (detail || undefined)}
           />
         );
       })()}

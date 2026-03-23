@@ -937,10 +937,12 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                           topIssue: staticSecondEyeResult.topIssue,
                           overallDesignVerdict: staticSecondEyeResult.overallDesignVerdict,
                         } : undefined}
+                        secondEyeResult={secondEyeOutput}
+                        secondEyeLoading={secondEyeLoading}
                         secondEyeSlot={
                           status === "complete" && format === "video" && secondEye ? (
                             <div className="mt-3">
-                              <SecondEyePanel result={secondEyeOutput} loading={secondEyeLoading} />
+                              {/* SecondEyePanel now rendered inside CreativeVerdictAndSecondEye */}
                             </div>
                           ) : undefined
                         }

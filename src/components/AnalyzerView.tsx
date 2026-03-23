@@ -48,6 +48,8 @@ interface AnalyzerViewProps {
   designReviewSlot?: React.ReactNode;
   secondEyeSlot?: React.ReactNode;
   designReviewData?: { flags: { area: string; severity: string; fix: string; issue: string }[]; topIssue?: string; overallDesignVerdict?: string };
+  secondEyeResult?: any;
+  secondEyeLoading?: boolean;
 }
 
 export function AnalyzerView({
@@ -88,6 +90,8 @@ export function AnalyzerView({
   designReviewSlot,
   secondEyeSlot,
   designReviewData,
+  secondEyeResult: secondEyeResultProp,
+  secondEyeLoading: secondEyeLoadingProp,
 }: AnalyzerViewProps) {
   return (
     <AnimatePresence mode="wait">
@@ -172,6 +176,8 @@ export function AnalyzerView({
             designReviewSlot={designReviewSlot}
             secondEyeSlot={secondEyeSlot}
             designReviewData={designReviewData}
+            secondEyeResult={secondEyeResultProp}
+            secondEyeLoading={secondEyeLoadingProp}
           />
         </div>
       )}
