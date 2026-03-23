@@ -520,7 +520,7 @@ export function ReportCards({
       {/* ─── Center column analysis sections ─── */}
       {/* Design Review + Second Eye Review rendered by PaidAdAnalyzer */}
 
-      {/* ─── Creative Analysis / Verdict + Second Eye ─── */}
+      {/* ─── Creative Analysis / Verdict + Second Eye ──�� */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: 'easeOut', delay: 0.06 }}>
       {(() => {
         const verdictSection = centerSections.find(s => /verdict/i.test(s.title ?? ''));
@@ -601,8 +601,7 @@ export function ReportCards({
                   <Film size={14} className="text-zinc-400" />
                 </div>
                 <div>
-                  <span className="text-[13px] font-medium text-zinc-200 block">Motion Test Idea</span>
-                  <span className="text-[10px] text-zinc-500">Static to motion</span>
+                  <span className="text-[13px] font-medium text-zinc-200">Motion Test Idea</span>
                 </div>
               </div>
               <div className="flex items-center gap-1.5">
