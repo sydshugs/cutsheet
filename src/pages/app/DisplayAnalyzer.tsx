@@ -46,18 +46,22 @@ function EmptyState({ onFileSelect }: { onFileSelect: (f: File) => void }) {
   const PILLS = ["Format detection", "Placement scoring", "Real-life mockup"];
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px", minHeight: "calc(100vh - 120px)" }}>
-      <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <Monitor size={28} color="#8b5cf6" />
+      <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Monitor size={28} color="#06b6d4" />
       </div>
       <h1 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>Display & Banner Analysis</h1>
       <p style={{ fontSize: 14, color: "#a1a1aa", textAlign: "center", maxWidth: 380, lineHeight: 1.6, marginTop: 10 }}>
-        Upload a Google Display or affiliate banner ad. Auto-detects format. Scored against display-specific criteria.
+        Upload a video or static creative. Get a full AI breakdown in 30 seconds.
       </p>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 16 }}>
+
+      {/* Feature pills — cyan styled */}
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 20 }}>
         {PILLS.map((p) => (
-          <span key={p} style={{ fontSize: 12, color: "#818cf8", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)", borderRadius: 9999, padding: "4px 12px" }}>{p}</span>
+          <span key={p} style={{ fontSize: 12, color: "#22d3ee", background: "rgba(6,182,212,0.08)", border: "1px solid rgba(6,182,212,0.15)", borderRadius: 9999, padding: "4px 12px" }}>{p}</span>
         ))}
       </div>
+
+      {/* Dropzone */}
       <div style={{ width: "100%", maxWidth: 520, marginTop: 32 }}>
         <div
           style={{
@@ -71,7 +75,7 @@ function EmptyState({ onFileSelect }: { onFileSelect: (f: File) => void }) {
             input.onchange = (e) => { const f = (e.target as HTMLInputElement).files?.[0]; if (f) onFileSelect(f); };
             input.click();
           }}
-          onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)"; e.currentTarget.style.background = "rgba(99,102,241,0.05)"; }}
+          onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(6,182,212,0.5)"; e.currentTarget.style.background = "rgba(6,182,212,0.05)"; }}
           onDragLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
           onDrop={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; const f = e.dataTransfer.files[0]; if (f) onFileSelect(f); }}
         >
@@ -79,7 +83,7 @@ function EmptyState({ onFileSelect }: { onFileSelect: (f: File) => void }) {
           <span style={{ fontSize: 14, color: "#a1a1aa" }}>Drop your banner ad here</span>
           <button
             type="button"
-            style={{ marginTop: 4, padding: "8px 20px", borderRadius: 9999, border: "none", background: "#6366f1", color: "white", fontSize: 13, fontWeight: 500, cursor: "pointer" }}
+            style={{ marginTop: 4, padding: "8px 20px", borderRadius: 9999, border: "none", background: "#06b6d4", color: "white", fontSize: 13, fontWeight: 500, cursor: "pointer" }}
             onClick={(e) => { e.stopPropagation(); const input = document.createElement("input"); input.type = "file"; input.accept = "image/jpeg,image/png,image/webp,image/gif"; input.onchange = (ev) => { const f = (ev.target as HTMLInputElement).files?.[0]; if (f) onFileSelect(f); }; input.click(); }}
           >
             Browse Files
