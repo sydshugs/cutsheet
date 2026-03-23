@@ -10,7 +10,9 @@ import { verifyAuth, handlePreflight, isProOrTeam } from "./_lib/auth";
 import { checkFeatureCredit } from "./_lib/creditCheck";
 import { safePlatform, safeAdType, safeNiche, validateBase64Size } from "./_lib/validateInput";
 
-const GEMINI_IMAGE_EDIT_MODEL = "gemini-2.0-flash-preview-image-generation";
+// Use the same model as v1 — gemini-2.5-flash-image supports image editing via generateContent
+// The spec suggested "gemini-2.0-flash-preview-image-generation" but that model is unavailable.
+const GEMINI_IMAGE_EDIT_MODEL = "gemini-2.5-flash-image";
 
 // ── 2×2 Quadrant Context (same strings as visualize.ts — shared by reference) ───
 
@@ -278,7 +280,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
 
       // Extract edited image from response
-      const parts = imageResponse.candidates?.[0]?.content?.parts ?? [];
+      const candidate = imageResponse.candidates?.[0];
+      const parts = candidate?.content?.parts ?? [];
+
+      // Diagnostic: log what Gemini returned (never log image data)
+      console.info("[visualize-v2] Gemini response: candidates=%d, parts=%d, finishReason=%s",
+        imageResponse.candidates?.length ?? 0,
+        parts.length,
+        candidate?.finishReason ?? "none",
+      );
+      for (let i = 0; i < parts.length; i++) {
+        const p = parts[i];
+        if (p.inlineData?.data) {
+          console.info("[visualize-v2] Part %d: inlineData, mimeType=%s, size=%dKB", i, p.inlineData.mimeType, Math.round(p.inlineData.data.length / 1024));
+        } else if (p.text) {
+          console.info("[visualize-v2] Part %d: text, length=%d", i, p.text.length);
+        }
+      }
+
       for (const part of parts) {
         if (part.inlineData?.data) {
           const mime = part.inlineData.mimeType || "image/png";
@@ -294,7 +313,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         visualBrief = editPrompt;
       }
     } catch (err) {
-      console.error("[visualize-v2] Gemini image editing failed:", err);
+      const errMsg = err instanceof Error ? err.message : String(err);
+      const errName = err instanceof Error ? err.constructor.name : "Unknown";
+      console.error("[visualize-v2] Gemini image editing failed: [%s] %s", errName, errMsg);
+      // Log API key presence (never log the key itself)
+      console.error("[visualize-v2] GEMINI_API_KEY present: %s, VITE_GEMINI_API_KEY present: %s",
+        !!process.env.GEMINI_API_KEY, !!process.env.VITE_GEMINI_API_KEY);
       // Fall back to visual brief (same behavior as v1 fallback)
       visualBrief = editPrompt;
     }
