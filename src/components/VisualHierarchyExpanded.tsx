@@ -1,6 +1,6 @@
 // VisualHierarchyExpanded — Redesigned eye-flow visualization with clear visual hierarchy
 
-import { AlertCircle, Eye, ArrowDown, CheckCircle2, XCircle } from "lucide-react";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 
 interface VisualHierarchyExpandedProps {
   content: string;

@@ -2,7 +2,7 @@
 // Cleaner card-based layout with minimal visual noise
 
 import { useState, useMemo } from "react";
-import { AlertCircle, ArrowRight } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 
 // Subdued color palette
 const STATE_COLORS = {

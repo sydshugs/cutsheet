@@ -97,8 +97,8 @@ function getTrailingForSection(title: string, content: string): React.ReactNode 
       const v = verdictMatch[1].trim();
       const isStrong = /strong|scroll.?stop/i.test(v);
       const isWeak = /weak/i.test(v);
-      const color = isStrong ? '#10b981' : isWeak ? '#ef4444' : '#d97706';
-      const bg = isStrong ? 'rgba(16,185,129,0.1)' : isWeak ? 'rgba(239,68,68,0.1)' : 'rgba(251,191,36,0.12)';
+      const color = isStrong ? '#6ee7b7' : isWeak ? '#fca5a5' : '#fcd34d';
+      const bg = isStrong ? 'rgba(110,231,183,0.08)' : isWeak ? 'rgba(252,165,165,0.08)' : 'rgba(252,211,77,0.08)';
       const label = isStrong ? 'Strong' : isWeak ? 'Weak' : 'Needs work';
       return <span style={{ fontSize: 10, fontWeight: 500, color, background: bg, borderRadius: 99, padding: '2px 7px', lineHeight: '16px' }}>{label}</span>;
     }
@@ -182,8 +182,8 @@ function getScoreBadge(title: string, content: string): { badge: string; color: 
       const isWeak = /weak/i.test(v);
       return {
         badge: isStrong ? 'Strong' : isWeak ? 'Weak' : 'Needs work',
-        color: isStrong ? '#10b981' : isWeak ? '#ef4444' : '#d97706',
-        bg: isStrong ? 'rgba(16,185,129,0.1)' : isWeak ? 'rgba(239,68,68,0.1)' : 'rgba(251,191,36,0.12)',
+        color: isStrong ? '#6ee7b7' : isWeak ? '#fca5a5' : '#fcd34d',
+        bg: isStrong ? 'rgba(110,231,183,0.08)' : isWeak ? 'rgba(252,165,165,0.08)' : 'rgba(252,211,77,0.08)',
       };
     }
   }
@@ -646,10 +646,9 @@ export function ReportCards({
                 <span className="text-zinc-600">→</span>
                 <span>{tertiary}</span>
               </div>
-              </div>
 
               {/* Tone tags */}
-              <div className="flex items-center gap-1.5 flex-wrap">
+              <div className="flex items-center gap-1.5 flex-wrap mt-3">
                 {tones.slice(0, 3).map(t => (
                   <span key={t} className="text-[9px] font-medium bg-white/[0.03] rounded-md px-2 py-0.5 text-zinc-500">{t}</span>
                 ))}
@@ -658,7 +657,7 @@ export function ReportCards({
               {/* CTA mismatch warning */}
               {hasMismatch && (
                 <div className="flex items-start gap-2 rounded-lg p-2.5 mt-3 bg-white/[0.02] border border-white/[0.04]">
-                  <AlertCircle size={12} className="text-fcd34d/70 shrink-0 mt-0.5" />
+                  <AlertCircle size={12} style={{ color: '#fcd34d' }} className="shrink-0 mt-0.5 opacity-70" />
                   <p className="text-[10px] text-zinc-500 leading-relaxed">{mismatchNote}</p>
                 </div>
               )}
@@ -813,7 +812,7 @@ export function ReportCards({
               return { timestamp: ts, risk: parts[0] ?? rest, note: parts[1] ?? '', severity: isHigh ? 'high' : 'medium' };
             })
           : [];
-        const pacingColor = /fast/i.test(pacing ?? '') ? '#10b981' : /slow/i.test(pacing ?? '') ? '#ef4444' : '#d97706';
+        const pacingColor = /fast/i.test(pacing ?? '') ? '#6ee7b7' : /slow/i.test(pacing ?? '') ? '#fca5a5' : '#fcd34d';
         // Key insight: first non-label sentence
         const sentences = c.split('\n').filter(l => l.trim() && !l.startsWith('#') && !l.startsWith('-') && !l.startsWith('*') && !/^\*\*/.test(l));
         const keyInsight = sentences.find(s => s.length > 15 && s.length < 100)?.replace(/\*\*/g, '').trim() ?? '';

@@ -1,7 +1,7 @@
 // HookAnalysisExpanded — Redesigned for clarity and visual hierarchy
 // Cleaner layout with focused sections and better scanability
 
-import { Eye, Zap, Target, CheckCircle2, AlertTriangle, Sparkles } from 'lucide-react';
+import { CheckCircle2, Sparkles } from 'lucide-react';
 
 interface HookAnalysisExpandedProps {
   content: string;
