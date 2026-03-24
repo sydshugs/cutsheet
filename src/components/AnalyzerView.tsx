@@ -55,6 +55,9 @@ interface AnalyzerViewProps {
   secondEyeResult?: { scrollMoment: string | null; flags: { timestamp: string; category: string; severity: string; issue: string; fix: string }[]; whatItCommunicates: string; whatItFails: string } | null;
   secondEyeLoading?: boolean;
   isOrganic?: boolean;
+  // Platform optimization scores for organic content
+  platformScores?: { platform: string; score: number; verdict: string; signals?: { label: string; pass: boolean }[]; improvements?: string[] }[];
+  platformScoresLoading?: boolean;
 }
 
 export function AnalyzerView({
@@ -102,6 +105,8 @@ export function AnalyzerView({
   secondEyeResult: secondEyeResultProp,
   secondEyeLoading: secondEyeLoadingProp,
   isOrganic,
+  platformScores,
+  platformScoresLoading,
 }: AnalyzerViewProps) {
   return (
     <AnimatePresence mode="wait">
@@ -193,6 +198,8 @@ export function AnalyzerView({
             secondEyeResult={secondEyeResultProp}
             secondEyeLoading={secondEyeLoadingProp}
             isOrganic={isOrganic}
+            platformScores={platformScores}
+            platformScoresLoading={platformScoresLoading}
           />
         </div>
       )}

@@ -21,7 +21,6 @@ import {
   type PlatformScore, type SecondEyeResult, type StaticSecondEyeResult,
 } from "../../services/claudeService";
 import { SecondEyePanel } from "../../components/SecondEyePanel";
-import PlatformScoreCard from "../../components/PlatformScoreCard";
 import { ORGANIC_STATIC_PLATFORMS, VIDEO_ONLY_PLATFORMS } from "../../components/PlatformSwitcher";
 import { generateFixIt, type FixItResult } from "../../services/fixItService";
 import { generatePrediction, type PredictionResult } from "../../services/predictionService";
@@ -586,6 +585,8 @@ YOUTUBE SHORTS: SEO-focused title keywords, 3-5 discovery tags`;
                     whatItFails: secondEyeOutput.whatItFails,
                   } : undefined}
                   secondEyeLoading={secondEyeLoading}
+                  platformScores={platformScores}
+                  platformScoresLoading={platformScoresLoading}
                 />
               </div>
             </div>
@@ -627,11 +628,7 @@ YOUTUBE SHORTS: SEO-focused title keywords, 3-5 discovery tags`;
               />
             </div>
             {/* Second Eye is now rendered inside CreativeVerdictAndSecondEye via AnalyzerView → ReportCards */}
-            <PlatformScoreCard
-              scores={platformScores}
-              loading={platformScoresLoading}
-              platform={platform}
-            />
+            {/* Platform Optimization moved to left panel below Design Review */}
           </>
         )}
 

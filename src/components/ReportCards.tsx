@@ -14,6 +14,7 @@ import type { Verdict, StructuredImprovement } from "../services/analyzerService
 import { CreativeAnalysis } from "./CreativeAnalysis";
 import { CreativeVerdictAndSecondEye } from "./CreativeVerdictAndSecondEye";
 import { MotionPreviewPlayer } from "./MotionPreviewPlayer";
+import PlatformScoreCard from "./PlatformScoreCard";
 
 interface ReportCardsProps {
   file: File | null;
@@ -59,6 +60,9 @@ interface ReportCardsProps {
   secondEyeResult?: { scrollMoment: string | null; flags: { timestamp: string; category: string; severity: string; issue: string; fix: string }[]; whatItCommunicates: string; whatItFails: string } | null;
   secondEyeLoading?: boolean;
   isOrganic?: boolean;
+  // Platform optimization scores for organic content
+  platformScores?: { platform: string; score: number; verdict: string; signals?: { label: string; pass: boolean }[]; improvements?: string[] }[];
+  platformScoresLoading?: boolean;
 }
 
 const JSON_TITLE_RE = /json|scene|raw\s*data|budget\s*recommend/i;
@@ -254,6 +258,8 @@ export function ReportCards({
   designReviewData,
   secondEyeResult: secondEyeData, secondEyeLoading: secondEyeDataLoading,
   isOrganic,
+  platformScores,
+  platformScoresLoading,
 }: ReportCardsProps) {
   const isImage = file?.type.startsWith("image/") ?? false;
   const fileUrl = useMemo(() => file ? URL.createObjectURL(file) : null, [file]);
@@ -569,6 +575,21 @@ export function ReportCards({
       })()}
 
       </motion.div>
+
+      {/* ─── Platform Optimization (organic only) ─── */}
+      {isOrganic && (platformScores?.length || platformScoresLoading) && (
+        <motion.div 
+          initial={{ opacity: 0, y: 12 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ duration: 0.3, ease: 'easeOut', delay: 0.12 }}
+        >
+          <PlatformScoreCard
+            scores={platformScores ?? []}
+            loading={platformScoresLoading ?? false}
+            platform={platform ?? "all"}
+          />
+        </motion.div>
+      )}
 
       {/* ─── Motion Test Idea — Premium redesign with cinematic feel (paid only) ─── */}
       {!isOrganic && <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: 'easeOut', delay: 0.18 }}>
