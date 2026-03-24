@@ -40,8 +40,24 @@ export const saveAnalysis = async (record: Omit<AnalysisRecord, 'id' | 'created_
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
 
-  const payload = { ...record, user_id: user.id }
-  console.info('[saveAnalysis] Payload:', JSON.stringify({ ...payload, markdown: '(truncated)' }, null, 2))
+  // The analyses table only has: id, slug, file_name, scores (JSONB), markdown, created_at, created_by_ip
+  // Pack all extra fields into the scores JSONB column
+  const slug = `${user.id.slice(0, 8)}-${Date.now().toString(36)}`
+  const payload = {
+    slug,
+    file_name: record.file_name,
+    scores: {
+      ...record.scores,
+      overall_score: record.overall_score,
+      file_type: record.file_type,
+      mode: record.mode,
+      platform: record.platform,
+      improvements: record.improvements,
+      ...(record.cta_rewrite ? { cta_rewrite: record.cta_rewrite } : {}),
+      ...(record.budget_recommendation ? { budget_recommendation: record.budget_recommendation } : {}),
+    },
+    markdown: record.improvements?.join('\n') || '',
+  }
   supabase
     .from('analyses')
     .insert(payload)
