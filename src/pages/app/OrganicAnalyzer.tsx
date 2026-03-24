@@ -569,6 +569,18 @@ Do NOT include any CTA-related improvements. Replace CTA suggestions with engage
                   icon={TrendingUp}
                   format={organicFormat}
                   isOrganic
+                  designReviewData={designReviewResult ? {
+                    flags: designReviewResult.flags ?? [],
+                    topIssue: designReviewResult.topIssue,
+                    overallDesignVerdict: designReviewResult.overallDesignVerdict,
+                  } : undefined}
+                  secondEyeResult={secondEyeOutput ? {
+                    scrollMoment: secondEyeOutput.scrollMoment,
+                    flags: secondEyeOutput.flags,
+                    whatItCommunicates: secondEyeOutput.whatItCommunicates,
+                    whatItFails: secondEyeOutput.whatItFails,
+                  } : undefined}
+                  secondEyeLoading={secondEyeLoading}
                 />
               </div>
             </div>
@@ -609,10 +621,7 @@ Do NOT include any CTA-related improvements. Replace CTA suggestions with engage
                 canVisualize={false}
               />
             </div>
-            {/* Second Eye output below scorecard — video only */}
-            {organicFormat === "video" && (secondEyeOutput || secondEyeLoading) && (
-              <SecondEyePanel result={secondEyeOutput} loading={secondEyeLoading} />
-            )}
+            {/* Second Eye is now rendered inside CreativeVerdictAndSecondEye via AnalyzerView → ReportCards */}
             <PlatformScoreCard
               scores={platformScores}
               loading={platformScoresLoading}
