@@ -17,8 +17,8 @@ import {
 } from "../../services/analyzerService";
 import {
   generateBriefWithClaude, generateCTARewrites, generateSecondEyeReview,
-  generatePlatformScore, type PlatformScore,
-  type SecondEyeResult,
+  generatePlatformScore, generateStaticSecondEye,
+  type PlatformScore, type SecondEyeResult, type StaticSecondEyeResult,
 } from "../../services/claudeService";
 import { SecondEyePanel } from "../../components/SecondEyePanel";
 import PlatformScoreCard from "../../components/PlatformScoreCard";
@@ -118,6 +118,8 @@ export default function OrganicAnalyzer() {
   const [platform, setPlatform] = useState<Platform>("all");
   const [secondEyeOutput, setSecondEyeOutput] = useState<SecondEyeResult | null>(null);
   const [secondEyeLoading, setSecondEyeLoading] = useState(false);
+  const [designReviewResult, setDesignReviewResult] = useState<StaticSecondEyeResult | null>(null);
+  const [designReviewLoading, setDesignReviewLoading] = useState(false);
 
   const [file, setFile] = useState<File | null>(null);
   const [copied, setCopied] = useState(false);
@@ -203,6 +205,8 @@ YOUTUBE SHORTS: SEO-focused title keywords, 3-5 discovery tags`;
     setRightTab("analysis");
     setSecondEyeOutput(null);
     setSecondEyeLoading(false);
+    setDesignReviewResult(null);
+    setDesignReviewLoading(false);
     setPlatformScores([]);
     setPlatformScoresLoading(false);
     setImageMismatch(false);
@@ -265,6 +269,29 @@ YOUTUBE SHORTS: SEO-focused title keywords, 3-5 discovery tags`;
         } finally {
           setSecondEyeLoading(false);
         }
+      };
+      run();
+    }
+  }, [status, result]); // eslint-disable-line
+
+  // Design Review: fires automatically when STATIC analysis completes
+  useEffect(() => {
+    if (status === "complete" && result && organicFormat === "static") {
+      if (designReviewLoading) return;
+      const run = async () => {
+        setDesignReviewLoading(true);
+        setDesignReviewResult(null);
+        try {
+          const output = await generateStaticSecondEye(
+            result.markdown, result.fileName,
+            result.scores ? { overall: result.scores.overall, cta: result.scores.cta } : undefined,
+            result.improvements, userContext || undefined, sessionMemoryRef.current
+          );
+          setDesignReviewResult(output);
+        } catch (err) {
+          console.error('Design Review failed:', err);
+          setDesignReviewResult(null);
+        } finally { setDesignReviewLoading(false); }
       };
       run();
     }
