@@ -680,7 +680,7 @@ Return JSON only — no prose:
             <div className="pointer-events-none absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-cyan-600/10 blur-[120px]" />
             <div className="pointer-events-none absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-teal-600/[0.08] blur-[100px]" />
 
-            <div className="relative flex flex-col flex-1" style={{ maxWidth: 800, margin: "0 auto", width: "100%" }}>
+            <div className={`relative flex flex-col flex-1 ${status === "analyzing" ? "items-center justify-center" : ""}`} style={{ maxWidth: 800, margin: "0 auto", width: "100%" }}>
               {/* Dropzone or preview */}
               {!file && status === "idle" && (
                 <div
