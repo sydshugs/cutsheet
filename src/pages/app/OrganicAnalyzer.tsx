@@ -171,10 +171,10 @@ There is no retention curve or scene breakdown for static content.
 Do NOT include a budget recommendation. This is organic content — there is no ad spend.
 Do NOT include any CTA-related improvements. Replace CTA suggestions with shareability or caption improvements.
 
-REPLACE the HASHTAGS section platforms with these organic static platforms:
-META: 2-3 hashtags max (low impact on Facebook, focus on keywords in caption)
-INSTAGRAM: 3-5 relevant hashtags, caption keywords matter more than tags
-PINTEREST: keyword-rich descriptions, board-relevant tags, SEO-focused`
+CRITICAL: In the HASHTAGS section, use EXACTLY these three platform labels and format. Do NOT use TikTok. Do NOT omit Pinterest:
+META: #tag1 #tag2 #tag3
+INSTAGRAM: #tag1 #tag2 #tag3 #tag4 #tag5
+PINTEREST: #tag1 #tag2 #tag3 #tag4 #tag5 #tag6 #tag7 #tag8`
     : `This is ORGANIC content, not a paid ad.
 Do NOT score for: CTA, conversion, purchase friction, offer clarity, ad spend efficiency, or any paid advertising metrics.
 Score for: entertainment value, native feel, completion probability, rewatch potential, shareability (DM potential), algorithm signals for ${platformLabel}, and caption discoverability.
@@ -187,10 +187,10 @@ Score "Shareability & Rewatch" on: Does this make someone share, save, or watch 
 Do NOT include a budget recommendation. This is organic content — there is no ad spend.
 Do NOT include any CTA-related improvements. Replace CTA suggestions with engagement, retention, or caption improvements.
 
-REPLACE the HASHTAGS section platforms with these organic video platforms:
-TIKTOK: trending + niche hashtags, keyword-based captions, 8-12 tags
-INSTAGRAM REELS: mix of broad + niche, saves-focused, 5-8 tags
-YOUTUBE SHORTS: SEO-focused title keywords, 3-5 discovery tags`;
+CRITICAL: In the HASHTAGS section, use EXACTLY these three platform labels and format. Do NOT use META or INSTAGRAM (without Reels). Do NOT omit YouTube Shorts:
+TIKTOK: #tag1 #tag2 #tag3 #tag4 #tag5 #tag6 #tag7 #tag8 #tag9 #tag10 #tag11 #tag12
+INSTAGRAM REELS: #tag1 #tag2 #tag3 #tag4 #tag5 #tag6 #tag7 #tag8
+YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
 
   const handleReset = useCallback(() => {
     setFile(null);
