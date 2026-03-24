@@ -50,9 +50,9 @@ function EmptyState({ onFileSelect }: { onFileSelect: (f: File | null) => void }
       <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <Monitor size={28} color="#06b6d4" />
       </div>
-      <h1 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>Display & Banner Analysis</h1>
+      <h1 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>Score your display ad</h1>
       <p style={{ fontSize: 14, color: "#a1a1aa", textAlign: "center", maxWidth: 380, lineHeight: 1.6, marginTop: 10 }}>
-        Upload a video or static creative. Get a full AI breakdown in 30 seconds.
+        Upload a banner ad. Get format detection, placement scoring, and a real-life mockup in 30 seconds.
       </p>
 
       {/* Feature pills — cyan styled */}
@@ -272,6 +272,16 @@ Return JSON only:
       setDetectedFormat(null);
     }
   };
+
+  // Auto-analyze when file + dimensions are ready (no manual button needed)
+  const autoAnalyzeRef = useRef(false);
+  useEffect(() => {
+    if (file && dimensions && status === "idle" && canAnalyze && !autoAnalyzeRef.current) {
+      autoAnalyzeRef.current = true;
+      handleAnalyze();
+    }
+    if (!file) autoAnalyzeRef.current = false;
+  }, [file, dimensions, status, canAnalyze]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Analyze
   const handleAnalyze = async () => {
@@ -740,22 +750,7 @@ Return JSON only — no prose:
                 </div>
               )}
 
-              {/* Analyze button */}
-              {file && status === "idle" && (
-                <button
-                  type="button"
-                  onClick={handleAnalyze}
-                  disabled={!canAnalyze}
-                  style={{
-                    width: "100%", height: 52, borderRadius: 9999, border: "none",
-                    background: "#6366f1", color: "white", fontSize: 15, fontWeight: 600,
-                    cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                    transition: "all 150ms", marginBottom: 24,
-                  }}
-                >
-                  <Monitor size={18} /> Analyze Display Ad
-                </button>
-              )}
+              {/* Analysis auto-triggers on file drop via useEffect */}
 
               {/* Loading — display-specific dimensions + checking items */}
               {status === "analyzing" && (
