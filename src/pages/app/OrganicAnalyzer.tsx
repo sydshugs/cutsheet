@@ -232,9 +232,9 @@ Do NOT include any CTA-related improvements. Replace CTA suggestions with engage
     if (status === "complete") setAnalysisCompletedAt(new Date());
   }, [status]);
 
-  // Fresh Viewer Review: fires automatically when analysis completes
+  // Fresh Viewer Review: fires automatically when VIDEO analysis completes (not static)
   useEffect(() => {
-    if (status === "complete" && result) {
+    if (status === "complete" && result && organicFormat === "video") {
       if (secondEyeLoading) return; // guard: prevent concurrent calls
       const run = async () => {
         setSecondEyeLoading(true);
@@ -603,8 +603,8 @@ Do NOT include any CTA-related improvements. Replace CTA suggestions with engage
                 canVisualize={false}
               />
             </div>
-            {/* Second Eye output below scorecard */}
-            {(secondEyeOutput || secondEyeLoading) && (
+            {/* Second Eye output below scorecard — video only */}
+            {organicFormat === "video" && (secondEyeOutput || secondEyeLoading) && (
               <SecondEyePanel result={secondEyeOutput} loading={secondEyeLoading} />
             )}
             <PlatformScoreCard
