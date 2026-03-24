@@ -21,6 +21,8 @@ import { visualizeAd } from "../../lib/visualizeService";
 import { uploadImageToStorage, removeFromStorage } from "../../lib/storageService";
 import type { VisualizeResult, VisualizeStatus, VisualizeCreditData } from "../../types/visualize";
 import { getSessionMemory } from "@/src/lib/userMemoryService";
+import { generatePrediction, type PredictionResult } from "../../services/predictionService";
+import PredictedPerformanceCard from "../../components/PredictedPerformanceCard";
 import type { AppSharedContext } from "../../components/AppLayout";
 
 type Mode = "single" | "suite";
@@ -88,6 +90,7 @@ export default function DisplayAnalyzer() {
   const [result, setResult] = useState<DisplayResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [mockupUrl, setMockupUrl] = useState<string | null>(null);
+  const [prediction, setPrediction] = useState<PredictionResult | null>(null);
   const [mockupLoading, setMockupLoading] = useState(false);
   const [userContext, setUserContext] = useState("");
   const [policyResult, setPolicyResult] = useState<PolicyCheckResult | null>(null);
@@ -121,6 +124,7 @@ export default function DisplayAnalyzer() {
     setSuiteBanners([]); setSuiteStatus("idle"); setSuiteCohesion(null); setSuiteCohesionError(false);
     setSuiteMockupUrl(null); setSuiteMockupLoading(false);
     setPolicyResult(null); setPolicyLoading(false); setPolicyError(null);
+    setPrediction(null);
     setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); setVisualizeCreditData(null);
   }, []);
 
@@ -383,6 +387,14 @@ Return JSON only — no prose:
       generateDisplayMockup(file, detectedFormat, dimensions.width, dimensions.height)
         .then((url) => { setMockupUrl(url); setMockupLoading(false); })
         .catch(() => setMockupLoading(false));
+
+      // Generate prediction (async, non-blocking)
+      if (displayResult.scores) {
+        generatePrediction(
+          displayResult.markdown ?? '', displayResult.scores,
+          'google_display', 'static', undefined,
+        ).then(setPrediction).catch((err) => console.error('Display prediction failed (silent):', err));
+      }
 
     } catch (err) {
       setStatus("error");
@@ -967,6 +979,16 @@ Return JSON only — no prose:
               <PolicyCheckPanel result={policyResult} onClose={() => setPolicyResult(null)} />
             )}
           </div>
+
+          {/* Predicted Performance */}
+          {prediction && (
+            <div className="mx-4 mt-4">
+              <PredictedPerformanceCard
+                prediction={prediction}
+                platform="google_display"
+              />
+            </div>
+          )}
 
           {/* Visualize Panel */}
           {(visualizeOpen || visualizeStatus !== "idle") && (
