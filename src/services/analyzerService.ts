@@ -457,7 +457,11 @@ function parseScores(markdown: string): AnalysisResult["scores"] {
   try {
     const hookMatch = markdown.match(/Hook Strength:\s*(\d+(?:\.\d+)?)\/10/);
     const clarityMatch = markdown.match(/Message Clarity:\s*(\d+(?:\.\d+)?)\/10/);
-    // Support both paid ("CTA Effectiveness") and organic ("Shareability & Save-Worthiness" / "Shareability & Rewatch")
+    // IMPORTANT: This regex must match ALL platform variants of this dimension.
+    // Paid uses "CTA Effectiveness", organic static uses "Shareability & Save-Worthiness",
+    // organic video uses "Shareability & Rewatch".
+    // Any new platform-specific dimension label added to a prompt MUST be added here too
+    // or the parser will return null and show "Something went wrong reading the results".
     const ctaMatch = markdown.match(/(?:CTA Effectiveness|Shareability\s*&\s*(?:Save[- ]?Worthiness|Rewatch)):\s*(\d+(?:\.\d+)?)\/10/);
     const productionMatch = markdown.match(/Production Quality:\s*(\d+(?:\.\d+)?)\/10/);
     const overallMatch = markdown.match(/Overall (?:Ad |Content )?Strength:\s*(\d+(?:\.\d+)?)\/10/);
