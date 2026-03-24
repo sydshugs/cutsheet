@@ -9,6 +9,7 @@ import { ScoreCard } from "./ScoreCard";
 import { UpgradeModal } from "./UpgradeModal";
 import { Toast } from "./Toast";
 import { AlertDialog } from "./ui/AlertDialog";
+import { AnalysisProgressCard } from "./AnalysisProgressCard";
 import type { ThemeTokens } from "../theme";
 
 const ACCEPTED_TYPES = ["video/mp4", "video/webm", "video/quicktime", "image/jpeg", "image/png", "image/webp"];
@@ -312,6 +313,25 @@ export function BatchView({ apiKey, addHistoryEntry, t, canAnalyze, isPro, incre
               }}>
               <Zap size={18} /> Rank {items.filter((i) => i.status === "pending").length} Creatives
             </button>
+          )}
+
+          {/* Progress card while analyzing */}
+          {isRunning && (
+            <motion.div 
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              style={{ marginTop: 24 }}
+            >
+              <AnalysisProgressCard
+                pageType="rank-creative"
+                files={items.filter(i => i.file).map(i => i.file as File)}
+                statusMessage={`Analyzing creative ${items.filter(i => i.status === "complete" || i.status === "analyzing").length + 1} of ${items.length}`}
+                currentIndex={items.findIndex(i => i.status === "analyzing")}
+                totalCount={items.length}
+                onCancel={() => { stopRequestedRef.current = true; }}
+              />
+            </motion.div>
           )}
 
           {/* Stop after current button */}
