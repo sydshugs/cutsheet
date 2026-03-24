@@ -147,6 +147,7 @@ export default function OrganicAnalyzer() {
   const [fixItResult, setFixItResult] = useState<FixItResult | null>(null);
   const [fixItLoading, setFixItLoading] = useState(false);
   const [prediction, setPrediction] = useState<PredictionResult | null>(null);
+  const [predictionLoading, setPredictionLoading] = useState(false);
 
   const scorecardRef = useRef<HTMLDivElement | null>(null);
   const lastSavedRef = useRef<string | null>(null);
@@ -276,37 +277,45 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
       ).then(setDesignReviewResult).catch(() => setDesignReviewResult(null)).finally(() => setDesignReviewLoading(false));
     }
 
-    // Platform scoring — parallel with above
+    // Platform scoring — parallel with above, 55s timeout guard (under Vercel's 60s limit)
     setPlatformScoresLoading(true);
     setPlatformScores([]);
     (async () => {
+      const timeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Platform scoring timeout (55s)')), 55000)
+      );
       try {
         if (platform === 'all') {
           const videoPlatforms = ['tiktok', 'reels', 'shorts'];
           const staticPlatforms = ['meta', 'instagram', 'pinterest'];
           const plats = organicFormat === 'static' ? staticPlatforms : videoPlatforms;
-          const results = await Promise.all(
-            plats.map(p => generatePlatformScore(p, result, result.fileName, organicFormat, userContext || undefined))
-          );
+          const results = await Promise.race([
+            Promise.all(plats.map(p => generatePlatformScore(p, result, result.fileName, organicFormat, userContext || undefined))),
+            timeout,
+          ]);
           setPlatformScores(results);
         } else {
           const k = PLATFORM_SERVICE_MAP[platform as keyof typeof PLATFORM_SERVICE_MAP];
           if (k) {
-            const score = await generatePlatformScore(k, result, result.fileName, organicFormat, userContext || undefined);
+            const score = await Promise.race([
+              generatePlatformScore(k, result, result.fileName, organicFormat, userContext || undefined),
+              timeout,
+            ]);
             setPlatformScores([score]);
           }
         }
-      } catch (err) { console.error('Platform scoring failed:', err); }
+      } catch (err) { console.warn('Platform scoring timed out or failed:', err); }
       finally { setPlatformScoresLoading(false); }
     })();
 
     // Predicted Performance — parallel with above
     if (result.scores) {
+      setPredictionLoading(true);
       generatePrediction(
         result.markdown, result.scores,
         platform === "all" ? rawUserContext?.platform : platform,
         organicFormat, rawUserContext?.niche, undefined, true
-      ).then(setPrediction).catch(console.error);
+      ).then(setPrediction).catch((err) => { console.error('Prediction failed:', err); setPrediction(null); }).finally(() => setPredictionLoading(false));
     }
 
   }, [status, result]); // eslint-disable-line
