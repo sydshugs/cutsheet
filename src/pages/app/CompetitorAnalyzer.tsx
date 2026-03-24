@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CompetitorResultPanel } from "../../components/CompetitorResult";
+import { AnalysisProgressCard } from "../../components/AnalysisProgressCard";
 import { analyzeCompetitor, type CompetitorResult } from "../../services/competitorService";
 import type { AppSharedContext } from "../../components/AppLayout";
 import { VideoDropzone } from "../../components/VideoDropzone";
@@ -251,39 +252,6 @@ function MetaSearch({ onFileSelect }: { onFileSelect: (f: File) => void }) {
   );
 }
 
-// ─── LOADING CARD ────────────���──────────────────────────────────────────────
-
-const STATUS_MSGS = ["Analyzing your ad...", "Analyzing competitor ad...", "Running gap analysis...", "Building action plan..."];
-
-function LoadingCard({ yourName, compName, statusMsg }: { yourName: string; compName: string; statusMsg: string }) {
-  const [msgIdx, setMsgIdx] = useState(0);
-  useEffect(() => { const t = setInterval(() => setMsgIdx(i => (i + 1) % STATUS_MSGS.length), 3000); return () => clearInterval(t); }, []);
-  return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 24px", gap: 28 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "8px 14px" }}>
-          <span style={{ fontSize: 13, color: "#a1a1aa", fontFamily: "var(--font-mono, monospace)", maxWidth: 120, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block" }}>{yourName.length > 16 ? yourName.slice(0, 14) + "..." : yourName}</span>
-        </div>
-        <div style={{ width: 40, height: 40, borderRadius: 10, background: BRAND_BG, border: `1px solid ${BRAND_BORDER}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <Swords size={18} color={BRAND_COLOR} />
-        </div>
-        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "8px 14px" }}>
-          <span style={{ fontSize: 13, color: "#a1a1aa", fontFamily: "var(--font-mono, monospace)", maxWidth: 120, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block" }}>{compName.length > 16 ? compName.slice(0, 14) + "..." : compName}</span>
-        </div>
-      </div>
-      <div style={{ width: 200, height: 3, borderRadius: 2, background: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
-        <div style={{ height: "100%", width: "40%", borderRadius: 2, background: BRAND_COLOR, animation: "progressSlide 1.5s ease-in-out infinite" }} />
-      </div>
-      <AnimatePresence mode="wait">
-        <motion.p key={msgIdx} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.2 }}
-          style={{ fontSize: 13, color: "#71717a", margin: 0 }}>
-          {statusMsg || STATUS_MSGS[msgIdx]}
-        </motion.p>
-      </AnimatePresence>
-    </div>
-  );
-}
-
 // ─── MAIN ────────────────────────────────────────────────────────────────────
 
 export default function CompetitorAnalyzer() {
@@ -516,9 +484,14 @@ export default function CompetitorAnalyzer() {
             )}
 
             {/* ── ANALYZING ──────────────────────────────────────── */}
-            {status === "analyzing" && (
-              <motion.div key="loading" {...SLIDE}>
-                <LoadingCard yourName={yourFile?.name ?? "Your Ad"} compName={competitorFile?.name ?? "Competitor"} statusMsg={statusMsg} />
+            {status === "analyzing" && yourFile && competitorFile && (
+              <motion.div key="loading" {...SLIDE} style={{ padding: "24px 0" }}>
+                <AnalysisProgressCard
+                  pageType="competitor"
+                  files={[yourFile, competitorFile]}
+                  statusMessage={statusMsg || "Comparing ads..."}
+                  onCancel={handleReset}
+                />
               </motion.div>
             )}
 

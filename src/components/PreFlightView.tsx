@@ -1,9 +1,10 @@
 // PreFlightView.tsx — Main Pre-Flight A/B creative testing view
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { FlaskConical, Plus, X, Upload, Check } from "lucide-react";
 import { VideoDropzone } from "./VideoDropzone";
 import { PreFlightWinner } from "./PreFlightWinner";
+import { AnalysisProgressCard } from "./AnalysisProgressCard";
 import { PreFlightRankCard } from "./PreFlightRankCard";
 import { PreFlightHeadToHead } from "./PreFlightHeadToHead";
 import { analyzeVideo, type AnalysisResult } from "../services/analyzerService";
@@ -434,154 +435,36 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
   }
 
   // ─── LOADING UI ──────────────────────────────────────────────────────────────
+  // Get files with actual uploads for the progress card
+  const filesWithUploads = useMemo(() => 
+    variants.filter((v) => v.file).map((v) => v.file as File),
+    [variants]
+  );
+  
   if (isRunning) {
+    const currentAnalyzingIndex = variantStatuses.findIndex((s) => s === "analyzing");
+    
     return (
       <div
         style={{
-          maxWidth: "560px",
+          maxWidth: "720px",
           margin: "0 auto",
-          padding: "80px 24px",
+          padding: "48px 24px",
           fontFamily: "var(--sans)",
-          textAlign: "center",
         }}
       >
-        {/* Spinner */}
-        <style>{`
-          @keyframes pfSpin { to { transform: rotate(360deg); } }
-          @keyframes pfPulse { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
-        `}</style>
-        <div
-          style={{
-            width: "40px",
-            height: "40px",
-            border: `2px solid ${border}`,
-            borderTopColor: BRAND_COLOR,
-            borderRadius: "50%",
-            animation: "pfSpin 0.8s linear infinite",
-            margin: "0 auto 24px",
-          }}
+        <AnalysisProgressCard
+          pageType="ab-test"
+          files={filesWithUploads}
+          statusMessage={
+            phase === "analyzing"
+              ? `Analyzing variant ${analysisProgress} of ${filesWithUploads.length}`
+              : "Running head-to-head comparison..."
+          }
+          currentIndex={currentAnalyzingIndex >= 0 ? currentAnalyzingIndex : analysisProgress - 1}
+          totalCount={filesWithUploads.length}
+          onCancel={handleReset}
         />
-        <div
-          style={{
-            fontSize: "14px",
-            fontFamily: "var(--mono)",
-            fontWeight: 700,
-            color: textPrimary,
-            marginBottom: "8px",
-          }}
-        >
-          {phase === "analyzing"
-            ? `Analyzing ${analysisProgress}/${variants.filter((v) => v.file).length}...`
-            : "Running head-to-head comparison..."}
-        </div>
-        <div
-          style={{
-            fontSize: "12px",
-            color: textMuted,
-            fontFamily: "var(--mono)",
-            marginBottom: "32px",
-          }}
-        >
-          {phase === "analyzing"
-            ? "Each variant gets a full creative analysis"
-            : "Comparing all variants and picking a winner"}
-        </div>
-
-        {/* Per-variant progress list */}
-        <div
-          style={{
-            textAlign: "left",
-            background: surface,
-            border: `1px solid ${border}`,
-            borderRadius: "var(--radius)",
-            padding: "16px 20px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "10px",
-          }}
-        >
-          {variants.map((v, i) => {
-            if (!v.file) return null;
-            const st = variantStatuses[i];
-            const icon =
-              st === "done" ? "✓" : st === "analyzing" ? "⟳" : st === "error" ? "✗" : "○";
-            const iconColor =
-              st === "done"
-                ? "#10B981"
-                : st === "analyzing"
-                  ? BRAND_COLOR
-                  : st === "error"
-                    ? "#ef4444"
-                    : textMuted;
-
-            return (
-              <div
-                key={v.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "10px",
-                  fontSize: "12px",
-                  fontFamily: "var(--mono)",
-                }}
-              >
-                <span
-                  style={{
-                    color: iconColor,
-                    fontWeight: 700,
-                    width: "16px",
-                    textAlign: "center",
-                    animation:
-                      st === "analyzing" ? "pfPulse 1.2s infinite" : "none",
-                  }}
-                >
-                  {icon}
-                </span>
-                <span style={{ color: st === "done" || st === "analyzing" ? textPrimary : textMuted }}>
-                  {v.label}
-                </span>
-                <span style={{ color: textMuted, marginLeft: "auto", fontSize: "10px" }}>
-                  {st === "done"
-                    ? "complete"
-                    : st === "analyzing"
-                      ? "analyzing..."
-                      : st === "error"
-                        ? "failed"
-                        : "pending"}
-                </span>
-              </div>
-            );
-          })}
-
-          {phase === "comparing" && (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-                fontSize: "12px",
-                fontFamily: "var(--mono)",
-                paddingTop: "8px",
-                borderTop: `1px solid ${border}`,
-                marginTop: "4px",
-              }}
-            >
-              <span
-                style={{
-                  color: BRAND_COLOR,
-                  fontWeight: 700,
-                  animation: "pfPulse 1.2s infinite",
-                }}
-              >
-                ⟳
-              </span>
-              <span style={{ color: textPrimary }}>Head-to-head comparison</span>
-              <span style={{ color: textMuted, marginLeft: "auto", fontSize: "10px" }}>
-                comparing...
-              </span>
-            </div>
-          )}
-        </div>
       </div>
     );
   }
