@@ -712,7 +712,7 @@ Return JSON only — no prose:
                 </div>
               )}
 
-              {file && previewUrl && status !== "complete" && (
+              {file && previewUrl && status !== "complete" && status !== "analyzing" && (
                 <div style={{ marginBottom: 16 }}>
                   <div style={{ display: "flex", justifyContent: "center", background: "#09090b", borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)", padding: 16 }}>
                     <img src={previewUrl} alt={sanitizeFileName(file.name)} style={{ maxWidth: "100%", maxHeight: 400, objectFit: "contain" }} />
