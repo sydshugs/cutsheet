@@ -246,89 +246,70 @@ YOUTUBE SHORTS: SEO-focused title keywords, 3-5 discovery tags`;
     if (status === "complete") setAnalysisCompletedAt(new Date());
   }, [status]);
 
-  // Fresh Viewer Review: fires automatically when VIDEO analysis completes (not static)
+  // Consolidated post-analysis: fires ALL secondary API calls in parallel
+  const postAnalysisFiredRef = useRef<string | null>(null);
   useEffect(() => {
-    if (status === "complete" && result && organicFormat === "video") {
-      if (secondEyeLoading) return; // guard: prevent concurrent calls
-      const run = async () => {
-        setSecondEyeLoading(true);
-        setSecondEyeOutput(null);
-        try {
-          const output = await generateSecondEyeReview(
-            result.markdown,
-            result.fileName,
-            result.scores ? { hook: result.scores.hook, overall: result.scores.overall } : undefined,
-            result.improvements,
-            userContext || undefined,
-            sessionMemoryRef.current
-          );
-          setSecondEyeOutput(output);
-        } catch (err) {
-          console.error('Second Eye failed:', err);
-          setSecondEyeOutput(null);
-        } finally {
-          setSecondEyeLoading(false);
-        }
-      };
-      run();
+    if (status !== "complete" || !result) return;
+    const key = `${result.fileName}-${result.timestamp.toISOString()}`;
+    if (postAnalysisFiredRef.current === key) return; // guard: fire once per analysis
+    postAnalysisFiredRef.current = key;
+
+    // Video-only: Second Eye Review
+    if (organicFormat === "video") {
+      setSecondEyeLoading(true);
+      setSecondEyeOutput(null);
+      generateSecondEyeReview(
+        result.markdown, result.fileName,
+        result.scores ? { hook: result.scores.hook, overall: result.scores.overall } : undefined,
+        result.improvements, userContext || undefined, sessionMemoryRef.current
+      ).then(setSecondEyeOutput).catch(() => setSecondEyeOutput(null)).finally(() => setSecondEyeLoading(false));
     }
-  }, [status, result]); // eslint-disable-line
 
-  // Design Review: fires automatically when STATIC analysis completes
-  useEffect(() => {
-    if (status === "complete" && result && organicFormat === "static") {
-      if (designReviewLoading) return;
-      const run = async () => {
-        setDesignReviewLoading(true);
-        setDesignReviewResult(null);
-        try {
-          const output = await generateStaticSecondEye(
-            result.markdown, result.fileName,
-            result.scores ? { overall: result.scores.overall, cta: result.scores.cta } : undefined,
-            result.improvements, userContext || undefined, sessionMemoryRef.current
-          );
-          setDesignReviewResult(output);
-        } catch (err) {
-          console.error('Design Review failed:', err);
-          setDesignReviewResult(null);
-        } finally { setDesignReviewLoading(false); }
-      };
-      run();
+    // Static-only: Design Review
+    if (organicFormat === "static") {
+      setDesignReviewLoading(true);
+      setDesignReviewResult(null);
+      generateStaticSecondEye(
+        result.markdown, result.fileName,
+        result.scores ? { overall: result.scores.overall, cta: result.scores.cta } : undefined,
+        result.improvements, userContext || undefined, sessionMemoryRef.current
+      ).then(setDesignReviewResult).catch(() => setDesignReviewResult(null)).finally(() => setDesignReviewLoading(false));
     }
-  }, [status, result]); // eslint-disable-line
 
-  // Platform scoring: fires after analysis completes
-  useEffect(() => {
-    if (status !== 'complete' || !result) return;
-    if (platformScoresLoading) return;
-
-    const run = async () => {
-      setPlatformScoresLoading(true);
-      setPlatformScores([]);
+    // Platform scoring — parallel with above
+    setPlatformScoresLoading(true);
+    setPlatformScores([]);
+    (async () => {
       try {
         if (platform === 'all') {
-          // Filter platforms by format — video-only platforms shouldn't score static content
           const videoPlatforms = ['tiktok', 'reels', 'shorts'];
           const staticPlatforms = ['meta', 'instagram', 'pinterest'];
-          const platforms = organicFormat === 'static' ? staticPlatforms : videoPlatforms;
+          const plats = organicFormat === 'static' ? staticPlatforms : videoPlatforms;
           const results = await Promise.all(
-            platforms.map(p => generatePlatformScore(p, result, result.fileName, organicFormat, userContext || undefined))
+            plats.map(p => generatePlatformScore(p, result, result.fileName, organicFormat, userContext || undefined))
           );
           setPlatformScores(results);
         } else {
-          const key = PLATFORM_SERVICE_MAP[platform as keyof typeof PLATFORM_SERVICE_MAP];
-          if (!key) return;
-          const score = await generatePlatformScore(key, result, result.fileName, organicFormat, userContext || undefined);
-          setPlatformScores([score]);
+          const k = PLATFORM_SERVICE_MAP[platform as keyof typeof PLATFORM_SERVICE_MAP];
+          if (k) {
+            const score = await generatePlatformScore(k, result, result.fileName, organicFormat, userContext || undefined);
+            setPlatformScores([score]);
+          }
         }
-      } catch (err) {
-        console.error('Platform scoring failed:', err);
-      } finally {
-        setPlatformScoresLoading(false);
-      }
-    };
-    run();
-  }, [status, result, platform]); // eslint-disable-line
+      } catch (err) { console.error('Platform scoring failed:', err); }
+      finally { setPlatformScoresLoading(false); }
+    })();
+
+    // Predicted Performance — parallel with above
+    if (result.scores) {
+      generatePrediction(
+        result.markdown, result.scores,
+        platform === "all" ? rawUserContext?.platform : platform,
+        organicFormat, rawUserContext?.niche, undefined, true
+      ).then(setPrediction).catch(console.error);
+    }
+
+  }, [status, result]); // eslint-disable-line
 
   useEffect(() => {
     if (status === "complete" && result) {
@@ -505,20 +486,7 @@ YOUTUBE SHORTS: SEO-focused title keywords, 3-5 discovery tags`;
     }
   };
 
-  // Auto-fire prediction when analysis completes
-  useEffect(() => {
-    if (status === "complete" && result?.markdown && result?.scores && !prediction) {
-      generatePrediction(
-        result.markdown,
-        result.scores,
-        platform === "all" ? rawUserContext?.platform : platform,
-        organicFormat,
-        rawUserContext?.niche,
-        undefined, // intent
-        true, // isOrganic
-      ).then(setPrediction).catch(console.error);
-    }
-  }, [status, result, prediction, platform, rawUserContext]);
+  // Prediction is now fired in the consolidated post-analysis useEffect above
 
   const handleShareLink = async () => {
     if (!activeResult || shareLoading) return;
