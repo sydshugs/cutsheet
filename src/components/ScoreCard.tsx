@@ -410,14 +410,14 @@ export function ScoreCard({
 
       </div>{/* end main card */}
 
-      {/* Re-analyze button */}
+      {/* Re-analyze / Analyze another button */}
       {onReanalyze && (
         <button
           onClick={onReanalyze}
           className="mx-4 mt-4 w-[calc(100%-2rem)] flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-medium transition-all hover:bg-indigo-500/15 bg-indigo-500/[0.08] text-indigo-400 border border-indigo-500/20"
         >
           <RotateCcw size={14} />
-          Re-analyze improved version
+          {isOrganic ? 'Analyze another creative' : 'Re-analyze improved version'}
         </button>
       )}
 

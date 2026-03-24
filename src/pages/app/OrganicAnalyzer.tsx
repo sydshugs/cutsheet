@@ -632,7 +632,7 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
                 fixItResult={fixItResult}
                 fixItLoading={fixItLoading}
                 prediction={prediction}
-                onStartOver={handleReset}
+                onReanalyze={handleReset}
                 canVisualize={false}
               />
             </div>
@@ -680,27 +680,7 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
           </div>
         )}
 
-        {/* Analyze another — sticky at bottom of right panel */}
-        {showRightPanel && (
-          <div style={{ position: "sticky", bottom: 0, padding: "0 16px 16px", background: "linear-gradient(transparent, rgba(9,9,11,0.95) 8px)" }}>
-            <button
-              type="button"
-              onClick={handleReset}
-              aria-label="Analyze another creative"
-              style={{
-                width: "100%", height: 44, background: "rgba(9,9,11,0.8)", backdropFilter: "blur(8px)",
-                border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10,
-                color: "#71717a", fontSize: 13, cursor: "pointer",
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "all 150ms",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.color = "#a1a1aa"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(9,9,11,0.8)"; e.currentTarget.style.color = "#71717a"; }}
-            >
-              <RotateCcw size={14} />
-              Analyze another creative
-            </button>
-          </div>
-        )}
+
       </div>
 
       <HistoryDrawer open={historyOpen} entries={historyEntries} onClose={() => setHistoryOpen(false)} onSelect={(entry) => setLoadedEntry(entry)} onDelete={deleteHistoryEntry} onClearAll={clearAllHistory} isDark={true} />
