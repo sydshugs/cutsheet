@@ -402,7 +402,7 @@ export function ScoreCard({
           })()}
 
           {/* Recommended Hashtags */}
-          {hashtags && (hashtags.tiktok.length > 0 || hashtags.meta.length > 0 || hashtags.instagram.length > 0) && (
+          {hashtags && (hashtags.tiktok?.length > 0 || hashtags.meta?.length > 0 || hashtags.instagram?.length > 0 || hashtags.pinterest?.length > 0 || hashtags.reels?.length > 0 || hashtags.youtube_shorts?.length > 0) && (
             <div className="mt-6">
               <HashtagsC2 hashtags={hashtags} format={format} />
             </div>
