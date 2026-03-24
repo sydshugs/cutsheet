@@ -3,9 +3,9 @@
 import { Helmet } from "react-helmet-async";
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useOutletContext } from "react-router-dom";
-import { Monitor, Eye, Download, X, Plus, CheckCircle, ShieldCheck, Sparkles, Lock } from "lucide-react";
+import { Monitor, Eye, Download, X, Plus, CheckCircle, ShieldCheck, Sparkles, Lock, RotateCcw } from "lucide-react";
 import { VideoDropzone } from "../../components/VideoDropzone";
-import { DisplayProgressCard } from "../../components/DisplayProgressCard";
+import { AnalysisProgressCard } from "../../components/AnalysisProgressCard";
 import { sanitizeFileName } from "../../utils/sanitize";
 import { SuiteCohesionCard } from "../../components/SuiteCohesionCard";
 import { DisplayScoreCard, type DisplayResult } from "../../components/DisplayScoreCard";
@@ -475,8 +475,8 @@ Return JSON only — no prose:
           {/* ── SUITE MODE ──────────────────────────────────────────── */}
           {mode === "suite" && (
             <div className="relative px-4 py-6 md:px-8 min-h-full flex flex-col">
-              <div className="pointer-events-none absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-indigo-600/10 blur-[120px]" />
-              <div className="pointer-events-none absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-violet-600/[0.08] blur-[100px]" />
+              <div className="pointer-events-none absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-cyan-600/10 blur-[120px]" />
+              <div className="pointer-events-none absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-teal-600/[0.08] blur-[100px]" />
               <div className="relative flex flex-col flex-1" style={{ maxWidth: 900, margin: "0 auto", width: "100%" }}>
 
                 {suiteStatus === "idle" && (
@@ -502,15 +502,15 @@ Return JSON only — no prose:
                               </span>
                               <span style={{
                                 fontSize: 10,
-                                color: b.format ? "#818cf8" : "#f59e0b",
-                                background: b.format ? "rgba(99,102,241,0.1)" : "rgba(245,158,11,0.1)",
+                                color: b.format ? "#22d3ee" : "#f59e0b",
+                                background: b.format ? "rgba(6,182,212,0.1)" : "rgba(245,158,11,0.1)",
                                 borderRadius: 9999, padding: "1px 6px",
                               }}>
                                 {b.format ? `${b.format.key} ${b.format.name}` : `${b.dimensions.width}×${b.dimensions.height} Custom`}
                               </span>
                             </div>
                             {b.status === "analyzing" && (
-                              <div style={{ width: 14, height: 14, border: "2px solid rgba(99,102,241,0.3)", borderTopColor: "#6366f1", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+                              <div style={{ width: 14, height: 14, border: "2px solid rgba(6,182,212,0.3)", borderTopColor: "#06b6d4", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
                             )}
                             {b.status === "complete" && b.result && (
                               <span style={{ fontSize: 13, fontWeight: 600, fontFamily: "var(--font-mono, monospace)", color: b.result.overallScore >= 7 ? "#10b981" : b.result.overallScore >= 5 ? "#f59e0b" : "#ef4444" }}>
@@ -543,7 +543,7 @@ Return JSON only — no prose:
                           };
                           input.click();
                         }}
-                        onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)"; }}
+                        onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(6,182,212,0.5)"; }}
                         onDragLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
                         onDrop={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; Array.from(e.dataTransfer.files).forEach((f) => addSuiteBanner(f)); }}
                       >
@@ -566,7 +566,7 @@ Return JSON only — no prose:
                       disabled={suiteBanners.length < 2 || !canAnalyze}
                       style={{
                         width: "100%", height: 52, borderRadius: 9999, border: "none",
-                        background: suiteBanners.length >= 2 ? "#6366f1" : "rgba(99,102,241,0.3)",
+                        background: suiteBanners.length >= 2 ? "#06b6d4" : "rgba(6,182,212,0.3)",
                         color: "white", fontSize: 15, fontWeight: 600,
                         cursor: suiteBanners.length >= 2 ? "pointer" : "not-allowed",
                         opacity: suiteBanners.length >= 2 ? 1 : 0.4,
@@ -580,13 +580,13 @@ Return JSON only — no prose:
                 {/* Suite analyzing */}
                 {suiteStatus === "analyzing" && (
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 24px", gap: 16 }}>
-                    <div style={{ width: 24, height: 24, border: "2px solid rgba(99,102,241,0.3)", borderTopColor: "#6366f1", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+                    <div style={{ width: 24, height: 24, border: "2px solid rgba(6,182,212,0.3)", borderTopColor: "#06b6d4", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
                     <span style={{ fontSize: 13, color: "#71717a" }}>Analyzing {suiteBanners.length} banners...</span>
                     {/* Per-banner status */}
                     <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 8 }}>
                       {suiteBanners.map((b) => (
                         <div key={b.id} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                          {b.status === "analyzing" && <div style={{ width: 10, height: 10, border: "1.5px solid rgba(99,102,241,0.3)", borderTopColor: "#6366f1", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />}
+                          {b.status === "analyzing" && <div style={{ width: 10, height: 10, border: "1.5px solid rgba(6,182,212,0.3)", borderTopColor: "#06b6d4", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />}
                           {b.status === "complete" && <CheckCircle size={10} color="#10b981" />}
                           <span style={{ fontSize: 11, color: "#52525b" }}>{b.format?.name ?? "Custom"}</span>
                         </div>
@@ -624,7 +624,7 @@ Return JSON only — no prose:
                         <p style={{ fontSize: 11, color: "#52525b", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Individual scores</p>
                         {suiteBanners.filter((b) => b.result).map((b, i) => (
                           <div key={b.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: i < suiteBanners.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
-                            <span style={{ fontSize: 11, color: "#818cf8", fontWeight: 600, width: 16 }}>{i + 1}</span>
+                            <span style={{ fontSize: 11, color: "#22d3ee", fontWeight: 600, width: 16 }}>{i + 1}</span>
                             <span style={{ fontSize: 12, color: "#a1a1aa", flex: 1 }}>{b.format?.name ?? "Custom"}</span>
                             <span style={{ fontSize: 13, fontWeight: 600, fontFamily: "var(--font-mono, monospace)", color: (b.result?.overallScore ?? 0) >= 7 ? "#10b981" : (b.result?.overallScore ?? 0) >= 5 ? "#f59e0b" : "#ef4444" }}>
                               {b.result?.overallScore}/10
@@ -652,7 +652,7 @@ Return JSON only — no prose:
                               const cohesion = await analyzeSuiteCohesion(bannerData, userContext, sessionMemoryRef.current);
                               setSuiteCohesion(cohesion);
                             } catch { setSuiteCohesionError(true); }
-                          }} style={{ fontSize: 11, color: "#6366f1", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
+                          }} style={{ fontSize: 11, color: "#06b6d4", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
                             Retry
                           </button>
                         </div>
@@ -677,8 +677,8 @@ Return JSON only — no prose:
           {mode === "single" && (file || status !== "idle") && (
           /* Upload + preview area — only when file is loaded or analysis in progress */
           <div className={`relative flex flex-col ${(status === "uploading" || status === "processing") ? "h-full" : "px-4 py-6 md:px-8 min-h-full"}`}>
-            <div className="pointer-events-none absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-indigo-600/10 blur-[120px]" />
-            <div className="pointer-events-none absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-violet-600/[0.08] blur-[100px]" />
+            <div className="pointer-events-none absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-cyan-600/10 blur-[120px]" />
+            <div className="pointer-events-none absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-teal-600/[0.08] blur-[100px]" />
 
             <div className="relative flex flex-col flex-1" style={{ maxWidth: 800, margin: "0 auto", width: "100%" }}>
               {/* Dropzone or preview */}
@@ -696,7 +696,7 @@ Return JSON only — no prose:
                     input.onchange = (e) => { const f = (e.target as HTMLInputElement).files?.[0]; if (f) handleFileSelect(f); };
                     input.click();
                   }}
-                  onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)"; e.currentTarget.style.background = "rgba(99,102,241,0.05)"; }}
+                  onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(6,182,212,0.5)"; e.currentTarget.style.background = "rgba(6,182,212,0.05)"; }}
                   onDragLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
                   onDrop={(e) => {
                     e.preventDefault();
@@ -733,9 +733,9 @@ Return JSON only — no prose:
 
                   {/* Format badge */}
                   {detectedFormat && (
-                    <div style={{ marginTop: 10, padding: "8px 14px", borderRadius: 10, background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.2)", display: "flex", alignItems: "center", gap: 8 }}>
-                      <Monitor size={14} color="#818cf8" />
-                      <span style={{ fontSize: 13, color: "#818cf8" }}>
+                    <div style={{ marginTop: 10, padding: "8px 14px", borderRadius: 10, background: "rgba(6,182,212,0.06)", border: "1px solid rgba(6,182,212,0.2)", display: "flex", alignItems: "center", gap: 8 }}>
+                      <Monitor size={14} color="#22d3ee" />
+                      <span style={{ fontSize: 13, color: "#22d3ee" }}>
                         {detectedFormat.key} · {detectedFormat.name} · {detectedFormat.placement}{detectedFormat.note ? ` · ${detectedFormat.note.replace(/^Matched to \S+ /, '')}` : ''}
                       </span>
                     </div>
@@ -753,15 +753,13 @@ Return JSON only — no prose:
 
               {/* Analysis auto-triggers on file drop via useEffect */}
 
-              {/* Loading — unified DisplayProgressCard matching organic ProgressCard design */}
+              {/* Loading — unified AnalysisProgressCard matching organic ProgressCard design */}
               {status === "analyzing" && file && (
-                <DisplayProgressCard
-                  file={file}
-                  status="processing"
-                  statusMessage={statusMsg}
+                <AnalysisProgressCard
+                  pageType="display"
+                  files={[file]}
+                  statusMessage={statusMsg || "Analyzing display ad..."}
                   onCancel={handleReset}
-                  format={detectedFormat}
-                  dimensions={dimensions}
                 />
               )}
 
@@ -787,7 +785,7 @@ Return JSON only — no prose:
                     </div>
 
                     {detectedFormat && (
-                      <span style={{ fontSize: 11, color: "#818cf8", background: "rgba(99,102,241,0.1)", borderRadius: 9999, padding: "3px 10px", display: "inline-block", marginBottom: 10 }}>
+                      <span style={{ fontSize: 11, color: "#22d3ee", background: "rgba(6,182,212,0.1)", borderRadius: 9999, padding: "3px 10px", display: "inline-block", marginBottom: 10 }}>
                         {detectedFormat.key} · {detectedFormat.name}
                       </span>
                     )}
@@ -828,123 +826,6 @@ Return JSON only — no prose:
                       Editorial content shown in gray. Real websites may look different.
                     </p>
                   </div>
-
-                  {/* Scores + Policy */}
-                  <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 12 }}>
-                    <DisplayScoreCard
-                      result={result}
-                      format={detectedFormat}
-                      network={network}
-                      mockupUrl={null}
-                      mockupLoading={false}
-                      dimensions={dimensions}
-                    />
-
-                    {/* Visualize It button — single mode, after analysis */}
-                    {mode === "single" && !visualizeOpen && (
-                      isPro ? (
-                        <button
-                          type="button"
-                          onClick={handleVisualize}
-                          style={{
-                            width: "100%", height: 48,
-                            background: "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15))",
-                            border: "1px solid rgba(99,102,241,0.35)",
-                            borderRadius: 12,
-                            color: "#818cf8", cursor: "pointer",
-                            display: "flex", flexDirection: "column",
-                            alignItems: "center", justifyContent: "center", gap: 2,
-                            transition: "all 150ms",
-                          }}
-                          onMouseEnter={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(99,102,241,0.25), rgba(139,92,246,0.2))"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15))"; e.currentTarget.style.borderColor = "rgba(99,102,241,0.35)"; }}
-                        >
-                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                            <Sparkles size={15} />
-                            <span style={{ fontSize: 14, fontWeight: 600 }}>Visualize It</span>
-                          </div>
-                          <span style={{ fontSize: 11, color: "#6366f1", opacity: 0.75 }}>See what your improved ad could look like</span>
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => onUpgradeRequired("visualize")}
-                          style={{
-                            width: "100%", height: 48,
-                            background: "rgba(255,255,255,0.02)",
-                            border: "1px solid rgba(255,255,255,0.08)",
-                            borderRadius: 12,
-                            color: "#52525b", cursor: "pointer",
-                            display: "flex", flexDirection: "column",
-                            alignItems: "center", justifyContent: "center", gap: 2,
-                            transition: "all 150ms",
-                          }}
-                          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(99,102,241,0.3)"; e.currentTarget.style.color = "#71717a"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#52525b"; }}
-                        >
-                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                            <Lock size={14} />
-                            <span style={{ fontSize: 14, fontWeight: 600 }}>Visualize It</span>
-                            <span style={{ fontSize: 9, fontWeight: 600, padding: "1px 5px", borderRadius: 4, background: "rgba(99,102,241,0.12)", color: "#818cf8" }}>PRO</span>
-                          </div>
-                          <span style={{ fontSize: 11, opacity: 0.6 }}>Upgrade to see your improved ad</span>
-                        </button>
-                      )
-                    )}
-                    {/* Visualize Panel */}
-                    {mode === "single" && (visualizeOpen || visualizeStatus !== "idle") && (
-                      <VisualizePanel
-                        status={visualizeStatus}
-                        result={visualizeResult}
-                        originalImageUrl={previewUrl}
-                        error={visualizeError}
-                        creditData={visualizeCreditData}
-                        onClose={() => { setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); setVisualizeCreditData(null); }}
-                        onUpgrade={onUpgradeRequired}
-                      />
-                    )}
-                    {/* Check Policies button */}
-                    {!policyResult && (
-                      <button
-                        type="button"
-                        onClick={handleCheckPolicies}
-                        disabled={policyLoading}
-                        style={{
-                          display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                          width: "100%", height: 44, borderRadius: 12,
-                          background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.25)",
-                          color: "#f59e0b", fontSize: 14, fontWeight: 500,
-                          cursor: policyLoading ? "default" : "pointer",
-                          opacity: policyLoading ? 0.7 : 1, transition: "all 150ms",
-                        }}
-                        onMouseEnter={(e) => { if (!policyLoading) e.currentTarget.style.background = "rgba(245,158,11,0.18)"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(245,158,11,0.1)"; }}
-                      >
-                        {policyLoading ? (
-                          <>
-                            <div style={{ width: 14, height: 14, border: "2px solid rgba(245,158,11,0.3)", borderTopColor: "#f59e0b", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
-                            Checking policies...
-                          </>
-                        ) : (
-                          <>
-                            <ShieldCheck size={15} /> Check Policies
-                          </>
-                        )}
-                      </button>
-                    )}
-
-                    {/* Policy error */}
-                    {policyError && (
-                      <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", fontSize: 13, color: "#ef4444" }}>
-                        {policyError}
-                      </div>
-                    )}
-
-                    {/* Policy results */}
-                    {policyResult && (
-                      <PolicyCheckPanel result={policyResult} onClose={() => setPolicyResult(null)} />
-                    )}
-                  </div>
                 </div>
               )}
             </div>
@@ -952,6 +833,157 @@ Return JSON only — no prose:
           )}
         </div>
       </div>
+
+      {/* Right panel — scores sidebar (Single mode only, when complete) */}
+      {mode === "single" && status === "complete" && result && (
+        <div className="shrink-0 bg-zinc-900/50 backdrop-blur-xl border-l border-white/5 overflow-y-auto overflow-x-hidden pb-12 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-white/5 w-[440px] max-lg:w-full opacity-100">
+          {/* Score overview header */}
+          <div style={{ padding: "16px 16px 0" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: "#f4f4f5" }}>Score Overview</span>
+              </div>
+              {detectedFormat && (
+                <span style={{ fontSize: 10, color: "#22d3ee", background: "rgba(6,182,212,0.1)", borderRadius: 9999, padding: "3px 10px" }}>
+                  {detectedFormat.key} · {detectedFormat.name}
+                </span>
+              )}
+            </div>
+          </div>
+          
+          {/* Display Score Card */}
+          <DisplayScoreCard
+            result={result}
+            format={detectedFormat}
+            network={network}
+            mockupUrl={null}
+            mockupLoading={false}
+            dimensions={dimensions!}
+          />
+
+          {/* Action buttons */}
+          <div style={{ padding: "0 16px", display: "flex", flexDirection: "column", gap: 10, marginTop: 16 }}>
+            {/* Analyze another */}
+            <button
+              type="button"
+              onClick={handleReset}
+              className="w-full flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-medium transition-all hover:bg-cyan-500/15 bg-cyan-500/[0.08] text-cyan-400 border border-cyan-500/20"
+            >
+              <RotateCcw size={14} />
+              Analyze another display ad
+            </button>
+
+            {/* Visualize It button */}
+            {!visualizeOpen && (
+              isPro ? (
+                <button
+                  type="button"
+                  onClick={handleVisualize}
+                  style={{
+                    width: "100%", height: 48,
+                    background: "linear-gradient(135deg, rgba(6,182,212,0.15), rgba(20,184,166,0.15))",
+                    border: "1px solid rgba(6,182,212,0.35)",
+                    borderRadius: 12,
+                    color: "#22d3ee", cursor: "pointer",
+                    display: "flex", flexDirection: "column",
+                    alignItems: "center", justifyContent: "center", gap: 2,
+                    transition: "all 150ms",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(6,182,212,0.25), rgba(20,184,166,0.2))"; e.currentTarget.style.borderColor = "rgba(6,182,212,0.5)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(6,182,212,0.15), rgba(20,184,166,0.15))"; e.currentTarget.style.borderColor = "rgba(6,182,212,0.35)"; }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <Sparkles size={15} />
+                    <span style={{ fontSize: 14, fontWeight: 600 }}>Visualize It</span>
+                  </div>
+                  <span style={{ fontSize: 11, color: "#06b6d4", opacity: 0.75 }}>See what your improved ad could look like</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => onUpgradeRequired("visualize")}
+                  style={{
+                    width: "100%", height: 48,
+                    background: "rgba(255,255,255,0.02)",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    borderRadius: 12,
+                    color: "#52525b", cursor: "pointer",
+                    display: "flex", flexDirection: "column",
+                    alignItems: "center", justifyContent: "center", gap: 2,
+                    transition: "all 150ms",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(6,182,212,0.3)"; e.currentTarget.style.color = "#71717a"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#52525b"; }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <Lock size={14} />
+                    <span style={{ fontSize: 14, fontWeight: 600 }}>Visualize It</span>
+                    <span style={{ fontSize: 9, fontWeight: 600, padding: "1px 5px", borderRadius: 4, background: "rgba(6,182,212,0.12)", color: "#22d3ee" }}>PRO</span>
+                  </div>
+                  <span style={{ fontSize: 11, opacity: 0.6 }}>Upgrade to see your improved ad</span>
+                </button>
+              )
+            )}
+
+            {/* Check Policies button */}
+            {!policyResult && (
+              <button
+                type="button"
+                onClick={handleCheckPolicies}
+                disabled={policyLoading}
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                  width: "100%", height: 44, borderRadius: 12,
+                  background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.25)",
+                  color: "#f59e0b", fontSize: 14, fontWeight: 500,
+                  cursor: policyLoading ? "default" : "pointer",
+                  opacity: policyLoading ? 0.7 : 1, transition: "all 150ms",
+                }}
+                onMouseEnter={(e) => { if (!policyLoading) e.currentTarget.style.background = "rgba(245,158,11,0.18)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(245,158,11,0.1)"; }}
+              >
+                {policyLoading ? (
+                  <>
+                    <div style={{ width: 14, height: 14, border: "2px solid rgba(245,158,11,0.3)", borderTopColor: "#f59e0b", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+                    Checking policies...
+                  </>
+                ) : (
+                  <>
+                    <ShieldCheck size={15} /> Check Policies
+                  </>
+                )}
+              </button>
+            )}
+
+            {/* Policy error */}
+            {policyError && (
+              <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", fontSize: 13, color: "#ef4444" }}>
+                {policyError}
+              </div>
+            )}
+
+            {/* Policy results */}
+            {policyResult && (
+              <PolicyCheckPanel result={policyResult} onClose={() => setPolicyResult(null)} />
+            )}
+          </div>
+
+          {/* Visualize Panel */}
+          {(visualizeOpen || visualizeStatus !== "idle") && (
+            <div style={{ padding: "16px" }}>
+              <VisualizePanel
+                status={visualizeStatus}
+                result={visualizeResult}
+                originalImageUrl={previewUrl}
+                error={visualizeError}
+                creditData={visualizeCreditData}
+                onClose={() => { setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); setVisualizeCreditData(null); }}
+                onUpgrade={onUpgradeRequired}
+              />
+            </div>
+          )}
+        </div>
+      )}
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg) } }

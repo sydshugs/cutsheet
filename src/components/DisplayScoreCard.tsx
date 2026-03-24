@@ -93,7 +93,7 @@ export function DisplayScoreCard({
           <p style={{ fontSize: 11, color: "#52525b", margin: "2px 0 0" }}>{network === "google" ? "Google Display Network" : network === "affiliate" ? "Affiliate / Direct" : "All Networks"}</p>
         </div>
         {format && (
-          <span style={{ fontSize: 11, color: "#818cf8", background: "rgba(99,102,241,0.1)", borderRadius: 9999, padding: "3px 10px" }}>
+          <span style={{ fontSize: 11, color: "#22d3ee", background: "rgba(6,182,212,0.1)", borderRadius: 9999, padding: "3px 10px" }}>
             {format.key} · {format.name}
           </span>
         )}

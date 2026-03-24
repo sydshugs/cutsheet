@@ -4,14 +4,14 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  FlaskConical, Swords, Trophy, Check,
+  FlaskConical, Swords, Trophy, Check, Monitor,
   type LucideIcon 
 } from "lucide-react";
 import { useThumbnail } from "../hooks/useThumbnail";
 import { sanitizeFileName } from "../utils/sanitize";
 
 // Page-specific configurations
-export type AnalysisPageType = "ab-test" | "competitor" | "rank-creative";
+export type AnalysisPageType = "ab-test" | "competitor" | "rank-creative" | "display";
 
 interface PageConfig {
   icon: LucideIcon;
@@ -71,6 +71,22 @@ const PAGE_CONFIGS: Record<AnalysisPageType, PageConfig> = {
       "Evaluating message clarity",
       "Assessing CTA strength",
       "Generating rankings",
+    ],
+  },
+  "display": {
+    icon: Monitor,
+    title: "Analyzing display ad",
+    color: "#06b6d4",
+    colorLight: "#22d3ee",
+    colorBg: "rgba(6,182,212,0.08)",
+    colorBorder: "rgba(6,182,212,0.15)",
+    metrics: ["Visual Hierarchy", "CTA Visibility", "Brand Clarity", "Message Clarity"],
+    checkItems: [
+      "Detecting ad format",
+      "Analyzing visual hierarchy",
+      "Scoring CTA visibility",
+      "Evaluating text ratio",
+      "Generating placement preview",
     ],
   },
 };
