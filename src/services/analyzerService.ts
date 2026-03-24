@@ -457,11 +457,14 @@ function parseScores(markdown: string): AnalysisResult["scores"] {
   try {
     const hookMatch = markdown.match(/Hook Strength:\s*(\d+(?:\.\d+)?)\/10/);
     const clarityMatch = markdown.match(/Message Clarity:\s*(\d+(?:\.\d+)?)\/10/);
-    const ctaMatch = markdown.match(/CTA Effectiveness:\s*(\d+(?:\.\d+)?)\/10/);
+    // Support both paid ("CTA Effectiveness") and organic ("Shareability & Save-Worthiness" / "Shareability & Rewatch")
+    const ctaMatch = markdown.match(/(?:CTA Effectiveness|Shareability\s*&\s*(?:Save[- ]?Worthiness|Rewatch)):\s*(\d+(?:\.\d+)?)\/10/);
     const productionMatch = markdown.match(/Production Quality:\s*(\d+(?:\.\d+)?)\/10/);
-    const overallMatch = markdown.match(/Overall Ad Strength:\s*(\d+(?:\.\d+)?)\/10/);
+    const overallMatch = markdown.match(/Overall (?:Ad |Content )?Strength:\s*(\d+(?:\.\d+)?)\/10/);
 
     if (!hookMatch || !clarityMatch || !ctaMatch || !productionMatch || !overallMatch) {
+      console.warn("[parseScores] Missing dimension — hook:%s clarity:%s cta/share:%s production:%s overall:%s",
+        !!hookMatch, !!clarityMatch, !!ctaMatch, !!productionMatch, !!overallMatch);
       return null;
     }
 
