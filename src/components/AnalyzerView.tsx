@@ -54,6 +54,7 @@ interface AnalyzerViewProps {
   designReviewData?: { flags: { area: string; severity: string; fix: string; issue: string }[]; topIssue?: string; overallDesignVerdict?: string };
   secondEyeResult?: { scrollMoment: string | null; flags: { timestamp: string; category: string; severity: string; issue: string; fix: string }[]; whatItCommunicates: string; whatItFails: string } | null;
   secondEyeLoading?: boolean;
+  isOrganic?: boolean;
 }
 
 export function AnalyzerView({
@@ -100,6 +101,7 @@ export function AnalyzerView({
   designReviewData,
   secondEyeResult: secondEyeResultProp,
   secondEyeLoading: secondEyeLoadingProp,
+  isOrganic,
 }: AnalyzerViewProps) {
   return (
     <AnimatePresence mode="wait">
@@ -190,6 +192,7 @@ export function AnalyzerView({
             designReviewData={designReviewData}
             secondEyeResult={secondEyeResultProp}
             secondEyeLoading={secondEyeLoadingProp}
+            isOrganic={isOrganic}
           />
         </div>
       )}

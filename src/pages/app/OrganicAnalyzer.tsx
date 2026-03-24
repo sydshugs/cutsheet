@@ -270,16 +270,18 @@ Do NOT include any CTA-related improvements. Replace CTA suggestions with engage
       setPlatformScores([]);
       try {
         if (platform === 'all') {
-          const [t, r, s] = await Promise.all([
-            generatePlatformScore('tiktok', result, result.fileName),
-            generatePlatformScore('reels', result, result.fileName),
-            generatePlatformScore('shorts', result, result.fileName),
-          ]);
-          setPlatformScores([t, r, s]);
+          // Filter platforms by format — video-only platforms shouldn't score static content
+          const videoPlatforms = ['tiktok', 'reels', 'shorts'];
+          const staticPlatforms = ['meta', 'instagram', 'pinterest'];
+          const platforms = organicFormat === 'static' ? staticPlatforms : videoPlatforms;
+          const results = await Promise.all(
+            platforms.map(p => generatePlatformScore(p, result, result.fileName, organicFormat, userContext || undefined))
+          );
+          setPlatformScores(results);
         } else {
           const key = PLATFORM_SERVICE_MAP[platform as keyof typeof PLATFORM_SERVICE_MAP];
           if (!key) return;
-          const score = await generatePlatformScore(key, result, result.fileName);
+          const score = await generatePlatformScore(key, result, result.fileName, organicFormat, userContext || undefined);
           setPlatformScores([score]);
         }
       } catch (err) {
@@ -563,6 +565,8 @@ Do NOT include any CTA-related improvements. Replace CTA suggestions with engage
                   historyEntries={historyEntries}
                   onHistoryEntryClick={(entry) => setLoadedEntry(entry)}
                   icon={TrendingUp}
+                  format={organicFormat}
+                  isOrganic
                 />
               </div>
             </div>

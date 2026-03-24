@@ -73,7 +73,9 @@ LAYOUT & ALIGNMENT:
 VISUAL HIERARCHY:
 - Where does the eye land first? Is that where it should?
 - Is there a clear primary, secondary, tertiary information order?
-- Does the CTA stand out from the background? Is it the most visually distinct element after the hero?
+- Does the key action element (if present) stand out from the background?
+- IMPORTANT: Do NOT suggest adding a CTA button, "Shop Now" button, or any call-to-action element to the image. On paid static ads, the platform (Meta, Google, etc.) places CTA buttons OUTSIDE the creative in the ad unit. Design review should focus on typography, layout, hierarchy, and contrast — not conversion mechanics.
+- Do NOT suggest adding urgency copy, offer callouts, promo badges, or discount overlays unless they already exist in the original.
 
 COLOR & CONTRAST:
 - Does text meet contrast requirements against its background? (WCAG AA: 4.5:1 for body, 3:1 for large text)

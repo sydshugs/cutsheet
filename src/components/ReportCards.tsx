@@ -58,6 +58,7 @@ interface ReportCardsProps {
   // Second eye data for combined video component
   secondEyeResult?: { scrollMoment: string | null; flags: { timestamp: string; category: string; severity: string; issue: string; fix: string }[]; whatItCommunicates: string; whatItFails: string } | null;
   secondEyeLoading?: boolean;
+  isOrganic?: boolean;
 }
 
 const JSON_TITLE_RE = /json|scene|raw\s*data|budget\s*recommend/i;
@@ -252,6 +253,7 @@ export function ReportCards({
   designReviewSlot, secondEyeSlot,
   designReviewData,
   secondEyeResult: secondEyeData, secondEyeLoading: secondEyeDataLoading,
+  isOrganic,
 }: ReportCardsProps) {
   const isImage = file?.type.startsWith("image/") ?? false;
   const fileUrl = useMemo(() => file ? URL.createObjectURL(file) : null, [file]);
@@ -568,8 +570,8 @@ export function ReportCards({
 
       </motion.div>
 
-      {/* ─── Motion Test Idea — Premium redesign with cinematic feel ─── */}
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: 'easeOut', delay: 0.18 }}>
+      {/* ─── Motion Test Idea — Premium redesign with cinematic feel (paid only) ─── */}
+      {!isOrganic && <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: 'easeOut', delay: 0.18 }}>
       {centerSections.filter(s => /motion.*(?:test|idea)/i.test(s.title ?? '')).map((section, i) => {
         const conceptText = section.content
           .replace(/^MOTION TEST IDEA:\s*/i, '')
@@ -688,7 +690,7 @@ export function ReportCards({
         );
       })}
 
-      </motion.div>
+      </motion.div>}
 
       {/* Pacing & Retention — VIDEO ONLY, redesigned to match branding */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: 'easeOut', delay: 0.24 }}>
