@@ -10,22 +10,29 @@ interface HashtagsC2Props {
   format?: 'video' | 'static';
 }
 
+// IMPORTANT: Add new entries here when new hashtag platforms are added to
+// the Hashtags interface in analyzerService.ts or the organic contextPrefix.
 const PLATFORM_MAP: Record<string, keyof Hashtags> = {
-  Meta: 'meta',
-  Instagram: 'instagram',
-  TikTok: 'tiktok',
+  'Meta': 'meta',
+  'Instagram': 'instagram',
+  'TikTok': 'tiktok',
+  'YouTube Shorts': 'youtube_shorts',
+  'Instagram Reels': 'reels',
+  'Pinterest': 'pinterest',
 };
 
 const VISIBLE_DEFAULT = 8;
 
 export function HashtagsC2({ hashtags, format }: HashtagsC2Props) {
-  // Determine available platforms based on format
+  // Determine available platforms — show all that have data
   const availablePlatforms = (() => {
     const platforms: string[] = [];
     if (hashtags.meta?.length) platforms.push('Meta');
     if (hashtags.instagram?.length) platforms.push('Instagram');
-    if (format === 'video' && hashtags.tiktok?.length) platforms.push('TikTok');
-    if (format !== 'video' && hashtags.tiktok?.length) platforms.push('TikTok');
+    if (hashtags.tiktok?.length) platforms.push('TikTok');
+    if (hashtags.youtube_shorts?.length) platforms.push('YouTube Shorts');
+    if (hashtags.reels?.length) platforms.push('Instagram Reels');
+    if (hashtags.pinterest?.length) platforms.push('Pinterest');
     return platforms;
   })();
 

@@ -40,11 +40,13 @@ export const saveAnalysis = async (record: Omit<AnalysisRecord, 'id' | 'created_
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
 
+  const payload = { ...record, user_id: user.id }
+  console.info('[saveAnalysis] Payload:', JSON.stringify({ ...payload, markdown: '(truncated)' }, null, 2))
   supabase
     .from('analyses')
-    .insert({ ...record, user_id: user.id })
+    .insert(payload)
     .then(({ error }) => {
-      if (error) console.error('Failed to save analysis:', error)
+      if (error) console.error('[saveAnalysis] Failed:', error.message, error.details, error.hint)
     })
 }
 
