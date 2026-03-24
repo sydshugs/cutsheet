@@ -360,111 +360,64 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
     }
   }, [status]);
 
-  // Compute budget recommendation from engine when analysis completes
+  // ── Consolidated post-analysis: fires ALL secondary calls in parallel ──
+  const postAnalysisFiredRef = useRef<string | null>(null);
   useEffect(() => {
-    if (status === "complete" && result?.scores) {
+    if (status !== "complete" || !result) return;
+    const key = `${result.fileName}-${result.timestamp.toISOString()}`;
+    if (postAnalysisFiredRef.current === key) return;
+    postAnalysisFiredRef.current = key;
+
+    // Synchronous: budget recommendation + history
+    if (result.scores) {
       const niche = userContext.match(/Niche:\s*(.+)/)?.[1]?.trim() || 'Other';
-      const budget = generateBudgetRecommendation(
-        result.scores.overall,
-        platform,
-        niche,
-        format
-      );
-      setEngineBudget(budget);
+      setEngineBudget(generateBudgetRecommendation(result.scores.overall, platform, niche, format));
     }
-  }, [status, result, platform, format, userContext]);
+    addHistoryEntry({
+      fileName: result.fileName, timestamp: result.timestamp.toISOString(),
+      scores: result.scores, markdown: result.markdown, thumbnailDataUrl: thumbnailDataUrl ?? undefined,
+    });
+    const newCount = increment();
+    if (newCount >= FREE_LIMIT && !isPro) onUpgradeRequired("analyze");
+    saveAnalysis({
+      file_name: result.fileName, file_type: format === 'video' ? 'video' : 'static',
+      mode: 'paid', platform: platform || 'all', overall_score: result.scores?.overall ?? 0,
+      scores: { hook: result.scores?.hook ?? 0, clarity: result.scores?.clarity ?? 0, cta: result.scores?.cta ?? 0, production: result.scores?.production ?? 0 },
+      improvements: result.improvements ?? [],
+      cta_rewrite: Array.isArray(ctaRewrites) && ctaRewrites.length > 0 ? ctaRewrites[0] : undefined,
+      budget_recommendation: result.budget?.verdict ?? undefined,
+    });
+    setHistoryRefreshKey(k => k + 1);
 
-  useEffect(() => {
-    if (status === "complete" && result) {
-      const key = `${result.fileName}-${result.timestamp.toISOString()}`;
-      if (lastSavedRef.current !== key) {
-        lastSavedRef.current = key;
-        addHistoryEntry({
-          fileName: result.fileName,
-          timestamp: result.timestamp.toISOString(),
-          scores: result.scores,
-          markdown: result.markdown,
-          thumbnailDataUrl: thumbnailDataUrl ?? undefined,
-        });
-        const newCount = increment();
-        if (newCount >= FREE_LIMIT && !isPro) onUpgradeRequired("analyze");
-        // Fire and forget — do not await, do not block UI
-        saveAnalysis({
-          file_name: result.fileName,
-          file_type: format === 'video' ? 'video' : 'static',
-          mode: 'paid',
-          platform: platform || 'all',
-          overall_score: result.scores?.overall ?? 0,
-          scores: {
-            hook: result.scores?.hook ?? 0,
-            clarity: result.scores?.clarity ?? 0,
-            cta: result.scores?.cta ?? 0,
-            production: result.scores?.production ?? 0,
-          },
-          improvements: result.improvements ?? [],
-          cta_rewrite: Array.isArray(ctaRewrites) && ctaRewrites.length > 0 ? ctaRewrites[0] : undefined,
-          budget_recommendation: result.budget?.verdict ?? undefined,
-        });
-        setHistoryRefreshKey(k => k + 1);
-      }
+    // Async parallel: Second Eye (video) + Static Design Review + Prediction
+    if (secondEye && format === "video") {
+      setSecondEyeLoading(true);
+      setSecondEyeOutput(null);
+      generateSecondEyeReview(
+        result.markdown, result.fileName,
+        result.scores ? { hook: result.scores.hook, overall: result.scores.overall } : undefined,
+        result.improvements, userContext || undefined, sessionMemoryRef.current
+      ).then(setSecondEyeOutput).catch(() => setSecondEyeOutput(null)).finally(() => setSecondEyeLoading(false));
     }
-  }, [status, result, addHistoryEntry, increment, isPro, FREE_LIMIT, onUpgradeRequired, thumbnailDataUrl]); // eslint-disable-line
 
-  // Second Eye trigger: fires when analysis completes and secondEye is on
-  useEffect(() => {
-    if (status === "complete" && result && secondEye) {
-      if (secondEyeLoading) return;
-      const run = async () => {
-        setSecondEyeLoading(true);
-        setSecondEyeOutput(null);
-        try {
-          const output = await generateSecondEyeReview(
-            result.markdown,
-            result.fileName,
-            result.scores ? { hook: result.scores.hook, overall: result.scores.overall } : undefined,
-            result.improvements,
-            userContext || undefined,
-            sessionMemoryRef.current
-          );
-          setSecondEyeOutput(output);
-        } catch (err) {
-          console.error('Second Eye failed:', err);
-          setSecondEyeOutput(null);
-        } finally {
-          setSecondEyeLoading(false);
-        }
-      };
-      run();
+    if (staticSecondEye && format === "static") {
+      setStaticSecondEyeLoading(true);
+      setStaticSecondEyeResult(null);
+      generateStaticSecondEye(
+        result.markdown, result.fileName,
+        result.scores ? { overall: result.scores.overall, cta: result.scores.cta } : undefined,
+        result.improvements, userContext || undefined, sessionMemoryRef.current
+      ).then(setStaticSecondEyeResult).catch(() => setStaticSecondEyeResult(null)).finally(() => setStaticSecondEyeLoading(false));
     }
-  }, [status, result, secondEye]); // eslint-disable-line
 
-  // Static Second Eye trigger: fires when analysis completes and staticSecondEye is on
-  useEffect(() => {
-    if (status === "complete" && result && staticSecondEye && format === "static") {
-      if (staticSecondEyeLoading) return;
-      const run = async () => {
-        setStaticSecondEyeLoading(true);
-        setStaticSecondEyeResult(null);
-        try {
-          const output = await generateStaticSecondEye(
-            result.markdown,
-            result.fileName,
-            result.scores ? { overall: result.scores.overall, cta: result.scores.cta } : undefined,
-            result.improvements,
-            userContext || undefined,
-            sessionMemoryRef.current
-          );
-          setStaticSecondEyeResult(output);
-        } catch (err) {
-          console.error('Static Second Eye failed:', err);
-          setStaticSecondEyeResult(null);
-        } finally {
-          setStaticSecondEyeLoading(false);
-        }
-      };
-      run();
+    if (result.scores) {
+      generatePrediction(
+        result.markdown, result.scores,
+        platform === "all" ? rawUserContext?.platform : platform,
+        format as 'video' | 'static', rawUserContext?.niche,
+      ).then(setPrediction).catch((err) => console.error('Prediction failed (silent):', err));
     }
-  }, [status, result, staticSecondEye, format]); // eslint-disable-line
+  }, [status, result]); // eslint-disable-line
 
   // Platform switch: re-generate improvements + platform score when platform changes
   const handlePlatformSwitch = useCallback(async (newPlatform: string) => {
@@ -713,20 +666,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
   };
 
   // ── Predicted Performance — auto-fire on analysis complete ────────────────
-  useEffect(() => {
-    if (status === "complete" && result?.markdown && result?.scores && !prediction) {
-      generatePrediction(
-        result.markdown,
-        result.scores,
-        platform === "all" ? rawUserContext?.platform : platform,
-        format as 'video' | 'static',
-        rawUserContext?.niche,
-      ).then(setPrediction).catch((err) => {
-        console.error('Prediction failed (silent):', err);
-        // Silently omit — spec says never show error for this
-      });
-    }
-  }, [status, result]); // eslint-disable-line
+  // Prediction is now fired in the consolidated post-analysis useEffect above
 
   const handleVisualize = async () => {
     if (!activeResult?.scores || !file) return;
