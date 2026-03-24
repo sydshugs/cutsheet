@@ -26,7 +26,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
   }
 
-  const { analysisMarkdown, scores, platform, adType, niche, intent } = req.body ?? {};
+  const { analysisMarkdown, scores, platform, adType, niche, intent, isOrganic } = req.body ?? {};
 
   if (!analysisMarkdown || !scores) {
     return res.status(400).json({ error: "Missing analysisMarkdown or scores" });
@@ -61,7 +61,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .map(([k, v]) => `${k} (${v}/10)`)
     : [];
 
-  const systemPrompt = `You are a performance marketing analyst specializing in ${nicheLabel} ${adTypeLabel} advertising on ${platformLabel}. You have studied over 100,000 ${platformLabel} ad campaigns in the ${nicheLabel} category.
+  // ── Organic vs Paid prompt selection ──────────────────────────────────────
+  const systemPrompt = isOrganic
+    ? `You are an organic content strategist specializing in ${nicheLabel} content on ${platformLabel}. You have studied over 100,000 organic posts in the ${nicheLabel} category.
+
+This post scored ${scores?.overall ?? "?"}/10 overall. Weakest areas: ${weakDims.join(", ") || "not identified"}.
+
+This is ORGANIC content. Do NOT predict CTR, CVR, or any paid ad metrics.
+
+CALIBRATION RULES:
+- An overall score of 3/10 → predict low save rate (<1%), minimal shares.
+- An overall score of 8/10 → predict high save rate (5%+), strong DM sharing.
+- A hook/scroll-stop score of 3/10 → most viewers scroll past in under 1s.
+- Every prediction must cite a specific score that drives it.
+- Never guess high to flatter. A weak post gets weak predictions.`
+    : `You are a performance marketing analyst specializing in ${nicheLabel} ${adTypeLabel} advertising on ${platformLabel}. You have studied over 100,000 ${platformLabel} ad campaigns in the ${nicheLabel} category.
 
 This ad scored ${scores?.overall ?? "?"}/10 overall. Weakest areas: ${weakDims.join(", ") || "not identified"}. Hook: ${scores?.hook ?? "?"}/10, CTA: ${scores?.cta ?? "?"}/10.
 
@@ -72,7 +86,51 @@ CALIBRATION RULES:
 - Every prediction must cite the specific score that drives it: "CTR predicted at X% vs Y% ${platformLabel} average for ${nicheLabel} because [dimension] scored [N]/10."
 - Never guess high to flatter. A weak ad gets weak predictions.`;
 
-  const prompt = `Based on the following creative scorecard, generate a performance prediction for this ${adTypeLabel} ad on ${platformLabel} in the ${nicheLabel} niche.
+  const prompt = isOrganic
+    ? `Based on the following content scorecard, predict organic performance for this ${adTypeLabel} post on ${platformLabel} in the ${nicheLabel} niche.
+
+Scorecard & Analysis:
+${analysisMarkdown}
+
+Scores: Overall ${scores.overall ?? 0}/10, Hook ${scores.hook ?? 0}/10, Clarity ${scores.clarity ?? 0}/10, Shareability ${scores.cta ?? 0}/10, Production ${scores.production ?? 0}/10
+Platform: ${platformLabel} | Format: ${adTypeLabel} | Niche: ${nicheLabel}
+
+Predict:
+1. Save Rate — likelihood viewers will bookmark/save this post (as % of impressions)
+2. Share/DM Potential — likelihood viewers DM this to a friend (as % of impressions)
+3. Scroll-Stop Score — 1-10, does this stop the feed scroll in under 2 seconds?
+4. Post Longevity — evergreen content (lasts months) vs trending (fades in days)
+5. Confidence Level and reason — cite specific scores
+6. Top 2 positive signals — what makes this post shareable
+7. Top 2 negative signals — what limits organic reach
+
+Return as JSON:
+{
+  "ctr": { "low": number, "high": number, "benchmark": number, "vsAvg": "above" | "at" | "below" },
+  "cvr": { "low": number, "high": number },
+  "hookRetention": { "low": number, "high": number } | null,
+  "fatigueDays": { "low": number, "high": number },
+  "confidence": "Low" | "Medium" | "High",
+  "confidenceReason": string,
+  "positiveSignals": [string, string],
+  "negativeSignals": [string, string],
+  "isOrganic": true,
+  "organicMetrics": {
+    "saveRate": { "low": number, "high": number, "label": "Save Rate" },
+    "sharePotential": { "low": number, "high": number, "label": "Share / DM Potential" },
+    "scrollStop": number,
+    "longevity": { "label": "evergreen" | "trending" | "moderate", "days": number }
+  }
+}
+
+Map the organic metrics to the standard fields too (for backwards compatibility):
+- ctr = save rate (same number range)
+- cvr = share potential
+- hookRetention = scroll-stop as percentage (score * 10)
+- fatigueDays = post longevity in days
+
+Return ONLY valid JSON, no markdown fencing.`
+    : `Based on the following creative scorecard, generate a performance prediction for this ${adTypeLabel} ad on ${platformLabel} in the ${nicheLabel} niche.
 
 Scorecard & Analysis:
 ${analysisMarkdown}

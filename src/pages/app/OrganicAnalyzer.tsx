@@ -475,8 +475,10 @@ Do NOT include any CTA-related improvements. Replace CTA suggestions with engage
         result.markdown,
         result.scores,
         platform === "all" ? rawUserContext?.platform : platform,
-        "video",
+        organicFormat,
         rawUserContext?.niche,
+        undefined, // intent
+        true, // isOrganic
       ).then(setPrediction).catch(console.error);
     }
   }, [status, result, prediction, platform, rawUserContext]);

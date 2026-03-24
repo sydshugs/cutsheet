@@ -26,6 +26,7 @@ export async function generatePrediction(
   adType?: 'video' | 'static' | 'display',
   niche?: string,
   intent?: string,
+  isOrganic?: boolean,
 ): Promise<PredictionResult> {
   const token = await getAuthToken();
   const response = await fetch("/api/predict-performance", {
@@ -34,7 +35,7 @@ export async function generatePrediction(
       "Authorization": `Bearer ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ analysisMarkdown, scores, platform, adType, niche, intent }),
+    body: JSON.stringify({ analysisMarkdown, scores, platform, adType, niche, intent, isOrganic }),
   });
 
   if (response.status === 429) {

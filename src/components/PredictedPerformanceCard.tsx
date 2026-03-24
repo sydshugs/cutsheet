@@ -12,12 +12,20 @@ export interface PredictionResult {
   confidenceReason: string
   positiveSignals: string[]
   negativeSignals: string[]
+  isOrganic?: boolean
+  organicMetrics?: {
+    saveRate?: { low: number; high: number; label: string }
+    sharePotential?: { low: number; high: number; label: string }
+    scrollStop?: number
+    longevity?: { label: string; days: number }
+  }
 }
 
 interface PredictedPerformanceCardProps {
   prediction: PredictionResult
   platform?: string
   niche?: string
+  isOrganic?: boolean
 }
 
 const VERDICT_STYLES = {
@@ -51,12 +59,21 @@ function CtrRangeBar({ low, high, nicheAvg }: { low: number; high: number; niche
   )
 }
 
-export default function PredictedPerformanceCard({ prediction, platform, niche }: PredictedPerformanceCardProps) {
+export default function PredictedPerformanceCard({ prediction, platform, niche, isOrganic }: PredictedPerformanceCardProps) {
   const [driversOpen, setDriversOpen] = useState(false)
+  const organic = isOrganic || prediction.isOrganic
   const verdict = VERDICT_STYLES[prediction.ctr.vsAvg]
   const VerdictIcon = verdict.icon
   const platformLabel = platform ?? 'Meta'
   const nicheLabel = niche ?? 'general'
+
+  // Labels swap for organic
+  const primaryLabel = organic ? 'Save Rate' : 'Est. CTR'
+  const secondaryLabel = organic ? 'Share / DM Potential' : 'CVR Potential'
+  const tertiaryLabel = organic
+    ? 'Scroll-Stop Score'
+    : (prediction.hookRetention ? 'Hook Retention' : 'Conv. Rate')
+  const fatigueLabel = organic ? 'Post longevity' : 'Creative fatigue'
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
@@ -73,7 +90,7 @@ export default function PredictedPerformanceCard({ prediction, platform, niche }
       <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
         <div className="flex items-baseline justify-between">
           <div>
-            <span className="text-[11px] text-zinc-500 uppercase tracking-wide">Est. CTR</span>
+            <span className="text-[11px] text-zinc-500 uppercase tracking-wide">{primaryLabel}</span>
             <p className="text-2xl font-medium font-mono text-zinc-100 mt-1 tracking-tight">
               {prediction.ctr.low}–{prediction.ctr.high}%
             </p>
@@ -88,12 +105,12 @@ export default function PredictedPerformanceCard({ prediction, platform, niche }
       {/* Secondary metrics grid */}
       <div className="grid grid-cols-2 gap-2 mt-3">
         <div className="rounded-xl border border-white/[0.05] bg-white/[0.015] p-3">
-          <span className="text-[10px] text-zinc-500 uppercase tracking-wide block mb-1">CVR Potential</span>
+          <span className="text-[10px] text-zinc-500 uppercase tracking-wide block mb-1">{secondaryLabel}</span>
           <p className="text-lg font-medium font-mono text-zinc-200">{prediction.cvr.low}–{prediction.cvr.high}%</p>
         </div>
         <div className="rounded-xl border border-white/[0.05] bg-white/[0.015] p-3">
           <span className="text-[10px] text-zinc-500 uppercase tracking-wide block mb-1">
-            {prediction.hookRetention ? 'Hook Retention' : 'Conv. Rate'}
+            {tertiaryLabel}
           </span>
           <p className="text-lg font-medium font-mono text-zinc-200">
             {prediction.hookRetention ? `${prediction.hookRetention.low}–${prediction.hookRetention.high}%` : `~${((prediction.cvr.low + prediction.cvr.high) / 2).toFixed(1)}%`}
@@ -103,8 +120,12 @@ export default function PredictedPerformanceCard({ prediction, platform, niche }
 
       {/* Fatigue indicator */}
       <div className="flex items-center justify-between mt-3 py-2.5 px-3 rounded-xl bg-amber-500/[0.05] border border-amber-500/10">
-        <span className="text-xs text-zinc-400">Creative fatigue</span>
-        <span className="text-sm font-medium font-mono text-amber-400">~{prediction.fatigueDays.low}–{prediction.fatigueDays.high}d</span>
+        <span className="text-xs text-zinc-400">{fatigueLabel}</span>
+        <span className="text-sm font-medium font-mono text-amber-400">
+          {organic && prediction.organicMetrics?.longevity
+            ? `~${prediction.organicMetrics.longevity.days}d · ${prediction.organicMetrics.longevity.label}`
+            : `~${prediction.fatigueDays.low}–${prediction.fatigueDays.high}d`}
+        </span>
       </div>
 
       {/* Confidence note */}

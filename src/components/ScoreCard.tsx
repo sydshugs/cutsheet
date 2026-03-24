@@ -437,7 +437,7 @@ export function ScoreCard({
       {/* Predicted Performance */}
       {prediction && (
         <div className="mx-4 mt-4 rounded-2xl border border-white/[0.06] bg-white/[0.015] p-5">
-          <PredictedPerformanceCard prediction={prediction} platform={platform} niche={niche} />
+          <PredictedPerformanceCard prediction={prediction} platform={platform} niche={niche} isOrganic={isOrganic} />
         </div>
       )}
 
