@@ -327,36 +327,47 @@ export default function PlatformScoreCard({ scores, loading, platform }: Platfor
   if (!loading && scores.length === 0) return null
 
   return (
-    <div style={{ margin: '0 16px 20px' }}>
-      {/* Section header */}
-      <div style={{ 
-        display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14,
-        paddingBottom: 10,
-        borderBottom: '1px solid rgba(255,255,255,0.04)',
+    <div style={{ margin: '0 16px 16px' }}>
+      {/* Outer container matching Motion Test Idea styling */}
+      <div style={{
+        position: 'relative',
+        borderRadius: 12,
+        overflow: 'hidden',
+        border: '1px solid rgba(255,255,255,0.05)',
+        background: 'rgba(255,255,255,0.015)',
+        backdropFilter: 'blur(8px)',
       }}>
-        <div style={{
-          width: 28, height: 28,
-          borderRadius: 8,
-          background: 'rgba(99,102,241,0.1)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        {/* Section header */}
+        <div style={{ 
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: '12px 16px',
+          borderBottom: '1px solid rgba(255,255,255,0.04)',
         }}>
-          <BarChart2 size={14} color="#818cf8" />
+          <div style={{
+            width: 32, height: 32,
+            borderRadius: 8,
+            background: 'rgba(255,255,255,0.04)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <BarChart2 size={14} color="#a1a1aa" />
+          </div>
+          <div>
+            <span style={{ fontSize: 13, fontWeight: 500, color: '#e4e4e7' }}>Platform Optimization</span>
+            <p style={{ fontSize: 11, color: '#52525b', margin: '2px 0 0' }}>
+              {loading ? 'Analyzing platform fit...' : `${scores.length} platform${scores.length !== 1 ? 's' : ''} analyzed`}
+            </p>
+          </div>
         </div>
-        <div>
-          <span style={{ fontSize: 14, fontWeight: 600, color: '#f4f4f5' }}>Platform Optimization</span>
-          <p style={{ fontSize: 11, color: '#52525b', margin: '2px 0 0' }}>
-            {loading ? 'Analyzing platform fit...' : `${scores.length} platform${scores.length !== 1 ? 's' : ''} analyzed`}
-          </p>
-        </div>
-      </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <AnimatePresence mode="wait">
-          {loading && scores.length === 0
-            ? Array.from({ length: count }).map((_, i) => <ShimmerCard key={`shimmer-${i}`} />)
-            : scores.map((s, i) => <PlatformCard key={s.platform} score={s} index={i} />)
-          }
-        </AnimatePresence>
+        {/* Content area */}
+        <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <AnimatePresence mode="wait">
+            {loading && scores.length === 0
+              ? Array.from({ length: count }).map((_, i) => <ShimmerCard key={`shimmer-${i}`} />)
+              : scores.map((s, i) => <PlatformCard key={s.platform} score={s} index={i} />)
+            }
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   )
