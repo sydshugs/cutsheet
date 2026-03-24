@@ -242,21 +242,23 @@ export default function PaidAdAnalyzer() {
   // Re-analyze handler: upload improved version, score, compare
   const handleReanalyze = async (improvedFile: File) => {
     if (!activeResult?.scores) return;
-    // Snapshot original scores before overwriting
+    // Capture snapshot locally — setState is async so we can't read it back immediately
+    const origScores = originalScoresSnapshot ?? { ...activeResult.scores };
+    const origImprovements = originalImprovementsSnapshot ?? (activeResult.improvements ?? []);
     if (!originalScoresSnapshot) {
-      setOriginalScoresSnapshot({ ...activeResult.scores });
-      setOriginalImprovementsSnapshot(activeResult.improvements ?? []);
+      setOriginalScoresSnapshot(origScores);
+      setOriginalImprovementsSnapshot(origImprovements);
     }
     setComparisonLoading(true);
     setComparisonResult(null);
     try {
       const improvedResult = await analyze(improvedFile, API_KEY, contextPrefix, userContext || undefined, sessionMemoryRef.current);
-      // Now generate comparison
-      if (improvedResult?.scores && originalScoresSnapshot) {
+      // Generate comparison using local snapshot (not state which may not have updated yet)
+      if (improvedResult?.scores) {
         const comp = await generateComparison(
-          originalScoresSnapshot,
+          origScores,
           improvedResult.scores,
-          originalImprovementsSnapshot,
+          origImprovements,
           userContext || undefined,
           sessionMemoryRef.current
         );
