@@ -95,6 +95,15 @@ ${guidance}
 
 ${nicheContext ? `\n${nicheLabel.toUpperCase()} ON ${platform.toUpperCase()} SPECIFICS:\n${nicheContext}` : ""}
 
+SCORING RULES — DETERMINISTIC:
+You are a scoring engine. Apply criteria mechanically and consistently.
+For the same input, always produce the same score. Scores must be integers 1-10. No decimals. No ranges.
+Scoring scale:
+1-3: Significant problems. Multiple critical issues.
+4-6: Functional but weak. Core elements present but underperforming.
+7-8: Solid. Meets platform best practices.
+9-10: Excellent. Exceeds benchmarks. Production-ready.
+
 Score this ad specifically for ${platform} performance. Return a JSON object with these exact keys:
 {
   "platform": "${platform}",
@@ -114,6 +123,7 @@ Return ONLY valid JSON, no markdown fencing.`;
     const message = await client.messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 1024,
+      temperature: 0,
       system: systemPrompt,
       messages: [{ role: "user", content: prompt }],
     });

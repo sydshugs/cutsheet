@@ -77,6 +77,11 @@ User's goal: ${intentLabel}
 IMPORTANT: Do not mention the user's role, niche, or platform explicitly.
 Use the context to inform your analysis but never reference it directly.
 
+SCORING RULES — DETERMINISTIC:
+Apply criteria mechanically. For the same input, always produce the same score.
+Scores must be integers 1-10. No decimals. No ranges.
+1-3: Significant problems. 4-6: Functional but weak. 7-8: Solid. 9-10: Excellent.
+
 Return JSON only — no prose, no preamble:
 {
   "verdict": "winning" | "losing" | "tied",
@@ -125,6 +130,7 @@ Rules:
   const response = await client.messages.create({
     model: CLAUDE_MODEL,
     max_tokens: 1500,
+    temperature: 0,
     system: systemPrompt,
     messages: [{ role: "user", content: prompt }],
   });

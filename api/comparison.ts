@@ -71,6 +71,7 @@ Return JSON only:
   const response = await client.messages.create({
     model: CLAUDE_MODEL,
     max_tokens: 1200,
+    temperature: 0,
     messages: [{ role: "user", content: prompt }],
   });
 

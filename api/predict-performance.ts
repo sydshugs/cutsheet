@@ -111,6 +111,7 @@ Return ONLY valid JSON, no markdown fencing. Be calibrated — a hook score of 3
     const message = await client.messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 1024,
+      temperature: 0,
       system: systemPrompt,
       messages: [{ role: "user", content: prompt }],
     });

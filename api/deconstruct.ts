@@ -336,6 +336,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const message = await client.messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 3000,
+      temperature: 0,
       system: buildClaudeSystemPrompt(sourceType ?? "meta", userCtx),
       messages: [
         {

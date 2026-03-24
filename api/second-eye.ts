@@ -45,6 +45,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const message = await client.messages.create({
     model: CLAUDE_MODEL,
     max_tokens: 2048,
+    temperature: 0,
     system: `You are watching this video ad for the very first time.
 You are a slightly bored person scrolling through your feed on your phone.
 You have never seen this brand before. You have no loyalty to it.

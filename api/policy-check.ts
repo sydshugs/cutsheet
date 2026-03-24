@@ -353,6 +353,7 @@ Return only the complete JSON. No preamble, no explanation outside the JSON.`;
     const message = await client.messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 4096,
+      temperature: 0,
       system: systemPrompt,
       messages: [{ role: "user", content: userPrompt }],
     });
