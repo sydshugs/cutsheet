@@ -343,7 +343,7 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
           },
           improvements: result.improvements ?? [],
           budget_recommendation: result.budget?.verdict ?? undefined,
-        });
+        }).catch(console.error);
         setHistoryRefreshKey(k => k + 1);
       }
     }
