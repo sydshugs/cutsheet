@@ -9,6 +9,11 @@ interface PlatformScoreCardProps {
   platform: string  // OrganicAnalyzer Platform value: "all" | "TikTok" | "Instagram Reels" | "YouTube Shorts"
 }
 
+// IMPORTANT: Add a new entry here whenever a new platform key is introduced
+// anywhere in the codebase (analyzerService.ts, generatePlatformScore,
+// organicFormat mappings, etc). Missing entries crash on .Icon — the fallback
+// guard catches unknown platforms but the correct fix is always to add the
+// real entry. BarChart2 fallback is last resort only.
 const PLATFORM_META: Record<string, { label: string; Icon: React.ComponentType<{ size?: number; color?: string }> }> = {
   tiktok:    { label: 'TikTok',           Icon: Music2    },
   reels:     { label: 'Instagram Reels',  Icon: Camera    },

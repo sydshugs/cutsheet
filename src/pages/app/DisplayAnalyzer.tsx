@@ -757,11 +757,65 @@ Return JSON only — no prose:
                 </button>
               )}
 
-              {/* Loading */}
+              {/* Loading — display-specific dimensions + checking items */}
               {status === "analyzing" && (
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 24px", gap: 16 }}>
-                  <div style={{ width: 24, height: 24, border: "2px solid rgba(99,102,241,0.3)", borderTopColor: "#6366f1", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
-                  <span style={{ fontSize: 13, color: "#71717a" }}>{statusMsg || "Analyzing display ad..."}</span>
+                <div style={{ display: "flex", gap: 24, padding: "32px 0" }}>
+                  {/* Left: preview */}
+                  {previewUrl && (
+                    <div style={{ flex: "0 0 auto", width: 280 }}>
+                      <div style={{ borderRadius: 12, overflow: "hidden", background: "#09090b", border: "1px solid rgba(255,255,255,0.06)" }}>
+                        <img src={previewUrl} alt="" style={{ width: "100%", objectFit: "contain" }} />
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8 }}>
+                        <span style={{ fontSize: 11, color: "#52525b", fontFamily: "var(--mono)" }}>
+                          {sanitizeFileName(file?.name ?? "").slice(0, 28)}
+                        </span>
+                        {detectedFormat && (
+                          <span style={{ fontSize: 10, color: "#818cf8", background: "rgba(99,102,241,0.08)", padding: "2px 6px", borderRadius: 4 }}>
+                            {detectedFormat.name}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {/* Right: progress */}
+                  <div style={{ flex: 1 }}>
+                    <h2 style={{ fontSize: 18, fontWeight: 600, color: "#f4f4f5", margin: "0 0 4px" }}>Analyzing your ad</h2>
+                    <p style={{ fontSize: 13, color: "#71717a", margin: "0 0 20px" }}>{statusMsg || "Reading creative..."}</p>
+                    {/* Dimension progress bars */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
+                      {["Contrast & Visibility", "Visual Hierarchy", "CTA Clarity", "Brand Visibility"].map((dim, i) => (
+                        <div key={dim} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                          <span style={{ fontSize: 12, color: "#71717a", width: 140, flexShrink: 0 }}>{dim}</span>
+                          <div style={{ flex: 1, height: 4, borderRadius: 999, background: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
+                            <div style={{
+                              height: "100%", borderRadius: 999,
+                              background: "linear-gradient(90deg, #6366f1, #8b5cf6)",
+                              width: `${Math.min(100, (i + 1) * 25)}%`,
+                              transition: "width 2s ease",
+                              animation: "shimmer 1.5s ease-in-out infinite",
+                            }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {/* What we're checking */}
+                    <div>
+                      <p style={{ fontSize: 11, color: "#52525b", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 10px" }}>What we're checking</p>
+                      {["Visual hierarchy & contrast", "CTA visibility", "Brand recognition", "Format compliance", "Safe area check"].map((item, i) => (
+                        <div key={item} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                          <div style={{
+                            width: 16, height: 16, borderRadius: "50%",
+                            border: `2px solid ${i < 2 ? "#6366f1" : "rgba(255,255,255,0.1)"}`,
+                            borderTopColor: i < 2 ? "#6366f1" : "rgba(255,255,255,0.1)",
+                            animation: i < 2 ? "spin 0.7s linear infinite" : "none",
+                            background: "none",
+                          }} />
+                          <span style={{ fontSize: 12, color: i < 2 ? "#f4f4f5" : "#52525b" }}>{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
 
