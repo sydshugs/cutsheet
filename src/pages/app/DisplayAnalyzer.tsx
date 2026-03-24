@@ -299,22 +299,26 @@ DISPLAY AD CONTEXT:
 
 FORMAT-SPECIFIC: ${guidance}
 
-Score this ad on these DISPLAY-SPECIFIC criteria (each 0-10, whole numbers only):
-1. VISUAL HIERARCHY — Does the eye flow: Brand → Offer → CTA in under 2 seconds?
-2. CTA VISIBILITY — Is there a clear, visible CTA button/text at first glance?
-3. BRAND CLARITY — Is the brand/logo immediately identifiable?
-4. MESSAGE CLARITY — Can you understand the offer in under 3 seconds?
-5. VISUAL CONTRAST — Does the ad stand out against a white editorial background?
+SCORING RULES — DETERMINISTIC:
+You are a scoring engine. Apply criteria mechanically and consistently.
+For the same input, always produce the same score. Scores must be integers 1-10. No decimals. No ranges.
+1-3: Significant problems. 4-6: Functional but weak. 7-8: Solid. 9-10: Excellent.
 
-Also estimate the TEXT-TO-IMAGE RATIO. Google policy: ads should not be predominantly text. Flag if text exceeds ~30%.
+Score this ad on these DISPLAY-SPECIFIC criteria (each 1-10, whole numbers only):
+1. VISUAL HIERARCHY (25% weight) — Does the eye flow: headline → image → CTA instantly?
+2. CTA CLARITY (20% weight) — Is the CTA immediately visible? Action-oriented and specific? Display ads REQUIRE an in-creative CTA.
+3. BRAND VISIBILITY (15% weight) — Logo/brand mark visible at first glance without hunting?
+4. MESSAGE CLARITY (15% weight) — Can you understand the full offer in 1-2 seconds flat?
+5. TEXT-TO-IMAGE RATIO (15% weight) — Is text within acceptable limits? Flag if >30% text area.
+6. CONTRAST & VISIBILITY (10% weight) — Does the ad stand out against a typical white/grey webpage background?
 
-Scoring rubric:
-1-3: Fundamentally broken  4-5: Below average  6-7: Average  8-9: Strong  10: Exceptional
+Do NOT score for: hook strength, scroll-stop power, native feel, sound-off, retention, shareability, or any social media metrics.
+Do NOT suggest removing the CTA — display ads REQUIRE an in-creative CTA. The advertiser cannot add a CTA externally like on Meta.
 
 Return JSON only — no prose:
 {
   "overallScore": <1-10>,
-  "scores": { "hierarchy": <n>, "ctaVisibility": <n>, "brandClarity": <n>, "messageClarity": <n>, "visualContrast": <n> },
+  "scores": { "hierarchy": <n>, "ctaVisibility": <n>, "brandClarity": <n>, "messageClarity": <n>, "textRatio": <n>, "visualContrast": <n> },
   "textToImageRatio": "<e.g. ~25% text>",
   "textRatioFlag": <true if over 30%>,
   "improvements": ["<5 display-specific improvements>"],
