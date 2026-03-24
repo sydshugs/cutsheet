@@ -393,10 +393,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       visualBrief = editPrompt;
     }
 
-    // ── Deduct 1 visualize credit ONLY on successful generation ──────────
-    const deductResult = await checkFeatureCredit(user.id, user.tier, "visualize", true);
-    console.info("[visualize-v2] Credit deducted: used=%d, limit=%d, remaining=%d",
-      deductResult.used, deductResult.limit, deductResult.remaining);
+    // ── Deduct 1 visualize credit ONLY when an image was actually generated ──
+    if (generatedImageUrl) {
+      const deductResult = await checkFeatureCredit(user.id, user.tier, "visualize", true);
+      console.info("[visualize-v2] Credit deducted (image generated): used=%d, limit=%d, remaining=%d",
+        deductResult.used, deductResult.limit, deductResult.remaining);
+    } else {
+      console.info("[visualize-v2] No credit deducted — visual brief fallback only");
+    }
 
     return res.status(200).json({
       generatedImageUrl,
