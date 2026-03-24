@@ -21,6 +21,7 @@ import {
   type PlatformScore, type SecondEyeResult, type StaticSecondEyeResult,
 } from "../../services/claudeService";
 import { SecondEyePanel } from "../../components/SecondEyePanel";
+import PlatformScoreCard from "../../components/PlatformScoreCard";
 import { ORGANIC_STATIC_PLATFORMS, VIDEO_ONLY_PLATFORMS } from "../../components/PlatformSwitcher";
 import { generateFixIt, type FixItResult } from "../../services/fixItService";
 import { generatePrediction, type PredictionResult } from "../../services/predictionService";
@@ -627,7 +628,11 @@ YOUTUBE SHORTS: SEO-focused title keywords, 3-5 discovery tags`;
               />
             </div>
             {/* Second Eye is now rendered inside CreativeVerdictAndSecondEye via AnalyzerView → ReportCards */}
-            {/* Platform Optimization moved to left panel below Design Review */}
+            <PlatformScoreCard
+              scores={platformScores}
+              loading={platformScoresLoading}
+              platform={platform}
+            />
           </>
         )}
 
