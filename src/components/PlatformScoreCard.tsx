@@ -1,5 +1,5 @@
 // src/components/PlatformScoreCard.tsx
-import { BarChart2, Music2, Camera, Youtube, CheckCircle, XCircle, ChevronRight, Facebook, Instagram, Pin, Sparkles, TrendingUp } from 'lucide-react'
+import { BarChart2, Music2, Camera, Youtube, CheckCircle, XCircle, Facebook, Instagram, Pin, Sparkles, TrendingUp } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
 import type { PlatformScore } from '../services/claudeService'
@@ -283,32 +283,36 @@ function PlatformCard({ score, index }: { score: PlatformScore; index: number })
                       Recommendations
                     </span>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {(score.improvements ?? []).map((imp, i) => (
                       <motion.div 
                         key={i} 
-                        initial={{ opacity: 0, x: -8 }}
-                        animate={{ opacity: 1, x: 0 }}
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.12 + 0.3 + (i * 0.05), duration: 0.25 }}
                         style={{ 
-                          display: 'flex', alignItems: 'flex-start', gap: 12,
-                          padding: '10px 12px',
-                          background: 'rgba(255,255,255,0.02)',
-                          borderRadius: 8,
-                          border: '1px solid rgba(255,255,255,0.04)',
+                          display: 'flex', alignItems: 'flex-start', gap: 10,
+                          padding: '8px 0',
+                          borderBottom: i < (score.improvements?.length ?? 0) - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
                         }}
                       >
-                        <div style={{
-                          width: 20, height: 20,
-                          borderRadius: 6,
+                        <span style={{
+                          fontSize: 11,
+                          fontWeight: 600,
+                          color: '#6366f1',
+                          minWidth: 18,
+                          height: 18,
+                          borderRadius: 4,
                           background: 'rgba(99,102,241,0.1)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                           flexShrink: 0,
                           marginTop: 1,
                         }}>
-                          <ChevronRight size={12} color="#818cf8" />
-                        </div>
-                        <span style={{ fontSize: 13, color: '#a1a1aa', lineHeight: 1.6 }}>{imp}</span>
+                          {i + 1}
+                        </span>
+                        <span style={{ fontSize: 13, color: '#a1a1aa', lineHeight: 1.5 }}>{imp}</span>
                       </motion.div>
                     ))}
                   </div>
