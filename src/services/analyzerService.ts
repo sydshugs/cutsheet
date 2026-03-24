@@ -371,6 +371,9 @@ export interface Hashtags {
   tiktok: string[];
   meta: string[];
   instagram: string[];
+  youtube_shorts?: string[];
+  reels?: string[];
+  pinterest?: string[];
 }
 
 export type HookType = "Pattern Interrupt" | "Curiosity Gap" | "Bold Claim" | "Social Proof" | "Problem-Agitate" | "Question Hook" | "None detected";
@@ -672,10 +675,19 @@ export function parseHashtags(markdown: string): Hashtags | undefined {
     const tiktok = extract("TIKTOK");
     const meta = extract("META");
     const instagram = extract("INSTAGRAM");
+    const youtube_shorts = extract("YOUTUBE SHORTS") || extract("YOUTUBE");
+    const reels = extract("INSTAGRAM REELS") || extract("REELS");
+    const pinterest = extract("PINTEREST");
 
-    if (tiktok.length === 0 && meta.length === 0 && instagram.length === 0) return undefined;
+    const all = [...tiktok, ...meta, ...instagram, ...youtube_shorts, ...reels, ...pinterest];
+    if (all.length === 0) return undefined;
 
-    return { tiktok, meta, instagram };
+    return {
+      tiktok, meta, instagram,
+      ...(youtube_shorts.length > 0 && { youtube_shorts }),
+      ...(reels.length > 0 && { reels }),
+      ...(pinterest.length > 0 && { pinterest }),
+    };
   } catch {
     return undefined;
   }

@@ -167,7 +167,12 @@ Score "Shareability & Save-Worthiness" on: Would someone DM this to a friend? Wo
 
 There is no retention curve or scene breakdown for static content.
 Do NOT include a budget recommendation. This is organic content — there is no ad spend.
-Do NOT include any CTA-related improvements. Replace CTA suggestions with shareability or caption improvements.`
+Do NOT include any CTA-related improvements. Replace CTA suggestions with shareability or caption improvements.
+
+REPLACE the HASHTAGS section platforms with these organic static platforms:
+META: 2-3 hashtags max (low impact on Facebook, focus on keywords in caption)
+INSTAGRAM: 3-5 relevant hashtags, caption keywords matter more than tags
+PINTEREST: keyword-rich descriptions, board-relevant tags, SEO-focused`
     : `This is ORGANIC content, not a paid ad.
 Do NOT score for: CTA, conversion, purchase friction, offer clarity, ad spend efficiency, or any paid advertising metrics.
 Score for: entertainment value, native feel, completion probability, rewatch potential, shareability (DM potential), algorithm signals for ${platformLabel}, and caption discoverability.
@@ -178,7 +183,12 @@ REPLACE the "CTA Effectiveness" dimension with "Shareability & Rewatch" in the Q
 Score "Shareability & Rewatch" on: Does this make someone share, save, or watch again? Does it trigger the algorithm's engagement signals?
 
 Do NOT include a budget recommendation. This is organic content — there is no ad spend.
-Do NOT include any CTA-related improvements. Replace CTA suggestions with engagement, retention, or caption improvements.`;
+Do NOT include any CTA-related improvements. Replace CTA suggestions with engagement, retention, or caption improvements.
+
+REPLACE the HASHTAGS section platforms with these organic video platforms:
+TIKTOK: trending + niche hashtags, keyword-based captions, 8-12 tags
+INSTAGRAM REELS: mix of broad + niche, saves-focused, 5-8 tags
+YOUTUBE SHORTS: SEO-focused title keywords, 3-5 discovery tags`;
 
   const handleReset = useCallback(() => {
     setFile(null);
