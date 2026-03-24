@@ -1,5 +1,5 @@
 // src/components/PlatformScoreCard.tsx
-import { BarChart2, Music2, Camera, Youtube, CheckCircle, XCircle, ArrowRight } from 'lucide-react'
+import { BarChart2, Music2, Camera, Youtube, CheckCircle, XCircle, ArrowRight, Facebook, Instagram, Pin } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { PlatformScore } from '../services/claudeService'
 
@@ -9,10 +9,13 @@ interface PlatformScoreCardProps {
   platform: string  // OrganicAnalyzer Platform value: "all" | "TikTok" | "Instagram Reels" | "YouTube Shorts"
 }
 
-const PLATFORM_META: Record<'tiktok' | 'reels' | 'shorts', { label: string; Icon: React.ComponentType<{ size?: number; color?: string }> }> = {
-  tiktok:  { label: 'TikTok',           Icon: Music2  },
-  reels:   { label: 'Instagram Reels',  Icon: Camera  },
-  shorts:  { label: 'YouTube Shorts',   Icon: Youtube },
+const PLATFORM_META: Record<string, { label: string; Icon: React.ComponentType<{ size?: number; color?: string }> }> = {
+  tiktok:    { label: 'TikTok',           Icon: Music2    },
+  reels:     { label: 'Instagram Reels',  Icon: Camera    },
+  shorts:    { label: 'YouTube Shorts',   Icon: Youtube   },
+  meta:      { label: 'Meta Feed',        Icon: Facebook  },
+  instagram: { label: 'Instagram Feed',   Icon: Instagram },
+  pinterest: { label: 'Pinterest',        Icon: Pin       },
 }
 
 function scoreColor(score: number): string {
@@ -39,7 +42,7 @@ function ShimmerCard() {
 }
 
 function PlatformCard({ score, index }: { score: PlatformScore; index: number }) {
-  const meta = PLATFORM_META[score.platform]
+  const meta = PLATFORM_META[score.platform] ?? { label: score.platform, Icon: BarChart2 }
   const Icon = meta.Icon
   const color = scoreColor(score.score)
 
