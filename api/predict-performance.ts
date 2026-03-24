@@ -37,20 +37,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const adTypeLabel = adType ?? "video";
   const intentLabel = intent ?? "conversion";
 
+  // ── Platform-specific benchmarks ──────────────────────────────────────────
+  const PLATFORM_BENCHMARKS: Record<string, { label: string; ctrRange: string; ctrAvg: number; cvrRange: string; hookRetentionRange: string | null; creativeFatigue: string }> = {
+    meta:           { label: 'Meta',           ctrRange: '0.8–1.5%', ctrAvg: 1.25, cvrRange: '1.5–3.5%', hookRetentionRange: '55–70%',  creativeFatigue: '~3–5d' },
+    instagram:      { label: 'Instagram',      ctrRange: '0.5–1.2%', ctrAvg: 0.90, cvrRange: '1.0–2.5%', hookRetentionRange: '50–65%',  creativeFatigue: '~3–5d' },
+    tiktok:         { label: 'TikTok',         ctrRange: '1.5–3.0%', ctrAvg: 2.10, cvrRange: '0.5–1.5%', hookRetentionRange: '60–75%',  creativeFatigue: '~1–3d' },
+    pinterest:      { label: 'Pinterest',      ctrRange: '0.2–0.5%', ctrAvg: 0.35, cvrRange: '0.8–2.0%', hookRetentionRange: '40–55%',  creativeFatigue: '~7–14d' },
+    youtube:        { label: 'YouTube',        ctrRange: '0.3–0.7%', ctrAvg: 0.50, cvrRange: '0.5–1.5%', hookRetentionRange: '30–50%',  creativeFatigue: '~5–7d' },
+    google_display: { label: 'Google Display', ctrRange: '0.1–0.3%', ctrAvg: 0.18, cvrRange: '0.5–1.5%', hookRetentionRange: null,       creativeFatigue: '~5–7d' },
+  };
+  const platformKey = platformLabel.toLowerCase().replace(/\s+/g, '_');
+  const platBenchmark = PLATFORM_BENCHMARKS[platformKey] ?? PLATFORM_BENCHMARKS.meta;
+
   const nicheBenchmarks: Record<string, { ctr: string; cvr: string }> = {
-    ecommerce: { ctr: "Meta ecommerce avg CTR: 1.0-1.5%. TikTok: 0.8-1.2%. Google Display: 0.3-0.5%.", cvr: "Ecommerce avg CVR from ad click: 2-4%." },
-    supplements: { ctr: "Supplement ads avg CTR: 1.2-2.0% on Meta (higher due to curiosity hooks). TikTok: 1.0-1.5%.", cvr: "Supplement CVR: 3-6% (impulse category)." },
-    saas: { ctr: "SaaS avg CTR: 0.8-1.2% on Meta. LinkedIn: 0.4-0.8%. Google Display: 0.2-0.4%.", cvr: "SaaS CVR from ad: 1-3% (longer sales cycle)." },
-    fitness: { ctr: "Fitness avg CTR: 1.5-2.5% on Meta (visual category). TikTok: 1.2-2.0%.", cvr: "Fitness CVR: 2-5% depending on price point." },
-    skincare: { ctr: "Skincare avg CTR: 1.2-1.8% on Meta. Instagram: 1.5-2.2% (visual platform).", cvr: "Skincare CVR: 2-4%." },
-    finance: { ctr: "Finance avg CTR: 0.6-1.0% on Meta. Google: 0.5-0.8%.", cvr: "Finance CVR: 1-2% (high consideration)." },
+    ecommerce: { ctr: `${platBenchmark.label} ecommerce avg CTR: ${platBenchmark.ctrRange}. Benchmark avg: ${platBenchmark.ctrAvg}%.`, cvr: `Ecommerce avg CVR from ad click: ${platBenchmark.cvrRange}.` },
+    supplements: { ctr: `Supplement ads avg CTR: ${platBenchmark.ctrRange} on ${platBenchmark.label}. Benchmark avg: ${platBenchmark.ctrAvg}%.`, cvr: "Supplement CVR: 3-6% (impulse category)." },
+    saas: { ctr: `SaaS avg CTR: ${platBenchmark.ctrRange} on ${platBenchmark.label}. Benchmark avg: ${platBenchmark.ctrAvg}%.`, cvr: "SaaS CVR from ad: 1-3% (longer sales cycle)." },
+    fitness: { ctr: `Fitness avg CTR: ${platBenchmark.ctrRange} on ${platBenchmark.label}. Benchmark avg: ${platBenchmark.ctrAvg}%.`, cvr: "Fitness CVR: 2-5% depending on price point." },
+    skincare: { ctr: `Skincare avg CTR: ${platBenchmark.ctrRange} on ${platBenchmark.label}. Benchmark avg: ${platBenchmark.ctrAvg}%.`, cvr: "Skincare CVR: 2-4%." },
+    finance: { ctr: `Finance avg CTR: ${platBenchmark.ctrRange} on ${platBenchmark.label}. Benchmark avg: ${platBenchmark.ctrAvg}%.`, cvr: "Finance CVR: 1-2% (high consideration)." },
   };
 
   const nicheKey = nicheLabel.toLowerCase().replace(/[^a-z]/g, "");
   const benchmarks = Object.entries(nicheBenchmarks).find(([k]) => nicheKey.includes(k))?.[1];
   const benchmarkBlock = benchmarks
-    ? `\nINDUSTRY BENCHMARKS:\n${benchmarks.ctr}\n${benchmarks.cvr}`
-    : `\nNote: Use general paid social benchmarks for ${nicheLabel}. Meta avg CTR: 0.9-1.5%. Google Display: 0.3-0.5%.`;
+    ? `\nPLATFORM BENCHMARKS (${platBenchmark.label} · Ecommerce / DTC avg):\nCTR: ${platBenchmark.ctrRange} (avg ${platBenchmark.ctrAvg}%)\nCVR: ${platBenchmark.cvrRange}\n${platBenchmark.hookRetentionRange ? `Hook Retention: ${platBenchmark.hookRetentionRange}` : ""}\nCreative Fatigue: ${platBenchmark.creativeFatigue}\n\n${benchmarks.ctr}\n${benchmarks.cvr}`
+    : `\nPLATFORM BENCHMARKS (${platBenchmark.label} · Ecommerce / DTC avg):\nCTR: ${platBenchmark.ctrRange} (avg ${platBenchmark.ctrAvg}%)\nCVR: ${platBenchmark.cvrRange}\n${platBenchmark.hookRetentionRange ? `Hook Retention: ${platBenchmark.hookRetentionRange}` : ""}\nCreative Fatigue: ${platBenchmark.creativeFatigue}`;
 
   // Identify weakest dimensions for calibration
   const weakDims = scores
@@ -83,7 +95,8 @@ CALIBRATION RULES:
 - A hook score of 3/10 → predict retention below 20%. A hook of 8/10 → predict retention above 55%.
 - A CTA score of 3/10 → predict CTR in the bottom quartile for ${nicheLabel}. A CTA of 8/10 → top quartile.
 - An overall score of 4/10 → fatigue in under 7 days at moderate spend. An 8/10 → 14-21 days.
-- Every prediction must cite the specific score that drives it: "CTR predicted at X% vs Y% ${platformLabel} average for ${nicheLabel} because [dimension] scored [N]/10."
+- Every prediction must cite the specific score that drives it: "CTR predicted at X% vs ${platBenchmark.ctrAvg}% ${platBenchmark.label} average for ${nicheLabel} because [dimension] scored [N]/10."
+- The benchmark field in the JSON must be ${platBenchmark.ctrAvg} (the ${platBenchmark.label} platform average).
 - Never guess high to flatter. A weak ad gets weak predictions.`;
 
   const prompt = isOrganic

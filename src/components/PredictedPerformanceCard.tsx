@@ -96,7 +96,7 @@ export default function PredictedPerformanceCard({ prediction, platform, niche, 
             </p>
           </div>
           <span className="text-[11px] text-zinc-500 text-right">
-            {nicheLabel} avg<br/>{prediction.ctr.benchmark}%
+            {platformLabel} · {nicheLabel} avg<br/>{prediction.ctr.benchmark}%
           </span>
         </div>
         <CtrRangeBar low={prediction.ctr.low} high={prediction.ctr.high} nicheAvg={prediction.ctr.benchmark} />
