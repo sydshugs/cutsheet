@@ -58,11 +58,16 @@ export const saveAnalysis = async (record: Omit<AnalysisRecord, 'id' | 'created_
     },
     markdown: record.improvements?.join('\n') || '',
   }
+  // Note: The analyses table RLS allows 'anon' inserts only. Authenticated users
+  // may get 403. This is a fire-and-forget save for share links — if it fails,
+  // local history (via useHistory) still works. Do not block the UI on this.
   supabase
     .from('analyses')
     .insert(payload)
     .then(({ error }) => {
-      if (error) console.error('[saveAnalysis] Failed:', error.message, error.details, error.hint)
+      if (error && !error.message?.includes('row-level security')) {
+        console.error('[saveAnalysis] Failed:', error.message, error.details, error.hint)
+      }
     })
 }
 
