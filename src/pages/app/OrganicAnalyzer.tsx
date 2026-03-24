@@ -333,7 +333,6 @@ YOUTUBE SHORTS: SEO-focused title keywords, 3-5 discovery tags`;
           },
           improvements: result.improvements ?? [],
           budget_recommendation: result.budget?.verdict ?? undefined,
-          second_eye_review: secondEyeOutput ? JSON.stringify(secondEyeOutput) : undefined,
         });
         setHistoryRefreshKey(k => k + 1);
       }
