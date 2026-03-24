@@ -40,11 +40,12 @@ export const saveAnalysis = async (record: Omit<AnalysisRecord, 'id' | 'created_
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
 
-  // The analyses table only has: id, slug, file_name, scores (JSONB), markdown, created_at, created_by_ip
-  // Pack all extra fields into the scores JSONB column
+  // The analyses table has: id, slug, user_id, file_name, scores (JSONB), markdown, created_at, created_by_ip
+  // RLS policy: auth.uid() = user_id — user_id MUST be set from live auth session
   const slug = `${user.id.slice(0, 8)}-${Date.now().toString(36)}`
   const payload = {
     slug,
+    user_id: user.id,
     file_name: record.file_name,
     scores: {
       ...record.scores,
@@ -58,16 +59,11 @@ export const saveAnalysis = async (record: Omit<AnalysisRecord, 'id' | 'created_
     },
     markdown: record.improvements?.join('\n') || '',
   }
-  // Note: The analyses table RLS allows 'anon' inserts only. Authenticated users
-  // may get 403. This is a fire-and-forget save for share links — if it fails,
-  // local history (via useHistory) still works. Do not block the UI on this.
   supabase
     .from('analyses')
     .insert(payload)
     .then(({ error }) => {
-      if (error && !error.message?.includes('row-level security')) {
-        console.error('[saveAnalysis] Failed:', error.message, error.details, error.hint)
-      }
+      if (error) console.error('[saveAnalysis] Failed:', error.message, error.details, error.hint)
     })
 }
 
