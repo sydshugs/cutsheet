@@ -157,8 +157,28 @@ export default function OrganicAnalyzer() {
   // ── Organic context prefix (always prepended) ─────────────────────────────
   const platformLabel = platform === "all" ? "all platforms" : platform;
   const contextPrefix = organicFormat === "static"
-    ? `This is an ORGANIC static image post (not a paid ad, not a video).\nScore for: visual stopping power in a feed scroll, caption hook effectiveness, save-worthiness, shareability, and platform-native feel for ${platformLabel}.\nDo NOT apply paid ad or video scoring criteria.\nThere is no retention curve or scene breakdown for static content.\nDo NOT include a budget recommendation. This is organic content — there is no ad spend.`
-    : `This is an ORGANIC content video (not a paid ad).\nScore for: entertainment value, native feel, retention curve, shareability, and algorithm signals for ${platformLabel}.\nDo NOT apply paid ad scoring criteria.\nScore as if a viewer found this organically on their feed.\nDo NOT include a budget recommendation. This is organic content — there is no ad spend.`;
+    ? `This is ORGANIC content, not a paid ad.
+Do NOT score for: CTA, conversion, purchase friction, offer clarity, ad spend efficiency, or any paid advertising metrics.
+Score for: entertainment value, native platform feel, save-worthiness, shareability (DM potential), caption hook effectiveness, visual stopping power in a feed scroll, and platform-native feel for ${platformLabel}.
+A high-scoring organic post feels like real creator content — not an ad.
+
+REPLACE the "CTA Effectiveness" dimension with "Shareability & Save-Worthiness" in the QUICK SCORES section.
+Score "Shareability & Save-Worthiness" on: Would someone DM this to a friend? Would they save it for later? Does it trigger the share impulse?
+
+There is no retention curve or scene breakdown for static content.
+Do NOT include a budget recommendation. This is organic content — there is no ad spend.
+Do NOT include any CTA-related improvements. Replace CTA suggestions with shareability or caption improvements.`
+    : `This is ORGANIC content, not a paid ad.
+Do NOT score for: CTA, conversion, purchase friction, offer clarity, ad spend efficiency, or any paid advertising metrics.
+Score for: entertainment value, native feel, completion probability, rewatch potential, shareability (DM potential), algorithm signals for ${platformLabel}, and caption discoverability.
+A high-scoring organic post feels like real creator content — not an ad.
+Score as if a viewer found this organically on their feed.
+
+REPLACE the "CTA Effectiveness" dimension with "Shareability & Rewatch" in the QUICK SCORES section.
+Score "Shareability & Rewatch" on: Does this make someone share, save, or watch again? Does it trigger the algorithm's engagement signals?
+
+Do NOT include a budget recommendation. This is organic content — there is no ad spend.
+Do NOT include any CTA-related improvements. Replace CTA suggestions with engagement, retention, or caption improvements.`;
 
   const handleReset = useCallback(() => {
     setFile(null);
@@ -433,7 +453,8 @@ export default function OrganicAnalyzer() {
         platform === "all" ? rawUserContext?.platform : platform,
         rawUserContext?.niche,
         undefined,
-        "video",
+        organicFormat,
+        true, // isOrganic
       );
       setFixItResult(result);
     } catch (err) {
