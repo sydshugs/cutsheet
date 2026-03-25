@@ -437,7 +437,7 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
     if (!activeResult || briefLoading) return;
     setBriefLoading(true); setBriefError(null);
     try {
-      const r = await generateBriefWithClaude(activeResult.markdown, activeResult.fileName, userContext || undefined, sessionMemoryRef.current);
+      const r = await generateBriefWithClaude(activeResult.markdown, activeResult.fileName, userContext || undefined, sessionMemoryRef.current, organicFormat, platform);
       setBrief(r); setRightTab("brief");
     } catch {
       try { const r = await generateBrief(activeResult.markdown, API_KEY); setBrief(r); setRightTab("brief"); }

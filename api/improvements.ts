@@ -113,10 +113,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (action === "brief") {
-    const { analysisMarkdown, filename, userContext: rawContext, sessionMemory: rawMemory } = payload ?? {};
+    const { analysisMarkdown, filename, userContext: rawContext, sessionMemory: rawMemory, adFormat, platform } = payload ?? {};
     const sessionMemory = sanitizeSessionMemory(rawMemory);
     const userContext = sanitizeSessionMemory(rawContext);
     if (!analysisMarkdown) return res.status(400).json({ error: "analysisMarkdown is required" });
+
+    const formatLabel = adFormat === "static" ? "static" : "video";
+    const platformLabel = platform && platform !== "all" ? platform : "";
 
     const contextBlock = userContext
       ? `\n\n${userContext}\n\nStructure this brief specifically for the user's niche and platform. Use relevant industry terminology and platform best practices.`
@@ -124,15 +127,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const memoryBlock = sessionMemory
       ? `\n\n${sessionMemory}\nReference learnings from prior analyses when structuring this brief. Avoid recommending approaches that already scored poorly.`
       : "";
+    const platformBlock = platformLabel
+      ? `\n\nOptimize this brief specifically for ${platformLabel} — format, copy length, and hook style should reflect ${platformLabel} best practices.`
+      : "";
 
     const message = await getClient().messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 2048,
-      system: `You are a senior creative strategist at a top performance marketing agency. You write tight, actionable creative briefs that creative teams can execute immediately. Your briefs are specific to the ad analyzed — not generic templates.${contextBlock}${memoryBlock}`,
+      system: `You are a senior creative strategist at a top performance marketing agency. You write tight, actionable creative briefs that creative teams can execute immediately. Your briefs are specific to the ad analyzed — not generic templates.${contextBlock}${memoryBlock}${platformBlock}`,
       messages: [
         {
           role: "user",
-          content: `Based on this video ad analysis for "${filename ?? "this ad"}", write a creative brief for the next iteration of this ad. Structure it exactly like this:
+          content: `Based on this ${formatLabel} ad analysis for "${filename ?? "this ad"}", write a creative brief for the next iteration of this ad. Structure it exactly like this:
 
 ## Creative Brief
 
@@ -153,6 +159,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 **Do:** 3 things the creative must include or achieve.
 
 **Don't:** 3 things to avoid.
+
+CRITICAL FORMAT RULES — follow EXACTLY or the parser will break:
+- Every section MUST start with **Label:** followed by content on the same line
+- Use exactly these label names: Objective, Target Audience, Hook Direction, Format, Key Message, Proof Points, CTA, Do, Don't
+- For numbered items (Hook Direction), put each on its own line starting with 1. 2. 3.
+- For bullet items (Proof Points, Do, Don't), put each on its own line starting with -
+- Do NOT add any extra markdown formatting, headers, or dividers
+- Do NOT wrap the brief in code fences
 
 ---
 

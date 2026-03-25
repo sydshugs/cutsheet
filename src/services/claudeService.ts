@@ -88,11 +88,13 @@ export async function generateBriefWithClaude(
   analysisMarkdown: string,
   filename: string,
   userContext?: string,
-  sessionMemory?: string
+  sessionMemory?: string,
+  adFormat?: string,
+  platform?: string,
 ): Promise<string> {
   const data = await callApi<{ brief: string }>("/api/improvements", {
     action: "brief",
-    payload: { analysisMarkdown, filename, userContext, sessionMemory },
+    payload: { analysisMarkdown, filename, userContext, sessionMemory, adFormat, platform },
   });
   if (!data.brief) throw new Error("Empty brief response");
   return data.brief;

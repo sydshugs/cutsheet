@@ -582,7 +582,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
     setBriefLoading(true);
     setBriefError(null);
     try {
-      const r = await generateBriefWithClaude(activeResult.markdown, activeResult.fileName, userContext || undefined, sessionMemoryRef.current);
+      const r = await generateBriefWithClaude(activeResult.markdown, activeResult.fileName, userContext || undefined, sessionMemoryRef.current, format, platform);
       setBrief(r);
       setRightTab("brief");
     } catch {
