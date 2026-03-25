@@ -321,21 +321,6 @@ export function ScoreCard({
       </div>
 
       {/* Verdict block — cleaner inline style */}
-      {verdict && (() => {
-        const vColors = {
-          not_ready: { color: '#ef4444', label: 'Not ready' },
-          needs_work: { color: '#f59e0b', label: 'Needs work' },
-          ready: { color: '#10b981', label: 'Ready' },
-        };
-        const v = vColors[verdict.state];
-        return (
-          <div className="mx-5 mt-4 mb-2 flex items-center gap-3">
-            <span className="w-2 h-2 rounded-full shrink-0" style={{ background: v.color }} />
-            <span className="text-sm text-zinc-400 leading-relaxed">{verdict.headline}</span>
-          </div>
-        );
-      })()}
-
       {/* Main content card — cleaner styling */}
       <div className="mx-4 mt-3 rounded-2xl overflow-hidden border border-white/[0.06] bg-white/[0.015]">
         {/* Platform switcher */}
