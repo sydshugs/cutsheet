@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { HookAnalysisExpanded } from "./HookAnalysisExpanded";
 import { HashtagsC2 } from "./HashtagsC2";
-import { Copy, CheckCircle, Loader2, ArrowUpRight, Share2, RotateCcw, FileText, Bookmark, Lightbulb, DollarSign, TrendingUp, ShieldCheck } from "lucide-react";
+import { Copy, CheckCircle, Loader2, ArrowUpRight, Share2, RotateCcw, FileText, Bookmark, Lightbulb, DollarSign } from "lucide-react";
 import type { BudgetRecommendation, Hashtags, Scene, HookDetail } from "../services/analyzerService";
 import type { EngineBudgetRecommendation } from "../services/budgetService";
 import { getBenchmark, type BenchmarkResult } from "../lib/benchmarks";
@@ -19,8 +19,6 @@ import { AlertDialog } from "./ui/AlertDialog";
 // Sub-components
 import { ScoreHero } from "./ScoreHero";
 import { BudgetCard } from "./scorecard/BudgetCard";
-import SceneBreakdown from "./SceneBreakdown";
-import { StaticAdChecks } from "./StaticAdChecks";
 
 interface Scores {
   hook: number;
@@ -423,55 +421,28 @@ export function ScoreCard({
         </button>
       )}
 
-          {/* 8. Predicted Performance */}
-          {prediction && (
-            <div style={{ marginTop: 8, padding: "0 20px" }}>
-              <CollapsibleSection
-                title="Predicted Performance"
-                icon={<TrendingUp size={14} />}
-              >
-                <PredictedPerformanceCard prediction={prediction} platform={platform} niche={niche} format={format} />
-              </CollapsibleSection>
-            </div>
-          )}
+      {/* Predicted Performance */}
+      {prediction && (
+        <div className="mx-4 mt-4 rounded-2xl border border-white/[0.06] bg-white/[0.015] p-5">
+          <PredictedPerformanceCard prediction={prediction} platform={platform} niche={niche} isOrganic={isOrganic} />
+        </div>
+      )}
 
-          {/* 9. Budget Recommendation */}
-          {(engineBudget || budget) && (
-            <div style={{ marginTop: 8, padding: "0 20px" }}>
-              <CollapsibleSection
-                title="Budget Recommendation"
-                icon={<DollarSign size={14} />}
-              >
-                <BudgetCard
-                  engineBudget={engineBudget}
-                  budget={budget}
-                  onNavigateSettings={onNavigateSettings}
-                />
-              </CollapsibleSection>
-            </div>
-          )}
+      {/* Budget Recommendation */}
+      {(engineBudget || budget) && (
+        <div className="mx-4 mt-4 rounded-2xl border border-white/[0.06] bg-white/[0.015] p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <DollarSign size={14} className="text-zinc-500" />
+            <span className="text-xs font-medium text-zinc-400 uppercase tracking-wide">Budget</span>
+          </div>
+          <BudgetCard
+            engineBudget={engineBudget}
+            budget={budget}
+            onNavigateSettings={onNavigateSettings}
+          />
+        </div>
+      )}
 
-          {/* 10. Scene Breakdown — video only */}
-          {format === "video" && scenes && scenes.length > 0 && (
-            <div style={{ marginTop: 8, padding: "0 20px" }}>
-              <CollapsibleSection
-                title="Scene Breakdown"
-                defaultOpen
-                trailing={<span className="text-[10px] text-zinc-500">{scenes.length} scenes</span>}
-              >
-                <SceneBreakdown scenes={scenes} />
-              </CollapsibleSection>
-            </div>
-          )}
-
-          {/* 11. Static Ad Checks — static only */}
-          {format === "static" && scores && (
-            <div style={{ marginTop: 8, padding: "0 20px", paddingBottom: 20 }}>
-              <CollapsibleSection title="Ad Quality Checks" icon={<ShieldCheck size={14} />}>
-                <StaticAdChecks scores={scores} />
-              </CollapsibleSection>
-            </div>
-          )}
 
           {/* 12. Hashtags */}
           {hashtags && (hashtags.tiktok.length > 0 || hashtags.meta.length > 0 || hashtags.instagram.length > 0) && (
