@@ -180,18 +180,30 @@ Placement: ${placement}
 Score on: VISUAL HIERARCHY, CTA VISIBILITY, BRAND CLARITY, MESSAGE CLARITY, VISUAL CONTRAST (each 0-10, whole numbers).
 Estimate TEXT-TO-IMAGE RATIO. Flag if over 30%.
 Return JSON only:
-{"overallScore":<n>,"scores":{"hierarchy":<n>,"ctaVisibility":<n>,"brandClarity":<n>,"messageClarity":<n>,"visualContrast":<n>},"textToImageRatio":"<str>","textRatioFlag":<bool>,"improvements":["<5 items>"],"formatNotes":"<str>","verdict":"<str>","placementRisk":"low"|"medium"|"high","placementRiskNote":"<str>"}`;
+{"overallScore":<n>,"scores":{"hierarchy":<n>,"ctaVisibility":<n>,"brandClarity":<n>,"messageClarity":<n>,"visualContrast":<n>},"textToImageRatio":"<str>","textRatioFlag":<bool>,"improvements":[{"fix":"<text>","category":"hierarchy|typography|layout|contrast","severity":"high|medium|low"}],"formatNotes":"<str>","verdict":"<str>","placementRisk":"low"|"medium"|"high","placementRiskNote":"<str>"}`;
 
         const rawResult = await analyzeVideo(banner.file, API_KEY, undefined, displayPrompt, userContext);
         const jsonMatch = rawResult.markdown.match(/\{[\s\S]*"overallScore"[\s\S]*\}/);
         let displayResult: DisplayResult | null = null;
-        if (jsonMatch) { try { displayResult = JSON.parse(jsonMatch[0]); } catch { /* fallback */ } }
+        if (jsonMatch) {
+          try {
+            displayResult = JSON.parse(jsonMatch[0]);
+            // Runtime guard: AI may return plain strings instead of objects
+            if (displayResult?.improvements?.length && typeof displayResult.improvements[0] === 'string') {
+              displayResult.improvements = (displayResult.improvements as unknown as string[]).map((imp, i) => ({
+                fix: imp, category: 'layout', severity: i === 0 ? 'high' : i < 3 ? 'medium' : 'low',
+              }));
+            }
+          } catch { /* fallback */ }
+        }
         if (!displayResult) {
           displayResult = {
             overallScore: rawResult.scores?.overall ?? 5,
             scores: { hierarchy: 5, ctaVisibility: 5, brandClarity: 5, messageClarity: 5, visualContrast: 5 },
             textToImageRatio: "~Unknown", textRatioFlag: false,
-            improvements: rawResult.improvements ?? [], formatNotes: "", verdict: "Fallback scoring.",
+            improvements: (rawResult.improvements ?? []).map((imp: string, i: number) => ({
+              fix: imp, category: 'layout', severity: i === 0 ? 'high' : i < 3 ? 'medium' : 'low',
+            })), formatNotes: "", verdict: "Fallback scoring.",
             placementRisk: "medium", placementRiskNote: "Could not determine.",
           };
         }
@@ -219,7 +231,7 @@ Return JSON only:
           format: banner.format?.name ?? `${banner.dimensions.width}x${banner.dimensions.height}`,
           fileName: banner.file.name,
           overallScore: r.value.result.overallScore,
-          improvements: r.value.result.improvements,
+          improvements: r.value.result.improvements.map(i => i.fix),
         };
       });
 
@@ -340,7 +352,7 @@ Return JSON only — no prose:
   "scores": { "hierarchy": <n>, "ctaVisibility": <n>, "brandClarity": <n>, "messageClarity": <n>, "textRatio": <n>, "visualContrast": <n> },
   "textToImageRatio": "<e.g. ~25% text>",
   "textRatioFlag": <true if over 30%>,
-  "improvements": ["<5 display-specific improvements>"],
+  "improvements": [{"fix":"<improvement text>","category":"hierarchy|typography|layout|contrast","severity":"high|medium|low"}],
   "formatNotes": "<format-specific observations>",
   "verdict": "<one sentence honest assessment>",
   "placementRisk": "low" | "medium" | "high",
@@ -357,6 +369,14 @@ Return JSON only — no prose:
       if (jsonMatch) {
         try {
           displayResult = JSON.parse(jsonMatch[0]) as DisplayResult;
+          // Runtime guard: AI may return plain strings instead of objects
+          if (displayResult?.improvements?.length && typeof displayResult.improvements[0] === 'string') {
+            displayResult.improvements = (displayResult.improvements as unknown as string[]).map((imp, i) => ({
+              fix: imp,
+              category: 'layout',
+              severity: i === 0 ? 'high' : i < 3 ? 'medium' : 'low',
+            }));
+          }
         } catch { /* fallback below */ }
       }
 
@@ -373,7 +393,9 @@ Return JSON only — no prose:
           },
           textToImageRatio: "~Unknown",
           textRatioFlag: false,
-          improvements: rawResult.improvements ?? [],
+          improvements: (rawResult.improvements ?? []).map((imp: string, i: number) => ({
+            fix: imp, category: 'layout', severity: i === 0 ? 'high' : i < 3 ? 'medium' : 'low',
+          })),
           formatNotes: "",
           verdict: "Analysis completed with fallback scoring.",
           placementRisk: "medium",
@@ -410,7 +432,7 @@ Return JSON only — no prose:
     if (!result || ctaLoading) return;
     setCtaLoading(true);
     try {
-      const ctaContext = `CTA Visibility: ${result.scores.ctaVisibility}/10. Verdict: ${result.verdict}. Improvements: ${result.improvements.join("; ")}`;
+      const ctaContext = `CTA Visibility: ${result.scores.ctaVisibility}/10. Verdict: ${result.verdict}. Improvements: ${result.improvements.map(i => i.fix).join("; ")}`;
       const rewrites = await generateCTARewrites(ctaContext, file?.name ?? "display-ad", userContext || undefined, sessionMemoryRef.current);
       setCtaRewrites(rewrites);
     } catch { /* silent */ }
@@ -431,7 +453,7 @@ Return JSON only — no prose:
         imageMediaType: "image/jpeg",
         analysisResult: {
           scores: result.scores as unknown as Record<string, number>,
-          improvements: result.improvements ?? [],
+          improvements: (result.improvements ?? []).map(i => i.fix),
         },
         platform: network === "google" ? "Google Display" : network === "affiliate" ? "Affiliate" : "general",
         niche,
@@ -469,7 +491,7 @@ Return JSON only — no prose:
         platform: "both",
         adType: "display",
         niche: "display advertising",
-        adCopy: result.improvements?.join(". ") ?? "",
+        adCopy: result.improvements?.map(i => i.fix).join(". ") ?? "",
         existingAnalysis: result as unknown as object,
       });
       setPolicyResult(r);
@@ -674,7 +696,7 @@ Return JSON only — no prose:
                                 format: b.format?.name ?? "Custom",
                                 fileName: b.file.name,
                                 overallScore: b.result!.overallScore,
-                                improvements: b.result!.improvements,
+                                improvements: b.result!.improvements.map(i => i.fix),
                               }));
                               const cohesion = await analyzeSuiteCohesion(bannerData, userContext, sessionMemoryRef.current);
                               setSuiteCohesion(cohesion);
@@ -1001,7 +1023,7 @@ Return JSON only — no prose:
                           </div>
                           <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
                             <Sparkles size={14} color="#818cf8" style={{ marginTop: 2 }} />
-                            <span style={{ fontSize: 13, color: "#e4e4e7", lineHeight: 1.5 }}>{result.improvements[0]}</span>
+                            <span style={{ fontSize: 13, color: "#e4e4e7", lineHeight: 1.5 }}>{result.improvements[0]?.fix}</span>
                           </div>
                         </div>
                       )}
