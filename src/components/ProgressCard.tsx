@@ -110,6 +110,9 @@ function ChecklistItem({ label, done, active }: { label: string; done: boolean; 
 }
 
 export function ProgressCard({ file, status, onCancel, platform, format = "video" }: ProgressCardProps) {
+  const Icon = Zap;
+  const title = "Analyzing your ad";
+  const METRICS = DEFAULT_METRICS;
   const [stageIndex, setStageIndex] = useState(0);
   const thumbnailDataUrl = useThumbnail(file);
   const isImage = file.type.startsWith("image/");

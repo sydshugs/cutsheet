@@ -16,7 +16,6 @@ import { getAvatarUrl } from "./UserAvatar";
 import { themes } from "../theme";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import { OfflineBanner } from "./OfflineBanner";
-import { Helmet } from "react-helmet-async";
 
 // ─── OUTLET CONTEXT TYPE ─────────────────────────────────────────────────────
 
