@@ -694,3 +694,27 @@ Every Claude Code prompt should specify the model. Default to Sonnet unless stat
 - **Sonnet (default)** — most tasks: multi-file changes, wiring props, writing tests, merging branches, reviewing diffs, bug fixes
 - **Opus** — only for: full architectural decisions, 10+ file changes, the 9-pass Full App Fix session, complex debugging where root cause is unclear
 Rule: Claude (me) will always specify which model to use before giving you a Claude Code prompt. If I forget, default to Sonnet.
+
+---
+
+## Session Protocol — What Syd Does Each Session
+This is the ONLY thing required from Syd each session. Nothing else needs to be re-explained or re-setup.
+
+### Start of every session
+1. Paste the current day's handoff Notion link to Claude (claude.ai)
+2. Claude reads it and catches up automatically
+3. Tell Claude Code to read CLAUDE.md: "Read CLAUDE.md before starting"
+4. Say what you want to build
+
+### During the session
+- Paste Claude Code responses back to Claude (claude.ai) for review
+- Claude (claude.ai) writes the prompts — Claude Code executes them
+- Always specify model in prompts (Haiku / Sonnet / Opus)
+
+### End of every session
+- Claude (claude.ai) writes the Day N+1 handoff to Notion automatically
+- No manual documentation needed
+
+### Two rules that must never slip
+1. Branch merged → delete it immediately (local + remote)
+2. New AI prompt added → register in Prompt Registry: https://www.notion.so/32e4ea3cb78781d1b06deecfacc9ce07
