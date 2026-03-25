@@ -3,10 +3,9 @@
 import { Helmet } from "react-helmet-async";
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useOutletContext } from "react-router-dom";
-import { Monitor, Eye, Download, X, Plus, CheckCircle, ShieldCheck, Sparkles, Lock, RotateCcw } from "lucide-react";
+import { Monitor, Eye, Download, X, Plus, CheckCircle, ShieldCheck, Sparkles, Lock, RotateCcw, Upload } from "lucide-react";
 import { VideoDropzone } from "../../components/VideoDropzone";
 import { AnalysisProgressCard } from "../../components/AnalysisProgressCard";
-import { DisplayResultPage } from "../../components/DisplayResultPage";
 import { sanitizeFileName } from "../../utils/sanitize";
 import { SuiteCohesionCard } from "../../components/SuiteCohesionCard";
 import { DisplayScoreCard, type DisplayResult } from "../../components/DisplayScoreCard";
@@ -787,9 +786,33 @@ Return JSON only — no prose:
                 </div>
               )}
 
-              {/* ── RESULTS: Stacked layout ─────────────────────── */}
+              {/* ── RESULTS: Stacked layout — matching Organic ReportCards ─────────────────────── */}
               {status === "complete" && result && dimensions && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 24, marginTop: 8 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 8 }}>
+                  
+                  {/* Original image preview card — matching Organic media preview */}
+                  {file && previewUrl && (
+                    <div style={{ borderRadius: 16, overflow: "hidden", border: "1px solid rgba(255,255,255,0.06)", background: "rgba(0,0,0,0.2)" }}>
+                      <div style={{ display: "flex", justifyContent: "center", padding: 16 }}>
+                        <img 
+                          src={previewUrl} 
+                          alt={sanitizeFileName(file.name)} 
+                          style={{ maxWidth: "100%", maxHeight: 420, objectFit: "contain", borderRadius: 12 }} 
+                        />
+                      </div>
+                      {/* File info bar */}
+                      <div style={{ 
+                        display: "flex", alignItems: "center", justifyContent: "space-between",
+                        padding: "12px 16px", borderTop: "1px solid rgba(255,255,255,0.05)", background: "rgba(255,255,255,0.02)"
+                      }}>
+                        <p style={{ fontSize: 12, color: "#71717a", fontFamily: "var(--font-mono, monospace)", margin: 0 }}>
+                          {(() => { const n = sanitizeFileName(file.name); return n.length > 35 ? n.slice(0, 32) + "..." : n; })()}
+                        </p>
+                        <span style={{ fontSize: 12, color: "#52525b" }}>{(file.size / 1024 / 1024).toFixed(1)} MB</span>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Mockup (hero — full width) */}
                   <div style={{ width: "100%" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
@@ -839,6 +862,147 @@ Return JSON only — no prose:
                       Editorial content shown in gray. Real websites may look different.
                     </p>
                   </div>
+
+                  {/* Analyze another creative button — matching Organic */}
+                  <button
+                    type="button"
+                    onClick={handleReset}
+                    style={{
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                      height: 48, borderRadius: 12,
+                      border: "1px dashed rgba(255,255,255,0.08)",
+                      background: "transparent", cursor: "pointer",
+                      transition: "all 150ms",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(6,182,212,0.3)"; e.currentTarget.style.background = "rgba(6,182,212,0.03)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "transparent"; }}
+                  >
+                    <RotateCcw size={14} color="#22d3ee" />
+                    <span style={{ fontSize: 12, color: "#a1a1aa" }}>Analyze another creative</span>
+                  </button>
+
+                  {/* TOOLS Section — matching Organic layout */}
+                  <div style={{ marginTop: 24 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                      <span style={{ fontSize: 10, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em", color: "#52525b" }}>Tools</span>
+                      <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.04)" }} />
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+                      {/* AI Rewrite */}
+                      <button
+                        type="button"
+                        style={{
+                          display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center",
+                          padding: 16, borderRadius: 12,
+                          border: "1px solid rgba(255,255,255,0.05)", background: "rgba(255,255,255,0.02)",
+                          cursor: "pointer", transition: "all 150ms",
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.02)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.05)"; }}
+                      >
+                        <div style={{ width: 40, height: 40, borderRadius: 12, background: "rgba(129,140,248,0.12)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
+                          <Sparkles size={18} color="#818cf8" />
+                        </div>
+                        <span style={{ fontSize: 12, fontWeight: 500, color: "#f4f4f5" }}>AI Rewrite</span>
+                        <span style={{ fontSize: 10, color: "#52525b", marginTop: 2 }}>Free</span>
+                      </button>
+
+                      {/* Visualize */}
+                      <button
+                        type="button"
+                        onClick={handleVisualize}
+                        style={{
+                          display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center",
+                          padding: 16, borderRadius: 12,
+                          border: "1px solid rgba(255,255,255,0.05)", background: "rgba(255,255,255,0.02)",
+                          cursor: "pointer", transition: "all 150ms",
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.02)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.05)"; }}
+                      >
+                        <div style={{ width: 40, height: 40, borderRadius: 12, background: "rgba(16,185,129,0.12)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
+                          <Eye size={18} color="#10b981" />
+                        </div>
+                        <span style={{ fontSize: 12, fontWeight: 500, color: "#f4f4f5" }}>Visualize</span>
+                        <span style={{ fontSize: 10, color: "#52525b", marginTop: 2 }}>1 credit</span>
+                      </button>
+
+                      {/* Policy Check */}
+                      <button
+                        type="button"
+                        onClick={handleCheckPolicies}
+                        disabled={policyLoading}
+                        style={{
+                          display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center",
+                          padding: 16, borderRadius: 12,
+                          border: "1px solid rgba(255,255,255,0.05)", background: "rgba(255,255,255,0.02)",
+                          cursor: policyLoading ? "default" : "pointer", transition: "all 150ms",
+                          opacity: policyLoading ? 0.5 : 1,
+                        }}
+                        onMouseEnter={(e) => { if (!policyLoading) { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; } }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.02)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.05)"; }}
+                      >
+                        <div style={{ width: 40, height: 40, borderRadius: 12, background: "rgba(245,158,11,0.12)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
+                          {policyLoading ? (
+                            <div style={{ width: 16, height: 16, border: "2px solid rgba(245,158,11,0.3)", borderTopColor: "#f59e0b", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+                          ) : (
+                            <ShieldCheck size={18} color="#f59e0b" />
+                          )}
+                        </div>
+                        <span style={{ fontSize: 12, fontWeight: 500, color: "#f4f4f5" }}>Policy Check</span>
+                        <span style={{ fontSize: 10, color: "#52525b", marginTop: 2 }}>Free</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Verdict and Improvements section — matching Organic CreativeVerdictAndSecondEye */}
+                  {result.verdict && (
+                    <div style={{ marginTop: 24 }}>
+                      {/* Verdict badge */}
+                      <div style={{
+                        display: "inline-flex", alignItems: "center", gap: 6,
+                        padding: "4px 10px", borderRadius: 9999,
+                        background: result.overallScore >= 7 ? "rgba(16,185,129,0.1)" : result.overallScore >= 5 ? "rgba(245,158,11,0.1)" : "rgba(239,68,68,0.1)",
+                        border: `1px solid ${result.overallScore >= 7 ? "rgba(16,185,129,0.2)" : result.overallScore >= 5 ? "rgba(245,158,11,0.2)" : "rgba(239,68,68,0.2)"}`,
+                        marginBottom: 12,
+                      }}>
+                        <div style={{
+                          width: 6, height: 6, borderRadius: "50%",
+                          background: result.overallScore >= 7 ? "#10b981" : result.overallScore >= 5 ? "#f59e0b" : "#ef4444",
+                        }} />
+                        <span style={{
+                          fontSize: 11, fontWeight: 600, textTransform: "uppercase",
+                          color: result.overallScore >= 7 ? "#10b981" : result.overallScore >= 5 ? "#f59e0b" : "#ef4444",
+                        }}>
+                          {result.overallScore >= 7 ? "Ready" : result.overallScore >= 5 ? "Needs Work" : "Not Ready"}
+                        </span>
+                      </div>
+
+                      {/* Verdict headline */}
+                      <p style={{ fontSize: 15, fontWeight: 600, color: "#f4f4f5", lineHeight: 1.5, margin: "0 0 16px" }}>
+                        {result.verdict}
+                      </p>
+
+                      {/* Priority fix */}
+                      {result.improvements && result.improvements.length > 0 && (
+                        <div style={{
+                          padding: 14, borderRadius: 12,
+                          background: "linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.06))",
+                          border: "1px solid rgba(99,102,241,0.15)",
+                        }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                            <span style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", color: "#818cf8" }}>Priority Fix</span>
+                            <span style={{ fontSize: 9, color: "#6366f1" }}>+2</span>
+                          </div>
+                          <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                            <Sparkles size={14} color="#818cf8" style={{ marginTop: 2 }} />
+                            <span style={{ fontSize: 13, color: "#e4e4e7", lineHeight: 1.5 }}>{result.improvements[0]}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -847,20 +1011,174 @@ Return JSON only — no prose:
         </div>
       </div>
 
-      {/* New premium result page layout (Single mode only, when complete) */}
-      {mode === "single" && status === "complete" && result && (
-        <DisplayResultPage
-          result={result}
-          format={detectedFormat}
-          mockupUrl={mockupUrl}
-          mockupLoading={mockupLoading}
-          dimensions={dimensions!}
-          isPro={isPro}
-          onAnalyzeAnother={handleReset}
-          onVisualize={handleVisualize}
-          onUpgrade={onUpgradeRequired}
-        />
-      )}
+      {/* Right panel — scores sidebar (Single mode only, when complete) - matching Organic layout */}
+      <div className={`shrink-0 bg-zinc-900/50 backdrop-blur-xl border-l border-white/5 overflow-y-auto overflow-x-hidden pb-12 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-white/5 ${mode === "single" && status === "complete" && result ? "w-[440px] max-lg:w-full opacity-100" : "w-0 max-lg:w-0 opacity-0"}`}>
+        {mode === "single" && status === "complete" && result && (
+          <>
+            {/* Score Overview header */}
+            <div style={{ padding: "16px 16px 0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: 14, fontWeight: 600, color: "#f4f4f5" }}>Score Overview</span>
+              {detectedFormat && (
+                <span style={{ fontSize: 10, color: "#22d3ee", background: "rgba(6,182,212,0.1)", borderRadius: 9999, padding: "3px 10px" }}>
+                  {detectedFormat.key} · {detectedFormat.name}
+                </span>
+              )}
+            </div>
+            <p style={{ fontSize: 11, color: "#71717a", padding: "4px 16px 0", margin: 0 }}>
+              {network === "google" ? "Google Display Network" : network === "affiliate" ? "Affiliate / Direct" : "All Networks"}
+            </p>
+
+            {/* Display Score Card */}
+            <DisplayScoreCard
+              result={result}
+              format={detectedFormat}
+              network={network}
+              mockupUrl={null}
+              mockupLoading={false}
+              dimensions={dimensions!}
+            />
+
+            {/* Predicted Performance */}
+            {prediction && (
+              <div className="mx-4 mt-4">
+                <PredictedPerformanceCard
+                  prediction={prediction}
+                  platform="google_display"
+                />
+              </div>
+            )}
+
+            {/* Action buttons */}
+            <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: 10 }}>
+              {/* Re-analyze button */}
+              <button
+                type="button"
+                onClick={handleReset}
+                style={{
+                  width: "100%", height: 44, borderRadius: 10,
+                  background: "rgba(6,182,212,0.08)", border: "1px solid rgba(6,182,212,0.2)",
+                  color: "#22d3ee", fontSize: 13, fontWeight: 500, cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                  transition: "all 150ms",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(6,182,212,0.15)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(6,182,212,0.08)"; }}
+              >
+                <RotateCcw size={14} /> Analyze another display ad
+              </button>
+
+              {/* Visualize It button */}
+              {!visualizeOpen && (
+                isPro ? (
+                  <button
+                    type="button"
+                    onClick={handleVisualize}
+                    style={{
+                      width: "100%", height: 48,
+                      background: "linear-gradient(135deg, rgba(6,182,212,0.15), rgba(20,184,166,0.15))",
+                      border: "1px solid rgba(6,182,212,0.35)",
+                      borderRadius: 10,
+                      color: "#22d3ee", cursor: "pointer",
+                      display: "flex", flexDirection: "column",
+                      alignItems: "center", justifyContent: "center", gap: 2,
+                      transition: "all 150ms",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(6,182,212,0.25), rgba(20,184,166,0.2))"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(6,182,212,0.15), rgba(20,184,166,0.15))"; }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <Sparkles size={15} />
+                      <span style={{ fontSize: 14, fontWeight: 600 }}>Visualize It</span>
+                    </div>
+                    <span style={{ fontSize: 11, color: "#06b6d4", opacity: 0.75 }}>See your improved ad</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => onUpgradeRequired("visualize")}
+                    style={{
+                      width: "100%", height: 48,
+                      background: "rgba(255,255,255,0.02)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      borderRadius: 10,
+                      color: "#52525b", cursor: "pointer",
+                      display: "flex", flexDirection: "column",
+                      alignItems: "center", justifyContent: "center", gap: 2,
+                      transition: "all 150ms",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(6,182,212,0.3)"; e.currentTarget.style.color = "#71717a"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#52525b"; }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <Lock size={14} />
+                      <span style={{ fontSize: 14, fontWeight: 600 }}>Visualize It</span>
+                      <span style={{ fontSize: 9, fontWeight: 600, padding: "1px 5px", borderRadius: 4, background: "rgba(6,182,212,0.12)", color: "#22d3ee" }}>PRO</span>
+                    </div>
+                    <span style={{ fontSize: 11, opacity: 0.6 }}>Upgrade to see your improved ad</span>
+                  </button>
+                )
+              )}
+
+              {/* Check Policies button */}
+              {!policyResult && (
+                <button
+                  type="button"
+                  onClick={handleCheckPolicies}
+                  disabled={policyLoading}
+                  style={{
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                    width: "100%", height: 44, borderRadius: 10,
+                    background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.25)",
+                    color: "#f59e0b", fontSize: 13, fontWeight: 500,
+                    cursor: policyLoading ? "default" : "pointer",
+                    opacity: policyLoading ? 0.7 : 1, transition: "all 150ms",
+                  }}
+                  onMouseEnter={(e) => { if (!policyLoading) e.currentTarget.style.background = "rgba(245,158,11,0.18)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(245,158,11,0.1)"; }}
+                >
+                  {policyLoading ? (
+                    <>
+                      <div style={{ width: 14, height: 14, border: "2px solid rgba(245,158,11,0.3)", borderTopColor: "#f59e0b", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+                      Checking policies...
+                    </>
+                  ) : (
+                    <>
+                      <ShieldCheck size={15} /> Check Policies
+                    </>
+                  )}
+                </button>
+              )}
+
+              {/* Policy error */}
+              {policyError && (
+                <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", fontSize: 12, color: "#ef4444" }}>
+                  {policyError}
+                </div>
+              )}
+
+              {/* Policy results */}
+              {policyResult && (
+                <PolicyCheckPanel result={policyResult} onClose={() => setPolicyResult(null)} />
+              )}
+            </div>
+
+            {/* Visualize Panel */}
+            {(visualizeOpen || visualizeStatus !== "idle") && (
+              <div style={{ padding: "0 16px 16px" }}>
+                <VisualizePanel
+                  status={visualizeStatus}
+                  result={visualizeResult}
+                  originalImageUrl={previewUrl}
+                  error={visualizeError}
+                  creditData={visualizeCreditData}
+                  onClose={() => { setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); setVisualizeCreditData(null); }}
+                  onUpgrade={onUpgradeRequired}
+                />
+              </div>
+            )}
+          </>
+        )}
+      </div>
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg) } }
