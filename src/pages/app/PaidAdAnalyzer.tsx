@@ -1064,7 +1064,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
         className={`shrink-0 bg-zinc-900/50 backdrop-blur-xl border-l border-white/5 overflow-y-auto overflow-x-hidden pb-12 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-white/5 ${showRightPanel ? "w-[440px] max-lg:w-full opacity-100" : "w-0 max-lg:w-0 opacity-0"}`}
       >
         <AnimatePresence mode="wait">
-        {showRightPanel && activeResult?.scores && rightTab === "analysis" && (
+        {showRightPanel && activeResult?.scores && rightTab === "analysis" && !(reanalyzeMode && !comparisonResult) && (
           <motion.div
             key="analysis"
             initial={{ opacity: 0, x: 16 }}
@@ -1427,42 +1427,56 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
           </motion.div>
         )}
 
-        {/* Before/After re-analysis upload flow (button is inside ScoreCard) */}
-        {showRightPanel && rightTab === "analysis" && !comparisonResult && reanalyzeMode && (
-          <div style={{ padding: "0 16px 12px" }}>
-            {(
-              <div style={{ background: "rgba(99,102,241,0.04)", border: "1px dashed rgba(99,102,241,0.3)", borderRadius: 12, padding: 16 }}>
-                <p style={{ fontSize: 13, fontWeight: 600, color: "#f4f4f5", margin: "0 0 4px" }}>Upload your improved version</p>
-                <p style={{ fontSize: 12, color: "#71717a", margin: "0 0 12px" }}>We'll score it and compare against your original.</p>
-                {comparisonLoading ? (
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "16px 0" }}>
-                    <div style={{ width: 14, height: 14, border: "2px solid rgba(99,102,241,0.3)", borderTopColor: "#6366f1", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
-                    <span style={{ fontSize: 12, color: "#71717a" }}>Analyzing improved version...</span>
-                  </div>
-                ) : (
+        {/* Re-analyze upload — replaces entire right panel */}
+        {showRightPanel && reanalyzeMode && !comparisonResult && (
+          <motion.div
+            key="reanalyze-upload"
+            initial={{ opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -16 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="flex flex-col h-full"
+          >
+            <div className="p-5 border-b border-white/5">
+              <button
+                type="button"
+                onClick={() => setReanalyzeMode(false)}
+                className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer flex items-center gap-1"
+              >
+                ← Back to Scores
+              </button>
+            </div>
+            <div className="flex-1 flex flex-col items-center justify-center gap-4 px-6">
+              {comparisonLoading ? (
+                <>
+                  <div className="w-6 h-6 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
+                  <span className="text-sm text-zinc-500">Analyzing improved version...</span>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm font-semibold text-zinc-100">Upload your improved version</p>
+                  <p className="text-xs text-zinc-500 -mt-2">We'll score it and compare against your original.</p>
                   <div
-                    style={{ height: 64, border: "1px dashed rgba(99,102,241,0.2)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, cursor: "pointer", transition: "all 150ms" }}
+                    className="w-full max-w-[320px] h-[140px] border-2 border-dashed border-indigo-500/25 hover:border-indigo-500/50 rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer transition-all"
                     onClick={() => {
                       const input = document.createElement("input");
                       input.type = "file"; input.accept = "video/*,image/*";
                       input.onchange = (e) => { const f = (e.target as HTMLInputElement).files?.[0]; if (f) handleReanalyze(f); };
                       input.click();
                     }}
-                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)"; }}
-                    onDragLeave={(e) => { e.currentTarget.style.borderColor = "rgba(99,102,241,0.2)"; }}
-                    onDrop={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(99,102,241,0.2)"; const f = e.dataTransfer.files[0]; if (f) handleReanalyze(f); }}
+                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("border-indigo-500/50", "bg-indigo-500/5"); }}
+                    onDragLeave={(e) => { e.currentTarget.classList.remove("border-indigo-500/50", "bg-indigo-500/5"); }}
+                    onDrop={(e) => { e.preventDefault(); e.currentTarget.classList.remove("border-indigo-500/50", "bg-indigo-500/5"); const f = e.dataTransfer.files[0]; if (f) handleReanalyze(f); }}
                   >
-                    <Upload size={14} color="#6366f1" />
-                    <span style={{ fontSize: 12, color: "#6366f1" }}>Drop improved version here</span>
+                    <Upload size={20} className="text-indigo-400" />
+                    <span className="text-xs text-indigo-400 font-medium">Drop improved version here</span>
+                    <span className="text-[11px] text-zinc-600">or click to browse</span>
                   </div>
-                )}
-                <button type="button" onClick={() => setReanalyzeMode(false)}
-                  style={{ fontSize: 11, color: "#52525b", background: "none", border: "none", cursor: "pointer", marginTop: 8, width: "100%", textAlign: "center" }}>
-                  ← Keep original
-                </button>
-              </div>
-            )}
-          </div>
+                  <span className="text-[11px] text-zinc-600">PNG, JPG, MP4 supported</span>
+                </>
+              )}
+            </div>
+          </motion.div>
         )}
 
         {/* Before/After comparison result */}
