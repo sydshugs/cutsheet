@@ -625,14 +625,13 @@ Only consolidate other duplicate Supabase instantiations — these two stay sepa
 
 ## Git Workflow Rules
 
-### The Only Branching System
+### The 3-Branch System
 
 ```
-main ← always deployable, always what Vercel deploys from
-└── one feature branch at a time
+main ← production (cutsheet.xyz) — always deployable
+staging ← pre-production (staging.cutsheet.xyz) — test here first
+feat/xxx ← active development — one at a time
 ```
-
-Never have more than 3 branches open at once (main + 1 active + 1 review).
 
 ### Branch Naming
 
@@ -640,50 +639,24 @@ Never have more than 3 branches open at once (main + 1 active + 1 review).
 - `fix/what-im-fixing` — bug fix
 - `chore/what-im-doing` — cleanup, refactor, config
 
-### The Workflow — Every Single Time
+### Workflow — Every Single Time
 
-1. Start work → create branch from main: `git checkout -b feat/my-feature`
-2. Work on the branch
-3. Merge into main when done: `git checkout main && git merge feat/my-feature`
-4. Delete the branch immediately: `git branch -d feat/my-feature && git push origin --delete feat/my-feature`
-5. Repeat
+1. Create feature branch FROM main: `git checkout main && git checkout -b feat/my-feature`
+2. Build the feature, test locally
+3. Merge to staging FIRST: `git checkout staging && git merge feat/my-feature && git push origin staging`
+4. Check staging.cutsheet.xyz — confirm it looks right
+5. If good → merge staging to main: `git checkout main && git merge staging && git push origin main`
+6. Delete the feature branch: `git branch -d feat/my-feature && git push origin --delete feat/my-feature`
+7. Vercel auto-deploys cutsheet.xyz from main
 
 ### Rules
 
-- NEVER commit directly to main
-- NEVER let merged branches sit undeleted — delete immediately after merge
-- NEVER have more than 3-4 branches open at once
+- NEVER merge directly to main without testing on staging first
+- NEVER have more than 3-4 feature branches open at once
 - ALWAYS delete the remote branch too (`git push origin --delete <branch>`) not just local
 - If a branch is more than 7 days old with no activity — it's stale, delete it
-
-### Current Active Branches
-
-- `main` — production, always deployable
-- `v0/sydshugs-e3d0150c` — Display analyzer work — merge when done
-- `claude/serene-leakey` — current session work
-- `claude/vigorous-kirch` — audit Pass 3-7 fixes (⌘K, noindex, Supabase consolidation, focus-visible) — cherry-pick into main
-- `claude/happy-herschel` — PredictedPerformanceCard Tailwind refactor — cherry-pick into main
-- `claude/prompt-personalization` — niche-specific prompt improvements — cherry-pick into main
-- `claude/ad-format-ui` — format wired through loading UI — cherry-pick into main
-- `claude/jolly-joliot` — results page section reorder + a11y — cherry-pick into main
-
-### Cherry-Pick Checklist
-
-When you're ready to bring in the unmerged fixes:
-
-1. `git checkout main`
-2. `git cherry-pick <branch>` or `git merge <branch>`
-3. Verify build passes
-4. `git push origin main`
-5. Delete the branch: `git branch -d <branch> && git push origin --delete <branch>`
-
-### After Cleanup (target state)
-
-Once the 28 stale branches are deleted and the 5 cherry-picks are done:
-
-- `main` only
-- Create a new branch when starting new work
-- Delete it when done
+- staging branch always reflects what's about to go to production
+- main branch is always what users see on cutsheet.xyz
 
 
 ---
