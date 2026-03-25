@@ -333,9 +333,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let usedV2 = false;
 
     try {
-      const genAI = new GoogleGenAI({
-        apiKey: (process.env.GEMINI_API_KEY ?? process.env.VITE_GEMINI_API_KEY)!,
-      });
+      const geminiKey = process.env.GEMINI_API_KEY;
+      if (!geminiKey) throw new Error("GEMINI_API_KEY is not set");
+      const genAI = new GoogleGenAI({ apiKey: geminiKey });
 
       const imageResponse = await genAI.models.generateContent({
         model: GEMINI_IMAGE_EDIT_MODEL,
@@ -393,8 +393,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const errName = err instanceof Error ? err.constructor.name : "Unknown";
       console.error("[visualize-v2] Gemini image editing failed: [%s] %s", errName, errMsg);
       // Log API key presence (never log the key itself)
-      console.error("[visualize-v2] GEMINI_API_KEY present: %s, VITE_GEMINI_API_KEY present: %s",
-        !!process.env.GEMINI_API_KEY, !!process.env.VITE_GEMINI_API_KEY);
+      console.error("[visualize-v2] GEMINI_API_KEY present: %s", !!process.env.GEMINI_API_KEY);
       // Fall back to visual brief (same behavior as v1 fallback)
       visualBrief = editPrompt;
     }

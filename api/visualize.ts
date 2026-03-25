@@ -272,7 +272,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   let visualBrief: string | undefined;
 
   try {
-    const genAI = new GoogleGenAI({ apiKey: (process.env.GEMINI_API_KEY ?? process.env.VITE_GEMINI_API_KEY)! });
+    const geminiKey = process.env.GEMINI_API_KEY;
+    if (!geminiKey) throw new Error("GEMINI_API_KEY is not set");
+    const genAI = new GoogleGenAI({ apiKey: geminiKey });
 
     const imageResponse = await genAI.models.generateContent({
       model: GEMINI_IMAGE_MODEL,

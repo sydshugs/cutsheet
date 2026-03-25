@@ -151,6 +151,11 @@ export function Settings() {
   const [credits, setCredits] = useState<Record<string, FeatureLimitResult> | null>(null);
   const [totalAnalyses, setTotalAnalyses] = useState<number | null>(null);
 
+  // Delete account state
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
   // Billing flow state
   const [billingView, setBillingView] = useState<BillingView>("dashboard");
   const [downgradeReason, setDowngradeReason] = useState<string | null>(null);
@@ -191,6 +196,40 @@ export function Settings() {
     clearUserContextCache();
     setIntentSaved(true);
     setTimeout(() => setIntentSaved(false), 2000);
+  };
+
+  const { signOut } = useAuth();
+
+  const handleDeleteAccount = async () => {
+    setDeleteLoading(true);
+    setDeleteError(null);
+    try {
+      const session = (await supabase.auth.getSession()).data.session;
+      if (!session?.access_token) {
+        setDeleteError("Not authenticated. Please sign in again.");
+        setDeleteLoading(false);
+        return;
+      }
+      const resp = await fetch("/api/delete-account", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+      if (!resp.ok) {
+        const data = await resp.json().catch(() => ({}));
+        setDeleteError(data.error ?? "Failed to delete account");
+        setDeleteLoading(false);
+        return;
+      }
+      // Sign out and redirect to landing
+      await signOut();
+      navigate("/");
+    } catch {
+      setDeleteError("Something went wrong. Please try again or contact support.");
+      setDeleteLoading(false);
+    }
   };
 
   const isTeam = subscriptionStatus === "team";
@@ -1368,6 +1407,59 @@ export function Settings() {
                     Couldn't send reset link. Check your connection and try again.
                   </p>
                 )}
+
+                {/* Danger zone — Delete account */}
+                <div style={{ ...DIVIDER, marginTop: 20, paddingTop: 20 }}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: COLORS.error }}>Delete Account</p>
+                      <p style={{ fontSize: 12, color: "#71717a", marginTop: 2 }}>
+                        Permanently delete your account and all data. This cannot be undone.
+                      </p>
+                    </div>
+                    {!deleteConfirmOpen ? (
+                      <button
+                        type="button"
+                        onClick={() => setDeleteConfirmOpen(true)}
+                        className="px-4 py-2 rounded-lg text-xs font-medium transition-opacity"
+                        style={{
+                          border: `1px solid ${COLORS.error}30`,
+                          color: COLORS.error,
+                          background: `${COLORS.error}08`,
+                        }}
+                      >
+                        Delete Account
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => { setDeleteConfirmOpen(false); setDeleteError(null); }}
+                          className="px-3 py-2 rounded-lg text-xs font-medium"
+                          style={{ border: "1px solid rgba(255,255,255,0.08)", color: "#a1a1aa" }}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleDeleteAccount}
+                          disabled={deleteLoading}
+                          className="px-4 py-2 rounded-lg text-xs font-medium transition-opacity"
+                          style={{
+                            background: COLORS.error,
+                            color: "#fff",
+                            opacity: deleteLoading ? 0.6 : 1,
+                          }}
+                        >
+                          {deleteLoading ? "Deleting..." : "Confirm Delete"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  {deleteError && (
+                    <p style={{ fontSize: 12, color: COLORS.error, marginTop: 8 }}>{deleteError}</p>
+                  )}
+                </div>
               </motion.div>
 
               {/* Ad Intent card */}
