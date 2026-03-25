@@ -19,6 +19,8 @@ import { AlertDialog } from "./ui/AlertDialog";
 // Sub-components
 import { ScoreHero } from "./ScoreHero";
 import { BudgetCard } from "./scorecard/BudgetCard";
+import SceneBreakdown from "./SceneBreakdown";
+import { StaticAdChecks } from "./StaticAdChecks";
 
 interface Scores {
   hook: number;
