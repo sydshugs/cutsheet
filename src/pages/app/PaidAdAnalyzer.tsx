@@ -1096,7 +1096,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                 format={format}
                 engineBudget={engineBudget}
                 onNavigateSettings={() => navigate('/settings')}
-                onReanalyze={() => setReanalyzeMode(true)}
+                onReanalyze={() => { setComparisonResult(null); setRightTab("analysis"); setReanalyzeMode(true); }}
                 onStartOver={() => setConfirmStartOver(true)}
                 onCheckPolicies={handleCheckPolicies}
                 policyLoading={policyLoading}
