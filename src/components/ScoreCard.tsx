@@ -5,6 +5,7 @@
 import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { HookAnalysisExpanded } from "./HookAnalysisExpanded";
+import { HashtagsC2 } from "./HashtagsC2";
 import { Copy, CheckCircle, Loader2, RotateCcw, FileText, Lightbulb, DollarSign } from "lucide-react";
 import type { BudgetRecommendation, Hashtags, Scene, HookDetail } from "../services/analyzerService";
 import type { EngineBudgetRecommendation } from "../services/budgetService";
@@ -368,6 +369,10 @@ export function ScoreCard({
           );
           })()}
 
+          {/* Hashtags */}
+          {hashtags && (hashtags.tiktok?.length > 0 || hashtags.meta?.length > 0 || hashtags.instagram?.length > 0 || hashtags.pinterest?.length > 0 || hashtags.reels?.length > 0 || hashtags.youtube_shorts?.length > 0) && (
+            <HashtagsC2 hashtags={hashtags} format={format} />
+          )}
 
       </div>{/* end main card */}
 
