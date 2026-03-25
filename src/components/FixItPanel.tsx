@@ -2,6 +2,7 @@ import { cn } from "@/src/lib/utils";
 import { Wand2, Copy, Sparkles, MessageSquare, Layers, Check, Lightbulb, ArrowRight } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
+import DOMPurify from "dompurify";
 
 // ─── TYPES ──────────────────────────────────────────────────────────────────
 
@@ -210,7 +211,7 @@ export default function FixItPanel({ result, onCopyAll, mediaType = "video" }: F
           {/* Content sourced from our Claude API response, not user input */}
           <div
             className="text-[13px] leading-[1.7] whitespace-pre-wrap text-zinc-300"
-            dangerouslySetInnerHTML={{ __html: renderBold(result.revisedBody) }}
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(renderBold(result.revisedBody)) }}
           />
         </Card>
 

@@ -5,6 +5,7 @@ import { Helmet } from "react-helmet-async";
 import { useOutletContext } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
+import rehypeSanitize from "rehype-sanitize";
 import {
   ScanSearch, Link2, ChevronDown, Copy, Check, RotateCcw, Bookmark,
   ExternalLink, AlertCircle, Upload,
@@ -381,7 +382,7 @@ function TeardownSectionCard({
                 .teardown-content hr { border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 12px 0; }
               `}</style>
               <div className="pt-4">
-                <ReactMarkdown>{section.content}</ReactMarkdown>
+                <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{section.content}</ReactMarkdown>
               </div>
             </div>
           </motion.div>
@@ -415,7 +416,7 @@ function WhyItWorksCard({ content }: { content: string }) {
         </span>
       </div>
       <div className="text-sm text-zinc-300 leading-relaxed">
-        <ReactMarkdown>{content}</ReactMarkdown>
+        <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{content}</ReactMarkdown>
       </div>
     </div>
   );

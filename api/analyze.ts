@@ -4,6 +4,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
+import { sanitizeSessionMemory } from "./_lib/sanitizeMemory";
 
 export const maxDuration = 120; // video analysis can take 30-60s
 
@@ -111,7 +112,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const genAI = new GoogleGenerativeAI(geminiKey);
     const model = genAI.getGenerativeModel({
       model: GEMINI_MODEL,
-      ...(systemInstruction ? { systemInstruction } : {}),
+      ...(systemInstruction ? { systemInstruction: sanitizeSessionMemory(systemInstruction) } : {}),
       generationConfig: {
         maxOutputTokens: Math.min(maxOutputTokens, 16384),
         temperature: Math.min(Math.max(temperature, 0), 2),

@@ -5,6 +5,8 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Anthropic from "@anthropic-ai/sdk";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
+import { safePlatform, safeAdType, safeNiche } from "./_lib/validateInput";
+import { sanitizeSessionMemory } from "./_lib/sanitizeMemory";
 
 export const maxDuration = 60;
 
@@ -37,16 +39,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
   }
 
-  const { analysisMarkdown, platform, adType, userContext, niche, scores } = req.body ?? {};
+  const { analysisMarkdown, platform: rawPlatform, adType: rawAdType, userContext: rawUserContext, niche: rawNiche, scores } = req.body ?? {};
 
-  if (!analysisMarkdown || !platform) {
+  if (!analysisMarkdown || !rawPlatform) {
     return res.status(400).json({ error: "Missing analysisMarkdown or platform" });
   }
 
+  // Sanitize user-supplied fields before prompt injection
+  const platform = safePlatform(rawPlatform);
+  const adType = safeAdType(rawAdType);
+  const nicheLabel = safeNiche(rawNiche);
+  const userContext = sanitizeSessionMemory(rawUserContext);
+
   const platformKey = platform.toLowerCase().replace(/\s+/g, "");
   const guidance = PLATFORM_GUIDANCE[platformKey] ?? PLATFORM_GUIDANCE.meta;
-
-  const nicheLabel = niche || "general";
 
   // Niche-specific platform expectations
   const nichePlatformContext: Record<string, Record<string, string>> = {
@@ -88,7 +94,7 @@ AD TYPE: ${adType ?? "video"}
 TARGET PLATFORM: ${platform}
 NICHE: ${nicheLabel}
 
-${userContext ? `USER CONTEXT:\n${userContext}\n` : ""}
+${userContext ? `<user_context>\n${userContext}\n</user_context>\n` : ""}
 
 Platform-specific scoring guidance for ${platform}:
 ${guidance}

@@ -1,5 +1,6 @@
 // ReportAnalysis.tsx — Page 2+ of PDF report (full analysis + score card)
 import ReactMarkdown from "react-markdown";
+import rehypeSanitize from "rehype-sanitize";
 import { ScoreCard } from "./ScoreCard";
 import type { AnalysisResult } from "../services/analyzerService";
 
@@ -107,7 +108,7 @@ export function ReportAnalysis({ result }: { result: AnalysisResult }) {
           lineHeight: 1.7,
         }}
       >
-        <ReactMarkdown>{processedMarkdown}</ReactMarkdown>
+        <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{processedMarkdown}</ReactMarkdown>
       </div>
     </div>
   );

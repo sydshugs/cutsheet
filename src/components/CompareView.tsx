@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
+import rehypeSanitize from "rehype-sanitize";
 import { ComparePanel } from "./ComparePanel";
 import { compareAnalyses } from "../services/analyzerService";
 import { themes, type ThemeTokens } from "../theme";
@@ -32,7 +33,7 @@ function CompareOutput({ markdown, t }: { markdown: string; t: ThemeTokens }) {
         .compare-output hr { border: none; border-top: 1px solid ${t.hrColor}; margin: 16px 0; }
       `}</style>
       <div className="compare-output">
-        <ReactMarkdown>{markdown}</ReactMarkdown>
+        <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{markdown}</ReactMarkdown>
       </div>
     </div>
   );

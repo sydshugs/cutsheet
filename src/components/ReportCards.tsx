@@ -2,6 +2,7 @@ import type React from "react";
 import { useMemo, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
+import rehypeSanitize from "rehype-sanitize";
 import { sanitizeFileName } from "../utils/sanitize";
 import {
   Copy, FileDown, Share2, Anchor, MessageSquare, MousePointerClick,
@@ -343,7 +344,7 @@ export function ReportCards({
   // Render a section's full content (for expanded deep dive)
   const renderSectionContent = (section: { title: string | null; content: string }) => (
     <div className="text-[11px] text-zinc-400 leading-relaxed [&_strong]:text-zinc-300 [&_strong]:font-medium [&_ul]:pl-3.5 [&_li]:mb-1 [&_code]:bg-white/[0.03] [&_code]:rounded [&_code]:px-1 [&_ol]:pl-3.5 [&_p]:mb-1.5 [&_p:last-child]:mb-0 [&_h3]:text-[10px] [&_h3]:font-medium [&_h3]:text-zinc-400 [&_h3]:mt-3 [&_h3]:mb-1.5 [&_em]:text-zinc-400">
-      <ReactMarkdown>{section.content}</ReactMarkdown>
+      <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{section.content}</ReactMarkdown>
     </div>
   );
 

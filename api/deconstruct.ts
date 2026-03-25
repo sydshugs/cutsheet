@@ -5,6 +5,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
 import { validateFetchUrl } from "./_lib/validateUrl";
+import { safeNiche } from "./_lib/validateInput";
+import { sanitizeSessionMemory } from "./_lib/sanitizeMemory";
 
 export const maxDuration = 60; // seconds — Claude + Gemini can take 15-30s
 
@@ -165,7 +167,7 @@ ${adContext}
 
 ${geminiContext}
 
-${userContext ? `USER CONTEXT:\n${userContext}\nCompare this competitor's techniques against the user's own creative approach.\n` : ""}
+${userContext ? `<user_context>\n${userContext}\nCompare this competitor's techniques against the user's own creative approach.\n</user_context>\n` : ""}
 
 Write a complete Ad Deconstruction Report. Every insight must be specific to ${nicheLabel} on ${platformLabel} — not generic advice that could apply to any ad.
 
@@ -217,13 +219,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
   }
 
-  const { url, sourceType, mediaUrl, niche, userContext } = (req.body ?? {}) as {
+  const { url, sourceType, mediaUrl, niche: rawNiche, userContext: rawUserContext } = (req.body ?? {}) as {
     url?: string;
     sourceType?: string;
     mediaUrl?: string;
     niche?: string;
     userContext?: string;
   };
+
+  // Sanitize user-supplied fields before prompt injection
+  const niche = safeNiche(rawNiche);
+  const userContext = sanitizeSessionMemory(rawUserContext);
 
   if (!url || typeof url !== "string") {
     return res.status(400).json({ error: "url is required" });

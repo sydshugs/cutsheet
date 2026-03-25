@@ -4,6 +4,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Anthropic from "@anthropic-ai/sdk";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
+import { safePlatform, safeAdType, safeNiche } from "./_lib/validateInput";
 
 export const maxDuration = 60;
 
@@ -32,10 +33,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: "Missing analysisMarkdown or scores" });
   }
 
-  const platformLabel = platform ?? "Meta";
-  const nicheLabel = niche ?? "general";
-  const adTypeLabel = adType ?? "video";
-  const intentLabel = intent ?? "conversion";
+  const platformLabel = safePlatform(platform) === "general" ? "Meta" : safePlatform(platform);
+  const nicheLabel = safeNiche(niche);
+  const adTypeLabel = safeAdType(adType);
+  const intentLabel = (typeof intent === "string" && ["conversion", "awareness", "consideration"].includes(intent)) ? intent : "conversion";
 
   const nicheBenchmarks: Record<string, { ctr: string; cvr: string }> = {
     ecommerce: { ctr: "Meta ecommerce avg CTR: 1.0-1.5%. TikTok: 0.8-1.2%. Google Display: 0.3-0.5%.", cvr: "Ecommerce avg CVR from ad click: 2-4%." },

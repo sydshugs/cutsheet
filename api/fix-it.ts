@@ -4,6 +4,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Anthropic from "@anthropic-ai/sdk";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
+import { safePlatform, safeAdType, safeNiche } from "./_lib/validateInput";
 
 export const maxDuration = 60;
 
@@ -26,11 +27,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
   }
 
-  const { analysisMarkdown, platform, niche, intent, adType, scores } = req.body ?? {};
+  const { analysisMarkdown, platform: rawPlatform, niche: rawNiche, intent: rawIntent, adType: rawAdType, scores } = req.body ?? {};
 
   if (!analysisMarkdown) {
     return res.status(400).json({ error: "Missing analysisMarkdown" });
   }
+
+  // Sanitize user-supplied fields before prompt injection
+  const platform = safePlatform(rawPlatform) === "general" ? "paid social" : safePlatform(rawPlatform);
+  const niche = safeNiche(rawNiche);
+  const adType = safeAdType(rawAdType);
+  const intent = (typeof rawIntent === "string" && ["conversion", "awareness", "consideration"].includes(rawIntent)) ? rawIntent : "conversion";
 
   // Identify weakest dimensions for targeted fixes
   const weakDims = scores
@@ -42,21 +49,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     : [];
 
   const platformCopyRules: Record<string, string> = {
-    Meta: "Meta copy rules: Primary text under 125 chars for full visibility. Headline under 40 chars. No ALL CAPS in headlines. CTA must match the ad objective (Shop Now for commerce, Learn More for awareness).",
-    TikTok: "TikTok copy rules: Speak like a creator, not a brand. Use first person. Text overlays must be readable at 9:16 on mobile. No corporate language. Hook must be in the first line of caption.",
-    Instagram: "Instagram copy rules: First line is the hook (before 'more' truncation). Use line breaks for readability. Hashtags at the end, not inline. CTA in the last line.",
-    YouTube: "YouTube copy rules: First 5 seconds must deliver the value prop verbally AND visually. End screen CTA must be specific. Audio is primary — text overlays support, not replace.",
-    "Google Display": "Display copy rules: Headline max 30 chars. One message per banner. CTA button must have high contrast. No body copy that requires reading — the ad has <2 seconds of attention.",
+    meta: "Meta copy rules: Primary text under 125 chars for full visibility. Headline under 40 chars. No ALL CAPS in headlines. CTA must match the ad objective (Shop Now for commerce, Learn More for awareness).",
+    tiktok: "TikTok copy rules: Speak like a creator, not a brand. Use first person. Text overlays must be readable at 9:16 on mobile. No corporate language. Hook must be in the first line of caption.",
+    instagram: "Instagram copy rules: First line is the hook (before 'more' truncation). Use line breaks for readability. Hashtags at the end, not inline. CTA in the last line.",
+    youtube: "YouTube copy rules: First 5 seconds must deliver the value prop verbally AND visually. End screen CTA must be specific. Audio is primary — text overlays support, not replace.",
+    google: "Display copy rules: Headline max 30 chars. One message per banner. CTA button must have high contrast. No body copy that requires reading — the ad has <2 seconds of attention.",
   };
 
-  const platformRules = platformCopyRules[platform ?? ""] || "";
+  const platformRules = platformCopyRules[platform] || "";
 
-  const systemPrompt = `You are a senior performance creative director specializing in ${niche ?? "DTC"} advertising on ${platform ?? "paid social"}. You're rewriting a ${adType ?? "video"} ad that scored ${scores?.overall ?? "?"}/10 overall, with weakest areas: ${weakDims.join(", ") || "not identified"}.
+  const systemPrompt = `You are a senior performance creative director specializing in <user_niche>${niche}</user_niche> advertising on <user_platform>${platform}</user_platform>. You're rewriting a <user_ad_type>${adType}</user_ad_type> ad that scored ${scores?.overall ?? "?"}/10 overall, with weakest areas: ${weakDims.join(", ") || "not identified"}.
 
 Your rewrites must:
 - Preserve the brand's existing voice and tone — read the original ad carefully before rewriting
-- Be specific to ${niche ?? "this"} category — use language ${niche ?? "this"} audiences actually use, not marketing speak
-- Follow ${platform ?? "platform"} copy best practices and character limits
+- Be specific to ${niche} category — use language ${niche} audiences actually use, not marketing speak
+- Follow ${platform} copy best practices and character limits
 - Fix the specific weaknesses identified in the scorecard — don't touch what scored 8+
 - Address the weakest dimensions FIRST: ${weakDims.join(", ") || "all areas"}
 
@@ -66,29 +73,29 @@ ANTI-GENERIC RULES (violations = failure):
 - No generic urgency ("Act now!", "Limited time!") unless the original ad used it
 - Every rewritten line must reference something specific from THIS ad — a product feature, a score finding, a visual element
 - If you catch yourself writing copy that could apply to any product in any niche, delete it and try again
-- The rewrite must be so specific to ${niche ?? "this product"} on ${platform ?? "this platform"} that it would be wrong for any other niche/platform combination`;
+- The rewrite must be so specific to ${niche} on ${platform} that it would be wrong for any other niche/platform combination`;
 
-  const prompt = `A user's ${adType ?? "video"} ad on ${platform ?? "unknown platform"} in the ${niche ?? "unknown"} niche received this scorecard:
+  const prompt = `A user's ${adType} ad on ${platform} in the ${niche} niche received this scorecard:
 
 ${analysisMarkdown}
 
 Scores: Hook ${scores?.hook ?? "?"}/10 | Clarity ${scores?.clarity ?? "?"}/10 | CTA ${scores?.cta ?? "?"}/10 | Production ${scores?.production ?? "?"}/10 | Overall ${scores?.overall ?? "?"}/10
 ${weakDims.length ? `\nWEAKEST AREAS (fix these first): ${weakDims.join(", ")}` : ""}
 
-User's intent: ${intent ?? "conversion"} — optimize the rewrite for ${intent === "awareness" ? "brand recall and reach" : intent === "consideration" ? "engagement and click-through" : "direct response and conversion"}.
+User's intent: ${intent} — optimize the rewrite for ${intent === "awareness" ? "brand recall and reach" : intent === "consideration" ? "engagement and click-through" : "direct response and conversion"}.
 
 ${platformRules}
 
 RULES:
 1. Read the original ad copy carefully. Match its voice — if it's casual, stay casual. If it's technical, stay technical.
-2. The rewritten hook must stop the scroll on ${platform ?? "the feed"} specifically.
+2. The rewritten hook must stop the scroll on ${platform} specifically.
 3. Every change must address a specific weakness from the scorecard. Don't change things that scored 8+.
 4. Text overlays must be readable on mobile in ${adType === "static" ? "a single glance" : "under 3 seconds"}.
-5. The CTA must be specific to ${niche ?? "this product"} — no generic "Learn More" unless that was the original.
+5. The CTA must be specific to ${niche} — no generic "Learn More" unless that was the original.
 
 Return a JSON object with these exact keys:
 {
-  "rewrittenHook": { "copy": "<new hook text/script>", "reasoning": "<1 sentence why this is stronger for ${platform ?? "this platform"}>" },
+  "rewrittenHook": { "copy": "<new hook text/script>", "reasoning": "<1 sentence why this is stronger for ${platform}>" },
   "revisedBody": "<full rewrite with **bold** on every changed part>",
   "newCTA": { "copy": "<rewritten CTA>", "placement": "<where to put it>" },
   "textOverlays": [{ "timestamp": "<when>", "copy": "<text>", "placement": "<where>" }],
