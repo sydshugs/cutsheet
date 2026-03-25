@@ -849,20 +849,6 @@ Return JSON only — no prose:
       {/* Right panel — scores sidebar (Single mode only, when complete) */}
       {mode === "single" && status === "complete" && result && (
         <div className="shrink-0 bg-zinc-900/50 backdrop-blur-xl border-l border-white/5 overflow-y-auto overflow-x-hidden pb-12 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-white/5 w-[440px] max-lg:w-full opacity-100">
-          {/* Score overview header */}
-          <div style={{ padding: "16px 16px 0" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: 14, fontWeight: 600, color: "#f4f4f5" }}>Score Overview</span>
-              </div>
-              {detectedFormat && (
-                <span style={{ fontSize: 10, color: "#22d3ee", background: "rgba(6,182,212,0.1)", borderRadius: 9999, padding: "3px 10px" }}>
-                  {detectedFormat.key} · {detectedFormat.name}
-                </span>
-              )}
-            </div>
-          </div>
-          
           {/* Display Score Card */}
           <DisplayScoreCard
             result={result}
