@@ -982,82 +982,6 @@ Return JSON only — no prose:
                     </div>
                   </div>
 
-                  {/* Verdict and Improvements section — matching Organic CreativeVerdictAndSecondEye */}
-                  {result.verdict && (
-                    <div style={{ marginTop: 24 }}>
-                      {/* Verdict badge */}
-                      <div style={{
-                        display: "inline-flex", alignItems: "center", gap: 6,
-                        padding: "4px 10px", borderRadius: 9999,
-                        background: result.overallScore >= 8 ? "rgba(16,185,129,0.1)" : result.overallScore >= 4 ? "rgba(245,158,11,0.1)" : "rgba(239,68,68,0.1)",
-                        border: `1px solid ${result.overallScore >= 8 ? "rgba(16,185,129,0.2)" : result.overallScore >= 4 ? "rgba(245,158,11,0.2)" : "rgba(239,68,68,0.2)"}`,
-                        marginBottom: 12,
-                      }}>
-                        <div style={{
-                          width: 6, height: 6, borderRadius: "50%",
-                          background: result.overallScore >= 8 ? "#10b981" : result.overallScore >= 4 ? "#f59e0b" : "#ef4444",
-                        }} />
-                        <span style={{
-                          fontSize: 11, fontWeight: 600, textTransform: "uppercase",
-                          color: result.overallScore >= 8 ? "#10b981" : result.overallScore >= 4 ? "#f59e0b" : "#ef4444",
-                        }}>
-                          {result.overallScore >= 8 ? "Ready" : result.overallScore >= 4 ? "Needs Work" : "Not Ready"}
-                        </span>
-                      </div>
-
-                      {/* Verdict headline */}
-                      <p style={{ fontSize: 15, fontWeight: 600, color: "#f4f4f5", lineHeight: 1.5, margin: "0 0 16px" }}>
-                        {result.verdict}
-                      </p>
-
-                      {/* Priority fix — matching CreativeAnalysis red banner style */}
-                      {result.improvements && result.improvements.length > 0 && (() => {
-                        const topFix = result.improvements[0];
-                        const CAT_MAP: Record<string, { icon: typeof Layers; color: string; bg: string }> = {
-                          hierarchy: { icon: Layers, color: '#818cf8', bg: 'rgba(129,140,248,0.1)' },
-                          typography: { icon: Type, color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
-                          layout: { icon: Layout, color: '#10b981', bg: 'rgba(16,185,129,0.1)' },
-                          contrast: { icon: AlertCircle, color: '#ef4444', bg: 'rgba(239,68,68,0.1)' },
-                        };
-                        const cat = CAT_MAP[topFix.category] ?? CAT_MAP.layout;
-                        const CatIcon = cat.icon;
-                        return (
-                          <div style={{
-                            borderRadius: 12, overflow: 'hidden',
-                            background: 'linear-gradient(135deg, rgba(239,68,68,0.06) 0%, rgba(245,158,11,0.03) 100%)',
-                            border: '1px solid rgba(239,68,68,0.12)',
-                          }}>
-                            {/* Priority banner header */}
-                            <div style={{
-                              display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px',
-                              background: 'rgba(239,68,68,0.08)', borderBottom: '1px solid rgba(239,68,68,0.08)',
-                            }}>
-                              <AlertCircle size={11} color="#f87171" />
-                              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', color: '#f87171', textTransform: 'uppercase' }}>Priority Fix</span>
-                              <ArrowRight size={10} color="rgba(248,113,113,0.5)" />
-                              {result.improvements.length > 1 && (
-                                <span style={{ fontSize: 9, fontWeight: 600, padding: '1px 6px', borderRadius: 4, background: 'rgba(248,113,113,0.1)', color: '#f87171' }}>
-                                  +{result.improvements.length - 1}
-                                </span>
-                              )}
-                            </div>
-                            {/* Content row */}
-                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: 14 }}>
-                              <div style={{
-                                width: 28, height: 28, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                                background: cat.bg,
-                              }}>
-                                <CatIcon size={14} color={cat.color} />
-                              </div>
-                              <p style={{ fontSize: 13, fontWeight: 500, color: '#e4e4e7', lineHeight: 1.5, margin: 0 }}>
-                                {topFix.fix}
-                              </p>
-                            </div>
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  )}
                 </div>
               )}
             </div>
@@ -1079,6 +1003,83 @@ Return JSON only — no prose:
               mockupLoading={false}
               dimensions={dimensions!}
             />
+
+            {/* Verdict and Improvements section — moved from left panel to match PaidAdAnalyzer */}
+            {result.verdict && (
+              <div className="mx-4 mt-4">
+                {/* Verdict badge */}
+                <div style={{
+                  display: "inline-flex", alignItems: "center", gap: 6,
+                  padding: "4px 10px", borderRadius: 9999,
+                  background: result.overallScore >= 8 ? "rgba(16,185,129,0.1)" : result.overallScore >= 4 ? "rgba(245,158,11,0.1)" : "rgba(239,68,68,0.1)",
+                  border: `1px solid ${result.overallScore >= 8 ? "rgba(16,185,129,0.2)" : result.overallScore >= 4 ? "rgba(245,158,11,0.2)" : "rgba(239,68,68,0.2)"}`,
+                  marginBottom: 12,
+                }}>
+                  <div style={{
+                    width: 6, height: 6, borderRadius: "50%",
+                    background: result.overallScore >= 8 ? "#10b981" : result.overallScore >= 4 ? "#f59e0b" : "#ef4444",
+                  }} />
+                  <span style={{
+                    fontSize: 11, fontWeight: 600, textTransform: "uppercase",
+                    color: result.overallScore >= 8 ? "#10b981" : result.overallScore >= 4 ? "#f59e0b" : "#ef4444",
+                  }}>
+                    {result.overallScore >= 8 ? "Ready" : result.overallScore >= 4 ? "Needs Work" : "Not Ready"}
+                  </span>
+                </div>
+
+                {/* Verdict headline */}
+                <p style={{ fontSize: 15, fontWeight: 600, color: "#f4f4f5", lineHeight: 1.5, margin: "0 0 16px" }}>
+                  {result.verdict}
+                </p>
+
+                {/* Priority fix — matching CreativeAnalysis red banner style */}
+                {result.improvements && result.improvements.length > 0 && (() => {
+                  const topFix = result.improvements[0];
+                  const CAT_MAP: Record<string, { icon: typeof Layers; color: string; bg: string }> = {
+                    hierarchy: { icon: Layers, color: '#818cf8', bg: 'rgba(129,140,248,0.1)' },
+                    typography: { icon: Type, color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
+                    layout: { icon: Layout, color: '#10b981', bg: 'rgba(16,185,129,0.1)' },
+                    contrast: { icon: AlertCircle, color: '#ef4444', bg: 'rgba(239,68,68,0.1)' },
+                  };
+                  const cat = CAT_MAP[topFix.category] ?? CAT_MAP.layout;
+                  const CatIcon = cat.icon;
+                  return (
+                    <div style={{
+                      borderRadius: 12, overflow: 'hidden',
+                      background: 'linear-gradient(135deg, rgba(239,68,68,0.06) 0%, rgba(245,158,11,0.03) 100%)',
+                      border: '1px solid rgba(239,68,68,0.12)',
+                    }}>
+                      {/* Priority banner header */}
+                      <div style={{
+                        display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px',
+                        background: 'rgba(239,68,68,0.08)', borderBottom: '1px solid rgba(239,68,68,0.08)',
+                      }}>
+                        <AlertCircle size={11} color="#f87171" />
+                        <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', color: '#f87171', textTransform: 'uppercase' }}>Priority Fix</span>
+                        <ArrowRight size={10} color="rgba(248,113,113,0.5)" />
+                        {result.improvements.length > 1 && (
+                          <span style={{ fontSize: 9, fontWeight: 600, padding: '1px 6px', borderRadius: 4, background: 'rgba(248,113,113,0.1)', color: '#f87171' }}>
+                            +{result.improvements.length - 1}
+                          </span>
+                        )}
+                      </div>
+                      {/* Content row */}
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: 14 }}>
+                        <div style={{
+                          width: 28, height: 28, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                          background: cat.bg,
+                        }}>
+                          <CatIcon size={14} color={cat.color} />
+                        </div>
+                        <p style={{ fontSize: 13, fontWeight: 500, color: '#e4e4e7', lineHeight: 1.5, margin: 0 }}>
+                          {topFix.fix}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
 
             {/* Predicted Performance */}
             {prediction && (
