@@ -201,21 +201,8 @@ export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, 
           )}
         </div>
 
-        <span
-          id="dropzone-hints"
-          style={{
-            position: "absolute",
-            width: 1,
-            height: 1,
-            padding: 0,
-            margin: -1,
-            overflow: "hidden",
-            clip: "rect(0, 0, 0, 0)",
-            whiteSpace: "nowrap",
-            borderWidth: 0,
-          }}
-        >
-          Accepts MP4, MOV, WEBM, JPG, PNG, WEBP. Max 200MB per file.
+        <span id="dropzone-hints" className="sr-only">
+          Accepts {acceptImages ? "MP4, MOV, WEBM, JPG, PNG, WEBP" : "MP4, MOV, WEBM"}. Max 200MB per file.
         </span>
         <input
           ref={fileInputRef}

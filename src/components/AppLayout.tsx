@@ -1,5 +1,6 @@
 // AppLayout.tsx — layout shell for all /app/* routes
 import { useRef, useCallback, useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { Outlet, useNavigate } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
@@ -108,30 +109,17 @@ export default function AppLayout() {
   const userEmail = user?.email ?? "";
 
   return (
+    <>
+    <Helmet>
+      <meta name="robots" content="noindex, nofollow" />
+    </Helmet>
     <div className="flex h-screen overflow-hidden" style={{ background: "#09090b" }}>
       <a
         href="#main-content"
-        style={{
-          position: "absolute",
-          left: "-9999px",
-          top: 8,
-          zIndex: 999,
-          background: "#6366f1",
-          color: "white",
-          padding: "8px 16px",
-          borderRadius: 8,
-          fontSize: 14,
-          fontWeight: 500,
-          textDecoration: "none",
-        }}
-        onFocus={(e) => { e.currentTarget.style.left = "8px"; }}
-        onBlur={(e) => { e.currentTarget.style.left = "-9999px"; }}
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-indigo-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:text-sm focus:font-medium"
       >
         Skip to main content
       </a>
-      <Helmet>
-        <meta name="robots" content="noindex, nofollow" />
-      </Helmet>
       <Sidebar
         mobileOpen={mobileOpen}
         onMobileClose={() => setMobileOpen(false)}
@@ -173,5 +161,6 @@ export default function AppLayout() {
       )}
       <KeyboardShortcutsModal open={showShortcuts} onClose={() => setShowShortcuts(false)} />
     </div>
+    </>
   );
 }

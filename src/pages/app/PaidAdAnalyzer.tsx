@@ -84,7 +84,7 @@ function PaidEmptyState({
       <h1 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>
         Score your paid ad
       </h1>
-      <p style={{ fontSize: 14, color: "#a1a1aa", textAlign: "center", maxWidth: 320, marginTop: 10, lineHeight: 1.6 }}>
+      <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)", textAlign: "center", maxWidth: 320, marginTop: 10, lineHeight: 1.6 }}>
         Upload a video or static creative. Get a full AI breakdown in 30 seconds.
       </p>
 
