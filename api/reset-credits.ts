@@ -6,7 +6,7 @@ export const maxDuration = 10;
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { Redis } from "@upstash/redis";
-import { verifyAuth, handlePreflight } from "./_lib/auth";
+import { verifyAuth, handlePreflight, checkRateLimit } from "./_lib/auth";
 
 const FEATURES = ["visualize", "visualize_video", "fixIt", "policyCheck", "deconstruct", "brief", "script"];
 
@@ -29,6 +29,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const user = await verifyAuth(req);
     if (!user) return res.status(401).json({ error: "Unauthorized" });
+
+    // ── Rate limit (dev endpoint — 5/min max) ────────────────────────────
+    const rl = await checkRateLimit("reset-credits", user.id, user.tier, { freeLimit: 5, proLimit: 5, windowSeconds: 60 });
+    if (!rl.allowed) {
+      return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
+    }
 
     const redis = Redis.fromEnv();
     const month = getYearMonth();

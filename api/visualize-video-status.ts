@@ -5,7 +5,7 @@ export const maxDuration = 15;
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { fal } from "@fal-ai/client";
-import { verifyAuth, handlePreflight } from "./_lib/auth";
+import { verifyAuth, handlePreflight, checkRateLimit } from "./_lib/auth";
 
 const KLING_ENDPOINT = "fal-ai/kling-video/v2.1/standard/image-to-video";
 
@@ -16,6 +16,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const user = await verifyAuth(req);
     if (!user) return res.status(401).json({ error: "Unauthorized" });
+
+    // ── Rate limit (generous — polling endpoint, ~60/min) ────────────────
+    const rl = await checkRateLimit("visualize-video-status", user.id, user.tier, { freeLimit: 60, proLimit: 60, windowSeconds: 60 });
+    if (!rl.allowed) {
+      return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
+    }
 
     const { requestId } = req.body ?? {};
     if (!requestId || typeof requestId !== "string") {

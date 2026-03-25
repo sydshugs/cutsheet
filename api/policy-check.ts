@@ -99,7 +99,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (hasMedia) {
     try {
-      const geminiKey = process.env.GEMINI_API_KEY ?? process.env.VITE_GEMINI_API_KEY;
+      const geminiKey = process.env.GEMINI_API_KEY;
       if (geminiKey) {
         const genai = new GoogleGenerativeAI(geminiKey);
         const model = genai.getGenerativeModel({

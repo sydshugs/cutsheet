@@ -66,6 +66,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // ── Validate inputs ───────────────────────────────────────────────────────
     if (!prompt) return res.status(400).json({ error: "prompt is required" });
 
+    // Validate MIME type if provided
+    const ALLOWED_MIME_TYPES = [
+      "image/jpeg", "image/png", "image/webp", "image/gif",
+      "video/mp4", "video/quicktime", "video/webm", "video/x-msvideo",
+    ];
+    if (mimeType && !ALLOWED_MIME_TYPES.includes(mimeType)) {
+      return res.status(400).json({ error: "Invalid file type" });
+    }
+
     // Cap prompt length to prevent abuse
     if (prompt.length > 50_000) {
       return res.status(413).json({ error: "prompt exceeds maximum length" });
@@ -103,7 +112,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ── Call Gemini ───────────────────────────────────────────────────────────
-    const geminiKey = process.env.GEMINI_API_KEY ?? process.env.VITE_GEMINI_API_KEY;
+    const geminiKey = process.env.GEMINI_API_KEY;
     if (!geminiKey) {
       console.error("[analyze] GEMINI_API_KEY is not set");
       return res.status(500).json({ error: "Server configuration error" });

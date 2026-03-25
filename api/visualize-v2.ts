@@ -6,7 +6,7 @@ export const maxDuration = 30; // seconds — spec requires 30s timeout for imag
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { GoogleGenAI, Modality } from "@google/genai";
-import { verifyAuth, handlePreflight, isProOrTeam } from "./_lib/auth";
+import { verifyAuth, handlePreflight, isProOrTeam, checkRateLimit } from "./_lib/auth";
 import { checkFeatureCredit } from "./_lib/creditCheck";
 import { safePlatform, safeAdType, safeNiche, validateBase64Size } from "./_lib/validateInput";
 
@@ -197,6 +197,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const user = await verifyAuth(req);
     if (!user) return res.status(401).json({ error: "Unauthorized" });
 
+    // ── Rate limit ───────────────────────────────────────────────────────
+    const rl = await checkRateLimit("visualize-v2", user.id, user.tier, { freeLimit: 0, proLimit: 20, windowSeconds: 86400 });
+    if (!rl.allowed) {
+      return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
+    }
+
     // ── Pro/Team gate ─────────────────────────────────────────────────────
     if (!isProOrTeam(user.tier)) {
       return res.status(403).json({ error: "PRO_REQUIRED", feature: "visualize" });
@@ -327,9 +333,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let usedV2 = false;
 
     try {
-      const genAI = new GoogleGenAI({
-        apiKey: (process.env.GEMINI_API_KEY ?? process.env.VITE_GEMINI_API_KEY)!,
-      });
+      const geminiKey = process.env.GEMINI_API_KEY;
+      if (!geminiKey) throw new Error("GEMINI_API_KEY is not set");
+      const genAI = new GoogleGenAI({ apiKey: geminiKey });
 
       const imageResponse = await genAI.models.generateContent({
         model: GEMINI_IMAGE_EDIT_MODEL,
@@ -387,8 +393,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const errName = err instanceof Error ? err.constructor.name : "Unknown";
       console.error("[visualize-v2] Gemini image editing failed: [%s] %s", errName, errMsg);
       // Log API key presence (never log the key itself)
-      console.error("[visualize-v2] GEMINI_API_KEY present: %s, VITE_GEMINI_API_KEY present: %s",
-        !!process.env.GEMINI_API_KEY, !!process.env.VITE_GEMINI_API_KEY);
+      console.error("[visualize-v2] GEMINI_API_KEY present: %s", !!process.env.GEMINI_API_KEY);
       // Fall back to visual brief (same behavior as v1 fallback)
       visualBrief = editPrompt;
     }

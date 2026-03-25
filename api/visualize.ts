@@ -6,7 +6,7 @@ export const maxDuration = 60; // seconds — image gen takes 15-20s
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { GoogleGenAI, Modality } from "@google/genai";
-import { verifyAuth, handlePreflight, isProOrTeam } from "./_lib/auth";
+import { verifyAuth, handlePreflight, isProOrTeam, checkRateLimit } from "./_lib/auth";
 import { checkFeatureCredit } from "./_lib/creditCheck";
 import { safePlatform, safeAdType, safeNiche, validateBase64Size } from "./_lib/validateInput";
 
@@ -151,6 +151,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const user = await verifyAuth(req);
   if (!user) return res.status(401).json({ error: "Unauthorized" });
 
+  // ── Rate limit ───────────────────────────────────────────────────────────
+  const rl = await checkRateLimit("visualize", user.id, user.tier, { freeLimit: 0, proLimit: 20, windowSeconds: 86400 });
+  if (!rl.allowed) {
+    return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
+  }
+
   // ── Pro/Team gate ─────────────────────────────────────────────────────────
   if (!isProOrTeam(user.tier)) {
     return res.status(403).json({ error: "PRO_REQUIRED", feature: "visualize" });
@@ -266,7 +272,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   let visualBrief: string | undefined;
 
   try {
-    const genAI = new GoogleGenAI({ apiKey: (process.env.GEMINI_API_KEY ?? process.env.VITE_GEMINI_API_KEY)! });
+    const geminiKey = process.env.GEMINI_API_KEY;
+    if (!geminiKey) throw new Error("GEMINI_API_KEY is not set");
+    const genAI = new GoogleGenAI({ apiKey: geminiKey });
 
     const imageResponse = await genAI.models.generateContent({
       model: GEMINI_IMAGE_MODEL,
