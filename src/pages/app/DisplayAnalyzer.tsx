@@ -14,7 +14,7 @@ import { runPolicyCheck, type PolicyCheckResult } from "../../lib/policyCheckSer
 import { getImageDimensions, detectDisplayFormat, getFormatGuidance, type DisplayFormat } from "../../utils/displayAdUtils";
 import { generateDisplayMockup, generateSuiteMockup } from "../../services/mockupService";
 import { analyzeVideo } from "../../services/analyzerService";
-import { analyzeSuiteCohesion, type SuiteCohesionResult } from "../../services/claudeService";
+import { analyzeSuiteCohesion, generateCTARewrites, type SuiteCohesionResult } from "../../services/claudeService";
 import { getUserContext, formatUserContextBlock } from "../../services/userContextService";
 import { VisualizePanel } from "../../components/VisualizePanel";
 import { visualizeAd } from "../../lib/visualizeService";
@@ -104,6 +104,10 @@ export default function DisplayAnalyzer() {
   const [suiteCohesionError, setSuiteCohesionError] = useState(false);
   const [suiteMockupUrl, setSuiteMockupUrl] = useState<string | null>(null);
   const [suiteMockupLoading, setSuiteMockupLoading] = useState(false);
+
+  // ── AI Rewrite state
+  const [ctaRewrites, setCtaRewrites] = useState<string[] | null>(null);
+  const [ctaLoading, setCtaLoading] = useState(false);
 
   // ── Visualize It state (single mode only)
   const [visualizeOpen, setVisualizeOpen] = useState(false);
@@ -400,6 +404,17 @@ Return JSON only — no prose:
       setStatus("error");
       setError(err instanceof Error ? err.message : "Analysis failed");
     }
+  };
+
+  const handleCTARewrite = async () => {
+    if (!result || ctaLoading) return;
+    setCtaLoading(true);
+    try {
+      const ctaContext = `CTA Visibility: ${result.scores.ctaVisibility}/10. Verdict: ${result.verdict}. Improvements: ${result.improvements.join("; ")}`;
+      const rewrites = await generateCTARewrites(ctaContext, file?.name ?? "display-ad", userContext || undefined, sessionMemoryRef.current);
+      setCtaRewrites(rewrites);
+    } catch { /* silent */ }
+    finally { setCtaLoading(false); }
   };
 
   const handleVisualize = async () => {
@@ -878,13 +893,16 @@ Return JSON only — no prose:
                       {/* AI Rewrite */}
                       <button
                         type="button"
+                        onClick={handleCTARewrite}
+                        disabled={ctaLoading}
                         style={{
                           display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center",
                           padding: 16, borderRadius: 12,
                           border: "1px solid rgba(255,255,255,0.05)", background: "rgba(255,255,255,0.02)",
-                          cursor: "pointer", transition: "all 150ms",
+                          cursor: ctaLoading ? "wait" : "pointer", transition: "all 150ms",
+                          opacity: ctaLoading ? 0.6 : 1,
                         }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
+                        onMouseEnter={(e) => { if (!ctaLoading) { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; } }}
                         onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.02)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.05)"; }}
                       >
                         <div style={{ width: 40, height: 40, borderRadius: 12, background: "rgba(129,140,248,0.12)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
@@ -949,19 +967,19 @@ Return JSON only — no prose:
                       <div style={{
                         display: "inline-flex", alignItems: "center", gap: 6,
                         padding: "4px 10px", borderRadius: 9999,
-                        background: result.overallScore >= 7 ? "rgba(16,185,129,0.1)" : result.overallScore >= 5 ? "rgba(245,158,11,0.1)" : "rgba(239,68,68,0.1)",
-                        border: `1px solid ${result.overallScore >= 7 ? "rgba(16,185,129,0.2)" : result.overallScore >= 5 ? "rgba(245,158,11,0.2)" : "rgba(239,68,68,0.2)"}`,
+                        background: result.overallScore >= 8 ? "rgba(16,185,129,0.1)" : result.overallScore >= 4 ? "rgba(245,158,11,0.1)" : "rgba(239,68,68,0.1)",
+                        border: `1px solid ${result.overallScore >= 8 ? "rgba(16,185,129,0.2)" : result.overallScore >= 4 ? "rgba(245,158,11,0.2)" : "rgba(239,68,68,0.2)"}`,
                         marginBottom: 12,
                       }}>
                         <div style={{
                           width: 6, height: 6, borderRadius: "50%",
-                          background: result.overallScore >= 7 ? "#10b981" : result.overallScore >= 5 ? "#f59e0b" : "#ef4444",
+                          background: result.overallScore >= 8 ? "#10b981" : result.overallScore >= 4 ? "#f59e0b" : "#ef4444",
                         }} />
                         <span style={{
                           fontSize: 11, fontWeight: 600, textTransform: "uppercase",
-                          color: result.overallScore >= 7 ? "#10b981" : result.overallScore >= 5 ? "#f59e0b" : "#ef4444",
+                          color: result.overallScore >= 8 ? "#10b981" : result.overallScore >= 4 ? "#f59e0b" : "#ef4444",
                         }}>
-                          {result.overallScore >= 7 ? "Ready" : result.overallScore >= 5 ? "Needs Work" : "Not Ready"}
+                          {result.overallScore >= 8 ? "Ready" : result.overallScore >= 4 ? "Needs Work" : "Not Ready"}
                         </span>
                       </div>
 
