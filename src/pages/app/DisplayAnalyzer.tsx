@@ -857,22 +857,14 @@ Return JSON only — no prose:
                     </p>
                   </div>
 
-                  {/* Analyze another creative button — matching Organic */}
+                  {/* Analyze another creative button — matching Organic ReportCards */}
                   <button
                     type="button"
                     onClick={handleReset}
-                    style={{
-                      display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                      height: 48, borderRadius: 12,
-                      border: "1px dashed rgba(255,255,255,0.08)",
-                      background: "transparent", cursor: "pointer",
-                      transition: "all 150ms",
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(6,182,212,0.3)"; e.currentTarget.style.background = "rgba(6,182,212,0.03)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "transparent"; }}
+                    className="flex items-center justify-center gap-2 h-12 rounded-xl border border-dashed border-white/[0.08] hover:border-indigo-500/30 hover:bg-indigo-500/[0.03] transition-all cursor-pointer w-full bg-transparent"
                   >
-                    <RotateCcw size={14} color="#22d3ee" />
-                    <span style={{ fontSize: 12, color: "#a1a1aa" }}>Analyze another creative</span>
+                    <Upload size={14} className="text-indigo-400" />
+                    <span className="text-xs text-zinc-400">Analyze another creative</span>
                   </button>
 
                   {/* TOOLS Section — matching Organic layout */}
