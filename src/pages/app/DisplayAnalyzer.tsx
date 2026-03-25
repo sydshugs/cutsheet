@@ -3,7 +3,7 @@
 import { Helmet } from "react-helmet-async";
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useOutletContext } from "react-router-dom";
-import { Monitor, Eye, Download, X, Plus, CheckCircle, ShieldCheck, Sparkles, Lock, RotateCcw, Upload } from "lucide-react";
+import { Monitor, Eye, Download, X, Plus, CheckCircle, ShieldCheck, Sparkles, Lock, RotateCcw, Upload, AlertCircle, ArrowRight, Layers, Type, Layout } from "lucide-react";
 import { VideoDropzone } from "../../components/VideoDropzone";
 import { ProgressCard } from "../../components/ProgressCard";
 import { sanitizeFileName } from "../../utils/sanitize";
@@ -1010,23 +1010,52 @@ Return JSON only — no prose:
                         {result.verdict}
                       </p>
 
-                      {/* Priority fix */}
-                      {result.improvements && result.improvements.length > 0 && (
-                        <div style={{
-                          padding: 14, borderRadius: 12,
-                          background: "linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.06))",
-                          border: "1px solid rgba(99,102,241,0.15)",
-                        }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-                            <span style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", color: "#818cf8" }}>Priority Fix</span>
-                            <span style={{ fontSize: 9, color: "#6366f1" }}>+2</span>
+                      {/* Priority fix — matching CreativeAnalysis red banner style */}
+                      {result.improvements && result.improvements.length > 0 && (() => {
+                        const topFix = result.improvements[0];
+                        const CAT_MAP: Record<string, { icon: typeof Layers; color: string; bg: string }> = {
+                          hierarchy: { icon: Layers, color: '#818cf8', bg: 'rgba(129,140,248,0.1)' },
+                          typography: { icon: Type, color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
+                          layout: { icon: Layout, color: '#10b981', bg: 'rgba(16,185,129,0.1)' },
+                          contrast: { icon: AlertCircle, color: '#ef4444', bg: 'rgba(239,68,68,0.1)' },
+                        };
+                        const cat = CAT_MAP[topFix.category] ?? CAT_MAP.layout;
+                        const CatIcon = cat.icon;
+                        return (
+                          <div style={{
+                            borderRadius: 12, overflow: 'hidden',
+                            background: 'linear-gradient(135deg, rgba(239,68,68,0.06) 0%, rgba(245,158,11,0.03) 100%)',
+                            border: '1px solid rgba(239,68,68,0.12)',
+                          }}>
+                            {/* Priority banner header */}
+                            <div style={{
+                              display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px',
+                              background: 'rgba(239,68,68,0.08)', borderBottom: '1px solid rgba(239,68,68,0.08)',
+                            }}>
+                              <AlertCircle size={11} color="#f87171" />
+                              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', color: '#f87171', textTransform: 'uppercase' }}>Priority Fix</span>
+                              <ArrowRight size={10} color="rgba(248,113,113,0.5)" />
+                              {result.improvements.length > 1 && (
+                                <span style={{ fontSize: 9, fontWeight: 600, padding: '1px 6px', borderRadius: 4, background: 'rgba(248,113,113,0.1)', color: '#f87171' }}>
+                                  +{result.improvements.length - 1}
+                                </span>
+                              )}
+                            </div>
+                            {/* Content row */}
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: 14 }}>
+                              <div style={{
+                                width: 28, height: 28, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                                background: cat.bg,
+                              }}>
+                                <CatIcon size={14} color={cat.color} />
+                              </div>
+                              <p style={{ fontSize: 13, fontWeight: 500, color: '#e4e4e7', lineHeight: 1.5, margin: 0 }}>
+                                {topFix.fix}
+                              </p>
+                            </div>
                           </div>
-                          <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
-                            <Sparkles size={14} color="#818cf8" style={{ marginTop: 2 }} />
-                            <span style={{ fontSize: 13, color: "#e4e4e7", lineHeight: 1.5 }}>{result.improvements[0]?.fix}</span>
-                          </div>
-                        </div>
-                      )}
+                        );
+                      })()}
                     </div>
                   )}
                 </div>
