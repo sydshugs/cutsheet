@@ -1096,17 +1096,10 @@ Return JSON only — no prose:
               <button
                 type="button"
                 onClick={handleReset}
-                style={{
-                  width: "100%", height: 44, borderRadius: 10,
-                  background: "rgba(6,182,212,0.08)", border: "1px solid rgba(6,182,212,0.2)",
-                  color: "#22d3ee", fontSize: 13, fontWeight: 500, cursor: "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                  transition: "all 150ms",
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(6,182,212,0.15)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(6,182,212,0.08)"; }}
+                className="flex items-center justify-center gap-2 h-12 rounded-xl border border-dashed border-white/[0.08] hover:border-indigo-500/30 hover:bg-indigo-500/[0.03] transition-all cursor-pointer w-full bg-transparent"
               >
-                <RotateCcw size={14} /> Analyze another display ad
+                <Upload size={14} className="text-indigo-400" />
+                <span className="text-xs text-zinc-400">Analyze another creative</span>
               </button>
 
               {/* Visualize It button */}
