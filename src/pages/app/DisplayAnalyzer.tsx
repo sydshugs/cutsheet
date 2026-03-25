@@ -3,7 +3,7 @@
 import { Helmet } from "react-helmet-async";
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useOutletContext } from "react-router-dom";
-import { Monitor, Eye, Download, X, Plus, CheckCircle, ShieldCheck, Sparkles, Lock, RotateCcw, Upload, AlertCircle, ArrowRight, Layers, Type, Layout } from "lucide-react";
+import { Monitor, Eye, Download, X, Plus, CheckCircle, ShieldCheck, Sparkles, Lock, RotateCcw, Upload, AlertCircle, ArrowRight, Layers, Type, Layout, FileText } from "lucide-react";
 import { VideoDropzone } from "../../components/VideoDropzone";
 import { ProgressCard } from "../../components/ProgressCard";
 import { sanitizeFileName } from "../../utils/sanitize";
@@ -1089,6 +1089,24 @@ Return JSON only — no prose:
                 />
               </div>
             )}
+
+            {/* Re-analyze improved version button */}
+            <button
+              onClick={() => {}}
+              className="mx-4 mt-4 w-[calc(100%-2rem)] flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-medium transition-all hover:bg-indigo-500/15 bg-indigo-500/[0.08] text-indigo-400 border border-indigo-500/20"
+            >
+              <RotateCcw size={14} />
+              Re-analyze improved version
+            </button>
+
+            {/* Generate Brief button */}
+            <button
+              onClick={() => {}}
+              className="mx-4 mt-4 w-[calc(100%-2rem)] flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-medium transition-all hover:bg-amber-500/15 bg-amber-500/[0.08] text-amber-400 border border-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <FileText size={14} />
+              Generate Brief
+            </button>
 
             {/* Action buttons */}
             <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: 10 }}>

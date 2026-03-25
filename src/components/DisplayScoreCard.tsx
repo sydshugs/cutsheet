@@ -132,7 +132,6 @@ export function DisplayScoreCard({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const networkLabel = network === "google" ? "Google Display Network" : network === "affiliate" ? "Affiliate / Direct" : "All Networks";
   const heroVerdict = result.overallScore >= 8 ? "Strong" : result.overallScore >= 4 ? "Average" : "Needs Work";
 
   return (
@@ -166,8 +165,6 @@ export function DisplayScoreCard({
 
       {/* Main content card — matching ScoreCard */}
       <div className="mx-4 mt-3 rounded-2xl overflow-hidden border border-white/[0.06] bg-white/[0.015]">
-        {/* Network label above score ring — matching ScoreCard platform label */}
-        <p className="text-[11px] text-zinc-500 text-center pt-4 mb-0">{networkLabel}</p>
         {/* ScoreHero — score number + benchmark + dimension grid */}
         <ScoreHero
           score={result.overallScore}
