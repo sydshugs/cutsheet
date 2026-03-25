@@ -1009,19 +1009,6 @@ Return JSON only — no prose:
       <div className={`shrink-0 bg-zinc-900/50 backdrop-blur-xl border-l border-white/5 overflow-y-auto overflow-x-hidden pb-12 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-white/5 ${mode === "single" && status === "complete" && result ? "w-[440px] max-lg:w-full opacity-100" : "w-0 max-lg:w-0 opacity-0"}`}>
         {mode === "single" && status === "complete" && result && (
           <>
-            {/* Score Overview header */}
-            <div style={{ padding: "16px 16px 0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontSize: 14, fontWeight: 600, color: "#f4f4f5" }}>Score Overview</span>
-              {detectedFormat && (
-                <span style={{ fontSize: 10, color: "#22d3ee", background: "rgba(6,182,212,0.1)", borderRadius: 9999, padding: "3px 10px" }}>
-                  {detectedFormat.key} · {detectedFormat.name}
-                </span>
-              )}
-            </div>
-            <p style={{ fontSize: 11, color: "#71717a", padding: "4px 16px 0", margin: 0 }}>
-              {network === "google" ? "Google Display Network" : network === "affiliate" ? "Affiliate / Direct" : "All Networks"}
-            </p>
-
             {/* Display Score Card */}
             <DisplayScoreCard
               result={result}
