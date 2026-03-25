@@ -76,10 +76,10 @@ const PAGE_CONFIGS: Record<AnalysisPageType, PageConfig> = {
   "display": {
     icon: Monitor,
     title: "Analyzing display ad",
-    color: "#06b6d4",
-    colorLight: "#22d3ee",
-    colorBg: "rgba(6,182,212,0.08)",
-    colorBorder: "rgba(6,182,212,0.15)",
+    color: "#6366f1",
+    colorLight: "#818cf8",
+    colorBg: "rgba(99,102,241,0.08)",
+    colorBorder: "rgba(99,102,241,0.15)",
     metrics: ["Visual Hierarchy", "CTA Visibility", "Brand Clarity", "Message Clarity"],
     checkItems: [
       "Detecting ad format",
