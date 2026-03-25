@@ -99,7 +99,7 @@ function OrganicEmptyState({
           <FeaturePill key={pill} label={pill} />
         ))}
       </div>
-      <p style={{ fontSize: 14, color: "#a1a1aa", textAlign: "center", maxWidth: 320, marginTop: 14, lineHeight: 1.6 }}>
+      <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)", textAlign: "center", maxWidth: 320, marginTop: 14, lineHeight: 1.6 }}>
         {format === "static"
           ? "Upload your Instagram or Facebook post image. Get scored on visual impact, caption strength, and shareability."
           : "Upload your TikTok, Reel, YouTube Short, or static post. Get scored on retention, shareability, and algorithm signals."}
