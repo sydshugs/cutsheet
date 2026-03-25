@@ -6,6 +6,7 @@ import { useOutletContext } from "react-router-dom";
 import { Monitor, Eye, Download, X, Plus, CheckCircle, ShieldCheck, Sparkles, Lock, RotateCcw } from "lucide-react";
 import { VideoDropzone } from "../../components/VideoDropzone";
 import { AnalysisProgressCard } from "../../components/AnalysisProgressCard";
+import { DisplayResultPage } from "../../components/DisplayResultPage";
 import { sanitizeFileName } from "../../utils/sanitize";
 import { SuiteCohesionCard } from "../../components/SuiteCohesionCard";
 import { DisplayScoreCard, type DisplayResult } from "../../components/DisplayScoreCard";
@@ -846,151 +847,19 @@ Return JSON only — no prose:
         </div>
       </div>
 
-      {/* Right panel — scores sidebar (Single mode only, when complete) */}
+      {/* New premium result page layout (Single mode only, when complete) */}
       {mode === "single" && status === "complete" && result && (
-        <div className="shrink-0 bg-zinc-900/50 backdrop-blur-xl border-l border-white/5 overflow-y-auto overflow-x-hidden pb-12 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-white/5 w-[440px] max-lg:w-full opacity-100">
-          {/* Display Score Card */}
-          <DisplayScoreCard
-            result={result}
-            format={detectedFormat}
-            network={network}
-            mockupUrl={null}
-            mockupLoading={false}
-            dimensions={dimensions!}
-          />
-
-          {/* Action buttons */}
-          <div style={{ padding: "0 16px", display: "flex", flexDirection: "column", gap: 10, marginTop: 16 }}>
-            {/* Analyze another */}
-            <button
-              type="button"
-              onClick={handleReset}
-              className="w-full flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-medium transition-all hover:bg-cyan-500/15 bg-cyan-500/[0.08] text-cyan-400 border border-cyan-500/20"
-            >
-              <RotateCcw size={14} />
-              Analyze another display ad
-            </button>
-
-            {/* Visualize It button */}
-            {!visualizeOpen && (
-              isPro ? (
-                <button
-                  type="button"
-                  onClick={handleVisualize}
-                  style={{
-                    width: "100%", height: 48,
-                    background: "linear-gradient(135deg, rgba(6,182,212,0.15), rgba(20,184,166,0.15))",
-                    border: "1px solid rgba(6,182,212,0.35)",
-                    borderRadius: 12,
-                    color: "#22d3ee", cursor: "pointer",
-                    display: "flex", flexDirection: "column",
-                    alignItems: "center", justifyContent: "center", gap: 2,
-                    transition: "all 150ms",
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(6,182,212,0.25), rgba(20,184,166,0.2))"; e.currentTarget.style.borderColor = "rgba(6,182,212,0.5)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(6,182,212,0.15), rgba(20,184,166,0.15))"; e.currentTarget.style.borderColor = "rgba(6,182,212,0.35)"; }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <Sparkles size={15} />
-                    <span style={{ fontSize: 14, fontWeight: 600 }}>Visualize It</span>
-                  </div>
-                  <span style={{ fontSize: 11, color: "#06b6d4", opacity: 0.75 }}>See what your improved ad could look like</span>
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => onUpgradeRequired("visualize")}
-                  style={{
-                    width: "100%", height: 48,
-                    background: "rgba(255,255,255,0.02)",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    borderRadius: 12,
-                    color: "#52525b", cursor: "pointer",
-                    display: "flex", flexDirection: "column",
-                    alignItems: "center", justifyContent: "center", gap: 2,
-                    transition: "all 150ms",
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(6,182,212,0.3)"; e.currentTarget.style.color = "#71717a"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#52525b"; }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <Lock size={14} />
-                    <span style={{ fontSize: 14, fontWeight: 600 }}>Visualize It</span>
-                    <span style={{ fontSize: 9, fontWeight: 600, padding: "1px 5px", borderRadius: 4, background: "rgba(6,182,212,0.12)", color: "#22d3ee" }}>PRO</span>
-                  </div>
-                  <span style={{ fontSize: 11, opacity: 0.6 }}>Upgrade to see your improved ad</span>
-                </button>
-              )
-            )}
-
-            {/* Check Policies button */}
-            {!policyResult && (
-              <button
-                type="button"
-                onClick={handleCheckPolicies}
-                disabled={policyLoading}
-                style={{
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                  width: "100%", height: 44, borderRadius: 12,
-                  background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.25)",
-                  color: "#f59e0b", fontSize: 14, fontWeight: 500,
-                  cursor: policyLoading ? "default" : "pointer",
-                  opacity: policyLoading ? 0.7 : 1, transition: "all 150ms",
-                }}
-                onMouseEnter={(e) => { if (!policyLoading) e.currentTarget.style.background = "rgba(245,158,11,0.18)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(245,158,11,0.1)"; }}
-              >
-                {policyLoading ? (
-                  <>
-                    <div style={{ width: 14, height: 14, border: "2px solid rgba(245,158,11,0.3)", borderTopColor: "#f59e0b", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
-                    Checking policies...
-                  </>
-                ) : (
-                  <>
-                    <ShieldCheck size={15} /> Check Policies
-                  </>
-                )}
-              </button>
-            )}
-
-            {/* Policy error */}
-            {policyError && (
-              <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", fontSize: 13, color: "#ef4444" }}>
-                {policyError}
-              </div>
-            )}
-
-            {/* Policy results */}
-            {policyResult && (
-              <PolicyCheckPanel result={policyResult} onClose={() => setPolicyResult(null)} />
-            )}
-          </div>
-
-          {/* Predicted Performance */}
-          {prediction && (
-            <div className="mx-4 mt-4">
-              <PredictedPerformanceCard
-                prediction={prediction}
-                platform="google_display"
-              />
-            </div>
-          )}
-
-          {/* Visualize Panel */}
-          {(visualizeOpen || visualizeStatus !== "idle") && (
-            <div style={{ padding: "16px" }}>
-              <VisualizePanel
-                status={visualizeStatus}
-                result={visualizeResult}
-                originalImageUrl={previewUrl}
-                error={visualizeError}
-                creditData={visualizeCreditData}
-                onClose={() => { setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); setVisualizeCreditData(null); }}
-                onUpgrade={onUpgradeRequired}
-              />
-            </div>
-          )}
-        </div>
+        <DisplayResultPage
+          result={result}
+          format={detectedFormat}
+          mockupUrl={mockupUrl}
+          mockupLoading={mockupLoading}
+          dimensions={dimensions!}
+          isPro={isPro}
+          onAnalyzeAnother={handleReset}
+          onVisualize={handleVisualize}
+          onUpgrade={onUpgradeRequired}
+        />
       )}
 
       <style>{`
