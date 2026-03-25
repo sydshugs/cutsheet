@@ -103,6 +103,21 @@ If Claude Code is about to write code that touches more than 2 files and no writ
 ### Verification Gate
 Before marking any task done, run `superpowers:verification-before-completion`. Build must pass with 0 errors and 0 TypeScript failures.
 
+## Icon & Component Import Rule — REQUIRED before every commit
+Before marking ANY UI task done, run this check on every file you touched:
+```bash
+# Find all JSX component usages
+grep -n "<[A-Z][a-zA-Z]*" <file> | grep -v "^.*import"
+# Find all imports
+grep -n "^import" <file>
+# Verify every component/icon used in JSX appears in an import
+```
+Missing lucide-react icon imports cause silent ReferenceError during React render.
+ChunkErrorBoundary catches it and shows "Something went wrong loading this page."
+This is a production crash with no obvious error message — extremely hard to debug.
+**Every icon used = must be in the import line. No exceptions.**
+`superpowers:verification-before-completion` must include this check.
+
 ### Screenshot Loop (UI changes only)
 After any significant change to a result view (PaidAdAnalyzer, DisplayAnalyzer, OrganicAnalyzer):
 1. Capture a screenshot of the affected view using playwright or chrome-devtools-mcp
