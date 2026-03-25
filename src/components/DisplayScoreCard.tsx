@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import {
   AlertTriangle, CheckCircle, XCircle, AlertCircle, Copy, CheckCircle as CheckCircle2,
-  ChevronRight, Layers, Type, Layout, Contrast,
+  ChevronRight, Layers, Type, Layout, Contrast, Sparkles,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ScoreHero } from "./ScoreHero";
@@ -36,6 +36,7 @@ const CATEGORY_STYLES: Record<string, { bg: string; bgActive: string; color: str
   typography: { bg: 'rgba(245,158,11,0.06)', bgActive: 'rgba(245,158,11,0.12)', color: '#f59e0b', dot: '#f59e0b', icon: Type, label: 'Typography' },
   layout: { bg: 'rgba(16,185,129,0.06)', bgActive: 'rgba(16,185,129,0.12)', color: '#10b981', dot: '#10b981', icon: Layout, label: 'Layout' },
   contrast: { bg: 'rgba(239,68,68,0.06)', bgActive: 'rgba(239,68,68,0.12)', color: '#ef4444', dot: '#ef4444', icon: Contrast, label: 'Contrast' },
+  visual: { bg: 'rgba(168,85,247,0.06)', bgActive: 'rgba(168,85,247,0.12)', color: '#c084fc', dot: '#a855f7', icon: Sparkles, label: 'Visual' },
 };
 
 const SEVERITY_STYLES: Record<string, { color: string; bg: string; label: string; priority: number }> = {
@@ -140,7 +141,6 @@ export function DisplayScoreCard({
       <div className="px-5 pt-5 pb-4 flex items-center justify-between border-b border-white/[0.05]">
         <div className="flex flex-col">
           <span className="text-sm font-medium text-zinc-300">Score Overview</span>
-          <span className="text-[11px] text-zinc-600 mt-0.5">{networkLabel}</span>
         </div>
         <div className="flex items-center gap-2">
           {format ? (
@@ -166,6 +166,8 @@ export function DisplayScoreCard({
 
       {/* Main content card — matching ScoreCard */}
       <div className="mx-4 mt-3 rounded-2xl overflow-hidden border border-white/[0.06] bg-white/[0.015]">
+        {/* Network label above score ring — matching ScoreCard platform label */}
+        <p className="text-[11px] text-zinc-500 text-center pt-4 mb-0">{networkLabel}</p>
         {/* ScoreHero — score number + benchmark + dimension grid */}
         <ScoreHero
           score={result.overallScore}
@@ -228,7 +230,6 @@ export function DisplayScoreCard({
         {/* Improvements — filter tabs + styled issue rows (matching CreativeAnalysis) */}
         {result.improvements.length > 0 && (
           <div>
-            <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-3">Improvements</p>
 
             {/* Category filter tabs */}
             {categories.length > 1 && (
