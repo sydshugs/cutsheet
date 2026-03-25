@@ -807,30 +807,6 @@ Return JSON only — no prose:
               {/* ── RESULTS: Stacked layout — matching Organic ReportCards ─────────────────────── */}
               {status === "complete" && result && dimensions && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 8 }}>
-                  
-                  {/* Original image preview card — matching Organic media preview */}
-                  {file && previewUrl && (
-                    <div style={{ borderRadius: 16, overflow: "hidden", border: "1px solid rgba(255,255,255,0.06)", background: "rgba(0,0,0,0.2)" }}>
-                      <div style={{ display: "flex", justifyContent: "center", padding: 16 }}>
-                        <img 
-                          src={previewUrl} 
-                          alt={sanitizeFileName(file.name)} 
-                          style={{ maxWidth: "100%", maxHeight: 420, objectFit: "contain", borderRadius: 12 }} 
-                        />
-                      </div>
-                      {/* File info bar */}
-                      <div style={{ 
-                        display: "flex", alignItems: "center", justifyContent: "space-between",
-                        padding: "12px 16px", borderTop: "1px solid rgba(255,255,255,0.05)", background: "rgba(255,255,255,0.02)"
-                      }}>
-                        <p style={{ fontSize: 12, color: "#71717a", fontFamily: "var(--font-mono, monospace)", margin: 0 }}>
-                          {(() => { const n = sanitizeFileName(file.name); return n.length > 35 ? n.slice(0, 32) + "..." : n; })()}
-                        </p>
-                        <span style={{ fontSize: 12, color: "#52525b" }}>{(file.size / 1024 / 1024).toFixed(1)} MB</span>
-                      </div>
-                    </div>
-                  )}
-
                   {/* Mockup (hero — full width) */}
                   <div style={{ width: "100%" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
