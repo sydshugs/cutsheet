@@ -5,15 +5,13 @@
 import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { HookAnalysisExpanded } from "./HookAnalysisExpanded";
-import { HashtagsC2 } from "./HashtagsC2";
-import { Copy, CheckCircle, Loader2, ArrowUpRight, Share2, RotateCcw, FileText, Bookmark, Lightbulb, DollarSign } from "lucide-react";
+import { Copy, CheckCircle, Loader2, RotateCcw, FileText, Lightbulb, DollarSign } from "lucide-react";
 import type { BudgetRecommendation, Hashtags, Scene, HookDetail } from "../services/analyzerService";
 import type { EngineBudgetRecommendation } from "../services/budgetService";
 import { getBenchmark, type BenchmarkResult } from "../lib/benchmarks";
 import FixItPanel, { type FixItResult } from "./FixItPanel";
 import PredictedPerformanceCard, { type PredictionResult } from "./PredictedPerformanceCard";
 import { CollapsibleSection } from "./ui/CollapsibleSection";
-import { OverflowMenu, type OverflowMenuItem } from "./ui/OverflowMenu";
 import { AlertDialog } from "./ui/AlertDialog";
 
 // Sub-components
@@ -301,22 +299,6 @@ export function ScoreCard({
             {copied ? <CheckCircle size={12} /> : <Copy size={12} />}
             {copied ? "Copied" : "Copy"}
           </button>
-          {(onGenerateBrief || onAddToSwipeFile || onStartOver || onCheckPolicies || onCompare) && (
-            <OverflowMenu
-              direction="down"
-              items={[
-                ...(onGenerateBrief ? [{ label: "Generate Brief", onClick: onGenerateBrief, icon: <FileText size={14} /> }] : []),
-                ...(onAddToSwipeFile ? [{
-                  label: "Add to Swipe File",
-                  onClick: () => { onAddToSwipeFile(); setToast("Added to Swipe File"); setTimeout(() => setToast(null), 2500); },
-                  icon: <Bookmark size={14} />,
-                }] : []),
-                ...(onShare ? [{ label: "Share Score", onClick: onShare, icon: <Share2 size={14} /> }] : []),
-                ...(onCompare ? [{ label: "Compare", onClick: onCompare, icon: <ArrowUpRight size={14} /> }] : []),
-                ...(onStartOver ? [{ label: "Start Over", onClick: () => setStartOverOpen(true), icon: <RotateCcw size={14} />, destructive: true }] : []),
-              ] satisfies OverflowMenuItem[]}
-            />
-          )}
         </div>
       </div>
 
@@ -386,12 +368,6 @@ export function ScoreCard({
           );
           })()}
 
-          {/* Recommended Hashtags */}
-          {hashtags && (hashtags.tiktok?.length > 0 || hashtags.meta?.length > 0 || hashtags.instagram?.length > 0 || hashtags.pinterest?.length > 0 || hashtags.reels?.length > 0 || hashtags.youtube_shorts?.length > 0) && (
-            <div className="mb-6">
-              <HashtagsC2 hashtags={hashtags} format={format} />
-            </div>
-          )}
 
       </div>{/* end main card */}
 
@@ -444,56 +420,7 @@ export function ScoreCard({
       )}
 
 
-          {/* 12. Hashtags */}
-          {hashtags && (hashtags.tiktok.length > 0 || hashtags.meta.length > 0 || hashtags.instagram.length > 0) && (
-            <div style={{ marginTop: 8, padding: "0 20px", paddingBottom: 16 }}>
-              <CollapsibleSection
-                title="Recommended Hashtags"
-                trailing={
-                  <span className="text-[10px] text-zinc-500">
-                    {[hashtags.tiktok, hashtags.meta, hashtags.instagram].reduce((n, t) => n + t.length, 0)} tags
-                  </span>
-                }
-              >
-                {([["TikTok", hashtags.tiktok], ["Meta", hashtags.meta], ["Instagram", hashtags.instagram]] as const).map(
-                  ([plat, tags]) =>
-                    tags.length > 0 && (
-                      <div key={plat} className="flex items-center gap-1.5 flex-wrap mb-2">
-                        <span className="text-xs text-zinc-500 w-16 flex-shrink-0">{plat}</span>
-                        {tags.map((tag) => (
-                          <span
-                            key={tag}
-                            className="bg-zinc-800 text-zinc-300 text-xs px-2 py-0.5 rounded-md font-mono"
-                          >
-                            #{tag}
-                          </span>
-                        ))}
-                      </div>
-                    )
-                )}
-              </CollapsibleSection>
-            </div>
-          )}
 
-      {/* 13. Overflow menu */}
-      {(onGenerateBrief || onAddToSwipeFile || onStartOver || onCheckPolicies || onCompare) && (
-        <div style={{ marginTop: 16 }} className="px-5 pb-8 flex justify-end">
-          <OverflowMenu
-            items={[
-              ...(onGenerateBrief ? [{ label: "Generate Brief", onClick: onGenerateBrief, icon: <FileText size={14} /> }] : []),
-              ...(onAddToSwipeFile ? [{
-                label: "Add to Swipe File",
-                onClick: () => { onAddToSwipeFile(); setToast("Added to Swipe File"); setTimeout(() => setToast(null), 2500); },
-                icon: <Bookmark size={14} />,
-              }] : []),
-              ...(onShare ? [{ label: "Share Score", onClick: onShare, icon: <Share2 size={14} /> }] : []),
-              ...(onCompare ? [{ label: "Compare", onClick: onCompare, icon: <ArrowUpRight size={14} /> }] : []),
-              ...(onStartOver ? [{ label: "Start Over", onClick: () => setStartOverOpen(true), icon: <RotateCcw size={14} />, destructive: true }] : []),
-            ] satisfies OverflowMenuItem[]}
-
-          />
-        </div>
-      )}
 
       {/* Toast notification */}
       {toast && (
