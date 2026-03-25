@@ -9,14 +9,22 @@ import { sanitizeFileName } from "../utils/sanitize";
 
 interface ProgressCardProps {
   file: File;
-  status: "uploading" | "processing";
+  status: "uploading" | "processing" | "analyzing";
   statusMessage: string;
   onCancel: () => void;
   platform?: string;
   icon?: LucideIcon;
+  /** Override the title (default: "Analyzing your ad") */
+  title?: string;
+  /** Override the metric bar labels */
+  metrics?: string[];
+  /** Override the loading stage labels */
+  stages?: { label: string; metric: string | null; pct: number }[];
+  /** Override the checklist items */
+  checkItems?: { id: string; label: string }[];
 }
 
-const STAGES = [
+const DEFAULT_STAGES = [
   { label: "Reading creative...", metric: null, pct: 10 },
   { label: "Scoring hook strength...", metric: "Hook", pct: 30 },
   { label: "Evaluating message clarity...", metric: "Clarity", pct: 50 },
@@ -25,15 +33,15 @@ const STAGES = [
   { label: "Generating report...", metric: null, pct: 95 },
 ];
 
-const METRICS = ["Hook Strength", "Message Clarity", "CTA Effectiveness", "Production Quality"];
+const DEFAULT_METRICS = ["Hook Strength", "Message Clarity", "CTA Effectiveness", "Production Quality"];
 
-const CHECK_ITEMS = [
+const DEFAULT_CHECK_ITEMS = [
   { id: "hook",     label: "Hook & scroll-stop power" },
   { id: "cta",      label: "CTA clarity + urgency" },
   { id: "visual",   label: "Visual hierarchy & brand" },
   { id: "platform", label: "Platform fit for {platform}" },
   { id: "policy",   label: "Policy risk flags" },
-] as const;
+];
 
 // Map stageIndex (0-5) → which CHECK_ITEMS index is active
 const STAGE_TO_CHECK_INDEX = [0, 1, 2, 3, 4, 4] as const;
@@ -90,7 +98,18 @@ function ChecklistItem({ label, done, active }: { label: string; done: boolean; 
   );
 }
 
-export function ProgressCard({ file, status, onCancel, platform, icon: Icon = Zap }: ProgressCardProps) {
+export function ProgressCard({
+  file, status, onCancel, platform, icon: Icon = Zap,
+  title = "Analyzing your ad",
+  metrics: customMetrics,
+  stages: customStages,
+  checkItems: customCheckItems,
+}: ProgressCardProps) {
+  const STAGES = customStages ?? DEFAULT_STAGES;
+  const METRICS = customMetrics ?? DEFAULT_METRICS;
+  const CHECK_ITEMS = customCheckItems ?? DEFAULT_CHECK_ITEMS;
+  const STAGE_TO_CHECK_INDEX = STAGES.map((_, i) => Math.min(i, CHECK_ITEMS.length - 1));
+
   const [stageIndex, setStageIndex] = useState(0);
   const thumbnailDataUrl = useThumbnail(file);
   const isImage = file.type.startsWith("image/");
@@ -105,12 +124,12 @@ export function ProgressCard({ file, status, onCancel, platform, icon: Icon = Za
   }, [previewUrl]);
 
   useEffect(() => {
-    if (status !== "processing") { setStageIndex(0); return; }
+    if (status !== "processing" && status !== "analyzing") { setStageIndex(0); return; }
     const interval = setInterval(() => {
       setStageIndex((prev) => Math.min(prev + 1, STAGES.length - 1));
     }, 3500);
     return () => clearInterval(interval);
-  }, [status]);
+  }, [status, STAGES.length]);
 
   const stage = STAGES[stageIndex];
   const displayUrl = thumbnailDataUrl || previewUrl;
@@ -189,7 +208,7 @@ export function ProgressCard({ file, status, onCancel, platform, icon: Icon = Za
                 </motion.div>
               </div>
               <div>
-                <p className="text-lg font-medium text-zinc-100 m-0">Analyzing your ad</p>
+                <p className="text-lg font-medium text-zinc-100 m-0">{title}</p>
                 <div className="min-h-[16px]">
                   <AnimatePresence mode="wait">
                     <motion.p

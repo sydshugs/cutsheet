@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useOutletContext } from "react-router-dom";
 import { Monitor, Eye, Download, X, Plus, CheckCircle, ShieldCheck, Sparkles, Lock, RotateCcw, Upload } from "lucide-react";
 import { VideoDropzone } from "../../components/VideoDropzone";
-import { AnalysisProgressCard } from "../../components/AnalysisProgressCard";
+import { ProgressCard } from "../../components/ProgressCard";
 import { sanitizeFileName } from "../../utils/sanitize";
 import { SuiteCohesionCard } from "../../components/SuiteCohesionCard";
 import { DisplayScoreCard, type DisplayResult } from "../../components/DisplayScoreCard";
@@ -765,13 +765,31 @@ Return JSON only — no prose:
 
               {/* Analysis auto-triggers on file drop via useEffect */}
 
-              {/* Loading — unified AnalysisProgressCard matching organic ProgressCard design */}
+              {/* Loading — uses same ProgressCard as PaidAdAnalyzer */}
               {status === "analyzing" && file && (
-                <AnalysisProgressCard
-                  pageType="display"
-                  files={[file]}
+                <ProgressCard
+                  file={file}
+                  status="processing"
                   statusMessage={statusMsg || "Analyzing display ad..."}
                   onCancel={handleReset}
+                  icon={Monitor}
+                  title="Analyzing display ad"
+                  metrics={["Visual Hierarchy", "CTA Visibility", "Brand Clarity", "Message Clarity"]}
+                  stages={[
+                    { label: "Reading creative...", metric: null, pct: 10 },
+                    { label: "Detecting ad format...", metric: null, pct: 25 },
+                    { label: "Analyzing visual hierarchy...", metric: "Hierarchy", pct: 40 },
+                    { label: "Scoring CTA visibility...", metric: "CTA", pct: 55 },
+                    { label: "Evaluating text ratio...", metric: "Text", pct: 70 },
+                    { label: "Generating placement preview...", metric: null, pct: 90 },
+                  ]}
+                  checkItems={[
+                    { id: "format", label: "Detecting ad format" },
+                    { id: "hierarchy", label: "Analyzing visual hierarchy" },
+                    { id: "cta", label: "Scoring CTA visibility" },
+                    { id: "text", label: "Evaluating text ratio" },
+                    { id: "preview", label: "Generating placement preview" },
+                  ]}
                 />
               )}
 
