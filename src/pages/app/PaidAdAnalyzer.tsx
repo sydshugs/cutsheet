@@ -5,6 +5,7 @@ import { useOutletContext, useNavigate, Link } from "react-router-dom";
 import { RotateCcw, Upload, Sparkles, Lock, Zap, Wand2, Lightbulb, FileText, ArrowUpRight, TrendingUp } from "lucide-react";
 import { Toast } from "../../components/Toast";
 import { AnalyzerView } from "../../components/AnalyzerView";
+import { BriefResultView, type BriefSection } from "../../components/BriefResultView";
 import { ScoreCard } from "../../components/ScoreCard";
 import { VideoDropzone } from "../../components/VideoDropzone";
 import { HistoryDrawer } from "../../components/HistoryDrawer";
@@ -1185,68 +1186,41 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
             )}
             {brief && (
               <>
-                <div className="px-5 pt-5 pb-2 flex-1 overflow-y-auto">
-                  <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.06em] mb-4">Creative Brief</p>
-                  <div className="flex flex-col">
-                    {(() => {
-                      // Parse brief into structured sections
-                      const sections: { label: string; lines: string[] }[] = [];
-                      let current: { label: string; lines: string[] } | null = null;
-                      for (const line of brief.split("\n")) {
-                        const t = line.trim();
-                        if (!t || t === "---" || t.startsWith("## ")) continue;
-                        const boldMatch = t.match(/^\*\*(.+?)\*\*:?\s*(.*)/);
-                        if (boldMatch) {
-                          if (current) sections.push(current);
-                          current = { label: boldMatch[1].replace(/:$/, ''), lines: boldMatch[2] ? [boldMatch[2]] : [] };
-                        } else if (current) {
-                          current.lines.push(t.replace(/^[-*]\s*/, ''));
-                        }
-                      }
+                {(() => {
+                  // Parse brief into BriefSection format for new component
+                  const sections: BriefSection[] = [];
+                  let current: BriefSection | null = null;
+                  for (const line of brief.split("\n")) {
+                    const t = line.trim();
+                    if (!t || t === "---" || t.startsWith("## ")) continue;
+                    const boldMatch = t.match(/^\*\*(.+?)\*\*:?\s*(.*)/);
+                    if (boldMatch) {
                       if (current) sections.push(current);
+                      const content = boldMatch[2];
+                      current = { 
+                        label: boldMatch[1].replace(/:$/, ''), 
+                        content: content || undefined,
+                        items: content ? undefined : []
+                      };
+                    } else if (current) {
+                      const cleanLine = t.replace(/^[-*]\s*/, '');
+                      if (!current.items) {
+                        current.items = [];
+                      }
+                      current.items.push(cleanLine);
+                    }
+                  }
+                  if (current) sections.push(current);
 
-                      return sections.map((sec, i) => {
-                        const isDo = /^do$/i.test(sec.label);
-                        const isDont = /^don'?t$/i.test(sec.label);
-                        const isHook = /hook/i.test(sec.label);
-                        return (
-                          <div key={i} className={i > 0 ? "border-t border-white/5 pt-3 mt-3" : ""}>
-                            <p className="text-[10px] text-zinc-500 uppercase tracking-[0.05em] mb-1">{sec.label}</p>
-                            {isHook ? (
-                              <ol className="list-decimal list-inside flex flex-col gap-1">
-                                {sec.lines.map((l, j) => (
-                                  <li key={j} className="text-[13px] text-zinc-300 leading-relaxed">{l.replace(/^\d+\.\s*/, '')}</li>
-                                ))}
-                              </ol>
-                            ) : (isDo || isDont) ? (
-                              <div className="flex flex-col gap-1">
-                                {sec.lines.map((l, j) => (
-                                  <div key={j} className="flex items-start gap-2">
-                                    <span className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${isDo ? 'bg-emerald-400' : 'bg-red-400'}`} />
-                                    <span className="text-[13px] text-zinc-300 leading-relaxed">{l}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : sec.lines.length === 1 ? (
-                              <p className="text-[13px] text-zinc-300 leading-relaxed">{sec.lines[0]}</p>
-                            ) : (
-                              <p className="text-[13px] text-zinc-300 leading-relaxed">{sec.lines.join(' · ')}</p>
-                            )}
-                          </div>
-                        );
-                      });
-                    })()}
-                  </div>
-                </div>
-                <div className="p-5 border-t border-white/5">
-                  <button
-                    type="button"
-                    onClick={handleBriefCopy}
-                    className="w-full py-2 px-3 bg-transparent border border-white/10 rounded-lg text-zinc-400 text-xs font-medium hover:bg-white/5 hover:text-white hover:border-white/20 transition-all duration-150 cursor-pointer"
-                  >
-                    {briefCopied ? "Copied!" : "Copy Brief"}
-                  </button>
-                </div>
+                  return (
+                    <BriefResultView 
+                      sections={sections}
+                      platform={platform !== "all" ? platform : "Meta"}
+                      adFormat={format === "static" ? "Static" : "Video"}
+                      onBack={() => setRightTab("analysis")}
+                    />
+                  );
+                })()}
               </>
             )}
           </motion.div>

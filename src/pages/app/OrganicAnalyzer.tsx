@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useOutletContext, useNavigate } from "react-router-dom";
 import { TrendingUp, RotateCcw } from "lucide-react";
 import { AnalyzerView } from "../../components/AnalyzerView";
+import { BriefResultView, type BriefSection } from "../../components/BriefResultView";
 import { ScoreCard } from "../../components/ScoreCard";
 import { VideoDropzone } from "../../components/VideoDropzone";
 import { HistoryDrawer } from "../../components/HistoryDrawer";
@@ -641,43 +642,67 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
         )}
 
         {showRightPanel && rightTab === "brief" && (
-          <div className="flex flex-col h-full">
-            <div className="p-5 border-b border-white/5 flex items-center justify-between">
-              <button type="button" onClick={() => setRightTab("analysis")} className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer">← Back to Scores</button>
-              <span className="text-xs text-zinc-600 font-mono">Claude Sonnet</span>
-            </div>
+          <>
             {briefLoading && !brief && (
-              <div className="flex-1 flex flex-col items-center justify-center gap-3 px-5">
-                <div className="w-5 h-5 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
-                <span className="text-xs text-zinc-500">Generating creative brief...</span>
+              <div className="flex flex-col h-full">
+                <div className="p-5 border-b border-white/5 flex items-center justify-between">
+                  <button type="button" onClick={() => setRightTab("analysis")} className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer">← Back to Scores</button>
+                  <span className="text-xs text-zinc-600 font-mono">Claude Sonnet</span>
+                </div>
+                <div className="flex-1 flex flex-col items-center justify-center gap-3 px-5">
+                  <div className="w-5 h-5 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
+                  <span className="text-xs text-zinc-500">Generating creative brief...</span>
+                </div>
               </div>
             )}
-            {briefError && <div className="px-5 py-4"><p className="text-xs text-red-400">{briefError}</p></div>}
+            {briefError && (
+              <div className="flex flex-col h-full">
+                <div className="p-5 border-b border-white/5 flex items-center justify-between">
+                  <button type="button" onClick={() => setRightTab("analysis")} className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer">← Back to Scores</button>
+                </div>
+                <div className="px-5 py-4"><p className="text-xs text-red-400">{briefError}</p></div>
+              </div>
+            )}
             {brief && (
               <>
-                <div className="px-5 pt-5 pb-2 flex-1 overflow-y-auto">
-                  <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-4">Creative Brief</p>
-                  <div className="flex flex-col gap-0.5">
-                    {brief.split("\n").map((line, i) => {
-                      const t = line.trim();
-                      if (!t) return null;
-                      if (t.startsWith("## ")) return <p key={i} className="text-xs font-semibold text-white mt-4 mb-1">{t.replace(/^##\s*/, "")}</p>;
-                      const boldMatch = t.match(/^\*\*(.+?)\*\*:?\s*(.*)/);
-                      if (boldMatch) return <div key={i} className="mb-3"><p className="text-xs text-zinc-500 font-medium">{boldMatch[1]}</p>{boldMatch[2] && <p className="text-xs text-zinc-300 leading-relaxed mt-0.5">{boldMatch[2]}</p>}</div>;
-                      if (t.startsWith("- ") || t.startsWith("* ")) return <div key={i} className="flex gap-2 items-start ml-1 mb-1"><span className="w-1 h-1 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" /><span className="text-xs text-zinc-400 leading-relaxed">{t.replace(/^[-*]\s*/, "")}</span></div>;
-                      if (t === "---") return <div key={i} className="border-t border-white/5 my-3" />;
-                      return <p key={i} className="text-xs text-zinc-300 leading-relaxed mb-1">{t}</p>;
-                    })}
-                  </div>
-                </div>
-                <div className="p-5 border-t border-white/5">
-                  <button type="button" onClick={handleBriefCopy} className="w-full py-2 px-3 bg-transparent border border-white/10 rounded-lg text-zinc-400 text-xs font-medium hover:bg-white/5 hover:text-white hover:border-white/20 transition-all duration-150 cursor-pointer">
-                    {briefCopied ? "Copied!" : "Copy Brief"}
-                  </button>
-                </div>
+                {(() => {
+                // Parse brief into BriefSection format for new component
+                const sections: BriefSection[] = [];
+                let current: BriefSection | null = null;
+                for (const line of brief.split("\n")) {
+                  const t = line.trim();
+                  if (!t || t === "---" || t.startsWith("## ")) continue;
+                  const boldMatch = t.match(/^\*\*(.+?)\*\*:?\s*(.*)/);
+                  if (boldMatch) {
+                    if (current) sections.push(current);
+                    const content = boldMatch[2];
+                    current = { 
+                      label: boldMatch[1].replace(/:$/, ''), 
+                      content: content || undefined,
+                      items: content ? undefined : []
+                    };
+                  } else if (current) {
+                    const cleanLine = t.replace(/^[-*]\s*/, '');
+                    if (!current.items) {
+                      current.items = [];
+                    }
+                    current.items.push(cleanLine);
+                  }
+                }
+                if (current) sections.push(current);
+
+                return (
+                  <BriefResultView 
+                    sections={sections}
+                    platform={platform !== "all" ? platform : "TikTok"}
+                    adFormat={format === "static" ? "Static" : "Video"}
+                    onBack={() => setRightTab("analysis")}
+                  />
+                );
+              })()}
               </>
             )}
-          </div>
+          </>
         )}
 
 
