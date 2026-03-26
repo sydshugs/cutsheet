@@ -10,7 +10,7 @@ import { Copy, CheckCircle, Loader2, RotateCcw, FileText, Lightbulb, DollarSign 
 import type { BudgetRecommendation, Hashtags, Scene, HookDetail } from "../services/analyzerService";
 import type { EngineBudgetRecommendation } from "../services/budgetService";
 import { getBenchmark, type BenchmarkResult } from "../lib/benchmarks";
-import FixItPanel, { type FixItResult } from "./FixItPanel";
+import { type FixItResult } from "./FixItPanel";
 import PredictedPerformanceCard, { type PredictionResult } from "./PredictedPerformanceCard";
 import { CollapsibleSection } from "./ui/CollapsibleSection";
 import { AlertDialog } from "./ui/AlertDialog";
@@ -341,12 +341,7 @@ export function ScoreCard({
 
           {/* Action row (AI Rewrite / Visualize / Policies) moved to center column tools grid */}
 
-          {/* 5. Fix It result (if already generated) */}
-          {fixItResult && (
-            <div style={{ marginTop: 12, padding: "0 20px" }}>
-              <FixItPanel result={fixItResult} />
-            </div>
-          )}
+          {/* Fix It result removed — only shows in dedicated slide-out panel in PaidAdAnalyzer */}
 
           {/* Predicted Performance + Budget moved outside glass card */}
 
