@@ -1,7 +1,7 @@
 // PreFlightView.tsx — A/B creative comparison with side-by-side dropzones
 
 import { useState, useCallback } from "react";
-import { FlaskConical, Upload, Check, X } from "lucide-react";
+import { GitBranch, Upload, Check, X } from "lucide-react";
 import { AnalysisProgressCard } from "./AnalysisProgressCard";
 import { analyzeVideo, type AnalysisResult } from "../services/analyzerService";
 import { runComparison } from "../services/comparisonService";
@@ -121,35 +121,41 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
     const PILLS = ["Hook comparison", "CTA analysis", "Winner prediction"];
     
     return (
-      <div className="flex flex-col items-center justify-center flex-1 min-h-[calc(100vh-120px)] px-6 py-16">
-        {/* Icon */}
-        <div className="w-16 h-16 rounded-lg bg-indigo-950 border border-indigo-900 flex items-center justify-center mb-6">
-          <FlaskConical size={32} className="text-indigo-400" />
+      <div className="flex flex-col items-center justify-center flex-1 min-h-[calc(100vh-120px)] px-6 py-16" style={{ background: "#09090b" }}>
+        {/* Icon tile — 76×76px, rose accent */}
+        <div className="w-19 h-19 rounded-lg flex items-center justify-center mb-6" style={{ background: "rgba(236,72,153,0.1)", border: "1px solid rgba(236,72,153,0.2)" }}>
+          <GitBranch size={28} color="#ec4899" strokeWidth={1.5} />
         </div>
 
-        {/* Title */}
-        <h1 className="text-2xl font-semibold text-white mb-2 text-center">
+        {/* Title — fontSize 20, fontWeight 600 */}
+        <h1 className="text-xl font-semibold text-center mb-3" style={{ color: "#f4f4f5" }}>
           Compare two ad variants
         </h1>
         
-        {/* Subtitle */}
-        <p className="text-sm text-gray-400 text-center max-w-md mb-6">
+        {/* Subtitle — maxWidth 320, centered, secondary text */}
+        <p className="text-sm text-center max-w-80 mb-6" style={{ color: "rgba(255,255,255,0.5)" }}>
           Upload two ad creatives side by side. AI analyzes both and predicts the winner.
         </p>
 
-        {/* Feature pills */}
-        <div className="flex flex-wrap justify-center gap-2 mb-10">
+        {/* Feature pills — NEUTRAL style only */}
+        <div className="flex flex-wrap justify-center gap-2 mb-8">
           {PILLS.map((pill) => (
             <span
               key={pill}
-              className="text-xs text-gray-400 px-3 py-1 rounded-full border border-gray-700 bg-transparent"
+              className="px-3 py-1 rounded-full"
+              style={{
+                fontSize: "12px",
+                color: "#a1a1aa",
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.08)",
+              }}
             >
               {pill}
             </span>
           ))}
         </div>
 
-        {/* Two-column dropzones */}
+        {/* Two-column dropzones — "Ad A" and "Ad B" */}
         <div className="w-full max-w-3xl grid grid-cols-2 gap-6 mb-8">
           {variants.map((v, i) => {
             const fileInputId = `preflight-file-${v.id}`;
@@ -158,32 +164,39 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
             return (
               <div key={v.id} className="flex flex-col">
                 {/* Label */}
-                <label className="text-xs font-semibold text-white uppercase tracking-wider mb-3">
+                <label className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#f4f4f5" }}>
                   {v.label}
                 </label>
 
-                {/* Dropzone */}
+                {/* Dropzone — dashed border, rounded-xl */}
                 {!hasFile ? (
                   <label
                     htmlFor={fileInputId}
-                    className="relative flex flex-col items-center justify-center p-8 border-2 border-dashed border-gray-700 rounded-lg cursor-pointer transition-all hover:border-indigo-500 hover:bg-indigo-950 hover:bg-opacity-20"
+                    className="relative flex flex-col items-center justify-center p-8 rounded-xl cursor-pointer transition-all"
+                    style={{
+                      border: "2px dashed rgba(255,255,255,0.1)",
+                      background: "transparent",
+                    }}
                     onDragOver={(e) => {
                       e.preventDefault();
-                      e.currentTarget.classList.add("border-indigo-500", "bg-indigo-950", "bg-opacity-20");
+                      e.currentTarget.style.borderColor = "#6366f1";
+                      e.currentTarget.style.background = "rgba(99,102,241,0.05)";
                     }}
                     onDragLeave={(e) => {
-                      e.currentTarget.classList.remove("border-indigo-500", "bg-indigo-950", "bg-opacity-20");
+                      e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
+                      e.currentTarget.style.background = "transparent";
                     }}
                     onDrop={(e) => {
                       e.preventDefault();
-                      e.currentTarget.classList.remove("border-indigo-500", "bg-indigo-950", "bg-opacity-20");
+                      e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
+                      e.currentTarget.style.background = "transparent";
                       const f = e.dataTransfer.files[0];
                       if (f) handleFileSelect(i, f);
                     }}
                   >
-                    <Upload size={24} className="text-gray-500 mb-2" />
-                    <span className="text-sm text-gray-400">Drop or click to browse</span>
-                    <span className="text-xs text-gray-600 mt-1">MP4 · MOV · PNG · JPG</span>
+                    <Upload size={24} style={{ color: "rgba(255,255,255,0.3)", marginBottom: "8px" }} />
+                    <span className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>Drop or click to browse</span>
+                    <span className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.3)" }}>MP4 · MOV · PNG · JPG</span>
                     <input
                       id={fileInputId}
                       type="file"
@@ -196,12 +209,13 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
                     />
                   </label>
                 ) : (
-                  <div className="flex items-center gap-2 p-3 bg-green-950 bg-opacity-30 border border-green-900 rounded-lg">
-                    <Check size={14} className="text-green-400 flex-shrink-0" />
-                    <span className="text-xs text-white truncate flex-1">{v.file.name}</span>
+                  <div className="flex items-center gap-2 p-3 rounded-lg" style={{ background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.15)" }}>
+                    <Check size={14} color="#10b981" className="flex-shrink-0" />
+                    <span className="text-xs truncate flex-1" style={{ color: "#f4f4f5" }}>{v.file.name}</span>
                     <button
                       onClick={() => handleFileSelect(i, null)}
-                      className="text-gray-500 hover:text-red-400 transition-colors flex-shrink-0"
+                      className="hover:text-red-400 transition-colors flex-shrink-0"
+                      style={{ color: "rgba(255,255,255,0.5)" }}
                     >
                       <X size={14} />
                     </button>
@@ -214,16 +228,27 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
 
         {/* Error message */}
         {phase === "error" && errorMsg && (
-          <div className="w-full max-w-3xl mb-6 p-3 bg-red-950 bg-opacity-30 border border-red-900 rounded-lg text-xs text-red-400 font-mono">
+          <div className="w-full max-w-3xl mb-6 p-3 rounded-lg text-xs font-mono" style={{ color: "#ef4444", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
             {errorMsg}
           </div>
         )}
 
-        {/* Compare button */}
+        {/* Compare button — indigo fill, disabled state */}
         <button
           onClick={handleRun}
           disabled={!canRun}
-          className="px-6 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-lg disabled:bg-gray-800 disabled:text-gray-500 disabled:cursor-not-allowed hover:enabled:bg-indigo-700 transition-colors"
+          className="px-6 py-2.5 text-sm font-semibold rounded-lg transition-colors"
+          style={{
+            background: canRun ? "#6366f1" : "rgba(255,255,255,0.04)",
+            color: canRun ? "#fff" : "#52525b",
+            cursor: canRun ? "pointer" : "not-allowed",
+          }}
+          onMouseEnter={(e) => {
+            if (canRun) e.currentTarget.style.background = "#4f46e5";
+          }}
+          onMouseLeave={(e) => {
+            if (canRun) e.currentTarget.style.background = "#6366f1";
+          }}
         >
           Compare Ads
         </button>
@@ -250,18 +275,18 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
     const loser = comparison.rankings?.[1];
 
     return (
-      <div className="max-w-4xl mx-auto px-6 py-12">
+      <div className="max-w-4xl mx-auto px-6 py-12" style={{ background: "#09090b" }}>
         {/* Results header */}
         <div className="mb-8">
-          <div className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-1">
+          <div className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "rgba(255,255,255,0.5)" }}>
             A/B Test Results
           </div>
-          <h1 className="text-3xl font-bold text-white">
+          <h1 className="text-3xl font-bold" style={{ color: "#f4f4f5" }}>
             {winner?.label} wins
           </h1>
         </div>
 
-        {/* Score panels grid */}
+        {/* Score panels grid — two columns, winner has indigo accent */}
         <div className="grid grid-cols-2 gap-6 mb-8">
           {analyses.map((analysis, idx) => {
             const isWinner = winner && analysisLabels[idx] === winner.label;
@@ -270,51 +295,51 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
             return (
               <div
                 key={idx}
-                className={`relative p-6 rounded-lg border ${
-                  isWinner
-                    ? "border-indigo-700 bg-indigo-950 bg-opacity-30"
-                    : "border-gray-800 bg-gray-900 bg-opacity-30"
-                }`}
+                className="relative p-6 rounded-lg"
+                style={{
+                  border: isWinner ? "1px solid rgba(99,102,241,0.3)" : "1px solid rgba(255,255,255,0.06)",
+                  background: isWinner ? "rgba(99,102,241,0.05)" : "rgba(255,255,255,0.02)",
+                }}
               >
                 {/* Winner badge */}
                 {isWinner && (
-                  <div className="absolute -top-3 -right-3 px-2 py-1 bg-indigo-600 text-white text-xs font-semibold rounded-full">
+                  <div className="absolute -top-3 -right-3 px-2 py-1 text-xs font-semibold rounded-full text-white" style={{ background: "#6366f1" }}>
                     🏆 Winner
                   </div>
                 )}
 
                 {/* Ad label */}
-                <h2 className="text-sm font-semibold text-white mb-4">
+                <h2 className="text-sm font-semibold mb-4" style={{ color: "#f4f4f5" }}>
                   {analysisLabels[idx]}
                 </h2>
 
-                {/* Scores */}
+                {/* Scores grid */}
                 <div className="space-y-2">
-                  <div className="flex justify-between p-2 bg-gray-800 bg-opacity-50 rounded">
-                    <span className="text-xs text-gray-400">Hook</span>
-                    <span className="text-sm font-semibold text-white">
+                  <div className="flex justify-between p-3 rounded" style={{ background: "rgba(255,255,255,0.02)" }}>
+                    <span className="text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>Hook</span>
+                    <span className="text-sm font-semibold" style={{ color: "#f4f4f5" }}>
                       {Math.round(scores.hook || 0)}/100
                     </span>
                   </div>
-                  <div className="flex justify-between p-2 bg-gray-800 bg-opacity-50 rounded">
-                    <span className="text-xs text-gray-400">Clarity</span>
-                    <span className="text-sm font-semibold text-white">
+                  <div className="flex justify-between p-3 rounded" style={{ background: "rgba(255,255,255,0.02)" }}>
+                    <span className="text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>Clarity</span>
+                    <span className="text-sm font-semibold" style={{ color: "#f4f4f5" }}>
                       {Math.round(scores.clarity || 0)}/100
                     </span>
                   </div>
-                  <div className="flex justify-between p-2 bg-gray-800 bg-opacity-50 rounded">
-                    <span className="text-xs text-gray-400">CTA</span>
-                    <span className="text-sm font-semibold text-white">
+                  <div className="flex justify-between p-3 rounded" style={{ background: "rgba(255,255,255,0.02)" }}>
+                    <span className="text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>CTA</span>
+                    <span className="text-sm font-semibold" style={{ color: "#f4f4f5" }}>
                       {Math.round(scores.cta || 0)}/100
                     </span>
                   </div>
-                  <div className="flex justify-between p-2 bg-gray-800 bg-opacity-50 rounded">
-                    <span className="text-xs text-gray-400">Production</span>
-                    <span className="text-sm font-semibold text-white">
+                  <div className="flex justify-between p-3 rounded" style={{ background: "rgba(255,255,255,0.02)" }}>
+                    <span className="text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>Production</span>
+                    <span className="text-sm font-semibold" style={{ color: "#f4f4f5" }}>
                       {Math.round(scores.production || 0)}/100
                     </span>
                   </div>
-                  <div className="flex justify-between p-3 bg-indigo-600 rounded">
+                  <div className="flex justify-between p-3 rounded" style={{ background: "#6366f1" }}>
                     <span className="text-xs font-semibold text-white">Overall</span>
                     <span className="text-lg font-bold text-white">
                       {Math.round(scores.overall || 0)}/100
@@ -326,16 +351,16 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
           })}
         </div>
 
-        {/* Improvements */}
+        {/* Improvements section */}
         {loser && loser.improvements && loser.improvements.length > 0 && (
-          <div className="p-6 bg-gray-900 bg-opacity-50 border border-gray-800 rounded-lg mb-8">
-            <h3 className="text-sm font-semibold text-white mb-3">
+          <div className="p-6 rounded-lg mb-8" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+            <h3 className="text-sm font-semibold mb-3" style={{ color: "#f4f4f5" }}>
               Improve {loser.label}
             </h3>
             <ul className="space-y-2">
               {loser.improvements.slice(0, 3).map((improvement, idx) => (
-                <li key={idx} className="text-xs text-gray-400 flex gap-2">
-                  <span className="text-indigo-400 font-bold">→</span>
+                <li key={idx} className="text-xs flex gap-2" style={{ color: "rgba(255,255,255,0.6)" }}>
+                  <span style={{ color: "#6366f1", fontWeight: "bold" }}>→</span>
                   {improvement}
                 </li>
               ))}
@@ -347,13 +372,19 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
         <div className="flex gap-3">
           <button
             onClick={handleReset}
-            className="flex-1 px-4 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition-colors"
+            className="flex-1 px-4 py-2.5 text-sm font-semibold rounded-lg transition-colors text-white"
+            style={{ background: "#6366f1" }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#4f46e5"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "#6366f1"; }}
           >
             Test Another
           </button>
           <button
             onClick={handleExportPdf}
-            className="flex-1 px-4 py-2.5 bg-gray-800 text-gray-300 text-sm font-semibold rounded-lg border border-gray-700 hover:bg-gray-700 transition-colors"
+            className="flex-1 px-4 py-2.5 text-sm font-semibold rounded-lg transition-colors"
+            style={{ background: "rgba(255,255,255,0.05)", color: "#a1a1aa", border: "1px solid rgba(255,255,255,0.06)" }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}
           >
             Export PDF
           </button>
