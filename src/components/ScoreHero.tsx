@@ -274,6 +274,9 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
         <div className="grid grid-cols-4 gap-1.5">
           {resolvedDimensions.map((dim, i) => {
             const dimColor = scoreColor(dim.score);
+            // When accentColor is provided (e.g. Display), use neutral white for tiles
+            // so page accent color never bleeds into individual score tiles.
+            const dimDisplayColor = accentColor != null ? '#a1a1aa' : dimColor;
             return (
               <motion.div
                 key={dim.name}
@@ -287,7 +290,7 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
               >
                 <span
                   className="font-mono text-xs font-medium tabular-nums"
-                  style={{ color: `${dimColor}99` }}
+                  style={{ color: dimDisplayColor }}
                 >
                   {dim.score.toFixed(1)}
                 </span>
