@@ -425,14 +425,21 @@ export default function CompetitorAnalyzer() {
                 <h3 style={{ fontSize: 18, fontWeight: 600, color: "#f4f4f5", margin: "0 0 20px", textAlign: "center" }}>Ready to compare</h3>
 
                 <div style={{ width: "100%", maxWidth: 520 }}>
-                  {/* Both file previews side by side */}
+                  {/* Both file previews side by side — with thumbnails */}
                   <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
-                    {[{ label: "Your Ad", file: yourFile }, { label: "Competitor", file: competitorFile }].map(({ label, file: f }) => (
-                      <div key={label} style={{ flex: 1, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: 12 }}>
+                    {[
+                      { label: "Your Ad",    file: yourFile,       onRemove: () => { setYourFile(null); setStep(0); } },
+                      { label: "Competitor", file: competitorFile, onRemove: () => { setCompetitorFile(null); setStep(1); } },
+                    ].map(({ label, file: f, onRemove }) => (
+                      <div key={label} style={{ flex: 1 }}>
                         <p style={{ fontSize: 10, color: "#52525b", margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 500 }}>{label}</p>
-                        <span style={{ fontSize: 12, color: "#a1a1aa", fontFamily: "var(--font-mono, monospace)" }}>
-                          {f ? (f.name.length > 20 ? f.name.slice(0, 17) + "..." : f.name) : "—"}
-                        </span>
+                        {f ? (
+                          <FilePreview file={f} onRemove={onRemove} />
+                        ) : (
+                          <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: 12 }}>
+                            <span style={{ fontSize: 12, color: "#52525b" }}>—</span>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
