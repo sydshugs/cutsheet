@@ -1,9 +1,7 @@
 // DisplayScoreCard.tsx — Display ad scorecard matching PaidAdAnalyzer ScoreCard layout
 
 import { useState } from "react";
-import {
-  AlertTriangle, CheckCircle, XCircle, AlertCircle, Copy, CheckCircle as CheckCircle2,
-} from "lucide-react";
+import { Copy, CheckCircle as CheckCircle2 } from "lucide-react";
 import { ScoreHero } from "./ScoreHero";
 import type { DisplayFormat } from "../utils/displayAdUtils";
 
@@ -91,6 +89,7 @@ export function DisplayScoreCard({
       <div className="px-5 pt-5 pb-4 flex items-center justify-between border-b border-white/[0.05]">
         <div className="flex flex-col">
           <span className="text-sm font-medium text-zinc-300">Score Overview</span>
+          <span className="text-[11px] text-cyan-400 mt-0.5">Google Display</span>
         </div>
         <div className="flex items-center gap-2">
           {format ? (
@@ -122,6 +121,7 @@ export function DisplayScoreCard({
           verdict={heroVerdict}
           benchmark={6.5}
           platform="Google Display"
+          accentColor="#06b6d4"
           dimensions={[
             { name: "Hierarchy", score: scores.hierarchy },
             { name: "CTA",      score: scores.ctaVisibility },
@@ -132,47 +132,6 @@ export function DisplayScoreCard({
         />
       </div>
 
-      {/* Display-specific sections */}
-      <div className="px-4 mt-3 flex flex-col gap-3">
-        {/* Text-to-image ratio */}
-        <div
-          className="flex items-center gap-2 rounded-xl px-3.5 py-2.5"
-          style={{
-            background: result.textRatioFlag ? "rgba(245,158,11,0.06)" : "rgba(16,185,129,0.06)",
-            border: `1px solid ${result.textRatioFlag ? "rgba(245,158,11,0.2)" : "rgba(16,185,129,0.2)"}`,
-          }}
-        >
-          {result.textRatioFlag
-            ? <AlertTriangle size={14} color="#f59e0b" />
-            : <CheckCircle size={14} color="#10b981" />
-          }
-          <span className="text-xs" style={{ color: result.textRatioFlag ? "#f59e0b" : "#10b981" }}>
-            {result.textToImageRatio} text {result.textRatioFlag ? "— Google recommends under 30%" : "— within policy"}
-          </span>
-        </div>
-
-        {/* Placement risk */}
-        <div
-          className="rounded-xl px-3.5 py-2.5"
-          style={{
-            background: result.placementRisk === "high" ? "rgba(239,68,68,0.06)" : result.placementRisk === "medium" ? "rgba(245,158,11,0.06)" : "rgba(16,185,129,0.06)",
-            border: `1px solid ${result.placementRisk === "high" ? "rgba(239,68,68,0.2)" : result.placementRisk === "medium" ? "rgba(245,158,11,0.2)" : "rgba(16,185,129,0.2)"}`,
-          }}
-        >
-          <div className="flex items-center gap-1.5 mb-1">
-            {result.placementRisk === "high" && <XCircle size={14} color="#ef4444" />}
-            {result.placementRisk === "medium" && <AlertCircle size={14} color="#f59e0b" />}
-            {result.placementRisk === "low" && <CheckCircle size={14} color="#10b981" />}
-            <span className="text-xs font-medium" style={{
-              color: result.placementRisk === "high" ? "#ef4444" : result.placementRisk === "medium" ? "#f59e0b" : "#10b981",
-            }}>
-              {result.placementRisk === "high" ? "High" : result.placementRisk === "medium" ? "Medium" : "Low"} placement risk
-            </span>
-          </div>
-          <p className="text-xs text-zinc-500 leading-relaxed m-0">{result.placementRiskNote}</p>
-        </div>
-
-      </div>
     </div>
   );
 }

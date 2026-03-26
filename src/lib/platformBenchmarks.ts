@@ -9,7 +9,7 @@ export const PLATFORM_BENCHMARKS = {
   tiktok:         { label: 'TikTok',         ctrRange: '1.5–3.0%', ctrAvg: 2.10, cvrRange: '0.5–1.5%', hookRetentionRange: '60–75%',  creativeFatigue: '~1–3d',  vertical: 'Ecommerce / DTC avg' },
   pinterest:      { label: 'Pinterest',      ctrRange: '0.2–0.5%', ctrAvg: 0.35, cvrRange: '0.8–2.0%', hookRetentionRange: '40–55%',  creativeFatigue: '~7–14d', vertical: 'Ecommerce / DTC avg' },
   youtube:        { label: 'YouTube',        ctrRange: '0.3–0.7%', ctrAvg: 0.50, cvrRange: '0.5–1.5%', hookRetentionRange: '30–50%',  creativeFatigue: '~5–7d',  vertical: 'Ecommerce / DTC avg' },
-  google_display: { label: 'Google Display', ctrRange: '0.30–0.57%', ctrAvg: 0.46, cvrRange: '0.5–1.5%', hookRetentionRange: null,       creativeFatigue: '~5–14d', vertical: 'Google Display Network avg' },
+  google_display: { label: 'Google Display', ctrRange: '0.35–0.60%', ctrAvg: 0.46, cvrRange: '2–5%', hookRetentionRange: null,       creativeFatigue: '14–21d', vertical: 'Google Display Network avg' },
 } as const;
 
 // ── Display format-specific benchmarks ──────────────────────────────────────
