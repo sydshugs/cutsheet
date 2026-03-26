@@ -656,12 +656,41 @@ Never reorder these without explicit approval.
 
 Every idle/upload state must follow these rules for consistency:
 
-- Icon tile: required on ALL analyzer pages — 64×64px, rounded-2xl, dark bg with colored border, icon inside
+- Icon tile: required on ALL analyzer pages — 76×76px, rounded-2xl, dark bg with colored border, icon inside
 - Feature pills: ALL pages use the neutral outlined style ONLY — `bg-white/[0.05] border border-white/[0.08] text-zinc-400 text-xs font-medium px-3 py-1 rounded-full`. No colored fills, no amber fills.
 - Dropzone: every dropzone must have a Browse Files button — `bg-indigo-600 text-white text-sm font-medium px-5 py-2 rounded-full`
 - Vertical centering: content area uses `min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center` — applied in shared wrapper, not per page
 - No false affordances: NEVER show ⌘K, URL paste, or ⌘V shortcuts that are not implemented
 - H1 required: every analyzer page must have exactly one `<h1>` as the primary heading
+
+---
+
+## Icon Tile Color System — Per-Page Accent Colors
+
+Every app page has a unique accent color applied ONLY to the 76×76 icon tile.
+All other interactive elements use indigo #6366f1 exclusively.
+
+| Page | Color | Hex | Tile bg token |
+|------|-------|-----|---------------|
+| Paid Ad Analyzer | Indigo | #6366f1 | rgba(99,102,241,0.1) |
+| Organic Analyzer | Green | #10b981 | rgba(16,185,129,0.1) |
+| Display Analyzer | Cyan | #06b6d4 | rgba(6,182,212,0.1) |
+| A/B Test | Rose | #ec4899 | rgba(236,72,153,0.1) |
+| Competitor Analysis | Sky | #0ea5e9 | rgba(14,165,233,0.1) |
+| Ad Breakdown | Amber | #f59e0b | rgba(245,158,11,0.1) |
+| Rank Creatives | Violet | #8b5cf6 | rgba(139,92,246,0.1) |
+| Saved Ads | Slate | #94a3b8 | rgba(100,116,139,0.1) |
+
+RULES — enforce on every UI task:
+- **Icon tile:** 76×76px, borderRadius 14, page accent bg + border + icon color
+- **Feature pills:** use page accent color subtly.
+  bg: rgba(PAGE_COLOR_RGB, 0.08)
+  border: 1px solid rgba(PAGE_COLOR_RGB, 0.15)
+  text: PAGE_COLOR at full opacity
+  Reference: Paid Ad indigo pills = rgba(99,102,241,0.08) — match this intensity.
+  Never filled or saturated. Applies to idle/empty state pills only.
+- **Buttons:** ALWAYS indigo `#6366f1` — NEVER page accent color
+- **Page accent color used ONLY on the icon tile — nowhere else**
 
 ---
 
