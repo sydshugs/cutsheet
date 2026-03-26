@@ -3,9 +3,9 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  FlaskConical, Swords, Trophy, Check, Monitor,
-  type LucideIcon 
+import {
+  GitBranch, Swords, Trophy, Check, Monitor,
+  type LucideIcon
 } from "lucide-react";
 import { useThumbnail } from "../hooks/useThumbnail";
 import { sanitizeFileName } from "../utils/sanitize";
@@ -26,7 +26,7 @@ interface PageConfig {
 
 const PAGE_CONFIGS: Record<AnalysisPageType, PageConfig> = {
   "ab-test": {
-    icon: FlaskConical,
+    icon: GitBranch,
     title: "Analyzing variants",
     color: "#ec4899",
     colorLight: "#f472b6",
@@ -197,53 +197,40 @@ export function AnalysisProgressCard({
     : statusMessage || "Processing...";
 
   return (
-    <div 
-      className="rounded-2xl overflow-hidden border"
-      style={{ 
-        background: "linear-gradient(180deg, rgba(24,24,27,0.98) 0%, rgba(9,9,11,1) 100%)",
-        borderColor: "rgba(255,255,255,0.06)",
-      }}
-    >
-      <div className="flex flex-col md:flex-row">
-        {/* Left: Preview */}
-        <div className="md:w-[320px] p-5 flex-shrink-0">
-          <div 
-            className="relative rounded-xl overflow-hidden"
-            style={{ 
-              background: "#09090b", 
-              border: "1px solid rgba(255,255,255,0.06)",
-              aspectRatio: files.length > 1 ? "auto" : "1",
-              minHeight: files.length > 1 ? 200 : "auto",
-            }}
-          >
+    <>
+      {/* Outer — full height, centered (matches ProgressCard layout) */}
+      <div className="flex-1 flex items-center justify-center p-6">
+        {/* Unified container — split panel */}
+        <div
+          className="w-full max-w-[720px] min-w-[480px] bg-[#111113] border border-white/[0.06] rounded-2xl overflow-hidden flex flex-col md:flex-row min-h-[360px]"
+        >
+          {/* ── Left half — creative preview ── */}
+          <div className="flex-1 bg-[#1a1a1c] border-b md:border-b-0 md:border-r border-white/[0.05] flex flex-col items-center justify-center relative min-h-[220px] md:min-h-[360px] p-6">
             {files.length === 1 && displayUrl ? (
               <>
                 {isImage ? (
-                  <img 
-                    src={displayUrl} 
-                    alt="" 
-                    className="w-full h-full object-contain"
+                  <motion.img
+                    src={displayUrl}
+                    alt=""
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.4 }}
+                    className="max-w-full max-h-[280px] object-contain rounded-lg"
                   />
                 ) : (
-                  <video 
-                    src={displayUrl} 
-                    className="w-full h-full object-contain"
+                  <motion.video
+                    src={displayUrl}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.4 }}
+                    className="max-w-full max-h-[280px] object-contain rounded-lg"
                     muted
                     playsInline
                   />
                 )}
-                {/* Scanning overlay */}
-                <div 
-                  className="absolute inset-0 pointer-events-none"
-                  style={{
-                    background: `linear-gradient(180deg, transparent 0%, ${config.color}10 50%, transparent 100%)`,
-                    animation: "scanDown 2s ease-in-out infinite",
-                  }}
-                />
               </>
             ) : files.length > 1 ? (
-              // Multi-file grid preview
-              <div className="grid grid-cols-2 gap-2 p-3">
+              <div className="grid grid-cols-2 gap-2 w-full max-w-[240px]">
                 {files.slice(0, 4).map((file, i) => (
                   <FileThumb key={i} file={file} index={i} currentIndex={currentIndex} color={config.color} />
                 ))}
@@ -255,94 +242,154 @@ export function AnalysisProgressCard({
                 )}
               </div>
             ) : (
-              <div className="w-full h-full flex items-center justify-center p-8">
-                <Icon size={48} color={config.color} style={{ opacity: 0.3 }} />
+              <div className="w-14 h-14 rounded-[14px] flex items-center justify-center"
+                style={{ background: config.colorBg }}>
+                <Icon size={28} color={config.color} style={{ opacity: 0.6 }} />
               </div>
             )}
+
+            {/* Scanning overlay — framer-motion (matches ProgressCard) */}
+            <motion.div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background: `linear-gradient(180deg, transparent 0%, ${config.color}0a 50%, transparent 100%)`,
+              }}
+              animate={{ y: ["-100%", "100%"] }}
+              transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
+            />
+
+            {/* Filename bar — pinned to bottom (matches ProgressCard) */}
+            <div className="absolute bottom-0 left-0 right-0 flex justify-between items-center px-4 py-3 border-t border-white/[0.04]">
+              <span className="text-[11px] text-zinc-600 font-mono truncate flex-1">
+                {files.length === 1
+                  ? sanitizeFileName(primaryFile?.name ?? "").slice(0, 32)
+                  : `${files.length} files`
+                }
+              </span>
+              {onCancel && (
+                <button
+                  onClick={onCancel}
+                  className="text-[11px] text-zinc-600 hover:text-zinc-400 transition-colors bg-transparent border-none cursor-pointer ml-3 flex-shrink-0"
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
           </div>
-          
-          {/* File info */}
-          <div className="flex items-center gap-2 mt-3">
-            <span className="text-xs text-zinc-500 font-mono truncate flex-1">
-              {files.length === 1 
-                ? sanitizeFileName(primaryFile?.name ?? "").slice(0, 32)
-                : `${files.length} files`
-              }
-            </span>
-            {onCancel && (
-              <button
-                onClick={onCancel}
-                className="text-xs text-zinc-500 hover:text-zinc-400 transition-colors"
+
+          {/* ── Right half — all progress ── */}
+          <div className="flex-1 flex flex-col p-6 md:p-7 min-h-[360px]">
+
+            {/* Header — icon + title + animated progress text */}
+            <div className="flex items-center gap-3 mb-5">
+              <div
+                className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ background: config.colorBg, border: `1px solid ${config.colorBorder}` }}
               >
-                Cancel
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Right: Progress */}
-        <div className="flex-1 p-5 border-t md:border-t-0 md:border-l border-white/[0.04]">
-          {/* Header with icon */}
-          <div className="flex items-center gap-3 mb-4">
-            <div 
-              className="w-11 h-11 rounded-xl flex items-center justify-center"
-              style={{ background: config.colorBg, border: `1px solid ${config.colorBorder}` }}
-            >
-              <Icon size={20} color={config.color} />
-            </div>
-            <div>
-              <h3 className="text-base font-semibold text-zinc-100">{config.title}</h3>
-              <p className="text-xs text-zinc-500">{progressText}</p>
-            </div>
-          </div>
-
-          {/* Metrics shimmer bars */}
-          <div className="flex flex-col gap-3 mb-5">
-            {config.metrics.map((metric, i) => (
-              <div key={metric} className="flex items-center gap-3">
-                <span className="text-xs text-zinc-500 w-[140px] flex-shrink-0">{metric}</span>
-                <div className="flex-1 h-1 rounded-full bg-white/[0.04] overflow-hidden">
-                  <div 
-                    className="h-full rounded-full"
-                    style={{
-                      width: `${Math.min(100, (stageIndex + 1) * 20 + i * 5)}%`,
-                      background: `linear-gradient(90deg, ${config.color}, ${config.colorLight})`,
-                      transition: "width 0.6s ease-out",
-                    }}
-                  />
+                <motion.div
+                  animate={{ opacity: [0.6, 1, 0.6] }}
+                  transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <Icon size={20} color={config.color} />
+                </motion.div>
+              </div>
+              <div>
+                <p className="text-lg font-medium text-zinc-100 m-0">{config.title}</p>
+                <div className="min-h-[16px]">
+                  <AnimatePresence mode="wait">
+                    <motion.p
+                      key={stageIndex}
+                      initial={{ opacity: 0, y: 2 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -2 }}
+                      transition={{ duration: 0.2 }}
+                      className="text-[13px] text-zinc-500 m-0"
+                    >
+                      {progressText}
+                    </motion.p>
+                  </AnimatePresence>
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
 
-          {/* Divider */}
-          <div className="h-px bg-white/[0.04] mb-4" />
+            {/* Metric bars — shimmer style matching ProgressCard */}
+            <div className="flex flex-col gap-[10px] mb-5">
+              {config.metrics.map((metric, i) => {
+                const isActive = stageIndex >= i + 1;
+                const isDone = stageIndex > i + 1;
+                return (
+                  <div key={metric} className="flex items-center gap-3">
+                    <span
+                      className="text-[13px] w-[130px] flex-shrink-0 transition-colors duration-300"
+                      style={{ color: isActive ? "#a1a1aa" : "#3f3f46" }}
+                    >
+                      {metric}
+                    </span>
+                    <div className="flex-1 h-[5px] bg-white/[0.07] rounded-full overflow-hidden">
+                      {isDone ? (
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: "100%" }}
+                          transition={{ duration: 0.6, ease: "easeOut" }}
+                          className="h-full rounded-full"
+                          style={{ background: config.color }}
+                        />
+                      ) : isActive ? (
+                        <div
+                          className="h-full w-full rounded-full"
+                          style={{
+                            background: `linear-gradient(90deg, ${config.colorBg} 25%, ${config.color}4d 50%, ${config.colorBg} 75%)`,
+                            backgroundSize: "200% 100%",
+                            animation: "shimmer 1.5s infinite",
+                          }}
+                        />
+                      ) : null}
+                    </div>
+                    {isDone ? (
+                      <motion.span
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="text-[11px] w-3.5 text-right flex-shrink-0"
+                        style={{ color: config.color }}
+                      >
+                        ✓
+                      </motion.span>
+                    ) : (
+                      <span className="w-3.5 flex-shrink-0" />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
 
-          {/* What we're checking */}
-          <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium mb-3">
-            What we're checking
-          </p>
-          <div className="flex flex-col gap-2.5">
-            {config.checkItems.map((item, i) => (
-              <ChecklistItem
-                key={item}
-                label={item}
-                done={i < stageIndex}
-                active={i === stageIndex}
-                color={config.color}
-              />
-            ))}
+            {/* Divider */}
+            <div className="w-full h-px bg-white/[0.05] mb-4" />
+
+            {/* Checklist */}
+            <div className="flex-1">
+              <p className="text-[11px] text-zinc-600 uppercase tracking-[0.06em] m-0 mb-3">
+                What we're checking
+              </p>
+              <div className="flex flex-col gap-2.5">
+                {config.checkItems.map((item, i) => (
+                  <ChecklistItem
+                    key={item}
+                    label={item}
+                    done={i < stageIndex}
+                    active={i === stageIndex}
+                    color={config.color}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       <style>{`
-        @keyframes scanDown {
-          0%, 100% { transform: translateY(-100%); }
-          50% { transform: translateY(100%); }
-        }
+        @keyframes shimmer { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
       `}</style>
-    </div>
+    </>
   );
 }
 

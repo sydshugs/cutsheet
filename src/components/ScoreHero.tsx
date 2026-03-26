@@ -276,7 +276,7 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
             const dimColor = scoreColor(dim.score);
             // When accentColor is provided (e.g. Display), use neutral white for tiles
             // so page accent color never bleeds into individual score tiles.
-            const dimDisplayColor = accentColor != null ? '#a1a1aa' : dimColor;
+            const dimDisplayColor = accentColor != null ? '#f4f4f5' : dimColor;
             return (
               <motion.div
                 key={dim.name}

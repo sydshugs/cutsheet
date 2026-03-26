@@ -36,6 +36,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const platformKey = safePlatform(platform);
   const PLATFORM_DISPLAY_NAMES: Record<string, string> = {
     google_display: "Google Display",
+    "google display": "Google Display",
     meta: "Meta", facebook: "Meta", instagram: "Instagram",
     tiktok: "TikTok", youtube: "YouTube", google: "Google",
     linkedin: "LinkedIn", twitter: "X/Twitter", x: "X/Twitter",
@@ -58,7 +59,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const benchmarks = Object.entries(nicheBenchmarks).find(([k]) => nicheKey.includes(k))?.[1];
   const benchmarkBlock = benchmarks
     ? `\nINDUSTRY BENCHMARKS:\n${benchmarks.ctr}\n${benchmarks.cvr}`
-    : platformKey === "google_display"
+    : (platformKey === "google_display" || platformKey === "google display")
     ? `\nINDUSTRY BENCHMARKS: Google Display Network avg CTR: 0.35–0.60% (avg 0.46%). Set "benchmark" to 0.46 in the JSON response.`
     : `\nNote: Use general paid social benchmarks for ${nicheLabel}. Meta avg CTR: 0.9-1.5%. Google Display: 0.35-0.60%.`;
 
