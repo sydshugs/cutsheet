@@ -31,6 +31,7 @@ export async function generateFixIt(
   intent?: string,
   adType?: 'video' | 'static' | 'display',
   isOrganic?: boolean,
+  ctaFree?: boolean,
 ): Promise<FixItResult> {
   const token = await getAuthToken();
   const response = await fetch("/api/fix-it", {
@@ -39,7 +40,7 @@ export async function generateFixIt(
       "Authorization": `Bearer ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ analysisMarkdown, scores, platform, niche, intent, adType, isOrganic }),
+    body: JSON.stringify({ analysisMarkdown, scores, platform, niche, intent, adType, isOrganic, ctaFree }),
   });
 
   if (response.status === 429) {
