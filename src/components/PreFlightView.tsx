@@ -1,7 +1,7 @@
 // PreFlightView.tsx — Main Pre-Flight A/B creative testing view
 
 import { useState, useCallback, useMemo } from "react";
-import { FlaskConical, Plus, X, Upload, Check } from "lucide-react";
+import { GitBranch, Plus, X, Upload, Check } from "lucide-react";
 import { VideoDropzone } from "./VideoDropzone";
 import { PreFlightWinner } from "./PreFlightWinner";
 import { AnalysisProgressCard } from "./AnalysisProgressCard";
@@ -208,32 +208,32 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
 
   // ─── UPLOAD UI ────────────────────────────────────────────────────────────────
   if (phase === "idle" || phase === "error") {
-    const PILLS = ["Head-to-head ranking", "Winner prediction", "Actionable insights"];
-    
+    const PILLS = ["Hook comparison", "CTA analysis", "Winner prediction"];
+
     return (
       <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px", minHeight: "calc(100vh - 120px)" }}>
-        {/* Header — matching other pages */}
+        {/* Rose icon tile */}
         <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(236,72,153,0.1)", border: "1px solid rgba(236,72,153,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <FlaskConical size={28} color={BRAND_COLOR} />
+          <GitBranch size={28} color={BRAND_COLOR} />
         </div>
 
         <h1 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>
-          Pre-Flight A/B Test
+          Compare two ad variants
         </h1>
         <p style={{ fontSize: 14, color: "#a1a1aa", textAlign: "center", maxWidth: 380, marginTop: 10, lineHeight: 1.6 }}>
-          Upload 2–5 creative variants. AI analyzes each, then ranks them head-to-head.
+          Upload two ad creatives side by side. AI analyzes both and predicts the winner.
         </p>
 
-        {/* Feature pills — rose styled */}
+        {/* Feature pills — rose accent */}
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 20 }}>
           {PILLS.map((pill) => (
-            <span key={pill} style={{ fontSize: 12, color: BRAND_COLOR_LIGHT, background: BRAND_BG, border: `1px solid ${BRAND_BORDER}`, borderRadius: 9999, padding: "4px 12px" }}>
+            <span key={pill} style={{ fontSize: 12, color: BRAND_COLOR, background: "rgba(236,72,153,0.08)", border: "1px solid rgba(236,72,153,0.15)", borderRadius: 9999, padding: "4px 12px" }}>
               {pill}
             </span>
           ))}
         </div>
 
-        {/* Test type selector — pill style */}
+        {/* Analysis mode tabs — indigo active state */}
         <div style={{ display: "flex", gap: 4, marginTop: 24, padding: 4, borderRadius: 12, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
           {TEST_TYPE_OPTIONS.map((opt) => (
             <button
@@ -243,7 +243,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
               style={{
                 padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer",
                 fontSize: 13, fontWeight: 500, transition: "all 150ms",
-                background: testType === opt.value ? BRAND_COLOR : "transparent",
+                background: testType === opt.value ? "#6366f1" : "transparent",
                 color: testType === opt.value ? "white" : "#71717a",
               }}
             >
@@ -252,8 +252,8 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
           ))}
         </div>
 
-        {/* Variant upload cards */}
-        <div style={{ width: "100%", maxWidth: 560, marginTop: 32, display: "flex", flexDirection: "column", gap: 12 }}>
+        {/* Variant upload cards — 2-column side-by-side grid */}
+        <div style={{ width: "100%", maxWidth: 640, marginTop: 32, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           {variants.map((v, i) => {
             const fileInputId = `preflight-file-${v.id}`;
             const hasFile = !!v.file;
@@ -262,69 +262,78 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
                 key={v.id}
                 style={{
                   background: "rgba(255,255,255,0.02)",
-                  border: hasFile ? "1px solid rgba(16,185,129,0.2)" : "1px solid rgba(255,255,255,0.06)",
+                  border: hasFile ? "1px solid rgba(16,185,129,0.2)" : "1.5px dashed rgba(255,255,255,0.1)",
                   borderRadius: 12,
-                  padding: "16px 20px",
+                  padding: 20,
                   display: "flex",
-                  alignItems: "center",
-                  gap: 16,
+                  flexDirection: "column",
+                  gap: 14,
+                  minHeight: 180,
                   transition: "all 150ms",
                 }}
-                onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = BRAND_BORDER; e.currentTarget.style.background = BRAND_BG; }}
-                onDragLeave={(e) => { e.currentTarget.style.borderColor = hasFile ? "rgba(16,185,129,0.2)" : "rgba(255,255,255,0.06)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
+                onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(236,72,153,0.4)"; e.currentTarget.style.background = "rgba(236,72,153,0.04)"; }}
+                onDragLeave={(e) => { e.currentTarget.style.borderColor = hasFile ? "rgba(16,185,129,0.2)" : "rgba(255,255,255,0.1)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
                 onDrop={(e) => {
                   e.preventDefault();
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
+                  e.currentTarget.style.borderColor = hasFile ? "rgba(16,185,129,0.2)" : "rgba(255,255,255,0.1)";
                   e.currentTarget.style.background = "rgba(255,255,255,0.02)";
                   const f = e.dataTransfer.files[0];
                   if (f) handleFileSelect(i, f);
                 }}
               >
-                {/* Variant label */}
-                <input
-                  type="text"
-                  value={v.label}
-                  maxLength={40}
-                  onChange={(e) => handleLabelChange(i, e.target.value)}
-                  style={{
-                    background: "transparent",
-                    border: "none",
-                    outline: "none",
-                    fontSize: 13,
-                    fontFamily: "monospace",
-                    fontWeight: 600,
-                    color: "#f4f4f5",
-                    letterSpacing: "0.02em",
-                    padding: 0,
-                    width: 90,
-                    flexShrink: 0,
-                  }}
-                />
+                {/* Label row + remove button */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <input
+                    type="text"
+                    value={v.label}
+                    maxLength={40}
+                    onChange={(e) => handleLabelChange(i, e.target.value)}
+                    style={{
+                      background: "transparent", border: "none", outline: "none",
+                      fontSize: 11, fontFamily: "monospace", fontWeight: 700,
+                      color: "#71717a", letterSpacing: "0.08em", textTransform: "uppercase",
+                      padding: 0, minWidth: 0,
+                    }}
+                  />
+                  {variants.length > MIN_VARIANTS && (
+                    <button
+                      onClick={() => removeVariant(i)}
+                      style={{
+                        width: 22, height: 22, borderRadius: 5, border: "1px solid rgba(255,255,255,0.06)",
+                        background: "transparent", color: "#52525b", cursor: "pointer",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        padding: 0, transition: "all 150ms",
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.color = "#ef4444"; e.currentTarget.style.borderColor = "rgba(239,68,68,0.3)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = "#52525b"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; }}
+                    >
+                      <X size={11} />
+                    </button>
+                  )}
+                </div>
 
-                {/* File dropzone / uploaded state */}
+                {/* File area */}
                 {!hasFile ? (
                   <label
                     htmlFor={fileInputId}
                     style={{
-                      flex: 1,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 10,
-                      padding: "12px 16px",
-                      border: `1.5px dashed rgba(255,255,255,0.12)`,
-                      borderRadius: 8,
-                      cursor: "pointer",
-                      color: "#71717a",
-                      fontSize: 12,
-                      transition: "all 150ms",
+                      flex: 1, display: "flex", flexDirection: "column",
+                      alignItems: "center", justifyContent: "center",
+                      gap: 12, cursor: "pointer", paddingTop: 8, paddingBottom: 8,
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = BRAND_BORDER; e.currentTarget.style.color = BRAND_COLOR_LIGHT; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; e.currentTarget.style.color = "#71717a"; }}
                   >
-                    <Upload size={16} />
-                    <span>Drop file or click to browse</span>
-                    <span style={{ marginLeft: "auto", fontFamily: "monospace", fontSize: 10, opacity: 0.5 }}>
-                      MP4 · MOV · PNG · JPG
+                    <Upload size={20} color="#52525b" />
+                    <div
+                      style={{
+                        padding: "8px 20px", background: "#6366f1", border: "none",
+                        borderRadius: 9999, color: "white", fontSize: 12,
+                        fontWeight: 600, pointerEvents: "none",
+                      }}
+                    >
+                      Browse files
+                    </div>
+                    <span style={{ fontSize: 10, color: "#52525b", fontFamily: "monospace" }}>
+                      MP4 · PNG · JPG · MOV
                     </span>
                     <input
                       id={fileInputId}
@@ -338,67 +347,49 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
                     />
                   </label>
                 ) : (
-                  <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.15)", borderRadius: 8 }}>
-                    <Check size={14} color="#10b981" />
-                    <span style={{ fontSize: 12, fontFamily: "monospace", color: "#f4f4f5", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, minWidth: 0 }}>
-                      {v.file!.name}
-                    </span>
-                    <span style={{ fontSize: 10, fontFamily: "monospace", color: "#71717a", flexShrink: 0 }}>
-                      {(v.file!.size / (1024 * 1024)).toFixed(1)}MB
-                    </span>
-                    <button
-                      onClick={() => handleFileSelect(i, null)}
-                      style={{ background: "none", border: "none", color: "#71717a", cursor: "pointer", fontSize: 10, fontFamily: "monospace", padding: "2px 6px", flexShrink: 0 }}
-                      onMouseEnter={(e) => { e.currentTarget.style.color = "#ef4444"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.color = "#71717a"; }}
-                    >
-                      Remove
-                    </button>
+                  <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8, justifyContent: "center" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.15)", borderRadius: 8 }}>
+                      <Check size={13} color="#10b981" />
+                      <span style={{ fontSize: 11, fontFamily: "monospace", color: "#f4f4f5", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, minWidth: 0 }}>
+                        {v.file!.name}
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <span style={{ fontSize: 10, fontFamily: "monospace", color: "#71717a" }}>
+                        {(v.file!.size / (1024 * 1024)).toFixed(1)}MB
+                      </span>
+                      <button
+                        onClick={() => handleFileSelect(i, null)}
+                        style={{ background: "none", border: "none", color: "#71717a", cursor: "pointer", fontSize: 10, fontFamily: "monospace", padding: "2px 6px", transition: "all 150ms" }}
+                        onMouseEnter={(e) => { e.currentTarget.style.color = "#ef4444"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.color = "#71717a"; }}
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </div>
-                )}
-
-                {/* Remove variant button */}
-                {variants.length > MIN_VARIANTS && (
-                  <button
-                    onClick={() => removeVariant(i)}
-                    style={{
-                      width: 28, height: 28, borderRadius: 6, border: "1px solid rgba(255,255,255,0.08)",
-                      background: "transparent", color: "#71717a", cursor: "pointer",
-                      display: "flex", alignItems: "center", justifyContent: "center", padding: 0, flexShrink: 0, transition: "all 150ms",
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.color = "#ef4444"; e.currentTarget.style.borderColor = "rgba(239,68,68,0.3)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.color = "#71717a"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
-                  >
-                    <X size={14} />
-                  </button>
                 )}
               </div>
             );
           })}
 
-          {/* Add variant button */}
+          {/* Add variant — spans both columns */}
           {variants.length < MAX_VARIANTS && (
             <button
               onClick={addVariant}
               style={{
+                gridColumn: "1 / -1",
                 background: "transparent",
-                border: "1.5px dashed rgba(255,255,255,0.08)",
+                border: "1.5px dashed rgba(255,255,255,0.06)",
                 borderRadius: 12,
-                padding: "16px 20px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 8,
-                cursor: "pointer",
-                color: "#71717a",
-                fontSize: 13,
-                fontWeight: 500,
-                transition: "all 150ms",
+                padding: "14px 20px",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                cursor: "pointer", color: "#52525b", fontSize: 13, fontWeight: 500, transition: "all 150ms",
               }}
               onMouseEnter={(e) => { e.currentTarget.style.borderColor = BRAND_BORDER; e.currentTarget.style.color = BRAND_COLOR_LIGHT; }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#71717a"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "#52525b"; }}
             >
-              <Plus size={16} />
+              <Plus size={14} />
               Add variant
             </button>
           )}
@@ -406,19 +397,19 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
 
         {/* Error message */}
         {phase === "error" && errorMsg && (
-          <div style={{ width: "100%", maxWidth: 560, marginTop: 16, padding: "12px 16px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, fontSize: 12, fontFamily: "monospace", color: "#ef4444" }}>
+          <div style={{ width: "100%", maxWidth: 640, marginTop: 16, padding: "12px 16px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, fontSize: 12, fontFamily: "monospace", color: "#ef4444" }}>
             {errorMsg}
           </div>
         )}
 
-        {/* Run button */}
+        {/* Compare Ads button — indigo */}
         <div style={{ marginTop: 28, display: "flex", alignItems: "center", gap: 12 }}>
           <button
             onClick={handleRun}
             disabled={!canRun}
             style={{
-              padding: "12px 24px",
-              background: canRun ? BRAND_COLOR : "rgba(255,255,255,0.04)",
+              padding: "12px 32px",
+              background: canRun ? "#6366f1" : "rgba(255,255,255,0.04)",
               border: "none",
               borderRadius: 9999,
               color: canRun ? "#fff" : "#52525b",
@@ -427,10 +418,10 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
               cursor: canRun ? "pointer" : "not-allowed",
               transition: "all 150ms",
             }}
-            onMouseEnter={(e) => { if (canRun) e.currentTarget.style.background = "#db2777"; }}
-            onMouseLeave={(e) => { if (canRun) e.currentTarget.style.background = BRAND_COLOR; }}
+            onMouseEnter={(e) => { if (canRun) e.currentTarget.style.background = "#5254cc"; }}
+            onMouseLeave={(e) => { if (canRun) e.currentTarget.style.background = "#6366f1"; }}
           >
-            Run Pre-Flight
+            Compare Ads
           </button>
           <span style={{ fontSize: 12, fontFamily: "monospace", color: "#71717a" }}>
             {readyCount}/{variants.length} variants ready
