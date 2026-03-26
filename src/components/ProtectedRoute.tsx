@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import { BetaGate } from './BetaGate'
@@ -7,6 +7,7 @@ import { BetaGate } from './BetaGate'
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading, betaAccess } = useAuth()
   const navigate = useNavigate()
+  const { pathname } = useLocation()
   const [checking, setChecking] = useState(true)
   const verifiedUserIdRef = useRef<string | null>(null)
 
@@ -83,7 +84,9 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (!user) return <Navigate to="/login" replace />
 
   // ── Beta gate — authenticated + onboarded, but no beta access yet ────────
-  if (betaAccess === false) return <BetaGate />
+  // Only enforce the gate on /app/* routes — not /settings or other thin
+  // protected pages where the gate would be unexpected and confusing.
+  if (betaAccess === false && pathname.startsWith('/app')) return <BetaGate />
 
   // ── Authenticated + beta access granted ─────────────────────────────────
   return <>{children}</>
