@@ -145,11 +145,32 @@ Be specific — name the actual visual elements you see, not generic description
       { text: prompt },
     ]);
 
-    const raw = result.response.text();
+    // gemini-2.5-flash is a thinking model. SDK 0.24.x concatenates ALL parts
+    // (including thought parts) in response.text(), which can produce a raw string
+    // that contains no parseable JSON when the model's output is in a thought part.
+    // Access parts directly and filter out thought parts to get only the output text.
+    const candidate = result.response.candidates?.[0];
+    const parts = (candidate?.content?.parts ?? []) as unknown as Array<Record<string, unknown>>;
+    const outputText = parts
+      .filter((p) => typeof p.text === "string" && !p.thought)
+      .map((p) => p.text as string)
+      .join("");
+
+    // Fall back to response.text() for non-thinking models (also handles safety throws)
+    const raw = outputText.length > 0 ? outputText : result.response.text();
+
+    // DIAGNOSTIC: log response shape — never log imageData (OWASP AITG-APP-03)
+    console.log(
+      "[safe-zone] finish:", candidate?.finishReason,
+      "| parts:", parts.length,
+      "| output len:", outputText.length,
+      "| raw len:", raw.length
+    );
 
     // Extract JSON from response (handle markdown code fences)
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
+      console.error("[safe-zone] no JSON found. raw preview:", raw.substring(0, 500));
       return res.status(500).json({ error: "Invalid AI response format" });
     }
 
