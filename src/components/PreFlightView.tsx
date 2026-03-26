@@ -200,6 +200,12 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
 
   const isRunning = phase === "analyzing" || phase === "comparing";
 
+  // Must be declared before any early returns — Rules of Hooks
+  const filesWithUploads = useMemo(() =>
+    variants.filter((v) => v.file).map((v) => v.file as File),
+    [variants]
+  );
+
   // ─── UPLOAD UI ────────────────────────────────────────────────────────────────
   if (phase === "idle" || phase === "error") {
     const PILLS = ["Head-to-head ranking", "Winner prediction", "Actionable insights"];
@@ -435,12 +441,6 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
   }
 
   // ─── LOADING UI ──────────────────────────────────────────────────────────────
-  // Get files with actual uploads for the progress card
-  const filesWithUploads = useMemo(() => 
-    variants.filter((v) => v.file).map((v) => v.file as File),
-    [variants]
-  );
-  
   if (isRunning) {
     const currentAnalyzingIndex = variantStatuses.findIndex((s) => s === "analyzing");
     
