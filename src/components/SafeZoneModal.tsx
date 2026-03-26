@@ -232,7 +232,7 @@ export function SafeZoneModal({ open, onClose, thumbnailSrc, mode = "paid" }: Sa
         role="dialog"
         aria-modal="true"
         aria-label="Safe Zone Check"
-        className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-white/[0.08] shadow-2xl"
+        className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl border border-white/[0.08] shadow-2xl"
         style={{ background: 'var(--surface, #18181b)' }}
       >
         {/* Header */}
@@ -344,7 +344,7 @@ export function SafeZoneModal({ open, onClose, thumbnailSrc, mode = "paid" }: Sa
                     className="shrink-0 mt-0.5"
                     style={{ color: '#10b981' }}
                   />
-                  <span className="text-[12px] text-zinc-400 leading-[1.55]">{tip}</span>
+                  <span className="text-[12px] text-zinc-400 leading-[1.55] break-words min-w-0">{tip}</span>
                 </div>
               ))}
             </div>

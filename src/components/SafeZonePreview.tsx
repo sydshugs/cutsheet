@@ -1,7 +1,6 @@
 // src/components/SafeZonePreview.tsx
 // Premium safe zone preview component — realistic phone frame + platform overlays
 
-import { useState } from "react";
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
@@ -30,15 +29,6 @@ export interface SafeZonePreviewProps {
 }
 
 // ─── PLATFORM CONFIG ─────────────────────────────────────────────────────────
-
-const PLATFORM_LABELS: Record<Platform, string> = {
-  tiktok: "TikTok",
-  instagram_reels: "IG Reels",
-  instagram_stories: "IG Stories",
-  youtube_shorts: "YT Shorts",
-  facebook_reels: "FB Reels",
-  universal: "Universal",
-};
 
 type UiElement = {
   label: string;
@@ -152,17 +142,6 @@ const DEFAULT_SAFE_ZONE_CONFIGS: Record<Platform, Record<Mode, SafeZoneConfig>> 
     paid: { top: 12, bottom: 38, left: 0, right: 0 },
   },
 };
-
-// ─── PLATFORM TABS ────────────────────────────────────────────────────────────
-
-const PLATFORMS: Platform[] = [
-  "tiktok",
-  "instagram_reels",
-  "instagram_stories",
-  "youtube_shorts",
-  "facebook_reels",
-  "universal",
-];
 
 // ─── UI ELEMENT CHIP ─────────────────────────────────────────────────────────
 
@@ -382,58 +361,19 @@ function Legend() {
 
 // ─── MAIN EXPORT ─────────────────────────────────────────────────────────────
 
+// Purely controlled — platform and mode come entirely from props.
+// The outer modal's tabs drive both values; no internal state here.
 export function SafeZonePreview({
   imageUrl,
-  platform: platformProp,
-  mode: modeProp,
+  platform,
+  mode,
   safeZoneConfig,
 }: SafeZonePreviewProps) {
-  const [platform, setPlatform] = useState<Platform>(platformProp);
-  const [mode, setMode] = useState<Mode>(modeProp);
-
   const resolvedConfig =
     safeZoneConfig ?? DEFAULT_SAFE_ZONE_CONFIGS[platform][mode];
 
   return (
-    <div className="bg-zinc-950 rounded-2xl border border-white/[0.06] p-6 flex flex-col items-center gap-5">
-      {/* ── Platform tabs ── */}
-      <div className="flex items-center gap-1 p-1 rounded-xl bg-zinc-900 border border-white/[0.05] flex-wrap justify-center">
-        {PLATFORMS.map((p) => (
-          <button
-            key={p}
-            type="button"
-            onClick={() => setPlatform(p)}
-            className={[
-              "px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-150",
-              platform === p
-                ? "bg-zinc-700 text-zinc-100 shadow-sm"
-                : "text-zinc-500 hover:text-zinc-300",
-            ].join(" ")}
-          >
-            {PLATFORM_LABELS[p]}
-          </button>
-        ))}
-      </div>
-
-      {/* ── Organic / Paid toggle ── */}
-      <div className="flex items-center gap-1 p-1 rounded-full bg-zinc-900 border border-white/[0.05]">
-        {(["organic", "paid"] as Mode[]).map((m) => (
-          <button
-            key={m}
-            type="button"
-            onClick={() => setMode(m)}
-            className={[
-              "px-4 py-1 rounded-full text-[11px] font-semibold capitalize transition-all duration-150",
-              mode === m
-                ? "bg-zinc-700 text-zinc-100 shadow-sm"
-                : "text-zinc-500 hover:text-zinc-300",
-            ].join(" ")}
-          >
-            {m}
-          </button>
-        ))}
-      </div>
-
+    <div className="bg-zinc-950 rounded-2xl border border-white/[0.06] p-4 flex flex-col items-center gap-4">
       {/* ── Phone frame ── */}
       <PhoneFrame
         imageUrl={imageUrl}
