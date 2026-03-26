@@ -426,19 +426,19 @@ These are confirmed open security/stability issues from the Phase 1 audit (March
 **File:** `Settings.tsx`
 **Issue:** "Delete my account" button does nothing. GDPR risk.
 **Fix:** Implement server-side deletion (`supabase.auth.admin.deleteUser()`) or disable with "Contact support."
-**Status:** ⬜ NOT FIXED
+**Status:** ✅ FIXED — PR #86. `api/delete-account.ts` now cleans Supabase Storage (`uploads/${uid}/*` and `visualize-temp/${uid}/*`) before deleting DB rows and calling `auth.admin.deleteUser()`.
 
 ### P0-5 — A/B Test page unreachable on mobile
 **File:** Sidebar / `MORE_ITEMS` array
 **Issue:** A/B Test page completely unreachable on mobile — skipped in `MORE_ITEMS`.
 **Fix:** Add A/B Test to mobile `MORE_ITEMS` array.
-**Status:** ⬜ NOT FIXED
+**Status:** ✅ FIXED — PR #86. Added A/B Test as 4th direct tab in `MOBILE_TABS` in `Sidebar.tsx`.
 
 ### P1-S1/S2 — Prompt injection via userContext
 **Files:** `predict-performance.ts`, `comparison.ts`, `gap-analysis.ts`, all Claude endpoints
 **Issue:** userContext is interpolated into prompts without sanitization or XML delimiters. Chained injection possible.
 **Fix:** Add `sanitizeSessionMemory()` on userContext before all 3 endpoints. Wrap all user content: `<user_data>${sanitized}</user_data>`
-**Status:** ⬜ NOT FIXED
+**Status:** ✅ FIXED — commit `b910e37`. Refactored `sanitizeMemory.ts` with shared `stripInjection()`, added `sanitizeUserInput()` + `sanitizeAnalysisText()`. All three endpoints now wrap userContext/sessionMemory in XML delimiters; analysisMarkdown, filenames, and improvement items sanitized before prompt injection.
 
 ### P1-R1 — Onboarding has no back button
 **File:** Onboarding flow
