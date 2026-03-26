@@ -451,9 +451,9 @@ Return JSON only — no prose:
         setEngineBudget(generateBudgetRecommendation(displayResult.overallScore, "google", niche, "static"));
       }
 
-    } catch (err) {
+    } catch {
       setStatus("error");
-      setError(err instanceof Error ? err.message : "Analysis failed");
+      setError("Something went wrong. Please try again.");
       autoAnalyzeRef.current = false; // allow retry after error
     }
   };
@@ -623,12 +623,17 @@ Return JSON only — no prose:
                     )}
 
                     {/* Add more / dropzone */}
+                    {suiteBanners.length >= 8 && (
+                      <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.15)", marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ fontSize: 12, color: "#f59e0b" }}>Maximum 8 banners per suite. Remove one to add another.</span>
+                      </div>
+                    )}
                     {suiteBanners.length < 8 && (
                       <div
                         style={{
                           height: 100, border: "1px dashed rgba(255,255,255,0.08)", borderRadius: 12,
                           background: "rgba(255,255,255,0.02)", display: "flex", alignItems: "center",
-                          justifyContent: "center", gap: 8, cursor: "pointer", transition: "all 150ms", marginBottom: 16,
+                          justifyContent: "center", gap: 8, cursor: "pointer", transition: "transform,opacity 150ms", marginBottom: 16,
                         }}
                         onClick={() => {
                           const input = document.createElement("input");
@@ -818,8 +823,10 @@ Return JSON only — no prose:
                       <span style={{ fontSize: 12, color: "#a1a1aa", fontFamily: "var(--font-mono, monospace)" }}>
                         {(() => { const n = sanitizeFileName(file.name); return n.length > 35 ? n.slice(0, 32) + "..." : n; })()}
                       </span>
-                      {dimensions && (
+                      {dimensions ? (
                         <span style={{ fontSize: 10, color: "#52525b" }}>{dimensions.width}×{dimensions.height}</span>
+                      ) : (
+                        <span style={{ fontSize: 10, color: "#52525b" }}>Reading file...</span>
                       )}
                     </div>
                     <button type="button" onClick={handleReset} style={{ fontSize: 11, color: "#71717a", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>

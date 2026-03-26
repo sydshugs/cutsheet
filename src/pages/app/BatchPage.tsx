@@ -21,7 +21,6 @@ export default function BatchPage() {
       </Helmet>
       <h1 className="sr-only">Rank Creatives</h1>
       <BatchView
-      isDark={true}
       apiKey={API_KEY}
       addHistoryEntry={addHistoryEntry}
       t={themes.dark}

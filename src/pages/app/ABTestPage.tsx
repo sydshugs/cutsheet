@@ -14,7 +14,7 @@ export default function ABTestPage() {
         <link rel="canonical" href="https://cutsheet.xyz/app/ab-test" />
       </Helmet>
       <h1 className="sr-only">Pre-Flight A/B Test</h1>
-      <PreFlightView isDark={true} apiKey={API_KEY} />
+      <PreFlightView apiKey={API_KEY} />
     </>
   );
 }

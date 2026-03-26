@@ -111,7 +111,7 @@ function NavItemRow({ item, collapsed }: { item: NavItem; collapsed: boolean }) 
       {/* Collapsed tooltip */}
       {collapsed && (
         <span
-          className="absolute opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-events-none transition-opacity"
+          className="absolute opacity-0 group-hover:opacity-100 group-hover:delay-300 group-focus-within:opacity-100 pointer-events-none transition-opacity duration-150"
           style={{
             left: "calc(100% + 8px)", top: "50%", transform: "translateY(-50%)",
             background: "#18181b", border: "1px solid rgba(255,255,255,0.08)",

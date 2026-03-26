@@ -64,6 +64,9 @@ export function Toast({
 
   return (
     <div
+      role={variant === "error" ? "alert" : "status"}
+      aria-live={variant === "error" ? "assertive" : "polite"}
+      aria-atomic="true"
       style={{
         position: "fixed",
         bottom: "24px",

@@ -499,8 +499,25 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
   const handleFileWithFormatCheck = useCallback((f: File | null) => {
     if (!f) { handleReset(); return; }
 
-    const fileIsVideo = f.type.startsWith("video/") || [".mp4", ".mov", ".webm"].some(e => f.name.toLowerCase().endsWith(e));
-    const fileIsImage = f.type.startsWith("image/") || [".jpg", ".jpeg", ".png", ".webp"].some(e => f.name.toLowerCase().endsWith(e));
+    // P2-4: Empty file guard
+    if (f.size === 0) {
+      setFileError("This file appears to be empty. Please select a valid file.");
+      return;
+    }
+
+    const mimeIsVideo = f.type.startsWith("video/");
+    const mimeIsImage = f.type.startsWith("image/");
+    const extIsVideo = [".mp4", ".mov", ".webm"].some(e => f.name.toLowerCase().endsWith(e));
+    const extIsImage = [".jpg", ".jpeg", ".png", ".webp"].some(e => f.name.toLowerCase().endsWith(e));
+
+    // P2-4: MIME/extension mismatch guard
+    if ((mimeIsVideo && extIsImage) || (mimeIsImage && extIsVideo)) {
+      setFileError("File type mismatch — the file extension doesn't match its content. Please re-export or re-save the file.");
+      return;
+    }
+
+    const fileIsVideo = mimeIsVideo || extIsVideo;
+    const fileIsImage = mimeIsImage || extIsImage;
 
     // Size validation before sending to API
     const MAX_IMAGE_SIZE_MB = 10;

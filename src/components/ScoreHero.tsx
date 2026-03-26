@@ -291,8 +291,9 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
                 <span
                   className="font-mono text-xs font-medium tabular-nums"
                   style={{ color: dimDisplayColor }}
+                  aria-label={`${dim.name}: ${dim.score.toFixed(1)} — ${dim.score >= 8 ? "Strong" : dim.score >= 4 ? "Average" : "Weak"}`}
                 >
-                  {dim.score.toFixed(1)}
+                  {scoreIndicator(dim.score)} {dim.score.toFixed(1)}
                 </span>
                 <span className="text-[9px] text-zinc-500 text-center leading-tight whitespace-nowrap">
                   {dim.name}

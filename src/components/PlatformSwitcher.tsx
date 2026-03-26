@@ -59,7 +59,7 @@ export function PlatformSwitcher({
             }}
             onMouseEnter={() => setHovered(p.key)}
             onMouseLeave={() => setHovered(null)}
-            className="relative flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+            className="relative flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-[background-color,color,opacity] duration-150 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
             style={{
               background: isActive
                 ? "var(--accent, #6366f1)"

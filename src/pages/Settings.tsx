@@ -1,6 +1,7 @@
 // Settings.tsx — /settings page with Profile, Billing, Usage tabs
 
 import { useState, useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, CheckCircle, X, Layers, Zap, Users, Check } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -31,12 +32,12 @@ const cardAnim = (delay = 0) => ({
 
 // ─── BRAND COLORS ─────────────────────────────────────────────────────────────
 const COLORS = {
-  primary: "#6366f1",
-  primaryLight: "#818cf8",
-  success: "#10b981",
-  warning: "#f59e0b",
-  error: "#ef4444",
-  team: "#8b5cf6",
+  primary: "var(--accent)",
+  primaryLight: "#818cf8",    // no dedicated token — keep as hex
+  success: "var(--success)",
+  warning: "var(--warn)",
+  error: "var(--error)",
+  team: "#8b5cf6",            // no dedicated token — keep as hex
 };
 
 // ─── DOWNGRADE REASONS ────────────────────────────────────────────────────────
@@ -1210,6 +1211,10 @@ export function Settings() {
 
   return (
     <div className="min-h-screen relative overflow-x-hidden" style={{ background: "#09090b" }}>
+      <Helmet>
+        <title>Settings — Cutsheet</title>
+        <meta name="robots" content="noindex" />
+      </Helmet>
       {/* Subtle ambient glow */}
       <div
         className="pointer-events-none fixed top-0 right-1/4 w-[800px] h-[600px] rounded-full blur-[150px]"

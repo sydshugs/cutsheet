@@ -134,7 +134,7 @@ export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, 
                 if (!disabled) fileInputRef.current?.click();
               }
             }}
-            className={`border-2 border-dashed rounded-2xl px-4 py-8 md:px-10 md:py-10 flex flex-col items-center gap-4 transition-all cursor-pointer select-none text-center ${
+            className={`border-2 border-dashed rounded-2xl px-4 py-8 md:px-10 md:py-10 flex flex-col items-center gap-4 transition-[border-color,transform,box-shadow,opacity] cursor-pointer select-none text-center ${
               isDragging
                 ? 'border-indigo-500/50 scale-[1.01] shadow-[0_0_20px_rgba(99,102,241,0.15)]'
                 : 'border-white/10 hover:border-indigo-500/30'
