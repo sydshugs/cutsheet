@@ -42,6 +42,7 @@ interface AnalyzerViewProps {
   motionLoading?: boolean;
   motionError?: string | null;
   onCheckPolicies?: () => void;
+  onSafeZone?: () => void;
   onCompare?: () => void;
   fixItLoading?: boolean;
   fixItResult?: { rewrittenHook?: { copy: string; reasoning: string }; revisedBody?: string; newCTA?: { copy: string; placement: string }; textOverlays?: { timestamp: string; copy: string; placement: string }[]; predictedImprovements?: { dimension: string; oldScore: number; newScore: number; reason: string }[] } | null;
@@ -92,6 +93,7 @@ export function AnalyzerView({
   motionLoading,
   motionError,
   onCheckPolicies,
+  onSafeZone,
   onCompare,
   fixItLoading,
   fixItResult,
@@ -184,6 +186,7 @@ export function AnalyzerView({
             motionLoading={motionLoading}
             motionError={motionError}
             onCheckPolicies={onCheckPolicies}
+            onSafeZone={onSafeZone}
             onCompare={onCompare}
             onGenerateBrief={onGenerateBrief}
             fixItLoading={fixItLoading}

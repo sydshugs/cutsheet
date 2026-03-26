@@ -9,7 +9,7 @@ import {
   Clapperboard, DollarSign, Hash, Eye, Lightbulb, BarChart3,
   Layout, Target, Palette, FileText, Upload, Wand2, Image, ShieldCheck,
   Zap, Film, AlignLeft, AlertCircle, Sparkles, ChevronRight, TrendingUp,
-  Heart, type LucideIcon,
+  Heart, Shield, type LucideIcon,
 } from "lucide-react";
 import type { Verdict, StructuredImprovement } from "../services/analyzerService";
 import { CreativeAnalysis } from "./CreativeAnalysis";
@@ -44,6 +44,7 @@ interface ReportCardsProps {
   motionLoading?: boolean;
   motionError?: string | null;
   onCheckPolicies?: () => void;
+  onSafeZone?: () => void;
   onCompare?: () => void;
   onGenerateBrief?: () => void;
   fixItLoading?: boolean;
@@ -253,7 +254,7 @@ export function ReportCards({
   verdict, structuredImprovements, improvements, scores, format,
   platform, hashtags,
   onFixIt, onVisualize, onMotionPreview, motionVideoUrl, motionLoading, motionError,
-  onCheckPolicies, onCompare, onGenerateBrief,
+  onCheckPolicies, onSafeZone, onCompare, onGenerateBrief,
   fixItLoading, fixItResult, policyLoading, policyResult, visualizeLoading, visualizeResult,
   designReviewSlot, secondEyeSlot,
   designReviewData,
@@ -409,39 +410,50 @@ export function ReportCards({
 
       {/* ─── AI Tools Section — glassmorphism cards ─── */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, ease: 'easeOut' }}>
-      {(onFixIt || onVisualize || onCheckPolicies || onCompare) && (() => {
+      {(onFixIt || onVisualize || onCheckPolicies || onSafeZone || onCompare) && (() => {
         const tools = [
-          { 
-            key: 'fix', 
-            icon: Wand2, 
-            name: 'AI Rewrite', 
+          {
+            key: 'fix',
+            icon: Wand2,
+            name: 'AI Rewrite',
             description: 'AI-powered copy suggestions',
-            credit: 'Free', 
+            credit: 'Free',
             iconColor: '#818cf8',
-            onClick: onFixIt, 
-            loading: fixItLoading 
+            onClick: onFixIt,
+            loading: fixItLoading
           },
-          { 
-            key: 'visualize', 
-            icon: Image, 
-            name: 'Visualize', 
+          {
+            key: 'visualize',
+            icon: Image,
+            name: 'Visualize',
             description: 'Static to motion concept',
-            credit: '1 credit', 
+            credit: '1 credit',
             iconColor: '#10b981',
-            onClick: onVisualize, 
-            disabled: format !== 'static' 
+            onClick: onVisualize,
+            disabled: format !== 'static'
           },
-          { 
-            key: 'policy', 
-            icon: ShieldCheck, 
-            name: 'Policy Check', 
+          {
+            key: 'policy',
+            icon: ShieldCheck,
+            name: 'Policy Check',
             description: 'Scan for violations',
-            credit: 'Free', 
+            credit: 'Free',
             iconColor: '#f59e0b',
-            onClick: onCheckPolicies, 
-            loading: policyLoading 
+            onClick: onCheckPolicies,
+            loading: policyLoading
           },
+          ...(onSafeZone ? [{
+            key: 'safe_zone',
+            icon: Shield,
+            name: 'Safe Zone',
+            description: 'Check platform UI margins',
+            credit: 'Free',
+            iconColor: '#38bdf8',
+            onClick: onSafeZone,
+            loading: false,
+          }] : []),
         ];
+        const colClass = tools.length === 4 ? 'grid-cols-4' : 'grid-cols-3';
         return (
           <div className="mt-6">
             {/* Section header */}
@@ -449,9 +461,9 @@ export function ReportCards({
               <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">Tools</span>
               <div className="flex-1 h-px bg-white/[0.04]" />
             </div>
-            
-            {/* Tools grid - 3 columns side by side */}
-            <div className="grid grid-cols-3 gap-2">
+
+            {/* Tools grid */}
+            <div className={`grid ${colClass} gap-2`}>
               {tools.map((t) => {
                 const Icon = t.icon;
                 const isDisabled = !!t.disabled;

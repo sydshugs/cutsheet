@@ -22,6 +22,7 @@ import {
   type PlatformScore, type SecondEyeResult, type StaticSecondEyeResult,
 } from "../../services/claudeService";
 import { SecondEyePanel } from "../../components/SecondEyePanel";
+import { SafeZoneModal } from "../../components/SafeZoneModal";
 
 import { ORGANIC_STATIC_PLATFORMS, VIDEO_ONLY_PLATFORMS } from "../../components/PlatformSwitcher";
 import { generateFixIt, type FixItResult } from "../../services/fixItService";
@@ -147,6 +148,7 @@ export default function OrganicAnalyzer() {
   const [loadedFromHistory, setLoadedFromHistory] = useState<AnalysisRecord | null>(null);
   const [fixItResult, setFixItResult] = useState<FixItResult | null>(null);
   const [fixItLoading, setFixItLoading] = useState(false);
+  const [safeZoneOpen, setSafeZoneOpen] = useState(false);
   const [prediction, setPrediction] = useState<PredictionResult | null>(null);
   const [predictionLoading, setPredictionLoading] = useState(false);
 
@@ -597,6 +599,7 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
                   secondEyeLoading={secondEyeLoading}
                   platformScores={platformScores}
                   platformScoresLoading={platformScoresLoading}
+                  onSafeZone={organicFormat === 'video' ? () => setSafeZoneOpen(true) : undefined}
                 />
               </div>
             </div>
@@ -725,6 +728,13 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
           {infoToast}
         </div>
       )}
+
+      <SafeZoneModal
+        open={safeZoneOpen}
+        onClose={() => setSafeZoneOpen(false)}
+        thumbnailSrc={thumbnailDataUrl ?? undefined}
+        mode="organic"
+      />
     </div>
   );
 }

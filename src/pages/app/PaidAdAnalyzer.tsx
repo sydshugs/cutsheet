@@ -40,6 +40,7 @@ import type { VisualizeResult, VisualizeStatus } from "../../types/visualize";
 import { StaticSecondEyePanel } from "../../components/StaticSecondEyePanel";
 import { PolicyCheckPanel } from "../../components/PolicyCheckPanel";
 import { runPolicyCheck, type PolicyCheckResult } from "../../lib/policyCheckService";
+import { SafeZoneModal } from "../../components/SafeZoneModal";
 import { BeforeAfterComparison } from "../../components/BeforeAfterComparison";
 import { generateComparison, type ComparisonResult } from "../../services/claudeService";
 import { createShare } from "../../services/shareService";
@@ -182,6 +183,7 @@ export default function PaidAdAnalyzer() {
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
   const [loadedFromHistory, setLoadedFromHistory] = useState<AnalysisRecord | null>(null);
   const [confirmStartOver, setConfirmStartOver] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
 
   const [improvementsLoading, setImprovementsLoading] = useState(false);
   const [platformImprovements, setPlatformImprovements] = useState<string[] | null>(null);
@@ -192,6 +194,9 @@ export default function PaidAdAnalyzer() {
   // ── Fix It For Me state ──────────────────────────────────────────────────
   const [fixItResult, setFixItResult] = useState<FixItResult | null>(null);
   const [fixItLoading, setFixItLoading] = useState(false);
+
+  // ── Safe Zone state ───────────────────────────────────────────────────────
+  const [safeZoneOpen, setSafeZoneOpen] = useState(false);
 
   // ── Predicted Performance state ──────────────────────────────────────────
   const [prediction, setPrediction] = useState<PredictionResult | null>(null);
@@ -485,6 +490,19 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
 
     const fileIsVideo = f.type.startsWith("video/") || [".mp4", ".mov", ".webm"].some(e => f.name.toLowerCase().endsWith(e));
     const fileIsImage = f.type.startsWith("image/") || [".jpg", ".jpeg", ".png", ".webp"].some(e => f.name.toLowerCase().endsWith(e));
+
+    // Size validation before sending to API
+    const MAX_IMAGE_SIZE_MB = 10;
+    const MAX_VIDEO_SIZE_MB = 100;
+    const maxSize = fileIsVideo ? MAX_VIDEO_SIZE_MB * 1024 * 1024 : MAX_IMAGE_SIZE_MB * 1024 * 1024;
+    const maxSizeMB = fileIsVideo ? MAX_VIDEO_SIZE_MB : MAX_IMAGE_SIZE_MB;
+    if (f.size > maxSize) {
+      setFileError(`File too large. Maximum size is ${maxSizeMB}MB for ${fileIsVideo ? "video" : "image"} files.`);
+      return;
+    }
+
+    // Clear any prior file error — this file passed validation
+    setFileError(null);
 
     // Auto-switch format silently + show toast
     if (fileIsImage && format !== "static") {
@@ -967,6 +985,12 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
         <div ref={leftPanelRef} className="flex-1 flex flex-col overflow-auto">
           {status === "idle" && !loadedEntry ? (
             <>
+              {fileError && (
+                <div style={{ margin: "16px 16px 0", padding: "12px 16px", borderRadius: 10, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                  <p style={{ fontSize: 13, color: "#ef4444", margin: 0 }}>{fileError}</p>
+                  <button type="button" onClick={() => setFileError(null)} style={{ fontSize: 12, color: "#71717a", background: "none", border: "none", cursor: "pointer", flexShrink: 0 }}>Dismiss</button>
+                </div>
+              )}
               <PaidEmptyState
                 onFileSelect={(f) => handleFileWithFormatCheck(f)}
                 onUrlSubmit={async (u) => { setUrlInput(u); await importFromUrl(u); }}
@@ -1041,6 +1065,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                         motionLoading={motionLoading}
                         motionError={motionError}
                         onCheckPolicies={handleCheckPolicies}
+                        onSafeZone={() => setSafeZoneOpen(true)}
                         onCompare={() => navigate('/app/competitor')}
                         fixItLoading={fixItLoading}
                         fixItResult={fixItResult}
@@ -1553,6 +1578,13 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
         confirmLabel="Start Over"
         cancelLabel="Cancel"
         variant="destructive"
+      />
+
+      <SafeZoneModal
+        open={safeZoneOpen}
+        onClose={() => setSafeZoneOpen(false)}
+        thumbnailSrc={thumbnailDataUrl ?? undefined}
+        mode="paid"
       />
     </div>
   );
