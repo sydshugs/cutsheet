@@ -248,10 +248,10 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
         <span className="font-mono text-sm text-zinc-500">/10</span>
       </div>
 
-      {/* Verdict label — brand guide: score color, paired with number */}
+      {/* Verdict label — neutral, not accent-colored */}
       <span
         className="text-xs font-semibold mt-1.5"
-        style={{ color: effectiveColor }}
+        style={{ color: '#a1a1aa' }}
       >
         {verdict}
       </span>
@@ -274,7 +274,6 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
         <div className="grid grid-cols-4 gap-1.5">
           {resolvedDimensions.map((dim, i) => {
             const dimColor = scoreColor(dim.score);
-            const effectiveDimColor = (accentColor != null && dimColor === '#10b981') ? accentColor : dimColor;
             return (
               <motion.div
                 key={dim.name}
@@ -288,7 +287,7 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
               >
                 <span
                   className="font-mono text-xs font-medium tabular-nums"
-                  style={{ color: `${effectiveDimColor}99` }}
+                  style={{ color: `${dimColor}99` }}
                 >
                   {dim.score.toFixed(1)}
                 </span>
