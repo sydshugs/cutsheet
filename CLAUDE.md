@@ -444,14 +444,14 @@ These are confirmed open security/stability issues from the Phase 1 audit (March
 **File:** Onboarding flow
 **Issue:** No back button. Auto-advances on 300ms tap — user can't correct mis-tap.
 **Fix:** Add back arrows. Remove auto-advance.
-**Status:** ⬜ NOT FIXED
+**Status:** ✅ FIXED — `Welcome.tsx`: removed `setTimeout` auto-advance from `handleIntentSelect` and `handleNicheSelect`; added "← Back" button in top bar (replaces logo on steps 2+); added "Continue" button to steps 1 and 2 (only visible after a selection is made).
 
 ### P1-R2 — Onboarding re-shows on fresh login (UX Bug)
 **File:** Onboarding flow / `ProtectedRoute.tsx` / `profiles` table
 **Issue:** When a user logs in via a new session, onboarding shows again even if previously completed. Root cause: `onboarding_completed` flag in `profiles` table may not be persisting correctly across sessions.
 **Fix:** Verify the flag is being written to `profiles` on onboarding completion AND that `ProtectedRoute` reads it server-side before showing onboarding.
 **Affects:** Playwright E2E tests — tests always hit onboarding screen on fresh auth session injection.
-**Status:** ⬜ NOT FIXED
+**Status:** ✅ ALREADY FIXED (pre-existing) — `ProtectedRoute.tsx` reads `profiles.onboarding_completed` from Supabase on every fresh login (lines 31-47). `Welcome.tsx` writes `onboarding_completed: true` via `supabase.upsert` on completion and skip (lines 158-163). No localStorage is used for onboarding state. CLAUDE.md status was stale.
 
 ---
 
