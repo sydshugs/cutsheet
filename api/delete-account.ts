@@ -1,10 +1,45 @@
 // api/delete-account.ts — GDPR account deletion endpoint
-// Deletes all user data (analyses, profile) then removes the auth user.
+//
+// Deletion order (respects FK constraints):
+//   1. Storage: uploads bucket — ${userId}/* and visualize-temp/${userId}/*
+//   2. DB: analyses (user_id FK; also cascades on auth user deletion)
+//   3. DB: profiles (id FK; also cascades on auth user deletion)
+//   4. Auth: supabase.auth.admin.deleteUser — cascades beta_codes.used_by → null
+//
 // Uses SUPABASE_SERVICE_ROLE_KEY for admin.deleteUser — never exposed to client.
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { verifyAuth, handlePreflight, checkRateLimit } from "./_lib/auth";
+
+// ─── Storage cleanup helper ────────────────────────────────────────────────────
+// Lists all files under a storage prefix and removes them in one call.
+// Best-effort: logs errors but never throws (storage failures don't block deletion).
+async function deleteStorageFolder(
+  supabaseAdmin: SupabaseClient,
+  bucket: string,
+  prefix: string
+): Promise<void> {
+  const { data: files, error: listErr } = await supabaseAdmin.storage
+    .from(bucket)
+    .list(prefix, { limit: 1000 });
+
+  if (listErr) {
+    console.warn(`[delete-account] Could not list ${bucket}/${prefix}:`, listErr.message);
+    return;
+  }
+  if (!files || files.length === 0) return;
+
+  const paths = files.map((f) => `${prefix}/${f.name}`);
+  const { error: removeErr } = await supabaseAdmin.storage.from(bucket).remove(paths);
+  if (removeErr) {
+    console.warn(`[delete-account] Storage remove failed for ${bucket}/${prefix}:`, removeErr.message);
+  } else {
+    console.info(`[delete-account] Removed ${paths.length} file(s) from ${bucket}/${prefix}`);
+  }
+}
+
+// ─── Handler ──────────────────────────────────────────────────────────────────
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handlePreflight(req, res)) return;
@@ -29,26 +64,47 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+    const uid = user.id;
 
-    // Delete user data in dependency order: analyses → profiles → auth user
-    const { error: analysesErr } = await supabaseAdmin.from("analyses").delete().eq("user_id", user.id);
+    // ── 1. Storage: uploads bucket ──────────────────────────────────────────
+    // Files live at two prefixes in the 'uploads' bucket:
+    //   - ${uid}/*           — files uploaded for analysis (analyzerService, storageService)
+    //   - visualize-temp/${uid}/* — Kling/visualize temp frames
+    await deleteStorageFolder(supabaseAdmin, "uploads", uid);
+    await deleteStorageFolder(supabaseAdmin, "uploads", `visualize-temp/${uid}`);
+
+    // ── 2. DB: analyses (user_id FK + ON DELETE CASCADE) ────────────────────
+    const { error: analysesErr } = await supabaseAdmin
+      .from("analyses")
+      .delete()
+      .eq("user_id", uid);
     if (analysesErr) {
-      console.error("[delete-account] Failed to delete analyses:", analysesErr.message);
-      // Continue — don't block account deletion for data cleanup failure
+      // Non-fatal: auth.deleteUser cascade will clean up anything we missed
+      console.warn("[delete-account] analyses delete:", analysesErr.message);
+    } else {
+      console.info("[delete-account] analyses deleted for user %s", uid);
     }
 
-    const { error: profileErr } = await supabaseAdmin.from("profiles").delete().eq("id", user.id);
+    // ── 3. DB: profiles (id FK + ON DELETE CASCADE) ─────────────────────────
+    const { error: profileErr } = await supabaseAdmin
+      .from("profiles")
+      .delete()
+      .eq("id", uid);
     if (profileErr) {
-      console.error("[delete-account] Failed to delete profile:", profileErr.message);
+      // Non-fatal: auth.deleteUser cascade will clean up anything we missed
+      console.warn("[delete-account] profile delete:", profileErr.message);
+    } else {
+      console.info("[delete-account] profile deleted for user %s", uid);
     }
 
-    const { error: authErr } = await supabaseAdmin.auth.admin.deleteUser(user.id);
+    // ── 4. Auth user (cascades beta_codes.used_by → null via ON DELETE SET NULL)
+    const { error: authErr } = await supabaseAdmin.auth.admin.deleteUser(uid);
     if (authErr) {
       console.error("[delete-account] Failed to delete auth user:", authErr.message);
       return res.status(500).json({ error: "Failed to delete account. Please contact support." });
     }
 
-    console.info("[delete-account] Successfully deleted user %s", user.id);
+    console.info("[delete-account] Successfully deleted user %s", uid);
     return res.status(200).json({ success: true });
   } catch (err) {
     console.error("[delete-account] Unhandled error:", err instanceof Error ? err.message : err);

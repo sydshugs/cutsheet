@@ -49,7 +49,8 @@ const LIBRARY: NavItem[] = [
   { label: "Saved Ads", sublabel: "Your reference library", path: "/app/swipe-file", icon: Bookmark },
 ];
 
-// Mobile "More" drawer: extra ANALYZE items + COMPARE (minus A/B Test) + LIBRARY
+// Mobile "More" drawer: Ad Breakdown (ANALYZE[3]) + Competitor + Rank Creatives + Saved Ads
+// A/B Test is in the primary tab bar — not duplicated here
 const MORE_ITEMS = [...ANALYZE.slice(3), ...COMPARE.slice(1), ...LIBRARY];
 
 // ─── SECTION LABEL ────────────────────────────────────────────────────────────
@@ -322,6 +323,7 @@ const MOBILE_TABS = [
   { label: "Paid Ad",  path: "/app/paid",     icon: Zap },
   { label: "Organic",  path: "/app/organic",  icon: TrendingUp },
   { label: "Display",  path: "/app/display",  icon: Monitor },
+  { label: "A/B Test", path: "/app/ab-test",  icon: GitBranch },
 ];
 
 function MobileTabBar({ onMoreClick }: { onMoreClick: () => void }) {
