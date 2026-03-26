@@ -148,7 +148,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
           Upload two ad creatives side by side. AI analyzes both and predicts the winner.
         </p>
 
-        {/* Fix 5: Pills — 12px font, 4px 12px padding */}
+        {/* Fix 5: Pills — 12px font, 4px 12px padding, rose accent */}
         <div className="flex flex-wrap justify-center gap-2" style={{ marginBottom: 24 }}>
           {PILLS.map((pill) => (
             <span
@@ -157,9 +157,9 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
                 fontSize: 12,
                 padding: "4px 12px",
                 borderRadius: 9999,
-                color: "#a1a1aa",
-                background: "rgba(255,255,255,0.05)",
-                border: "1px solid rgba(255,255,255,0.08)",
+                color: "#ec4899",
+                background: "rgba(236,72,153,0.08)",
+                border: "1px solid rgba(236,72,153,0.15)",
               }}
             >
               {pill}
