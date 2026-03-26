@@ -27,7 +27,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
   }
 
-  const { analysisMarkdown, platform: rawPlatform, niche: rawNiche, intent: rawIntent, adType: rawAdType, scores } = req.body ?? {};
+  const { analysisMarkdown, platform: rawPlatform, niche: rawNiche, intent: rawIntent, adType: rawAdType, scores, ctaFree } = req.body ?? {};
+  const isCTAFree = ctaFree === true;
 
   if (!analysisMarkdown) {
     return res.status(400).json({ error: "Missing analysisMarkdown" });
@@ -40,9 +41,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const intent = (typeof rawIntent === "string" && ["conversion", "awareness", "consideration"].includes(rawIntent)) ? rawIntent : "conversion";
 
   // Identify weakest dimensions for targeted fixes
+  // When ctaFree, exclude CTA from weak dims — low CTA score is expected and intentional
   const weakDims = scores
     ? Object.entries(scores as Record<string, number>)
-        .filter(([k]) => ["hook", "clarity", "cta", "production"].includes(k))
+        .filter(([k]) => (isCTAFree ? ["hook", "clarity", "production"] : ["hook", "clarity", "cta", "production"]).includes(k))
         .sort(([, a], [, b]) => a - b)
         .slice(0, 2)
         .map(([k, v]) => `${k}: ${v}/10`)
@@ -73,13 +75,19 @@ ANTI-GENERIC RULES (violations = failure):
 - No generic urgency ("Act now!", "Limited time!") unless the original ad used it
 - Every rewritten line must reference something specific from THIS ad — a product feature, a score finding, a visual element
 - If you catch yourself writing copy that could apply to any product in any niche, delete it and try again
-- The rewrite must be so specific to ${niche} on ${platform} that it would be wrong for any other niche/platform combination`;
+- The rewrite must be so specific to ${niche} on ${platform} that it would be wrong for any other niche/platform combination${isCTAFree ? `
+
+CTA-FREE AD: This Meta ad intentionally has no in-creative CTA — it relies on Meta's native CTA button in Ads Manager.
+Do NOT suggest adding a CTA, Shop Now button, or any verbal call-to-action to the creative.
+For the "newCTA" field in your JSON response, return: { "copy": "", "placement": "Uses Meta native CTA button" }.
+Focus rewrite energy on hook strength, visual storytelling, offer clarity, and sound-off viability instead.` : ""}`;
 
   const prompt = `A user's ${adType} ad on ${platform} in the ${niche} niche received this scorecard:
 
 ${analysisMarkdown}
 
 Scores: Hook ${scores?.hook ?? "?"}/10 | Clarity ${scores?.clarity ?? "?"}/10 | CTA ${scores?.cta ?? "?"}/10 | Production ${scores?.production ?? "?"}/10 | Overall ${scores?.overall ?? "?"}/10
+${isCTAFree ? "NOTE: CTA score is intentionally low — this ad uses Meta's native CTA button. Do NOT rewrite or suggest a CTA." : ""}
 ${weakDims.length ? `\nWEAKEST AREAS (fix these first): ${weakDims.join(", ")}` : ""}
 
 User's intent: ${intent} — optimize the rewrite for ${intent === "awareness" ? "brand recall and reach" : intent === "consideration" ? "engagement and click-through" : "direct response and conversion"}.

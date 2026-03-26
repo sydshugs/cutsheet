@@ -130,6 +130,7 @@ export default function PaidAdAnalyzer() {
   const [platform, setPlatform] = useState<Platform>("all");
   const [format, setFormat] = useState<Format>("video");
   const [youtubeFormat, setYoutubeFormat] = useState<YouTubeFormat>("skippable");
+  const [ctaFree, setCtaFree] = useState(false);
   // Second Eye + Design Review always on — no toggles
   const secondEye = true;
   const staticSecondEye = true;
@@ -329,7 +330,7 @@ Score dimensions: Thumbnail Appeal (would this get clicked?), Title Strength (cr
 
     // Sound-off check for Meta video
     if (platform === "Meta" && format === "video") {
-      return base + `\n\nSOUND-OFF CHECK: A significant portion of Meta feed is watched muted.
+      const soundOff = `\n\nSOUND-OFF CHECK: A significant portion of Meta feed is watched muted.
 Evaluate whether this ad communicates its full message when watched muted.
 Are captions or text overlays present and readable? Does the visual storytelling convey the narrative without sound?
 Would a muted viewer understand the hook, offer, and CTA?
@@ -337,6 +338,13 @@ Score "Message Clarity" as a sound-off readability signal — a great Meta video
 8-10: Full captions + strong visual narrative. Works perfectly muted.
 5-7: Partial captions or text overlays. Message partially survives mute.
 1-4: Audio-dependent. Muted viewer would miss the core message.`;
+
+      const ctaFreeContext = ctaFree ? `\n\nCTA-FREE AD: The advertiser has confirmed this Meta video ad intentionally has no in-creative CTA — it relies on Meta's native CTA button displayed below the ad in Ads Manager.
+Do NOT penalize the absence of in-creative CTA text, button, or verbal call-to-action.
+For "CTA Effectiveness" scoring: score the creative's ability to communicate the offer clearly and generate desire for action — NOT the presence of CTA copy inside the frame. An ad that makes the viewer instinctively want to click IS effective, even without saying "Shop Now."
+Do NOT include any suggestion to "add a CTA," "include a call-to-action," or "add a Shop Now button" in the IMPROVEMENTS section.` : "";
+
+      return base + soundOff + ctaFreeContext;
     }
 
     // Sound-off + audio strategy for TikTok
@@ -430,6 +438,8 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
   // Platform switch: re-generate improvements + platform score when platform changes
   const handlePlatformSwitch = useCallback(async (newPlatform: string) => {
     setPlatform(newPlatform as Platform);
+    // Reset ctaFree when switching away from Meta
+    if (newPlatform !== "Meta") setCtaFree(false);
     if (status !== "complete" || !result?.markdown || !result?.scores) return;
     if (newPlatform === "all") {
       setPlatformScoreResult(null);
@@ -672,6 +682,8 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
         rawUserContext?.niche,
         undefined, // intent
         format as 'video' | 'static',
+        undefined, // isOrganic
+        ctaFree,
       );
       setFixItResult(result);
     } catch (err) {
@@ -1171,6 +1183,20 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                           disabled={status !== "complete"}
                         />
                       </div>
+                    )}
+                    {(platform === "Meta" || platform === "meta") && format === "video" && (
+                      <label className="flex items-center gap-2 mt-2 cursor-pointer select-none group">
+                        <input
+                          type="checkbox"
+                          id="cta-free"
+                          checked={ctaFree}
+                          onChange={(e) => setCtaFree(e.target.checked)}
+                          className="rounded border-zinc-600 accent-indigo-500 cursor-pointer"
+                        />
+                        <span className="text-xs text-zinc-400 group-hover:text-zinc-300 transition-opacity leading-tight">
+                          Uses Meta's native CTA button (no CTA in creative)
+                        </span>
+                      </label>
                     )}
                     {platformScoreResult && platform !== "all" && (
                       <div className="mt-1.5 flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs"
