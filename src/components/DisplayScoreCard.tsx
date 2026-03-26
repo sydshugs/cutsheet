@@ -92,15 +92,6 @@ export function DisplayScoreCard({
           <span className="text-[11px] text-cyan-400 mt-0.5">Google Display</span>
         </div>
         <div className="flex items-center gap-2">
-          {format ? (
-            <span className="text-[11px] text-cyan-400 bg-cyan-500/10 rounded-full px-2.5 py-0.5">
-              {format.key} · {format.name}
-            </span>
-          ) : (
-            <span className="text-[11px] text-amber-400 bg-amber-500/10 rounded-full px-2.5 py-0.5">
-              {dimensions.width}×{dimensions.height} · Custom
-            </span>
-          )}
           <button
             onClick={handleCopy}
             aria-label="Copy scores to clipboard"
