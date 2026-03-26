@@ -128,6 +128,7 @@ interface SafeZoneModalProps {
 
 export function SafeZoneModal({ open, onClose, thumbnailSrc, mode = "paid" }: SafeZoneModalProps) {
   const [activePlatform, setActivePlatform] = useState<PlatformKey>("tiktok");
+  const [activeMode, setActiveMode] = useState<"organic" | "paid">(mode);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState<AIResult | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
@@ -135,6 +136,13 @@ export function SafeZoneModal({ open, onClose, thumbnailSrc, mode = "paid" }: Sa
   const handlePlatformChange = useCallback((platform: PlatformKey) => {
     setActivePlatform(platform);
     // Reset AI results when switching platforms — different safe zones
+    setAiResult(null);
+    setAiError(null);
+  }, []);
+
+  const handleModeChange = useCallback((m: "organic" | "paid") => {
+    setActiveMode(m);
+    // Reset AI results when switching mode — safe zone dims differ
     setAiResult(null);
     setAiError(null);
   }, []);
@@ -175,7 +183,7 @@ export function SafeZoneModal({ open, onClose, thumbnailSrc, mode = "paid" }: Sa
           imageData: base64,
           mimeType: fetchedBlob.type || "image/jpeg",
           platform: API_PLATFORM_MAP[activePlatform],
-          mode,
+          mode: activeMode,
         }),
       });
       const data = await res.json() as AIResult & { error?: string };
@@ -184,17 +192,18 @@ export function SafeZoneModal({ open, onClose, thumbnailSrc, mode = "paid" }: Sa
       } else {
         setAiResult(data);
       }
-    } catch {
+    } catch (err) {
+      console.error("[safe-zone] client error:", err);
       setAiError("Network error — please try again");
     } finally {
       setAiLoading(false);
     }
-  }, [thumbnailSrc, activePlatform, mode]);
+  }, [thumbnailSrc, activePlatform, activeMode]);
 
   if (!open) return null;
 
-  // Pick dims from the 2026 config based on active platform + mode
-  const dims = SAFE_ZONE_CONFIG[activePlatform][mode];
+  // Pick dims from the 2026 config based on active platform + activeMode
+  const dims = SAFE_ZONE_CONFIG[activePlatform][activeMode];
   const tips = PLATFORM_TIPS[activePlatform];
   const platformLabel = PLATFORMS.find((p) => p.key === activePlatform)?.label ?? activePlatform;
 
@@ -262,8 +271,8 @@ export function SafeZoneModal({ open, onClose, thumbnailSrc, mode = "paid" }: Sa
           </button>
         </div>
 
-        {/* Platform tabs */}
-        <div className="px-6 pt-4">
+        {/* Platform tabs + Organic/Paid toggle */}
+        <div className="px-6 pt-4 flex flex-wrap items-center gap-3">
           <div className="flex flex-wrap gap-1.5">
             {PLATFORMS.map((p) => (
               <button
@@ -286,6 +295,28 @@ export function SafeZoneModal({ open, onClose, thumbnailSrc, mode = "paid" }: Sa
               </button>
             ))}
           </div>
+
+          {/* Organic / Paid toggle */}
+          <div
+            className="flex items-center gap-0.5 p-0.5 rounded-full shrink-0"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.08)' }}
+          >
+            {(["organic", "paid"] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => handleModeChange(m)}
+                className="px-3 py-1 rounded-full text-xs font-medium capitalize cursor-pointer transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50"
+                style={
+                  activeMode === m
+                    ? { background: 'var(--accent, #6366f1)', color: '#fff' }
+                    : { background: 'transparent', color: 'rgba(161,161,170,1)' }
+                }
+              >
+                {m}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Content */}
@@ -295,7 +326,7 @@ export function SafeZoneModal({ open, onClose, thumbnailSrc, mode = "paid" }: Sa
             <SafeZonePreview
               imageUrl={thumbnailSrc ?? ""}
               platform={activePlatform}
-              mode={mode}
+              mode={activeMode}
               safeZoneConfig={safeZonePct}
             />
 
@@ -333,7 +364,7 @@ export function SafeZoneModal({ open, onClose, thumbnailSrc, mode = "paid" }: Sa
           {/* Tips + warning */}
           <div className="flex-1 flex flex-col min-w-0">
             <h3 className="text-xs font-semibold text-zinc-200 mb-4">
-              {platformLabel} — {mode === "paid" ? "Paid" : "Organic"}
+              {platformLabel} — {activeMode === "paid" ? "Paid" : "Organic"}
             </h3>
 
             <div className="space-y-3 mb-5">
