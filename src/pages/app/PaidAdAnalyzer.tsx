@@ -1184,7 +1184,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                         />
                       </div>
                     )}
-                    {(platform === "Meta" || platform === "meta") && format === "video" && (
+                    {platform === "Meta" && format === "video" && (
                       <label className="flex items-center gap-2 mt-2 cursor-pointer select-none group">
                         <input
                           type="checkbox"
