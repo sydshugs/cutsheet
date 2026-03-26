@@ -40,6 +40,7 @@ import type { VisualizeResult, VisualizeStatus } from "../../types/visualize";
 import { StaticSecondEyePanel } from "../../components/StaticSecondEyePanel";
 import { PolicyCheckPanel } from "../../components/PolicyCheckPanel";
 import { runPolicyCheck, type PolicyCheckResult } from "../../lib/policyCheckService";
+import { SafeZoneModal } from "../../components/SafeZoneModal";
 import { BeforeAfterComparison } from "../../components/BeforeAfterComparison";
 import { generateComparison, type ComparisonResult } from "../../services/claudeService";
 import { createShare } from "../../services/shareService";
@@ -193,6 +194,9 @@ export default function PaidAdAnalyzer() {
   // ── Fix It For Me state ──────────────────────────────────────────────────
   const [fixItResult, setFixItResult] = useState<FixItResult | null>(null);
   const [fixItLoading, setFixItLoading] = useState(false);
+
+  // ── Safe Zone state ───────────────────────────────────────────────────────
+  const [safeZoneOpen, setSafeZoneOpen] = useState(false);
 
   // ── Predicted Performance state ──────────────────────────────────────────
   const [prediction, setPrediction] = useState<PredictionResult | null>(null);
@@ -1061,6 +1065,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                         motionLoading={motionLoading}
                         motionError={motionError}
                         onCheckPolicies={handleCheckPolicies}
+                        onSafeZone={() => setSafeZoneOpen(true)}
                         onCompare={() => navigate('/app/competitor')}
                         fixItLoading={fixItLoading}
                         fixItResult={fixItResult}
@@ -1573,6 +1578,13 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
         confirmLabel="Start Over"
         cancelLabel="Cancel"
         variant="destructive"
+      />
+
+      <SafeZoneModal
+        open={safeZoneOpen}
+        onClose={() => setSafeZoneOpen(false)}
+        imageData={thumbnailDataUrl ? thumbnailDataUrl.replace(/^data:[^;]+;base64,/, '') : undefined}
+        mode="paid"
       />
     </div>
   );
