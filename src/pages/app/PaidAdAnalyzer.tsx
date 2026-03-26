@@ -2,7 +2,7 @@
 import { Helmet } from 'react-helmet-async';
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useOutletContext, useNavigate, Link } from "react-router-dom";
-import { RotateCcw, Upload, Sparkles, Lock, Zap, Wand2, Lightbulb, FileText, ArrowUpRight, TrendingUp } from "lucide-react";
+import { RotateCcw, Upload, Sparkles, Lock, Zap } from "lucide-react";
 import { Toast } from "../../components/Toast";
 import { AnalyzerView } from "../../components/AnalyzerView";
 import { BriefResultView, type BriefSection } from "../../components/BriefResultView";
@@ -30,6 +30,7 @@ import { PlatformSwitcher, PAID_AD_PLATFORMS, PAID_STATIC_PLATFORMS, VIDEO_ONLY_
 import { extractRightPanelSections } from "../../components/ReportCards";
 import { YouTubeFormatSelector, type YouTubeFormat } from "../../components/YouTubeFormatSelector";
 import { generateFixIt, type FixItResult } from "../../services/fixItService";
+import FixItPanel from "../../components/FixItPanel";
 import { generatePrediction, type PredictionResult } from "../../services/predictionService";
 import { SecondEyePanel } from "../../components/SecondEyePanel";
 import { VisualizePanel } from "../../components/VisualizePanel";
@@ -1329,7 +1330,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
           </motion.div>
         )}
 
-        {/* AI Rewrite panel */}
+        {/* AI Rewrite panel — uses FixItPanel component */}
         {showRightPanel && rightTab === "ai_rewrite" && (
           <motion.div
             key="ai_rewrite"
@@ -1348,7 +1349,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                 ← Back to Scores
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto p-4">
               {fixItLoading && !fixItResult && (
                 <div className="flex flex-col items-center justify-center py-10 gap-3">
                   <div className="w-5 h-5 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
@@ -1356,135 +1357,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                 </div>
               )}
               {fixItResult && !fixItLoading && (
-                <div>
-                  {/* Header */}
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
-                    <div className="flex items-center gap-2">
-                      <Wand2 size={14} className="text-indigo-400" />
-                      <span className="text-[13px] font-medium text-zinc-200">Your Rewrite</span>
-                    </div>
-                    <button
-                      onClick={() => {
-                        const parts = [
-                          fixItResult.rewrittenHook?.copy,
-                          fixItResult.revisedBody,
-                          fixItResult.newCTA?.copy ? `CTA: ${fixItResult.newCTA.copy}` : '',
-                        ].filter(Boolean).join('\n\n');
-                        navigator.clipboard.writeText(parts);
-                      }}
-                      className="text-[11px] font-medium rounded-lg cursor-pointer"
-                      style={{ padding: '4px 10px', background: 'rgba(99,102,241,0.08)', border: '0.5px solid rgba(99,102,241,0.2)', color: '#818cf8' }}
-                    >
-                      Copy All
-                    </button>
-                  </div>
-
-                  {/* Sections */}
-                  <div className="p-4 flex flex-col gap-4">
-                    {/* Rewritten Hook */}
-                    {fixItResult.rewrittenHook && (
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="w-[22px] h-[22px] rounded-md flex items-center justify-center" style={{ background: 'rgba(99,102,241,0.1)' }}>
-                            <Lightbulb size={11} className="text-indigo-400" />
-                          </div>
-                          <span className="text-xs font-medium text-zinc-200">Rewritten hook</span>
-                        </div>
-                        <p className="text-sm font-medium text-zinc-100 leading-relaxed mb-1">{fixItResult.rewrittenHook.copy}</p>
-                        <p className="text-[11px] text-zinc-500 leading-[1.45]">{fixItResult.rewrittenHook.reasoning}</p>
-                      </div>
-                    )}
-
-                    {/* Revised Body */}
-                    {fixItResult.revisedBody && (
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="w-[22px] h-[22px] rounded-md flex items-center justify-center" style={{ background: 'rgba(16,185,129,0.1)' }}>
-                            <FileText size={11} className="text-emerald-400" />
-                          </div>
-                          <span className="text-xs font-medium text-zinc-200">Revised body</span>
-                        </div>
-                        {fixItResult.revisedBody.split('\n').filter((l: string) => l.trim()).map((para: string, pi: number) => (
-                          <p key={pi} className="text-[13px] text-zinc-300 leading-[1.6] mb-2 last:mb-0">{para}</p>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* New CTA */}
-                    {fixItResult.newCTA && (
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="w-[22px] h-[22px] rounded-md flex items-center justify-center" style={{ background: 'rgba(251,191,36,0.1)' }}>
-                            <ArrowUpRight size={11} className="text-amber-400" />
-                          </div>
-                          <span className="text-xs font-medium text-zinc-200">New CTA</span>
-                        </div>
-                        <div className="bg-white/[0.03] rounded-[9px] p-2.5">
-                          <span className="text-[10px] text-zinc-500 uppercase tracking-[0.04em] block mb-1">CTA text</span>
-                          <p className="text-sm font-medium text-zinc-100 mb-1">{fixItResult.newCTA.copy}</p>
-                          <p className="text-[11px] text-zinc-500">Placement: {fixItResult.newCTA.placement}</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Text Overlays */}
-                    {fixItResult.textOverlays?.length > 0 && (
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="w-[22px] h-[22px] rounded-md flex items-center justify-center" style={{ background: 'rgba(129,140,248,0.08)' }}>
-                            <FileText size={11} className="text-indigo-400" />
-                          </div>
-                          <span className="text-xs font-medium text-zinc-200">Text overlays</span>
-                        </div>
-                        <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
-                          <thead>
-                            <tr style={{ borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
-                              <th className="text-[10px] uppercase text-zinc-500 font-medium py-1.5 px-2">Time</th>
-                              <th className="text-[10px] uppercase text-zinc-500 font-medium py-1.5 px-2">Copy</th>
-                              <th className="text-[10px] uppercase text-zinc-500 font-medium py-1.5 px-2">Placement</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {fixItResult.textOverlays.map((ov: any, oi: number) => (
-                              <tr key={oi} style={{ borderBottom: oi < fixItResult.textOverlays.length - 1 ? '0.5px solid rgba(255,255,255,0.06)' : 'none' }}>
-                                <td className="text-[11px] font-mono text-zinc-500 py-2 px-2 whitespace-nowrap align-top">{ov.timestamp}</td>
-                                <td className="text-xs text-zinc-200 py-2 px-2 align-top">{ov.copy}</td>
-                                <td className="text-[11px] text-zinc-500 py-2 px-2 align-top">{ov.placement}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-
-                    {/* Predicted Improvements */}
-                    {fixItResult.predictedImprovements?.length > 0 && (
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="w-[22px] h-[22px] rounded-md flex items-center justify-center" style={{ background: 'rgba(16,185,129,0.08)' }}>
-                            <TrendingUp size={11} className="text-emerald-400" />
-                          </div>
-                          <span className="text-xs font-medium text-zinc-200">Predicted improvements</span>
-                        </div>
-                        <div className="flex flex-col gap-1.5">
-                          {fixItResult.predictedImprovements.map((imp: any, ii: number) => (
-                            <div key={ii} className="bg-white/[0.03] rounded-lg p-2.5">
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="text-[11px] font-medium text-zinc-200">{imp.dimension}</span>
-                                <span className="text-[11px] font-mono">
-                                  <span className="text-zinc-500">{imp.oldScore}</span>
-                                  <span className="text-zinc-600 mx-1">→</span>
-                                  <span className="font-medium text-emerald-400">{imp.newScore}</span>
-                                </span>
-                              </div>
-                              <p className="text-[11px] text-zinc-500 leading-[1.45]">{imp.reason}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                <FixItPanel result={fixItResult} mediaType={format as "static" | "video"} />
               )}
             </div>
           </motion.div>
