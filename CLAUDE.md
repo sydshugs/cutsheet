@@ -162,6 +162,17 @@ Invoke these skills at the start of the described tasks — not after:
 - `superpowers:verification-before-completion` — before every commit
 - `code-reviewer` — before merging to main
 - `frontend-design:frontend-design` — after senior-frontend, for visual polish pass
+- `playwright-pro` — before writing or modifying any E2E test in `e2e/`
+- `senior-security` — before touching any P0/P1 security fix (CheckoutSuccess, delete account, userContext injection)
+- `wcag-accessibility-audit` — before executing Pass 1 and Pass 2 of the Full App Fix session
+
+### owasp-llm-top10 — When to Use
+Run this skill after the `sanitizeSessionMemory()` prompt injection fix ships (P1-S1/S2). Does a structured LLM-specific security review of the Gemini API integration:
+- Prompt leakage
+- Insecure output handling
+- Training data poisoning vectors
+
+Run before any paid traffic hits the product.
 
 ---
 
@@ -225,6 +236,8 @@ Every task falls into one of these types. Identify the type first, then follow i
 3. Fix ONLY the confirmed root cause — never fix symptoms
 4. `superpowers:verification-before-completion` — 0 errors
 5. `code-reviewer` — confirm fix doesn't break adjacent code
+6. `senior-security` — if the fix touches any P0/P1 security issue (CheckoutSuccess, delete account, userContext injection)
+7. `playwright-pro` — if the fix involves or requires changes to `e2e/`
 
 ---
 
@@ -246,11 +259,12 @@ Every task falls into one of these types. Identify the type first, then follow i
 1. `superpowers:brainstorming` — required
 2. `superpowers:writing-plans` — full written plan before any code
 3. `superpowers:test-driven-development` — write tests first
-4. `senior-frontend` (UI) + `senior-backend` (API) — execute plan
-5. `superpowers:verification-before-completion` — 0 errors
-6. `code-reviewer` — full review before merging
-7. Update Prompt Registry if any new AI prompts were added
-8. Register any new AI prompts in Notion Prompt Registry
+4. `playwright-pro` — before writing any E2E tests for the new feature
+5. `senior-frontend` (UI) + `senior-backend` (API) — execute plan
+6. `superpowers:verification-before-completion` — 0 errors
+7. `code-reviewer` — full review before merging
+8. Update Prompt Registry if any new AI prompts were added
+9. Register any new AI prompts in Notion Prompt Registry
 
 ---
 
@@ -559,6 +573,8 @@ These are fully specced audit fixes that have never been executed. Check this li
 ### Full App Fix Session (⚡ Full App Fix page)
 
 9 passes, fully specced and ready to run. Run this BEFORE any landing page work.
+
+**Invoke `wcag-accessibility-audit` before starting Pass 1 and Pass 2.**
 
 Pass 1 — A11y P0s: unnamed sidebar button + color contrast (zinc-500/600 → ink-muted)
 Pass 2 — A11y P1s: skip-to-main link, H1 on all 9 analyzer pages, aria-label mismatches
