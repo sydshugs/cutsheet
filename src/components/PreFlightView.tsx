@@ -465,7 +465,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
   // ─── RESULTS UI ──────────────────────────────────────────────────────────────
   if (phase === "done" && comparison) {
     // Score color helper
-    const scoreCol = (s: number) => s >= 8 ? '#10b981' : s >= 4 ? '#f59e0b' : '#ef4444';
+    const scoreCol = (s: number) => s >= 8 ? '#10b981' : s >= 5 ? '#f59e0b' : '#ef4444';
 
     // Confidence badge colors
     const confColor = comparison.winner.confidence === "high"
@@ -488,7 +488,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
     ];
 
     return (
-      <div className="flex h-full" style={{ minHeight: 'calc(100vh - 56px)' }}>
+      <div className="flex h-full overflow-x-hidden" style={{ minHeight: 'calc(100vh - 56px)' }}>
 
         {/* ── Left panel ────────────────────────────────────── */}
         <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
@@ -579,7 +579,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
                         className="text-[11px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
                         style={pillStyle}
                       >
-                        {row.winner}
+                        {row.winner} wins
                       </span>
                       <span className="text-xs text-zinc-500 flex-1">{row.reason}</span>
                     </div>
@@ -617,7 +617,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
 
         {/* ── Right panel ───────────────────────────────────── */}
         <div
-          className="shrink-0 w-[440px] overflow-y-auto pb-12"
+          className="shrink-0 w-[440px] overflow-y-auto overflow-x-hidden pb-12"
           style={{ background: 'rgba(24,24,27,0.5)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', borderLeft: '1px solid rgba(255,255,255,0.05)' }}
         >
           {/* Section label */}
