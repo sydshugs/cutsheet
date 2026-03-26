@@ -279,6 +279,16 @@ Return JSON only:
       setStatus("idle");
       return;
     }
+
+    // Size validation — display banners are images only, 10MB max
+    const MAX_IMAGE_SIZE_MB = 10;
+    const MAX_IMAGE_SIZE = MAX_IMAGE_SIZE_MB * 1024 * 1024;
+    if (f.size > MAX_IMAGE_SIZE) {
+      setError(`File too large. Maximum size is ${MAX_IMAGE_SIZE_MB}MB for display banner images.`);
+      setStatus("error");
+      return;
+    }
+
     setFile(f);
     setResult(null);
     setMockupUrl(null);
