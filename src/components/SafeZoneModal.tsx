@@ -4,105 +4,93 @@ import { cn } from "../lib/utils";
 import { supabase } from "../lib/supabase";
 
 const PLATFORMS = [
-  { key: "tiktok", label: "TikTok" },
-  { key: "ig_reels", label: "IG Reels" },
-  { key: "ig_stories", label: "IG Stories" },
-  { key: "yt_shorts", label: "YT Shorts" },
-  { key: "fb_reels", label: "FB Reels" },
-  { key: "universal", label: "Universal" },
+  { key: "tiktok",            label: "TikTok" },
+  { key: "instagram_reels",   label: "IG Reels" },
+  { key: "instagram_stories", label: "IG Stories" },
+  { key: "youtube_shorts",    label: "YT Shorts" },
+  { key: "facebook_reels",    label: "FB Reels" },
+  { key: "universal",         label: "Universal" },
 ] as const;
 
 type PlatformKey = (typeof PLATFORMS)[number]["key"];
 
-interface SafeZone {
-  topPct: number;
-  bottomPct: number;
-  rightPct: number;
-  leftPct: number;
-  label: string;
-  tips: string[];
-}
-
-// All percentages based on a 1080×1920 (9:16) canvas
-const SAFE_ZONE_CONFIG: Record<PlatformKey, SafeZone> = {
+// 2026 safe zone specs — pixel values on a 1080×1920 (9:16) canvas.
+// Each platform has organic and paid variants; paid always clears more bottom space.
+export const SAFE_ZONE_CONFIG = {
   tiktok: {
-    topPct: 6.8,    // 130px / 1920
-    bottomPct: 13.0, // 250px / 1920
-    rightPct: 7.4,   // 80px / 1080
-    leftPct: 0,
-    label: "TikTok Safe Zone",
-    tips: [
-      "Keep text away from the top 130px (system UI & status bar)",
-      "Leave the bottom 250px clear — captions & action buttons live here",
-      "Avoid placing key visuals in the right 80px (like / comment / share icons)",
-      "Hook copy performs best in the upper-middle area of the safe zone",
-    ],
+    organic: { top: 131, bottom: 370, left: 120, right: 140 }, // right updated Jan 2026 (+20px Add to Playlist)
+    paid:    { top: 131, bottom: 420, left: 120, right: 140 },
   },
-  ig_reels: {
-    topPct: 5.2,     // 100px / 1920
-    bottomPct: 17.7, // 340px / 1920
-    rightPct: 6.9,   // 75px / 1080
-    leftPct: 0,
-    label: "Instagram Reels Safe Zone",
-    tips: [
-      "Keep the top 100px clear of important content (back button & indicators)",
-      "Bottom 340px is covered by username, caption, and engagement row",
-      "Right 75px holds like, comment, share, and audio icons",
-      "Place hook text in the center-upper third for maximum readability",
-    ],
+  instagram_reels: {
+    organic: { top: 108, bottom: 370, left: 60, right: 120 }, // bottom updated late 2025 (+50px audio bar)
+    paid:    { top: 108, bottom: 400, left: 60, right: 120 },
   },
-  ig_stories: {
-    topPct: 11.5,  // 220px / 1920
-    bottomPct: 6.3, // 120px / 1920
-    rightPct: 0,
-    leftPct: 2.8,   // 30px / 1080
-    label: "Instagram Stories Safe Zone",
-    tips: [
-      "Top 220px is occupied by story header bar and progress indicator",
-      "Bottom 120px has the reply bar and swipe-up gesture area",
-      "Leave a small left margin for touch targets and safe framing",
-      "Keep CTAs and key copy centered vertically within the safe zone",
-    ],
+  instagram_stories: {
+    organic: { top: 250, bottom: 250, left: 60, right: 60 },
+    paid:    { top: 250, bottom: 250, left: 60, right: 60 },
   },
-  yt_shorts: {
-    topPct: 6.3,    // 120px / 1920
-    bottomPct: 15.6, // 300px / 1920
-    rightPct: 7.4,   // 80px / 1080
-    leftPct: 0,
-    label: "YouTube Shorts Safe Zone",
-    tips: [
-      "Top 120px is reserved for system UI and back button",
-      "Bottom 300px contains title, channel name, and engagement buttons",
-      "Right 80px is covered by action icon column",
-      "Center your product shots and key text within the safe zone",
-    ],
+  youtube_shorts: {
+    organic: { top: 160, bottom: 480, left: 120, right: 120 },
+    paid:    { top: 160, bottom: 520, left: 120, right: 120 },
   },
-  fb_reels: {
-    topPct: 6.3,    // 120px / 1920
-    bottomPct: 15.6, // 300px / 1920
-    rightPct: 7.4,   // 80px / 1080
-    leftPct: 0,
-    label: "Facebook Reels Safe Zone",
-    tips: [
-      "Top 120px is the system UI area",
-      "Bottom 300px has caption text and engagement buttons",
-      "Right 80px is reserved for like, comment, and share icons",
-      "Center product shots and primary text for both feed and reels",
-    ],
+  facebook_reels: {
+    organic: { top: 108, bottom: 370, left: 60, right: 120 }, // unified with IG Reels March 2026
+    paid:    { top: 108, bottom: 400, left: 60, right: 120 },
   },
   universal: {
-    topPct: 11.5,   // Use the strictest top (IG Stories) = 220px
-    bottomPct: 17.7, // Use the strictest bottom (IG Reels) = 340px
-    rightPct: 7.4,   // Use the strictest right (TikTok/YT) = 80px
-    leftPct: 2.8,    // Use the strictest left (IG Stories) = 30px
-    label: "Universal Safe Zone (All Platforms)",
-    tips: [
-      "These margins ensure your content is safe across every major platform",
-      "Use this when creating one creative that runs on multiple placements",
-      "Never place text, faces, logos, or CTAs outside the green border",
-      "This is the most conservative safe zone — ideal for cross-platform ads",
-    ],
+    organic: { top: 260, bottom: 260, left: 90, right: 90 },
+    paid:    { top: 260, bottom: 310, left: 90, right: 90 },
   },
+} as const;
+
+// Per-platform placement tips — reference updated 2026 pixel values
+const PLATFORM_TIPS: Record<PlatformKey, string[]> = {
+  tiktok: [
+    "Top 131px: status bar, live indicator, and back button",
+    "Bottom 370px organic / 420px paid: comment row, action bar, and expanded caption",
+    "Right 140px: like, comment, share, and Add to Playlist icons (updated Jan 2026)",
+    "Left 120px: for-you/following toggle and profile avatar",
+  ],
+  instagram_reels: [
+    "Top 108px: back button and reel progress indicators",
+    "Bottom 370px organic / 400px paid: username, caption, audio bar (expanded late 2025), and engagement row",
+    "Right 120px: like, comment, share, save, and audio icons",
+    "Left 60px: margin for safe framing and touch targets",
+  ],
+  instagram_stories: [
+    "Top 250px: story progress bar, header, and close/profile button",
+    "Bottom 250px: reply field and swipe-up / link sticker gesture area",
+    "60px left and right margins for touch targets and sticker placement safety",
+    "Keep all CTAs and key copy centered vertically within the safe zone",
+  ],
+  youtube_shorts: [
+    "Top 160px: system UI, search bar, and Shorts navigation",
+    "Bottom 480px organic / 520px paid: title, channel info, actions, and Subscribe button",
+    "120px left and right margins for action column and safe framing",
+    "Center product shots and hook text vertically in the safe zone",
+  ],
+  facebook_reels: [
+    "Top 108px: system UI and back button",
+    "Bottom 370px organic / 400px paid: creator info, caption, and engagement row (unified with IG Reels, March 2026)",
+    "Right 120px: like, comment, share, and save icons",
+    "Left 60px: margin for safe framing",
+  ],
+  universal: [
+    "These margins cover the strictest requirements across all six platforms",
+    "Top 260px / Bottom 310px paid — safest choice when one creative runs everywhere",
+    "90px left and right margins ensure safety on every major placement",
+    "Never place text, faces, logos, or CTAs outside the green border",
+  ],
+};
+
+// Map modal platform keys → API's platform keys (API uses legacy short-form keys)
+const API_PLATFORM_MAP: Record<PlatformKey, string> = {
+  tiktok:            "tiktok",
+  instagram_reels:   "ig_reels",
+  instagram_stories: "ig_stories",
+  youtube_shorts:    "yt_shorts",
+  facebook_reels:    "fb_reels",
+  universal:         "universal",
 };
 
 // ─── AI RESULT TYPES ─────────────────────────────────────────────────────────
@@ -185,7 +173,7 @@ export function SafeZoneModal({ open, onClose, thumbnailSrc, mode = "paid" }: Sa
         body: JSON.stringify({
           imageData: base64,
           mimeType: fetchedBlob.type || "image/jpeg",
-          platform: activePlatform,
+          platform: API_PLATFORM_MAP[activePlatform],
           mode,
         }),
       });
@@ -204,16 +192,19 @@ export function SafeZoneModal({ open, onClose, thumbnailSrc, mode = "paid" }: Sa
 
   if (!open) return null;
 
-  const config = SAFE_ZONE_CONFIG[activePlatform];
+  // Pick dims from the 2026 config based on active platform + mode
+  const dims = SAFE_ZONE_CONFIG[activePlatform][mode];
+  const tips = PLATFORM_TIPS[activePlatform];
+  const platformLabel = PLATFORMS.find((p) => p.key === activePlatform)?.label ?? activePlatform;
 
-  // SVG viewBox — 1080×1920 (9:16)
+  // SVG viewBox — 1080×1920 (9:16). Config values are already in pixels on this canvas.
   const VW = 1080;
   const VH = 1920;
 
-  const topH = (config.topPct / 100) * VH;
-  const bottomH = (config.bottomPct / 100) * VH;
-  const rightW = (config.rightPct / 100) * VW;
-  const leftW = (config.leftPct / 100) * VW;
+  const topH = dims.top;
+  const bottomH = dims.bottom;
+  const rightW = dims.right;
+  const leftW = dims.left;
 
   const safeX = leftW;
   const safeY = topH;
@@ -349,7 +340,7 @@ export function SafeZoneModal({ open, onClose, thumbnailSrc, mode = "paid" }: Sa
                 height="320"
                 className="absolute inset-0"
                 style={{ display: 'block' }}
-                aria-label={`Safe zone overlay for ${config.label}`}
+                aria-label={`Safe zone overlay for ${platformLabel}`}
               >
                 {/* Top danger zone */}
                 {topH > 0 && (
@@ -462,10 +453,12 @@ export function SafeZoneModal({ open, onClose, thumbnailSrc, mode = "paid" }: Sa
 
           {/* Tips + warning */}
           <div className="flex-1 flex flex-col min-w-0">
-            <h3 className="text-xs font-semibold text-zinc-200 mb-4">{config.label}</h3>
+            <h3 className="text-xs font-semibold text-zinc-200 mb-4">
+              {platformLabel} — {mode === "paid" ? "Paid" : "Organic"}
+            </h3>
 
             <div className="space-y-3 mb-5">
-              {config.tips.map((tip, i) => (
+              {tips.map((tip, i) => (
                 <div key={i} className="flex items-start gap-2.5">
                   <CheckCircle2
                     size={13}
