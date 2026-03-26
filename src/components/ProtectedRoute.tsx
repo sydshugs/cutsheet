@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 import { BetaGate } from './BetaGate'
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading, betaAccess } = useAuth()
+  const { user, loading, betaAccess, refreshUserProfile } = useAuth()
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const [checking, setChecking] = useState(true)
@@ -53,6 +53,39 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
       }
     })()
   }, [user, loading])
+
+  // ── Auto-redeem pending beta code ────────────────────────────────────────
+  // Fires when a newly-authed user has betaAccess=false and localStorage
+  // holds a code validated at /access. Covers email-confirm + Google OAuth.
+  useEffect(() => {
+    if (!user || betaAccess !== false || checking) return
+
+    const pendingCode = localStorage.getItem('pending_beta_code')
+    if (!pendingCode) return
+
+    void (async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session?.access_token) return
+
+        const res = await fetch('/api/redeem-beta-code', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ code: pendingCode }),
+        })
+
+        if (res.ok) {
+          localStorage.removeItem('pending_beta_code')
+          await refreshUserProfile()
+        }
+      } catch (err) {
+        console.error('[ProtectedRoute] auto-redeem error:', err)
+      }
+    })()
+  }, [user, betaAccess, checking])
 
   // ── Loading spinner ──────────────────────────────────────────────────────
   // Show while auth is loading OR while we're checking onboarding status.

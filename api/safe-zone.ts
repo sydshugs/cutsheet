@@ -96,7 +96,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
       model: GEMINI_MODEL,
-      generationConfig: { temperature: 0, maxOutputTokens: 2048 },
+      // gemini-2.5-flash thinking tokens count against maxOutputTokens.
+      // 2048 was too tight — thinking consumed ~1800, leaving <250 for JSON.
+      // 8192 gives the model room to think AND return a complete response.
+      generationConfig: { temperature: 0, maxOutputTokens: 8192 },
     });
 
     // Build safe zone description without any user-controlled interpolation

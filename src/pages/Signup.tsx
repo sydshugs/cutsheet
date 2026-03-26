@@ -1,5 +1,5 @@
 import { Helmet } from 'react-helmet-async';
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, CheckCircle } from "lucide-react";
@@ -98,6 +98,13 @@ export default function Signup() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState(false);
+
+  // Guard: must have passed through /access first
+  useEffect(() => {
+    if (!localStorage.getItem("pending_beta_code")) {
+      navigate("/access", { replace: true });
+    }
+  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
