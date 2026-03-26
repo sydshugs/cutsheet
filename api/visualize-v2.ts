@@ -138,11 +138,16 @@ function buildV2EditPrompt(ctx: VisualizeContextInput, scorecard: ScorecardData)
   const overrides = buildOverrides(ctx);
 
   return `ABSOLUTE RULES — THESE OVERRIDE EVERYTHING ELSE:
-1. DO NOT CHANGE THE HEADLINE COPY. The text in this ad is intentional. Read every word in the original image. Your output must contain those EXACT same words in the EXACT same positions. If the headline says "A BETTER DOWN-THERE LIFE" — those exact words must appear in your output.
+1. RULE 1 — HEADLINE TEXT IS LOCKED. DO NOT REWRITE IT.
+   The headline text in this ad must appear word-for-word in your output.
+   If the headline says "THE COMPLETE CLEAN-UP FOR AFTER" — output those exact words in your image. Not a paraphrase. Not an improvement. The exact same words.
+   Gemini's tendency to "improve" headlines is a failure mode. Resist it completely.
 2. DO NOT REPLACE THE PRODUCT VISUAL. The hero image stays. You may enhance lighting, contrast, or composition — never swap the subject.
 3. DO NOT CHANGE THE BRAND IDENTITY. Logo, colors, typography — identical to the original.
 4. ONLY FIX WHAT THE SCORECARD FLAGGED AS WEAK (score < 7). Leave everything that scored 7+ completely alone.
 5. THE OUTPUT MUST LOOK LIKE THE INPUT WITH TARGETED IMPROVEMENTS. If someone compared before/after, they should recognize it as the same ad — not a different ad.
+
+PROOFREAD REQUIREMENT: Before outputting, check every word in every text element for spelling errors. "BATHROOM" not "BATHROM". "COMPLETE" not "COMPLET". Read every word character by character. Do not output an image with a misspelling.
 
 DO NOT MAKE THIS LOOK AI-GENERATED:
 - No perfect symmetry unless it was in the original
