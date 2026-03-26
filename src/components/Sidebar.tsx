@@ -111,7 +111,7 @@ function NavItemRow({ item, collapsed }: { item: NavItem; collapsed: boolean }) 
       {/* Collapsed tooltip */}
       {collapsed && (
         <span
-          className="absolute opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity"
+          className="absolute opacity-0 group-hover:opacity-100 group-hover:delay-300 group-focus-within:opacity-100 pointer-events-none transition-opacity duration-150"
           style={{
             left: "calc(100% + 8px)", top: "50%", transform: "translateY(-50%)",
             background: "#18181b", border: "1px solid rgba(255,255,255,0.08)",
@@ -343,8 +343,8 @@ function MobileTabBar({ onMoreClick }: { onMoreClick: () => void }) {
           >
             {({ isActive }) => (
               <>
-                <Icon size={20} color={isActive ? "#6366f1" : "rgba(255,255,255,0.4)"} />
-                <span style={{ fontSize: 10, color: isActive ? "#6366f1" : "rgba(255,255,255,0.4)", fontWeight: isActive ? 500 : 400 }}>
+                <Icon size={20} color={isActive ? "#6366f1" : "rgba(255,255,255,0.6)"} />
+                <span style={{ fontSize: 10, color: isActive ? "#6366f1" : "rgba(255,255,255,0.6)", fontWeight: isActive ? 500 : 400 }}>
                   {tab.label}
                 </span>
               </>
@@ -357,8 +357,8 @@ function MobileTabBar({ onMoreClick }: { onMoreClick: () => void }) {
         onClick={onMoreClick}
         style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3, background: "transparent", border: "none", cursor: "pointer" }}
       >
-        <MoreHorizontal size={20} color="rgba(255,255,255,0.4)" />
-        <span style={{ fontSize: 10, color: "rgba(255,255,255,0.4)" }}>More</span>
+        <MoreHorizontal size={20} color="rgba(255,255,255,0.6)" />
+        <span style={{ fontSize: 10, color: "rgba(255,255,255,0.6)" }}>More</span>
       </button>
     </nav>
   );
@@ -371,8 +371,15 @@ function MobileMoreDrawer({ open, onClose }: { open: boolean; onClose: () => voi
   if (!open) return null;
   return (
     <>
-      <div className="fixed inset-0 z-50 bg-black/60" onClick={onClose} />
-      <div className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl" style={{ background: "#111113", border: "1px solid rgba(255,255,255,0.08)" }}>
+      <div className="fixed inset-0 z-50 bg-black/60" onClick={onClose} aria-hidden="true" />
+      <div
+        className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl"
+        style={{ background: "#111113", border: "1px solid rgba(255,255,255,0.08)" }}
+        role="dialog"
+        aria-modal="true"
+        aria-label="More navigation options"
+        onKeyDown={(e) => { if (e.key === "Escape") onClose(); }}
+      >
         <div className="flex justify-center pt-3 pb-1">
           <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.12)" }} />
         </div>
@@ -395,7 +402,7 @@ function MobileMoreDrawer({ open, onClose }: { open: boolean; onClose: () => voi
                 <Icon size={18} color="#71717a" />
                 <div style={{ textAlign: "left" }}>
                   <div style={{ fontSize: 13, fontWeight: 500, color: "#f4f4f5" }}>{item.label}</div>
-                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>{item.sublabel}</div>
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.6)" }}>{item.sublabel}</div>
                 </div>
                 {item.comingSoon && (
                   <span style={{ marginLeft: "auto", fontSize: 10, color: "#818cf8", background: "rgba(99,102,241,0.1)", padding: "2px 8px", borderRadius: 999, border: "1px solid rgba(99,102,241,0.2)" }}>

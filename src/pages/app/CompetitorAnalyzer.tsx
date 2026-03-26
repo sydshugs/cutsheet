@@ -285,9 +285,9 @@ export default function CompetitorAnalyzer() {
       const r = await analyzeCompetitor(yourFile, competitorFile, API_KEY, platform, format, (m) => setStatusMsg(m));
       setResult(r); setStatus("complete"); setStep(3);
       const c = increment(); if (c >= FREE_LIMIT && !isPro) onUpgradeRequired("analyze");
-    } catch (err) {
+    } catch {
       setStatus("error");
-      setError(err instanceof Error ? err.message : "Couldn't analyze this creative. This usually means the file format isn't supported or the image is too small. Try a different file.");
+      setError("Something went wrong. Please try again.");
     }
   };
 

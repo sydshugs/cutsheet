@@ -1,6 +1,6 @@
 // src/pages/app/Deconstructor.tsx — Winning Ad Deconstructor
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { useOutletContext } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -210,13 +210,13 @@ function DeconstructingState({ sourceType }: { sourceType: SourceType }) {
   ];
   const [stageIdx, setStageIdx] = useState(0);
 
-  useState(() => {
+  useEffect(() => {
     const interval = setInterval(
       () => setStageIdx((p) => Math.min(p + 1, STAGES.length - 1)),
       3200
     );
     return () => clearInterval(interval);
-  });
+  }, []);
 
   return (
     <div className="flex flex-col items-center justify-center py-20 gap-6">

@@ -24,8 +24,8 @@
   --ink:           #f4f4f5;
   --ink-secondary: #a1a1aa;
   --ink-muted:     #71717a;
-  --ink-disabled:  #52525b;
-  --ink-faint:     rgba(255,255,255,0.25);
+  --ink-disabled:  #71717a;
+  --ink-faint:     rgba(255,255,255,0.5);
   --surface-dim:   rgba(255,255,255,0.015);
   --label:         #a1a1aa;
   

@@ -1,6 +1,7 @@
 // Settings.tsx — /settings page with Profile, Billing, Usage tabs
 
 import { useState, useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, CheckCircle, X, Layers, Zap, Users, Check } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -31,12 +32,12 @@ const cardAnim = (delay = 0) => ({
 
 // ─── BRAND COLORS ─────────────────────────────────────────────────────────────
 const COLORS = {
-  primary: "#6366f1",
-  primaryLight: "#818cf8",
-  success: "#10b981",
-  warning: "#f59e0b",
-  error: "#ef4444",
-  team: "#8b5cf6",
+  primary: "var(--accent)",
+  primaryLight: "#818cf8",    // no dedicated token — keep as hex
+  success: "var(--success)",
+  warning: "var(--warn)",
+  error: "var(--error)",
+  team: "#8b5cf6",            // no dedicated token — keep as hex
 };
 
 // ─── DOWNGRADE REASONS ────────────────────────────────────────────────────────
@@ -1210,6 +1211,10 @@ export function Settings() {
 
   return (
     <div className="min-h-screen relative overflow-x-hidden" style={{ background: "#09090b" }}>
+      <Helmet>
+        <title>Settings — Cutsheet</title>
+        <meta name="robots" content="noindex" />
+      </Helmet>
       {/* Subtle ambient glow */}
       <div
         className="pointer-events-none fixed top-0 right-1/4 w-[800px] h-[600px] rounded-full blur-[150px]"
@@ -1543,10 +1548,10 @@ export function Settings() {
                       <p style={{ fontSize: 13, fontWeight: 500, color: "#f4f4f5" }}>Product updates</p>
                       <p style={{ fontSize: 12, color: "#71717a", marginTop: 2 }}>New features and improvements</p>
                     </div>
-                    <Switch checked={productUpdates} onCheckedChange={(v) => handlePrefChange(setProductUpdates, v)} disabled />
+                    <Switch checked={productUpdates} onCheckedChange={(v) => handlePrefChange(setProductUpdates, v)} disabled aria-label="Product updates" />
                   </div>
 
-                  <div 
+                  <div
                     className="flex items-center justify-between p-4 rounded-xl"
                     style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}
                   >
@@ -1554,7 +1559,7 @@ export function Settings() {
                       <p style={{ fontSize: 13, fontWeight: 500, color: "#f4f4f5" }}>Weekly digest</p>
                       <p style={{ fontSize: 12, color: "#71717a", marginTop: 2 }}>Your usage summary every Monday</p>
                     </div>
-                    <Switch checked={weeklyDigest} onCheckedChange={(v) => handlePrefChange(setWeeklyDigest, v)} disabled />
+                    <Switch checked={weeklyDigest} onCheckedChange={(v) => handlePrefChange(setWeeklyDigest, v)} disabled aria-label="Weekly digest" />
                   </div>
                 </div>
               </motion.div>

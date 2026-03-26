@@ -56,7 +56,7 @@ export function YouTubeFormatSelector({ selected, onChange, disabled }: YouTubeF
               onMouseEnter={() => setHovered(f.key)}
               onMouseLeave={() => setHovered(null)}
               title={f.tooltip}
-              className="relative flex items-center justify-center px-2 py-1 rounded-md text-[10px] font-medium transition-all duration-150 outline-none"
+              className="relative flex items-center justify-center px-2 py-1 rounded-md text-[10px] font-medium transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
               style={{
                 background: isActive
                   ? "rgba(99,102,241,0.15)"
