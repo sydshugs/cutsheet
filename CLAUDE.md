@@ -127,6 +127,34 @@ After any significant change to a result view (PaidAdAnalyzer, DisplayAnalyzer, 
 
 Do at least 2 rounds of comparison before marking a UI task done.
 
+### PRD to Issues — Thin Vertical Slices
+Use this before starting any feature that touches more than 2 files or has unclear dependencies.
+
+Before writing code:
+1. Write a one-paragraph PRD: what problem does this solve, what does done look like
+2. Break it into the smallest independently-shippable slices (each slice = one PR that works on its own)
+3. For each slice, call out:
+   - What it delivers
+   - What it blocks (dependencies on other slices)
+   - What it does NOT include (scope boundary)
+4. Only start coding slice 1 after the full slice map is written
+
+Goal: eliminate "I got halfway through and hit a dependency I didn't see" failures.
+Never start a multi-slice feature without this decomposition done first.
+
+### Improve Codebase Architecture — Parallel Sub-Agent Pattern
+Use this before Full App Fix sessions or any major structural refactor.
+
+Pattern:
+1. Identify the architectural problem (e.g. "state management is scattered", "API layer has no consistent error handling")
+2. Spawn 3 parallel sub-agents, each tasked with designing a *radically different* solution to the same problem — no two solutions should share the same approach
+3. Each sub-agent writes a spec: approach, tradeoffs, migration path, estimated scope
+4. Review all 3 specs and pick the winner (or hybrid)
+5. Only then begin implementation
+
+Goal: avoid defaulting to the first reasonable solution. Forces consideration of alternatives before any code is written.
+Use `senior-architect` skill alongside this pattern.
+
 ---
 
 ## Anti-Generic Design Rules
@@ -392,7 +420,7 @@ These are confirmed open security/stability issues from the Phase 1 audit (March
 **File:** `CheckoutSuccess.tsx`
 **Issue:** Client directly writes `subscription_status: "pro"` to Supabase after Stripe checkout. Any user can call this from console to get Pro free.
 **Fix:** Wire CheckoutSuccess to poll for webhook-written status. Remove client-side write. `api/stripe-webhook.ts` already writes correctly — just remove the client write.
-**Status:** ⬜ NOT FIXED
+**Status:** ✅ FIXED — commit `62c6367` replaced client write with webhook-polling approach. CheckoutSuccess now only reads `subscription_status` and waits for the webhook to set it.
 
 ### P0-4 — Delete account is a no-op
 **File:** `Settings.tsx`
