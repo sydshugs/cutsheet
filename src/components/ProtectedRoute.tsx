@@ -29,17 +29,25 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
       .select('onboarding_completed')
       .eq('id', user.id)
       .single()
-      .then(({ data }) => {
-        if (!data || !data.onboarding_completed) {
+      .then(({ data, error }) => {
+        if (error) {
+          // Log but don't redirect — could be RLS misconfiguration or network issue.
+          // Punishing users for a DB error by sending them back through onboarding
+          // is worse than letting them through. The flag will be enforced next load
+          // once RLS is confirmed correct.
+          console.error('[ProtectedRoute] profiles fetch error:', error.message)
+          verifiedUserIdRef.current = user.id
+        } else if (!data || !data.onboarding_completed) {
           navigate('/welcome', { replace: true })
         } else {
           verifiedUserIdRef.current = user.id
         }
         setChecking(false)
       })
-      .catch(() => {
-        // If query fails, redirect to onboarding to be safe
-        navigate('/welcome', { replace: true })
+      .catch((err) => {
+        // Unexpected JS error (not a Supabase query error) — allow through and log
+        console.error('[ProtectedRoute] unexpected error:', err)
+        verifiedUserIdRef.current = user.id
         setChecking(false)
       })
   }, [user, loading])
