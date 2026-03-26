@@ -131,56 +131,64 @@ function buildV2EditPrompt(ctx: VisualizeContextInput, scorecard: ScorecardData)
 
   const hookWarning =
     scorecard.hookVerdict && scorecard.hookVerdict !== "Strong"
-      ? `\nHOOK IS ${scorecard.hookVerdict.toUpperCase()}: The opening visual/headline is not stopping the scroll. Fix the hook — make the first thing the eye lands on impossible to ignore.\n`
+      ? `\nHOOK IS ${scorecard.hookVerdict.toUpperCase()}: The opening visual/headline is not stopping the scroll. Make the first thing the eye lands on more arresting — but keep the existing headline text.\n`
       : "";
 
   // Build the CRITICAL OVERRIDES block that goes at the very end
   const overrides = buildOverrides(ctx);
 
-  return `You are editing an existing ad creative. Make ONLY the specific improvements listed below.
-Do NOT redesign the entire image. Preserve all elements that are already working.
-Do NOT change the product, brand logo, or overall composition unless explicitly instructed.
+  return `ABSOLUTE RULES — THESE OVERRIDE EVERYTHING ELSE:
+1. DO NOT CHANGE THE HEADLINE COPY. The text in this ad is intentional. Read every word in the original image. Your output must contain those EXACT same words in the EXACT same positions. If the headline says "A BETTER DOWN-THERE LIFE" — those exact words must appear in your output.
+2. DO NOT REPLACE THE PRODUCT VISUAL. The hero image stays. You may enhance lighting, contrast, or composition — never swap the subject.
+3. DO NOT CHANGE THE BRAND IDENTITY. Logo, colors, typography — identical to the original.
+4. ONLY FIX WHAT THE SCORECARD FLAGGED AS WEAK (score < 7). Leave everything that scored 7+ completely alone.
+5. THE OUTPUT MUST LOOK LIKE THE INPUT WITH TARGETED IMPROVEMENTS. If someone compared before/after, they should recognize it as the same ad — not a different ad.
+
+DO NOT MAKE THIS LOOK AI-GENERATED:
+- No perfect symmetry unless it was in the original
+- No overlit product shots with fake studio lighting
+- No uncanny-valley faces or impossibly perfect skin
+- No generic stock photo aesthetic
+- Real textures, real imperfections, authentic feel
+- If there are people in the original, keep the same appearance
+
+---
 
 ${quadrantContext}
 
 ---
 
-The ad scored ${scorecard.overallScore}/10. The specific weaknesses to fix:
+You are editing a ${ctx.platform} ad that scored ${scorecard.overallScore}/10. Make ONLY the specific improvements listed below — do not redesign the ad.
+
+WHAT IS WEAK IN THIS AD (fix these specifically):
 ${weakLines || "- No critical weaknesses identified — refine overall quality."}
 
-Specific improvements from the analysis:
+SPECIFIC IMPROVEMENTS FROM THE ANALYSIS:
 ${improvementLines || "- Refine visual impact and clarity."}
 ${hookWarning}
 ---
 
-EDITING RULES — CRITICAL:
+ADDITIONAL EDITING RULES:
 
-1. PRESERVE THE ORIGINAL. This is image editing, not image generation. The output must be recognizably the same ad — same background, same product, same brand identity. You are making surgical fixes, not creating a new creative.
-
-2. DO NOT MAKE THIS LOOK AI-GENERATED. Specifically:
-   - No perfect symmetry unless it was in the original
-   - No overlit product shots with fake studio lighting
-   - No uncanny-valley faces or impossibly perfect skin
-   - Real textures, real imperfections, authentic feel
-
-3. WHAT YOU CAN CHANGE:
-   - Text overlays: rewrite, reposition, resize, change weight/color for better contrast
-   - Visual hierarchy: adjust what the eye lands on first
+1. WHAT YOU CAN CHANGE:
+   - Visual hierarchy: adjust what the eye lands on first (size, contrast, position)
    - Background: adjust color, contrast, brightness, gradient
    - Composition: reposition elements for better visual flow
    - Color accents: adjust for better contrast and attention
+   - Text styling: change weight, size, color, position for better readability — but keep the SAME WORDS
 
-4. WHAT YOU MUST NOT CHANGE:
+2. WHAT YOU MUST NOT CHANGE:
+   - Any headline or body text (keep exact wording from the original)
    - Brand logo (position, size, or design)
-   - Product photography (the core product shot)
+   - Product photography (the core product/hero shot)
    - Brand color palette
-   - Elements that scored 8+ in the analysis — leave them alone
+   - Elements that scored 8+ in the analysis
 
-5. PROOFREAD ALL TEXT. No duplicate words, no repeated phrases, no incomplete sentences. Every text string must be clean.
+3. PROOFREAD ALL TEXT. Every word in your output must match the original. No duplicate words, no repeated phrases, no altered copy. If the original says "A BETTER DOWN-THERE LIFE" your output must say exactly "A BETTER DOWN-THERE LIFE".
 
-6. PRESERVE EXISTING PERSUASION PATTERNS. Loss aversion framing, named villains, and urgency triggers that already exist in the original should be preserved — do not remove them. But do NOT add new ones that were not in the original.
+4. PRESERVE EXISTING PERSUASION PATTERNS. Loss aversion framing, named villains, and urgency triggers that already exist in the original must be preserved exactly as written.
 
-7. PRESERVE TYPOGRAPHIC HIGHLIGHT TREATMENTS. If any word in the original uses a brand accent color (e.g. pink, colored highlight, neon), bold weight, or special styling that differs from the surrounding text, that treatment MUST be maintained. When replacing headline text, apply the SAME highlight color to the equivalent high-impact word in the new headline. Never render new headline copy in plain monochrome if the original had color-highlighted words. Match the exact color — do not substitute a different accent.
+5. PRESERVE TYPOGRAPHIC HIGHLIGHT TREATMENTS. If any word in the original uses a brand accent color (e.g. pink, colored highlight, neon), bold weight, or special styling, that treatment MUST be maintained. Match the exact color — do not substitute a different accent.
 ${overrides}
 
 Produce the improved version of the provided image now. Output only the image — no explanation, no description.`;
