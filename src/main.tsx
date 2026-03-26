@@ -30,7 +30,6 @@ const CheckoutSuccess = lazy(() => import("./pages/CheckoutSuccess.tsx"));
 const CheckoutCancel = lazy(() => import("./pages/CheckoutCancel.tsx"));
 const Changelog = lazy(() => import("./pages/Changelog.tsx"));
 const DemoPage = lazy(() => import("./pages/DemoPage.tsx"));
-const SafeZoneDemo = lazy(() => import("./pages/SafeZoneDemo.tsx"));
 const Settings = lazy(() => import("./pages/Settings.tsx").then(m => ({ default: m.Settings })));
 
 // ── App pages (heaviest — analyzer bundles) ──────────────────────────────────
@@ -90,7 +89,6 @@ createRoot(document.getElementById("root")!).render(
           <Route path="/checkout/success" element={<CheckoutSuccess />} />
           <Route path="/checkout/cancel" element={<CheckoutCancel />} />
           <Route path="/demo" element={<DemoPage />} />
-          <Route path="/safe-zone-preview" element={<SafeZoneDemo />} />
           <Route path="/changelog" element={<Changelog />} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
 

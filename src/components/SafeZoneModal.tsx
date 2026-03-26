@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { X, Shield, AlertTriangle, CheckCircle2, Loader2, Sparkles, XCircle } from "lucide-react";
 import { cn } from "../lib/utils";
 import { supabase } from "../lib/supabase";
+import { SafeZonePreview } from "./SafeZonePreview";
 
 const PLATFORMS = [
   { key: "tiktok",            label: "TikTok" },
@@ -197,19 +198,13 @@ export function SafeZoneModal({ open, onClose, thumbnailSrc, mode = "paid" }: Sa
   const tips = PLATFORM_TIPS[activePlatform];
   const platformLabel = PLATFORMS.find((p) => p.key === activePlatform)?.label ?? activePlatform;
 
-  // SVG viewBox — 1080×1920 (9:16). Config values are already in pixels on this canvas.
-  const VW = 1080;
-  const VH = 1920;
-
-  const topH = dims.top;
-  const bottomH = dims.bottom;
-  const rightW = dims.right;
-  const leftW = dims.left;
-
-  const safeX = leftW;
-  const safeY = topH;
-  const safeW = VW - leftW - rightW;
-  const safeH = VH - topH - bottomH;
+  // Convert pixel dims to percentages for SafeZonePreview (which uses % not px)
+  const safeZonePct = {
+    top: (dims.top / 1920) * 100,
+    bottom: (dims.bottom / 1920) * 100,
+    left: (dims.left / 1080) * 100,
+    right: (dims.right / 1080) * 100,
+  };
 
   // Risk level styling
   const riskStyles: Record<string, { bg: string; border: string; text: string; label: string }> = {
@@ -295,130 +290,14 @@ export function SafeZoneModal({ open, onClose, thumbnailSrc, mode = "paid" }: Sa
 
         {/* Content */}
         <div className="p-6 flex flex-col md:flex-row gap-6">
-          {/* SVG preview — phone frame */}
-          <div className="shrink-0 flex flex-col items-center">
-            <p className="text-[10px] text-zinc-600 uppercase tracking-wider mb-2 font-medium">
-              9:16 Preview
-            </p>
-            <div
-              className="relative overflow-hidden rounded-xl border border-white/[0.08]"
-              style={{ width: 180, height: 320 }}
-            >
-              {/* Phone background */}
-              <div className="absolute inset-0 bg-zinc-950" />
-
-              {/* Ad creative preview — renders behind the SVG overlays */}
-              {thumbnailSrc && (
-                <img
-                  src={thumbnailSrc}
-                  alt="Ad creative preview"
-                  className="absolute inset-0 w-full h-full object-cover"
-                  style={{ display: 'block' }}
-                />
-              )}
-
-              {/* Crosshatch fill — shown only when no image is available */}
-              <svg
-                viewBox="0 0 180 320"
-                width="180"
-                height="320"
-                className="absolute inset-0"
-                style={{ display: thumbnailSrc ? 'none' : 'block', opacity: 0.12 }}
-              >
-                <defs>
-                  <pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-                    <line x1="0" y1="0" x2="0" y2="8" stroke="#ffffff" strokeWidth="1" />
-                  </pattern>
-                </defs>
-                <rect x="0" y="0" width="180" height="320" fill="url(#hatch)" />
-              </svg>
-
-              {/* Safe zone overlay */}
-              <svg
-                viewBox={`0 0 ${VW} ${VH}`}
-                width="180"
-                height="320"
-                className="absolute inset-0"
-                style={{ display: 'block' }}
-                aria-label={`Safe zone overlay for ${platformLabel}`}
-              >
-                {/* Top danger zone */}
-                {topH > 0 && (
-                  <rect x={0} y={0} width={VW} height={topH} fill="rgba(239,68,68,0.4)" />
-                )}
-                {/* Bottom danger zone */}
-                {bottomH > 0 && (
-                  <rect x={0} y={VH - bottomH} width={VW} height={bottomH} fill="rgba(239,68,68,0.4)" />
-                )}
-                {/* Right danger zone */}
-                {rightW > 0 && (
-                  <rect
-                    x={VW - rightW}
-                    y={topH}
-                    width={rightW}
-                    height={VH - topH - bottomH}
-                    fill="rgba(239,68,68,0.28)"
-                  />
-                )}
-                {/* Left danger zone */}
-                {leftW > 0 && (
-                  <rect
-                    x={0}
-                    y={topH}
-                    width={leftW}
-                    height={VH - topH - bottomH}
-                    fill="rgba(239,68,68,0.28)"
-                  />
-                )}
-
-                {/* Safe zone border */}
-                <rect
-                  x={safeX}
-                  y={safeY}
-                  width={safeW}
-                  height={safeH}
-                  fill="none"
-                  stroke="rgba(16,185,129,0.85)"
-                  strokeWidth={28}
-                  strokeDasharray="90 45"
-                />
-
-                {/* UI label — top zone */}
-                {topH > 120 && (
-                  <text
-                    x={VW / 2}
-                    y={topH / 2 + 24}
-                    textAnchor="middle"
-                    fill="rgba(255,255,255,0.55)"
-                    fontSize={84}
-                    fontFamily="system-ui, sans-serif"
-                  >
-                    UI
-                  </text>
-                )}
-                {/* UI label — bottom zone */}
-                {bottomH > 120 && (
-                  <text
-                    x={VW / 2}
-                    y={VH - bottomH / 2 + 24}
-                    textAnchor="middle"
-                    fill="rgba(255,255,255,0.55)"
-                    fontSize={84}
-                    fontFamily="system-ui, sans-serif"
-                  >
-                    UI
-                  </text>
-                )}
-              </svg>
-
-              {/* Legend pill */}
-              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-2 rounded-full px-2 py-0.5" style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)' }}>
-                <div className="w-2 h-2 rounded-sm" style={{ background: 'rgba(239,68,68,0.7)' }} />
-                <span className="text-[9px] text-zinc-400">Unsafe</span>
-                <div className="w-2 h-2 rounded-sm border" style={{ borderColor: 'rgba(16,185,129,0.85)' }} />
-                <span className="text-[9px] text-zinc-400">Safe</span>
-              </div>
-            </div>
+          {/* Phone frame preview — polished v0 SafeZonePreview */}
+          <div className="shrink-0">
+            <SafeZonePreview
+              imageUrl={thumbnailSrc ?? ""}
+              platform={activePlatform}
+              mode={mode}
+              safeZoneConfig={safeZonePct}
+            />
 
             {/* AI Check button — only shown when image is available */}
             {thumbnailSrc && (
