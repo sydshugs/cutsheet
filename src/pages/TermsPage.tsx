@@ -8,65 +8,55 @@ export default function TermsPage() {
 
       <main className="mx-auto max-w-3xl px-8 py-24">
         <h1 className="text-3xl font-bold text-white mb-2">Terms of Service</h1>
-        <p className="text-sm text-zinc-500 mb-12">Last updated: March 12, 2026</p>
+        <p className="text-sm text-zinc-500 mb-12">Last updated: March 25, 2026</p>
 
-        <h2 className="text-lg font-semibold text-white mt-10 mb-3">Acceptance</h2>
+        <h2 className="text-lg font-semibold text-white mt-10 mb-3">The Service</h2>
         <p className="text-sm text-zinc-400 leading-relaxed">
-          By using Cutsheet, you agree to these terms. If you do not agree, do not
-          use the service.
+          Cutsheet is provided as-is for ad creative analysis. Scores and feedback
+          are advisory — they are not guarantees of ad performance.
         </p>
 
-        <h2 className="text-lg font-semibold text-white mt-10 mb-3">What Cutsheet Is</h2>
+        <h2 className="text-lg font-semibold text-white mt-10 mb-3">Your Content</h2>
         <p className="text-sm text-zinc-400 leading-relaxed">
-          Cutsheet is an AI-powered ad creative analysis tool. It provides scores and
-          feedback on video and static ad creatives using AI models. Scores are
-          advisory — they are not guarantees of ad performance.
+          You own your uploaded content. By uploading, you grant Cutsheet a limited
+          license to process your creatives solely for the purpose of generating
+          your analysis results.
         </p>
 
         <h2 className="text-lg font-semibold text-white mt-10 mb-3">Acceptable Use</h2>
         <p className="text-sm text-zinc-400 leading-relaxed">
-          You may use Cutsheet to analyze ad creatives you own or have rights to
-          analyze. You may not use Cutsheet to analyze content you do not have
-          rights to, to attempt to reverse-engineer our AI models, to submit
-          illegal or harmful content, or to resell or redistribute Cutsheet's
-          analysis output as your own product.
+          Don't use Cutsheet for illegal content. We may suspend accounts that
+          abuse the service or violate these terms.
         </p>
 
-        <h2 className="text-lg font-semibold text-white mt-10 mb-3">Intellectual Property</h2>
+        <h2 className="text-lg font-semibold text-white mt-10 mb-3">Billing</h2>
         <p className="text-sm text-zinc-400 leading-relaxed">
-          Cutsheet and its underlying technology are owned by Shug Studio LLC.
-          Your uploaded creatives remain your property. Analysis output generated
-          by Cutsheet may be used freely by you for your own purposes.
+          Subscription billing is handled via Stripe. You can cancel your
+          subscription at any time — your access continues until the end of the
+          billing period. For refund requests, contact{" "}
+          <a
+            href="mailto:hello@cutsheet.xyz"
+            className="text-indigo-400 hover:text-indigo-300 transition-colors"
+          >
+            hello@cutsheet.xyz
+          </a>{" "}
+          within 7 days of your charge.
         </p>
 
-        <h2 className="text-lg font-semibold text-white mt-10 mb-3">Disclaimers</h2>
+        <h2 className="text-lg font-semibold text-white mt-10 mb-3">Governing Law</h2>
         <p className="text-sm text-zinc-400 leading-relaxed">
-          Cutsheet is provided "as is." AI analysis scores are probabilistic
-          estimates, not guarantees. We are not liable for advertising decisions
-          made based on Cutsheet output.
-        </p>
-
-        <h2 className="text-lg font-semibold text-white mt-10 mb-3">Limitation of Liability</h2>
-        <p className="text-sm text-zinc-400 leading-relaxed">
-          Shug Studio LLC's liability to you for any claim arising from use of
-          Cutsheet is limited to the amount you paid us in the 12 months prior
-          to the claim, or $100, whichever is greater.
-        </p>
-
-        <h2 className="text-lg font-semibold text-white mt-10 mb-3">Changes to Terms</h2>
-        <p className="text-sm text-zinc-400 leading-relaxed">
-          We may update these terms at any time. Continued use of Cutsheet after
-          changes constitutes acceptance of the new terms.
+          These terms are governed by the laws of New York, USA.
         </p>
 
         <h2 className="text-lg font-semibold text-white mt-10 mb-3">Contact</h2>
         <p className="text-sm text-zinc-400 leading-relaxed">
           For questions:{" "}
-          <a href="mailto:hello@cutsheet.xyz" className="text-indigo-400 hover:text-indigo-300 transition-colors">
+          <a
+            href="mailto:hello@cutsheet.xyz"
+            className="text-indigo-400 hover:text-indigo-300 transition-colors"
+          >
             hello@cutsheet.xyz
           </a>
-          <br />
-          Shug Studio LLC, Wyoming
         </p>
       </main>
 

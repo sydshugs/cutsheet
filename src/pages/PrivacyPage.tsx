@@ -8,62 +8,47 @@ export default function PrivacyPage() {
 
       <main className="mx-auto max-w-3xl px-8 py-24">
         <h1 className="text-3xl font-bold text-white mb-2">Privacy Policy</h1>
-        <p className="text-sm text-zinc-500 mb-12">Last updated: March 12, 2026</p>
+        <p className="text-sm text-zinc-500 mb-12">Last updated: March 25, 2026</p>
 
         <h2 className="text-lg font-semibold text-white mt-10 mb-3">What We Collect</h2>
         <p className="text-sm text-zinc-400 leading-relaxed">
-          When you sign up for the Cutsheet waitlist, we collect your email address.
-          When you use the Cutsheet app, we process video and image files you upload
-          for the purpose of generating creative analysis. We do not store your uploaded
-          files after analysis is complete. We collect basic usage data (pages visited,
-          features used) to improve the product.
+          We collect your email address when you sign up. When you use the Cutsheet app,
+          we process ad creatives you upload for the purpose of generating analysis scores.
+          We also collect usage data (pages visited, features used) to improve the product.
         </p>
 
-        <h2 className="text-lg font-semibold text-white mt-10 mb-3">How We Use Your Data</h2>
+        <h2 className="text-lg font-semibold text-white mt-10 mb-3">How We Use It</h2>
         <p className="text-sm text-zinc-400 leading-relaxed">
-          We use your email address to send waitlist updates and product announcements.
-          We use uploaded creative files solely to generate your analysis scorecard —
-          files are processed and immediately discarded. We do not sell your data to
-          third parties.
+          Your data is used to provide the service and improve analysis quality.
+          We do not sell your data to third parties.
         </p>
 
-        <h2 className="text-lg font-semibold text-white mt-10 mb-3">Third-Party Services</h2>
-        <p className="text-sm text-zinc-400 leading-relaxed mb-3">
-          Cutsheet uses the following third-party services:
-        </p>
-        <ul className="text-sm text-zinc-400 leading-relaxed list-disc list-inside space-y-1">
-          <li>Google Gemini API — for AI-powered creative analysis</li>
-          <li>Loops.so — for email communication</li>
-          <li>Vercel — for hosting and infrastructure</li>
-          <li>Cloudflare — for DNS and security</li>
-        </ul>
-
-        <h2 className="text-lg font-semibold text-white mt-10 mb-3">Data Retention</h2>
+        <h2 className="text-lg font-semibold text-white mt-10 mb-3">AI Processing</h2>
         <p className="text-sm text-zinc-400 leading-relaxed">
-          Email addresses are retained until you unsubscribe or request deletion.
-          Uploaded files are not retained after analysis. Analysis results are stored
-          locally in your browser (localStorage) and are not transmitted to our servers.
+          Ad creatives you upload are processed by Google Gemini and Anthropic Claude APIs
+          to generate your analysis results. These services may retain data per their own
+          privacy policies.
+        </p>
+
+        <h2 className="text-lg font-semibold text-white mt-10 mb-3">Data Storage</h2>
+        <p className="text-sm text-zinc-400 leading-relaxed">
+          Your account data and analysis results are stored securely in Supabase.
+          Uploaded ad creatives are stored temporarily for processing and then deleted.
         </p>
 
         <h2 className="text-lg font-semibold text-white mt-10 mb-3">Your Rights</h2>
         <p className="text-sm text-zinc-400 leading-relaxed">
-          You may request deletion of your data at any time by emailing{" "}
-          <a href="mailto:hello@cutsheet.xyz" className="text-indigo-400 hover:text-indigo-300 transition-colors">
-            hello@cutsheet.xyz
-          </a>
-          . We will respond within 30 days.
-        </p>
-
-        <h2 className="text-lg font-semibold text-white mt-10 mb-3">Cookies</h2>
-        <p className="text-sm text-zinc-400 leading-relaxed">
-          Cutsheet uses no tracking cookies. We use localStorage for saving your
-          analysis history locally on your device.
+          You can delete your account and all associated data at any time from your
+          Settings page. We will respond to data deletion requests within 30 days.
         </p>
 
         <h2 className="text-lg font-semibold text-white mt-10 mb-3">Contact</h2>
         <p className="text-sm text-zinc-400 leading-relaxed">
           For privacy questions:{" "}
-          <a href="mailto:hello@cutsheet.xyz" className="text-indigo-400 hover:text-indigo-300 transition-colors">
+          <a
+            href="mailto:hello@cutsheet.xyz"
+            className="text-indigo-400 hover:text-indigo-300 transition-colors"
+          >
             hello@cutsheet.xyz
           </a>
         </p>
