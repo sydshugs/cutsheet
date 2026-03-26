@@ -1,15 +1,10 @@
-// PreFlightView.tsx — Main Pre-Flight A/B creative testing view
+// PreFlightView.tsx — A/B creative comparison (redesigned with indigo accent, side-by-side dropzones)
 
 import { useState, useCallback, useMemo } from "react";
-import { FlaskConical, Plus, X, Upload, Check } from "lucide-react";
-import { VideoDropzone } from "./VideoDropzone";
-import { PreFlightWinner } from "./PreFlightWinner";
+import { FlaskConical, Upload, Check, X } from "lucide-react";
 import { AnalysisProgressCard } from "./AnalysisProgressCard";
-import { PreFlightRankCard } from "./PreFlightRankCard";
-import { PreFlightHeadToHead } from "./PreFlightHeadToHead";
 import { analyzeVideo, type AnalysisResult } from "../services/analyzerService";
 import { runComparison } from "../services/comparisonService";
-import { exportToPdf } from "../utils/pdfExport";
 import type {
   VariantInput,
   ComparisonResult,
@@ -17,24 +12,19 @@ import type {
   PreFlightPhase,
 } from "../types/preflight";
 
-// Brand color for Pre-Flight: Rose/Pink
-const BRAND_COLOR = "#ec4899";
-const BRAND_COLOR_LIGHT = "#f472b6";
-const BRAND_BG = "rgba(236,72,153,0.08)";
-const BRAND_BORDER = "rgba(236,72,153,0.15)";
+// Design system: indigo for interactive, neutrals for structure
+const INDIGO_PRIMARY = "#6366f1";
+const INDIGO_BG = "rgba(99,102,241,0.1)";
+const INDIGO_BORDER = "rgba(99,102,241,0.2)";
+const NEUTRAL_PILLS = "rgba(255,255,255,0.05)";
+const NEUTRAL_PILLS_BORDER = "rgba(255,255,255,0.08)";
 
 interface PreFlightViewProps {
   isDark: boolean;
   apiKey: string;
 }
 
-const TEST_TYPE_OPTIONS: { value: TestType; label: string }[] = [
-  { value: "hook", label: "Hook Battle" },
-  { value: "cta", label: "CTA Showdown" },
-  { value: "full", label: "Full Creative" },
-];
-
-const MAX_VARIANTS = 5;
+const MAX_VARIANTS = 2; // A/B only
 const MIN_VARIANTS = 2;
 
 function createVariant(index: number): VariantInput {
@@ -46,8 +36,8 @@ function createVariant(index: number): VariantInput {
 
 export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
   const [variants, setVariants] = useState<VariantInput[]>([
-    createVariant(0),
-    createVariant(1),
+    { id: crypto.randomUUID(), label: "Ad A" },
+    { id: crypto.randomUUID(), label: "Ad B" },
   ]);
   const [testType, setTestType] = useState<TestType>("full");
   const [phase, setPhase] = useState<PreFlightPhase>("idle");
@@ -56,8 +46,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
   const [comparison, setComparison] = useState<ComparisonResult | null>(null);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  // Track per-variant status: null = pending, "analyzing" = in progress, "done" = complete, "error" = failed
-  const [variantStatuses, setVariantStatuses] = useState<(null | "analyzing" | "done" | "error")[]>([]);
+  const [variantStatuses, setVariantStatuses] = useState<(null | "analyzing" | "done" | "error")[]>([null, null]);
 
   const bg = "var(--surface)";
   const surface = "var(--surface-el)";
@@ -78,31 +67,6 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
     },
     []
   );
-
-  const handleLabelChange = useCallback(
-    (index: number, label: string) => {
-      setVariants((prev) =>
-        prev.map((v, i) => (i === index ? { ...v, label } : v))
-      );
-    },
-    []
-  );
-
-  const addVariant = useCallback(() => {
-    setVariants((prev) => {
-      if (prev.length >= MAX_VARIANTS) return prev;
-      return [...prev, createVariant(prev.length)];
-    });
-  }, []);
-
-  const removeVariant = useCallback((index: number) => {
-    setVariants((prev) => {
-      if (prev.length <= MIN_VARIANTS) return prev;
-      return prev.filter((_, i) => i !== index);
-    });
-  }, []);
-
-  const handleRun = useCallback(async () => {
     const toAnalyze = variants.filter((v) => v.file);
     if (toAnalyze.length < MIN_VARIANTS) return;
 
@@ -171,7 +135,10 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
   }, [variants, testType, apiKey]);
 
   const handleReset = useCallback(() => {
-    setVariants([createVariant(0), createVariant(1)]);
+    setVariants([
+      { id: crypto.randomUUID(), label: "Ad A" },
+      { id: crypto.randomUUID(), label: "Ad B" },
+    ]);
     setTestType("full");
     setPhase("idle");
     setAnalyses([]);
@@ -179,7 +146,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
     setComparison(null);
     setAnalysisProgress(0);
     setErrorMsg(null);
-    setVariantStatuses([]);
+    setVariantStatuses([null, null]);
   }, []);
 
   const handleExportPdf = useCallback(async () => {
@@ -202,124 +169,77 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
 
   // ─── UPLOAD UI ────────────────────────────────────────────────────────────────
   if (phase === "idle" || phase === "error") {
-    const PILLS = ["Head-to-head ranking", "Winner prediction", "Actionable insights"];
+    const PILLS = ["Hook comparison", "CTA analysis", "Winner prediction"];
     
     return (
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px", minHeight: "calc(100vh - 120px)" }}>
-        {/* Header — matching other pages */}
-        <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(236,72,153,0.1)", border: "1px solid rgba(236,72,153,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <FlaskConical size={28} color={BRAND_COLOR} />
+      <div className="flex flex-col items-center justify-center flex-1 min-h-[calc(100vh-120px)] px-6 py-8">
+        {/* Header icon */}
+        <div className="w-19 h-19 rounded-lg bg-[rgba(99,102,241,0.1)] border border-[rgba(99,102,241,0.2)] flex items-center justify-center">
+          <FlaskConical size={28} color={INDIGO_PRIMARY} />
         </div>
 
-        <h1 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>
-          Pre-Flight A/B Test
+        {/* Title & subtitle */}
+        <h1 className="text-xl font-semibold text-[#f4f4f5] mt-5 mb-0">
+          Compare two ad variants
         </h1>
-        <p style={{ fontSize: 14, color: "#a1a1aa", textAlign: "center", maxWidth: 380, marginTop: 10, lineHeight: 1.6 }}>
-          Upload 2–5 creative variants. AI analyzes each, then ranks them head-to-head.
+        <p className="text-sm text-[rgba(255,255,255,0.5)] text-center max-w-80 mt-2.5 leading-relaxed">
+          Upload two ad creatives side by side. AI analyzes both and predicts the winner.
         </p>
 
-        {/* Feature pills — rose styled */}
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 20 }}>
+        {/* Feature pills */}
+        <div className="flex flex-wrap justify-center gap-2 mt-5">
           {PILLS.map((pill) => (
-            <span key={pill} style={{ fontSize: 12, color: BRAND_COLOR_LIGHT, background: BRAND_BG, border: `1px solid ${BRAND_BORDER}`, borderRadius: 9999, padding: "4px 12px" }}>
+            <span
+              key={pill}
+              className="text-xs text-[#a1a1aa] bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.08)] rounded-full px-3 py-1"
+            >
               {pill}
             </span>
           ))}
         </div>
 
-        {/* Test type selector — pill style */}
-        <div style={{ display: "flex", gap: 4, marginTop: 24, padding: 4, borderRadius: 12, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
-          {TEST_TYPE_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => setTestType(opt.value)}
-              style={{
-                padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer",
-                fontSize: 13, fontWeight: 500, transition: "all 150ms",
-                background: testType === opt.value ? BRAND_COLOR : "transparent",
-                color: testType === opt.value ? "white" : "#71717a",
-              }}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Variant upload cards */}
-        <div style={{ width: "100%", maxWidth: 560, marginTop: 32, display: "flex", flexDirection: "column", gap: 12 }}>
+        {/* Two-column dropzone layout */}
+        <div className="w-full max-w-2xl mt-8 grid grid-cols-2 gap-4">
           {variants.map((v, i) => {
             const fileInputId = `preflight-file-${v.id}`;
             const hasFile = !!v.file;
             return (
               <div
                 key={v.id}
-                style={{
-                  background: "rgba(255,255,255,0.02)",
-                  border: hasFile ? "1px solid rgba(16,185,129,0.2)" : "1px solid rgba(255,255,255,0.06)",
-                  borderRadius: 12,
-                  padding: "16px 20px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 16,
-                  transition: "all 150ms",
-                }}
-                onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = BRAND_BORDER; e.currentTarget.style.background = BRAND_BG; }}
-                onDragLeave={(e) => { e.currentTarget.style.borderColor = hasFile ? "rgba(16,185,129,0.2)" : "rgba(255,255,255,0.06)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
-                  e.currentTarget.style.background = "rgba(255,255,255,0.02)";
-                  const f = e.dataTransfer.files[0];
-                  if (f) handleFileSelect(i, f);
-                }}
+                className="flex flex-col"
               >
-                {/* Variant label */}
-                <input
-                  type="text"
-                  value={v.label}
-                  maxLength={40}
-                  onChange={(e) => handleLabelChange(i, e.target.value)}
-                  style={{
-                    background: "transparent",
-                    border: "none",
-                    outline: "none",
-                    fontSize: 13,
-                    fontFamily: "monospace",
-                    fontWeight: 600,
-                    color: "#f4f4f5",
-                    letterSpacing: "0.02em",
-                    padding: 0,
-                    width: 90,
-                    flexShrink: 0,
-                  }}
-                />
+                {/* Label */}
+                <label className="text-xs font-semibold text-[#f4f4f5] mb-2 uppercase tracking-wide">
+                  {v.label}
+                </label>
 
-                {/* File dropzone / uploaded state */}
+                {/* Dropzone */}
                 {!hasFile ? (
                   <label
                     htmlFor={fileInputId}
-                    style={{
-                      flex: 1,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 10,
-                      padding: "12px 16px",
-                      border: `1.5px dashed rgba(255,255,255,0.12)`,
-                      borderRadius: 8,
-                      cursor: "pointer",
-                      color: "#71717a",
-                      fontSize: 12,
-                      transition: "all 150ms",
+                    className="relative flex flex-col items-center justify-center p-6 border-2 border-dashed border-[rgba(255,255,255,0.1)] rounded-xl cursor-pointer transition-all hover:border-[rgba(99,102,241,0.3)] hover:bg-[rgba(99,102,241,0.05)] group"
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.style.borderColor = INDIGO_BORDER;
+                      e.currentTarget.style.background = INDIGO_BG;
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = BRAND_BORDER; e.currentTarget.style.color = BRAND_COLOR_LIGHT; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; e.currentTarget.style.color = "#71717a"; }}
+                    onDragLeave={(e) => {
+                      e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
+                      e.currentTarget.style.background = "transparent";
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
+                      e.currentTarget.style.background = "transparent";
+                      const f = e.dataTransfer.files[0];
+                      if (f) handleFileSelect(i, f);
+                    }}
                   >
-                    <Upload size={16} />
-                    <span>Drop file or click to browse</span>
-                    <span style={{ marginLeft: "auto", fontFamily: "monospace", fontSize: 10, opacity: 0.5 }}>
-                      MP4 · MOV · PNG · JPG
+                    <Upload size={20} className="text-[#71717a] mb-2 group-hover:text-[#6366f1] transition-colors" />
+                    <span className="text-xs text-[#71717a] text-center group-hover:text-[#6366f1] transition-colors">
+                      Drop or click to browse
                     </span>
+                    <span className="text-[10px] text-[#52525b] mt-1">MP4 · MOV · PNG · JPG</span>
                     <input
                       id={fileInputId}
                       type="file"
@@ -328,107 +248,47 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
                         const f = e.target.files?.[0];
                         if (f) handleFileSelect(i, f);
                       }}
-                      style={{ display: "none" }}
+                      className="hidden"
                     />
                   </label>
                 ) : (
-                  <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.15)", borderRadius: 8 }}>
-                    <Check size={14} color="#10b981" />
-                    <span style={{ fontSize: 12, fontFamily: "monospace", color: "#f4f4f5", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, minWidth: 0 }}>
+                  <div className="relative flex items-center gap-2 p-3 bg-[rgba(16,185,129,0.06)] border border-[rgba(16,185,129,0.15)] rounded-xl">
+                    <Check size={14} className="text-[#10b981] flex-shrink-0" />
+                    <span className="text-xs font-mono text-[#f4f4f5] truncate flex-1 min-w-0">
                       {v.file!.name}
-                    </span>
-                    <span style={{ fontSize: 10, fontFamily: "monospace", color: "#71717a", flexShrink: 0 }}>
-                      {(v.file!.size / (1024 * 1024)).toFixed(1)}MB
                     </span>
                     <button
                       onClick={() => handleFileSelect(i, null)}
-                      style={{ background: "none", border: "none", color: "#71717a", cursor: "pointer", fontSize: 10, fontFamily: "monospace", padding: "2px 6px", flexShrink: 0 }}
-                      onMouseEnter={(e) => { e.currentTarget.style.color = "#ef4444"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.color = "#71717a"; }}
+                      className="text-[#71717a] hover:text-[#ef4444] transition-colors flex-shrink-0"
                     >
-                      Remove
+                      <X size={14} />
                     </button>
                   </div>
-                )}
-
-                {/* Remove variant button */}
-                {variants.length > MIN_VARIANTS && (
-                  <button
-                    onClick={() => removeVariant(i)}
-                    style={{
-                      width: 28, height: 28, borderRadius: 6, border: "1px solid rgba(255,255,255,0.08)",
-                      background: "transparent", color: "#71717a", cursor: "pointer",
-                      display: "flex", alignItems: "center", justifyContent: "center", padding: 0, flexShrink: 0, transition: "all 150ms",
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.color = "#ef4444"; e.currentTarget.style.borderColor = "rgba(239,68,68,0.3)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.color = "#71717a"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
-                  >
-                    <X size={14} />
-                  </button>
                 )}
               </div>
             );
           })}
-
-          {/* Add variant button */}
-          {variants.length < MAX_VARIANTS && (
-            <button
-              onClick={addVariant}
-              style={{
-                background: "transparent",
-                border: "1.5px dashed rgba(255,255,255,0.08)",
-                borderRadius: 12,
-                padding: "16px 20px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 8,
-                cursor: "pointer",
-                color: "#71717a",
-                fontSize: 13,
-                fontWeight: 500,
-                transition: "all 150ms",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = BRAND_BORDER; e.currentTarget.style.color = BRAND_COLOR_LIGHT; }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#71717a"; }}
-            >
-              <Plus size={16} />
-              Add variant
-            </button>
-          )}
         </div>
 
         {/* Error message */}
         {phase === "error" && errorMsg && (
-          <div style={{ width: "100%", maxWidth: 560, marginTop: 16, padding: "12px 16px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, fontSize: 12, fontFamily: "monospace", color: "#ef4444" }}>
+          <div className="w-full max-w-2xl mt-4 p-3 bg-[rgba(239,68,68,0.08)] border border-[rgba(239,68,68,0.2)] rounded-lg text-xs font-mono text-[#ef4444]">
             {errorMsg}
           </div>
         )}
 
-        {/* Run button */}
-        <div style={{ marginTop: 28, display: "flex", alignItems: "center", gap: 12 }}>
+        {/* Compare button */}
+        <div className="mt-8 flex items-center gap-3">
           <button
             onClick={handleRun}
             disabled={!canRun}
-            style={{
-              padding: "12px 24px",
-              background: canRun ? BRAND_COLOR : "rgba(255,255,255,0.04)",
-              border: "none",
-              borderRadius: 9999,
-              color: canRun ? "#fff" : "#52525b",
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: canRun ? "pointer" : "not-allowed",
-              transition: "all 150ms",
-            }}
-            onMouseEnter={(e) => { if (canRun) e.currentTarget.style.background = "#db2777"; }}
-            onMouseLeave={(e) => { if (canRun) e.currentTarget.style.background = BRAND_COLOR; }}
+            className="px-6 py-2.5 bg-[#6366f1] text-white text-sm font-semibold rounded-full disabled:bg-[rgba(255,255,255,0.04)] disabled:text-[#52525b] disabled:cursor-not-allowed hover:enabled:bg-[#4f46e5] transition-colors"
           >
-            Run Pre-Flight
+            Compare Ads
           </button>
-          <span style={{ fontSize: 12, fontFamily: "monospace", color: "#71717a" }}>
-            {readyCount}/{variants.length} variants ready
-          </span>
+          {canRun && (
+            <span className="text-xs font-mono text-[#71717a]">2/2 ready</span>
+          )}
         </div>
       </div>
     );
@@ -471,117 +331,118 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
 
   // ─── RESULTS UI ──────────────────────────────────────────────────────────────
   if (phase === "done" && comparison) {
+    const winner = comparison.rankings?.[0];
+    const loser = comparison.rankings?.[1];
+
     return (
-      <div
-        style={{
-          maxWidth: "900px",
-          margin: "0 auto",
-          padding: "40px 24px",
-          fontFamily: "var(--sans)",
-        }}
-      >
+      <div className="max-w-4xl mx-auto px-6 py-10 font-sans">
         {/* Results header */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: "24px",
-          }}
-        >
-          <div>
-            <div
-              style={{
-                fontSize: "11px",
-                fontFamily: "var(--sans)",
-                fontWeight: 600,
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
-                color: "var(--label)",
-                marginBottom: "4px",
-              }}
-            >
-              PRE-FLIGHT RESULTS
-            </div>
-            <div
-              style={{
-                fontSize: "20px",
-                fontWeight: 800,
-                color: textPrimary,
-                letterSpacing: "-0.02em",
-              }}
-            >
-              {comparison.rankings.length} variants tested
-            </div>
+        <div className="mb-8">
+          <div className="text-xs font-semibold uppercase tracking-widest text-[rgba(255,255,255,0.5)] mb-1">
+            A/B Test Results
           </div>
-          <div style={{ display: "flex", gap: "8px" }}>
-            <button
-              onClick={handleExportPdf}
-              style={{
-                padding: "8px 16px",
-                background: surfaceDim,
-                border: `1px solid ${border}`,
-                borderRadius: "var(--radius-sm)",
-                color: textSecondary,
-                fontSize: "11px",
-                fontFamily: "var(--mono)",
-                cursor: "pointer",
-                fontWeight: 600,
-              }}
-            >
-              Export PDF
-            </button>
-            <button
-              onClick={handleReset}
-              style={{
-                padding: "8px 16px",
-                background: BRAND_COLOR,
-                border: "none",
-                borderRadius: "var(--radius-sm)",
-                color: "#fff",
-                fontSize: "11px",
-                fontFamily: "var(--mono)",
-                cursor: "pointer",
-                fontWeight: 700,
-                letterSpacing: "0.04em",
-              }}
-            >
-              New Test
-            </button>
+          <h1 className="text-3xl font-bold text-[#f4f4f5]">
+            {winner?.label} wins
+          </h1>
+        </div>
+
+        {/* Two-column score panels */}
+        <div className="grid grid-cols-2 gap-6 mb-8">
+          {analyses.map((analysis, idx) => {
+            const isWinner = winner && analysisLabels[idx] === winner.label;
+            const scores = analysis.scores || {};
+            
+            return (
+              <div
+                key={idx}
+                className={`relative p-6 rounded-xl border transition-all ${
+                  isWinner
+                    ? "border-[rgba(99,102,241,0.3)] bg-[rgba(99,102,241,0.05)]"
+                    : "border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)]"
+                }`}
+              >
+                {/* Winner badge */}
+                {isWinner && (
+                  <div className="absolute -top-3 -right-3 px-3 py-1 bg-[#6366f1] text-white text-xs font-semibold rounded-full">
+                    🏆 Winner
+                  </div>
+                )}
+
+                {/* Ad label */}
+                <h2 className="text-sm font-semibold text-[#f4f4f5] mb-4">
+                  {analysisLabels[idx]}
+                </h2>
+
+                {/* Score grid */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 bg-[rgba(255,255,255,0.02)] rounded-lg">
+                    <span className="text-xs text-[rgba(255,255,255,0.6)]">Hook</span>
+                    <span className="text-sm font-semibold text-[#f4f4f5]">
+                      {Math.round(scores.hook || 0)}/100
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-[rgba(255,255,255,0.02)] rounded-lg">
+                    <span className="text-xs text-[rgba(255,255,255,0.6)]">Clarity</span>
+                    <span className="text-sm font-semibold text-[#f4f4f5]">
+                      {Math.round(scores.clarity || 0)}/100
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-[rgba(255,255,255,0.02)] rounded-lg">
+                    <span className="text-xs text-[rgba(255,255,255,0.6)]">CTA</span>
+                    <span className="text-sm font-semibold text-[#f4f4f5]">
+                      {Math.round(scores.cta || 0)}/100
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-[rgba(255,255,255,0.02)] rounded-lg">
+                    <span className="text-xs text-[rgba(255,255,255,0.6)]">Production</span>
+                    <span className="text-sm font-semibold text-[#f4f4f5]">
+                      {Math.round(scores.production || 0)}/100
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-[#6366f1] rounded-lg">
+                    <span className="text-xs font-semibold text-white">Overall</span>
+                    <span className="text-lg font-bold text-white">
+                      {Math.round(scores.overall || 0)}/100
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Loser improvements */}
+        {loser && loser.improvements && loser.improvements.length > 0 && (
+          <div className="p-6 bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.08)] rounded-xl mb-8">
+            <h3 className="text-sm font-semibold text-[#f4f4f5] mb-3">
+              Improve {loser.label}
+            </h3>
+            <ul className="space-y-2">
+              {loser.improvements.slice(0, 3).map((improvement, idx) => (
+                <li key={idx} className="text-xs text-[rgba(255,255,255,0.6)] flex gap-2">
+                  <span className="text-[#6366f1] font-bold">→</span>
+                  {improvement}
+                </li>
+              ))}
+            </ul>
           </div>
-        </div>
+        )}
 
-        {/* Winner card */}
-        <div style={{ marginBottom: "24px" }}>
-          <PreFlightWinner winner={comparison.winner} isDark={isDark} />
+        {/* Action buttons */}
+        <div className="flex gap-3">
+          <button
+            onClick={handleReset}
+            className="flex-1 px-4 py-2.5 bg-[#6366f1] text-white text-sm font-semibold rounded-lg hover:bg-[#4f46e5] transition-colors"
+          >
+            Test Another
+          </button>
+          <button
+            onClick={handleExportPdf}
+            className="flex-1 px-4 py-2.5 bg-[rgba(255,255,255,0.05)] text-[#a1a1aa] text-sm font-semibold rounded-lg border border-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.08)] transition-colors"
+          >
+            Export PDF
+          </button>
         </div>
-
-        {/* Ranked cards row */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: `repeat(${Math.min(comparison.rankings.length, 3)}, 1fr)`,
-            gap: "12px",
-            marginBottom: "24px",
-          }}
-        >
-          {comparison.rankings.map((rv) => (
-            <PreFlightRankCard
-              key={rv.variant}
-              variant={rv}
-              isWinner={rv.rank === 1}
-              isDark={isDark}
-            />
-          ))}
-        </div>
-
-        {/* Head-to-head + Recommendation */}
-        <PreFlightHeadToHead
-          headToHead={comparison.headToHead}
-          recommendation={comparison.recommendation}
-          hybridNote={comparison.hybridNote}
-          isDark={isDark}
-        />
       </div>
     );
   }
