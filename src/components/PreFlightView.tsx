@@ -243,7 +243,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
               style={{
                 padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer",
                 fontSize: 13, fontWeight: 500, transition: "all 150ms",
-                background: testType === opt.value ? "#6366f1" : "transparent",
+                background: testType === opt.value ? "#ec4899" : "transparent",
                 color: testType === opt.value ? "white" : "#71717a",
               }}
             >

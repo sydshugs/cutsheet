@@ -61,6 +61,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const benchmarks = Object.entries(nicheBenchmarks).find(([k]) => nicheKey.includes(k))?.[1];
   const benchmarkBlock = benchmarks
     ? `\nINDUSTRY BENCHMARKS:\n${benchmarks.ctr}\n${benchmarks.cvr}`
+    : platformKey === "google_display"
+    ? `\nINDUSTRY BENCHMARKS: Google Display Network avg CTR: 0.35–0.60% (avg 0.46%). Set "benchmark" to 0.46 in the JSON response.`
     : `\nNote: Use general paid social benchmarks for ${nicheLabel}. Meta avg CTR: 0.9-1.5%. Google Display: 0.35-0.60%.`;
 
   // Identify weakest dimensions for calibration
