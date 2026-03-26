@@ -121,30 +121,42 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
     const PILLS = ["Hook comparison", "CTA analysis", "Winner prediction"];
     
     return (
-      <div className="flex flex-col items-center justify-center flex-1 min-h-[calc(100vh-120px)] px-6 py-16" style={{ background: "#09090b" }}>
-        {/* Icon tile — 76×76px, rose accent */}
-        <div className="w-19 h-19 rounded-lg flex items-center justify-center mb-6" style={{ background: "rgba(236,72,153,0.1)", border: "1px solid rgba(236,72,153,0.2)" }}>
+      <div className="flex flex-col items-center justify-center flex-1 min-h-[calc(100vh-120px)] px-6 py-10" style={{ background: "#09090b" }}>
+
+        {/* Fix 1: Icon tile — explicit 76×76 container, 14px radius, rose bg + border */}
+        <div style={{
+          width: 76,
+          height: 76,
+          borderRadius: 14,
+          background: "rgba(236,72,153,0.1)",
+          border: "1px solid rgba(236,72,153,0.2)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+          marginBottom: 20,
+        }}>
           <GitBranch size={28} color="#ec4899" strokeWidth={1.5} />
         </div>
 
-        {/* Title — fontSize 20, fontWeight 600 */}
-        <h1 className="text-xl font-semibold text-center mb-3" style={{ color: "#f4f4f5" }}>
+        {/* Fix 4: Tighter spacing — mb-2 on title, mb-2 on subtitle */}
+        <h1 className="text-xl font-semibold text-center" style={{ color: "#f4f4f5", marginBottom: 8 }}>
           Compare two ad variants
         </h1>
-        
-        {/* Subtitle — maxWidth 320, centered, secondary text */}
-        <p className="text-sm text-center max-w-80 mb-6" style={{ color: "rgba(255,255,255,0.5)" }}>
+
+        <p className="text-sm text-center max-w-xs" style={{ color: "rgba(255,255,255,0.5)", lineHeight: 1.5, marginBottom: 16 }}>
           Upload two ad creatives side by side. AI analyzes both and predicts the winner.
         </p>
 
-        {/* Feature pills — NEUTRAL style only */}
-        <div className="flex flex-wrap justify-center gap-2 mb-8">
+        {/* Fix 5: Pills — 12px font, 4px 12px padding */}
+        <div className="flex flex-wrap justify-center gap-2" style={{ marginBottom: 24 }}>
           {PILLS.map((pill) => (
             <span
               key={pill}
-              className="px-3 py-1 rounded-full"
               style={{
-                fontSize: "12px",
+                fontSize: 12,
+                padding: "4px 12px",
+                borderRadius: 9999,
                 color: "#a1a1aa",
                 background: "rgba(255,255,255,0.05)",
                 border: "1px solid rgba(255,255,255,0.08)",
@@ -155,27 +167,27 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
           ))}
         </div>
 
-        {/* Two-column dropzones — "Ad A" and "Ad B" */}
-        <div className="w-full max-w-3xl grid grid-cols-2 gap-6 mb-8">
+        {/* Two-column dropzones */}
+        <div className="w-full max-w-3xl grid grid-cols-2 gap-5" style={{ marginBottom: 20 }}>
           {variants.map((v, i) => {
             const fileInputId = `preflight-file-${v.id}`;
             const hasFile = !!v.file;
-            
-            return (
-              <div key={v.id} className="flex flex-col">
-                {/* Label */}
-                <label className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#f4f4f5" }}>
-                  {v.label}
-                </label>
 
-                {/* Dropzone — dashed border, rounded-xl */}
+            return (
+              <div key={v.id} className="flex flex-col" style={{ gap: 10 }}>
+                {/* Label */}
+                <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#f4f4f5" }}>
+                  {v.label}
+                </span>
+
                 {!hasFile ? (
-                  <label
-                    htmlFor={fileInputId}
-                    className="relative flex flex-col items-center justify-center p-8 rounded-xl cursor-pointer transition-all"
+                  <div
+                    className="flex flex-col items-center justify-center rounded-xl transition-all"
                     style={{
                       border: "2px dashed rgba(255,255,255,0.1)",
                       background: "transparent",
+                      padding: "28px 20px",
+                      gap: 8,
                     }}
                     onDragOver={(e) => {
                       e.preventDefault();
@@ -194,9 +206,33 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
                       if (f) handleFileSelect(i, f);
                     }}
                   >
-                    <Upload size={24} style={{ color: "rgba(255,255,255,0.3)", marginBottom: "8px" }} />
-                    <span className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>Drop or click to browse</span>
-                    <span className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.3)" }}>MP4 · MOV · PNG · JPG</span>
+                    <Upload size={20} style={{ color: "rgba(255,255,255,0.25)" }} />
+                    <span className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>
+                      Drop or click to browse
+                    </span>
+                    <span className="text-xs" style={{ color: "rgba(255,255,255,0.25)" }}>
+                      MP4 · MOV · PNG · JPG
+                    </span>
+
+                    {/* Fix 2: Explicit "Browse files" button inside each dropzone */}
+                    <label
+                      htmlFor={fileInputId}
+                      style={{
+                        marginTop: 4,
+                        padding: "6px 16px",
+                        background: "#6366f1",
+                        color: "#fff",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        borderRadius: 6,
+                        cursor: "pointer",
+                        display: "inline-block",
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = "#4f46e5"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "#6366f1"; }}
+                    >
+                      Browse files
+                    </label>
                     <input
                       id={fileInputId}
                       type="file"
@@ -207,15 +243,16 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
                       }}
                       className="hidden"
                     />
-                  </label>
+                  </div>
                 ) : (
                   <div className="flex items-center gap-2 p-3 rounded-lg" style={{ background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.15)" }}>
-                    <Check size={14} color="#10b981" className="flex-shrink-0" />
+                    <Check size={14} color="#10b981" style={{ flexShrink: 0 }} />
                     <span className="text-xs truncate flex-1" style={{ color: "#f4f4f5" }}>{v.file.name}</span>
                     <button
                       onClick={() => handleFileSelect(i, null)}
-                      className="hover:text-red-400 transition-colors flex-shrink-0"
-                      style={{ color: "rgba(255,255,255,0.5)" }}
+                      style={{ color: "rgba(255,255,255,0.4)", background: "none", border: "none", cursor: "pointer", flexShrink: 0 }}
+                      onMouseEnter={(e) => { e.currentTarget.style.color = "#ef4444"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.4)"; }}
                     >
                       <X size={14} />
                     </button>
@@ -228,27 +265,28 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
 
         {/* Error message */}
         {phase === "error" && errorMsg && (
-          <div className="w-full max-w-3xl mb-6 p-3 rounded-lg text-xs font-mono" style={{ color: "#ef4444", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
+          <div className="w-full max-w-3xl p-3 rounded-lg text-xs font-mono" style={{ color: "#ef4444", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", marginBottom: 16 }}>
             {errorMsg}
           </div>
         )}
 
-        {/* Compare button — indigo fill, disabled state */}
+        {/* Fix 3: Compare Ads — solid #6366f1 when both slots filled, clearly disabled otherwise */}
         <button
           onClick={handleRun}
           disabled={!canRun}
-          className="px-6 py-2.5 text-sm font-semibold rounded-lg transition-colors"
           style={{
+            padding: "10px 28px",
             background: canRun ? "#6366f1" : "rgba(255,255,255,0.04)",
-            color: canRun ? "#fff" : "#52525b",
+            color: canRun ? "#fff" : "#3f3f46",
+            fontSize: 14,
+            fontWeight: 600,
+            borderRadius: 8,
+            border: "none",
             cursor: canRun ? "pointer" : "not-allowed",
+            transition: "background 150ms",
           }}
-          onMouseEnter={(e) => {
-            if (canRun) e.currentTarget.style.background = "#4f46e5";
-          }}
-          onMouseLeave={(e) => {
-            if (canRun) e.currentTarget.style.background = "#6366f1";
-          }}
+          onMouseEnter={(e) => { if (canRun) e.currentTarget.style.background = "#4f46e5"; }}
+          onMouseLeave={(e) => { if (canRun) e.currentTarget.style.background = "#6366f1"; }}
         >
           Compare Ads
         </button>
