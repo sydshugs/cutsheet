@@ -5,6 +5,7 @@ import { FlaskConical, Upload, Check, X } from "lucide-react";
 import { AnalysisProgressCard } from "./AnalysisProgressCard";
 import { analyzeVideo, type AnalysisResult } from "../services/analyzerService";
 import { runComparison } from "../services/comparisonService";
+import { exportToPdf } from "../utils/pdfExport";
 import type {
   VariantInput,
   ComparisonResult,
