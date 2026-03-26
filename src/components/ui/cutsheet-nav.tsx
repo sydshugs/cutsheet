@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 
 export default function CutsheetNav() {
@@ -29,9 +29,6 @@ export default function CutsheetNav() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const location = useLocation();
-  const waitlistHref = location.pathname === "/" ? "#waitlist" : "/#waitlist";
-
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-200 ease-out ${
@@ -55,14 +52,14 @@ export default function CutsheetNav() {
 
         {/* Right side */}
         <div className="flex items-center gap-3">
-          <a
-            href={waitlistHref}
+          <Link
+            to="/access"
             className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-zinc-300 transition-all hover:bg-white/10 hover:text-white hover:border-white/20"
           >
-            <span className="hidden md:inline">Get Early Access</span>
-            <span className="md:hidden">Join Waitlist</span>
+            <span className="hidden md:inline">Enter Access Code</span>
+            <span className="md:hidden">Access Code</span>
             <ArrowRight className="h-3.5 w-3.5" />
-          </a>
+          </Link>
         </div>
       </div>
     </nav>

@@ -14,6 +14,7 @@ inject();
 import LandingPage from "./pages/LandingPage.tsx";
 import Login from "./pages/Login.tsx";
 import Signup from "./pages/Signup.tsx";
+import AccessPage from "./pages/AccessPage.tsx";
 import NotFoundPage from "./pages/NotFoundPage.tsx";
 
 // ── Lazy-loaded routes — split into separate chunks ──────────────────────────
@@ -76,6 +77,7 @@ createRoot(document.getElementById("root")!).render(
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/access" element={<AccessPage />} />
 
           {/* Public — lazy loaded */}
           <Route path="/privacy" element={<PrivacyPage />} />

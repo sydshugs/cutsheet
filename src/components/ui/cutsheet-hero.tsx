@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import EarlyAccessForm from "./cutsheet-early-access-form";
+import { Link } from "react-router-dom";
 import WatchDemoButton from "./WatchDemoButton";
 import {
   Zap,
@@ -164,10 +164,15 @@ export default function CutsheetHero() {
             {/* CTA Buttons */}
             <div id="waitlist" className="animate-fade-in delay-450 flex flex-col gap-4">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                <EarlyAccessForm />
+                <Link
+                  to="/access"
+                  className="inline-flex items-center gap-2 rounded-full bg-indigo-600 px-7 py-3 text-sm font-semibold text-white transition-all duration-150 hover:bg-indigo-500 hover:scale-[1.02] hover:shadow-[0_0_24px_rgba(99,102,241,0.35)] active:scale-[0.97]"
+                >
+                  Enter Access Code
+                </Link>
               </div>
               <p className="text-xs text-zinc-600">
-                No card required &middot; Limited early access spots
+                Private beta &middot; Limited spots available
               </p>
               <div className="flex items-center gap-4">
                 <a
