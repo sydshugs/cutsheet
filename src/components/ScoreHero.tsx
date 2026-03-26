@@ -18,6 +18,7 @@ export interface ScoreHeroProps {
   platform?: string;      // 'Meta' | 'TikTok' | etc. — for benchmark label
   format?: 'video' | 'static';  // ad format — used to hide invalid benchmarks
   youtubeFormat?: string; // YouTube sub-format: 'skippable' | 'non_skippable' | 'bumper' | 'shorts' | 'in_feed'
+  accentColor?: string;   // override benchmark bar fill color (e.g. cyan for Display)
 }
 
 /** Platform benchmark defaults — used when benchmark prop is not supplied */
@@ -184,7 +185,7 @@ function BenchmarkBar({ score, benchmark, color, label }: BenchmarkBarProps) {
 
 // ── ScoreHero ──────────────────────────────────────────────────────────────────
 
-export function ScoreHero({ score, verdict, benchmark, dimensions, platform, format, youtubeFormat }: ScoreHeroProps) {
+export function ScoreHero({ score, verdict, benchmark, dimensions, platform, format, youtubeFormat, accentColor }: ScoreHeroProps) {
   const animatedScore = useCountUp(score, 600);
   const color = scoreColor(score);
 
@@ -258,7 +259,7 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
           <BenchmarkBar
             score={score}
             benchmark={resolvedBenchmark!}
-            color={color}
+            color={accentColor ?? color}
             platform={platform}
             label={benchmarkLabel}
           />
