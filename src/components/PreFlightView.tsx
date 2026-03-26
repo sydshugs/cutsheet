@@ -1,6 +1,6 @@
-// PreFlightView.tsx — A/B creative comparison (redesigned with indigo accent, side-by-side dropzones)
+// PreFlightView.tsx — A/B creative comparison with side-by-side dropzones
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback } from "react";
 import { FlaskConical, Upload, Check, X } from "lucide-react";
 import { AnalysisProgressCard } from "./AnalysisProgressCard";
 import { analyzeVideo, type AnalysisResult } from "../services/analyzerService";
@@ -13,26 +13,12 @@ import type {
   PreFlightPhase,
 } from "../types/preflight";
 
-// Design system: indigo for interactive, neutrals for structure
-const INDIGO_PRIMARY = "#6366f1";
-const INDIGO_BG = "rgba(99,102,241,0.1)";
-const INDIGO_BORDER = "rgba(99,102,241,0.2)";
-const NEUTRAL_PILLS = "rgba(255,255,255,0.05)";
-const NEUTRAL_PILLS_BORDER = "rgba(255,255,255,0.08)";
+const MAX_VARIANTS = 2;
+const MIN_VARIANTS = 2;
 
 interface PreFlightViewProps {
   isDark: boolean;
   apiKey: string;
-}
-
-const MAX_VARIANTS = 2; // A/B only
-const MIN_VARIANTS = 2;
-
-function createVariant(index: number): VariantInput {
-  return {
-    id: crypto.randomUUID(),
-    label: `Variant ${String.fromCharCode(65 + index)}`,
-  };
 }
 
 export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
@@ -45,20 +31,19 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
   const [analyses, setAnalyses] = useState<AnalysisResult[]>([]);
   const [analysisLabels, setAnalysisLabels] = useState<string[]>([]);
   const [comparison, setComparison] = useState<ComparisonResult | null>(null);
-  const [analysisProgress, setAnalysisProgress] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [variantStatuses, setVariantStatuses] = useState<(null | "analyzing" | "done" | "error")[]>([null, null]);
-
-  const bg = "var(--surface)";
-  const surface = "var(--surface-el)";
-  const border = "var(--border)";
-  const textPrimary = "var(--ink)";
-  const textSecondary = "var(--ink-muted)";
-  const textMuted = "var(--ink-faint)";
-  const surfaceDim = "var(--surface-dim)";
 
   const readyCount = variants.filter((v) => v.file).length;
   const canRun = readyCount >= MIN_VARIANTS && phase === "idle";
+
+  const handleFileSelect = useCallback(
+    (index: number, file: File | null) => {
+      setVariants((prev) =>
+        prev.map((v, i) => (i === index ? { ...v, file: file ?? undefined } : v))
+      );
+    },
+    []
+  );
 
   const handleRun = useCallback(async () => {
     const toAnalyze = variants.filter((v) => v.file);
@@ -68,51 +53,34 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
     setErrorMsg(null);
     setAnalyses([]);
     setComparison(null);
-    setAnalysisProgress(0);
-
-    const statuses = variants.map(() => null as null | "analyzing" | "done" | "error");
-    setVariantStatuses([...statuses]);
 
     const results: AnalysisResult[] = [];
     const labels: string[] = [];
-    const succeededIndices: number[] = [];
 
-    // Stage 1: Analyze each variant sequentially
+    // Analyze each variant
     for (let i = 0; i < variants.length; i++) {
       const v = variants[i];
-      if (!v.file) {
-        statuses[i] = "error";
-        setVariantStatuses([...statuses]);
-        continue;
-      }
-
-      statuses[i] = "analyzing";
-      setVariantStatuses([...statuses]);
-      setAnalysisProgress(i + 1);
+      if (!v.file) continue;
 
       try {
         const result = await analyzeVideo(v.file, apiKey);
         results.push(result);
-        labels.push(v.label || `Variant ${String.fromCharCode(65 + i)}`);
-        succeededIndices.push(i);
-        statuses[i] = "done";
+        labels.push(v.label || `Ad ${String.fromCharCode(65 + i)}`);
       } catch (err) {
-        statuses[i] = "error";
-        console.error(`Pre-Flight: Variant ${i} analysis failed:`, err);
+        console.error(`Analysis failed for variant ${i}:`, err);
       }
-      setVariantStatuses([...statuses]);
     }
 
     if (results.length < 2) {
       setPhase("error");
-      setErrorMsg("Need at least 2 successful analyses to run comparison. Some variants failed.");
+      setErrorMsg("Need at least 2 successful analyses to run comparison.");
       return;
     }
 
     setAnalyses(results);
     setAnalysisLabels(labels);
 
-    // Stage 2: Run comparison
+    // Run comparison
     setPhase("comparing");
     try {
       const comparisonResult = await runComparison(results, labels, testType, apiKey);
@@ -121,9 +89,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
     } catch (err) {
       setPhase("error");
       setErrorMsg(
-        err instanceof Error
-          ? `Comparison failed: ${err.message}`
-          : "Comparison failed. Try again."
+        err instanceof Error ? `Comparison failed: ${err.message}` : "Comparison failed. Try again."
       );
     }
   }, [variants, testType, apiKey]);
@@ -138,72 +104,61 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
     setAnalyses([]);
     setAnalysisLabels([]);
     setComparison(null);
-    setAnalysisProgress(0);
     setErrorMsg(null);
-    setVariantStatuses([null, null]);
   }, []);
 
   const handleExportPdf = useCallback(async () => {
     if (!analyses.length || !comparison) return;
-    // Find the winner's label and map it to the correct analysis index
-    const winnerLabel = comparison.winner?.label
-      ?? comparison.rankings.find((r) => r.rank === 1)?.label;
-    const winnerIndex = winnerLabel ? analysisLabels.indexOf(winnerLabel) : -1;
-    const winnerAnalysis = analyses[winnerIndex >= 0 ? winnerIndex : 0];
-    if (winnerAnalysis) {
-      try {
-        await exportToPdf(winnerAnalysis);
-      } catch (err) {
-        console.error("PDF export failed:", err);
-      }
+    try {
+      await exportToPdf(analyses[0]);
+    } catch (err) {
+      console.error("PDF export failed:", err);
     }
-  }, [analyses, analysisLabels, comparison]);
-
-  const isRunning = phase === "analyzing" || phase === "comparing";
+  }, [analyses, comparison]);
 
   // ─── UPLOAD UI ────────────────────────────────────────────────────────────────
   if (phase === "idle" || phase === "error") {
     const PILLS = ["Hook comparison", "CTA analysis", "Winner prediction"];
     
     return (
-      <div className="flex flex-col items-center justify-center flex-1 min-h-[calc(100vh-120px)] px-6 py-8">
-        {/* Header icon */}
-        <div className="w-19 h-19 rounded-lg bg-[rgba(99,102,241,0.1)] border border-[rgba(99,102,241,0.2)] flex items-center justify-center">
-          <FlaskConical size={28} color={INDIGO_PRIMARY} />
+      <div className="flex flex-col items-center justify-center flex-1 min-h-[calc(100vh-120px)] px-6 py-16">
+        {/* Icon */}
+        <div className="w-16 h-16 rounded-lg bg-indigo-950 border border-indigo-900 flex items-center justify-center mb-6">
+          <FlaskConical size={32} className="text-indigo-400" />
         </div>
 
-        {/* Title & subtitle */}
-        <h1 className="text-xl font-semibold text-[#f4f4f5] mt-5 mb-0">
+        {/* Title */}
+        <h1 className="text-2xl font-semibold text-white mb-2 text-center">
           Compare two ad variants
         </h1>
-        <p className="text-sm text-[rgba(255,255,255,0.5)] text-center max-w-80 mt-2.5 leading-relaxed">
+        
+        {/* Subtitle */}
+        <p className="text-sm text-gray-400 text-center max-w-md mb-6">
           Upload two ad creatives side by side. AI analyzes both and predicts the winner.
         </p>
 
         {/* Feature pills */}
-        <div className="flex flex-wrap justify-center gap-2 mt-5">
+        <div className="flex flex-wrap justify-center gap-2 mb-10">
           {PILLS.map((pill) => (
             <span
               key={pill}
-              className="text-xs text-[#a1a1aa] bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.08)] rounded-full px-3 py-1"
+              className="text-xs text-gray-400 px-3 py-1 rounded-full border border-gray-700 bg-transparent"
             >
               {pill}
             </span>
           ))}
         </div>
 
-        {/* Two-column dropzone layout */}
-        <div className="w-full max-w-2xl mt-8 grid grid-cols-2 gap-4">
+        {/* Two-column dropzones */}
+        <div className="w-full max-w-3xl grid grid-cols-2 gap-6 mb-8">
           {variants.map((v, i) => {
             const fileInputId = `preflight-file-${v.id}`;
             const hasFile = !!v.file;
+            
             return (
-              <div
-                key={v.id}
-                className="flex flex-col"
-              >
+              <div key={v.id} className="flex flex-col">
                 {/* Label */}
-                <label className="text-xs font-semibold text-[#f4f4f5] mb-2 uppercase tracking-wide">
+                <label className="text-xs font-semibold text-white uppercase tracking-wider mb-3">
                   {v.label}
                 </label>
 
@@ -211,29 +166,24 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
                 {!hasFile ? (
                   <label
                     htmlFor={fileInputId}
-                    className="relative flex flex-col items-center justify-center p-6 border-2 border-dashed border-[rgba(255,255,255,0.1)] rounded-xl cursor-pointer transition-all hover:border-[rgba(99,102,241,0.3)] hover:bg-[rgba(99,102,241,0.05)] group"
+                    className="relative flex flex-col items-center justify-center p-8 border-2 border-dashed border-gray-700 rounded-lg cursor-pointer transition-all hover:border-indigo-500 hover:bg-indigo-950 hover:bg-opacity-20"
                     onDragOver={(e) => {
                       e.preventDefault();
-                      e.currentTarget.style.borderColor = INDIGO_BORDER;
-                      e.currentTarget.style.background = INDIGO_BG;
+                      e.currentTarget.classList.add("border-indigo-500", "bg-indigo-950", "bg-opacity-20");
                     }}
                     onDragLeave={(e) => {
-                      e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
-                      e.currentTarget.style.background = "transparent";
+                      e.currentTarget.classList.remove("border-indigo-500", "bg-indigo-950", "bg-opacity-20");
                     }}
                     onDrop={(e) => {
                       e.preventDefault();
-                      e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
-                      e.currentTarget.style.background = "transparent";
+                      e.currentTarget.classList.remove("border-indigo-500", "bg-indigo-950", "bg-opacity-20");
                       const f = e.dataTransfer.files[0];
                       if (f) handleFileSelect(i, f);
                     }}
                   >
-                    <Upload size={20} className="text-[#71717a] mb-2 group-hover:text-[#6366f1] transition-colors" />
-                    <span className="text-xs text-[#71717a] text-center group-hover:text-[#6366f1] transition-colors">
-                      Drop or click to browse
-                    </span>
-                    <span className="text-[10px] text-[#52525b] mt-1">MP4 · MOV · PNG · JPG</span>
+                    <Upload size={24} className="text-gray-500 mb-2" />
+                    <span className="text-sm text-gray-400">Drop or click to browse</span>
+                    <span className="text-xs text-gray-600 mt-1">MP4 · MOV · PNG · JPG</span>
                     <input
                       id={fileInputId}
                       type="file"
@@ -246,14 +196,12 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
                     />
                   </label>
                 ) : (
-                  <div className="relative flex items-center gap-2 p-3 bg-[rgba(16,185,129,0.06)] border border-[rgba(16,185,129,0.15)] rounded-xl">
-                    <Check size={14} className="text-[#10b981] flex-shrink-0" />
-                    <span className="text-xs font-mono text-[#f4f4f5] truncate flex-1 min-w-0">
-                      {v.file!.name}
-                    </span>
+                  <div className="flex items-center gap-2 p-3 bg-green-950 bg-opacity-30 border border-green-900 rounded-lg">
+                    <Check size={14} className="text-green-400 flex-shrink-0" />
+                    <span className="text-xs text-white truncate flex-1">{v.file.name}</span>
                     <button
                       onClick={() => handleFileSelect(i, null)}
-                      className="text-[#71717a] hover:text-[#ef4444] transition-colors flex-shrink-0"
+                      className="text-gray-500 hover:text-red-400 transition-colors flex-shrink-0"
                     >
                       <X size={14} />
                     </button>
@@ -266,58 +214,31 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
 
         {/* Error message */}
         {phase === "error" && errorMsg && (
-          <div className="w-full max-w-2xl mt-4 p-3 bg-[rgba(239,68,68,0.08)] border border-[rgba(239,68,68,0.2)] rounded-lg text-xs font-mono text-[#ef4444]">
+          <div className="w-full max-w-3xl mb-6 p-3 bg-red-950 bg-opacity-30 border border-red-900 rounded-lg text-xs text-red-400 font-mono">
             {errorMsg}
           </div>
         )}
 
         {/* Compare button */}
-        <div className="mt-8 flex items-center gap-3">
-          <button
-            onClick={handleRun}
-            disabled={!canRun}
-            className="px-6 py-2.5 bg-[#6366f1] text-white text-sm font-semibold rounded-full disabled:bg-[rgba(255,255,255,0.04)] disabled:text-[#52525b] disabled:cursor-not-allowed hover:enabled:bg-[#4f46e5] transition-colors"
-          >
-            Compare Ads
-          </button>
-          {canRun && (
-            <span className="text-xs font-mono text-[#71717a]">2/2 ready</span>
-          )}
-        </div>
+        <button
+          onClick={handleRun}
+          disabled={!canRun}
+          className="px-6 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-lg disabled:bg-gray-800 disabled:text-gray-500 disabled:cursor-not-allowed hover:enabled:bg-indigo-700 transition-colors"
+        >
+          Compare Ads
+        </button>
       </div>
     );
   }
 
-  // ─── LOADING UI ──────────────────────────────────────────────────────────────
-  // Get files with actual uploads for the progress card
-  const filesWithUploads = useMemo(() => 
-    variants.filter((v) => v.file).map((v) => v.file as File),
-    [variants]
-  );
-  
-  if (isRunning) {
-    const currentAnalyzingIndex = variantStatuses.findIndex((s) => s === "analyzing");
-    
+  // ─── ANALYZING UI ─────────────────────────────────────────────────────────────
+  if (phase === "analyzing" || phase === "comparing") {
     return (
-      <div
-        style={{
-          maxWidth: "720px",
-          margin: "0 auto",
-          padding: "48px 24px",
-          fontFamily: "var(--sans)",
-        }}
-      >
+      <div className="flex flex-col items-center justify-center flex-1 min-h-[calc(100vh-120px)] px-6 py-16">
         <AnalysisProgressCard
-          pageType="ab-test"
-          files={filesWithUploads}
-          statusMessage={
-            phase === "analyzing"
-              ? `Analyzing variant ${analysisProgress} of ${filesWithUploads.length}`
-              : "Running head-to-head comparison..."
-          }
-          currentIndex={currentAnalyzingIndex >= 0 ? currentAnalyzingIndex : analysisProgress - 1}
-          totalCount={filesWithUploads.length}
-          onCancel={handleReset}
+          currentVariant={analysisLabels.length}
+          totalVariants={variants.length}
+          isDark={isDark}
         />
       </div>
     );
@@ -329,18 +250,18 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
     const loser = comparison.rankings?.[1];
 
     return (
-      <div className="max-w-4xl mx-auto px-6 py-10 font-sans">
+      <div className="max-w-4xl mx-auto px-6 py-12">
         {/* Results header */}
         <div className="mb-8">
-          <div className="text-xs font-semibold uppercase tracking-widest text-[rgba(255,255,255,0.5)] mb-1">
+          <div className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-1">
             A/B Test Results
           </div>
-          <h1 className="text-3xl font-bold text-[#f4f4f5]">
+          <h1 className="text-3xl font-bold text-white">
             {winner?.label} wins
           </h1>
         </div>
 
-        {/* Two-column score panels */}
+        {/* Score panels grid */}
         <div className="grid grid-cols-2 gap-6 mb-8">
           {analyses.map((analysis, idx) => {
             const isWinner = winner && analysisLabels[idx] === winner.label;
@@ -349,51 +270,51 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
             return (
               <div
                 key={idx}
-                className={`relative p-6 rounded-xl border transition-all ${
+                className={`relative p-6 rounded-lg border ${
                   isWinner
-                    ? "border-[rgba(99,102,241,0.3)] bg-[rgba(99,102,241,0.05)]"
-                    : "border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)]"
+                    ? "border-indigo-700 bg-indigo-950 bg-opacity-30"
+                    : "border-gray-800 bg-gray-900 bg-opacity-30"
                 }`}
               >
                 {/* Winner badge */}
                 {isWinner && (
-                  <div className="absolute -top-3 -right-3 px-3 py-1 bg-[#6366f1] text-white text-xs font-semibold rounded-full">
+                  <div className="absolute -top-3 -right-3 px-2 py-1 bg-indigo-600 text-white text-xs font-semibold rounded-full">
                     🏆 Winner
                   </div>
                 )}
 
                 {/* Ad label */}
-                <h2 className="text-sm font-semibold text-[#f4f4f5] mb-4">
+                <h2 className="text-sm font-semibold text-white mb-4">
                   {analysisLabels[idx]}
                 </h2>
 
-                {/* Score grid */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-[rgba(255,255,255,0.02)] rounded-lg">
-                    <span className="text-xs text-[rgba(255,255,255,0.6)]">Hook</span>
-                    <span className="text-sm font-semibold text-[#f4f4f5]">
+                {/* Scores */}
+                <div className="space-y-2">
+                  <div className="flex justify-between p-2 bg-gray-800 bg-opacity-50 rounded">
+                    <span className="text-xs text-gray-400">Hook</span>
+                    <span className="text-sm font-semibold text-white">
                       {Math.round(scores.hook || 0)}/100
                     </span>
                   </div>
-                  <div className="flex items-center justify-between p-3 bg-[rgba(255,255,255,0.02)] rounded-lg">
-                    <span className="text-xs text-[rgba(255,255,255,0.6)]">Clarity</span>
-                    <span className="text-sm font-semibold text-[#f4f4f5]">
+                  <div className="flex justify-between p-2 bg-gray-800 bg-opacity-50 rounded">
+                    <span className="text-xs text-gray-400">Clarity</span>
+                    <span className="text-sm font-semibold text-white">
                       {Math.round(scores.clarity || 0)}/100
                     </span>
                   </div>
-                  <div className="flex items-center justify-between p-3 bg-[rgba(255,255,255,0.02)] rounded-lg">
-                    <span className="text-xs text-[rgba(255,255,255,0.6)]">CTA</span>
-                    <span className="text-sm font-semibold text-[#f4f4f5]">
+                  <div className="flex justify-between p-2 bg-gray-800 bg-opacity-50 rounded">
+                    <span className="text-xs text-gray-400">CTA</span>
+                    <span className="text-sm font-semibold text-white">
                       {Math.round(scores.cta || 0)}/100
                     </span>
                   </div>
-                  <div className="flex items-center justify-between p-3 bg-[rgba(255,255,255,0.02)] rounded-lg">
-                    <span className="text-xs text-[rgba(255,255,255,0.6)]">Production</span>
-                    <span className="text-sm font-semibold text-[#f4f4f5]">
+                  <div className="flex justify-between p-2 bg-gray-800 bg-opacity-50 rounded">
+                    <span className="text-xs text-gray-400">Production</span>
+                    <span className="text-sm font-semibold text-white">
                       {Math.round(scores.production || 0)}/100
                     </span>
                   </div>
-                  <div className="flex items-center justify-between p-3 bg-[#6366f1] rounded-lg">
+                  <div className="flex justify-between p-3 bg-indigo-600 rounded">
                     <span className="text-xs font-semibold text-white">Overall</span>
                     <span className="text-lg font-bold text-white">
                       {Math.round(scores.overall || 0)}/100
@@ -405,16 +326,16 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
           })}
         </div>
 
-        {/* Loser improvements */}
+        {/* Improvements */}
         {loser && loser.improvements && loser.improvements.length > 0 && (
-          <div className="p-6 bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.08)] rounded-xl mb-8">
-            <h3 className="text-sm font-semibold text-[#f4f4f5] mb-3">
+          <div className="p-6 bg-gray-900 bg-opacity-50 border border-gray-800 rounded-lg mb-8">
+            <h3 className="text-sm font-semibold text-white mb-3">
               Improve {loser.label}
             </h3>
             <ul className="space-y-2">
               {loser.improvements.slice(0, 3).map((improvement, idx) => (
-                <li key={idx} className="text-xs text-[rgba(255,255,255,0.6)] flex gap-2">
-                  <span className="text-[#6366f1] font-bold">→</span>
+                <li key={idx} className="text-xs text-gray-400 flex gap-2">
+                  <span className="text-indigo-400 font-bold">→</span>
                   {improvement}
                 </li>
               ))}
@@ -426,13 +347,13 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
         <div className="flex gap-3">
           <button
             onClick={handleReset}
-            className="flex-1 px-4 py-2.5 bg-[#6366f1] text-white text-sm font-semibold rounded-lg hover:bg-[#4f46e5] transition-colors"
+            className="flex-1 px-4 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition-colors"
           >
             Test Another
           </button>
           <button
             onClick={handleExportPdf}
-            className="flex-1 px-4 py-2.5 bg-[rgba(255,255,255,0.05)] text-[#a1a1aa] text-sm font-semibold rounded-lg border border-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.08)] transition-colors"
+            className="flex-1 px-4 py-2.5 bg-gray-800 text-gray-300 text-sm font-semibold rounded-lg border border-gray-700 hover:bg-gray-700 transition-colors"
           >
             Export PDF
           </button>
