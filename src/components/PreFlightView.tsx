@@ -1,6 +1,6 @@
 // PreFlightView.tsx — Main Pre-Flight A/B creative testing view
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { GitBranch, Plus, X, Upload, Check } from "lucide-react";
 import { VideoDropzone } from "./VideoDropzone";
 import { PreFlightWinner } from "./PreFlightWinner";
@@ -205,6 +205,17 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
     variants.filter((v) => v.file).map((v) => v.file as File),
     [variants]
   );
+
+  // Object URLs for variant thumbnails — must be before early returns (Rules of Hooks)
+  const variantThumbnailUrls = useMemo(() =>
+    variants.map((v) => v.file ? URL.createObjectURL(v.file) : null),
+    [variants]
+  );
+  useEffect(() => {
+    return () => {
+      variantThumbnailUrls.forEach((url) => { if (url) URL.revokeObjectURL(url); });
+    };
+  }, [variantThumbnailUrls]);
 
   // ─── UPLOAD UI ────────────────────────────────────────────────────────────────
   if (phase === "idle" || phase === "error") {
@@ -462,117 +473,237 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
 
   // ─── RESULTS UI ──────────────────────────────────────────────────────────────
   if (phase === "done" && comparison) {
+    // Score color helper
+    const scoreCol = (s: number) => s >= 8 ? '#10b981' : s >= 4 ? '#f59e0b' : '#ef4444';
+
+    // Confidence badge colors
+    const confColor = comparison.winner.confidence === "high"
+      ? { bg: 'rgba(16,185,129,0.1)', text: '#10b981', border: 'rgba(16,185,129,0.2)' }
+      : comparison.winner.confidence === "medium"
+      ? { bg: 'rgba(245,158,11,0.1)', text: '#f59e0b', border: 'rgba(245,158,11,0.2)' }
+      : { bg: 'rgba(239,68,68,0.1)', text: '#ef4444', border: 'rgba(239,68,68,0.2)' };
+
+    // Build label → variant and label → url maps
+    const labelToVariant = new Map<string, typeof variants[0]>();
+    variants.forEach((v) => labelToVariant.set(v.label, v));
+    const labelToUrl = new Map<string, string | null>();
+    variants.forEach((v, i) => labelToUrl.set(v.label, variantThumbnailUrls[i]));
+
+    // Head-to-head rows
+    const h2hRows = [
+      { dim: "Hook", winner: comparison.headToHead.hookWinner, reason: comparison.headToHead.hookReason },
+      { dim: "CTA", winner: comparison.headToHead.ctaWinner, reason: comparison.headToHead.ctaReason },
+      { dim: "Retention", winner: comparison.headToHead.retentionWinner, reason: comparison.headToHead.retentionReason },
+    ];
+
     return (
-      <div
-        style={{
-          maxWidth: "900px",
-          margin: "0 auto",
-          padding: "40px 24px",
-          fontFamily: "var(--sans)",
-        }}
-      >
-        {/* Results header */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: "24px",
-          }}
-        >
-          <div>
-            <div
-              style={{
-                fontSize: "11px",
-                fontFamily: "var(--sans)",
-                fontWeight: 600,
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
-                color: "var(--label)",
-                marginBottom: "4px",
-              }}
-            >
-              PRE-FLIGHT RESULTS
+      <div className="flex h-full" style={{ minHeight: 'calc(100vh - 56px)' }}>
+
+        {/* ── Left panel ────────────────────────────────────── */}
+        <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+          <div className="flex-1 overflow-auto p-6 flex flex-col gap-5">
+
+            {/* 1. Thumbnail row */}
+            <div className="grid grid-cols-2 gap-3">
+              {comparison.rankings.map((rv) => {
+                const url = labelToUrl.get(rv.label);
+                const v = labelToVariant.get(rv.label);
+                const isWinner = rv.rank === 1;
+                const isVideo = v?.file?.type.startsWith('video/');
+                return (
+                  <div key={rv.variant} className="flex flex-col gap-1.5">
+                    <div
+                      className={`relative rounded-xl overflow-hidden bg-[#18181b] ${isVideo ? 'aspect-video' : 'aspect-square'}`}
+                      style={isWinner
+                        ? { boxShadow: '0 0 0 2px #ec4899' }
+                        : { border: '1px solid rgba(255,255,255,0.06)' }
+                      }
+                    >
+                      {url ? (
+                        isVideo ? (
+                          <video src={url} className="w-full h-full object-cover" muted />
+                        ) : (
+                          <img src={url} alt={rv.label} className="w-full h-full object-cover" />
+                        )
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <span className="text-xs text-zinc-600 font-mono">{rv.label}</span>
+                        </div>
+                      )}
+                      {isWinner && (
+                        <div className="absolute bottom-2 left-2">
+                          <span
+                            className="text-white text-[10px] font-bold px-2 py-0.5 rounded-full"
+                            style={{ background: '#ec4899' }}
+                          >
+                            Winner
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-[10px] font-mono text-zinc-500 truncate">{rv.label}</span>
+                  </div>
+                );
+              })}
             </div>
+
+            {/* 2. Predicted winner banner */}
             <div
-              style={{
-                fontSize: "20px",
-                fontWeight: 800,
-                color: textPrimary,
-                letterSpacing: "-0.02em",
-              }}
+              className="rounded-2xl overflow-hidden"
+              style={{ background: '#18181b', borderTop: '1px solid rgba(255,255,255,0.06)', borderRight: '1px solid rgba(255,255,255,0.06)', borderBottom: '1px solid rgba(255,255,255,0.06)', borderLeft: '4px solid #ec4899' }}
             >
-              {comparison.rankings.length} variants tested
+              <div className="px-5 py-4">
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500">Predicted Winner</span>
+                <p className="text-base font-semibold text-zinc-100 mt-1">{comparison.winner.headline}</p>
+                <p className="text-sm text-zinc-400 mt-1.5 leading-relaxed">{comparison.winner.reasoning}</p>
+                <span
+                  className="inline-flex mt-3 text-[11px] font-mono rounded-full px-3 py-0.5"
+                  style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981', border: '1px solid rgba(16,185,129,0.2)' }}
+                >
+                  ↑ {comparison.winner.predictedLift}
+                </span>
+              </div>
+            </div>
+
+            {/* 3. Head-to-head breakdown */}
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500 mb-3">Head-to-Head</p>
+              <div
+                className="rounded-2xl overflow-hidden"
+                style={{ background: '#18181b', border: '1px solid rgba(255,255,255,0.06)' }}
+              >
+                {h2hRows.map((row, i) => {
+                  const isWinnerDim = row.winner === comparison.winner.label;
+                  const pillStyle = isWinnerDim
+                    ? { background: 'rgba(236,72,153,0.1)', color: '#ec4899', border: '1px solid rgba(236,72,153,0.2)' }
+                    : { background: 'rgba(99,102,241,0.1)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.2)' };
+                  return (
+                    <div
+                      key={row.dim}
+                      className="flex items-start gap-3 px-5 py-3.5"
+                      style={i < h2hRows.length - 1 ? { borderBottom: '1px solid rgba(255,255,255,0.04)' } : undefined}
+                    >
+                      <span className="text-xs font-medium text-zinc-400 w-20 flex-shrink-0">{row.dim}</span>
+                      <span
+                        className="text-[11px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
+                        style={pillStyle}
+                      >
+                        {row.winner}
+                      </span>
+                      <span className="text-xs text-zinc-500 flex-1">{row.reason}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 4. Recommendation */}
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500 mb-3">Recommendation</p>
+              <div
+                className="rounded-2xl px-5 py-4"
+                style={{ background: '#18181b', border: '1px solid rgba(255,255,255,0.06)' }}
+              >
+                <p className="text-sm text-zinc-300 leading-relaxed">{comparison.recommendation}</p>
+              </div>
+            </div>
+
+            {/* 5. Hybrid opportunity (conditional) */}
+            {comparison.hybridNote !== null && (
+              <div
+                className="rounded-2xl overflow-hidden"
+                style={{ background: '#18181b', borderTop: '1px solid rgba(255,255,255,0.06)', borderRight: '1px solid rgba(255,255,255,0.06)', borderBottom: '1px solid rgba(255,255,255,0.06)', borderLeft: '4px solid #f59e0b' }}
+              >
+                <div className="px-5 py-4">
+                  <span className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: '#f59e0b' }}>Hybrid Opportunity</span>
+                  <p className="text-sm text-zinc-300 mt-1 leading-relaxed">{comparison.hybridNote}</p>
+                </div>
+              </div>
+            )}
+
+          </div>
+        </div>
+
+        {/* ── Right panel ───────────────────────────────────── */}
+        <div
+          className="shrink-0 w-[440px] overflow-y-auto pb-12"
+          style={{ background: 'rgba(24,24,27,0.5)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', borderLeft: '1px solid rgba(255,255,255,0.05)' }}
+        >
+          {/* Section label */}
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500 px-5 pt-5 pb-3">Score Comparison</p>
+
+          {/* Score comparison cards */}
+          {comparison.rankings.map((rv) => {
+            const isWinner = rv.rank === 1;
+            const sc = scoreCol(rv.overallScore);
+            return (
+              <div
+                key={rv.variant}
+                className="mx-4 mb-3 rounded-2xl overflow-hidden"
+                style={isWinner
+                  ? { background: '#18181b', borderTop: '1px solid rgba(255,255,255,0.06)', borderRight: '1px solid rgba(255,255,255,0.06)', borderBottom: '1px solid rgba(255,255,255,0.06)', borderLeft: '4px solid #ec4899' }
+                  : { background: '#18181b', border: '1px solid rgba(255,255,255,0.06)' }
+                }
+              >
+                <div className="px-4 py-4">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-semibold text-zinc-200">{rv.label}</span>
+                    <span className="text-[10px] font-mono text-zinc-500">#{rv.rank}</span>
+                  </div>
+                  <span className="text-3xl font-mono font-bold" style={{ color: sc }}>{rv.overallScore.toFixed(1)}</span>
+                  <p className="text-xs mt-2" style={{ color: '#10b981' }}>↑ {rv.keyStrength}</p>
+                  <p className="text-xs text-zinc-500 mt-0.5">↓ {rv.keyWeakness}</p>
+                  <span
+                    className="inline-flex mt-2 text-[10px] font-medium rounded-full px-2 py-0.5"
+                    style={rv.wouldScale
+                      ? { color: '#10b981', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.15)' }
+                      : { color: '#a1a1aa', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }
+                    }
+                  >
+                    {rv.wouldScale ? 'Ready to scale' : 'Needs work'}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Confidence badge */}
+          <div className="mx-4 mb-4">
+            <div
+              className="rounded-xl px-4 py-2.5 text-xs font-semibold text-center"
+              style={{ background: confColor.bg, color: confColor.text, border: `1px solid ${confColor.border}` }}
+            >
+              {comparison.winner.confidence.toUpperCase()} CONFIDENCE
             </div>
           </div>
-          <div style={{ display: "flex", gap: "8px" }}>
+
+          {/* Run New Test button */}
+          <div className="mx-4 mb-2" style={{ width: 'calc(100% - 2rem)' }}>
+            <button
+              onClick={handleReset}
+              className="w-full text-white text-sm font-medium rounded-xl px-4 py-3"
+              style={{ background: '#6366f1' }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#5254cc'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = '#6366f1'; }}
+            >
+              Run New Test
+            </button>
+          </div>
+
+          {/* Export PDF button */}
+          <div className="mx-4 mb-4" style={{ width: 'calc(100% - 2rem)' }}>
             <button
               onClick={handleExportPdf}
-              style={{
-                padding: "8px 16px",
-                background: surfaceDim,
-                border: `1px solid ${border}`,
-                borderRadius: "var(--radius-sm)",
-                color: textSecondary,
-                fontSize: "11px",
-                fontFamily: "var(--mono)",
-                cursor: "pointer",
-                fontWeight: 600,
-              }}
+              className="w-full text-sm font-medium rounded-xl px-4 py-3"
+              style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', color: '#a1a1aa' }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
             >
               Export PDF
             </button>
-            <button
-              onClick={handleReset}
-              style={{
-                padding: "8px 16px",
-                background: BRAND_COLOR,
-                border: "none",
-                borderRadius: "var(--radius-sm)",
-                color: "#fff",
-                fontSize: "11px",
-                fontFamily: "var(--mono)",
-                cursor: "pointer",
-                fontWeight: 700,
-                letterSpacing: "0.04em",
-              }}
-            >
-              New Test
-            </button>
           </div>
         </div>
 
-        {/* Winner card */}
-        <div style={{ marginBottom: "24px" }}>
-          <PreFlightWinner winner={comparison.winner} isDark={isDark} />
-        </div>
-
-        {/* Ranked cards row */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: `repeat(${Math.min(comparison.rankings.length, 3)}, 1fr)`,
-            gap: "12px",
-            marginBottom: "24px",
-          }}
-        >
-          {comparison.rankings.map((rv) => (
-            <PreFlightRankCard
-              key={rv.variant}
-              variant={rv}
-              isWinner={rv.rank === 1}
-              isDark={isDark}
-            />
-          ))}
-        </div>
-
-        {/* Head-to-head + Recommendation */}
-        <PreFlightHeadToHead
-          headToHead={comparison.headToHead}
-          recommendation={comparison.recommendation}
-          hybridNote={comparison.hybridNote}
-          isDark={isDark}
-        />
       </div>
     );
   }
