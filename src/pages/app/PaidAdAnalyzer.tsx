@@ -1583,7 +1583,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
       <SafeZoneModal
         open={safeZoneOpen}
         onClose={() => setSafeZoneOpen(false)}
-        imageData={thumbnailDataUrl ? thumbnailDataUrl.replace(/^data:[^;]+;base64,/, '') : undefined}
+        thumbnailSrc={thumbnailDataUrl ?? undefined}
         mode="paid"
       />
     </div>

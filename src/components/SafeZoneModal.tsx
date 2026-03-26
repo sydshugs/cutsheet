@@ -125,15 +125,19 @@ interface AIResult {
 interface SafeZoneModalProps {
   open: boolean;
   onClose: () => void;
-  /** Base64-encoded image (no data URL prefix) for AI vision detection */
-  imageData?: string;
+  /**
+   * Image source for preview + AI detection — accepts blob URL (images) or
+   * data URL (video thumbnails). Converted to base64 client-side before
+   * sending to the API so both formats work correctly.
+   */
+  thumbnailSrc?: string;
   /** Whether this is organic or paid content — affects AI prompt context */
   mode?: "organic" | "paid";
 }
 
 // ─── COMPONENT ───────────────────────────────────────────────────────────────
 
-export function SafeZoneModal({ open, onClose, imageData, mode = "paid" }: SafeZoneModalProps) {
+export function SafeZoneModal({ open, onClose, thumbnailSrc, mode = "paid" }: SafeZoneModalProps) {
   const [activePlatform, setActivePlatform] = useState<PlatformKey>("tiktok");
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState<AIResult | null>(null);
@@ -147,7 +151,7 @@ export function SafeZoneModal({ open, onClose, imageData, mode = "paid" }: SafeZ
   }, []);
 
   const handleCheckWithAI = useCallback(async () => {
-    if (!imageData) return;
+    if (!thumbnailSrc) return;
     setAiLoading(true);
     setAiResult(null);
     setAiError(null);
@@ -157,6 +161,21 @@ export function SafeZoneModal({ open, onClose, imageData, mode = "paid" }: SafeZ
         setAiError("Not authenticated — please sign in");
         return;
       }
+
+      // Convert thumbnailSrc (blob URL or data URL) to pure base64.
+      // fetch() works for both blob: and data: URLs in the browser.
+      const fetchedBlob = await fetch(thumbnailSrc).then((r) => r.blob());
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          // Strip the data URL prefix (data:image/jpeg;base64,) to get raw base64
+          resolve(result.replace(/^data:[^;]+;base64,/, ""));
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(fetchedBlob);
+      });
+
       const res = await fetch("/api/safe-zone", {
         method: "POST",
         headers: {
@@ -164,8 +183,8 @@ export function SafeZoneModal({ open, onClose, imageData, mode = "paid" }: SafeZ
           "Authorization": `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
-          imageData,
-          mimeType: "image/jpeg",
+          imageData: base64,
+          mimeType: fetchedBlob.type || "image/jpeg",
           platform: activePlatform,
           mode,
         }),
@@ -181,7 +200,7 @@ export function SafeZoneModal({ open, onClose, imageData, mode = "paid" }: SafeZ
     } finally {
       setAiLoading(false);
     }
-  }, [imageData, activePlatform, mode]);
+  }, [thumbnailSrc, activePlatform, mode]);
 
   if (!open) return null;
 
@@ -297,13 +316,23 @@ export function SafeZoneModal({ open, onClose, imageData, mode = "paid" }: SafeZ
               {/* Phone background */}
               <div className="absolute inset-0 bg-zinc-950" />
 
-              {/* Crosshatch fill to suggest content area */}
+              {/* Ad creative preview — renders behind the SVG overlays */}
+              {thumbnailSrc && (
+                <img
+                  src={thumbnailSrc}
+                  alt="Ad creative preview"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  style={{ display: 'block' }}
+                />
+              )}
+
+              {/* Crosshatch fill — shown only when no image is available */}
               <svg
                 viewBox="0 0 180 320"
                 width="180"
                 height="320"
                 className="absolute inset-0"
-                style={{ display: 'block', opacity: 0.12 }}
+                style={{ display: thumbnailSrc ? 'none' : 'block', opacity: 0.12 }}
               >
                 <defs>
                   <pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
@@ -401,7 +430,7 @@ export function SafeZoneModal({ open, onClose, imageData, mode = "paid" }: SafeZ
             </div>
 
             {/* AI Check button — only shown when image is available */}
-            {imageData && (
+            {thumbnailSrc && (
               <button
                 type="button"
                 onClick={handleCheckWithAI}

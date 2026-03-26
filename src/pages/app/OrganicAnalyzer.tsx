@@ -732,7 +732,7 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
       <SafeZoneModal
         open={safeZoneOpen}
         onClose={() => setSafeZoneOpen(false)}
-        imageData={thumbnailDataUrl ? thumbnailDataUrl.replace(/^data:[^;]+;base64,/, '') : undefined}
+        thumbnailSrc={thumbnailDataUrl ?? undefined}
         mode="organic"
       />
     </div>
