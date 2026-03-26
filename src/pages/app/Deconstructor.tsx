@@ -92,7 +92,7 @@ function UrlInput({
           }}
           onKeyDown={handleKeyDown}
           placeholder="Paste a Meta Ad Library, TikTok Creative Center, or YouTube URL"
-          className="flex-1 bg-transparent text-sm text-white placeholder:text-zinc-500 outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40 py-2.5 min-w-0"
+          className="flex-1 bg-transparent text-sm text-white placeholder:text-zinc-500 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 py-2.5 min-w-0"
           disabled={loading}
           autoFocus
         />
@@ -101,13 +101,13 @@ function UrlInput({
           onClick={handleSubmit}
           disabled={loading || !url.trim()}
           className="shrink-0 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-          style={{ background: "#f59e0b" }}
+          style={{ background: "#6366f1" }}
           onMouseEnter={(e) => {
             if (!loading && url.trim())
-              e.currentTarget.style.background = "#d97706";
+              e.currentTarget.style.background = "#5254cc";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.background = "#f59e0b";
+            e.currentTarget.style.background = "#6366f1";
           }}
         >
           {loading ? (

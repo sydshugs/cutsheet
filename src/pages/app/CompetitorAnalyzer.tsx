@@ -20,11 +20,13 @@ import { sanitizeSearchQuery, sanitizeFileName } from "../../utils/sanitize";
 const API_KEY = ""; // Gemini calls are now server-side via /api/analyze
 const META_TOKEN = import.meta.env.VITE_META_ACCESS_TOKEN ?? "";
 
-// Brand color for Competitor Analysis: Sky Blue
-const BRAND_COLOR = "#0ea5e9";
-const BRAND_COLOR_LIGHT = "#38bdf8";
-const BRAND_BG = "rgba(14,165,233,0.08)";
-const BRAND_BORDER = "rgba(14,165,233,0.15)";
+// Interactive color: indigo (buttons, selectors, active states)
+const BRAND_COLOR = "#6366f1";
+// Page accent: sky (icon tile, feature pills, decorative links)
+const ACCENT = "#0ea5e9";
+const ACCENT_LIGHT = "#38bdf8";
+const ACCENT_BG = "rgba(14,165,233,0.08)";
+const ACCENT_BORDER = "rgba(14,165,233,0.15)";
 
 const PLATFORMS = ["all", "Meta", "TikTok", "Google", "YouTube"] as const;
 const FORMATS = ["video", "static"] as const;
@@ -104,7 +106,7 @@ function FilePreview({ file, onRemove }: { file: File; onRemove: () => void }) {
           <span style={{ fontSize: 12, color: "#a1a1aa", fontFamily: "var(--font-mono, monospace)" }}>
             {(() => { const n = sanitizeFileName(file.name); return n.length > 26 ? n.slice(0, 23) + "..." : n; })()}
           </span>
-          <span style={{ fontSize: 10, color: BRAND_COLOR_LIGHT, background: BRAND_BG, borderRadius: 9999, padding: "2px 8px" }}>
+          <span style={{ fontSize: 10, color: ACCENT_LIGHT, background: ACCENT_BG, borderRadius: 9999, padding: "2px 8px" }}>
             {file.type.startsWith("video/") ? "Video" : "Static"}
           </span>
         </div>
@@ -229,17 +231,17 @@ function MetaSearch({ onFileSelect }: { onFileSelect: (f: File) => void }) {
           {results.map((ad) => (
             <div key={ad.id} onClick={() => handleUseAd(ad)}
               style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: 10, cursor: "pointer", transition: "all 150ms", display: "flex", flexDirection: "column", gap: 6 }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = BRAND_BORDER; }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = ACCENT_BORDER; }}
               onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; }}>
               {ad.ad_snapshot_url && (
                 <div style={{ width: "100%", height: 80, borderRadius: 6, overflow: "hidden", background: "#18181b" }}>
                   <img src={ad.ad_snapshot_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 </div>
               )}
-              {ad.page_name && <span style={{ fontSize: 11, color: BRAND_COLOR_LIGHT, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ad.page_name}</span>}
+              {ad.page_name && <span style={{ fontSize: 11, color: ACCENT_LIGHT, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ad.page_name}</span>}
               {ad.ad_creative_bodies?.[0] && <span style={{ fontSize: 11, color: "#71717a", lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const }}>{ad.ad_creative_bodies[0].slice(0, 80)}</span>}
               <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: "auto" }}>
-                <ExternalLink size={10} color={BRAND_COLOR} /><span style={{ fontSize: 10, color: BRAND_COLOR }}>Use this ad</span>
+                <ExternalLink size={10} color={ACCENT} /><span style={{ fontSize: 10, color: ACCENT }}>Use this ad</span>
               </div>
             </div>
           ))}
@@ -312,8 +314,8 @@ export default function CompetitorAnalyzer() {
             {step === 0 && (
               <motion.div key="s0" {...SLIDE} style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 24 }}>
                 {/* Icon box */}
-                <div style={{ width: 76, height: 76, borderRadius: 14, background: BRAND_BG, border: `1px solid ${BRAND_BORDER}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <Swords size={28} color={BRAND_COLOR} />
+                <div style={{ width: 76, height: 76, borderRadius: 14, background: ACCENT_BG, border: `1px solid ${ACCENT_BORDER}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Swords size={28} color={ACCENT} />
                 </div>
 
                 {/* Title */}
@@ -327,7 +329,7 @@ export default function CompetitorAnalyzer() {
                 {/* Feature pills */}
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 20 }}>
                   {FEATURE_PILLS.map((pill) => (
-                    <span key={pill} style={{ fontSize: 12, color: BRAND_COLOR_LIGHT, background: BRAND_BG, border: `1px solid ${BRAND_BORDER}`, borderRadius: 9999, padding: "4px 12px" }}>
+                    <span key={pill} style={{ fontSize: 12, color: ACCENT_LIGHT, background: ACCENT_BG, border: `1px solid ${ACCENT_BORDER}`, borderRadius: 9999, padding: "4px 12px" }}>
                       {pill}
                     </span>
                   ))}
@@ -388,12 +390,12 @@ export default function CompetitorAnalyzer() {
                       {/* TikTok Creative Center */}
                       <div onClick={() => window.open("https://ads.tiktok.com/business/creativecenter/inspiration/topads", "_blank")}
                         style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "10px 14px", marginTop: 12, display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", transition: "all 150ms" }}
-                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = BRAND_BORDER; }}
+                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = ACCENT_BORDER; }}
                         onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                           <Music2 size={14} color="#71717a" /><span style={{ fontSize: 13, color: "#a1a1aa" }}>Find TikTok ads</span>
                         </div>
-                        <span style={{ fontSize: 12, color: BRAND_COLOR }}>Creative Center ↗</span>
+                        <span style={{ fontSize: 12, color: ACCENT }}>Creative Center ↗</span>
                       </div>
                       <p style={{ fontSize: 11, color: "#52525b", margin: "6px 0 0 0" }}>Download from TikTok Creative Center, then upload above</p>
 
@@ -502,7 +504,7 @@ export default function CompetitorAnalyzer() {
                   <button type="button" onClick={handleReset} style={{ background: "none", border: "none", color: "#52525b", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
                     <ChevronLeft size={14} /> Compare another
                   </button>
-                  <span style={{ fontSize: 11, color: BRAND_COLOR_LIGHT, background: BRAND_BG, border: `1px solid ${BRAND_BORDER}`, borderRadius: 9999, padding: "4px 12px" }}>
+                  <span style={{ fontSize: 11, color: ACCENT_LIGHT, background: ACCENT_BG, border: `1px solid ${ACCENT_BORDER}`, borderRadius: 9999, padding: "4px 12px" }}>
                     Analysis complete
                   </span>
                 </div>

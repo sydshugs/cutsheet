@@ -662,7 +662,7 @@ Return JSON only — no prose:
                       disabled={suiteBanners.length < 2 || !canAnalyze}
                       style={{
                         width: "100%", height: 52, borderRadius: 9999, border: "none",
-                        background: suiteBanners.length >= 2 ? "#06b6d4" : "rgba(6,182,212,0.3)",
+                        background: suiteBanners.length >= 2 ? "#6366f1" : "rgba(99,102,241,0.3)",
                         color: "white", fontSize: 15, fontWeight: 600,
                         cursor: suiteBanners.length >= 2 ? "pointer" : "not-allowed",
                         opacity: suiteBanners.length >= 2 ? 1 : 0.4,
