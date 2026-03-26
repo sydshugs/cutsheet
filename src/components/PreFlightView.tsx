@@ -60,14 +60,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
   const readyCount = variants.filter((v) => v.file).length;
   const canRun = readyCount >= MIN_VARIANTS && phase === "idle";
 
-  const handleFileSelect = useCallback(
-    (index: number, file: File | null) => {
-      setVariants((prev) =>
-        prev.map((v, i) => (i === index ? { ...v, file: file ?? undefined } : v))
-      );
-    },
-    []
-  );
+  const handleRun = useCallback(async () => {
     const toAnalyze = variants.filter((v) => v.file);
     if (toAnalyze.length < MIN_VARIANTS) return;
 

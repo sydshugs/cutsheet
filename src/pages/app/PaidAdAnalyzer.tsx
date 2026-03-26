@@ -1032,7 +1032,6 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                         onHistoryEntryClick={(entry) => setLoadedEntry(entry)}
                         platform={platform !== "all" ? platform : (rawUserContext?.platform ?? undefined)}
                         icon={Zap}
-                        format={format}
                         niche={rawUserContext?.niche}
                         onFixIt={handleFixIt}
                         onVisualize={handleVisualize}
