@@ -426,32 +426,32 @@ These are confirmed open security/stability issues from the Phase 1 audit (March
 **File:** `Settings.tsx`
 **Issue:** "Delete my account" button does nothing. GDPR risk.
 **Fix:** Implement server-side deletion (`supabase.auth.admin.deleteUser()`) or disable with "Contact support."
-**Status:** ⬜ NOT FIXED
+**Status:** ✅ FIXED — PR #86. `api/delete-account.ts` now cleans Supabase Storage (`uploads/${uid}/*` and `visualize-temp/${uid}/*`) before deleting DB rows and calling `auth.admin.deleteUser()`.
 
 ### P0-5 — A/B Test page unreachable on mobile
 **File:** Sidebar / `MORE_ITEMS` array
 **Issue:** A/B Test page completely unreachable on mobile — skipped in `MORE_ITEMS`.
 **Fix:** Add A/B Test to mobile `MORE_ITEMS` array.
-**Status:** ⬜ NOT FIXED
+**Status:** ✅ FIXED — PR #86. Added A/B Test as 4th direct tab in `MOBILE_TABS` in `Sidebar.tsx`.
 
 ### P1-S1/S2 — Prompt injection via userContext
 **Files:** `predict-performance.ts`, `comparison.ts`, `gap-analysis.ts`, all Claude endpoints
 **Issue:** userContext is interpolated into prompts without sanitization or XML delimiters. Chained injection possible.
 **Fix:** Add `sanitizeSessionMemory()` on userContext before all 3 endpoints. Wrap all user content: `<user_data>${sanitized}</user_data>`
-**Status:** ⬜ NOT FIXED
+**Status:** ✅ FIXED — commit `b910e37`. Refactored `sanitizeMemory.ts` with shared `stripInjection()`, added `sanitizeUserInput()` + `sanitizeAnalysisText()`. All three endpoints now wrap userContext/sessionMemory in XML delimiters; analysisMarkdown, filenames, and improvement items sanitized before prompt injection.
 
 ### P1-R1 — Onboarding has no back button
 **File:** Onboarding flow
 **Issue:** No back button. Auto-advances on 300ms tap — user can't correct mis-tap.
 **Fix:** Add back arrows. Remove auto-advance.
-**Status:** ⬜ NOT FIXED
+**Status:** ✅ FIXED — `Welcome.tsx`: removed `setTimeout` auto-advance from `handleIntentSelect` and `handleNicheSelect`; added "← Back" button in top bar (replaces logo on steps 2+); added "Continue" button to steps 1 and 2 (only visible after a selection is made).
 
 ### P1-R2 — Onboarding re-shows on fresh login (UX Bug)
 **File:** Onboarding flow / `ProtectedRoute.tsx` / `profiles` table
 **Issue:** When a user logs in via a new session, onboarding shows again even if previously completed. Root cause: `onboarding_completed` flag in `profiles` table may not be persisting correctly across sessions.
 **Fix:** Verify the flag is being written to `profiles` on onboarding completion AND that `ProtectedRoute` reads it server-side before showing onboarding.
 **Affects:** Playwright E2E tests — tests always hit onboarding screen on fresh auth session injection.
-**Status:** ⬜ NOT FIXED
+**Status:** ✅ ALREADY FIXED (pre-existing) — `ProtectedRoute.tsx` reads `profiles.onboarding_completed` from Supabase on every fresh login (lines 31-47). `Welcome.tsx` writes `onboarding_completed: true` via `supabase.upsert` on completion and skip (lines 158-163). No localStorage is used for onboarding state. CLAUDE.md status was stale.
 
 ---
 
@@ -656,12 +656,41 @@ Never reorder these without explicit approval.
 
 Every idle/upload state must follow these rules for consistency:
 
-- Icon tile: required on ALL analyzer pages — 64×64px, rounded-2xl, dark bg with colored border, icon inside
+- Icon tile: required on ALL analyzer pages — 76×76px, rounded-2xl, dark bg with colored border, icon inside
 - Feature pills: ALL pages use the neutral outlined style ONLY — `bg-white/[0.05] border border-white/[0.08] text-zinc-400 text-xs font-medium px-3 py-1 rounded-full`. No colored fills, no amber fills.
 - Dropzone: every dropzone must have a Browse Files button — `bg-indigo-600 text-white text-sm font-medium px-5 py-2 rounded-full`
 - Vertical centering: content area uses `min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center` — applied in shared wrapper, not per page
 - No false affordances: NEVER show ⌘K, URL paste, or ⌘V shortcuts that are not implemented
 - H1 required: every analyzer page must have exactly one `<h1>` as the primary heading
+
+---
+
+## Icon Tile Color System — Per-Page Accent Colors
+
+Every app page has a unique accent color applied ONLY to the 76×76 icon tile.
+All other interactive elements use indigo #6366f1 exclusively.
+
+| Page | Color | Hex | Tile bg token |
+|------|-------|-----|---------------|
+| Paid Ad Analyzer | Indigo | #6366f1 | rgba(99,102,241,0.1) |
+| Organic Analyzer | Green | #10b981 | rgba(16,185,129,0.1) |
+| Display Analyzer | Cyan | #06b6d4 | rgba(6,182,212,0.1) |
+| A/B Test | Rose | #ec4899 | rgba(236,72,153,0.1) |
+| Competitor Analysis | Sky | #0ea5e9 | rgba(14,165,233,0.1) |
+| Ad Breakdown | Amber | #f59e0b | rgba(245,158,11,0.1) |
+| Rank Creatives | Violet | #8b5cf6 | rgba(139,92,246,0.1) |
+| Saved Ads | Slate | #94a3b8 | rgba(100,116,139,0.1) |
+
+RULES — enforce on every UI task:
+- **Icon tile:** 76×76px, borderRadius 14, page accent bg + border + icon color
+- **Feature pills:** use page accent color subtly.
+  bg: rgba(PAGE_COLOR_RGB, 0.08)
+  border: 1px solid rgba(PAGE_COLOR_RGB, 0.15)
+  text: PAGE_COLOR at full opacity
+  Reference: Paid Ad indigo pills = rgba(99,102,241,0.08) — match this intensity.
+  Never filled or saturated. Applies to idle/empty state pills only.
+- **Buttons:** ALWAYS indigo `#6366f1` — NEVER page accent color
+- **Page accent color used ONLY on the icon tile — nowhere else**
 
 ---
 

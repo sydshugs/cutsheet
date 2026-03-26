@@ -3,9 +3,9 @@
 import { Helmet } from "react-helmet-async";
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useOutletContext } from "react-router-dom";
-import { Monitor, Eye, Download, X, Plus, CheckCircle, ShieldCheck, Sparkles, Lock, RotateCcw, Upload, AlertCircle, ArrowRight, Layers, Type, Layout, FileText } from "lucide-react";
+import { Monitor, Eye, Download, X, Plus, CheckCircle, ShieldCheck, Sparkles, Lock, RotateCcw, Upload, AlertCircle, AlertTriangle, XCircle, ArrowRight, Layers, Type, Layout, FileText } from "lucide-react";
 import { VideoDropzone } from "../../components/VideoDropzone";
-import { ProgressCard } from "../../components/ProgressCard";
+import { DisplayProgressCard } from "../../components/DisplayProgressCard";
 import { sanitizeFileName } from "../../utils/sanitize";
 import { SuiteCohesionCard } from "../../components/SuiteCohesionCard";
 import { DisplayScoreCard, type DisplayResult } from "../../components/DisplayScoreCard";
@@ -13,7 +13,7 @@ import { PolicyCheckPanel } from "../../components/PolicyCheckPanel";
 import { runPolicyCheck, type PolicyCheckResult } from "../../lib/policyCheckService";
 import { getImageDimensions, detectDisplayFormat, getFormatGuidance, type DisplayFormat } from "../../utils/displayAdUtils";
 import { generateDisplayMockup, generateSuiteMockup } from "../../services/mockupService";
-import { analyzeVideo } from "../../services/analyzerService";
+import { analyzeVideo, generateBrief } from "../../services/analyzerService";
 import { analyzeSuiteCohesion, generateCTARewrites, type SuiteCohesionResult } from "../../services/claudeService";
 import { getUserContext, formatUserContextBlock } from "../../services/userContextService";
 import { VisualizePanel } from "../../components/VisualizePanel";
@@ -22,7 +22,9 @@ import { uploadImageToStorage, removeFromStorage } from "../../lib/storageServic
 import type { VisualizeResult, VisualizeStatus, VisualizeCreditData } from "../../types/visualize";
 import { getSessionMemory } from "@/src/lib/userMemoryService";
 import { generatePrediction, type PredictionResult } from "../../services/predictionService";
+import { generateBudgetRecommendation, type EngineBudgetRecommendation } from "../../services/budgetService";
 import PredictedPerformanceCard from "../../components/PredictedPerformanceCard";
+import { BudgetCard } from "../../components/scorecard/BudgetCard";
 import type { AppSharedContext } from "../../components/AppLayout";
 
 type Mode = "single" | "suite";
@@ -91,6 +93,10 @@ export default function DisplayAnalyzer() {
   const [error, setError] = useState<string | null>(null);
   const [mockupUrl, setMockupUrl] = useState<string | null>(null);
   const [prediction, setPrediction] = useState<PredictionResult | null>(null);
+  const [engineBudget, setEngineBudget] = useState<EngineBudgetRecommendation | null>(null);
+  const [briefLoading, setBriefLoading] = useState(false);
+  const [briefMarkdown, setBriefMarkdown] = useState<string | null>(null);
+  const [briefError, setBriefError] = useState<string | null>(null);
   const [mockupLoading, setMockupLoading] = useState(false);
   const [userContext, setUserContext] = useState("");
   const [policyResult, setPolicyResult] = useState<PolicyCheckResult | null>(null);
@@ -129,6 +135,8 @@ export default function DisplayAnalyzer() {
     setSuiteMockupUrl(null); setSuiteMockupLoading(false);
     setPolicyResult(null); setPolicyLoading(false); setPolicyError(null);
     setPrediction(null);
+    setEngineBudget(null);
+    setBriefMarkdown(null); setBriefLoading(false); setBriefError(null);
     setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); setVisualizeCreditData(null);
   }, []);
 
@@ -327,7 +335,9 @@ Return JSON only:
     const placement = detectedFormat?.placement ?? "Unknown placement";
     const guidance = detectedFormat ? getFormatGuidance(detectedFormat) : "Non-standard format. Apply general display best practices.";
 
-    const displayPrompt = `You are a display advertising expert scoring a ${formatName} banner ad (${formatKey}) for ${network} networks.
+    const displayPrompt = `CRITICAL CONTEXT: This is a GOOGLE DISPLAY NETWORK (GDN) static banner ad — NOT a social media ad, video ad, or native ad. It appears as a fixed-size banner on third-party websites while the viewer is reading unrelated content. The viewer has no purchase intent and will see this ad for 1-2 seconds at most. Do NOT apply social media metrics (scroll-stop, hook strength, native feel, watch time, retention) to this evaluation.
+
+You are a display advertising expert scoring a ${formatName} banner ad (${formatKey}) for ${network} networks.
 
 ${userContext}
 
@@ -424,12 +434,21 @@ Return JSON only — no prose:
         .then((url) => { setMockupUrl(url); setMockupLoading(false); })
         .catch(() => setMockupLoading(false));
 
-      // Generate prediction (async, non-blocking)
+      // Generate prediction + budget (async, non-blocking)
       if (displayResult.scores) {
+        const niche = userContext.match(/Niche:\s*(.+)/)?.[1]?.trim() || "general";
+        const predScores = {
+          hook: displayResult.scores.hierarchy,
+          clarity: displayResult.scores.messageClarity,
+          cta: displayResult.scores.ctaVisibility,
+          production: displayResult.scores.brandClarity,
+          overall: displayResult.overallScore,
+        };
         generatePrediction(
-          displayResult.markdown ?? '', displayResult.scores,
-          'google_display', 'static', undefined,
+          rawResult.markdown, predScores,
+          'google_display', 'static', niche,
         ).then(setPrediction).catch((err) => console.error('Display prediction failed (silent):', err));
+        setEngineBudget(generateBudgetRecommendation(displayResult.overallScore, "google", niche, "static"));
       }
 
     } catch (err) {
@@ -447,6 +466,23 @@ Return JSON only — no prose:
       setCtaRewrites(rewrites);
     } catch { /* silent */ }
     finally { setCtaLoading(false); }
+  };
+
+  const handleGenerateBrief = async () => {
+    if (!result || briefLoading) return;
+    setBriefLoading(true);
+    setBriefError(null);
+    try {
+      const niche = userContext.match(/Niche:\s*(.+)/)?.[1]?.trim() || "general";
+      const platform = network === "google" ? "Google Display" : network === "affiliate" ? "Affiliate" : "All Networks";
+      const scores = { hook: result.scores.hierarchy, clarity: result.scores.messageClarity, cta: result.scores.ctaVisibility, production: result.scores.brandClarity, overall: result.overallScore };
+      const md = await generateBrief(result.verdict + "\n\n" + result.improvements.map(i => i.fix).join("\n"), API_KEY, platform, niche, scores, undefined);
+      setBriefMarkdown(md);
+    } catch (err) {
+      setBriefError(err instanceof Error ? err.message : "Brief generation failed");
+    } finally {
+      setBriefLoading(false);
+    }
   };
 
   const handleVisualize = async () => {
@@ -812,31 +848,15 @@ Return JSON only — no prose:
 
               {/* Analysis auto-triggers on file drop via useEffect */}
 
-              {/* Loading — uses same ProgressCard as PaidAdAnalyzer */}
+              {/* Loading — cyan Display-specific progress card */}
               {status === "analyzing" && file && (
-                <ProgressCard
+                <DisplayProgressCard
                   file={file}
                   status="processing"
                   statusMessage={statusMsg || "Analyzing display ad..."}
                   onCancel={handleReset}
-                  icon={Monitor}
-                  title="Analyzing display ad"
-                  metrics={["Visual Hierarchy", "CTA Visibility", "Brand Clarity", "Message Clarity"]}
-                  stages={[
-                    { label: "Reading creative...", metric: null, pct: 10 },
-                    { label: "Detecting ad format...", metric: null, pct: 25 },
-                    { label: "Analyzing visual hierarchy...", metric: "Hierarchy", pct: 40 },
-                    { label: "Scoring CTA visibility...", metric: "CTA", pct: 55 },
-                    { label: "Evaluating text ratio...", metric: "Text", pct: 70 },
-                    { label: "Generating placement preview...", metric: null, pct: 90 },
-                  ]}
-                  checkItems={[
-                    { id: "format", label: "Detecting ad format" },
-                    { id: "hierarchy", label: "Analyzing visual hierarchy" },
-                    { id: "cta", label: "Scoring CTA visibility" },
-                    { id: "text", label: "Evaluating text ratio" },
-                    { id: "preview", label: "Generating placement preview" },
-                  ]}
+                  format={detectedFormat}
+                  dimensions={dimensions}
                 />
               )}
 
@@ -860,12 +880,6 @@ Return JSON only — no prose:
                       <Eye size={14} color="#71717a" />
                       <span style={{ fontSize: 13, fontWeight: 600, color: "#f4f4f5" }}>Real-life placement preview</span>
                     </div>
-
-                    {detectedFormat && (
-                      <span style={{ fontSize: 11, color: "#22d3ee", background: "rgba(6,182,212,0.1)", borderRadius: 9999, padding: "3px 10px", display: "inline-block", marginBottom: 10 }}>
-                        {detectedFormat.key} · {detectedFormat.name}
-                      </span>
-                    )}
 
                     {mockupLoading && (
                       <div style={{ height: 240, borderRadius: 12, background: "linear-gradient(90deg, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.02) 75%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -914,8 +928,8 @@ Return JSON only — no prose:
                     <span className="text-xs text-zinc-400">Analyze another creative</span>
                   </button>
 
-                  {/* TOOLS Section — matching Organic layout */}
-                  <div style={{ marginTop: 24 }}>
+                  {/* TOOLS Section — above verdict, matching Organic layout */}
+                  <div style={{ marginTop: 8 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
                       <span style={{ fontSize: 10, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em", color: "#52525b" }}>Tools</span>
                       <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.04)" }} />
@@ -992,6 +1006,116 @@ Return JSON only — no prose:
                     </div>
                   </div>
 
+                  {/* Verdict + Priority fix — below tools */}
+                  {result.verdict && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                      {/* Verdict badge */}
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 10px", borderRadius: 9999, background: result.overallScore >= 8 ? "rgba(16,185,129,0.1)" : result.overallScore >= 4 ? "rgba(245,158,11,0.1)" : "rgba(239,68,68,0.1)", border: `1px solid ${result.overallScore >= 8 ? "rgba(16,185,129,0.2)" : result.overallScore >= 4 ? "rgba(245,158,11,0.2)" : "rgba(239,68,68,0.2)"}`, alignSelf: "flex-start" }}>
+                        <div style={{ width: 6, height: 6, borderRadius: "50%", background: result.overallScore >= 8 ? "#10b981" : result.overallScore >= 4 ? "#f59e0b" : "#ef4444" }} />
+                        <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", color: result.overallScore >= 8 ? "#10b981" : result.overallScore >= 4 ? "#f59e0b" : "#ef4444" }}>
+                          {result.overallScore >= 8 ? "Ready" : result.overallScore >= 4 ? "Needs Work" : "Not Ready"}
+                        </span>
+                      </div>
+                      <p style={{ fontSize: 15, fontWeight: 600, color: "#f4f4f5", lineHeight: 1.5, margin: 0 }}>{result.verdict}</p>
+                      {/* Priority fix */}
+                      {result.improvements && result.improvements.length > 0 && (() => {
+                        const topFix = result.improvements[0];
+                        const CAT_MAP: Record<string, { icon: typeof Layers; color: string; bg: string }> = {
+                          hierarchy: { icon: Layers, color: '#818cf8', bg: 'rgba(129,140,248,0.1)' },
+                          typography: { icon: Type, color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
+                          layout: { icon: Layout, color: '#10b981', bg: 'rgba(16,185,129,0.1)' },
+                          contrast: { icon: AlertCircle, color: '#ef4444', bg: 'rgba(239,68,68,0.1)' },
+                        };
+                        const cat = CAT_MAP[topFix.category] ?? CAT_MAP.layout;
+                        const CatIcon = cat.icon;
+                        return (
+                          <div style={{ borderRadius: 12, overflow: 'hidden', background: 'linear-gradient(135deg, rgba(239,68,68,0.06) 0%, rgba(245,158,11,0.03) 100%)', border: '1px solid rgba(239,68,68,0.12)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', background: 'rgba(239,68,68,0.08)', borderBottom: '1px solid rgba(239,68,68,0.08)' }}>
+                              <AlertCircle size={11} color="#f87171" />
+                              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', color: '#f87171', textTransform: 'uppercase' }}>Priority Fix</span>
+                              <ArrowRight size={10} color="rgba(248,113,113,0.5)" />
+                              {result.improvements.length > 1 && (
+                                <span style={{ fontSize: 9, fontWeight: 600, padding: '1px 6px', borderRadius: 4, background: 'rgba(248,113,113,0.1)', color: '#f87171' }}>+{result.improvements.length - 1}</span>
+                              )}
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: 14 }}>
+                              <div style={{ width: 28, height: 28, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: cat.bg }}>
+                                <CatIcon size={14} color={cat.color} />
+                              </div>
+                              <p style={{ fontSize: 13, fontWeight: 500, color: '#e4e4e7', lineHeight: 1.5, margin: 0 }}>{topFix.fix}</p>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
+
+                  {/* ── GDN Compliance ── */}
+                  <div style={{ marginTop: 4 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                      <span style={{ fontSize: 10, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em", color: "#52525b" }}>GDN Compliance</span>
+                      <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.04)" }} />
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      {/* File size */}
+                      {(() => {
+                        const kb = Math.round(file!.size / 1024);
+                        const over = kb > 150;
+                        return (
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 10, background: over ? "rgba(245,158,11,0.06)" : "rgba(16,185,129,0.06)", border: `1px solid ${over ? "rgba(245,158,11,0.2)" : "rgba(16,185,129,0.2)"}` }}>
+                            {over ? <AlertTriangle size={13} color="#f59e0b" /> : <CheckCircle size={13} color="#10b981" />}
+                            <span style={{ fontSize: 12, color: over ? "#f59e0b" : "#10b981" }}>{kb}KB {over ? "— over GDN 150KB limit" : "— within GDN file size limit"}</span>
+                          </div>
+                        );
+                      })()}
+                      {/* Text ratio */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 10, background: result.textRatioFlag ? "rgba(245,158,11,0.06)" : "rgba(16,185,129,0.06)", border: `1px solid ${result.textRatioFlag ? "rgba(245,158,11,0.2)" : "rgba(16,185,129,0.2)"}` }}>
+                        {result.textRatioFlag ? <AlertTriangle size={13} color="#f59e0b" /> : <CheckCircle size={13} color="#10b981" />}
+                        <span style={{ fontSize: 12, color: result.textRatioFlag ? "#f59e0b" : "#10b981" }}>{result.textToImageRatio} text {result.textRatioFlag ? "— Google recommends under 30%" : "— within text ratio policy"}</span>
+                      </div>
+                      {/* Format match */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 10, background: detectedFormat ? "rgba(16,185,129,0.06)" : "rgba(245,158,11,0.06)", border: `1px solid ${detectedFormat ? "rgba(16,185,129,0.2)" : "rgba(245,158,11,0.2)"}` }}>
+                        {detectedFormat ? <CheckCircle size={13} color="#10b981" /> : <AlertTriangle size={13} color="#f59e0b" />}
+                        <span style={{ fontSize: 12, color: detectedFormat ? "#10b981" : "#f59e0b" }}>{detectedFormat ? `${detectedFormat.key} — recognized GDN format` : "Non-standard size — verify placement eligibility"}</span>
+                      </div>
+                      {/* CTA presence */}
+                      {result.scores.ctaVisibility < 5 && (
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 10, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)" }}>
+                          <XCircle size={13} color="#ef4444" />
+                          <span style={{ fontSize: 12, color: "#ef4444" }}>Weak CTA — display ads require an in-creative call to action</span>
+                        </div>
+                      )}
+                      {/* Logo visibility */}
+                      {result.scores.brandClarity < 5 && (
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 10, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)" }}>
+                          <XCircle size={13} color="#ef4444" />
+                          <span style={{ fontSize: 12, color: "#ef4444" }}>Brand/logo unclear — viewers can't identify advertiser in 1–2 seconds</span>
+                        </div>
+                      )}
+                      {/* Placement risk */}
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "8px 12px", borderRadius: 10, background: result.placementRisk === "high" ? "rgba(239,68,68,0.06)" : result.placementRisk === "medium" ? "rgba(245,158,11,0.06)" : "rgba(16,185,129,0.06)", border: `1px solid ${result.placementRisk === "high" ? "rgba(239,68,68,0.2)" : result.placementRisk === "medium" ? "rgba(245,158,11,0.2)" : "rgba(16,185,129,0.2)"}` }}>
+                        <div style={{ flexShrink: 0, marginTop: 1 }}>
+                          {result.placementRisk === "high" && <XCircle size={13} color="#ef4444" />}
+                          {result.placementRisk === "medium" && <AlertTriangle size={13} color="#f59e0b" />}
+                          {result.placementRisk === "low" && <CheckCircle size={13} color="#10b981" />}
+                        </div>
+                        <div>
+                          <span style={{ fontSize: 12, fontWeight: 500, color: result.placementRisk === "high" ? "#ef4444" : result.placementRisk === "medium" ? "#f59e0b" : "#10b981", display: "block" }}>
+                            {result.placementRisk === "high" ? "High" : result.placementRisk === "medium" ? "Medium" : "Low"} placement risk
+                          </span>
+                          <span style={{ fontSize: 11, color: "#71717a" }}>{result.placementRiskNote}</span>
+                        </div>
+                      </div>
+                      {/* Animation / GIF loops */}
+                      {file?.type === "image/gif" && (
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 10, background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)" }}>
+                          <AlertTriangle size={13} color="#f59e0b" />
+                          <span style={{ fontSize: 12, color: "#f59e0b" }}>GIF detected — GDN limits animation to 30 seconds, max 3 loops</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                 </div>
               )}
             </div>
@@ -1014,96 +1138,9 @@ Return JSON only — no prose:
               dimensions={dimensions!}
             />
 
-            {/* Verdict and Improvements section — moved from left panel to match PaidAdAnalyzer */}
-            {result.verdict && (
-              <div className="mx-4 mt-4">
-                {/* Verdict badge */}
-                <div style={{
-                  display: "inline-flex", alignItems: "center", gap: 6,
-                  padding: "4px 10px", borderRadius: 9999,
-                  background: result.overallScore >= 8 ? "rgba(16,185,129,0.1)" : result.overallScore >= 4 ? "rgba(245,158,11,0.1)" : "rgba(239,68,68,0.1)",
-                  border: `1px solid ${result.overallScore >= 8 ? "rgba(16,185,129,0.2)" : result.overallScore >= 4 ? "rgba(245,158,11,0.2)" : "rgba(239,68,68,0.2)"}`,
-                  marginBottom: 12,
-                }}>
-                  <div style={{
-                    width: 6, height: 6, borderRadius: "50%",
-                    background: result.overallScore >= 8 ? "#10b981" : result.overallScore >= 4 ? "#f59e0b" : "#ef4444",
-                  }} />
-                  <span style={{
-                    fontSize: 11, fontWeight: 600, textTransform: "uppercase",
-                    color: result.overallScore >= 8 ? "#10b981" : result.overallScore >= 4 ? "#f59e0b" : "#ef4444",
-                  }}>
-                    {result.overallScore >= 8 ? "Ready" : result.overallScore >= 4 ? "Needs Work" : "Not Ready"}
-                  </span>
-                </div>
-
-                {/* Verdict headline */}
-                <p style={{ fontSize: 15, fontWeight: 600, color: "#f4f4f5", lineHeight: 1.5, margin: "0 0 16px" }}>
-                  {result.verdict}
-                </p>
-
-                {/* Priority fix — matching CreativeAnalysis red banner style */}
-                {result.improvements && result.improvements.length > 0 && (() => {
-                  const topFix = result.improvements[0];
-                  const CAT_MAP: Record<string, { icon: typeof Layers; color: string; bg: string }> = {
-                    hierarchy: { icon: Layers, color: '#818cf8', bg: 'rgba(129,140,248,0.1)' },
-                    typography: { icon: Type, color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
-                    layout: { icon: Layout, color: '#10b981', bg: 'rgba(16,185,129,0.1)' },
-                    contrast: { icon: AlertCircle, color: '#ef4444', bg: 'rgba(239,68,68,0.1)' },
-                  };
-                  const cat = CAT_MAP[topFix.category] ?? CAT_MAP.layout;
-                  const CatIcon = cat.icon;
-                  return (
-                    <div style={{
-                      borderRadius: 12, overflow: 'hidden',
-                      background: 'linear-gradient(135deg, rgba(239,68,68,0.06) 0%, rgba(245,158,11,0.03) 100%)',
-                      border: '1px solid rgba(239,68,68,0.12)',
-                    }}>
-                      {/* Priority banner header */}
-                      <div style={{
-                        display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px',
-                        background: 'rgba(239,68,68,0.08)', borderBottom: '1px solid rgba(239,68,68,0.08)',
-                      }}>
-                        <AlertCircle size={11} color="#f87171" />
-                        <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', color: '#f87171', textTransform: 'uppercase' }}>Priority Fix</span>
-                        <ArrowRight size={10} color="rgba(248,113,113,0.5)" />
-                        {result.improvements.length > 1 && (
-                          <span style={{ fontSize: 9, fontWeight: 600, padding: '1px 6px', borderRadius: 4, background: 'rgba(248,113,113,0.1)', color: '#f87171' }}>
-                            +{result.improvements.length - 1}
-                          </span>
-                        )}
-                      </div>
-                      {/* Content row */}
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: 14 }}>
-                        <div style={{
-                          width: 28, height: 28, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                          background: cat.bg,
-                        }}>
-                          <CatIcon size={14} color={cat.color} />
-                        </div>
-                        <p style={{ fontSize: 13, fontWeight: 500, color: '#e4e4e7', lineHeight: 1.5, margin: 0 }}>
-                          {topFix.fix}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })()}
-              </div>
-            )}
-
-            {/* Predicted Performance */}
-            {prediction && (
-              <div className="mx-4 mt-4">
-                <PredictedPerformanceCard
-                  prediction={prediction}
-                  platform="google_display"
-                />
-              </div>
-            )}
-
             {/* Re-analyze improved version button */}
             <button
-              onClick={() => {}}
+              onClick={handleReset}
               className="mx-4 mt-4 w-[calc(100%-2rem)] flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-medium transition-all hover:bg-indigo-500/15 bg-indigo-500/[0.08] text-indigo-400 border border-indigo-500/20"
             >
               <RotateCcw size={14} />
@@ -1112,12 +1149,43 @@ Return JSON only — no prose:
 
             {/* Generate Brief button */}
             <button
-              onClick={() => {}}
+              onClick={handleGenerateBrief}
+              disabled={briefLoading}
               className="mx-4 mt-4 w-[calc(100%-2rem)] flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-medium transition-all hover:bg-amber-500/15 bg-amber-500/[0.08] text-amber-400 border border-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <FileText size={14} />
-              Generate Brief
+              {briefLoading ? (
+                <div style={{ width: 14, height: 14, border: "2px solid rgba(245,158,11,0.3)", borderTopColor: "#f59e0b", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+              ) : (
+                <FileText size={14} />
+              )}
+              {briefLoading ? "Generating…" : "Generate Brief"}
             </button>
+
+            {/* Brief output */}
+            {briefError && (
+              <div className="mx-4 mt-2 text-xs text-red-400 bg-red-500/[0.08] rounded-xl px-4 py-3 border border-red-500/20">{briefError}</div>
+            )}
+            {briefMarkdown && (
+              <div className="mx-4 mt-2 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 text-xs text-zinc-300 whitespace-pre-wrap leading-relaxed">{briefMarkdown}</div>
+            )}
+
+            {/* Predicted Performance */}
+            {prediction && (
+              <div className="mx-4 mt-4">
+                <PredictedPerformanceCard
+                  prediction={prediction}
+                  platform="Google Display"
+                  niche="GDN avg"
+                />
+              </div>
+            )}
+
+            {/* Budget Card */}
+            {engineBudget && (
+              <div className="mx-4 mt-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+                <BudgetCard engineBudget={engineBudget} />
+              </div>
+            )}
 
             {/* Action buttons */}
             <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: 10 }}>

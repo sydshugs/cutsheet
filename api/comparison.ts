@@ -3,7 +3,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Anthropic from "@anthropic-ai/sdk";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
-import { sanitizeSessionMemory } from "./_lib/sanitizeMemory";
+import { sanitizeSessionMemory, sanitizeUserInput } from "./_lib/sanitizeMemory";
 
 export const maxDuration = 60;
 
@@ -25,6 +25,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { originalScores, improvedScores, originalImprovements, userContext: rawContext, sessionMemory: rawMemory } = req.body ?? {};
   const sessionMemory = sanitizeSessionMemory(rawMemory);
   const userContext = sanitizeSessionMemory(rawContext);
+  // Sanitize improvement items — they're AI-generated but return through req.body (untrusted)
+  const safeImprovements = (Array.isArray(originalImprovements) ? originalImprovements : [])
+    .slice(0, 10)
+    .map((imp: unknown) => sanitizeUserInput(String(imp ?? "")))
+    .filter(Boolean);
   if (!originalScores || !improvedScores) {
     return res.status(400).json({ error: "originalScores and improvedScores are required" });
   }
@@ -32,8 +37,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const prompt = `You are comparing two versions of the same ad creative.
 The creator received feedback and made improvements.
 
-${userContext || ""}
-${sessionMemory ? `\n${sessionMemory}\nConsider whether improvement trends are consistent with this user's prior ad performance.\n` : ""}
+${userContext ? `<user_context>\n${userContext}\n</user_context>` : ""}
+${sessionMemory ? `<session_memory>\n${sessionMemory}\nConsider whether improvement trends are consistent with this user's prior ad performance.\n</session_memory>` : ""}
 ORIGINAL VERSION SCORES:
 Overall: ${originalScores.overall}/10
 Hook: ${originalScores.hook}/10
@@ -49,7 +54,7 @@ Clarity: ${improvedScores.clarity}/10
 Production: ${improvedScores.production}/10
 
 IMPROVEMENTS THAT WERE SUGGESTED:
-${(Array.isArray(originalImprovements) ? originalImprovements : []).map((imp: string, i: number) => `${i + 1}. ${imp}`).join("\n")}
+${safeImprovements.map((imp, i) => `${i + 1}. ${imp}`).join("\n")}
 
 Based on the score changes, assess which improvements were addressed.
 Be honest. If scores dropped, say so.

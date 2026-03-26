@@ -3,7 +3,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Anthropic from "@anthropic-ai/sdk";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
-import { sanitizeSessionMemory } from "./_lib/sanitizeMemory";
+import { sanitizeSessionMemory, sanitizeUserInput } from "./_lib/sanitizeMemory";
 
 export const maxDuration = 60;
 
@@ -30,6 +30,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   } = req.body ?? {};
   const sessionMemory = sanitizeSessionMemory(rawMemory);
   const userContext = sanitizeSessionMemory(rawContext);
+  // Sanitize short user-supplied strings that get interpolated into the prompt
+  const safeYourFileName = sanitizeUserInput(yourFileName ?? "Your Ad") || "Your Ad";
+  const safeCompetitorFileName = sanitizeUserInput(competitorFileName ?? "Competitor Ad") || "Competitor Ad";
+  // Sanitize improvement items — AI-generated but returned through client req.body (untrusted)
+  const safeYourImprovements = (Array.isArray(yourImprovements) ? yourImprovements : [])
+    .slice(0, 5)
+    .map((imp: unknown) => sanitizeUserInput(String(imp ?? "")))
+    .filter(Boolean);
+  const safeCompetitorImprovements = (Array.isArray(competitorImprovements) ? competitorImprovements : [])
+    .slice(0, 5)
+    .map((imp: unknown) => sanitizeUserInput(String(imp ?? "")))
+    .filter(Boolean);
 
   if (!yourScores || !competitorScores) {
     return res.status(400).json({ error: "yourScores and competitorScores are required" });
@@ -51,23 +63,23 @@ The user's weakest dimensions are: ${userWeakDims.map(d => `${d.dim} (${d.score}
 
   const prompt = `You have scored two ${nicheLabel} ad creatives head-to-head on ${platformLabel}.
 
-${userContext || ""}
-${sessionMemory ? `\n${sessionMemory}\nFactor in the user's historical score trends when assessing competitive position.\n` : ""}
-YOUR AD: ${yourFileName ?? "Your Ad"}
+${userContext ? `<user_context>\n${userContext}\n</user_context>` : ""}
+${sessionMemory ? `<session_memory>\n${sessionMemory}\nFactor in the user's historical score trends when assessing competitive position.\n</session_memory>` : ""}
+YOUR AD: ${safeYourFileName}
 Overall: ${yourScores.overall}/10
 Hook: ${yourScores.hook}/10
 Clarity: ${yourScores.clarity}/10
 CTA: ${yourScores.cta}/10
 Production: ${yourScores.production}/10
-Key issues: ${(yourImprovements ?? []).slice(0, 3).join(", ") || "none flagged"}
+Key issues: ${safeYourImprovements.slice(0, 3).join(", ") || "none flagged"}
 
-COMPETITOR AD: ${competitorFileName ?? "Competitor Ad"}
+COMPETITOR AD: ${safeCompetitorFileName}
 Overall: ${competitorScores.overall}/10
 Hook: ${competitorScores.hook}/10
 Clarity: ${competitorScores.clarity}/10
 CTA: ${competitorScores.cta}/10
 Production: ${competitorScores.production}/10
-Key issues: ${(competitorImprovements ?? []).slice(0, 3).join(", ") || "none flagged"}
+Key issues: ${safeCompetitorImprovements.slice(0, 3).join(", ") || "none flagged"}
 
 USER'S WEAKEST DIMENSIONS: ${userWeakDims.map(d => `${d.dim} (${d.score}/10)`).join(", ")}
 Platform: ${platformLabel}

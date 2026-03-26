@@ -5,6 +5,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Anthropic from "@anthropic-ai/sdk";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
 import { safePlatform, safeAdType, safeNiche } from "./_lib/validateInput";
+import { sanitizeAnalysisText } from "./_lib/sanitizeMemory";
 
 export const maxDuration = 60;
 
@@ -28,12 +29,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const { analysisMarkdown, scores, platform, adType, niche, intent } = req.body ?? {};
+  // Sanitize analysis text — AI-generated but returned through client req.body (untrusted)
+  const safeAnalysis = sanitizeAnalysisText(analysisMarkdown);
 
-  if (!analysisMarkdown || !scores) {
+  if (!safeAnalysis || !scores) {
     return res.status(400).json({ error: "Missing analysisMarkdown or scores" });
   }
 
-  const platformLabel = safePlatform(platform) === "general" ? "Meta" : safePlatform(platform);
+  const platformKey = safePlatform(platform);
+  const PLATFORM_DISPLAY_NAMES: Record<string, string> = {
+    google_display: "Google Display",
+    "google display": "Google Display",
+    meta: "Meta", facebook: "Meta", instagram: "Instagram",
+    tiktok: "TikTok", youtube: "YouTube", google: "Google",
+    linkedin: "LinkedIn", twitter: "X/Twitter", x: "X/Twitter",
+  };
+  const platformLabel = platformKey === "general" ? "Meta" : (PLATFORM_DISPLAY_NAMES[platformKey] ?? platformKey);
   const nicheLabel = safeNiche(niche);
   const adTypeLabel = safeAdType(adType);
   const intentLabel = (typeof intent === "string" && ["conversion", "awareness", "consideration"].includes(intent)) ? intent : "conversion";
@@ -51,7 +62,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const benchmarks = Object.entries(nicheBenchmarks).find(([k]) => nicheKey.includes(k))?.[1];
   const benchmarkBlock = benchmarks
     ? `\nINDUSTRY BENCHMARKS:\n${benchmarks.ctr}\n${benchmarks.cvr}`
-    : `\nNote: Use general paid social benchmarks for ${nicheLabel}. Meta avg CTR: 0.9-1.5%. Google Display: 0.3-0.5%.`;
+    : (platformKey === "google_display" || platformKey === "google display")
+    ? `\nINDUSTRY BENCHMARKS: Google Display Network avg CTR: 0.35–0.60% (avg 0.46%). Set "benchmark" to 0.46 in the JSON response.`
+    : `\nNote: Use general paid social benchmarks for ${nicheLabel}. Meta avg CTR: 0.9-1.5%. Google Display: 0.35-0.60%.`;
 
   // Identify weakest dimensions for calibration
   const weakDims = scores
@@ -76,7 +89,9 @@ CALIBRATION RULES:
   const prompt = `Based on the following creative scorecard, generate a performance prediction for this ${adTypeLabel} ad on ${platformLabel} in the ${nicheLabel} niche.
 
 Scorecard & Analysis:
-${analysisMarkdown}
+<analysis>
+${safeAnalysis}
+</analysis>
 
 Scores: Hook ${scores.hook ?? 0}/10, Clarity ${scores.clarity ?? 0}/10, CTA ${scores.cta ?? 0}/10, Production ${scores.production ?? 0}/10, Overall ${scores.overall ?? 0}/10
 Platform: ${platformLabel} | Format: ${adTypeLabel} | Niche: ${nicheLabel} | Intent: ${intentLabel}

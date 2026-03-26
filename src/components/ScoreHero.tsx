@@ -18,6 +18,7 @@ export interface ScoreHeroProps {
   platform?: string;      // 'Meta' | 'TikTok' | etc. — for benchmark label
   format?: 'video' | 'static';  // ad format — used to hide invalid benchmarks
   youtubeFormat?: string; // YouTube sub-format: 'skippable' | 'non_skippable' | 'bumper' | 'shorts' | 'in_feed'
+  accentColor?: string;   // override benchmark bar fill color (e.g. cyan for Display)
 }
 
 /** Platform benchmark defaults — used when benchmark prop is not supplied */
@@ -184,9 +185,12 @@ function BenchmarkBar({ score, benchmark, color, label }: BenchmarkBarProps) {
 
 // ── ScoreHero ──────────────────────────────────────────────────────────────────
 
-export function ScoreHero({ score, verdict, benchmark, dimensions, platform, format, youtubeFormat }: ScoreHeroProps) {
+export function ScoreHero({ score, verdict, benchmark, dimensions, platform, format, youtubeFormat, accentColor }: ScoreHeroProps) {
   const animatedScore = useCountUp(score, 600);
   const color = scoreColor(score);
+  // When accentColor is supplied, replace the "strong" green (#10b981) with it so
+  // platform-specific accent colors (e.g. cyan for Display) propagate everywhere.
+  const effectiveColor = (accentColor != null && color === '#10b981') ? accentColor : color;
 
   // Hide benchmark for platforms that don't serve the current format
   const platformIncompatible = format === 'static' && platform != null && STATIC_INCOMPATIBLE_PLATFORMS.has(platform);
@@ -235,7 +239,7 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
             fontSize: 40,
             fontWeight: 700,
             lineHeight: 1,
-            color: color,
+            color: effectiveColor,
             letterSpacing: '-0.03em',
           }}
         >
@@ -244,10 +248,10 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
         <span className="font-mono text-sm text-zinc-500">/10</span>
       </div>
 
-      {/* Verdict label — brand guide: score color, paired with number */}
+      {/* Verdict label — neutral, not accent-colored */}
       <span
         className="text-xs font-semibold mt-1.5"
-        style={{ color }}
+        style={{ color: '#a1a1aa' }}
       >
         {verdict}
       </span>
@@ -258,7 +262,7 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
           <BenchmarkBar
             score={score}
             benchmark={resolvedBenchmark!}
-            color={color}
+            color={accentColor ?? color}
             platform={platform}
             label={benchmarkLabel}
           />
@@ -270,6 +274,9 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
         <div className="grid grid-cols-4 gap-1.5">
           {resolvedDimensions.map((dim, i) => {
             const dimColor = scoreColor(dim.score);
+            // When accentColor is provided (e.g. Display), use neutral white for tiles
+            // so page accent color never bleeds into individual score tiles.
+            const dimDisplayColor = accentColor != null ? '#f4f4f5' : dimColor;
             return (
               <motion.div
                 key={dim.name}
@@ -283,7 +290,7 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
               >
                 <span
                   className="font-mono text-xs font-medium tabular-nums"
-                  style={{ color: `${dimColor}99` }}
+                  style={{ color: dimDisplayColor }}
                 >
                   {dim.score.toFixed(1)}
                 </span>

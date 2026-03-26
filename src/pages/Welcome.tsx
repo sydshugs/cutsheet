@@ -7,7 +7,7 @@ import {
   Megaphone, Smartphone, Monitor, BarChart2,
   ShoppingBag, Layers, Video, Users, Package,
   Music2, Camera, Youtube, Search, Globe,
-  CheckCircle, ArrowRight,
+  CheckCircle, ArrowRight, ArrowLeft,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
@@ -129,19 +129,12 @@ export default function Welcome() {
 
   const handleIntentSelect = (value: Intent) => {
     setIntent(value);
-    setTimeout(() => setStep(2), 300);
+    // No auto-advance — user clicks Continue to proceed (P1-R1 fix)
   };
 
   const handleNicheSelect = (value: string) => {
     setNiche(value);
-    if (value === "Other") return; // Don't auto-advance — let them type custom
-    if (intent === "display") {
-      // Skip platform, go straight to finish
-      setPlatform("Google Display");
-      setTimeout(() => handleFinish(value, "Google Display"), 300);
-    } else {
-      setTimeout(() => setStep(3), 300);
-    }
+    // No auto-advance — user clicks Continue to proceed (P1-R1 fix)
   };
 
   const handlePlatformSelect = (value: string) => {
@@ -197,10 +190,23 @@ export default function Welcome() {
 
       {/* Top bar */}
       <div className="relative z-10 flex items-center justify-between px-8 pt-8">
-        <div className="flex items-center gap-2.5">
-          <img src="/cutsheet-logo-full.png" alt="Cutsheet" className="w-8 h-8" />
-          <span className="text-[15px] font-semibold" style={{ color: "#f4f4f5" }}>Cutsheet</span>
-        </div>
+        {/* Left: logo on step 1 + completion, back button on steps 2+ */}
+        {(step === 1 || completed) ? (
+          <div className="flex items-center gap-2.5">
+            <img src="/cutsheet-logo-full.png" alt="Cutsheet" className="w-8 h-8" />
+            <span className="text-[15px] font-semibold" style={{ color: "#f4f4f5" }}>Cutsheet</span>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setStep(s => s - 1)}
+            className="flex items-center gap-1.5 text-sm font-medium transition-opacity hover:opacity-70 active:opacity-50"
+            style={{ color: "#71717a", background: "none", border: "none", cursor: "pointer", padding: "4px 0" }}
+          >
+            <ArrowLeft size={14} />
+            Back
+          </button>
+        )}
         <div className="absolute left-1/2 -translate-x-1/2">
           <ProgressDots step={completed ? totalSteps + 1 : step} total={totalSteps} />
         </div>
@@ -241,6 +247,21 @@ export default function Welcome() {
                       <OptionCard key={opt.value} label={opt.label} sublabel={opt.sublabel} icon={opt.icon} selected={intent === opt.value} onClick={() => handleIntentSelect(opt.value)} index={i} />
                     ))}
                   </div>
+                  {intent && (
+                    <motion.button
+                      type="button"
+                      onClick={() => setStep(2)}
+                      initial={{ opacity: 0, y: 12, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.97 }}
+                      className="w-full max-w-[360px] h-[52px] rounded-full text-white font-semibold text-[15px] flex items-center justify-center gap-2"
+                      style={{ background: "#6366f1", cursor: "pointer", border: "none" }}
+                    >
+                      Continue <ArrowRight size={16} />
+                    </motion.button>
+                  )}
                 </>
               )}
 
@@ -256,6 +277,29 @@ export default function Welcome() {
                       <OptionCard key={opt.value} label={opt.label} sublabel={opt.sublabel} icon={opt.icon} selected={niche === opt.value} onClick={() => handleNicheSelect(opt.value)} index={i} dimmed={opt.dimmed} />
                     ))}
                   </div>
+                  {/* Continue button for non-"Other" niches */}
+                  {niche && niche !== "Other" && (
+                    <motion.button
+                      type="button"
+                      onClick={() => {
+                        if (intent === "display") {
+                          setPlatform("Google Display");
+                          void handleFinish(niche, "Google Display");
+                        } else {
+                          setStep(3);
+                        }
+                      }}
+                      initial={{ opacity: 0, y: 12, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.97 }}
+                      className="w-full max-w-[360px] h-[52px] rounded-full text-white font-semibold text-[15px] flex items-center justify-center gap-2"
+                      style={{ background: "#6366f1", cursor: "pointer", border: "none" }}
+                    >
+                      Continue <ArrowRight size={16} />
+                    </motion.button>
+                  )}
                   {/* Custom niche input for "Other" */}
                   {niche === "Other" && (
                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="w-full max-w-[360px] flex flex-col gap-2">
