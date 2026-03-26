@@ -2,9 +2,10 @@ import { useState, useEffect, useRef } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
+import { BetaGate } from './BetaGate'
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth()
+  const { user, loading, betaAccess } = useAuth()
   const navigate = useNavigate()
   const [checking, setChecking] = useState(true)
   const verifiedUserIdRef = useRef<string | null>(null)
@@ -24,17 +25,18 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
       return
     }
 
-    supabase
-      .from('profiles')
-      .select('onboarding_completed')
-      .eq('id', user.id)
-      .single()
-      .then(({ data, error }) => {
+    void (async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('onboarding_completed')
+          .eq('id', user.id)
+          .single()
+
         if (error) {
           // Log but don't redirect — could be RLS misconfiguration or network issue.
           // Punishing users for a DB error by sending them back through onboarding
-          // is worse than letting them through. The flag will be enforced next load
-          // once RLS is confirmed correct.
+          // is worse than letting them through.
           console.error('[ProtectedRoute] profiles fetch error:', error.message)
           verifiedUserIdRef.current = user.id
         } else if (!data || !data.onboarding_completed) {
@@ -42,17 +44,20 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
         } else {
           verifiedUserIdRef.current = user.id
         }
-        setChecking(false)
-      })
-      .catch((err) => {
-        // Unexpected JS error (not a Supabase query error) — allow through and log
+      } catch (err) {
         console.error('[ProtectedRoute] unexpected error:', err)
         verifiedUserIdRef.current = user.id
+      } finally {
         setChecking(false)
-      })
+      }
+    })()
   }, [user, loading])
 
-  if (loading || checking) {
+  // ── Loading spinner ──────────────────────────────────────────────────────
+  // Show while auth is loading OR while we're checking onboarding status.
+  // Also show while betaAccess is null (profile fetch not yet complete) to
+  // prevent a flash of the gate before we know the user's actual access state.
+  if (loading || checking || (user && betaAccess === null)) {
     return (
       <div style={{
         minHeight: '100vh',
@@ -74,7 +79,12 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     )
   }
 
+  // ── Not authenticated ────────────────────────────────────────────────────
   if (!user) return <Navigate to="/login" replace />
 
+  // ── Beta gate — authenticated + onboarded, but no beta access yet ────────
+  if (betaAccess === false) return <BetaGate />
+
+  // ── Authenticated + beta access granted ─────────────────────────────────
   return <>{children}</>
 }

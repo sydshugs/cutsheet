@@ -7,6 +7,8 @@ interface AuthContextType {
   session: Session | null
   loading: boolean
   subscriptionStatus: string | null
+  /** null = not yet fetched; false = beta gate shown; true = access granted */
+  betaAccess: boolean | null
   refreshUserProfile: () => Promise<void>
   signOut: () => Promise<void>
 }
@@ -16,6 +18,7 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   loading: true,
   subscriptionStatus: null,
+  betaAccess: null,
   refreshUserProfile: async () => {},
   signOut: async () => {}
 })
@@ -25,17 +28,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null)
+  const [betaAccess, setBetaAccess] = useState<boolean | null>(null)
 
   const fetchProfile = useCallback(async (userId: string) => {
     try {
       const { data } = await supabase
         .from('profiles')
-        .select('subscription_status')
+        .select('subscription_status, beta_access')
         .eq('id', userId)
         .single()
       setSubscriptionStatus(data?.subscription_status ?? 'free')
+      setBetaAccess(data?.beta_access ?? false)
     } catch {
-      // keep existing value
+      // Keep existing values on error — don't reset to null (would re-show gate)
     }
   }, [])
 
@@ -48,8 +53,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setUser(session?.user ?? null)
-      if (session?.user) fetchProfile(session.user.id)
-      setLoading(false)
+      if (session?.user) {
+        // fetchProfile sets loading=false via betaAccess state transition
+        fetchProfile(session.user.id).finally(() => setLoading(false))
+      } else {
+        setLoading(false)
+      }
     }).catch(() => {
       setLoading(false)
     })
@@ -58,8 +67,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       (_event, session) => {
         setSession(session)
         setUser(session?.user ?? null)
-        if (session?.user) fetchProfile(session.user.id)
-        else setSubscriptionStatus(null)
+        if (session?.user) {
+          fetchProfile(session.user.id)
+        } else {
+          setSubscriptionStatus(null)
+          setBetaAccess(null)
+        }
         setLoading(false)
       }
     )
@@ -77,6 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       session,
       loading,
       subscriptionStatus,
+      betaAccess,
       refreshUserProfile,
       signOut,
     }}>
