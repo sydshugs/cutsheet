@@ -403,6 +403,13 @@ These are confirmed open security/stability issues from the Phase 1 audit (March
 **Fix:** Add back arrows. Remove auto-advance.
 **Status:** ⬜ NOT FIXED
 
+### P1-R2 — Onboarding re-shows on fresh login (UX Bug)
+**File:** Onboarding flow / `ProtectedRoute.tsx` / `profiles` table
+**Issue:** When a user logs in via a new session, onboarding shows again even if previously completed. Root cause: `onboarding_completed` flag in `profiles` table may not be persisting correctly across sessions.
+**Fix:** Verify the flag is being written to `profiles` on onboarding completion AND that `ProtectedRoute` reads it server-side before showing onboarding.
+**Affects:** Playwright E2E tests — tests always hit onboarding screen on fresh auth session injection.
+**Status:** ⬜ NOT FIXED
+
 ---
 
 ## Pre-Launch Ops Checklist (Dashboard Config — No Code)
