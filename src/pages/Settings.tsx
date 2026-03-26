@@ -140,7 +140,7 @@ export function Settings() {
   const [passwordResetSent, setPasswordResetSent] = useState(false);
   const [passwordResetLoading, setPasswordResetLoading] = useState(false);
   const [passwordResetError, setPasswordResetError] = useState(false);
-  const [prefSaved, setPrefSaved] = useState(false);
+  // prefSaved removed — notification prefs not yet wired to backend
 
   // Ad intent state
   const [intent, setIntent] = useState<AdIntent>("conversion");
@@ -271,10 +271,10 @@ export function Settings() {
     }
   };
 
+  // Notification preferences are disabled (not yet wired to backend).
+  // No-op handler — remove setPrefSaved fake feedback to avoid misleading users.
   const handlePrefChange = (setter: (v: boolean) => void, value: boolean) => {
     setter(value);
-    setPrefSaved(true);
-    setTimeout(() => setPrefSaved(false), 2000);
   };
 
   const tabs: { id: Tab; label: string }[] = [

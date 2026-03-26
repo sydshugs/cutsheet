@@ -454,6 +454,7 @@ Return JSON only — no prose:
     } catch (err) {
       setStatus("error");
       setError(err instanceof Error ? err.message : "Analysis failed");
+      autoAnalyzeRef.current = false; // allow retry after error
     }
   };
 
@@ -1005,6 +1006,30 @@ Return JSON only — no prose:
                       </button>
                     </div>
                   </div>
+
+                  {/* AI Rewrite results */}
+                  {ctaRewrites && ctaRewrites.length > 0 && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: 16, borderRadius: 14, background: "rgba(129,140,248,0.06)", border: "1px solid rgba(129,140,248,0.12)" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <Sparkles size={14} color="#818cf8" />
+                        <span style={{ fontSize: 12, fontWeight: 600, color: "#818cf8" }}>AI Rewrites</span>
+                      </div>
+                      {ctaRewrites.map((rewrite, i) => (
+                        <div
+                          key={i}
+                          style={{
+                            padding: "10px 12px", borderRadius: 10,
+                            background: "rgba(255,255,255,0.03)",
+                            border: "1px solid rgba(255,255,255,0.05)",
+                          }}
+                        >
+                          <p style={{ fontSize: 13, color: "#f4f4f5", margin: 0, lineHeight: 1.5 }}>
+                            {rewrite}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Verdict + Priority fix — below tools */}
                   {result.verdict && (

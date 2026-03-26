@@ -405,7 +405,7 @@ export default function CompetitorAnalyzer() {
                             <span style={{ fontSize: 11, color: "#52525b" }}>or search Meta Ad Library</span>
                             <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
                           </div>
-                          <MetaSearch onFileSelect={(f) => { setCompetitorFile(f); setStep(3); }} />
+                          <MetaSearch onFileSelect={(f) => { setCompetitorFile(f); setStep(2); }} />
                         </>
                       )}
                     </>
