@@ -188,6 +188,9 @@ function BenchmarkBar({ score, benchmark, color, label }: BenchmarkBarProps) {
 export function ScoreHero({ score, verdict, benchmark, dimensions, platform, format, youtubeFormat, accentColor }: ScoreHeroProps) {
   const animatedScore = useCountUp(score, 600);
   const color = scoreColor(score);
+  // When accentColor is supplied, replace the "strong" green (#10b981) with it so
+  // platform-specific accent colors (e.g. cyan for Display) propagate everywhere.
+  const effectiveColor = (accentColor != null && color === '#10b981') ? accentColor : color;
 
   // Hide benchmark for platforms that don't serve the current format
   const platformIncompatible = format === 'static' && platform != null && STATIC_INCOMPATIBLE_PLATFORMS.has(platform);
@@ -236,7 +239,7 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
             fontSize: 40,
             fontWeight: 700,
             lineHeight: 1,
-            color: color,
+            color: effectiveColor,
             letterSpacing: '-0.03em',
           }}
         >
@@ -248,7 +251,7 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
       {/* Verdict label — brand guide: score color, paired with number */}
       <span
         className="text-xs font-semibold mt-1.5"
-        style={{ color }}
+        style={{ color: effectiveColor }}
       >
         {verdict}
       </span>
@@ -271,6 +274,7 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
         <div className="grid grid-cols-4 gap-1.5">
           {resolvedDimensions.map((dim, i) => {
             const dimColor = scoreColor(dim.score);
+            const effectiveDimColor = (accentColor != null && dimColor === '#10b981') ? accentColor : dimColor;
             return (
               <motion.div
                 key={dim.name}
@@ -284,7 +288,7 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
               >
                 <span
                   className="font-mono text-xs font-medium tabular-nums"
-                  style={{ color: `${dimColor}99` }}
+                  style={{ color: `${effectiveDimColor}99` }}
                 >
                   {dim.score.toFixed(1)}
                 </span>

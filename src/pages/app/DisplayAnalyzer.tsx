@@ -881,23 +881,6 @@ Return JSON only — no prose:
                       <span style={{ fontSize: 13, fontWeight: 600, color: "#f4f4f5" }}>Real-life placement preview</span>
                     </div>
 
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
-                      {detectedFormat && (
-                        <span style={{ fontSize: 11, color: "#22d3ee", background: "rgba(6,182,212,0.1)", borderRadius: 9999, padding: "3px 10px" }}>
-                          {detectedFormat.key} · {detectedFormat.name}
-                        </span>
-                      )}
-                      {file && (() => {
-                        const kb = Math.round(file.size / 1024);
-                        const overLimit = kb > 150;
-                        return (
-                          <span style={{ fontSize: 11, borderRadius: 9999, padding: "3px 10px", color: overLimit ? "#f59e0b" : "#10b981", background: overLimit ? "rgba(245,158,11,0.1)" : "rgba(16,185,129,0.1)" }}>
-                            {kb}KB {overLimit ? "· over GDN 150KB limit" : "· within GDN limit"}
-                          </span>
-                        );
-                      })()}
-                    </div>
-
                     {mockupLoading && (
                       <div style={{ height: 240, borderRadius: 12, background: "linear-gradient(90deg, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.02) 75%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite", display: "flex", alignItems: "center", justifyContent: "center" }}>
                         <span style={{ fontSize: 12, color: "#52525b" }}>Generating placement preview...</span>
@@ -1155,24 +1138,6 @@ Return JSON only — no prose:
               dimensions={dimensions!}
             />
 
-            {/* Predicted Performance */}
-            {prediction && (
-              <div className="mx-4 mt-4">
-                <PredictedPerformanceCard
-                  prediction={prediction}
-                  platform="Google Display"
-                  niche="GDN avg"
-                />
-              </div>
-            )}
-
-            {/* Budget Card */}
-            {engineBudget && (
-              <div className="mx-4 mt-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
-                <BudgetCard engineBudget={engineBudget} />
-              </div>
-            )}
-
             {/* Re-analyze improved version button */}
             <button
               onClick={handleReset}
@@ -1202,6 +1167,24 @@ Return JSON only — no prose:
             )}
             {briefMarkdown && (
               <div className="mx-4 mt-2 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 text-xs text-zinc-300 whitespace-pre-wrap leading-relaxed">{briefMarkdown}</div>
+            )}
+
+            {/* Predicted Performance */}
+            {prediction && (
+              <div className="mx-4 mt-4">
+                <PredictedPerformanceCard
+                  prediction={prediction}
+                  platform="Google Display"
+                  niche="GDN avg"
+                />
+              </div>
+            )}
+
+            {/* Budget Card */}
+            {engineBudget && (
+              <div className="mx-4 mt-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+                <BudgetCard engineBudget={engineBudget} />
+              </div>
             )}
 
             {/* Action buttons */}

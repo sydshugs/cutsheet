@@ -33,7 +33,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: "Missing analysisMarkdown or scores" });
   }
 
-  const platformLabel = safePlatform(platform) === "general" ? "Meta" : safePlatform(platform);
+  const platformKey = safePlatform(platform);
+  const PLATFORM_DISPLAY_NAMES: Record<string, string> = {
+    google_display: "Google Display",
+    meta: "Meta", facebook: "Meta", instagram: "Instagram",
+    tiktok: "TikTok", youtube: "YouTube", google: "Google",
+    linkedin: "LinkedIn", twitter: "X/Twitter", x: "X/Twitter",
+  };
+  const platformLabel = platformKey === "general" ? "Meta" : (PLATFORM_DISPLAY_NAMES[platformKey] ?? platformKey);
   const nicheLabel = safeNiche(niche);
   const adTypeLabel = safeAdType(adType);
   const intentLabel = (typeof intent === "string" && ["conversion", "awareness", "consideration"].includes(intent)) ? intent : "conversion";

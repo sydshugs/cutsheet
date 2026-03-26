@@ -2,7 +2,7 @@
 
 const ALLOWED_PLATFORMS = [
   "meta", "facebook", "instagram", "tiktok", "youtube", "google",
-  "linkedin", "twitter", "x", "pinterest", "snapchat", "reddit",
+  "google_display", "linkedin", "twitter", "x", "pinterest", "snapchat", "reddit",
   "all", "both", "general",
 ];
 
