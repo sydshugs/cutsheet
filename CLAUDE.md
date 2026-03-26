@@ -165,6 +165,7 @@ Invoke these skills at the start of the described tasks — not after:
 - `playwright-pro` — before writing or modifying any E2E test in `e2e/`
 - `senior-security` — before touching any P0/P1 security fix (CheckoutSuccess, delete account, userContext injection)
 - `wcag-accessibility-audit` — before executing Pass 1 and Pass 2 of the Full App Fix session
+- `skill-creator` — before creating or modifying any SKILL.md file in the skills directory
 
 ### owasp-llm-top10 — When to Use
 Run this skill after the `sanitizeSessionMemory()` prompt injection fix ships (P1-S1/S2). Does a structured LLM-specific security review of the Gemini API integration:
