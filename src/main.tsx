@@ -5,7 +5,10 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 import { AuthProvider } from "./context/AuthContext.tsx";
 import { ProtectedRoute } from "./components/ProtectedRoute.tsx";
 import { ChunkErrorBoundary } from "./components/ChunkErrorBoundary.tsx";
+import { inject } from "@vercel/analytics";
 import "./index.css";
+
+inject();
 
 // ── Critical path (landing + auth) — eagerly loaded ──────────────────────────
 import LandingPage from "./pages/LandingPage.tsx";
