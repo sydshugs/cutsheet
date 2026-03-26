@@ -447,27 +447,18 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
     const currentAnalyzingIndex = variantStatuses.findIndex((s) => s === "analyzing");
     
     return (
-      <div
-        style={{
-          maxWidth: "720px",
-          margin: "0 auto",
-          padding: "48px 24px",
-          fontFamily: "var(--sans)",
-        }}
-      >
-        <AnalysisProgressCard
-          pageType="ab-test"
-          files={filesWithUploads}
-          statusMessage={
-            phase === "analyzing"
-              ? `Analyzing variant ${analysisProgress} of ${filesWithUploads.length}`
-              : "Running head-to-head comparison..."
-          }
-          currentIndex={currentAnalyzingIndex >= 0 ? currentAnalyzingIndex : analysisProgress - 1}
-          totalCount={filesWithUploads.length}
-          onCancel={handleReset}
-        />
-      </div>
+      <AnalysisProgressCard
+        pageType="ab-test"
+        files={filesWithUploads}
+        statusMessage={
+          phase === "analyzing"
+            ? `Analyzing variant ${analysisProgress} of ${filesWithUploads.length}`
+            : "Running head-to-head comparison..."
+        }
+        currentIndex={currentAnalyzingIndex >= 0 ? currentAnalyzingIndex : analysisProgress - 1}
+        totalCount={filesWithUploads.length}
+        onCancel={handleReset}
+      />
     );
   }
 
