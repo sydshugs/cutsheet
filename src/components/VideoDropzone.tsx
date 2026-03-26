@@ -247,9 +247,9 @@ export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, 
           </div>
           <div className="flex gap-3 shrink-0 ml-3">
             {!fileIsImage && duration !== null && (
-              <span className="text-xs font-mono text-zinc-600">{formatDuration(duration)}</span>
+              <span className="text-xs font-mono text-zinc-400">{formatDuration(duration)}</span>
             )}
-            <span className="text-xs font-mono text-zinc-600">{formatSize(file.size)}</span>
+            <span className="text-xs font-mono text-zinc-400">{formatSize(file.size)}</span>
             <button
               onClick={() => {
                 onFileSelect(null);

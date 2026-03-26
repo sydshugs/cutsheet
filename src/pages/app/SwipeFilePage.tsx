@@ -25,6 +25,7 @@ export default function SwipeFilePage() {
         <meta name="description" content="Your saved winning ad creatives. Build a reference library of high-scoring ads." />
         <link rel="canonical" href="https://cutsheet.xyz/app/swipe-file" />
       </Helmet>
+      <h1 className="sr-only">Saved Ads</h1>
       <SwipeFileView
         isDark={true}
         items={items}

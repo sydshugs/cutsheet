@@ -1543,10 +1543,10 @@ export function Settings() {
                       <p style={{ fontSize: 13, fontWeight: 500, color: "#f4f4f5" }}>Product updates</p>
                       <p style={{ fontSize: 12, color: "#71717a", marginTop: 2 }}>New features and improvements</p>
                     </div>
-                    <Switch checked={productUpdates} onCheckedChange={(v) => handlePrefChange(setProductUpdates, v)} disabled />
+                    <Switch checked={productUpdates} onCheckedChange={(v) => handlePrefChange(setProductUpdates, v)} disabled aria-label="Product updates" />
                   </div>
 
-                  <div 
+                  <div
                     className="flex items-center justify-between p-4 rounded-xl"
                     style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}
                   >
@@ -1554,7 +1554,7 @@ export function Settings() {
                       <p style={{ fontSize: 13, fontWeight: 500, color: "#f4f4f5" }}>Weekly digest</p>
                       <p style={{ fontSize: 12, color: "#71717a", marginTop: 2 }}>Your usage summary every Monday</p>
                     </div>
-                    <Switch checked={weeklyDigest} onCheckedChange={(v) => handlePrefChange(setWeeklyDigest, v)} disabled />
+                    <Switch checked={weeklyDigest} onCheckedChange={(v) => handlePrefChange(setWeeklyDigest, v)} disabled aria-label="Weekly digest" />
                   </div>
                 </div>
               </motion.div>

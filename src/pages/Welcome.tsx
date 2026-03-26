@@ -309,6 +309,7 @@ export default function Welcome() {
                           onChange={(e) => setNicheCustom(e.target.value.slice(0, 100))}
                           maxLength={100}
                           placeholder="Tell us what you do (optional)"
+                          aria-label="Your niche or industry"
                           className="w-full h-10 px-4 rounded-xl text-sm outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
                           style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#f4f4f5", paddingRight: 48 }}
                           autoFocus
