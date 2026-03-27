@@ -314,7 +314,14 @@ export function ScoreCard({
       {/* Verdict block — cleaner inline style */}
       {/* Main content card — cleaner styling */}
       <div className="mx-4 mt-3 rounded-2xl overflow-hidden border border-white/[0.06] bg-white/[0.015]">
-          {/* 1. ScoreHero — score number + benchmark bar + dimension grid */}
+          {/* 1. Platform switcher — above score for organic */}
+          {platformSwitcher && (
+            <div className="px-4 pt-4 pb-2">
+              {platformSwitcher}
+            </div>
+          )}
+
+          {/* 2. ScoreHero — score number + benchmark bar + dimension grid */}
           <ScoreHero
             score={displayScore}
             verdict={heroVerdict}
@@ -336,13 +343,6 @@ export function ScoreCard({
               <div className="px-3 py-1 rounded-full text-xs font-semibold font-mono bg-amber-500/10 text-amber-400 border border-amber-500/25">
                 &#9733; Winner
               </div>
-            </div>
-          )}
-
-          {/* 2. Platform switcher */}
-          {platformSwitcher && (
-            <div className="px-4 pt-2 pb-3 border-t border-white/[0.05]">
-              {platformSwitcher}
             </div>
           )}
 

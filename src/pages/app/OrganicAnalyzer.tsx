@@ -634,7 +634,7 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
                 format={organicFormat}
                 isOrganic={true}
                 niche={rawUserContext?.niche}
-                platform={rawUserContext?.platform}
+                platform={platform !== "all" ? platform : rawUserContext?.platform}
                 onFixIt={handleFixIt}
                 fixItResult={fixItResult}
                 fixItLoading={fixItLoading}
