@@ -1183,10 +1183,10 @@ Return JSON only — no prose:
             <button
               onClick={handleGenerateBrief}
               disabled={briefLoading}
-              className="mx-4 mt-4 w-[calc(100%-2rem)] flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-medium transition-[background-color] duration-150 hover:bg-amber-500/15 bg-amber-500/[0.08] text-amber-400 border border-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="mx-4 mt-4 w-[calc(100%-2rem)] flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-medium transition-[background-color] duration-150 hover:bg-indigo-500/15 bg-indigo-500/[0.08] text-indigo-400 border border-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {briefLoading ? (
-                <div style={{ width: 14, height: 14, border: "2px solid rgba(245,158,11,0.3)", borderTopColor: "#f59e0b", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+                <div style={{ width: 14, height: 14, border: "2px solid rgba(99,102,241,0.3)", borderTopColor: "#6366f1", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
               ) : (
                 <FileText size={14} />
               )}

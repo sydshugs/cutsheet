@@ -383,7 +383,7 @@ export function ScoreCard({
         <button
           onClick={onGenerateBrief}
           disabled={briefLoading}
-          className="mx-4 mt-4 w-[calc(100%-2rem)] flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-medium transition-[background-color,color] hover:bg-amber-500/15 bg-amber-500/[0.08] text-amber-400 border border-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="mx-4 mt-4 w-[calc(100%-2rem)] flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-medium transition-[background-color,color] hover:bg-indigo-500/15 bg-indigo-500/[0.08] text-indigo-400 border border-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {briefLoading ? (
             <><Loader2 size={14} className="animate-spin" /> Generating...</>

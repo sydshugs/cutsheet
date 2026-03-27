@@ -66,7 +66,7 @@ export function ScoreAdaptiveCTA({ overallScore, onShare, onGenerateBrief, brief
               type="button"
               onClick={() => onGenerateBrief?.()}
               disabled={briefLoading}
-              className="w-full py-3.5 rounded-xl text-sm font-medium cursor-pointer flex items-center justify-center gap-2.5 transition-all bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/15 hover:border-amber-500/30 disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full py-3.5 rounded-xl text-sm font-medium cursor-pointer flex items-center justify-center gap-2.5 transition-all bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/15 hover:border-indigo-500/30 disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {briefLoading ? (
                 <><Loader2 size={15} className="animate-spin" /> Generating...</>

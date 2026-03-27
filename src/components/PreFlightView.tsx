@@ -492,10 +492,10 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
     ];
 
     return (
-      <div className="flex h-full overflow-x-hidden" style={{ minHeight: 'calc(100vh - 56px)' }}>
+      <div className="flex max-lg:flex-col h-full overflow-x-hidden" style={{ minHeight: 'calc(100vh - 56px)' }}>
 
-        {/* ── Left panel ────────────────────────────────────── */}
-        <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+        {/* ── Left panel (hidden on mobile — score comparison is primary) ── */}
+        <div className="flex flex-col flex-1 min-w-0 overflow-hidden max-lg:hidden">
           <div className="flex-1 overflow-auto p-6 flex flex-col gap-5">
 
             {/* 1. Thumbnail row */}
@@ -621,7 +621,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
 
         {/* ── Right panel ───────────────────────────────────── */}
         <div
-          className="shrink-0 w-[440px] overflow-y-auto overflow-x-hidden pb-12"
+          className="shrink-0 w-[440px] max-lg:w-full overflow-y-auto overflow-x-hidden pb-12"
           style={{ background: 'rgba(24,24,27,0.5)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', borderLeft: '1px solid rgba(255,255,255,0.05)' }}
         >
           {/* Section label */}
