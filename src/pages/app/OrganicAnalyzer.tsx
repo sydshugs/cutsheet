@@ -73,14 +73,14 @@ function OrganicEmptyState({
       <h1 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>
         Score your organic content
       </h1>
-      <p style={{ fontSize: 14, color: "#a1a1aa", textAlign: "center", maxWidth: 320, marginTop: 10, lineHeight: 1.6 }}>
+      <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)", textAlign: "center", maxWidth: 320, marginTop: 10, lineHeight: 1.6 }}>
         Upload a video or static creative. Get a full AI breakdown in 30 seconds.
       </p>
 
       {/* Feature pills — green styled like paid page purple */}
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 20 }}>
         {PILLS.map((pill) => (
-          <span key={pill} style={{ fontSize: 12, color: "#34d399", background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.15)", borderRadius: 9999, padding: "4px 12px" }}>
+          <span key={pill} style={{ fontSize: 12, color: "#10b981", background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.15)", borderRadius: 9999, padding: "4px 12px" }}>
             {pill}
           </span>
         ))}
@@ -558,7 +558,7 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
             />
           ) : (
             <div className={`relative flex flex-col ${(effectiveStatus === "uploading" || effectiveStatus === "processing") ? "h-full" : "px-4 py-6 md:px-8 min-h-full"}`}>
-              <div className="pointer-events-none absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-emerald-600/10 blur-[120px]" />
+              <div className="pointer-events-none absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-indigo-600/10 blur-[120px]" />
               <div className="pointer-events-none absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-violet-600/[0.08] blur-[100px]" />
               <div className="relative flex flex-col flex-1">
                 <AnalyzerView
@@ -608,7 +608,7 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
       </div>
 
       {/* Right panel */}
-      <div className={`shrink-0 bg-zinc-900/50 backdrop-blur-xl border-l border-white/5 overflow-y-auto overflow-x-hidden pb-12 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-white/5 ${showRightPanel ? "w-[440px] max-lg:w-full opacity-100" : "w-0 max-lg:w-0 opacity-0"}`}>
+      <div className={`shrink-0 bg-zinc-900/50 backdrop-blur-xl border-l border-white/5 overflow-y-auto overflow-x-hidden pb-12 transition-[width,opacity] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-white/5 ${showRightPanel ? "w-[440px] max-lg:w-full opacity-100" : "w-0 max-lg:w-0 opacity-0"}`}>
         {showRightPanel && activeResult?.scores && rightTab === "analysis" && (
           <>
             <div ref={scorecardRef}>

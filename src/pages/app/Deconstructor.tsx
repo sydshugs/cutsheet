@@ -100,7 +100,7 @@ function UrlInput({
           type="button"
           onClick={handleSubmit}
           disabled={loading || !url.trim()}
-          className="shrink-0 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+          className="shrink-0 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           style={{ background: "#6366f1" }}
           onMouseEnter={(e) => {
             if (!loading && url.trim())
@@ -260,7 +260,7 @@ function DeconstructingState({ sourceType }: { sourceType: SourceType }) {
         {STAGES.map((_, i) => (
           <div
             key={i}
-            className="rounded-full transition-all duration-500"
+            className="rounded-full transition-[width,background-color] duration-500"
             style={{
               width: i === stageIdx ? 16 : 4,
               height: 4,
@@ -518,7 +518,7 @@ function ResultsPanel({
         <button
           type="button"
           onClick={onSaveToSwipeFile}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-zinc-300 border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/20 transition-all"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-zinc-300 border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/20 transition-colors"
         >
           <Bookmark size={14} />
           Save to Library
@@ -526,7 +526,7 @@ function ResultsPanel({
         <button
           type="button"
           onClick={onReset}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-zinc-500 border border-white/[0.06] bg-transparent hover:bg-white/[0.03] hover:text-zinc-300 transition-all"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-zinc-500 border border-white/[0.06] bg-transparent hover:bg-white/[0.03] hover:text-zinc-300 transition-colors"
         >
           <RotateCcw size={14} />
           Analyze Another
@@ -638,7 +638,7 @@ export default function Deconstructor() {
   return (
     <div
       className="flex-1 flex flex-col overflow-auto"
-      style={{ minHeight: "calc(100vh - 56px)" }}
+      style={{ minHeight: "calc(100vh - 120px)" }}
     >
       <Helmet>
         <title>Ad Breakdown — Cutsheet</title>
@@ -652,7 +652,11 @@ export default function Deconstructor() {
         />
       </Helmet>
 
-      <div className="relative flex-1 flex flex-col items-center justify-center px-4 py-10 md:py-14">
+      <div className="relative flex-1 flex flex-col items-center justify-center" style={{ padding: "32px 24px" }}>
+        {/* Ambient glow */}
+        <div className="pointer-events-none absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-indigo-600/10 blur-[120px]" />
+        <div className="pointer-events-none absolute bottom-[-10%] right-[-5%] w-[40%] h-[40%] rounded-full bg-violet-600/[0.08] blur-[100px]" />
+
         {/* Header — visible until result */}
         {!result && (
           <div className="text-center mb-8">
@@ -662,14 +666,14 @@ export default function Deconstructor() {
             <h1 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginBottom: 0 }}>
               Ad Breakdown
             </h1>
-            <p className="text-sm text-zinc-500 max-w-md mx-auto" style={{ marginTop: 10, lineHeight: 1.6 }}>
+            <p className="text-sm mx-auto" style={{ marginTop: 10, lineHeight: 1.6, color: "rgba(255,255,255,0.5)", maxWidth: 320 }}>
               Paste any ad URL. Get a full AI breakdown in 30 seconds.
             </p>
 
             {/* Feature pills — amber styled */}
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 20 }}>
               {["Hook analysis", "Psychological triggers", "Creative brief"].map((p) => (
-                <span key={p} style={{ fontSize: 12, color: "#fbbf24", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.15)", borderRadius: 9999, padding: "4px 12px" }}>{p}</span>
+                <span key={p} style={{ fontSize: 12, color: "#f59e0b", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.15)", borderRadius: 9999, padding: "4px 12px" }}>{p}</span>
               ))}
             </div>
           </div>
