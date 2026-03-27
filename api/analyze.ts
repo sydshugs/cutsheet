@@ -139,7 +139,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Build niche context block when niche is known from onboarding
     let nicheContext = "";
     if (niche) {
-      const { getNicheBenchmark, getNicheShortLabel } = await import("../src/lib/benchmarks") as BenchmarkModule;
+      const { getNicheBenchmark, getNicheShortLabel } = await import("../src/lib/benchmarks.js") as BenchmarkModule;
       const nicheBench = getNicheBenchmark(niche, platform);
       const nicheLabel = getNicheShortLabel(niche) ?? niche;
       if (nicheBench) {

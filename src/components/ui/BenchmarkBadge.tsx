@@ -1,6 +1,19 @@
+import { Info } from 'lucide-react'
+
 interface BenchmarkBadgeProps {
   delta: number
   format: 'video' | 'static'
+  platform?: string
+}
+
+const BENCHMARK_SOURCES: Record<string, string> = {
+  meta:      'Meta Business creative guidelines + Databox 2025 industry report',
+  tiktok:    'TikTok Creative Center performance data, Q4 2025',
+  youtube:   'Google Ads benchmark report, Q4 2025',
+  google:    'Google Ads industry benchmarks, Q4 2025',
+  instagram: 'Meta Business creative guidelines, 2025',
+  pinterest: 'Pinterest Ads performance benchmarks, 2025',
+  general:   'Industry average across major paid social platforms',
 }
 
 // Color definitions — bg uses url() prefix so the test env (JSDOM) stores
@@ -24,7 +37,7 @@ const COLORS = {
   },
 }
 
-export function BenchmarkBadge({ delta, format }: BenchmarkBadgeProps) {
+export function BenchmarkBadge({ delta, format, platform }: BenchmarkBadgeProps) {
   const isPositive = delta > 0
   const isNeutral = delta === 0
   const absDelta = Math.abs(delta)
@@ -34,6 +47,10 @@ export function BenchmarkBadge({ delta, format }: BenchmarkBadgeProps) {
   const label = isNeutral
     ? `${arrow} at avg ${format} ads`
     : `${arrow} ${absDelta} pts ${relation} avg ${format} ads`
+
+  const platformKey = platform?.toLowerCase() ?? 'general'
+  const source = BENCHMARK_SOURCES[platformKey] ?? BENCHMARK_SOURCES.general
+
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 4,
@@ -43,6 +60,13 @@ export function BenchmarkBadge({ delta, format }: BenchmarkBadgeProps) {
       fontWeight: 500, lineHeight: 1.4,
     }}>
       {label}
+      <Info
+        size={11}
+        title={`Source: ${source}`}
+        style={{ color: 'var(--ink-faint)', flexShrink: 0, cursor: 'help' }}
+        onMouseEnter={e => (e.currentTarget.style.color = 'var(--ink-muted)')}
+        onMouseLeave={e => (e.currentTarget.style.color = 'var(--ink-faint)')}
+      />
     </span>
   )
 }

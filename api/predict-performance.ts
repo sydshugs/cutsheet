@@ -51,7 +51,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const intentLabel = (typeof intent === "string" && ["conversion", "awareness", "consideration"].includes(intent)) ? intent : "conversion";
 
   // Niche × platform benchmarks from shared lib — dynamic import for CJS compat
-  const { getNicheBenchmark } = await import("../src/lib/benchmarks");
+  const { getNicheBenchmark } = await import("../src/lib/benchmarks.js");
   const nicheBench = getNicheBenchmark(nicheLabel, platformKey);
   let benchmarkBlock: string;
   if (nicheBench) {
