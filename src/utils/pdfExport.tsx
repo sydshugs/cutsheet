@@ -1,8 +1,7 @@
 // pdfExport.tsx — Generate PDF report from analysis result using html2canvas + jsPDF
 import React from "react";
 import { createRoot } from "react-dom/client";
-import html2canvas from "html2canvas";
-import { jsPDF } from "jspdf";
+// html2canvas and jspdf are dynamically imported to avoid 622kB+ in the main bundle
 import { ReportCover } from "../components/ReportCover";
 import { ReportAnalysis } from "../components/ReportAnalysis";
 import type { AnalysisResult } from "../services/analyzerService";
@@ -30,6 +29,10 @@ export async function exportToPdf(result: AnalysisResult): Promise<void> {
   const container = createOffscreenContainer();
 
   try {
+    const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+      import("html2canvas"),
+      import("jspdf"),
+    ]);
     const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
     // —— Page 1: Cover ——

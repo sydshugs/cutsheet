@@ -24,6 +24,7 @@ export function AlertDialog({
   variant = "default",
 }: AlertDialogProps) {
   const confirmRef = useRef<HTMLButtonElement>(null);
+  const cancelRef = useRef<HTMLButtonElement>(null);
   const trapRef = useFocusTrap(open);
 
   useEffect(() => {
@@ -32,10 +33,17 @@ export function AlertDialog({
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", handleKey);
-    // Focus confirm button on open
-    setTimeout(() => confirmRef.current?.focus(), 50);
+    // For destructive dialogs: focus cancel button to prevent accidental confirmation
+    // For default dialogs: focus confirm button
+    setTimeout(() => {
+      if (variant === "destructive") {
+        cancelRef.current?.focus();
+      } else {
+        confirmRef.current?.focus();
+      }
+    }, 50);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [open, onClose]);
+  }, [open, onClose, variant]);
 
   if (!open) return null;
 
@@ -80,9 +88,10 @@ export function AlertDialog({
         </p>
         <div className="flex gap-2 justify-end">
           <button
+            ref={cancelRef}
             type="button"
             onClick={onClose}
-            className="px-4 py-2.5 rounded-xl text-sm font-medium transition-all bg-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.04]"
+            className="px-4 py-2.5 rounded-xl text-sm font-medium transition-[color,background-color] bg-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
           >
             {cancelLabel}
           </button>

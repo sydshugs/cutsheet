@@ -138,7 +138,8 @@ function ImprovementsList({ improvements, loading }: { improvements: string[]; l
         <button
           type="button"
           onClick={() => setExpanded(!expanded)}
-          className="text-[11px] text-indigo-400 hover:text-indigo-300 mt-2 cursor-pointer bg-transparent border-none p-0 font-medium transition-colors"
+          className="text-[11px] text-indigo-400 hover:text-indigo-300 mt-2 cursor-pointer bg-transparent border-none font-medium transition-[color]"
+          style={{ minHeight: 24, minWidth: 44, padding: "0 4px" }}
         >
           {expanded ? "Show less" : `Show all ${improvements.length} \u2192`}
         </button>
@@ -291,7 +292,7 @@ export function ScoreCard({
           <button
             onClick={handleCopy}
             aria-label="Copy scores to clipboard"
-            className="inline-flex items-center gap-1.5 text-xs font-medium rounded-lg cursor-pointer transition-all hover:bg-white/[0.06] focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:outline-none px-2.5 py-1.5"
+            className="inline-flex items-center gap-1.5 text-xs font-medium rounded-lg cursor-pointer transition-[color,background-color] hover:bg-white/[0.06] focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:outline-none px-2.5 py-1.5"
             style={{
               background: 'transparent',
               color: copied ? '#10b981' : '#71717a',
@@ -306,14 +307,7 @@ export function ScoreCard({
       {/* Verdict block — cleaner inline style */}
       {/* Main content card — cleaner styling */}
       <div className="mx-4 mt-3 rounded-2xl overflow-hidden border border-white/[0.06] bg-white/[0.015]">
-        {/* Platform switcher */}
-        {platformSwitcher && (
-          <div className="px-4 pt-4 pb-2 border-b border-white/[0.05]">
-            {platformSwitcher}
-          </div>
-        )}
-
-          {/* 1 + 2. ScoreHero — score number + benchmark bar + dimension grid */}
+          {/* 1. ScoreHero — score number + benchmark bar + dimension grid */}
           <ScoreHero
             score={displayScore}
             verdict={heroVerdict}
@@ -334,6 +328,13 @@ export function ScoreCard({
               <div className="px-3 py-1 rounded-full text-xs font-semibold font-mono bg-amber-500/10 text-amber-400 border border-amber-500/25">
                 &#9733; Winner
               </div>
+            </div>
+          )}
+
+          {/* 2. Platform switcher */}
+          {platformSwitcher && (
+            <div className="px-4 pt-2 pb-3 border-t border-white/[0.05]">
+              {platformSwitcher}
             </div>
           )}
 
@@ -364,18 +365,13 @@ export function ScoreCard({
           );
           })()}
 
-          {/* Hashtags */}
-          {hashtags && (hashtags.tiktok?.length > 0 || hashtags.meta?.length > 0 || hashtags.instagram?.length > 0 || hashtags.pinterest?.length > 0 || hashtags.reels?.length > 0 || hashtags.youtube_shorts?.length > 0) && (
-            <HashtagsC2 hashtags={hashtags} format={format} />
-          )}
-
       </div>{/* end main card */}
 
       {/* Re-analyze / Analyze another button */}
       {onReanalyze && (
         <button
           onClick={onReanalyze}
-          className="mx-4 mt-4 w-[calc(100%-2rem)] flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-medium transition-all hover:bg-indigo-500/15 bg-indigo-500/[0.08] text-indigo-400 border border-indigo-500/20"
+          className="mx-4 mt-4 w-[calc(100%-2rem)] flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-medium transition-[background-color,color] hover:bg-indigo-500/15 bg-indigo-500/[0.08] text-indigo-400 border border-indigo-500/20"
         >
           <RotateCcw size={14} />
           {isOrganic ? 'Analyze another creative' : 'Re-analyze improved version'}
@@ -387,7 +383,7 @@ export function ScoreCard({
         <button
           onClick={onGenerateBrief}
           disabled={briefLoading}
-          className="mx-4 mt-4 w-[calc(100%-2rem)] flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-medium transition-all hover:bg-amber-500/15 bg-amber-500/[0.08] text-amber-400 border border-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="mx-4 mt-4 w-[calc(100%-2rem)] flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-medium transition-[background-color,color] hover:bg-indigo-500/15 bg-indigo-500/[0.08] text-indigo-400 border border-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {briefLoading ? (
             <><Loader2 size={14} className="animate-spin" /> Generating...</>
@@ -419,7 +415,12 @@ export function ScoreCard({
         </div>
       )}
 
-
+      {/* 11. Hashtags */}
+      {hashtags && (hashtags.tiktok?.length > 0 || hashtags.meta?.length > 0 || hashtags.instagram?.length > 0 || hashtags.pinterest?.length > 0 || hashtags.reels?.length > 0 || hashtags.youtube_shorts?.length > 0) && (
+        <div className="mx-4 mt-4">
+          <HashtagsC2 hashtags={hashtags} format={format} />
+        </div>
+      )}
 
 
       {/* Toast notification */}

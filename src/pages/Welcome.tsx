@@ -12,6 +12,7 @@ import {
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 import { sanitizeForAI, sanitizeText } from "../utils/sanitize";
+import { Helmet } from "react-helmet-async";
 
 // ─── STEP DATA ──────────────────────────────────────────────────────────────
 
@@ -51,17 +52,23 @@ const ORGANIC_PLATFORM_OPTIONS = [
 function ProgressDots({ step, total }: { step: number; total: number }) {
   return (
     <div className="flex items-center justify-center gap-2">
-      {Array.from({ length: total }).map((_, i) => (
-        <motion.div
-          key={i}
-          className="h-2 rounded-full"
-          animate={{
-            width: i + 1 === step ? 24 : 8,
-            backgroundColor: i + 1 <= step ? "#6366f1" : "#27272a",
-          }}
-          transition={{ type: "spring", stiffness: 400, damping: 30 }}
-        />
-      ))}
+      <AnimatePresence initial={false}>
+        {Array.from({ length: total }).map((_, i) => (
+          <motion.div
+            key={i}
+            className="h-2 rounded-full"
+            initial={{ opacity: 0, scale: 0.5, width: 8 }}
+            animate={{
+              opacity: 1,
+              scale: 1,
+              width: i + 1 === step ? 24 : 8,
+              backgroundColor: i + 1 <= step ? "#6366f1" : "#27272a",
+            }}
+            exit={{ opacity: 0, scale: 0.5, width: 0 }}
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+          />
+        ))}
+      </AnimatePresence>
     </div>
   );
 }
@@ -119,6 +126,7 @@ export default function Welcome() {
   const [intent, setIntent] = useState<Intent>("");
   const [niche, setNiche] = useState("");
   const [nicheCustom, setNicheCustom] = useState("");
+  const [nicheError, setNicheError] = useState<string | null>(null);
   const [platform, setPlatform] = useState("");
   const [completed, setCompleted] = useState(false);
 
@@ -184,6 +192,10 @@ export default function Welcome() {
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden" style={{ background: "#09090b" }}>
+      <Helmet>
+        <title>Welcome — Cutsheet</title>
+        <meta name="robots" content="noindex" />
+      </Helmet>
       {/* Ambient glows */}
       <div className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full blur-[120px] pointer-events-none" style={{ background: "rgba(99,102,241,0.12)" }} />
       <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] rounded-full blur-[100px] pointer-events-none" style={{ background: "rgba(139,92,246,0.08)" }} />
@@ -309,6 +321,7 @@ export default function Welcome() {
                           onChange={(e) => setNicheCustom(e.target.value.slice(0, 100))}
                           maxLength={100}
                           placeholder="Tell us what you do (optional)"
+                          aria-label="Your niche or industry"
                           className="w-full h-10 px-4 rounded-xl text-sm outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
                           style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#f4f4f5", paddingRight: 48 }}
                           autoFocus
@@ -317,8 +330,22 @@ export default function Welcome() {
                           {nicheCustom.length}/100
                         </span>
                       </div>
-                      <button type="button" onClick={() => { if (intent === "display") { setPlatform("Google Display"); handleFinish("Other", "Google Display"); } else { setStep(3); } }}
-                        className="w-full h-10 rounded-full text-sm font-medium" style={{ background: "#6366f1", color: "white", border: "none", cursor: "pointer" }}>
+                      {nicheError && (
+                        <p className="text-xs" style={{ color: "var(--error)", marginTop: -4 }}>{nicheError}</p>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (nicheCustom.length > 0 && nicheCustom.trim().length === 0) {
+                            setNicheError("Please enter a valid description or clear the field.");
+                            return;
+                          }
+                          setNicheError(null);
+                          if (intent === "display") { setPlatform("Google Display"); void handleFinish("Other", "Google Display"); } else { setStep(3); }
+                        }}
+                        className="w-full h-10 rounded-full text-sm font-medium"
+                        style={{ background: "#6366f1", color: "white", border: "none", cursor: "pointer" }}
+                      >
                         Continue <ArrowRight size={14} style={{ display: "inline", verticalAlign: "middle" }} />
                       </button>
                     </motion.div>

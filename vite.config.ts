@@ -39,6 +39,17 @@ export default defineConfig(({mode}) => {
       // Do not modify — file watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
     },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'framer-motion': ['framer-motion'],
+            'supabase': ['@supabase/supabase-js'],
+            'react-markdown': ['react-markdown'],
+          },
+        },
+      },
+    },
     test: {
       environment: 'jsdom',
       globals: true,

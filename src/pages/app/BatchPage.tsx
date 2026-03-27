@@ -19,8 +19,8 @@ export default function BatchPage() {
         <meta name="description" content="Upload up to 10 ad variations. Get them ranked by AI so you know which 2-3 to test before spending." />
         <link rel="canonical" href="https://cutsheet.xyz/app/batch" />
       </Helmet>
+      <h1 className="sr-only">Rank Creatives</h1>
       <BatchView
-      isDark={true}
       apiKey={API_KEY}
       addHistoryEntry={addHistoryEntry}
       t={themes.dark}
