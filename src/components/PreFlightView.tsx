@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo, useEffect } from "react";
 import { GitBranch, Plus, X, Upload, Check } from "lucide-react";
 import { VideoDropzone } from "./VideoDropzone";
 import { PreFlightWinner } from "./PreFlightWinner";
-import { AnalysisProgressCard } from "./AnalysisProgressCard";
+import { ProgressCard } from "./ProgressCard";
 import { PreFlightRankCard } from "./PreFlightRankCard";
 import { PreFlightHeadToHead } from "./PreFlightHeadToHead";
 import { analyzeVideo, type AnalysisResult } from "../services/analyzerService";
@@ -223,9 +223,6 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
 
     return (
       <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px", minHeight: "calc(100vh - 120px)", position: "relative" }}>
-        {/* Ambient glow */}
-        <div className="pointer-events-none absolute top-1/4 -left-32 h-[420px] w-[420px] rounded-full bg-indigo-600/10 blur-[120px]" />
-        <div className="pointer-events-none absolute bottom-1/4 -right-24 h-[340px] w-[340px] rounded-full bg-violet-600/[0.08] blur-[100px]" />
 
         {/* Rose icon tile */}
         <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(236,72,153,0.1)", border: "1px solid rgba(236,72,153,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -448,21 +445,23 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
 
   // ─── LOADING UI ──────────────────────────────────────────────────────────────
   if (isRunning) {
-    const currentAnalyzingIndex = variantStatuses.findIndex((s) => s === "analyzing");
-    
+    const currentFile = filesWithUploads[0] ?? null;
+
     return (
-      <AnalysisProgressCard
-        pageType="ab-test"
-        files={filesWithUploads}
-        statusMessage={
-          phase === "analyzing"
-            ? `Analyzing variant ${analysisProgress} of ${filesWithUploads.length}`
-            : "Running head-to-head comparison..."
-        }
-        currentIndex={currentAnalyzingIndex >= 0 ? currentAnalyzingIndex : analysisProgress - 1}
-        totalCount={filesWithUploads.length}
-        onCancel={handleReset}
-      />
+      <div className="flex-1 flex flex-col">
+        <ProgressCard
+          file={currentFile}
+          status="processing"
+          statusMessage={
+            phase === "analyzing"
+              ? `Analyzing variant ${analysisProgress} of ${filesWithUploads.length}`
+              : "Running head-to-head comparison..."
+          }
+          onCancel={handleReset}
+          icon={GitBranch}
+          title="Analyzing your ad"
+        />
+      </div>
     );
   }
 
@@ -508,10 +507,10 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
                 return (
                   <div key={rv.variant} className="flex flex-col gap-1.5">
                     <div
-                      className={`relative rounded-xl overflow-hidden bg-[#18181b] ${isVideo ? 'aspect-video' : 'aspect-square'}`}
+                      className={`relative rounded-xl overflow-hidden ${isVideo ? 'aspect-video' : 'aspect-square'}`}
                       style={isWinner
-                        ? { boxShadow: '0 0 0 2px #ec4899' }
-                        : { border: '1px solid rgba(255,255,255,0.06)' }
+                        ? { background: 'var(--surface-el)', boxShadow: '0 0 0 2px #ec4899' }
+                        : { background: 'var(--surface-el)', border: '1px solid rgba(255,255,255,0.06)' }
                       }
                     >
                       {url ? (
@@ -545,7 +544,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
             {/* 2. Predicted winner banner */}
             <div
               className="rounded-2xl overflow-hidden"
-              style={{ background: '#18181b', borderTop: '1px solid rgba(255,255,255,0.06)', borderRight: '1px solid rgba(255,255,255,0.06)', borderBottom: '1px solid rgba(255,255,255,0.06)', borderLeft: '4px solid #ec4899' }}
+              style={{ background: 'var(--surface-el)', borderTop: '1px solid rgba(255,255,255,0.06)', borderRight: '1px solid rgba(255,255,255,0.06)', borderBottom: '1px solid rgba(255,255,255,0.06)', borderLeft: '4px solid #ec4899' }}
             >
               <div className="px-5 py-4">
                 <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500">Predicted Winner</span>
@@ -565,7 +564,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
               <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500 mb-3">Head-to-Head</p>
               <div
                 className="rounded-2xl overflow-hidden"
-                style={{ background: '#18181b', border: '1px solid rgba(255,255,255,0.06)' }}
+                style={{ background: 'var(--surface-el)', border: '1px solid rgba(255,255,255,0.06)' }}
               >
                 {h2hRows.map((row, i) => {
                   const isWinnerDim = row.winner === comparison.winner.label;
@@ -597,7 +596,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
               <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500 mb-3">Recommendation</p>
               <div
                 className="rounded-2xl px-5 py-4"
-                style={{ background: '#18181b', border: '1px solid rgba(255,255,255,0.06)' }}
+                style={{ background: 'var(--surface-el)', border: '1px solid rgba(255,255,255,0.06)' }}
               >
                 <p className="text-sm text-zinc-300 leading-relaxed">{comparison.recommendation}</p>
               </div>
@@ -607,7 +606,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
             {comparison.hybridNote !== null && (
               <div
                 className="rounded-2xl overflow-hidden"
-                style={{ background: '#18181b', borderTop: '1px solid rgba(255,255,255,0.06)', borderRight: '1px solid rgba(255,255,255,0.06)', borderBottom: '1px solid rgba(255,255,255,0.06)', borderLeft: '4px solid #f59e0b' }}
+                style={{ background: 'var(--surface-el)', borderTop: '1px solid rgba(255,255,255,0.06)', borderRight: '1px solid rgba(255,255,255,0.06)', borderBottom: '1px solid rgba(255,255,255,0.06)', borderLeft: '4px solid #f59e0b' }}
               >
                 <div className="px-5 py-4">
                   <span className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: '#f59e0b' }}>Hybrid Opportunity</span>
@@ -636,8 +635,8 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
                 key={rv.variant}
                 className="mx-4 mb-3 rounded-2xl overflow-hidden"
                 style={isWinner
-                  ? { background: '#18181b', borderTop: '1px solid rgba(255,255,255,0.06)', borderRight: '1px solid rgba(255,255,255,0.06)', borderBottom: '1px solid rgba(255,255,255,0.06)', borderLeft: '4px solid #ec4899' }
-                  : { background: '#18181b', border: '1px solid rgba(255,255,255,0.06)' }
+                  ? { background: 'var(--surface-el)', borderTop: '1px solid rgba(255,255,255,0.06)', borderRight: '1px solid rgba(255,255,255,0.06)', borderBottom: '1px solid rgba(255,255,255,0.06)', borderLeft: '4px solid #ec4899' }
+                  : { background: 'var(--surface-el)', border: '1px solid rgba(255,255,255,0.06)' }
                 }
               >
                 <div className="px-4 py-4">
