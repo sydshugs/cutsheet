@@ -56,14 +56,14 @@ function EmptyState({ onFileSelect }: { onFileSelect: (f: File | null) => void }
         <Monitor size={28} color="#06b6d4" />
       </div>
       <h1 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>Score your display ad</h1>
-      <p style={{ fontSize: 14, color: "#a1a1aa", textAlign: "center", maxWidth: 380, lineHeight: 1.6, marginTop: 10 }}>
+      <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)", textAlign: "center", maxWidth: 320, lineHeight: 1.6, marginTop: 10 }}>
         Upload a banner ad. Get format detection, placement scoring, and a real-life mockup in 30 seconds.
       </p>
 
       {/* Feature pills — cyan styled */}
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 20 }}>
         {PILLS.map((p) => (
-          <span key={p} style={{ fontSize: 12, color: "#22d3ee", background: "rgba(6,182,212,0.08)", border: "1px solid rgba(6,182,212,0.15)", borderRadius: 9999, padding: "4px 12px" }}>{p}</span>
+          <span key={p} style={{ fontSize: 12, color: "#06b6d4", background: "rgba(6,182,212,0.08)", border: "1px solid rgba(6,182,212,0.15)", borderRadius: 9999, padding: "4px 12px" }}>{p}</span>
         ))}
       </div>
 
@@ -571,8 +571,8 @@ Return JSON only — no prose:
           {/* ── SUITE MODE ──────────────────────────────────────────── */}
           {mode === "suite" && (
             <div className="relative px-4 py-6 md:px-8 min-h-full flex flex-col">
-              <div className="pointer-events-none absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-cyan-600/10 blur-[120px]" />
-              <div className="pointer-events-none absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-teal-600/[0.08] blur-[100px]" />
+              <div className="pointer-events-none absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-indigo-600/10 blur-[120px]" />
+              <div className="pointer-events-none absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-violet-600/[0.08] blur-[100px]" />
               <div className="relative flex flex-col flex-1" style={{ maxWidth: 900, margin: "0 auto", width: "100%" }}>
 
                 {suiteStatus === "idle" && (
@@ -598,7 +598,7 @@ Return JSON only — no prose:
                               </span>
                               <span style={{
                                 fontSize: 10,
-                                color: b.format ? "#22d3ee" : "#f59e0b",
+                                color: b.format ? "#06b6d4" : "#f59e0b",
                                 background: b.format ? "rgba(6,182,212,0.1)" : "rgba(245,158,11,0.1)",
                                 borderRadius: 9999, padding: "1px 6px",
                               }}>
@@ -606,7 +606,7 @@ Return JSON only — no prose:
                               </span>
                             </div>
                             {b.status === "analyzing" && (
-                              <div style={{ width: 14, height: 14, border: "2px solid rgba(6,182,212,0.3)", borderTopColor: "#06b6d4", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+                              <div style={{ width: 14, height: 14, border: "2px solid rgba(99,102,241,0.3)", borderTopColor: "#6366f1", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
                             )}
                             {b.status === "complete" && b.result && (
                               <span style={{ fontSize: 13, fontWeight: 600, fontFamily: "var(--font-mono, monospace)", color: b.result.overallScore >= 7 ? "#10b981" : b.result.overallScore >= 5 ? "#f59e0b" : "#ef4444" }}>
@@ -644,7 +644,7 @@ Return JSON only — no prose:
                           };
                           input.click();
                         }}
-                        onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(6,182,212,0.5)"; }}
+                        onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)"; }}
                         onDragLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
                         onDrop={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; Array.from(e.dataTransfer.files).forEach((f) => addSuiteBanner(f)); }}
                       >
@@ -681,13 +681,13 @@ Return JSON only — no prose:
                 {/* Suite analyzing */}
                 {suiteStatus === "analyzing" && (
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 24px", gap: 16 }}>
-                    <div style={{ width: 24, height: 24, border: "2px solid rgba(6,182,212,0.3)", borderTopColor: "#06b6d4", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+                    <div style={{ width: 24, height: 24, border: "2px solid rgba(99,102,241,0.3)", borderTopColor: "#6366f1", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
                     <span style={{ fontSize: 13, color: "#71717a" }}>Analyzing {suiteBanners.length} banners...</span>
                     {/* Per-banner status */}
                     <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 8 }}>
                       {suiteBanners.map((b) => (
                         <div key={b.id} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                          {b.status === "analyzing" && <div style={{ width: 10, height: 10, border: "1.5px solid rgba(6,182,212,0.3)", borderTopColor: "#06b6d4", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />}
+                          {b.status === "analyzing" && <div style={{ width: 10, height: 10, border: "1.5px solid rgba(99,102,241,0.3)", borderTopColor: "#6366f1", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />}
                           {b.status === "complete" && <CheckCircle size={10} color="#10b981" />}
                           <span style={{ fontSize: 11, color: "#52525b" }}>{b.format?.name ?? "Custom"}</span>
                         </div>
@@ -725,7 +725,7 @@ Return JSON only — no prose:
                         <p style={{ fontSize: 11, color: "#52525b", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Individual scores</p>
                         {suiteBanners.filter((b) => b.result).map((b, i) => (
                           <div key={b.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: i < suiteBanners.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
-                            <span style={{ fontSize: 11, color: "#22d3ee", fontWeight: 600, width: 16 }}>{i + 1}</span>
+                            <span style={{ fontSize: 11, color: "#818cf8", fontWeight: 600, width: 16 }}>{i + 1}</span>
                             <span style={{ fontSize: 12, color: "#a1a1aa", flex: 1 }}>{b.format?.name ?? "Custom"}</span>
                             <span style={{ fontSize: 13, fontWeight: 600, fontFamily: "var(--font-mono, monospace)", color: (b.result?.overallScore ?? 0) >= 7 ? "#10b981" : (b.result?.overallScore ?? 0) >= 5 ? "#f59e0b" : "#ef4444" }}>
                               {b.result?.overallScore}/10
@@ -753,7 +753,7 @@ Return JSON only — no prose:
                               const cohesion = await analyzeSuiteCohesion(bannerData, userContext, sessionMemoryRef.current);
                               setSuiteCohesion(cohesion);
                             } catch { setSuiteCohesionError(true); }
-                          }} style={{ fontSize: 11, color: "#06b6d4", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
+                          }} style={{ fontSize: 11, color: "#6366f1", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
                             Retry
                           </button>
                         </div>
@@ -778,8 +778,8 @@ Return JSON only — no prose:
           {mode === "single" && (file || status !== "idle") && (
           /* Upload + preview area — only when file is loaded or analysis in progress */
           <div className={`relative flex flex-col ${(status === "uploading" || status === "processing") ? "h-full" : "px-4 py-6 md:px-8 min-h-full"}`}>
-            <div className="pointer-events-none absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-cyan-600/10 blur-[120px]" />
-            <div className="pointer-events-none absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-teal-600/[0.08] blur-[100px]" />
+            <div className="pointer-events-none absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-indigo-600/10 blur-[120px]" />
+            <div className="pointer-events-none absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-violet-600/[0.08] blur-[100px]" />
 
             <div className={`relative flex flex-col flex-1 ${status === "analyzing" ? "items-center justify-center" : ""}`} style={{ maxWidth: 800, margin: "0 auto", width: "100%" }}>
               {/* Dropzone or preview */}
@@ -788,7 +788,7 @@ Return JSON only — no prose:
                   style={{
                     height: 280, border: "2px dashed rgba(255,255,255,0.08)", borderRadius: 16,
                     background: "rgba(255,255,255,0.02)", display: "flex", flexDirection: "column",
-                    alignItems: "center", justifyContent: "center", gap: 10, cursor: "pointer", transition: "all 150ms",
+                    alignItems: "center", justifyContent: "center", gap: 10, cursor: "pointer", transition: "border-color 150ms, background-color 150ms",
                   }}
                   onClick={() => {
                     const input = document.createElement("input");
@@ -797,7 +797,7 @@ Return JSON only — no prose:
                     input.onchange = (e) => { const f = (e.target as HTMLInputElement).files?.[0]; if (f) handleFileSelect(f); };
                     input.click();
                   }}
-                  onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(6,182,212,0.5)"; e.currentTarget.style.background = "rgba(6,182,212,0.05)"; }}
+                  onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)"; e.currentTarget.style.background = "rgba(99,102,241,0.05)"; }}
                   onDragLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
                   onDrop={(e) => {
                     e.preventDefault();
@@ -837,8 +837,8 @@ Return JSON only — no prose:
                   {/* Format badge */}
                   {detectedFormat && (
                     <div style={{ marginTop: 10, padding: "8px 14px", borderRadius: 10, background: "rgba(6,182,212,0.06)", border: "1px solid rgba(6,182,212,0.2)", display: "flex", alignItems: "center", gap: 8 }}>
-                      <Monitor size={14} color="#22d3ee" />
-                      <span style={{ fontSize: 13, color: "#22d3ee" }}>
+                      <Monitor size={14} color="#06b6d4" />
+                      <span style={{ fontSize: 13, color: "#06b6d4" }}>
                         {detectedFormat.key} · {detectedFormat.name} · {detectedFormat.placement}{detectedFormat.note ? ` · ${detectedFormat.note.replace(/^Matched to \S+ /, '')}` : ''}
                       </span>
                     </div>
@@ -911,7 +911,7 @@ Return JSON only — no prose:
                             border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8,
                             color: "#71717a", fontSize: 12, cursor: "pointer",
                             display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                            transition: "all 150ms",
+                            transition: "border-color 150ms, color 150ms",
                           }}
                           onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; e.currentTarget.style.color = "#a1a1aa"; }}
                           onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#71717a"; }}
@@ -930,7 +930,7 @@ Return JSON only — no prose:
                   <button
                     type="button"
                     onClick={handleReset}
-                    className="flex items-center justify-center gap-2 h-12 rounded-xl border border-dashed border-white/[0.08] hover:border-indigo-500/30 hover:bg-indigo-500/[0.03] transition-all cursor-pointer w-full bg-transparent"
+                    className="flex items-center justify-center gap-2 h-12 rounded-xl border border-dashed border-white/[0.08] hover:border-indigo-500/30 hover:bg-indigo-500/[0.03] transition-[border-color,background-color] duration-150 cursor-pointer w-full bg-transparent"
                   >
                     <Upload size={14} className="text-indigo-400" />
                     <span className="text-xs text-zinc-400">Analyze another creative</span>
@@ -953,7 +953,7 @@ Return JSON only — no prose:
                           display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center",
                           padding: 16, borderRadius: 12,
                           border: "1px solid rgba(255,255,255,0.05)", background: "rgba(255,255,255,0.02)",
-                          cursor: ctaLoading ? "wait" : "pointer", transition: "all 150ms",
+                          cursor: ctaLoading ? "wait" : "pointer", transition: "border-color 150ms, background-color 150ms",
                           opacity: ctaLoading ? 0.6 : 1,
                         }}
                         onMouseEnter={(e) => { if (!ctaLoading) { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; } }}
@@ -974,7 +974,7 @@ Return JSON only — no prose:
                           display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center",
                           padding: 16, borderRadius: 12,
                           border: "1px solid rgba(255,255,255,0.05)", background: "rgba(255,255,255,0.02)",
-                          cursor: "pointer", transition: "all 150ms",
+                          cursor: "pointer", transition: "border-color 150ms, background-color 150ms",
                         }}
                         onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
                         onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.02)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.05)"; }}
@@ -995,7 +995,7 @@ Return JSON only — no prose:
                           display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center",
                           padding: 16, borderRadius: 12,
                           border: "1px solid rgba(255,255,255,0.05)", background: "rgba(255,255,255,0.02)",
-                          cursor: policyLoading ? "default" : "pointer", transition: "all 150ms",
+                          cursor: policyLoading ? "default" : "pointer", transition: "border-color 150ms, background-color 150ms",
                           opacity: policyLoading ? 0.5 : 1,
                         }}
                         onMouseEnter={(e) => { if (!policyLoading) { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; } }}
@@ -1157,7 +1157,7 @@ Return JSON only — no prose:
       </div>
 
       {/* Right panel — scores sidebar (Single mode only, when complete) - matching Organic layout */}
-      <div className={`shrink-0 bg-zinc-900/50 backdrop-blur-xl border-l border-white/5 overflow-y-auto overflow-x-hidden pb-12 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-white/5 ${mode === "single" && status === "complete" && result ? "w-[440px] max-lg:w-full opacity-100" : "w-0 max-lg:w-0 opacity-0"}`}>
+      <div className={`shrink-0 bg-zinc-900/50 backdrop-blur-xl border-l border-white/5 overflow-y-auto overflow-x-hidden pb-12 transition-[width,opacity] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-white/5 ${mode === "single" && status === "complete" && result ? "w-[440px] max-lg:w-full opacity-100" : "w-0 max-lg:w-0 opacity-0"}`}>
         {mode === "single" && status === "complete" && result && (
           <>
             {/* Display Score Card */}
@@ -1173,7 +1173,7 @@ Return JSON only — no prose:
             {/* Re-analyze improved version button */}
             <button
               onClick={handleReset}
-              className="mx-4 mt-4 w-[calc(100%-2rem)] flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-medium transition-all hover:bg-indigo-500/15 bg-indigo-500/[0.08] text-indigo-400 border border-indigo-500/20"
+              className="mx-4 mt-4 w-[calc(100%-2rem)] flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-medium transition-[background-color] duration-150 hover:bg-indigo-500/15 bg-indigo-500/[0.08] text-indigo-400 border border-indigo-500/20"
             >
               <RotateCcw size={14} />
               Re-analyze improved version
@@ -1183,7 +1183,7 @@ Return JSON only — no prose:
             <button
               onClick={handleGenerateBrief}
               disabled={briefLoading}
-              className="mx-4 mt-4 w-[calc(100%-2rem)] flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-medium transition-all hover:bg-amber-500/15 bg-amber-500/[0.08] text-amber-400 border border-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="mx-4 mt-4 w-[calc(100%-2rem)] flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-medium transition-[background-color] duration-150 hover:bg-amber-500/15 bg-amber-500/[0.08] text-amber-400 border border-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {briefLoading ? (
                 <div style={{ width: 14, height: 14, border: "2px solid rgba(245,158,11,0.3)", borderTopColor: "#f59e0b", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />

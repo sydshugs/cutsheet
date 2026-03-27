@@ -78,10 +78,14 @@ export function SwipeFileView({
     : "\u2014";
 
   return (
-    <div style={{ padding: "28px 32px", display: "flex", flexDirection: "column", gap: 24 }}>
-      <div style={{ fontFamily: "var(--sans)", fontSize: 11, fontWeight: 600, color: "var(--label)", letterSpacing: "0.18em", textTransform: "uppercase" }}>
+    <div style={{ padding: "28px 32px", display: "flex", flexDirection: "column", gap: 24, position: "relative" }}>
+      {/* Ambient glow */}
+      <div style={{ position: "absolute", top: -40, left: -60, width: 340, height: 340, borderRadius: "50%", background: "rgba(99,102,241,0.10)", filter: "blur(120px)", pointerEvents: "none", zIndex: 0 }} />
+      <div style={{ position: "absolute", top: 60, right: -40, width: 260, height: 260, borderRadius: "50%", background: "rgba(124,58,237,0.08)", filter: "blur(100px)", pointerEvents: "none", zIndex: 0 }} />
+
+      <h1 style={{ fontFamily: "var(--sans)", fontSize: 11, fontWeight: 600, color: "var(--label)", letterSpacing: "0.18em", textTransform: "uppercase", margin: 0, position: "relative", zIndex: 1 }}>
         Saved Ads
-      </div>
+      </h1>
 
       {/* Search bar */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
@@ -146,28 +150,32 @@ export function SwipeFileView({
       {/* Empty state — no items at all */}
       {items.length === 0 && (
         <div style={{
-          padding: "48px 24px",
+          padding: "32px 24px",
+          minHeight: "calc(100vh - 120px)",
           borderRadius: "var(--radius-lg)",
           border: "1px dashed var(--border)",
           background: "var(--surface)",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
+          justifyContent: "center",
           gap: 12,
           textAlign: "center",
+          position: "relative",
+          zIndex: 1,
         }}>
           <div style={{
-            width: 56,
-            height: 56,
-            borderRadius: "var(--radius-lg)",
-            background: "rgba(99,102,241,0.08)",
-            border: "1px solid rgba(99,102,241,0.15)",
+            width: 76,
+            height: 76,
+            borderRadius: 14,
+            background: "rgba(100,116,139,0.1)",
+            border: "1px solid rgba(100,116,139,0.2)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             marginBottom: 4,
           }}>
-            <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <rect x="2" y="2" width="8" height="10" rx="2" />
               <rect x="14" y="2" width="8" height="10" rx="2" />
               <rect x="2" y="14" width="8" height="8" rx="2" />
@@ -177,8 +185,25 @@ export function SwipeFileView({
           <div style={{ fontSize: 16, fontWeight: 600, color: "var(--ink)" }}>
             No saved ads yet
           </div>
-          <div style={{ fontSize: 13, color: "var(--ink-muted)", maxWidth: 320, lineHeight: 1.5 }}>
+          <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", maxWidth: 320, lineHeight: 1.5 }}>
             Score any ad in Paid, Organic, or Display — then save it here to build your reference library.
+          </div>
+          {/* Feature pills */}
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 4 }}>
+            {["Save Ads", "Organize", "Reference Library"].map((pill) => (
+              <span key={pill} style={{
+                fontSize: 12,
+                fontWeight: 500,
+                padding: "4px 12px",
+                borderRadius: 9999,
+                background: "rgba(100,116,139,0.08)",
+                border: "1px solid rgba(100,116,139,0.15)",
+                color: "#94a3b8",
+                fontFamily: "var(--sans)",
+              }}>
+                {pill}
+              </span>
+            ))}
           </div>
         </div>
       )}

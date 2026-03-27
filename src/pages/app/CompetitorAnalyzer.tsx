@@ -58,7 +58,7 @@ function StepIndicator({ step, yourFile, competitorFile, onStepClick }: { step: 
             <div
               style={{ display: "flex", alignItems: "center", gap: 6, cursor: clickable ? "pointer" : "default", borderRadius: 9999, padding: "4px 8px", transition: "background 150ms" }}
               onClick={clickable ? () => onStepClick(s.num) : undefined}
-              onMouseEnter={clickable ? (e) => { e.currentTarget.style.background = "rgba(14,165,233,0.08)"; } : undefined}
+              onMouseEnter={clickable ? (e) => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; } : undefined}
               onMouseLeave={clickable ? (e) => { e.currentTarget.style.background = "transparent"; } : undefined}
             >
               <div style={{
@@ -68,11 +68,11 @@ function StepIndicator({ step, yourFile, competitorFile, onStepClick }: { step: 
                 background: completed ? "#10b981" : active ? BRAND_COLOR : "rgba(255,255,255,0.04)",
                 border: `1px solid ${completed ? "#10b981" : active ? BRAND_COLOR : "rgba(255,255,255,0.08)"}`,
                 color: completed || active ? "white" : "#52525b",
-                transition: "all 200ms",
+                transition: "background-color 200ms, border-color 200ms, color 200ms",
               }}>
                 {completed ? <Check size={12} /> : s.num + 1}
               </div>
-              <span style={{ fontSize: 12, color: active ? "#f4f4f5" : completed ? "#10b981" : "#52525b", fontWeight: active ? 600 : 400, transition: "all 200ms" }}>
+              <span style={{ fontSize: 12, color: active ? "#f4f4f5" : completed ? "#10b981" : "#52525b", fontWeight: active ? 600 : 400, transition: "color 200ms" }}>
                 {s.label}
               </span>
             </div>
@@ -106,7 +106,7 @@ function FilePreview({ file, onRemove }: { file: File; onRemove: () => void }) {
           <span style={{ fontSize: 12, color: "#a1a1aa", fontFamily: "var(--font-mono, monospace)" }}>
             {(() => { const n = sanitizeFileName(file.name); return n.length > 26 ? n.slice(0, 23) + "..." : n; })()}
           </span>
-          <span style={{ fontSize: 10, color: ACCENT_LIGHT, background: ACCENT_BG, borderRadius: 9999, padding: "2px 8px" }}>
+          <span style={{ fontSize: 10, color: "#71717a", background: "rgba(255,255,255,0.05)", borderRadius: 9999, padding: "2px 8px" }}>
             {file.type.startsWith("video/") ? "Video" : "Static"}
           </span>
         </div>
@@ -230,18 +230,18 @@ function MetaSearch({ onFileSelect }: { onFileSelect: (f: File) => void }) {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, maxHeight: 300, overflowY: "auto" }}>
           {results.map((ad) => (
             <div key={ad.id} onClick={() => handleUseAd(ad)}
-              style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: 10, cursor: "pointer", transition: "all 150ms", display: "flex", flexDirection: "column", gap: 6 }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = ACCENT_BORDER; }}
+              style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: 10, cursor: "pointer", transition: "border-color 150ms", display: "flex", flexDirection: "column", gap: 6 }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; }}
               onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; }}>
               {ad.ad_snapshot_url && (
                 <div style={{ width: "100%", height: 80, borderRadius: 6, overflow: "hidden", background: "#18181b" }}>
                   <img src={ad.ad_snapshot_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 </div>
               )}
-              {ad.page_name && <span style={{ fontSize: 11, color: ACCENT_LIGHT, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ad.page_name}</span>}
+              {ad.page_name && <span style={{ fontSize: 11, color: "#a1a1aa", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ad.page_name}</span>}
               {ad.ad_creative_bodies?.[0] && <span style={{ fontSize: 11, color: "#71717a", lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const }}>{ad.ad_creative_bodies[0].slice(0, 80)}</span>}
               <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: "auto" }}>
-                <ExternalLink size={10} color={ACCENT} /><span style={{ fontSize: 10, color: ACCENT }}>Use this ad</span>
+                <ExternalLink size={10} color="#6366f1" /><span style={{ fontSize: 10, color: "#6366f1" }}>Use this ad</span>
               </div>
             </div>
           ))}
@@ -314,7 +314,7 @@ export default function CompetitorAnalyzer() {
             {step === 0 && (
               <motion.div key="s0" {...SLIDE} style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 24 }}>
                 {/* Icon box */}
-                <div style={{ width: 76, height: 76, borderRadius: 14, background: ACCENT_BG, border: `1px solid ${ACCENT_BORDER}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(14,165,233,0.1)", border: "1px solid rgba(14,165,233,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <Swords size={28} color={ACCENT} />
                 </div>
 
@@ -322,21 +322,21 @@ export default function CompetitorAnalyzer() {
                 <h1 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>
                   Competitor Analysis
                 </h1>
-                <p style={{ fontSize: 14, color: "#a1a1aa", textAlign: "center", maxWidth: 380, marginTop: 10, lineHeight: 1.6 }}>
+                <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)", textAlign: "center", maxWidth: 320, marginTop: 10, lineHeight: 1.6 }}>
                   Compare your ad against a competitor. Get gap analysis and a win strategy.
                 </p>
 
                 {/* Feature pills */}
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 20 }}>
                   {FEATURE_PILLS.map((pill) => (
-                    <span key={pill} style={{ fontSize: 12, color: ACCENT_LIGHT, background: ACCENT_BG, border: `1px solid ${ACCENT_BORDER}`, borderRadius: 9999, padding: "4px 12px" }}>
+                    <span key={pill} style={{ fontSize: 12, color: ACCENT, background: ACCENT_BG, border: `1px solid ${ACCENT_BORDER}`, borderRadius: 9999, padding: "4px 12px" }}>
                       {pill}
                     </span>
                   ))}
                 </div>
 
                 {/* Upload section */}
-                <div style={{ width: "100%", maxWidth: 480, marginTop: 32 }}>
+                <div style={{ width: "100%", maxWidth: 520, marginTop: 32 }}>
                   <p style={{ fontSize: 11, color: "#52525b", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 10, fontWeight: 500 }}>
                     Step 1 — Your Ad
                   </p>
@@ -389,13 +389,13 @@ export default function CompetitorAnalyzer() {
 
                       {/* TikTok Creative Center */}
                       <div onClick={() => window.open("https://ads.tiktok.com/business/creativecenter/inspiration/topads", "_blank")}
-                        style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "10px 14px", marginTop: 12, display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", transition: "all 150ms" }}
-                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = ACCENT_BORDER; }}
+                        style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "10px 14px", marginTop: 12, display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", transition: "border-color 150ms" }}
+                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; }}
                         onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                           <Music2 size={14} color="#71717a" /><span style={{ fontSize: 13, color: "#a1a1aa" }}>Find TikTok ads</span>
                         </div>
-                        <span style={{ fontSize: 12, color: ACCENT }}>Creative Center ↗</span>
+                        <span style={{ fontSize: 12, color: "#6366f1" }}>Creative Center ↗</span>
                       </div>
                       <p style={{ fontSize: 11, color: "#52525b", margin: "6px 0 0 0" }}>Download from TikTok Creative Center, then upload above</p>
 
@@ -450,7 +450,7 @@ export default function CompetitorAnalyzer() {
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                       {PLATFORMS.map((p) => (
                         <button key={p} type="button" onClick={() => setPlatform(p)}
-                          style={{ height: 34, padding: "0 14px", borderRadius: 8, fontSize: 13, cursor: "pointer", background: platform === p ? BRAND_COLOR : "rgba(255,255,255,0.03)", border: `1px solid ${platform === p ? BRAND_COLOR : "rgba(255,255,255,0.08)"}`, color: platform === p ? "white" : "#71717a", fontWeight: platform === p ? 500 : 400, transition: "all 150ms" }}>
+                          style={{ height: 34, padding: "0 14px", borderRadius: 8, fontSize: 13, cursor: "pointer", background: platform === p ? BRAND_COLOR : "rgba(255,255,255,0.03)", border: `1px solid ${platform === p ? BRAND_COLOR : "rgba(255,255,255,0.08)"}`, color: platform === p ? "white" : "#71717a", fontWeight: platform === p ? 500 : 400, transition: "background-color 150ms, border-color 150ms, color 150ms" }}>
                           {p === "all" ? "All" : p}
                         </button>
                       ))}
@@ -461,7 +461,7 @@ export default function CompetitorAnalyzer() {
                     <div style={{ display: "flex", gap: 6 }}>
                       {FORMATS.map((f) => (
                         <button key={f} type="button" onClick={() => setFormat(f)}
-                          style={{ height: 34, padding: "0 14px", borderRadius: 8, fontSize: 13, cursor: "pointer", background: format === f ? BRAND_COLOR : "rgba(255,255,255,0.03)", border: `1px solid ${format === f ? BRAND_COLOR : "rgba(255,255,255,0.08)"}`, color: format === f ? "white" : "#71717a", fontWeight: format === f ? 500 : 400, transition: "all 150ms" }}>
+                          style={{ height: 34, padding: "0 14px", borderRadius: 8, fontSize: 13, cursor: "pointer", background: format === f ? BRAND_COLOR : "rgba(255,255,255,0.03)", border: `1px solid ${format === f ? BRAND_COLOR : "rgba(255,255,255,0.08)"}`, color: format === f ? "white" : "#71717a", fontWeight: format === f ? 500 : 400, transition: "background-color 150ms, border-color 150ms, color 150ms" }}>
                           {f.charAt(0).toUpperCase() + f.slice(1)}
                         </button>
                       ))}
@@ -473,11 +473,11 @@ export default function CompetitorAnalyzer() {
                       <p style={{ fontSize: 12, color: "#ef4444", margin: 0, lineHeight: 1.5 }}>{error}</p>
                       <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
                         <button type="button" onClick={handleRetry}
-                          style={{ height: 32, padding: "0 16px", borderRadius: 8, border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.1)", color: "#ef4444", fontSize: 12, fontWeight: 500, cursor: "pointer", transition: "all 150ms" }}>
+                          style={{ height: 32, padding: "0 16px", borderRadius: 8, border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.1)", color: "#ef4444", fontSize: 12, fontWeight: 500, cursor: "pointer", transition: "background-color 150ms, border-color 150ms" }}>
                           Retry
                         </button>
                         <button type="button" onClick={handleReset}
-                          style={{ height: 32, padding: "0 16px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", color: "#71717a", fontSize: 12, fontWeight: 500, cursor: "pointer", transition: "all 150ms" }}>
+                          style={{ height: 32, padding: "0 16px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", color: "#71717a", fontSize: 12, fontWeight: 500, cursor: "pointer", transition: "background-color 150ms, border-color 150ms" }}>
                           Start over
                         </button>
                       </div>
@@ -485,7 +485,7 @@ export default function CompetitorAnalyzer() {
                   )}
 
                   <button type="button" onClick={handleAnalyze} disabled={!yourFile || !competitorFile || !canAnalyze}
-                    style={{ width: "100%", height: 50, borderRadius: 9999, border: "none", background: BRAND_COLOR, color: "white", fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "all 150ms" }}>
+                    style={{ width: "100%", height: 50, borderRadius: 9999, border: "none", background: BRAND_COLOR, color: "white", fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "background-color 150ms, opacity 150ms" }}>
                     <Swords size={18} /> Compare Ads
                   </button>
                 </div>
@@ -511,7 +511,7 @@ export default function CompetitorAnalyzer() {
                   <button type="button" onClick={handleReset} style={{ background: "none", border: "none", color: "#52525b", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
                     <ChevronLeft size={14} /> Compare another
                   </button>
-                  <span style={{ fontSize: 11, color: ACCENT_LIGHT, background: ACCENT_BG, border: `1px solid ${ACCENT_BORDER}`, borderRadius: 9999, padding: "4px 12px" }}>
+                  <span style={{ fontSize: 11, color: "#818cf8", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)", borderRadius: 9999, padding: "4px 12px" }}>
                     Analysis complete
                   </span>
                 </div>

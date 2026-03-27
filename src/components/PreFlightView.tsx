@@ -222,7 +222,11 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
     const PILLS = ["Hook comparison", "CTA analysis", "Winner prediction"];
 
     return (
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px", minHeight: "calc(100vh - 120px)" }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px", minHeight: "calc(100vh - 120px)", position: "relative" }}>
+        {/* Ambient glow */}
+        <div className="pointer-events-none absolute top-1/4 -left-32 h-[420px] w-[420px] rounded-full bg-indigo-600/10 blur-[120px]" />
+        <div className="pointer-events-none absolute bottom-1/4 -right-24 h-[340px] w-[340px] rounded-full bg-violet-600/[0.08] blur-[100px]" />
+
         {/* Rose icon tile */}
         <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(236,72,153,0.1)", border: "1px solid rgba(236,72,153,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <GitBranch size={28} color={BRAND_COLOR} />
@@ -231,7 +235,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
         <h1 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>
           Compare two ad variants
         </h1>
-        <p style={{ fontSize: 14, color: "#a1a1aa", textAlign: "center", maxWidth: 380, marginTop: 10, lineHeight: 1.6 }}>
+        <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)", textAlign: "center", maxWidth: 320, marginTop: 10, lineHeight: 1.6 }}>
           Upload two ad creatives side by side. AI analyzes both and predicts the winner.
         </p>
 
@@ -253,8 +257,8 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
               onClick={() => setTestType(opt.value)}
               style={{
                 padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer",
-                fontSize: 13, fontWeight: 500, transition: "all 150ms",
-                background: testType === opt.value ? "#ec4899" : "transparent",
+                fontSize: 13, fontWeight: 500, transition: "background 150ms, color 150ms",
+                background: testType === opt.value ? "#6366f1" : "transparent",
                 color: testType === opt.value ? "white" : "#71717a",
               }}
             >
@@ -264,7 +268,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
         </div>
 
         {/* Variant upload cards — 2-column side-by-side grid */}
-        <div style={{ width: "100%", maxWidth: 640, marginTop: 32, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <div style={{ width: "100%", maxWidth: 520, marginTop: 32, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           {variants.map((v, i) => {
             const fileInputId = `preflight-file-${v.id}`;
             const hasFile = !!v.file;
@@ -280,7 +284,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
                   flexDirection: "column",
                   gap: 14,
                   minHeight: 180,
-                  transition: "all 150ms",
+                  transition: "border-color 150ms, background 150ms",
                 }}
                 onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(236,72,153,0.4)"; e.currentTarget.style.background = "rgba(236,72,153,0.04)"; }}
                 onDragLeave={(e) => { e.currentTarget.style.borderColor = hasFile ? "rgba(16,185,129,0.2)" : "rgba(255,255,255,0.1)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
@@ -313,7 +317,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
                         width: 22, height: 22, borderRadius: 5, border: "1px solid rgba(255,255,255,0.06)",
                         background: "transparent", color: "#52525b", cursor: "pointer",
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        padding: 0, transition: "all 150ms",
+                        padding: 0, transition: "color 150ms, border-color 150ms",
                       }}
                       onMouseEnter={(e) => { e.currentTarget.style.color = "#ef4444"; e.currentTarget.style.borderColor = "rgba(239,68,68,0.3)"; }}
                       onMouseLeave={(e) => { e.currentTarget.style.color = "#52525b"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; }}
@@ -371,7 +375,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
                       </span>
                       <button
                         onClick={() => handleFileSelect(i, null)}
-                        style={{ background: "none", border: "none", color: "#71717a", cursor: "pointer", fontSize: 10, fontFamily: "monospace", padding: "2px 6px", transition: "all 150ms" }}
+                        style={{ background: "none", border: "none", color: "#71717a", cursor: "pointer", fontSize: 10, fontFamily: "monospace", padding: "2px 6px", transition: "color 150ms" }}
                         onMouseEnter={(e) => { e.currentTarget.style.color = "#ef4444"; }}
                         onMouseLeave={(e) => { e.currentTarget.style.color = "#71717a"; }}
                       >
@@ -395,9 +399,9 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
                 borderRadius: 12,
                 padding: "14px 20px",
                 display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                cursor: "pointer", color: "#52525b", fontSize: 13, fontWeight: 500, transition: "all 150ms",
+                cursor: "pointer", color: "#52525b", fontSize: 13, fontWeight: 500, transition: "border-color 150ms, color 150ms",
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = BRAND_BORDER; e.currentTarget.style.color = BRAND_COLOR_LIGHT; }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(99,102,241,0.3)"; e.currentTarget.style.color = "#818cf8"; }}
               onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "#52525b"; }}
             >
               <Plus size={14} />
@@ -408,7 +412,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
 
         {/* Error message */}
         {phase === "error" && errorMsg && (
-          <div style={{ width: "100%", maxWidth: 640, marginTop: 16, padding: "12px 16px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, fontSize: 12, fontFamily: "monospace", color: "#ef4444" }}>
+          <div style={{ width: "100%", maxWidth: 520, marginTop: 16, padding: "12px 16px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, fontSize: 12, fontFamily: "monospace", color: "#ef4444" }}>
             {errorMsg}
           </div>
         )}
@@ -427,7 +431,7 @@ export function PreFlightView({ isDark, apiKey }: PreFlightViewProps) {
               fontSize: 14,
               fontWeight: 600,
               cursor: canRun ? "pointer" : "not-allowed",
-              transition: "all 150ms",
+              transition: "background 150ms, color 150ms",
             }}
             onMouseEnter={(e) => { if (canRun) e.currentTarget.style.background = "#5254cc"; }}
             onMouseLeave={(e) => { if (canRun) e.currentTarget.style.background = "#6366f1"; }}

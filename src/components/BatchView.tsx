@@ -60,22 +60,26 @@ function RankEmptyState({ onStart, onFileDrop }: { onStart: () => void; onFileDr
       onDragLeave={(e) => { if (e.currentTarget.contains(e.relatedTarget as Node)) return; setIsDragOver(false); }}
       onDrop={(e) => { e.preventDefault(); setIsDragOver(false); if (e.dataTransfer.files.length > 0) onFileDrop(e.dataTransfer.files); }}
       style={{
-        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 24px", gap: 16, flex: 1,
+        position: "relative", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px", gap: 16, flex: 1,
+        minHeight: "calc(100vh - 120px)",
         border: isDragOver ? "2px dashed var(--accent, #6366f1)" : "2px dashed transparent",
         background: isDragOver ? "rgba(99,102,241,0.04)" : "transparent",
         borderRadius: 16, transition: "border-color 150ms, background 150ms",
       }}
     >
-      <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <Trophy size={28} color="#6366f1" />
+      {/* Ambient glow */}
+      <div style={{ position: "absolute", top: "20%", left: "30%", width: 300, height: 300, borderRadius: "50%", background: "rgba(99,102,241,0.1)", filter: "blur(120px)", pointerEvents: "none" }} />
+      <div style={{ position: "absolute", top: "40%", right: "25%", width: 250, height: 250, borderRadius: "50%", background: "rgba(139,92,246,0.08)", filter: "blur(100px)", pointerEvents: "none" }} />
+      <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Trophy size={28} color="#8b5cf6" />
       </div>
       <h1 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", margin: 0 }}>Rank your creatives</h1>
-      <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)", textAlign: "center", maxWidth: 380, lineHeight: 1.6, margin: 0 }}>
+      <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)", textAlign: "center", maxWidth: 320, lineHeight: 1.6, margin: 0 }}>
         Upload up to 10 ad variations. Cutsheet scores them all and ranks them — so you know which 2-3 to actually test before spending a dollar.
       </p>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 4 }}>
         {["Score all at once", "Ranked by strength", "Know before you spend"].map((p) => (
-          <span key={p} style={{ fontSize: 12, color: "#818cf8", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)", borderRadius: 9999, padding: "4px 12px" }}>{p}</span>
+          <span key={p} style={{ fontSize: 12, color: "#8b5cf6", background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.15)", borderRadius: 9999, padding: "4px 12px" }}>{p}</span>
         ))}
       </div>
       {/* Step explanation */}
@@ -288,7 +292,7 @@ export function BatchView({ apiKey, addHistoryEntry, t, canAnalyze, isPro, incre
           {/* Dropzone */}
           {items.length < MAX_FILES && !isRunning && (
             <div
-              style={{ height: 80, border: "1px dashed rgba(255,255,255,0.08)", borderRadius: 12, background: "rgba(255,255,255,0.02)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, cursor: "pointer", transition: "all 150ms", marginBottom: 16 }}
+              style={{ height: 80, border: "1px dashed rgba(255,255,255,0.08)", borderRadius: 12, background: "rgba(255,255,255,0.02)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, cursor: "pointer", transition: "border-color 150ms, background 150ms", marginBottom: 16 }}
               onClick={() => fileInputRef.current?.click()}
               onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)"; }}
               onDragLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
@@ -391,7 +395,7 @@ export function BatchView({ apiKey, addHistoryEntry, t, canAnalyze, isPro, incre
                   style={{
                     display: "flex", alignItems: "center", gap: 12, padding: "12px 14px",
                     background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
-                    borderRadius: isExpanded ? "12px 12px 0 0" : 12, cursor: "pointer", transition: "all 150ms",
+                    borderRadius: isExpanded ? "12px 12px 0 0" : 12, cursor: "pointer", transition: "border-color 150ms",
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; }}
