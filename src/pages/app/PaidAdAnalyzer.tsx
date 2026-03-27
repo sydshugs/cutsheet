@@ -458,7 +458,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
     try {
       const [imps, pScore] = await Promise.all([
         generateImprovements(result.markdown, result.scores, userContext || undefined, newPlatform, sessionMemoryRef.current),
-        generatePlatformScore(newPlatform, result, result.fileName, format as 'video' | 'static', userContext || undefined),
+        generatePlatformScore(newPlatform, result, result.fileName, format as 'video' | 'static', userContext || undefined, rawUserContext?.niche),
       ]);
       setPlatformImprovements(imps);
       setPlatformScoreResult(pScore);

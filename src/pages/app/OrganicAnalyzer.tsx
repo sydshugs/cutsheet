@@ -296,7 +296,7 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
           const staticPlatforms = ['meta', 'instagram', 'pinterest'];
           const plats = organicFormat === 'static' ? staticPlatforms : videoPlatforms;
           const results = await Promise.race([
-            Promise.all(plats.map(p => generatePlatformScore(p, result, result.fileName, organicFormat, userContext || undefined))),
+            Promise.all(plats.map(p => generatePlatformScore(p, result, result.fileName, organicFormat, userContext || undefined, rawUserContext?.niche))),
             timeout,
           ]);
           setPlatformScores(results);
@@ -304,7 +304,7 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
           const k = PLATFORM_SERVICE_MAP[platform as keyof typeof PLATFORM_SERVICE_MAP];
           if (k) {
             const score = await Promise.race([
-              generatePlatformScore(k, result, result.fileName, organicFormat, userContext || undefined),
+              generatePlatformScore(k, result, result.fileName, organicFormat, userContext || undefined, rawUserContext?.niche),
               timeout,
             ]);
             setPlatformScores([score]);

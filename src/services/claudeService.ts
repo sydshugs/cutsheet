@@ -52,16 +52,19 @@ export interface PlatformScore {
 
 export async function generatePlatformScore(
   platform: string,
-  result: { markdown: string; scores: { overall: number } },
+  result: { markdown: string; scores: { overall: number; hook?: number; clarity?: number; cta?: number; production?: number } },
   _fileName: string,
   adType?: 'video' | 'static',
   userContext?: string,
+  niche?: string,
 ): Promise<PlatformScore> {
   return callApi<PlatformScore>("/api/platform-score", {
     analysisMarkdown: result.markdown,
     platform,
     adType: adType ?? 'video',
     userContext,
+    niche,
+    scores: result.scores,
   });
 }
 

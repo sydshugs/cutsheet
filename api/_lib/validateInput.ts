@@ -3,6 +3,7 @@
 const ALLOWED_PLATFORMS = [
   "meta", "facebook", "instagram", "tiktok", "youtube", "google",
   "google_display", "google display", "linkedin", "twitter", "x", "pinterest", "snapchat", "reddit",
+  "reels", "shorts",
   "all", "both", "general",
 ];
 

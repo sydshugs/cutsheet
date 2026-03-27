@@ -25,6 +25,9 @@ const PLATFORM_GUIDANCE: Record<string, string> = {
   youtube: `Prioritize: strong hook in 5s (skip threshold), audio quality, retention arc, end screen CTA, brand consistency. Penalize: weak audio, no clear narrative, buried CTA.`,
   google: `Prioritize: hierarchy at smallest size, single clear message, brand visibility, CTA button contrast. Penalize: text-heavy layout, low contrast, unclear offer.`,
   display: `Prioritize: hierarchy at smallest size, single clear message, brand visibility, CTA button contrast. Penalize: text-heavy layout, low contrast, unclear offer.`,
+  instagram: `Prioritize: visually striking imagery, cohesive grid aesthetic, strong first-frame hook, Reels-compatible vertical format, hashtag strategy, save-worthy content. Penalize: low-quality images, text-heavy static posts, no clear CTA, generic stock photography.`,
+  facebook: `Prioritize: thumb-stop in first frame, clear value prop, sound-off readability, strong CTA above fold, text overlay on key moments, engagement-driving copy. Penalize: long intros without text, no captions, weak opening frame.`,
+  pinterest: `Prioritize: vertical 2:3 aspect ratio, text overlay with clear value prop, lifestyle imagery, rich pin compatibility, keyword-rich description, save-worthy design. Penalize: horizontal format, no text overlay, hard-sell copy, low-resolution imagery.`,
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
