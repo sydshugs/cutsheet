@@ -43,7 +43,7 @@ export function BudgetCard({ engineBudget, budget, onNavigateSettings }: BudgetC
         </div>
 
         {/* Main recommendation card */}
-        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+        <div className="rounded-xl border border-white/[0.06] p-4">
           {/* Scale signal */}
           {engineBudget.scaleSignal && (
             <div className="flex items-start gap-2.5 mb-3 pb-3 border-b border-white/[0.05]">
