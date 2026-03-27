@@ -658,7 +658,7 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
                 isPro={isPro}
                 onUpgradeRequired={onUpgradeRequired}
                 platformScore={platform !== "all" && platformScores.length > 0
-                  ? platformScores.find(ps => ps.platform === platform)?.score
+                  ? platformScores.find(ps => ps.platform === PLATFORM_SERVICE_MAP[platform as keyof typeof PLATFORM_SERVICE_MAP])?.score
                   : undefined}
                 platformSwitcher={
                   <PlatformSwitcher
