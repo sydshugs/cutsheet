@@ -2,18 +2,20 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Zap } from "lucide-react";
+import { Zap, type LucideIcon } from "lucide-react";
 import { cn } from "../lib/utils";
 import { useThumbnail } from "../hooks/useThumbnail";
 import { sanitizeFileName } from "../utils/sanitize";
 
 interface ProgressCardProps {
-  file: File;
+  file?: File | null;
   status: "uploading" | "processing" | "analyzing";
   statusMessage: string;
   onCancel: () => void;
   platform?: string;
   format?: "video" | "static";
+  icon?: LucideIcon;
+  title?: string;
 }
 
 const VIDEO_STAGES = [
@@ -109,18 +111,18 @@ function ChecklistItem({ label, done, active }: { label: string; done: boolean; 
   );
 }
 
-export function ProgressCard({ file, status, onCancel, platform, format = "video" }: ProgressCardProps) {
-  const Icon = Zap;
-  const title = "Analyzing your ad";
+export function ProgressCard({ file, status, onCancel, platform, format = "video", icon: IconProp, title: titleProp }: ProgressCardProps) {
+  const Icon = IconProp ?? Zap;
+  const title = titleProp ?? "Analyzing your ad";
   const METRICS = DEFAULT_METRICS;
   const [stageIndex, setStageIndex] = useState(0);
-  const thumbnailDataUrl = useThumbnail(file);
-  const isImage = file.type.startsWith("image/");
+  const thumbnailDataUrl = useThumbnail(file ?? null);
+  const isImage = file?.type.startsWith("image/") ?? false;
   const STAGES = format === "static" ? STATIC_STAGES : VIDEO_STAGES;
   const CHECK_ITEMS = format === "static" ? STATIC_CHECK_ITEMS : VIDEO_CHECK_ITEMS;
 
   const previewUrl = useMemo(() => {
-    if (isImage) return URL.createObjectURL(file);
+    if (isImage && file) return URL.createObjectURL(file);
     return null;
   }, [file, isImage]);
 
@@ -140,7 +142,7 @@ export function ProgressCard({ file, status, onCancel, platform, format = "video
   const displayUrl = thumbnailDataUrl || previewUrl;
   const activeCheckIndex = STAGE_TO_CHECK_INDEX[stageIndex] ?? 0;
   const platformLabel = platform && platform !== "all" ? platform : "your platform";
-  const truncatedName = (() => { const n = sanitizeFileName(file.name); return n.length > 28 ? n.slice(0, 25) + "..." : n; })();
+  const truncatedName = (() => { if (!file) return ""; const n = sanitizeFileName(file.name); return n.length > 28 ? n.slice(0, 25) + "..." : n; })();
 
   return (
     <>
@@ -188,7 +190,7 @@ export function ProgressCard({ file, status, onCancel, platform, format = "video
             {/* Filename bar — pinned to bottom */}
             <div className="absolute bottom-0 left-0 right-0 flex justify-between items-center px-4 py-3 border-t border-white/[0.04]">
               <span className="text-[11px] text-zinc-600 font-mono">
-                {truncatedName} · {(file.size / 1024 / 1024).toFixed(1)} MB
+                {file ? `${truncatedName} · ${(file.size / 1024 / 1024).toFixed(1)} MB` : "Analyzing..."}
               </span>
               <button
                 onClick={onCancel}

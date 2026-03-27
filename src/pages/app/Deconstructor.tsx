@@ -20,6 +20,7 @@ import {
   type TeardownSection,
 } from "../../lib/deconstructorService";
 import { InlineError } from "../../components/InlineError";
+import { ProgressCard } from "../../components/ProgressCard";
 import type { AppSharedContext } from "../../components/AppLayout";
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
@@ -28,12 +29,6 @@ const SOURCE_COLORS: Record<SourceType, string> = {
   meta: "#1877F2",
   tiktok: "#69C9D0",
   youtube: "#FF0000",
-};
-
-const SOURCE_ICONS: Record<SourceType, string> = {
-  meta: "f",
-  tiktok: "tt",
-  youtube: "▶",
 };
 
 // The "Your Brief" section gets distinct dark styling
@@ -194,81 +189,6 @@ function TikTokFallback({
           }
         }}
       />
-    </div>
-  );
-}
-
-// ─── LOADING STATE ────────────────────────────────────────────────────────────
-
-function DeconstructingState({ sourceType }: { sourceType: SourceType }) {
-  const STAGES = [
-    "Fetching ad metadata...",
-    "Running visual analysis...",
-    "Identifying psychological triggers...",
-    "Writing teardown report...",
-    "Building your creative brief...",
-  ];
-  const [stageIdx, setStageIdx] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(
-      () => setStageIdx((p) => Math.min(p + 1, STAGES.length - 1)),
-      3200
-    );
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div className="flex flex-col items-center justify-center py-20 gap-6">
-      <div className="relative w-16 h-16">
-        <div
-          className="absolute inset-0 rounded-full"
-          style={{ border: "1px solid rgba(99,102,241,0.15)" }}
-        />
-        <motion.div
-          className="absolute inset-0 rounded-full"
-          style={{ border: "2px solid transparent", borderTopColor: "#6366f1" }}
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
-        />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-xs font-mono" style={{ color: SOURCE_COLORS[sourceType] }}>
-            {SOURCE_ICONS[sourceType]}
-          </span>
-        </div>
-      </div>
-
-      <div className="flex flex-col items-center gap-2">
-        <p className="text-sm font-medium text-zinc-300">
-          Deconstructing {getSourceLabel(sourceType)} ad
-        </p>
-        <AnimatePresence mode="wait">
-          <motion.p
-            key={stageIdx}
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.2 }}
-            className="text-xs text-zinc-500"
-          >
-            {STAGES[stageIdx]}
-          </motion.p>
-        </AnimatePresence>
-      </div>
-
-      <div className="flex gap-1.5">
-        {STAGES.map((_, i) => (
-          <div
-            key={i}
-            className="rounded-full transition-[width,background-color] duration-500"
-            style={{
-              width: i === stageIdx ? 16 : 4,
-              height: 4,
-              background: i <= stageIdx ? "#6366f1" : "rgba(255,255,255,0.08)",
-            }}
-          />
-        ))}
-      </div>
     </div>
   );
 }
@@ -653,9 +573,6 @@ export default function Deconstructor() {
       </Helmet>
 
       <div className="relative flex-1 flex flex-col items-center justify-center" style={{ padding: "32px 24px" }}>
-        {/* Ambient glow */}
-        <div className="pointer-events-none absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-indigo-600/10 blur-[120px]" />
-        <div className="pointer-events-none absolute bottom-[-10%] right-[-5%] w-[40%] h-[40%] rounded-full bg-violet-600/[0.08] blur-[100px]" />
 
         {/* Header — visible until result */}
         {!result && (
@@ -692,12 +609,17 @@ export default function Deconstructor() {
           <TikTokFallback onMediaUrl={handleTikTokMediaUrl} />
         )}
 
-        {/* Loading */}
-        {loading && pendingSource && (
-          <DeconstructingState sourceType={pendingSource} />
-        )}
-        {loading && !pendingSource && (
-          <DeconstructingState sourceType="youtube" />
+        {/* Loading — unified ProgressCard */}
+        {loading && (
+          <div className="flex-1 flex flex-col">
+            <ProgressCard
+              status="processing"
+              statusMessage="Deconstructing ad..."
+              onCancel={() => window.location.reload()}
+              icon={ScanSearch}
+              title="Analyzing your ad"
+            />
+          </div>
         )}
 
         {/* Error */}
