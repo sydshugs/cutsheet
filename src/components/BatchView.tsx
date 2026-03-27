@@ -9,7 +9,7 @@ import { ScoreCard } from "./ScoreCard";
 import { UpgradeModal } from "./UpgradeModal";
 import { Toast } from "./Toast";
 import { AlertDialog } from "./ui/AlertDialog";
-import { AnalysisProgressCard } from "./AnalysisProgressCard";
+import { ProgressCard } from "./ProgressCard";
 import type { ThemeTokens } from "../theme";
 
 const ACCEPTED_TYPES = ["video/mp4", "video/webm", "video/quicktime", "image/jpeg", "image/png", "image/webp"];
@@ -67,9 +67,6 @@ function RankEmptyState({ onStart, onFileDrop }: { onStart: () => void; onFileDr
         borderRadius: 16, transition: "border-color 150ms, background 150ms",
       }}
     >
-      {/* Ambient glow */}
-      <div style={{ position: "absolute", top: "20%", left: "30%", width: 300, height: 300, borderRadius: "50%", background: "rgba(99,102,241,0.1)", filter: "blur(120px)", pointerEvents: "none" }} />
-      <div style={{ position: "absolute", top: "40%", right: "25%", width: 250, height: 250, borderRadius: "50%", background: "rgba(139,92,246,0.08)", filter: "blur(100px)", pointerEvents: "none" }} />
       <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <Trophy size={28} color="#8b5cf6" />
       </div>
@@ -321,19 +318,20 @@ export function BatchView({ apiKey, addHistoryEntry, t, canAnalyze, isPro, incre
 
           {/* Progress card while analyzing */}
           {isRunning && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
+              className="flex-1 flex flex-col"
               style={{ marginTop: 24 }}
             >
-              <AnalysisProgressCard
-                pageType="rank-creative"
-                files={items.filter(i => i.file).map(i => i.file as File)}
+              <ProgressCard
+                file={items.find(i => i.status === "analyzing")?.file ?? items[0]?.file ?? null}
+                status="processing"
                 statusMessage={`Analyzing creative ${items.filter(i => i.status === "complete" || i.status === "analyzing").length + 1} of ${items.length}`}
-                currentIndex={items.findIndex(i => i.status === "analyzing")}
-                totalCount={items.length}
                 onCancel={() => { stopRequestedRef.current = true; }}
+                icon={Trophy}
+                title="Analyzing your ad"
               />
             </motion.div>
           )}
