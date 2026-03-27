@@ -83,6 +83,8 @@ interface ScoreCardProps {
   hasBrief?: boolean;
   // Analysis sections for right panel (Hook, Hierarchy, Copy, Messaging, Emotional)
   analysisSections?: { title: string; content: string }[];
+  // Dimension overrides — when provided, ScoreHero uses these instead of scores.hook/clarity/etc.
+  dimensionOverrides?: { name: string; score: number }[];
 }
 
 /** Score band color for chips/overlays: 9-10 green, 7-8 indigo, 5-6 amber, 1-4 red (scores 0-10). */
@@ -207,6 +209,7 @@ export function ScoreCard({
   briefLoading,
   hasBrief,
   analysisSections,
+  dimensionOverrides,
 }: ScoreCardProps) {
   const displayScore = platformScore ?? scores.overall;
   const { label: overallLabel } = getScoreLabel(displayScore);
@@ -232,10 +235,14 @@ export function ScoreCard({
     lines.push(`--- CUTSHEET ANALYSIS \u2014 ${fileName || "Ad Creative"} ---`);
     lines.push(`Overall Score: ${scores.overall}/10`);
     lines.push("");
-    lines.push(`Hook Strength: ${scores.hook}/10`);
-    lines.push(`Message Clarity: ${scores.clarity}/10`);
-    lines.push(`CTA Effectiveness: ${scores.cta}/10`);
-    lines.push(`Production: ${scores.production}/10`);
+    if (dimensionOverrides) {
+      dimensionOverrides.forEach(d => lines.push(`${d.name}: ${d.score}/10`));
+    } else {
+      lines.push(`Hook Strength: ${scores.hook}/10`);
+      lines.push(`Message Clarity: ${scores.clarity}/10`);
+      lines.push(`CTA Effectiveness: ${scores.cta}/10`);
+      lines.push(`Production: ${scores.production}/10`);
+    }
 
     if (improvements && improvements.length > 0) {
       lines.push("");
@@ -315,7 +322,7 @@ export function ScoreCard({
             platform={platform}
             format={format}
             youtubeFormat={youtubeFormat}
-            dimensions={[
+            dimensions={dimensionOverrides ?? [
               { name: "Hook",   score: scores.hook },
               { name: "Copy",   score: scores.clarity },
               { name: "Visual", score: scores.production },
@@ -350,7 +357,7 @@ export function ScoreCard({
           {analysisSections && analysisSections.length > 0 && (() => {
             // Only show Hook analysis section
             const hookSection = analysisSections.find(s => /hook/i.test(s.title));
-            
+
             if (!hookSection) return null;
 
             return (
@@ -364,6 +371,13 @@ export function ScoreCard({
             </div>
           );
           })()}
+
+          {/* 11. Hashtags — inside the main card */}
+          {hashtags && (hashtags.tiktok?.length > 0 || hashtags.meta?.length > 0 || hashtags.instagram?.length > 0 || hashtags.pinterest?.length > 0 || hashtags.reels?.length > 0 || hashtags.youtube_shorts?.length > 0) && (
+            <div className="px-4 pt-4 pb-2">
+              <HashtagsC2 hashtags={hashtags} format={format} />
+            </div>
+          )}
 
       </div>{/* end main card */}
 
@@ -415,12 +429,6 @@ export function ScoreCard({
         </div>
       )}
 
-      {/* 11. Hashtags */}
-      {hashtags && (hashtags.tiktok?.length > 0 || hashtags.meta?.length > 0 || hashtags.instagram?.length > 0 || hashtags.pinterest?.length > 0 || hashtags.reels?.length > 0 || hashtags.youtube_shorts?.length > 0) && (
-        <div className="mx-4 mt-4">
-          <HashtagsC2 hashtags={hashtags} format={format} />
-        </div>
-      )}
 
 
       {/* Toast notification */}
