@@ -3,6 +3,7 @@
     { "source": "/((?!api/|assets/).*)", "destination": "/index.html" }
   ],
   "functions": {
+    "api/analyze.ts": { "maxDuration": 120 },
     "api/*.ts": { "maxDuration": 60 }
   },
   "headers": [
