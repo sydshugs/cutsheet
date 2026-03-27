@@ -5,6 +5,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
 import { sanitizeSessionMemory } from "./_lib/sanitizeMemory";
+import { getNicheBenchmark, getNicheShortLabel } from "../src/lib/benchmarks";
 
 export const maxDuration = 120; // video analysis can take 30-60s
 
@@ -34,6 +35,8 @@ interface AnalyzeRequest {
   temperature?: number;
   topP?: number;
   topK?: number;
+  niche?: string;
+  platform?: string;
 }
 
 // ─── HANDLER ─────────────────────────────────────────────────────────────────
@@ -61,6 +64,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       temperature = 0,
       topP = 0.8,
       topK = 40,
+      niche,
+      platform,
     } = (req.body ?? {}) as AnalyzeRequest;
 
     // ── Validate inputs ───────────────────────────────────────────────────────
@@ -130,12 +135,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
     });
 
+    // Build niche context block when niche is known from onboarding
+    let nicheContext = "";
+    if (niche) {
+      const nicheBench = getNicheBenchmark(niche, platform);
+      const nicheLabel = getNicheShortLabel(niche) ?? niche;
+      if (nicheBench) {
+        nicheContext = `\n\nNICHE CONTEXT: This ad is in the ${nicheLabel} niche${platform ? ` on ${platform}` : ""}. Industry benchmarks — CTR: ${nicheBench.ctr.low}–${nicheBench.ctr.high}% (avg ${nicheBench.ctr.avg}%)${nicheBench.hookRate ? `, Hook retention: ${nicheBench.hookRate.avg}%` : ""}, CPM: $${nicheBench.cpm.avg}. Score relative to these benchmarks.\n`;
+      }
+    }
+
     // Build content parts — media + text, or text-only
     const contentParts: Array<{ inlineData: { mimeType: string; data: string } } | { text: string }> = [];
     if (resolvedBase64 && resolvedMime) {
       contentParts.push({ inlineData: { mimeType: resolvedMime, data: resolvedBase64 } });
     }
-    contentParts.push({ text: prompt });
+    contentParts.push({ text: nicheContext + prompt });
 
     const result = await model.generateContent(contentParts);
 

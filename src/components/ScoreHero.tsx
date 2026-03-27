@@ -19,6 +19,7 @@ export interface ScoreHeroProps {
   format?: 'video' | 'static';  // ad format — used to hide invalid benchmarks
   youtubeFormat?: string; // YouTube sub-format: 'skippable' | 'non_skippable' | 'bumper' | 'shorts' | 'in_feed'
   accentColor?: string;   // override benchmark bar fill color (e.g. cyan for Display)
+  benchmarkLabelOverride?: string; // niche-aware label e.g. "DTC Meta video ads"
 }
 
 /** Platform benchmark defaults — used when benchmark prop is not supplied */
@@ -185,7 +186,7 @@ function BenchmarkBar({ score, benchmark, color, label }: BenchmarkBarProps) {
 
 // ── ScoreHero ──────────────────────────────────────────────────────────────────
 
-export function ScoreHero({ score, verdict, benchmark, dimensions, platform, format, youtubeFormat, accentColor }: ScoreHeroProps) {
+export function ScoreHero({ score, verdict, benchmark, dimensions, platform, format, youtubeFormat, accentColor, benchmarkLabelOverride }: ScoreHeroProps) {
   const animatedScore = useCountUp(score, 600);
   const color = scoreColor(score);
   // When accentColor is supplied, replace the "strong" green (#10b981) with it so
@@ -225,7 +226,7 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
   const ytBenchmarkLabel = (platform === 'YouTube' || platform === 'Shorts') && youtubeFormat
     ? YOUTUBE_FORMAT_BENCHMARK_LABELS[youtubeFormat]
     : undefined;
-  const benchmarkLabel = ytBenchmarkLabel ?? (platform
+  const benchmarkLabel = benchmarkLabelOverride ?? ytBenchmarkLabel ?? (platform
     ? (PLATFORM_BENCHMARK_LABELS[platform] ?? `${platform} avg`)
     : "Avg");
 

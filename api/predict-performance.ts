@@ -6,6 +6,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
 import { safePlatform, safeAdType, safeNiche } from "./_lib/validateInput";
 import { sanitizeAnalysisText } from "./_lib/sanitizeMemory";
+import { getNicheBenchmark } from "../src/lib/benchmarks";
 
 export const maxDuration = 60;
 
@@ -49,22 +50,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const adTypeLabel = safeAdType(adType);
   const intentLabel = (typeof intent === "string" && ["conversion", "awareness", "consideration"].includes(intent)) ? intent : "conversion";
 
-  const nicheBenchmarks: Record<string, { ctr: string; cvr: string }> = {
-    ecommerce: { ctr: "Meta ecommerce avg CTR: 1.0-1.5%. TikTok: 0.8-1.2%. Google Display: 0.3-0.5%.", cvr: "Ecommerce avg CVR from ad click: 2-4%." },
-    supplements: { ctr: "Supplement ads avg CTR: 1.2-2.0% on Meta (higher due to curiosity hooks). TikTok: 1.0-1.5%.", cvr: "Supplement CVR: 3-6% (impulse category)." },
-    saas: { ctr: "SaaS avg CTR: 0.8-1.2% on Meta. LinkedIn: 0.4-0.8%. Google Display: 0.2-0.4%.", cvr: "SaaS CVR from ad: 1-3% (longer sales cycle)." },
-    fitness: { ctr: "Fitness avg CTR: 1.5-2.5% on Meta (visual category). TikTok: 1.2-2.0%.", cvr: "Fitness CVR: 2-5% depending on price point." },
-    skincare: { ctr: "Skincare avg CTR: 1.2-1.8% on Meta. Instagram: 1.5-2.2% (visual platform).", cvr: "Skincare CVR: 2-4%." },
-    finance: { ctr: "Finance avg CTR: 0.6-1.0% on Meta. Google: 0.5-0.8%.", cvr: "Finance CVR: 1-2% (high consideration)." },
-  };
-
-  const nicheKey = nicheLabel.toLowerCase().replace(/[^a-z]/g, "");
-  const benchmarks = Object.entries(nicheBenchmarks).find(([k]) => nicheKey.includes(k))?.[1];
-  const benchmarkBlock = benchmarks
-    ? `\nINDUSTRY BENCHMARKS:\n${benchmarks.ctr}\n${benchmarks.cvr}`
-    : (platformKey === "google_display" || platformKey === "google display")
-    ? `\nINDUSTRY BENCHMARKS: Google Display Network avg CTR: 0.35–0.60% (avg 0.46%). Set "benchmark" to 0.46 in the JSON response.`
-    : `\nNote: Use general paid social benchmarks for ${nicheLabel}. Meta avg CTR: 0.9-1.5%. Google Display: 0.35-0.60%.`;
+  // Niche × platform benchmarks from shared lib — replaces inline duplication
+  const nicheBench = getNicheBenchmark(nicheLabel, platformKey);
+  let benchmarkBlock: string;
+  if (nicheBench) {
+    const ctrLine = `${platformLabel} ${nicheLabel} avg CTR: ${nicheBench.ctr.low}–${nicheBench.ctr.high}% (avg ${nicheBench.ctr.avg}%).`;
+    const hookLine = nicheBench.hookRate ? ` Avg hook retention: ${nicheBench.hookRate.avg}%.` : "";
+    const cpmLine = ` Avg CPM: $${nicheBench.cpm.avg}.`;
+    benchmarkBlock = `\nINDUSTRY BENCHMARKS:\n${ctrLine}${hookLine}${cpmLine}`;
+  } else if (platformKey === "google_display" || platformKey === "google display") {
+    benchmarkBlock = `\nINDUSTRY BENCHMARKS: Google Display Network avg CTR: 0.35–0.60% (avg 0.46%). Set "benchmark" to 0.46 in the JSON response.`;
+  } else {
+    benchmarkBlock = `\nNote: Use general paid social benchmarks for ${nicheLabel}. Meta avg CTR: 0.9-1.5%. Google Display: 0.35-0.60%.`;
+  }
 
   // Identify weakest dimensions for calibration
   const weakDims = scores

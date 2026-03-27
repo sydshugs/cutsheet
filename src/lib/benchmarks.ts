@@ -1,157 +1,166 @@
-// src/lib/benchmarks.ts — Static benchmark dataset (MVP)
-// Designed so getBenchmark() can be swapped for a Supabase query with zero UI changes.
+// src/lib/benchmarks.ts — Niche × platform benchmark lookup
+// Replaces generic platform averages when user's niche is known from onboarding.
+// Falls back to platformBenchmarks.ts when niche is null or unrecognized.
 
+import { getBenchmark as getPlatformBenchmark } from "./platformBenchmarks";
+
+// ── Types ────────────────────────────────────────────────────────────────────
+
+export interface NicheBenchmark {
+  ctr: { low: number; avg: number; high: number };
+  hookRate: { avg: number } | null;
+  cpm: { avg: number };
+}
+
+/** Legacy shape consumed by BenchmarkBadge — kept for compatibility */
 export interface BenchmarkResult {
-  averageScore: number       // 0-10 overall score average
-  sampleLabel: string        // e.g. "ecomm video ads on Meta"
-  percentile?: number        // where this score ranks (added by caller)
-  source: 'static' | 'aggregate'  // 'static' = curated, 'aggregate' = real Cutsheet data
+  averageScore: number;
+  sampleLabel: string;
+  percentile?: number;
+  source: "static" | "aggregate";
 }
 
-// Lookup key: `${niche}:${platform}:${adType}`
-// Fallback chain: exact match → platform:adType match → adType-only match → global default
-const BENCHMARKS: Record<string, { avg: number; label: string }> = {
-  // Ecomm
-  'ecomm:meta:video':            { avg: 6.8, label: 'ecomm video ads on Meta' },
-  'ecomm:meta:static':           { avg: 6.4, label: 'ecomm static ads on Meta' },
-  'ecomm:tiktok:video':          { avg: 7.1, label: 'ecomm video ads on TikTok' },
-  'ecomm:instagram_reels:video': { avg: 6.9, label: 'ecomm Reels ads' },
-  'ecomm:youtube:video':         { avg: 6.2, label: 'ecomm YouTube ads' },
-  'ecomm:display:static':        { avg: 5.8, label: 'ecomm display banners' },
-  // SaaS / Tech
-  'saas:meta:video':             { avg: 6.5, label: 'SaaS video ads on Meta' },
-  'saas:meta:static':            { avg: 6.1, label: 'SaaS static ads on Meta' },
-  'saas:linkedin:static':        { avg: 5.9, label: 'SaaS LinkedIn ads' },
-  'saas:youtube:video':          { avg: 6.3, label: 'SaaS YouTube ads' },
-  // Health & Wellness
-  'health:meta:video':           { avg: 7.0, label: 'health & wellness video on Meta' },
-  'health:tiktok:video':         { avg: 7.3, label: 'health & wellness TikTok ads' },
-  'health:meta:static':          { avg: 6.5, label: 'health & wellness static on Meta' },
-  // Beauty / CPG
-  'beauty:meta:video':           { avg: 7.2, label: 'beauty video ads on Meta' },
-  'beauty:tiktok:video':         { avg: 7.5, label: 'beauty TikTok ads' },
-  'beauty:instagram_reels:video':{ avg: 7.3, label: 'beauty Reels ads' },
-  // Finance
-  'finance:meta:static':         { avg: 6.0, label: 'finance static ads on Meta' },
-  'finance:meta:video':          { avg: 6.3, label: 'finance video ads on Meta' },
-  // Education / Courses
-  'education:meta:video':        { avg: 6.7, label: 'education/course video ads on Meta' },
-  'education:youtube:video':     { avg: 6.5, label: 'education YouTube ads' },
-  // Platform-only fallbacks (no niche)
-  ':meta:video':                 { avg: 6.7, label: 'video ads on Meta' },
-  ':meta:static':                { avg: 6.3, label: 'static ads on Meta' },
-  ':tiktok:video':               { avg: 7.0, label: 'TikTok video ads' },
-  ':instagram_reels:video':      { avg: 6.9, label: 'Instagram Reels ads' },
-  ':youtube:video':              { avg: 6.3, label: 'YouTube video ads' },
-  ':display:static':             { avg: 5.7, label: 'display banner ads' },
-  ':linkedin:static':            { avg: 5.8, label: 'LinkedIn ads' },
-  // Format-only fallbacks
-  '::video':                     { avg: 6.7, label: 'video ads' },
-  '::static':                    { avg: 6.2, label: 'static ads' },
-  // Global fallback
-  '::':                          { avg: 6.5, label: 'ads in your category' },
-}
+// ── Niche × Platform data ────────────────────────────────────────────────────
 
-// Niche alias map — normalize user-facing niche names to lookup keys
+export const NICHE_BENCHMARKS: Record<string, Record<string, NicheBenchmark>> = {
+  "Ecommerce / DTC": {
+    Meta:    { ctr: { low: 1.5, avg: 2.1, high: 3.2 }, hookRate: { avg: 32 }, cpm: { avg: 14 } },
+    TikTok:  { ctr: { low: 0.8, avg: 1.4, high: 2.5 }, hookRate: { avg: 28 }, cpm: { avg: 9 } },
+    Google:  { ctr: { low: 2.0, avg: 3.5, high: 6.0 }, hookRate: null,        cpm: { avg: 38 } },
+    YouTube: { ctr: { low: 0.3, avg: 0.6, high: 1.2 }, hookRate: { avg: 45 }, cpm: { avg: 11 } },
+    general: { ctr: { low: 1.2, avg: 1.9, high: 3.0 }, hookRate: { avg: 30 }, cpm: { avg: 13 } },
+  },
+  SaaS: {
+    Meta:    { ctr: { low: 0.7, avg: 1.0, high: 1.8 }, hookRate: { avg: 22 }, cpm: { avg: 22 } },
+    TikTok:  { ctr: { low: 0.4, avg: 0.8, high: 1.5 }, hookRate: { avg: 20 }, cpm: { avg: 12 } },
+    Google:  { ctr: { low: 2.5, avg: 4.2, high: 7.5 }, hookRate: null,        cpm: { avg: 55 } },
+    YouTube: { ctr: { low: 0.2, avg: 0.4, high: 0.9 }, hookRate: { avg: 35 }, cpm: { avg: 18 } },
+    general: { ctr: { low: 0.6, avg: 0.9, high: 1.6 }, hookRate: { avg: 21 }, cpm: { avg: 26 } },
+  },
+  Agency: {
+    Meta:    { ctr: { low: 0.9, avg: 1.4, high: 2.5 }, hookRate: { avg: 27 }, cpm: { avg: 16 } },
+    TikTok:  { ctr: { low: 0.6, avg: 1.1, high: 2.0 }, hookRate: { avg: 25 }, cpm: { avg: 10 } },
+    Google:  { ctr: { low: 2.2, avg: 3.8, high: 6.5 }, hookRate: null,        cpm: { avg: 42 } },
+    YouTube: { ctr: { low: 0.25, avg: 0.5, high: 1.0 }, hookRate: { avg: 40 }, cpm: { avg: 13 } },
+    general: { ctr: { low: 0.8, avg: 1.3, high: 2.2 }, hookRate: { avg: 26 }, cpm: { avg: 17 } },
+  },
+  "Creator / Content": {
+    Meta:    { ctr: { low: 0.5, avg: 0.9, high: 1.8 }, hookRate: { avg: 35 }, cpm: { avg: 8 } },
+    TikTok:  { ctr: { low: 1.0, avg: 2.0, high: 4.0 }, hookRate: { avg: 42 }, cpm: { avg: 6 } },
+    YouTube: { ctr: { low: 0.4, avg: 0.9, high: 2.0 }, hookRate: { avg: 55 }, cpm: { avg: 7 } },
+    general: { ctr: { low: 0.7, avg: 1.4, high: 2.8 }, hookRate: { avg: 40 }, cpm: { avg: 7 } },
+  },
+};
+
+// ── Niche alias map — normalize onboarding niche names to lookup keys ────────
+
 const NICHE_ALIASES: Record<string, string> = {
-  'e-commerce': 'ecomm',
-  'ecommerce': 'ecomm',
-  'ecom': 'ecomm',
-  'dtc': 'ecomm',
-  'd2c': 'ecomm',
-  'direct to consumer': 'ecomm',
-  'software': 'saas',
-  'tech': 'saas',
-  'b2b': 'saas',
-  'b2b saas': 'saas',
-  'health & wellness': 'health',
-  'health and wellness': 'health',
-  'wellness': 'health',
-  'fitness': 'health',
-  'beauty & skincare': 'beauty',
-  'skincare': 'beauty',
-  'cosmetics': 'beauty',
-  'cpg': 'beauty',
-  'personal finance': 'finance',
-  'fintech': 'finance',
-  'insurance': 'finance',
-  'online courses': 'education',
-  'courses': 'education',
-  'edtech': 'education',
+  "ecommerce": "Ecommerce / DTC",
+  "ecommerce / dtc": "Ecommerce / DTC",
+  "e-commerce": "Ecommerce / DTC",
+  "dtc": "Ecommerce / DTC",
+  "d2c": "Ecommerce / DTC",
+  "direct to consumer": "Ecommerce / DTC",
+  "saas": "SaaS",
+  "software": "SaaS",
+  "b2b": "SaaS",
+  "b2b saas": "SaaS",
+  "tech": "SaaS",
+  "agency": "Agency",
+  "creator / content": "Creator / Content",
+  "creator": "Creator / Content",
+  "content": "Creator / Content",
+  "content creator": "Creator / Content",
+};
+
+function resolveNicheKey(niche: string): string | null {
+  if (!niche) return null;
+  // Direct match first
+  if (NICHE_BENCHMARKS[niche]) return niche;
+  // Alias match
+  const lower = niche.toLowerCase().trim();
+  const aliased = NICHE_ALIASES[lower];
+  if (aliased && NICHE_BENCHMARKS[aliased]) return aliased;
+  return null;
 }
 
-// Platform alias map
+// ── Platform alias map ───────────────────────────────────────────────────────
+
 const PLATFORM_ALIASES: Record<string, string> = {
-  'facebook': 'meta',
-  'instagram': 'meta',
-  'ig': 'meta',
-  'reels': 'instagram_reels',
-  'instagram reels': 'instagram_reels',
-  'linkedin': 'linkedin',
-  'youtube': 'youtube',
-  'yt': 'youtube',
-  'tiktok': 'tiktok',
-  'tt': 'tiktok',
-  'display': 'display',
-  'gdn': 'display',
-  'google display': 'display',
+  meta: "Meta",
+  facebook: "Meta",
+  instagram: "Meta",
+  tiktok: "TikTok",
+  google: "Google",
+  "google display": "Google",
+  youtube: "YouTube",
+};
+
+function resolvePlatformKey(platform: string): string {
+  if (!platform) return "general";
+  // Direct match
+  const lower = platform.toLowerCase().trim();
+  return PLATFORM_ALIASES[lower] ?? platform;
 }
 
-function normalizeNiche(raw: string): string {
-  const lower = raw.toLowerCase().trim()
-  return NICHE_ALIASES[lower] ?? lower
+// ── Public API ───────────────────────────────────────────────────────────────
+
+/** Get niche-specific benchmark. Returns null if niche is unknown or 'Other'. */
+export function getNicheBenchmark(
+  niche: string | null | undefined,
+  platform: string | null | undefined
+): NicheBenchmark | null {
+  if (!niche) return null;
+  const nicheKey = resolveNicheKey(niche);
+  if (!nicheKey) return null;
+  const nicheData = NICHE_BENCHMARKS[nicheKey];
+  const platformKey = resolvePlatformKey(platform ?? "");
+  return nicheData[platformKey] ?? nicheData["general"] ?? null;
 }
 
-function normalizePlatform(raw: string): string {
-  const lower = raw.toLowerCase().replace(/\s+/g, ' ').trim()
-  return PLATFORM_ALIASES[lower] ?? lower.replace(/\s+/g, '_')
+/** Short niche label for UI — "DTC", "SaaS", "Agency", "Creator" */
+export function getNicheShortLabel(niche: string | null | undefined): string | null {
+  if (!niche) return null;
+  const nicheKey = resolveNicheKey(niche);
+  if (!nicheKey) return null;
+  const SHORT_LABELS: Record<string, string> = {
+    "Ecommerce / DTC": "DTC",
+    SaaS: "SaaS",
+    Agency: "Agency",
+    "Creator / Content": "Creator",
+  };
+  return SHORT_LABELS[nicheKey] ?? null;
 }
 
-export function getBenchmark(
-  niche: string,
-  platform: string,
-  adType: 'video' | 'static' | 'display'
+/**
+ * Get niche-aware benchmark for ScoreCard display.
+ * Falls back to platform-only averages from platformBenchmarks.ts when niche is unknown.
+ */
+export function getNicheAwareBenchmark(
+  niche: string | null | undefined,
+  platform: string | null | undefined,
+  adType: "video" | "static" = "video"
 ): BenchmarkResult {
-  const n = normalizeNiche(niche || '')
-  const p = normalizePlatform(platform || '')
-  const t = adType || 'video'
+  const nicheKey = niche ? resolveNicheKey(niche) : null;
+  const nicheBench = nicheKey ? getNicheBenchmark(niche, platform) : null;
 
-  // Fallback chain: exact → platform:type → type-only → global
-  const key = `${n}:${p}:${t}`
-  const platformKey = `:${p}:${t}`
-  const typeKey = `::${t}`
-  const globalKey = '::'
-
-  const match =
-    BENCHMARKS[key] ??
-    BENCHMARKS[platformKey] ??
-    BENCHMARKS[typeKey] ??
-    BENCHMARKS[globalKey]!
-
-  return {
-    averageScore: match.avg,
-    sampleLabel: match.label,
-    source: 'static',
+  if (nicheBench && nicheKey) {
+    const shortLabel = getNicheShortLabel(niche) ?? nicheKey;
+    const platformLabel = resolvePlatformKey(platform ?? "") === "general"
+      ? ""
+      : ` ${resolvePlatformKey(platform ?? "")}`;
+    return {
+      averageScore: 6.5, // scoring-scale avg (preserved for BenchmarkBadge)
+      sampleLabel: `${shortLabel}${platformLabel} ${adType} ads`,
+      source: "static",
+    };
   }
+
+  // Fallback: platform-only benchmark from platformBenchmarks.ts
+  const platBench = getPlatformBenchmark(platform ?? undefined);
+  return {
+    averageScore: 6.5,
+    sampleLabel: `${platBench.label} ${adType} ads`,
+    source: "static",
+  };
 }
-
-// Future: replace getBenchmark() body with a Supabase query:
-// const { data } = await supabase
-//   .from('score_aggregates')
-//   .select('avg_score, sample_count, label')
-//   .eq('niche', niche).eq('platform', platform).eq('ad_type', adType)
-//   .single();
-// return { averageScore: data.avg_score, sampleLabel: data.label, source: 'aggregate' };
-
-// Future Supabase migration (scaffold only — do not run yet):
-// create table if not exists score_aggregates (
-//   id uuid primary key default gen_random_uuid(),
-//   niche text not null,
-//   platform text not null,
-//   ad_type text check (ad_type in ('video', 'static', 'display')),
-//   avg_score numeric(5,2) not null,
-//   sample_count integer not null default 0,
-//   label text not null,
-//   updated_at timestamptz default now(),
-//   unique(niche, platform, ad_type)
-// );

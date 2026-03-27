@@ -9,7 +9,7 @@ import { HashtagsC2 } from "./HashtagsC2";
 import { Copy, CheckCircle, Loader2, RotateCcw, FileText, Lightbulb, DollarSign } from "lucide-react";
 import type { BudgetRecommendation, Hashtags, Scene, HookDetail } from "../services/analyzerService";
 import type { EngineBudgetRecommendation } from "../services/budgetService";
-import { getBenchmark, type BenchmarkResult } from "../lib/benchmarks";
+import { getNicheAwareBenchmark, type BenchmarkResult } from "../lib/benchmarks";
 import { type FixItResult } from "./FixItPanel";
 import PredictedPerformanceCard, { type PredictionResult } from "./PredictedPerformanceCard";
 import { CollapsibleSection } from "./ui/CollapsibleSection";
@@ -214,7 +214,7 @@ export function ScoreCard({
   const displayScore = platformScore ?? scores.overall;
   const { label: overallLabel } = getScoreLabel(displayScore);
   const heroVerdict = displayScore >= 8 ? "Strong" : displayScore >= 4 ? "Average" : "Needs Work";
-  const benchmark: BenchmarkResult = getBenchmark(niche ?? '', platform ?? '', format === 'video' ? 'video' : 'static');
+  const benchmark: BenchmarkResult = getNicheAwareBenchmark(niche, platform, format === 'video' ? 'video' : 'static');
   const [relativeTime, setRelativeTime] = useState<string>("");
   const [toast, setToast] = useState<string | null>(null);
   const [startOverOpen, setStartOverOpen] = useState(false);
@@ -319,6 +319,7 @@ export function ScoreCard({
             score={displayScore}
             verdict={heroVerdict}
             benchmark={benchmark.averageScore}
+            benchmarkLabelOverride={benchmark.sampleLabel}
             platform={platform}
             format={format}
             youtubeFormat={youtubeFormat}
