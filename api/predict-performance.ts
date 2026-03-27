@@ -6,7 +6,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
 import { safePlatform, safeAdType, safeNiche } from "./_lib/validateInput";
 import { sanitizeAnalysisText } from "./_lib/sanitizeMemory";
-import { getNicheBenchmark } from "../src/lib/benchmarks";
+// Dynamic import — benchmarks.ts is ESM, Vercel bundles API routes as CJS
 
 export const maxDuration = 60;
 
@@ -50,7 +50,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const adTypeLabel = safeAdType(adType);
   const intentLabel = (typeof intent === "string" && ["conversion", "awareness", "consideration"].includes(intent)) ? intent : "conversion";
 
-  // Niche × platform benchmarks from shared lib — replaces inline duplication
+  // Niche × platform benchmarks from shared lib — dynamic import for CJS compat
+  const { getNicheBenchmark } = await import("../src/lib/benchmarks");
   const nicheBench = getNicheBenchmark(nicheLabel, platformKey);
   let benchmarkBlock: string;
   if (nicheBench) {

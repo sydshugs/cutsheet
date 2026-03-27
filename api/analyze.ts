@@ -5,7 +5,8 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
 import { sanitizeSessionMemory } from "./_lib/sanitizeMemory";
-import { getNicheBenchmark, getNicheShortLabel } from "../src/lib/benchmarks";
+// Dynamic import — benchmarks.ts is ESM, Vercel bundles API routes as CJS
+type BenchmarkModule = typeof import("../src/lib/benchmarks");
 
 export const maxDuration = 120; // video analysis can take 30-60s
 
@@ -138,6 +139,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Build niche context block when niche is known from onboarding
     let nicheContext = "";
     if (niche) {
+      const { getNicheBenchmark, getNicheShortLabel } = await import("../src/lib/benchmarks") as BenchmarkModule;
       const nicheBench = getNicheBenchmark(niche, platform);
       const nicheLabel = getNicheShortLabel(niche) ?? niche;
       if (nicheBench) {
