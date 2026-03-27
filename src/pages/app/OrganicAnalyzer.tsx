@@ -6,6 +6,8 @@ import { TrendingUp, RotateCcw } from "lucide-react";
 import { AnalyzerView } from "../../components/AnalyzerView";
 import { BriefResultView, type BriefSection } from "../../components/BriefResultView";
 import { ScoreCard } from "../../components/ScoreCard";
+import { extractRightPanelSections } from "../../components/ReportCards";
+import { AlertDialog } from "../../components/ui/AlertDialog";
 import { VideoDropzone } from "../../components/VideoDropzone";
 import { HistoryDrawer } from "../../components/HistoryDrawer";
 import { useVideoAnalyzer } from "../../hooks/useVideoAnalyzer";
@@ -24,7 +26,7 @@ import {
 import { SecondEyePanel } from "../../components/SecondEyePanel";
 import { SafeZoneModal } from "../../components/SafeZoneModal";
 
-import { ORGANIC_STATIC_PLATFORMS, VIDEO_ONLY_PLATFORMS } from "../../components/PlatformSwitcher";
+import { PlatformSwitcher, ORGANIC_PLATFORMS, ORGANIC_STATIC_PLATFORMS, VIDEO_ONLY_PLATFORMS } from "../../components/PlatformSwitcher";
 import { generateFixIt, type FixItResult } from "../../services/fixItService";
 import { generatePrediction, type PredictionResult } from "../../services/predictionService";
 import { createShare } from "../../services/shareService";
@@ -151,6 +153,7 @@ export default function OrganicAnalyzer() {
   const [safeZoneOpen, setSafeZoneOpen] = useState(false);
   const [prediction, setPrediction] = useState<PredictionResult | null>(null);
   const [predictionLoading, setPredictionLoading] = useState(false);
+  const [confirmStartOver, setConfirmStartOver] = useState(false);
 
   const scorecardRef = useRef<HTMLDivElement | null>(null);
   const lastSavedRef = useRef<string | null>(null);
@@ -638,9 +641,49 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
                 prediction={prediction}
                 onReanalyze={handleReset}
                 canVisualize={false}
+                verdict={(() => {
+                  const s = activeResult.scores.overall;
+                  return {
+                    state: (s >= 8 ? 'ready' : s >= 5 ? 'needs_work' : 'not_ready') as 'ready' | 'needs_work' | 'not_ready',
+                    headline: s >= 8 ? 'Ready to post' : s >= 5 ? 'Needs refinement' : 'Not ready',
+                    sub: 'Organic content',
+                  };
+                })()}
+                analysisSections={activeResult.markdown ? extractRightPanelSections(activeResult.markdown) : undefined}
+                briefLoading={briefLoading}
+                hasBrief={!!brief}
+                improvementsLoading={false}
+                onStartOver={() => setConfirmStartOver(true)}
+                onNavigateSettings={() => navigate('/settings')}
+                isPro={isPro}
+                onUpgradeRequired={onUpgradeRequired}
+                platformScore={platform !== "all" && platformScores.length > 0
+                  ? platformScores.find(ps => ps.platform === platform)?.score
+                  : undefined}
+                platformSwitcher={
+                  <PlatformSwitcher
+                    platforms={organicFormat === "static" ? ORGANIC_STATIC_PLATFORMS : ORGANIC_PLATFORMS}
+                    selected={platform}
+                    onChange={(p) => setPlatform(p as Platform)}
+                    disabled={false}
+                    isSwitching={platformScoresLoading}
+                  />
+                }
               />
             </div>
             {/* Second Eye is now rendered inside CreativeVerdictAndSecondEye via AnalyzerView → ReportCards */}
+            <AlertDialog
+              open={confirmStartOver}
+              onClose={() => setConfirmStartOver(false)}
+              onConfirm={() => {
+                setConfirmStartOver(false);
+                handleReset();
+              }}
+              title="Start over?"
+              description="This will clear your current analysis. You can always re-analyze the same file."
+              confirmLabel="Start Over"
+              variant="destructive"
+            />
           </>
         )}
 
@@ -698,7 +741,7 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
                   <BriefResultView 
                     sections={sections}
                     platform={platform !== "all" ? platform : "TikTok"}
-                    adFormat={format === "static" ? "Static" : "Video"}
+                    adFormat={organicFormat === "static" ? "Static" : "Video"}
                     onBack={() => setRightTab("analysis")}
                   />
                 );
