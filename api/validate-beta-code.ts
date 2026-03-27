@@ -4,9 +4,19 @@
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient } from "@supabase/supabase-js";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 import { handlePreflight } from "./_lib/auth";
 
 export const maxDuration = 10;
+
+// 10 attempts per IP per hour — prevents brute-forcing beta codes
+const ratelimit = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(10, "3600 s"),
+  analytics: false,
+  prefix: "cutsheet:validate-beta-code",
+});
 
 function getSupabaseAdmin() {
   const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
@@ -18,6 +28,13 @@ function getSupabaseAdmin() {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handlePreflight(req, res)) return;
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
+  // Rate limit by IP
+  const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || "unknown";
+  const rl = await ratelimit.limit(ip);
+  if (!rl.success) {
+    return res.status(429).json({ valid: false, error: "Too many attempts. Please try again later." });
+  }
 
   try {
     const { code } = req.body ?? {};
