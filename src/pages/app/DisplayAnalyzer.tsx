@@ -3,12 +3,14 @@
 import { Helmet } from "react-helmet-async";
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useOutletContext } from "react-router-dom";
-import { Monitor, Eye, Download, X, Plus, CheckCircle, ShieldCheck, Sparkles, Lock, RotateCcw, Upload, AlertCircle, AlertTriangle, XCircle, ArrowRight, Layers, Type, Layout, FileText } from "lucide-react";
+import { Monitor, Eye, Download, X, Plus, CheckCircle, ShieldCheck, Sparkles, Lock, Upload, AlertCircle, AlertTriangle, XCircle, ArrowRight, Layers, Type, Layout } from "lucide-react";
 import { VideoDropzone } from "../../components/VideoDropzone";
-import { DisplayProgressCard } from "../../components/DisplayProgressCard";
+import { ProgressCard } from "../../components/ProgressCard";
 import { sanitizeFileName } from "../../utils/sanitize";
 import { SuiteCohesionCard } from "../../components/SuiteCohesionCard";
-import { DisplayScoreCard, type DisplayResult } from "../../components/DisplayScoreCard";
+import { ScoreCard } from "../../components/ScoreCard";
+import type { DisplayResult } from "../../types/display";
+import { AlertDialog } from "../../components/ui/AlertDialog";
 import { PolicyCheckPanel } from "../../components/PolicyCheckPanel";
 import { runPolicyCheck, type PolicyCheckResult } from "../../lib/policyCheckService";
 import { getImageDimensions, detectDisplayFormat, getFormatGuidance, type DisplayFormat } from "../../utils/displayAdUtils";
@@ -23,8 +25,6 @@ import type { VisualizeResult, VisualizeStatus, VisualizeCreditData } from "../.
 import { getSessionMemory } from "@/src/lib/userMemoryService";
 import { generatePrediction, type PredictionResult } from "../../services/predictionService";
 import { generateBudgetRecommendation, type EngineBudgetRecommendation } from "../../services/budgetService";
-import PredictedPerformanceCard from "../../components/PredictedPerformanceCard";
-import { BudgetCard } from "../../components/scorecard/BudgetCard";
 import type { AppSharedContext } from "../../components/AppLayout";
 
 type Mode = "single" | "suite";
@@ -121,6 +121,7 @@ export default function DisplayAnalyzer() {
   const [visualizeResult, setVisualizeResult] = useState<VisualizeResult | null>(null);
   const [visualizeError, setVisualizeError] = useState<string | null>(null);
   const [visualizeCreditData, setVisualizeCreditData] = useState<VisualizeCreditData | null>(null);
+  const [confirmStartOverDisplay, setConfirmStartOverDisplay] = useState(false);
 
   const previewUrl = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
   useEffect(() => { return () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }; }, [previewUrl]);
@@ -778,9 +779,6 @@ Return JSON only — no prose:
           {mode === "single" && (file || status !== "idle") && (
           /* Upload + preview area — only when file is loaded or analysis in progress */
           <div className={`relative flex flex-col ${(status === "uploading" || status === "processing") ? "h-full" : "px-4 py-6 md:px-8 min-h-full"}`}>
-            <div className="pointer-events-none absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-indigo-600/10 blur-[120px]" />
-            <div className="pointer-events-none absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-violet-600/[0.08] blur-[100px]" />
-
             <div className={`relative flex flex-col flex-1 ${status === "analyzing" ? "items-center justify-center" : ""}`} style={{ maxWidth: 800, margin: "0 auto", width: "100%" }}>
               {/* Dropzone or preview */}
               {!file && status === "idle" && (
@@ -856,15 +854,16 @@ Return JSON only — no prose:
 
               {/* Analysis auto-triggers on file drop via useEffect */}
 
-              {/* Loading — cyan Display-specific progress card */}
+              {/* Loading — unified ProgressCard */}
               {status === "analyzing" && file && (
-                <DisplayProgressCard
+                <ProgressCard
                   file={file}
                   status="processing"
                   statusMessage={statusMsg || "Analyzing display ad..."}
                   onCancel={handleReset}
-                  format={detectedFormat}
-                  dimensions={dimensions}
+                  format="static"
+                  icon={Monitor}
+                  title="Analyzing your ad"
                 />
               )}
 
@@ -1160,40 +1159,44 @@ Return JSON only — no prose:
       <div className={`shrink-0 bg-zinc-900/50 backdrop-blur-xl border-l border-white/5 overflow-y-auto overflow-x-hidden pb-12 transition-[width,opacity] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-white/5 ${mode === "single" && status === "complete" && result ? "w-[440px] max-lg:w-full opacity-100" : "w-0 max-lg:w-0 opacity-0"}`}>
         {mode === "single" && status === "complete" && result && (
           <>
-            {/* Display Score Card */}
-            <DisplayScoreCard
-              result={result}
-              format={detectedFormat}
-              network={network}
-              mockupUrl={null}
-              mockupLoading={false}
-              dimensions={dimensions!}
+            <ScoreCard
+              scores={{ hook: 0, clarity: 0, cta: 0, production: 0, overall: result.overallScore }}
+              dimensionOverrides={[
+                { name: "Hierarchy", score: result.scores.hierarchy },
+                { name: "CTA",       score: result.scores.ctaVisibility },
+                { name: "Brand",     score: result.scores.brandClarity },
+                { name: "Message",   score: result.scores.messageClarity },
+                { name: "Contrast",  score: result.scores.visualContrast },
+              ]}
+              verdict={{
+                state: result.overallScore >= 8 ? 'ready' : result.overallScore >= 4 ? 'needs_work' : 'not_ready',
+                headline: result.verdict,
+                sub: 'Google Display',
+              }}
+              improvements={result.improvements.map(i => i.fix)}
+              fileName={file?.name}
+              engineBudget={engineBudget}
+              briefLoading={briefLoading}
+              hasBrief={!!briefMarkdown}
+              onGenerateBrief={handleGenerateBrief}
+              prediction={prediction}
+              onReanalyze={handleReset}
+              onStartOver={() => setConfirmStartOverDisplay(true)}
+              format="static"
+              niche={userContext.match(/Niche:\s*(.+)/)?.[1]?.trim()}
+              platform="Google Display"
+              onCheckPolicies={handleCheckPolicies}
+              policyLoading={policyLoading}
+              onVisualize={handleVisualize}
+              visualizeLoading={visualizeStatus === "loading"}
+              canVisualize={true}
+              isPro={isPro}
+              onUpgradeRequired={onUpgradeRequired}
+              improvementsLoading={false}
+              isDark={true}
             />
 
-            {/* Re-analyze improved version button */}
-            <button
-              onClick={handleReset}
-              className="mx-4 mt-4 w-[calc(100%-2rem)] flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-medium transition-[background-color] duration-150 hover:bg-indigo-500/15 bg-indigo-500/[0.08] text-indigo-400 border border-indigo-500/20"
-            >
-              <RotateCcw size={14} />
-              Re-analyze improved version
-            </button>
-
-            {/* Generate Brief button */}
-            <button
-              onClick={handleGenerateBrief}
-              disabled={briefLoading}
-              className="mx-4 mt-4 w-[calc(100%-2rem)] flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-medium transition-[background-color] duration-150 hover:bg-indigo-500/15 bg-indigo-500/[0.08] text-indigo-400 border border-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {briefLoading ? (
-                <div style={{ width: 14, height: 14, border: "2px solid rgba(99,102,241,0.3)", borderTopColor: "#6366f1", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
-              ) : (
-                <FileText size={14} />
-              )}
-              {briefLoading ? "Generating…" : "Generate Brief"}
-            </button>
-
-            {/* Brief output */}
+            {/* Brief output — ScoreCard renders the button but not the content */}
             {briefError && (
               <div className="mx-4 mt-2 text-xs text-red-400 bg-red-500/[0.08] rounded-xl px-4 py-3 border border-red-500/20">{briefError}</div>
             )}
@@ -1201,42 +1204,19 @@ Return JSON only — no prose:
               <div className="mx-4 mt-2 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 text-xs text-zinc-300 whitespace-pre-wrap leading-relaxed">{briefMarkdown}</div>
             )}
 
-            {/* Predicted Performance */}
-            {prediction && (
-              <div className="mx-4 mt-4">
-                <PredictedPerformanceCard
-                  prediction={prediction}
-                  platform="Google Display"
-                  niche="GDN avg"
-                />
-              </div>
+            {/* Policy results */}
+            {policyError && (
+              <div className="mx-4 mt-2 text-xs text-red-400 bg-red-500/[0.08] rounded-xl px-4 py-3 border border-red-500/20">{policyError}</div>
             )}
-
-            {/* Budget Card */}
-            {engineBudget && (
-              <div className="mx-4 mt-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
-                <BudgetCard engineBudget={engineBudget} />
-              </div>
-            )}
-
-            {/* Action buttons */}
-            <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: 10 }}>
-              {/* Policy error */}
-              {policyError && (
-                <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", fontSize: 12, color: "#ef4444" }}>
-                  {policyError}
-                </div>
-              )}
-
-              {/* Policy results */}
-              {policyResult && (
+            {policyResult && (
+              <div className="px-4 mt-4">
                 <PolicyCheckPanel result={policyResult} onClose={() => setPolicyResult(null)} />
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Visualize Panel */}
             {(visualizeOpen || visualizeStatus !== "idle") && (
-              <div style={{ padding: "0 16px 16px" }}>
+              <div className="px-4 mt-4 pb-4">
                 <VisualizePanel
                   status={visualizeStatus}
                   result={visualizeResult}
@@ -1248,6 +1228,20 @@ Return JSON only — no prose:
                 />
               </div>
             )}
+
+            {/* Start Over confirmation */}
+            <AlertDialog
+              open={confirmStartOverDisplay}
+              onClose={() => setConfirmStartOverDisplay(false)}
+              onConfirm={() => {
+                setConfirmStartOverDisplay(false);
+                handleReset();
+              }}
+              title="Start over?"
+              description="This will clear your current analysis. You can always re-analyze the same file."
+              confirmLabel="Start Over"
+              variant="destructive"
+            />
           </>
         )}
       </div>
