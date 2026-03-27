@@ -57,7 +57,7 @@ export function HashtagsC2({ hashtags, format }: HashtagsC2Props) {
   if (availablePlatforms.length === 0) return null;
 
   return (
-    <div className="px-4 pt-1">
+    <div className="pt-1">
       <div 
         className="rounded-2xl transition-all"
         style={{ 
