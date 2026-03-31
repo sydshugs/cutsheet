@@ -3,8 +3,10 @@
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Anthropic from "@anthropic-ai/sdk";
+import { createClient } from "@supabase/supabase-js";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
 import { safePlatform, safeAdType, safeNiche } from "./_lib/validateInput";
+import { sanitizeSessionMemory } from "./_lib/sanitizeMemory";
 
 export const maxDuration = 60;
 
@@ -25,6 +27,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const rl = await checkRateLimit("fix-it", user.id, user.tier, RATE);
   if (!rl.allowed) {
     return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
+  }
+
+  // Fetch brand voice from user profile (non-fatal)
+  let brandVoiceContext = "";
+  try {
+    const supabaseAdmin = createClient(
+      (process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL)!,
+      (process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.VITE_SUPABASE_SERVICE_ROLE_KEY)!,
+      { auth: { persistSession: false } }
+    );
+    const { data: profileData } = await supabaseAdmin
+      .from("user_profiles")
+      .select("brand_voice_description, brand_voice_tags")
+      .eq("user_id", user.id)
+      .single();
+    const rawDesc = profileData?.brand_voice_description ?? "";
+    const rawTags: string[] = profileData?.brand_voice_tags ?? [];
+    if (rawDesc) {
+      brandVoiceContext = `\nBrand voice: ${sanitizeSessionMemory(rawDesc)}\nVoice tags: ${rawTags.map((t: string) => sanitizeSessionMemory(t)).join(", ")}\n\nAll copy rewrites, hooks, CTAs, and suggestions must match this voice exactly. A voice mismatch is worse than keeping the original copy.\n`;
+    }
+  } catch {
+    // Profile fetch failure is non-fatal — proceed without brand voice
   }
 
   const { analysisMarkdown, platform: rawPlatform, niche: rawNiche, intent: rawIntent, adType: rawAdType, scores, ctaFree } = req.body ?? {};
@@ -75,7 +99,7 @@ ANTI-GENERIC RULES (violations = failure):
 - No generic urgency ("Act now!", "Limited time!") unless the original ad used it
 - Every rewritten line must reference something specific from THIS ad — a product feature, a score finding, a visual element
 - If you catch yourself writing copy that could apply to any product in any niche, delete it and try again
-- The rewrite must be so specific to ${niche} on ${platform} that it would be wrong for any other niche/platform combination${isCTAFree ? `
+- The rewrite must be so specific to ${niche} on ${platform} that it would be wrong for any other niche/platform combination${brandVoiceContext}${isCTAFree ? `
 
 CTA-FREE AD: This Meta ad intentionally has no in-creative CTA — it relies on Meta's native CTA button in Ads Manager.
 Do NOT suggest adding a CTA, Shop Now button, or any verbal call-to-action to the creative.
