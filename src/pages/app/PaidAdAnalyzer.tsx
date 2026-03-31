@@ -1,6 +1,6 @@
 // src/pages/app/PaidAdAnalyzer.tsx
 import { Helmet } from 'react-helmet-async';
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useOutletContext, useNavigate, Link } from "react-router-dom";
 import { RotateCcw, Upload, Sparkles, Lock, Zap } from "lucide-react";
 import { Toast } from "../../components/Toast";
@@ -597,6 +597,35 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
   const effectiveStatus = (loadedEntry || loadedFromHistory) ? ("complete" as const) : status;
   const showRightPanel = effectiveStatus === "complete" && activeResult !== null;
 
+  // ── Score delta vs previous analysis ─────────────────────────────────────
+  const scoreDelta = useMemo(() => {
+    if (loadedEntry) return null; // don't show delta when viewing a loaded history entry
+    const currentScores = activeResult?.scores;
+    if (!currentScores) return null;
+    const prevEntry = historyEntries.find(e => e.scores != null);
+    if (!prevEntry?.scores) return null;
+    const overall = Math.round((currentScores.overall - prevEntry.scores.overall) * 10) / 10;
+    const diffMs = Date.now() - new Date(prevEntry.timestamp).getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const label = diffDays >= 1
+      ? `vs ${diffDays} day${diffDays === 1 ? '' : 's'} ago`
+      : diffHours >= 1 ? `vs ${diffHours}h ago`
+      : diffMins >= 1  ? `vs ${diffMins}m ago`
+      : 'vs last analysis';
+    return {
+      overall,
+      label,
+      dims: {
+        'Hook':   Math.round((currentScores.hook       - prevEntry.scores.hook)       * 10) / 10,
+        'Copy':   Math.round((currentScores.clarity    - prevEntry.scores.clarity)    * 10) / 10,
+        'Visual': Math.round((currentScores.production - prevEntry.scores.production) * 10) / 10,
+        'CTA':    Math.round((currentScores.cta        - prevEntry.scores.cta)        * 10) / 10,
+      },
+    };
+  }, [activeResult?.scores, historyEntries, loadedEntry]);
+
   // Report hasResult to TopBar via AppLayout
   useEffect(() => {
     registerCallbacks({
@@ -1156,6 +1185,9 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                   low:  Math.max(0,  Math.round((activeResult.scores.overall - 0.65) * 10) / 10),
                   high: Math.min(10, Math.round((activeResult.scores.overall + 0.65) * 10) / 10),
                 } : undefined}
+                overallDelta={scoreDelta?.overall}
+                overallDeltaLabel={scoreDelta?.label}
+                dimensionDeltas={scoreDelta?.dims}
                 modelName="Gemini + Claude"
                 onGenerateBrief={handleGenerateBrief}
                 onAddToSwipeFile={handleAddToSwipeFile}

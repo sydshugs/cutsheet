@@ -2,7 +2,7 @@
 // Replaces arc gauge + MetricBars
 
 import { useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 /** Platforms that do NOT support static image ads — benchmark should be hidden for these */
 const STATIC_INCOMPATIBLE_PLATFORMS = new Set(['TikTok', 'YouTube', 'YouTube Shorts', 'Instagram Reels']);
@@ -23,6 +23,9 @@ export interface ScoreHeroProps {
   accentColor?: string;   // override benchmark bar fill color (e.g. cyan for Display)
   benchmarkLabelOverride?: string; // niche-aware label e.g. "DTC Meta video ads"
   scoreRange?: { low: number; high: number }; // overall score confidence interval
+  overallDelta?: number;  // score change vs previous analysis, e.g. +1.9 or -0.4
+  overallDeltaLabel?: string; // human label e.g. "vs 3 days ago"
+  dimensionDeltas?: Record<string, number>; // per-dimension delta keyed by dimension name
 }
 
 /** Platform benchmark defaults — used when benchmark prop is not supplied */
@@ -189,9 +192,11 @@ function BenchmarkBar({ score, benchmark, color, label }: BenchmarkBarProps) {
 
 // ── ScoreHero ──────────────────────────────────────────────────────────────────
 
-export function ScoreHero({ score, verdict, benchmark, dimensions, platform, format, youtubeFormat, accentColor, benchmarkLabelOverride, scoreRange }: ScoreHeroProps) {
+export function ScoreHero({ score, verdict, benchmark, dimensions, platform, format, youtubeFormat, accentColor, benchmarkLabelOverride, scoreRange, overallDelta, overallDeltaLabel, dimensionDeltas }: ScoreHeroProps) {
   const animatedScore = useCountUp(score, 600);
   const color = scoreColor(score);
+  const [showDeltas, setShowDeltas] = useState(false);
+  const hasDelta = overallDelta != null && Math.abs(overallDelta) >= 0.05;
   // When accentColor is supplied, replace the "strong" green (#10b981) with it so
   // platform-specific accent colors (e.g. cyan for Display) propagate everywhere.
   const effectiveColor = (accentColor != null && color === '#10b981') ? accentColor : color;
@@ -267,6 +272,26 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
         </span>
       )}
 
+      {/* Score delta pill — shown when a previous analysis exists */}
+      {hasDelta && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+          className="flex items-center gap-1 mt-2 px-2.5 py-1 rounded-full font-mono text-[11px] font-semibold"
+          style={{
+            background: overallDelta! > 0 ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
+            color: overallDelta! > 0 ? '#10b981' : '#ef4444',
+          }}
+        >
+          <span>{overallDelta! > 0 ? '▲' : '▼'}</span>
+          <span>{Math.abs(overallDelta!).toFixed(1)}</span>
+          {overallDeltaLabel && (
+            <span className="font-normal opacity-70 ml-0.5">{overallDeltaLabel}</span>
+          )}
+        </motion.div>
+      )}
+
       {/* Benchmark bar */}
       {showBenchmark && (
         <div className="w-full mt-4">
@@ -282,6 +307,17 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
 
       {/* Dimension grid — score + mini bar with optional confidence band */}
       <div className="w-full mt-4 pt-4 border-t border-white/[0.04]">
+        {/* "Show changes" toggle — only visible when delta data exists */}
+        {hasDelta && dimensionDeltas && (
+          <div className="flex justify-end mb-2">
+            <button
+              onClick={() => setShowDeltas(v => !v)}
+              className="text-[10px] font-medium text-zinc-500 hover:text-zinc-300 transition-opacity"
+            >
+              {showDeltas ? 'Hide changes' : 'Show changes'}
+            </button>
+          </div>
+        )}
         <div className="grid grid-cols-4 gap-1.5">
           {resolvedDimensions.map((dim, i) => {
             const dimColor = scoreColor(dim.score);
@@ -332,6 +368,25 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
                 <span className="text-[9px] text-zinc-500 text-center leading-tight whitespace-nowrap">
                   {dim.name}
                 </span>
+
+                {/* Per-dimension delta chip */}
+                <AnimatePresence>
+                  {showDeltas && dimensionDeltas && dimensionDeltas[dim.name] != null && Math.abs(dimensionDeltas[dim.name]) >= 0.05 && (
+                    <motion.span
+                      key="delta"
+                      initial={{ opacity: 0, y: 2 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 2 }}
+                      transition={{ duration: 0.15 }}
+                      className="font-mono text-[9px] font-semibold"
+                      style={{
+                        color: dimensionDeltas[dim.name] > 0 ? '#10b981' : '#ef4444',
+                      }}
+                    >
+                      {dimensionDeltas[dim.name] > 0 ? '+' : ''}{dimensionDeltas[dim.name].toFixed(1)}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
               </motion.div>
             );
           })}

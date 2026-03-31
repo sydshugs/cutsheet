@@ -87,6 +87,10 @@ interface ScoreCardProps {
   dimensionOverrides?: { name: string; score: number; rangeLow?: number; rangeHigh?: number }[];
   // Confidence interval for overall score — "X.X – Y.Y range" shown below score number
   scoreRange?: { low: number; high: number };
+  // Score delta vs previous analysis
+  overallDelta?: number;
+  overallDeltaLabel?: string;
+  dimensionDeltas?: Record<string, number>;
 }
 
 /** Score band color — design spec: 7.0+ emerald, 5.0–6.9 amber, below 5.0 red */
@@ -210,6 +214,9 @@ export function ScoreCard({
   analysisSections,
   dimensionOverrides,
   scoreRange,
+  overallDelta,
+  overallDeltaLabel,
+  dimensionDeltas,
 }: ScoreCardProps) {
   const displayScore = platformScore ?? scores.overall;
   const { label: overallLabel } = getScoreLabel(displayScore);
@@ -331,6 +338,9 @@ export function ScoreCard({
             format={format}
             youtubeFormat={youtubeFormat}
             scoreRange={scoreRange}
+            overallDelta={overallDelta}
+            overallDeltaLabel={overallDeltaLabel}
+            dimensionDeltas={dimensionDeltas}
             dimensions={dimensionOverrides ?? [
               { name: "Hook",   score: scores.hook },
               { name: "Copy",   score: scores.clarity },
