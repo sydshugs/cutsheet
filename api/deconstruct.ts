@@ -3,6 +3,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Anthropic from "@anthropic-ai/sdk";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { createClient } from "@supabase/supabase-js";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
 import { validateFetchUrl } from "./_lib/validateUrl";
 import { safeNiche } from "./_lib/validateInput";
@@ -221,6 +222,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
   }
 
+  // Fetch brand voice from user profile (non-fatal)
+  let brandVoiceContext = "";
+  try {
+    const supabaseAdmin = createClient(
+      (process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL)!,
+      (process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.VITE_SUPABASE_SERVICE_ROLE_KEY)!,
+      { auth: { persistSession: false } }
+    );
+    const { data: profileData } = await supabaseAdmin
+      .from("user_profiles")
+      .select("brand_voice_description, brand_voice_tags")
+      .eq("user_id", user.id)
+      .single();
+    const rawDesc = profileData?.brand_voice_description ?? "";
+    const rawTags: string[] = profileData?.brand_voice_tags ?? [];
+    if (rawDesc) {
+      brandVoiceContext = `\nBrand voice: ${sanitizeSessionMemory(rawDesc)}\nVoice tags: ${rawTags.map((t: string) => sanitizeSessionMemory(t)).join(", ")}\n\nAll copy rewrites, hooks, CTAs, and suggestions must match this voice exactly. A voice mismatch is worse than keeping the original copy.\n`;
+    }
+  } catch {
+    // Profile fetch failure is non-fatal — proceed without brand voice
+  }
+
   const { url, sourceType, mediaUrl, niche: rawNiche, userContext: rawUserContext } = (req.body ?? {}) as {
     url?: string;
     sourceType?: string;
@@ -308,6 +331,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const message = await client.messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 3000,
+      ...(brandVoiceContext ? { system: brandVoiceContext } : {}),
       messages: [
         {
           role: "user",
