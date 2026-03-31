@@ -193,6 +193,9 @@ export default function PaidAdAnalyzer() {
   const [isPlatformSwitching, setIsPlatformSwitching] = useState(false);
   const platformAbortRef = useRef<AbortController | null>(null);
 
+  // ── Saved analysis ID — for suggestion_feedback FK ───────────────────────
+  const [savedAnalysisId, setSavedAnalysisId] = useState<string | null>(null);
+
   // ── Fix It For Me state ──────────────────────────────────────────────────
   const [fixItResult, setFixItResult] = useState<FixItResult | null>(null);
   const [fixItLoading, setFixItLoading] = useState(false);
@@ -403,7 +406,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
       improvements: result.improvements ?? [],
       cta_rewrite: Array.isArray(ctaRewrites) && ctaRewrites.length > 0 ? ctaRewrites[0] : undefined,
       budget_recommendation: result.budget?.verdict ?? undefined,
-    });
+    }).then(id => { if (id) setSavedAnalysisId(id); });
     setHistoryRefreshKey(k => k + 1);
 
     // Async parallel: Second Eye (video) + Static Design Review + Prediction
@@ -1410,7 +1413,13 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                 </div>
               )}
               {fixItResult && !fixItLoading && (
-                <FixItPanel result={fixItResult} mediaType={format as "static" | "video"} />
+                <FixItPanel
+                  result={fixItResult}
+                  mediaType={format as "static" | "video"}
+                  analysisId={savedAnalysisId ?? undefined}
+                  platform={platform !== "all" ? platform : (rawUserContext?.platform ?? undefined)}
+                  niche={rawUserContext?.niche}
+                />
               )}
             </div>
           </motion.div>

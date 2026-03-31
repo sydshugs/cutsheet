@@ -36,9 +36,9 @@ export interface AnalysisRecord {
   created_at?: string
 }
 
-export const saveAnalysis = async (record: Omit<AnalysisRecord, 'id' | 'created_at'>): Promise<void> => {
+export const saveAnalysis = async (record: Omit<AnalysisRecord, 'id' | 'created_at'>): Promise<string | null> => {
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return
+  if (!user) return null
 
   // The analyses table has: id, slug, user_id, file_name, scores (JSONB), markdown, created_at, created_by_ip
   // RLS policy: auth.uid() = user_id — user_id MUST be set from live auth session
@@ -59,12 +59,16 @@ export const saveAnalysis = async (record: Omit<AnalysisRecord, 'id' | 'created_
     },
     markdown: record.improvements?.join('\n') || '',
   }
-  supabase
+  const { data, error } = await supabase
     .from('analyses')
     .insert(payload)
-    .then(({ error }) => {
-      if (error) console.error('[saveAnalysis] Failed:', error.message, error.details, error.hint)
-    })
+    .select('id')
+    .single()
+  if (error) {
+    console.error('[saveAnalysis] Failed:', error.message, error.details, error.hint)
+    return null
+  }
+  return data?.id ?? null
 }
 
 export const getAnalysisHistory = async (limit = 20): Promise<AnalysisRecord[]> => {

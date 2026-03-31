@@ -1,8 +1,9 @@
 import { cn } from "@/src/lib/utils";
-import { Wand2, Copy, Sparkles, MessageSquare, Layers, Check, Lightbulb, ArrowRight } from "lucide-react";
+import { Wand2, Copy, Sparkles, MessageSquare, Layers, Check, Lightbulb, ArrowRight, ThumbsUp, ThumbsDown } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import DOMPurify from "dompurify";
+import { supabase } from "../lib/supabase";
 
 // ─── TYPES ──────────────────────────────────────────────────────────────────
 
@@ -20,6 +21,10 @@ interface FixItPanelProps {
   onCopyAll?: () => void;
   /** "static" hides text overlays section, "video" shows timestamps */
   mediaType?: "static" | "video";
+  /** UUID of the saved analysis row in Supabase — used as FK in suggestion_feedback */
+  analysisId?: string;
+  platform?: string;
+  niche?: string;
 }
 
 // ─── BRAND COLORS ───────────────────────────────────────────────────────────
@@ -134,9 +139,70 @@ function SectionHeader({
   );
 }
 
+// ─── FEEDBACK ROW ───────────────────────────────────────────────────────────
+
+interface FeedbackRowProps {
+  analysisId?: string;
+  suggestionType: string;
+  suggestionIndex?: number;
+  suggestionPreview: string;
+  platform?: string;
+  niche?: string;
+}
+
+function FeedbackRow({ analysisId, suggestionType, suggestionIndex = 0, suggestionPreview, platform, niche }: FeedbackRowProps) {
+  const [vote, setVote] = useState<'up' | 'down' | null>(null);
+
+  const handleVote = async (helpful: boolean) => {
+    if (vote != null) return; // already voted
+    setVote(helpful ? 'up' : 'down');
+    const { error } = await supabase.from('suggestion_feedback').insert({
+      analysis_id: analysisId ?? null,
+      suggestion_type: suggestionType,
+      suggestion_index: suggestionIndex,
+      suggestion_preview: suggestionPreview.slice(0, 100),
+      platform: platform ?? null,
+      niche: niche ?? null,
+      helpful,
+    });
+    if (error) console.warn('[FeedbackRow] insert failed:', error.message);
+  };
+
+  return (
+    <div className={cn(
+      "flex items-center justify-end gap-2 mt-3 transition-opacity duration-200",
+      vote == null ? "opacity-30 hover:opacity-100" : "opacity-100"
+    )}>
+      {vote == null ? (
+        <>
+          <span className="text-[10px] text-zinc-600 mr-1">Helpful?</span>
+          <button
+            type="button"
+            onClick={() => handleVote(true)}
+            className="w-6 h-6 flex items-center justify-center rounded hover:bg-white/[0.06] transition-colors cursor-pointer"
+            aria-label="Mark helpful"
+          >
+            <ThumbsUp size={12} className="text-zinc-500 hover:text-emerald-400" />
+          </button>
+          <button
+            type="button"
+            onClick={() => handleVote(false)}
+            className="w-6 h-6 flex items-center justify-center rounded hover:bg-white/[0.06] transition-colors cursor-pointer"
+            aria-label="Mark not helpful"
+          >
+            <ThumbsDown size={12} className="text-zinc-500 hover:text-red-400" />
+          </button>
+        </>
+      ) : (
+        <span className="text-[10px] text-zinc-500">Thanks for the feedback</span>
+      )}
+    </div>
+  );
+}
+
 // ─── MAIN COMPONENT ─────────────────────────────────────────────────────────
 
-export default function FixItPanel({ result, onCopyAll, mediaType = "video" }: FixItPanelProps) {
+export default function FixItPanel({ result, onCopyAll, mediaType = "video", analysisId, platform, niche }: FixItPanelProps) {
   const [copied, setCopied] = useState(false);
   const isVideo = mediaType === "video";
   const showOverlays = isVideo && result.textOverlays.length > 0;
@@ -196,13 +262,20 @@ export default function FixItPanel({ result, onCopyAll, mediaType = "video" }: F
           <p className="text-[15px] leading-relaxed font-medium text-zinc-100 mb-3">
             {result.rewrittenHook.copy}
           </p>
-          <div 
+          <div
             className="px-3 py-2.5 rounded-lg text-xs leading-relaxed"
             style={{ background: "rgba(255,255,255,0.03)", color: "#a1a1aa" }}
           >
             <span className="font-medium text-zinc-400">Why: </span>
             {result.rewrittenHook.reasoning}
           </div>
+          <FeedbackRow
+            analysisId={analysisId}
+            suggestionType="hook"
+            suggestionPreview={result.rewrittenHook.copy}
+            platform={platform}
+            niche={niche}
+          />
         </Card>
 
         {/* ── Revised Body ───────────────────────────────────────── */}
@@ -212,6 +285,13 @@ export default function FixItPanel({ result, onCopyAll, mediaType = "video" }: F
           <div
             className="text-[13px] leading-[1.7] whitespace-pre-wrap text-zinc-300"
             dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(renderBold(result.revisedBody)) }}
+          />
+          <FeedbackRow
+            analysisId={analysisId}
+            suggestionType="body"
+            suggestionPreview={result.revisedBody}
+            platform={platform}
+            niche={niche}
           />
         </Card>
 
@@ -229,6 +309,13 @@ export default function FixItPanel({ result, onCopyAll, mediaType = "video" }: F
           <p className="text-xs text-zinc-500">
             <span className="font-medium text-zinc-400">Placement:</span> {result.newCTA.placement}
           </p>
+          <FeedbackRow
+            analysisId={analysisId}
+            suggestionType="cta"
+            suggestionPreview={result.newCTA.copy}
+            platform={platform}
+            niche={niche}
+          />
         </Card>
 
         {/* ── Text Overlays (VIDEO ONLY) ────────────────────────── */}
