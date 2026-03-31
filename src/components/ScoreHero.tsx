@@ -14,12 +14,15 @@ export interface ScoreHeroProps {
   dimensions: {
     name: string;         // 'Hook' | 'Copy' | 'Visual' | 'CTA'
     score: number;        // 0–10
+    rangeLow?: number;    // confidence interval lower bound
+    rangeHigh?: number;   // confidence interval upper bound
   }[];
   platform?: string;      // 'Meta' | 'TikTok' | etc. — for benchmark label
   format?: 'video' | 'static';  // ad format — used to hide invalid benchmarks
   youtubeFormat?: string; // YouTube sub-format: 'skippable' | 'non_skippable' | 'bumper' | 'shorts' | 'in_feed'
   accentColor?: string;   // override benchmark bar fill color (e.g. cyan for Display)
   benchmarkLabelOverride?: string; // niche-aware label e.g. "DTC Meta video ads"
+  scoreRange?: { low: number; high: number }; // overall score confidence interval
 }
 
 /** Platform benchmark defaults — used when benchmark prop is not supplied */
@@ -91,17 +94,17 @@ const YOUTUBE_FORMAT_BENCHMARK_LABELS: Record<string, string> = {
   'in_feed':       'YouTube In-Feed \u00B7 CTR avg 0.65%',
 };
 
-/** Score color (brand guide): 8+ emerald, 4–7.9 amber, 0–3.9 red */
+/** Score color — design spec: 7.0+ emerald, 5.0–6.9 amber, below 5.0 red */
 function scoreColor(score: number): string {
-  if (score >= 8) return "#10b981";
-  if (score >= 4) return "#f59e0b";
+  if (score >= 7) return "#10b981";
+  if (score >= 5) return "#f59e0b";
   return "#ef4444";
 }
 
 /** Colorblind-safe indicator: shape that communicates score band without relying on color */
 function scoreIndicator(score: number): string {
-  if (score >= 8) return "\u25B2"; // ▲ up triangle = strong
-  if (score >= 4) return "\u25CF"; // ● circle = average
+  if (score >= 7) return "\u25B2"; // ▲ up triangle = strong
+  if (score >= 5) return "\u25CF"; // ● circle = average
   return "\u25BC"; // ▼ down triangle = weak
 }
 
@@ -186,7 +189,7 @@ function BenchmarkBar({ score, benchmark, color, label }: BenchmarkBarProps) {
 
 // ── ScoreHero ──────────────────────────────────────────────────────────────────
 
-export function ScoreHero({ score, verdict, benchmark, dimensions, platform, format, youtubeFormat, accentColor, benchmarkLabelOverride }: ScoreHeroProps) {
+export function ScoreHero({ score, verdict, benchmark, dimensions, platform, format, youtubeFormat, accentColor, benchmarkLabelOverride, scoreRange }: ScoreHeroProps) {
   const animatedScore = useCountUp(score, 600);
   const color = scoreColor(score);
   // When accentColor is supplied, replace the "strong" green (#10b981) with it so
@@ -257,6 +260,13 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
         {verdict}
       </span>
 
+      {/* Confidence range — shown when scoreRange is provided */}
+      {scoreRange && (
+        <span className="text-[11px] text-zinc-600 font-mono mt-1">
+          {scoreRange.low.toFixed(1)} – {scoreRange.high.toFixed(1)} range
+        </span>
+      )}
+
       {/* Benchmark bar */}
       {showBenchmark && (
         <div className="w-full mt-4">
@@ -270,7 +280,7 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
         </div>
       )}
 
-      {/* Dimension grid — minimal */}
+      {/* Dimension grid — score + mini bar with optional confidence band */}
       <div className="w-full mt-4 pt-4 border-t border-white/[0.04]">
         <div className="grid grid-cols-4 gap-1.5">
           {resolvedDimensions.map((dim, i) => {
@@ -278,24 +288,47 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
             // When accentColor is provided (e.g. Display), use neutral white for tiles
             // so page accent color never bleeds into individual score tiles.
             const dimDisplayColor = accentColor != null ? '#f4f4f5' : dimColor;
+            const hasRange = dim.rangeLow != null && dim.rangeHigh != null;
             return (
               <motion.div
                 key={dim.name}
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.25, delay: i * 0.04, ease: "easeOut" }}
-                className="flex flex-col items-center gap-1 py-2.5 px-1 rounded-lg"
-                style={{
-                  background: 'rgba(255,255,255,0.015)',
-                }}
+                className="flex flex-col items-center gap-1.5 py-2.5 px-1 rounded-lg"
+                style={{ background: 'rgba(255,255,255,0.015)' }}
               >
                 <span
                   className="font-mono text-xs font-medium tabular-nums"
                   style={{ color: dimDisplayColor }}
-                  aria-label={`${dim.name}: ${dim.score.toFixed(1)} — ${dim.score >= 8 ? "Strong" : dim.score >= 4 ? "Average" : "Weak"}`}
+                  aria-label={`${dim.name}: ${dim.score.toFixed(1)} — ${dim.score >= 7 ? "Strong" : dim.score >= 5 ? "Average" : "Weak"}`}
                 >
                   {scoreIndicator(dim.score)} {dim.score.toFixed(1)}
                 </span>
+
+                {/* Mini bar track with optional confidence band */}
+                <div className="relative w-full h-[3px] bg-white/[0.06] rounded-full overflow-hidden">
+                  {/* Confidence band — lighter overlay spanning rangeLow → rangeHigh */}
+                  {hasRange && (
+                    <div
+                      className="absolute h-full rounded-full"
+                      style={{
+                        left: `${(dim.rangeLow! / 10) * 100}%`,
+                        width: `${((dim.rangeHigh! - dim.rangeLow!) / 10) * 100}%`,
+                        background: `${dimDisplayColor}30`,
+                      }}
+                    />
+                  )}
+                  {/* Score fill */}
+                  <motion.div
+                    className="absolute h-full rounded-full left-0 top-0"
+                    style={{ background: dimDisplayColor }}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${(dim.score / 10) * 100}%` }}
+                    transition={{ duration: 0.5, ease: "easeOut", delay: i * 0.04 }}
+                  />
+                </div>
+
                 <span className="text-[9px] text-zinc-500 text-center leading-tight whitespace-nowrap">
                   {dim.name}
                 </span>

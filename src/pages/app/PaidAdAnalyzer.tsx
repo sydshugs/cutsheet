@@ -1152,6 +1152,10 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                 scenes={activeResult.scenes}
                 fileName={activeResult.fileName}
                 analysisTime={analysisCompletedAt ?? undefined}
+                scoreRange={activeResult.scores ? {
+                  low:  Math.max(0,  Math.round((activeResult.scores.overall - 0.65) * 10) / 10),
+                  high: Math.min(10, Math.round((activeResult.scores.overall + 0.65) * 10) / 10),
+                } : undefined}
                 modelName="Gemini + Claude"
                 onGenerateBrief={handleGenerateBrief}
                 onAddToSwipeFile={handleAddToSwipeFile}
