@@ -950,6 +950,7 @@ export async function generateBrief(
   niche?: string,
   scores?: { hook: number; clarity: number; cta: number; production: number; overall: number } | null,
   intent?: string,
+  brandVoice?: string,
 ): Promise<string> {
   const nicheLabel = niche || "performance marketing";
   const platformLabel = platform || "paid social";
@@ -1004,7 +1005,7 @@ ${analysisMarkdown}`;
 
   return callGeminiProxy({
     prompt,
-    systemInstruction: `You are a senior creative strategist specializing in ${nicheLabel} advertising on ${platformLabel}. You write tight, actionable creative briefs for ${intentLabel} campaigns. Your briefs target the ad's specific weaknesses${weakDims.length ? ` (${weakDims.join(", ")})` : ""} — not generic improvement templates. Every recommendation must be executable by a creative team working on ${nicheLabel} ads.`,
+    systemInstruction: `You are a senior creative strategist specializing in ${nicheLabel} advertising on ${platformLabel}. You write tight, actionable creative briefs for ${intentLabel} campaigns. Your briefs target the ad's specific weaknesses${weakDims.length ? ` (${weakDims.join(", ")})` : ""} — not generic improvement templates. Every recommendation must be executable by a creative team working on ${nicheLabel} ads.${brandVoice ? `\n\n${brandVoice}` : ""}`,
     maxOutputTokens: 2048,
     temperature: 0.6,
   });
