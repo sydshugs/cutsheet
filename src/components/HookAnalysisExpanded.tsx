@@ -1,12 +1,58 @@
-// HookAnalysisExpanded — Redesigned for clarity and visual hierarchy
-// Cleaner layout with focused sections and better scanability
+// HookAnalysisExpanded — Hook type classification + platform context + alternative hook callout
+// F4: hook type pill, platform context pill, alternative hook suggestion for weak hooks
 
-import { CheckCircle2, Sparkles } from 'lucide-react';
+import { CheckCircle2, Sparkles, Tag, Monitor } from 'lucide-react';
 
 interface HookAnalysisExpandedProps {
   content: string;
   format: 'video' | 'static';
+  platform?: string;
 }
+
+/** Map raw hook type strings → canonical category for the pill */
+const HOOK_TYPE_CATEGORIES: Record<string, { label: string; color: string }> = {
+  question:      { label: 'Question Hook',       color: '#6366f1' },
+  curiosity:     { label: 'Curiosity Hook',       color: '#8b5cf6' },
+  pattern:       { label: 'Pattern Interrupt',    color: '#ec4899' },
+  'social proof':{ label: 'Social Proof Hook',   color: '#10b981' },
+  authority:     { label: 'Authority Hook',       color: '#0ea5e9' },
+  pain:          { label: 'Pain Point Hook',      color: '#ef4444' },
+  story:         { label: 'Story Hook',           color: '#f59e0b' },
+  visual:        { label: 'Visual Hook',          color: '#06b6d4' },
+  contrast:      { label: 'Contrast Hook',        color: '#a78bfa' },
+  statistics:    { label: 'Stat/Data Hook',       color: '#14b8a6' },
+  humor:         { label: 'Humor Hook',           color: '#fb923c' },
+};
+
+function classifyHookType(raw: string): { label: string; color: string } {
+  const lower = raw.toLowerCase();
+  for (const [key, val] of Object.entries(HOOK_TYPE_CATEGORIES)) {
+    if (lower.includes(key)) return val;
+  }
+  return { label: raw.split(/[—–-]/)[0].trim() || 'Hook', color: '#a1a1aa' };
+}
+
+/** Platform-specific hook best practices for the context pill */
+const PLATFORM_HOOK_CONTEXT: Record<string, string> = {
+  'Meta':            'First 3s critical — captions required',
+  'TikTok':          'Sound-on native — hook must work with audio',
+  'Instagram':       'Thumb-stop in feed — visual first',
+  'Instagram Reels': 'Hold rate determines reach',
+  'YouTube':         'Skip button at 5s — pre-skip hook essential',
+  'YouTube Shorts':  'Loop mechanic drives retention',
+  'Google Display':  'Static — headline drives click',
+  'LinkedIn':        'Professional context — value-first hook',
+};
+
+/** When hook is weak, suggest a stronger alternative hook type */
+const ALTERNATIVE_HOOKS: Record<string, string> = {
+  'Meta':            'Question or Pain Point hooks drive 2× higher thumb-stop on Meta',
+  'TikTok':          'Pattern Interrupt or Curiosity hooks perform best on TikTok',
+  'Instagram Reels': 'Story or Contrast hooks retain Reels viewers past 3s',
+  'YouTube':         'Authority or Stats hooks survive the 5s skip window',
+  'YouTube Shorts':  'Curiosity loop hooks maximize Shorts replays',
+  'Google Display':  'Pain Point or Contrast headlines lift Display CTR',
+};
 
 function parseHookData(content: string) {
   const c = content;
@@ -50,10 +96,14 @@ const SCRUBBER_DOTS = [
   { ts: '5s', pos: '100%', color: '#ef4444' },
 ];
 
-export function HookAnalysisExpanded({ content, format }: HookAnalysisExpandedProps) {
+export function HookAnalysisExpanded({ content, format, platform }: HookAnalysisExpandedProps) {
   const data = parseHookData(content);
   const strengthConfig = STRENGTH_CONFIG[data.strength];
   const isStrong = data.verdict === 'strong';
+  const isWeak = data.verdict === 'weak' || data.strength === 'weak';
+  const hookCategory = classifyHookType(data.hookType);
+  const platformContext = platform ? PLATFORM_HOOK_CONTEXT[platform] : null;
+  const alternativeHook = (isWeak && platform) ? ALTERNATIVE_HOOKS[platform] : null;
 
   // Parse video moments
   const moments = (() => {
@@ -110,6 +160,55 @@ export function HookAnalysisExpanded({ content, format }: HookAnalysisExpandedPr
           <span className="text-xs text-zinc-400">{data.hookType.split(/[—–-]/)[0].trim()}</span>
         </div>
       </div>
+
+      {/* Hook type + platform context pills */}
+      <div className="flex flex-wrap gap-2">
+        {/* Hook type pill */}
+        <div
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium"
+          style={{
+            background: `${hookCategory.color}12`,
+            border: `1px solid ${hookCategory.color}25`,
+            color: hookCategory.color,
+          }}
+        >
+          <Tag size={9} />
+          {hookCategory.label}
+        </div>
+
+        {/* Platform context pill */}
+        {platformContext && (
+          <div
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium"
+            style={{
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              color: '#71717a',
+            }}
+          >
+            <Monitor size={9} />
+            {platformContext}
+          </div>
+        )}
+      </div>
+
+      {/* Alternative hook callout — shown when hook is weak */}
+      {alternativeHook && (
+        <div
+          className="rounded-lg p-3"
+          style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.12)' }}
+        >
+          <div className="flex items-start gap-2">
+            <Sparkles size={11} style={{ color: '#6366f1', marginTop: 1, flexShrink: 0 }} />
+            <div>
+              <span className="text-[9px] font-semibold text-indigo-400 uppercase tracking-wide block mb-0.5">
+                Try instead
+              </span>
+              <p className="text-[11px] text-zinc-400 leading-relaxed">{alternativeHook}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Recommendation - subtle */}
       <div className="rounded-lg p-3 bg-white/[0.015] border border-white/[0.04]">

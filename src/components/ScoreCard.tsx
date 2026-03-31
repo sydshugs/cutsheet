@@ -378,7 +378,7 @@ export function ScoreCard({
                 title={hookSection.title}
                 icon={<Lightbulb size={14} />}
               >
-                <HookAnalysisExpanded content={hookSection.content} format={format ?? 'static'} />
+                <HookAnalysisExpanded content={hookSection.content} format={format ?? 'static'} platform={platform} />
               </CollapsibleSection>
             </div>
           );
