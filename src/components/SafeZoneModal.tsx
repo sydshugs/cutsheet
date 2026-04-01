@@ -1,8 +1,6 @@
 import { useState, useCallback } from "react";
-import { X, Shield, AlertTriangle, CheckCircle2, Loader2, Sparkles, XCircle } from "lucide-react";
-import { cn } from "../lib/utils";
+import { X, Shield, AlertTriangle, CheckCircle2, Loader2, Sparkles, XCircle, Wand2 } from "lucide-react";
 import { supabase } from "../lib/supabase";
-import { SafeZonePreview } from "./SafeZonePreview";
 
 const PLATFORMS = [
   { key: "tiktok",            label: "TikTok" },
@@ -16,14 +14,13 @@ const PLATFORMS = [
 type PlatformKey = (typeof PLATFORMS)[number]["key"];
 
 // 2026 safe zone specs — pixel values on a 1080×1920 (9:16) canvas.
-// Each platform has organic and paid variants; paid always clears more bottom space.
 export const SAFE_ZONE_CONFIG = {
   tiktok: {
-    organic: { top: 131, bottom: 370, left: 120, right: 140 }, // right updated Jan 2026 (+20px Add to Playlist)
+    organic: { top: 131, bottom: 370, left: 120, right: 140 },
     paid:    { top: 131, bottom: 420, left: 120, right: 140 },
   },
   instagram_reels: {
-    organic: { top: 108, bottom: 370, left: 60, right: 120 }, // bottom updated late 2025 (+50px audio bar)
+    organic: { top: 108, bottom: 370, left: 60, right: 120 },
     paid:    { top: 108, bottom: 400, left: 60, right: 120 },
   },
   instagram_stories: {
@@ -35,7 +32,7 @@ export const SAFE_ZONE_CONFIG = {
     paid:    { top: 160, bottom: 520, left: 120, right: 120 },
   },
   facebook_reels: {
-    organic: { top: 108, bottom: 370, left: 60, right: 120 }, // unified with IG Reels March 2026
+    organic: { top: 108, bottom: 370, left: 60, right: 120 },
     paid:    { top: 108, bottom: 400, left: 60, right: 120 },
   },
   universal: {
@@ -44,7 +41,7 @@ export const SAFE_ZONE_CONFIG = {
   },
 } as const;
 
-// Per-platform placement tips — reference updated 2026 pixel values
+// Per-platform placement tips — 2026 pixel values
 const PLATFORM_TIPS: Record<PlatformKey, string[]> = {
   tiktok: [
     "Top 131px: status bar, live indicator, and back button",
@@ -84,7 +81,17 @@ const PLATFORM_TIPS: Record<PlatformKey, string[]> = {
   ],
 };
 
-// Map modal platform keys → API's platform keys (API uses legacy short-form keys)
+// Platform update notes (amber callout)
+const PLATFORM_UPDATES: Record<PlatformKey, string> = {
+  tiktok:            "Add to Playlist icon added to right rail (Jan 2026) — right margin increased from 120px to 140px.",
+  instagram_reels:   "Audio bar expanded in late 2025 — bottom margin increased from 320px to 370px organic.",
+  instagram_stories: "Story UI unchanged since 2024 — specs remain stable at 250px top and bottom.",
+  youtube_shorts:    "Shorts redesign (Q4 2025) added persistent search bar — top margin updated from 140px to 160px.",
+  facebook_reels:    "Unified with IG Reels specs in March 2026 — same margins now apply across both placements.",
+  universal:         "Universal margins cover all platforms. When in doubt, use these for cross-platform campaigns.",
+};
+
+// Map modal platform keys → API platform keys
 const API_PLATFORM_MAP: Record<PlatformKey, string> = {
   tiktok:            "tiktok",
   instagram_reels:   "ig_reels",
@@ -109,18 +116,101 @@ interface AIResult {
   overall_risk: string;
 }
 
+// ─── PHONE PREVIEW ───────────────────────────────────────────────────────────
+
+// Safe zone percentages derived from 1080×1920 pixel values
+function toSafeZonePct(dims: { top: number; bottom: number; left: number; right: number }) {
+  return {
+    top:    (dims.top    / 1920) * 100,
+    bottom: (dims.bottom / 1920) * 100,
+    left:   (dims.left   / 1080) * 100,
+    right:  (dims.right  / 1080) * 100,
+  };
+}
+
+function PhoneMockup({ imageUrl, platform, mode }: { imageUrl: string; platform: PlatformKey; mode: "organic" | "paid" }) {
+  const dims = SAFE_ZONE_CONFIG[platform][mode];
+  const pct = toSafeZonePct(dims);
+
+  return (
+    <div
+      className="relative overflow-hidden"
+      style={{
+        width: 285,
+        aspectRatio: '9/16',
+        background: '#18181b',
+        border: '1px solid rgba(255,255,255,0.1)',
+        borderRadius: 17.5,
+      }}
+    >
+      {/* Ad image */}
+      {imageUrl ? (
+        <img
+          src={imageUrl}
+          alt="Ad creative"
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ opacity: 0.9 }}
+        />
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-[#3f3f46] text-xs font-medium">No image</span>
+        </div>
+      )}
+
+      {/* Top danger zone */}
+      {pct.top > 0 && (
+        <div
+          className="absolute top-0 left-0 right-0 pointer-events-none"
+          style={{ height: `${pct.top}%`, background: 'rgba(251,44,54,0.2)' }}
+        />
+      )}
+
+      {/* Bottom danger zone */}
+      {pct.bottom > 0 && (
+        <div
+          className="absolute bottom-0 left-0 right-0 pointer-events-none"
+          style={{ height: `${pct.bottom}%`, background: 'rgba(251,44,54,0.2)' }}
+        />
+      )}
+
+      {/* Right danger zone */}
+      {pct.right > 0 && (
+        <div
+          className="absolute top-0 bottom-0 right-0 pointer-events-none"
+          style={{ width: `${pct.right}%`, background: 'rgba(251,44,54,0.2)' }}
+        />
+      )}
+
+      {/* Left danger zone */}
+      {pct.left > 0 && (
+        <div
+          className="absolute top-0 bottom-0 left-0 pointer-events-none"
+          style={{ width: `${pct.left}%`, background: 'rgba(251,44,54,0.2)' }}
+        />
+      )}
+
+      {/* Safe zone border */}
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          top: `${pct.top}%`,
+          bottom: `${pct.bottom}%`,
+          left: `${pct.left}%`,
+          right: `${pct.right}%`,
+          border: '2.2px dashed rgba(0,188,125,0.8)',
+          borderRadius: 8.76,
+        }}
+      />
+    </div>
+  );
+}
+
 // ─── PROPS ───────────────────────────────────────────────────────────────────
 
 interface SafeZoneModalProps {
   open: boolean;
   onClose: () => void;
-  /**
-   * Image source for preview + AI detection — accepts blob URL (images) or
-   * data URL (video thumbnails). Converted to base64 client-side before
-   * sending to the API so both formats work correctly.
-   */
   thumbnailSrc?: string;
-  /** Whether this is organic or paid content — affects AI prompt context */
   mode?: "organic" | "paid";
 }
 
@@ -135,14 +225,12 @@ export function SafeZoneModal({ open, onClose, thumbnailSrc, mode = "paid" }: Sa
 
   const handlePlatformChange = useCallback((platform: PlatformKey) => {
     setActivePlatform(platform);
-    // Reset AI results when switching platforms — different safe zones
     setAiResult(null);
     setAiError(null);
   }, []);
 
   const handleModeChange = useCallback((m: "organic" | "paid") => {
     setActiveMode(m);
-    // Reset AI results when switching mode — safe zone dims differ
     setAiResult(null);
     setAiError(null);
   }, []);
@@ -159,14 +247,11 @@ export function SafeZoneModal({ open, onClose, thumbnailSrc, mode = "paid" }: Sa
         return;
       }
 
-      // Convert thumbnailSrc (blob URL or data URL) to pure base64.
-      // fetch() works for both blob: and data: URLs in the browser.
       const fetchedBlob = await fetch(thumbnailSrc).then((r) => r.blob());
       const base64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => {
           const result = reader.result as string;
-          // Strip the data URL prefix (data:image/jpeg;base64,) to get raw base64
           resolve(result.replace(/^data:[^;]+;base64,/, ""));
         };
         reader.onerror = reject;
@@ -202,20 +287,10 @@ export function SafeZoneModal({ open, onClose, thumbnailSrc, mode = "paid" }: Sa
 
   if (!open) return null;
 
-  // Pick dims from the 2026 config based on active platform + activeMode
-  const dims = SAFE_ZONE_CONFIG[activePlatform][activeMode];
-  const tips = PLATFORM_TIPS[activePlatform];
   const platformLabel = PLATFORMS.find((p) => p.key === activePlatform)?.label ?? activePlatform;
+  const tips = PLATFORM_TIPS[activePlatform];
+  const updateNote = PLATFORM_UPDATES[activePlatform];
 
-  // Convert pixel dims to percentages for SafeZonePreview (which uses % not px)
-  const safeZonePct = {
-    top: (dims.top / 1920) * 100,
-    bottom: (dims.bottom / 1920) * 100,
-    left: (dims.left / 1080) * 100,
-    right: (dims.right / 1080) * 100,
-  };
-
-  // Risk level styling
   const riskStyles: Record<string, { bg: string; border: string; text: string; label: string }> = {
     high:    { bg: 'rgba(239,68,68,0.08)',    border: 'rgba(239,68,68,0.25)',    text: '#f87171', label: 'High Risk' },
     medium:  { bg: 'rgba(245,158,11,0.08)',   border: 'rgba(245,158,11,0.25)',   text: '#fbbf24', label: 'Medium Risk' },
@@ -241,76 +316,113 @@ export function SafeZoneModal({ open, onClose, thumbnailSrc, mode = "paid" }: Sa
         role="dialog"
         aria-modal="true"
         aria-label="Safe Zone Check"
-        className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl border border-white/[0.08] shadow-2xl"
-        style={{ background: 'var(--surface, #18181b)' }}
+        className="relative w-full max-h-[92vh] overflow-y-auto font-['Geist',sans-serif]"
+        style={{
+          maxWidth: 820,
+          background: '#18181b',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 17.5,
+          boxShadow: '0px 27.4px 54.8px -13.1px rgba(0,0,0,0.25)',
+        }}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
-          <div className="flex items-center gap-2.5">
+        {/* ── Header ── */}
+        <div
+          className="flex items-center justify-between px-[26px]"
+          style={{ height: 75.5, borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+        >
+          <div className="flex items-center gap-3">
             <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center"
-              style={{ background: 'rgba(99,102,241,0.12)' }}
+              className="flex items-center justify-center shrink-0"
+              style={{
+                width: 35,
+                height: 35,
+                background: 'rgba(14,165,233,0.12)',
+                border: '1px solid rgba(14,165,233,0.08)',
+                borderRadius: 10,
+              }}
             >
-              <Shield size={16} style={{ color: '#818cf8' }} />
+              <Shield size={15} style={{ color: '#38bdf8' }} />
             </div>
-            <div>
-              <h2 className="text-sm font-semibold text-zinc-100">Safe Zone Check</h2>
-              <p className="text-[11px] text-zinc-500">Red zones = platform UI overlap risk</p>
+            <div className="flex flex-col gap-0.5">
+              <h2
+                className="font-semibold text-[#f4f4f5]"
+                style={{ fontSize: 15.3, letterSpacing: -0.165 }}
+              >
+                Safe Zone Check
+              </h2>
+              <p className="text-[#71717b]" style={{ fontSize: 12 }}>
+                Red zones = platform UI overlap risk
+              </p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close safe zone modal"
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-500 hover:text-zinc-300 transition-opacity cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50"
-            style={{ background: 'transparent' }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+            className="flex items-center justify-center text-[#71717b] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50"
+            style={{
+              width: 30.7,
+              height: 30.7,
+              borderRadius: 10,
+              background: 'transparent',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+              e.currentTarget.style.color = '#d4d4d8';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.color = '#71717b';
+            }}
           >
             <X size={14} />
           </button>
         </div>
 
-        {/* Platform tabs + Organic/Paid toggle */}
-        <div className="px-6 pt-4 flex flex-wrap items-center gap-3">
-          <div className="flex flex-wrap gap-1.5">
-            {PLATFORMS.map((p) => (
-              <button
-                key={p.key}
-                type="button"
-                onClick={() => handlePlatformChange(p.key)}
-                className={cn(
-                  "px-3 py-1.5 rounded-full text-xs font-medium transition-opacity cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50",
-                  activePlatform === p.key
-                    ? "text-white"
-                    : "text-zinc-400 border border-white/[0.06]"
-                )}
-                style={
-                  activePlatform === p.key
-                    ? { background: 'var(--accent, #6366f1)' }
-                    : { background: 'rgba(255,255,255,0.04)' }
-                }
-              >
-                {p.label}
-              </button>
-            ))}
+        {/* ── Platform tabs + organic/paid toggle ── */}
+        <div className="px-[26px] pt-[22px] pb-5 flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap gap-2">
+            {PLATFORMS.map((p) => {
+              const isActive = activePlatform === p.key;
+              return (
+                <button
+                  key={p.key}
+                  type="button"
+                  onClick={() => handlePlatformChange(p.key)}
+                  className="cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50"
+                  style={{
+                    height: isActive ? 30.7 : 32.9,
+                    padding: '0 14px',
+                    borderRadius: 999,
+                    fontSize: 13.1,
+                    fontWeight: 500,
+                    background: isActive ? '#615fff' : 'rgba(255,255,255,0.04)',
+                    border: isActive ? 'none' : '1px solid rgba(255,255,255,0.06)',
+                    color: isActive ? '#fff' : '#9f9fa9',
+                    boxShadow: isActive ? '0 1px 4px rgba(97,95,255,0.3)' : 'none',
+                  }}
+                >
+                  {p.label}
+                </button>
+              );
+            })}
           </div>
 
           {/* Organic / Paid toggle */}
           <div
-            className="flex items-center gap-0.5 p-0.5 rounded-full shrink-0"
-            style={{ background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.08)' }}
+            className="flex items-center gap-0.5 p-0.5 rounded-full shrink-0 ml-auto"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
           >
             {(["organic", "paid"] as const).map((m) => (
               <button
                 key={m}
                 type="button"
                 onClick={() => handleModeChange(m)}
-                className="px-3 py-1 rounded-full text-xs font-medium capitalize cursor-pointer transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50"
+                className="px-3 py-1 rounded-full text-xs font-medium capitalize cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50"
                 style={
                   activeMode === m
-                    ? { background: 'var(--accent, #6366f1)', color: '#fff' }
-                    : { background: 'transparent', color: 'rgba(161,161,170,1)' }
+                    ? { background: '#615fff', color: '#fff' }
+                    : { background: 'transparent', color: '#9f9fa9' }
                 }
               >
                 {m}
@@ -319,41 +431,72 @@ export function SafeZoneModal({ open, onClose, thumbnailSrc, mode = "paid" }: Sa
           </div>
         </div>
 
-        {/* Content */}
-        <div className="p-6 flex flex-col md:flex-row gap-6">
-          {/* Phone frame preview — polished v0 SafeZonePreview */}
-          <div className="shrink-0">
-            <SafeZonePreview
+        {/* ── Main content ── */}
+        <div className="px-[26px] pb-[26px] flex flex-col md:flex-row gap-6">
+
+          {/* Left: phone mockup + AI button */}
+          <div className="shrink-0 flex flex-col gap-3">
+            <PhoneMockup
               imageUrl={thumbnailSrc ?? ""}
               platform={activePlatform}
               mode={activeMode}
-              safeZoneConfig={safeZonePct}
             />
 
-            {/* AI Check button — only shown when image is available */}
+            {/* Legend */}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <div
+                  style={{
+                    width: 13.1,
+                    height: 13.1,
+                    borderRadius: 8.76,
+                    background: 'rgba(251,44,54,0.2)',
+                    border: '1px solid rgba(251,44,54,0.5)',
+                  }}
+                />
+                <span className="text-[#71717b]" style={{ fontSize: 11 }}>Danger zone</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div
+                  style={{
+                    width: 13.1,
+                    height: 0,
+                    borderTop: '2.2px dashed rgba(0,188,125,0.8)',
+                  }}
+                />
+                <span className="text-[#71717b]" style={{ fontSize: 11 }}>Safe zone</span>
+              </div>
+            </div>
+
+            {/* Check with AI button */}
             {thumbnailSrc && (
               <button
                 type="button"
                 onClick={handleCheckWithAI}
                 disabled={aiLoading}
                 aria-label="Check this creative for safe zone violations using AI"
-                className="mt-3 w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                className="flex items-center justify-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 style={{
-                  background: 'rgba(99,102,241,0.12)',
-                  border: '0.5px solid rgba(99,102,241,0.3)',
-                  color: '#818cf8',
+                  width: 285,
+                  height: 41.6,
+                  borderRadius: 26.3,
+                  background: 'rgba(97,95,255,0.1)',
+                  border: '1px solid rgba(97,95,255,0.3)',
+                  color: '#a3b3ff',
+                  fontSize: 13.1,
+                  fontWeight: 600,
                 }}
-                onMouseEnter={(e) => { if (!aiLoading) e.currentTarget.style.background = 'rgba(99,102,241,0.2)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(99,102,241,0.12)'; }}
+                onMouseEnter={(e) => { if (!aiLoading) e.currentTarget.style.background = 'rgba(97,95,255,0.18)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(97,95,255,0.1)'; }}
               >
                 {aiLoading ? (
                   <>
-                    <Loader2 size={11} className="animate-spin" />
+                    <Loader2 size={13} className="animate-spin" />
                     Scanning…
                   </>
                 ) : (
                   <>
-                    <Sparkles size={11} />
+                    <Wand2 size={13} />
                     Check with AI
                   </>
                 )}
@@ -361,84 +504,95 @@ export function SafeZoneModal({ open, onClose, thumbnailSrc, mode = "paid" }: Sa
             )}
           </div>
 
-          {/* Tips + warning */}
-          <div className="flex-1 flex flex-col min-w-0">
-            <h3 className="text-xs font-semibold text-zinc-200 mb-4">
-              {platformLabel} — {activeMode === "paid" ? "Paid" : "Organic"}
-            </h3>
+          {/* Right: guidelines */}
+          <div className="flex-1 flex flex-col min-w-0 gap-5">
+            {/* Section title */}
+            <span
+              className="font-semibold text-[#e4e4e7] uppercase"
+              style={{ fontSize: 13.1, letterSpacing: 0.33 }}
+            >
+              {platformLabel} Guidelines
+            </span>
 
-            <div className="space-y-3 mb-5">
+            {/* Tips */}
+            <div className="flex flex-col gap-4">
               {tips.map((tip, i) => (
-                <div key={i} className="flex items-start gap-2.5">
+                <div key={i} className="flex items-start gap-3">
                   <CheckCircle2
-                    size={13}
+                    size={15.3}
                     className="shrink-0 mt-0.5"
                     style={{ color: '#10b981' }}
                   />
-                  <span className="text-[12px] text-zinc-400 leading-[1.55] break-words min-w-0">{tip}</span>
+                  <span className="text-[#9f9fa9] leading-[1.63]" style={{ fontSize: 13.1 }}>
+                    {tip}
+                  </span>
                 </div>
               ))}
             </div>
 
-            {/* Warning callout */}
+            {/* Platform update callout — amber */}
             <div
-              className="mt-auto rounded-xl p-3.5 flex items-start gap-2.5"
+              className="flex items-start gap-3 mt-auto"
               style={{
-                background: 'rgba(239,68,68,0.05)',
-                border: '0.5px solid rgba(239,68,68,0.15)',
+                background: 'rgba(254,154,0,0.05)',
+                border: '1px solid rgba(254,154,0,0.2)',
+                borderRadius: 26.3,
+                padding: '17.5px',
               }}
             >
-              <AlertTriangle size={13} className="shrink-0 mt-0.5 text-red-400" />
-              <p className="text-[11px] text-zinc-500 leading-[1.55]">
-                Content placed in red zones risks being hidden by platform UI elements — navigation bars, action buttons, captions, and system indicators. Always verify on a real device before publishing.
+              <AlertTriangle
+                size={15.3}
+                className="shrink-0 mt-0.5"
+                style={{ color: '#f59e0b' }}
+              />
+              <p className="text-[#71717b]" style={{ fontSize: 12 }}>
+                <span className="font-semibold text-[#d4d4d8]">Platform Update: </span>
+                {updateNote}
               </p>
             </div>
           </div>
         </div>
 
-        {/* ── AI Results section ─────────────────────────────────────────────── */}
+        {/* ── AI Results section ── */}
         {(aiResult || aiError) && (
-          <div className="px-6 pb-6">
+          <div className="px-[26px] pb-[26px]">
             <div
               className="rounded-xl overflow-hidden"
-              style={{ border: '0.5px solid rgba(255,255,255,0.06)' }}
+              style={{ border: '1px solid rgba(255,255,255,0.06)' }}
             >
               {/* Results header */}
               <div
                 className="flex items-center justify-between px-4 py-3"
-                style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}
+                style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
               >
                 <div className="flex items-center gap-2">
                   <Sparkles size={12} style={{ color: '#818cf8' }} />
-                  <span className="text-[11px] font-semibold text-zinc-300">AI Detection Results</span>
+                  <span className="text-[11px] font-semibold text-[#d4d4d8]">AI Detection Results</span>
                 </div>
                 {aiResult && (
                   <span
                     className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
-                    style={{ background: riskStyle.bg, border: `0.5px solid ${riskStyle.border}`, color: riskStyle.text }}
+                    style={{ background: riskStyle.bg, border: `1px solid ${riskStyle.border}`, color: riskStyle.text }}
                   >
                     {riskStyle.label}
                   </span>
                 )}
               </div>
 
-              {/* Error state */}
               {aiError && (
                 <div className="flex items-start gap-2.5 px-4 py-3">
                   <XCircle size={13} className="shrink-0 mt-0.5 text-red-400" />
-                  <p className="text-[12px] text-zinc-400">{aiError}</p>
+                  <p className="text-[12px] text-[#9f9fa9]">{aiError}</p>
                 </div>
               )}
 
-              {/* No issues */}
               {aiResult && aiResult.issues.length === 0 && (
                 <div className="flex items-center gap-2.5 px-4 py-4">
                   <CheckCircle2 size={14} style={{ color: '#10b981' }} className="shrink-0" />
-                  <p className="text-[12px] text-zinc-300 font-medium">All key elements are within the safe zone.</p>
+                  <p className="text-[12px] text-[#d4d4d8] font-medium">All key elements are within the safe zone.</p>
                 </div>
               )}
 
-              {/* Issues list */}
               {aiResult && aiResult.issues.length > 0 && (
                 <div className="divide-y divide-white/[0.04]">
                   {aiResult.issues.map((issue, i) => (
@@ -461,11 +615,11 @@ export function SafeZoneModal({ open, onClose, thumbnailSrc, mode = "paid" }: Sa
                           >
                             {issue.severity}
                           </span>
-                          <span className="text-[11px] font-medium text-zinc-200 truncate">{issue.element}</span>
+                          <span className="text-[11px] font-medium text-[#d4d4d8] truncate">{issue.element}</span>
                         </div>
-                        <p className="text-[11px] text-zinc-500 mb-1">{issue.location}</p>
-                        <p className="text-[11px] text-zinc-400">
-                          <span className="text-zinc-500 mr-1">Fix:</span>
+                        <p className="text-[11px] text-[#71717b] mb-1">{issue.location}</p>
+                        <p className="text-[11px] text-[#9f9fa9]">
+                          <span className="text-[#71717b] mr-1">Fix:</span>
                           {issue.fix}
                         </p>
                       </div>
@@ -474,19 +628,18 @@ export function SafeZoneModal({ open, onClose, thumbnailSrc, mode = "paid" }: Sa
                 </div>
               )}
 
-              {/* Safe elements */}
               {aiResult && aiResult.safe_elements.length > 0 && (
                 <div
                   className="px-4 py-3"
-                  style={{ borderTop: '0.5px solid rgba(255,255,255,0.04)' }}
+                  style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}
                 >
-                  <p className="text-[10px] text-zinc-600 uppercase tracking-wider mb-2 font-medium">Correctly placed</p>
+                  <p className="text-[10px] text-[#52525c] uppercase tracking-wider mb-2 font-medium">Correctly placed</p>
                   <div className="flex flex-wrap gap-1.5">
                     {aiResult.safe_elements.map((el, i) => (
                       <span
                         key={i}
-                        className="text-[11px] text-zinc-400 px-2 py-0.5 rounded-full"
-                        style={{ background: 'rgba(16,185,129,0.08)', border: '0.5px solid rgba(16,185,129,0.2)' }}
+                        className="text-[11px] text-[#9f9fa9] px-2 py-0.5 rounded-full"
+                        style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)' }}
                       >
                         ✓ {el}
                       </span>

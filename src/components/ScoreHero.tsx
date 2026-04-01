@@ -165,7 +165,7 @@ export function ScoreHero({
             </span>
             <div className="flex items-baseline gap-0 leading-none">
               <span
-                className="text-[57px] font-bold leading-none tracking-tight"
+                className="text-[52px] font-bold leading-none tracking-tight"
                 style={{ color: effectiveColor }}
               >
                 {animatedScore.toFixed(1)}
