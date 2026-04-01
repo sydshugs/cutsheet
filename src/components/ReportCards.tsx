@@ -16,7 +16,6 @@ import { CreativeAnalysis } from "./CreativeAnalysis";
 import { CreativeVerdictAndSecondEye } from "./CreativeVerdictAndSecondEye";
 import { DesignReviewCard } from "./DesignReviewCard";
 import { MotionTestIdeaCard } from "./MotionTestIdeaCard";
-import { MotionPreviewPlayer } from "./MotionPreviewPlayer";
 import PlatformScoreCard from "./PlatformScoreCard";
 
 interface ReportCardsProps {
@@ -635,127 +634,35 @@ export function ReportCards({
         </motion.div>
       )}
 
-      {/* ─── Motion Test Idea — Premium redesign with cinematic feel (paid only) ─── */}
-      {!isOrganic && <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: 'easeOut', delay: 0.18 }}>
-      {centerSections.filter(s => /motion.*(?:test|idea)/i.test(s.title ?? '')).map((section, i) => {
-        const conceptText = section.content
+
+      {/* ─── Motion Test Idea — matches Figma node 217:2401 ─── */}
+      {!isOrganic && (() => {
+        const motionSection = centerSections.find(s => /motion.*(?:test|idea)/i.test(s.title ?? ''));
+        if (!motionSection) return null;
+        // Parse AI-derived phase descriptions (comma-separated clauses)
+        const conceptText = motionSection.content
           .replace(/^MOTION TEST IDEA:\s*/i, '')
-          .replace(/^-\s*Primary emotion.*$/gim, '')
-          .replace(/^-\s*Tone:.*$/gim, '')
-          .replace(/^-\s*Does the emotion.*$/gim, '')
-          .replace(/\*\*/g, '')
-          .replace(/[-\s]+$/, '')
-          .trim();
-        
-        // Parse concept into phases - ensure we always have 3
+          .replace(/\*\*/g, '').trim();
         const rawPhases = conceptText.split(/,\s*then\s+|,\s*ending\s+with\s+|,\s*followed\s+by\s+/i).filter(Boolean);
-        const phases = [
-          rawPhases[0] || 'Opening scene',
-          rawPhases[1] || 'Main transition',
-          rawPhases[2] || 'Product reveal with CTA'
+        const phaseDescs: [string, string, string] = [
+          rawPhases[0]?.trim() || 'Fast-paced jump cuts. High contrast visual hook.',
+          rawPhases[1]?.trim() || 'Quick UI zoom. Satisfying synchronized audio cue.',
+          rawPhases[2]?.trim() || 'Pulsing CTA button. Instant offer presentation.',
         ];
-        
-        // Brand guide colors
-        const phaseConfig = [
-          { label: 'Opening', time: '0-2s', color: '#818cf8' },
-          { label: 'Transition', time: '2-5s', color: '#10b981' },
-          { label: 'Payoff', time: '5-8s', color: '#f59e0b' },
-        ];
-        
-        const platformTag = platform ?? 'Meta';
-        const durationTag = '6–8s';
-        
         return (
-          <div key={`motion-${i}`} className="relative rounded-xl overflow-hidden mt-4 border border-white/[0.05] bg-white/[0.015] backdrop-blur-sm">
-            {/* Header */}
-            <div className="relative flex items-center justify-between px-4 py-3 border-b border-white/[0.04]">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-white/[0.04] flex items-center justify-center">
-                  <Film size={14} className="text-zinc-400" />
-                </div>
-                <div>
-                  <span className="text-[13px] font-medium text-zinc-200">Motion Test Idea</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-[9px] font-medium bg-white/[0.04] rounded-md px-2 py-1 text-zinc-500">{platformTag}</span>
-                <span className="text-[9px] font-medium bg-white/[0.04] rounded-md px-2 py-1 text-zinc-500">{durationTag}</span>
-              </div>
-            </div>
-            
-            {/* Storyboard section */}
-            <div className="relative p-4">
-              {/* Phase cards */}
-              <div className="grid grid-cols-3 gap-2 mb-4">
-                {phaseConfig.map((config, pi) => (
-                  <div 
-                    key={pi} 
-                    className="rounded-lg p-3 border border-white/[0.04] bg-white/[0.02]"
-                  >
-                    {/* Phase header */}
-                    <div className="flex items-center justify-between mb-2">
-                      <span 
-                        className="text-[10px] font-semibold uppercase tracking-wide"
-                        style={{ color: config.color }}
-                      >
-                        {config.label}
-                      </span>
-                      <span className="text-[9px] font-mono text-zinc-600">{config.time}</span>
-                    </div>
-                    
-                    {/* Phase description */}
-                    <p className="text-[11px] text-zinc-400 leading-relaxed">
-                      {phases[pi].trim().charAt(0).toUpperCase() + phases[pi].trim().slice(1).replace(/^product and cta$/i, 'Product reveal with clear CTA')}
-                    </p>
-                  </div>
-                ))}
-              </div>
-              
-              {/* Timeline bar */}
-              <div className="relative mb-4">
-                <div className="flex items-center h-1 rounded-full overflow-hidden bg-white/[0.04]">
-                  {phaseConfig.map((config, pi) => (
-                    <div 
-                      key={pi} 
-                      className="flex-1 h-full"
-                      style={{ background: `${config.color}50` }} 
-                    />
-                  ))}
-                </div>
-                {/* Time labels */}
-                <div className="flex justify-between mt-1.5">
-                  <span className="text-[8px] font-mono text-zinc-600">0s</span>
-                  <span className="text-[8px] font-mono text-zinc-600">2s</span>
-                  <span className="text-[8px] font-mono text-zinc-600">5s</span>
-                  <span className="text-[8px] font-mono text-zinc-600">8s</span>
-                </div>
-              </div>
-
-              {/* Performance insight */}
-              <div className="flex items-center gap-2 text-[10px] text-zinc-500">
-                <TrendingUp size={12} className="text-zinc-500" />
-                <span>Motion ads drive 2-3x higher engagement on {platformTag}</span>
-              </div>
-              
-              {/* Motion Preview — animates original image, no Gemini edit */}
-              {format === 'static' && (
-                <div className="mt-3">
-                  <MotionPreviewPlayer
-                    videoUrl={motionVideoUrl}
-                    stillFrameUrl={thumbnailDataUrl}
-                    isLoading={!!motionLoading}
-                    loadingLabel="Generating 5s video clip..."
-                    onAnimate={!motionVideoUrl && !motionLoading ? onMotionPreview : undefined}
-                    error={motionError}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: 'easeOut', delay: 0.18 }}>
+            <MotionTestIdeaCard
+              platform={platform ?? undefined}
+              phaseDescs={phaseDescs}
+              onGenerate={!motionVideoUrl && !motionLoading ? onMotionPreview : undefined}
+              isGenerating={!!motionLoading}
+              videoUrl={motionVideoUrl}
+              error={motionError}
+            />
+          </motion.div>
         );
-      })}
+      })()}
 
-      </motion.div>}
 
       {/* Pacing & Retention — VIDEO ONLY, redesigned to match branding */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: 'easeOut', delay: 0.24 }}>
