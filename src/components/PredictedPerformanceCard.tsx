@@ -90,15 +90,8 @@ export default function PredictedPerformanceCard({ prediction, platform, niche: 
     )
   }
 
-  // Unavailable state (API failed or no data)
-  if (!prediction) {
-    return (
-      <div className="w-full bg-[#18181b] border border-white/[0.06] rounded-[17px] p-5 flex flex-col gap-3 font-['Geist',sans-serif]">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#71717b]">PREDICTED PERFORMANCE</span>
-        <p className="text-[13px] text-[#52525c]">Prediction unavailable for this analysis.</p>
-      </div>
-    )
-  }
+  // No data — component should not be rendered (gated by parent)
+  if (!prediction) return null;
 
   const organic = isOrganic || prediction.isOrganic
   const badge = CONFIDENCE_BADGE[prediction.confidence] ?? CONFIDENCE_BADGE.Medium

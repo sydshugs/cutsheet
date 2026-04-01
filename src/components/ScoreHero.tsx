@@ -198,14 +198,14 @@ export function ScoreHero({
                 You · {score.toFixed(1)}
               </span>
               <div
-                className="rounded-full border flex items-center gap-[7px] px-[14px] shrink-0"
+                className="rounded-full border flex items-center gap-[7px] px-[14px] min-w-0 overflow-hidden"
                 style={{
                   height: 33,
                   borderColor: aboveBenchmark ? 'rgba(0,188,125,0.2)' : 'rgba(239,68,68,0.2)',
                 }}
               >
                 <span
-                  className="font-mono text-[12px] whitespace-nowrap"
+                  className="font-mono text-[12px] truncate"
                   style={{ color: aboveBenchmark ? '#00d492' : '#f87171' }}
                 >
                   {benchmarkDiffText}
