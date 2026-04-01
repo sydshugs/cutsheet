@@ -46,7 +46,7 @@ export function CollapsibleSection({
             </span>
           )}
           <span
-            className="text-[14px] font-medium transition-colors"
+            className="text-[15px] font-medium transition-colors"
             style={{ color: open ? "rgba(255,255,255,0.85)" : "#d4d4d8" }}
           >
             {title}

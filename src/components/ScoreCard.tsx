@@ -5,7 +5,7 @@
 import { useEffect, useState } from "react";
 import { HookAnalysisExpanded } from "./HookAnalysisExpanded";
 import { HashtagsC2 } from "./HashtagsC2";
-import { Copy, CheckCircle, Loader2, RotateCcw, Lightbulb } from "lucide-react";
+import { Copy, CheckCircle, Loader2, RotateCcw, Activity } from "lucide-react";
 import type { BudgetRecommendation, Hashtags, Scene, HookDetail } from "../services/analyzerService";
 import type { EngineBudgetRecommendation } from "../services/budgetService";
 import { getNicheAwareBenchmark, type BenchmarkResult } from "../lib/benchmarks";
@@ -307,7 +307,7 @@ export function ScoreCard({
               <div className="border-b border-white/[0.04]">
                 <CollapsibleSection
                   title={hookSection.title}
-                  icon={<Lightbulb size={14} />}
+                  icon={<Activity size={14} />}
                 >
                   <HookAnalysisExpanded content={hookSection.content} format={format ?? 'static'} platform={platform} />
                 </CollapsibleSection>

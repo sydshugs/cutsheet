@@ -98,7 +98,7 @@ export function HashtagsC2({ hashtags, format }: HashtagsC2Props) {
             <button
               onClick={handleCopy}
               className="text-xs font-medium cursor-pointer transition-colors px-2 py-1 rounded-md hover:bg-white/[0.04]"
-              style={{ color: copied ? '#10b981' : '#818cf8', background: 'transparent', border: 'none' }}
+              style={{ color: copied ? '#10b981' : '#7c86ff', background: 'transparent', border: 'none' }}
             >
               {copied ? 'Copied!' : 'Copy all'}
             </button>
@@ -136,7 +136,8 @@ export function HashtagsC2({ hashtags, format }: HashtagsC2Props) {
               {visibleTags.map(tag => (
                 <span
                   key={tag}
-                  className="text-xs px-3 py-1.5 rounded-lg bg-white/[0.03] text-zinc-400 hover:bg-white/[0.05] hover:text-zinc-300 transition-colors cursor-default border border-white/[0.04]"
+                  className="text-[13px] px-[11px] py-[4px] rounded-full text-[#9f9fa9] cursor-default"
+                  style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}
                 >
                   #{tag}
                 </span>
