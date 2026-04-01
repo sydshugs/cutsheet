@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback, useEffect, type RefObject } from "react";
-import { Upload, Video, Image } from "lucide-react";
+import { CloudUpload, Video, Image } from "lucide-react";
 import { sanitizeFileName } from "../utils/sanitize";
 
 interface VideoDropzoneProps {
@@ -115,94 +115,80 @@ export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, 
 
   // Empty state — dropzone
   if (!file) {
-    const formatPills = acceptImages ? ["MP4", "MOV", "WEBM", "JPG", "PNG", "WEBP"] : ["MP4", "MOV", "WEBM"];
+    const hintText = acceptImages ? "MP4 · MOV · JPG · PNG · up to 500MB" : "MP4 · MOV · WEBM · up to 500MB";
     return (
       <div className="w-full max-w-[640px] mx-auto">
-        <div className="bg-zinc-900/50 backdrop-blur-xl rounded-3xl border border-white/5 p-4 md:p-8">
-          <div
-            onClick={() => !disabled && fileInputRef.current?.click()}
-            onDrop={onDrop}
-            onDragOver={onDragOver}
-            onDragLeave={onDragLeave}
-            role="button"
-            aria-label="Drop your creative here to upload"
-            aria-describedby="dropzone-hints"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                if (!disabled) fileInputRef.current?.click();
-              }
+        <div
+          onClick={() => !disabled && fileInputRef.current?.click()}
+          onDrop={onDrop}
+          onDragOver={onDragOver}
+          onDragLeave={onDragLeave}
+          role="button"
+          aria-label="Drop your ad here to upload"
+          aria-describedby="dropzone-hints"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              if (!disabled) fileInputRef.current?.click();
+            }
+          }}
+          className={`bg-white/[0.02] border border-white/[0.06] rounded-2xl px-8 py-12 flex flex-col items-center gap-3 transition-[border-color,box-shadow] cursor-pointer select-none text-center ${
+            isDragging
+              ? 'border-indigo-500/40 shadow-[0_0_20px_rgba(99,102,241,0.12)]'
+              : 'hover:border-white/[0.10]'
+          } ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
+        >
+          <CloudUpload
+            size={28}
+            className={`transition-transform ${isDragging ? 'scale-110 -translate-y-0.5 text-indigo-400' : 'text-zinc-500'}`}
+          />
+
+          <div className="text-base font-medium text-white">Drop your ad here</div>
+
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!disabled) fileInputRef.current?.click();
             }}
-            className={`border-2 border-dashed rounded-2xl px-4 py-8 md:px-10 md:py-10 flex flex-col items-center gap-4 transition-[border-color,transform,box-shadow,opacity] cursor-pointer select-none text-center ${
-              isDragging
-                ? 'border-indigo-500/50 scale-[1.01] shadow-[0_0_20px_rgba(99,102,241,0.15)]'
-                : 'border-white/10 hover:border-indigo-500/30'
-            } ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
+            className="text-sm text-indigo-400 hover:text-indigo-300 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 rounded"
           >
-            {/* Upload icon */}
-            <div className={`w-14 h-14 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center transition-transform ${isDragging ? 'scale-110 -translate-y-0.5' : ''}`}>
-              <Upload size={24} className="text-white" />
-            </div>
+            or browse files
+          </button>
 
-            <div className="text-base md:text-xl font-semibold text-white">Drop your creative here</div>
-            <div className="text-sm text-zinc-400 text-center">video or static — any ad format</div>
+          <p className="text-xs text-zinc-500">{hintText}</p>
 
-            {/* Format chips */}
-            <div className="flex gap-1.5 flex-wrap justify-center">
-              {formatPills.map((p) => (
-                <span key={p} className="bg-white/5 rounded-full text-xs text-zinc-400 px-3 py-1 font-mono">
-                  {p}
-                </span>
-              ))}
-            </div>
-
-            {/* Browse button */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (!disabled) fileInputRef.current?.click();
-              }}
-              className="mt-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl px-6 py-3 transition-colors"
-            >
-              Browse Files
-            </button>
-
-            {/* Validation error */}
-            {error && (
-              <p className="text-xs text-red-400 animate-[shake_0.3s_ease-in-out]">{error}</p>
-            )}
-
-            <p className="text-xs text-zinc-400">Max {MAX_SIZE_MB}MB per file</p>
-          </div>
-
-          {/* Pasted URL input — appears when URL is pasted */}
-          {pastedUrl && (
-            <div className="mt-4 flex gap-2 animate-[fadeIn_0.2s_ease-out]">
-              <input
-                type="text"
-                value={pastedUrl}
-                onChange={(e) => setPastedUrl(e.target.value)}
-                className="flex-1 bg-white/5 rounded-xl text-sm text-white px-4 py-2.5 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 border border-white/10 focus:border-indigo-500/50"
-                onClick={(e) => e.stopPropagation()}
-              />
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (pastedUrl && onUrlSubmit) onUrlSubmit(pastedUrl);
-                  setPastedUrl(null);
-                }}
-                className="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl px-4 py-2.5 transition-colors"
-              >
-                Go
-              </button>
-            </div>
+          {error && (
+            <p className="text-xs text-red-400">{error}</p>
           )}
         </div>
 
+        {/* Pasted URL input — appears when URL is pasted */}
+        {pastedUrl && (
+          <div className="mt-4 flex gap-2 animate-[fadeIn_0.2s_ease-out]">
+            <input
+              type="text"
+              value={pastedUrl}
+              onChange={(e) => setPastedUrl(e.target.value)}
+              className="flex-1 bg-white/5 rounded-xl text-sm text-white px-4 py-2.5 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 border border-white/10 focus:border-indigo-500/50"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (pastedUrl && onUrlSubmit) onUrlSubmit(pastedUrl);
+                setPastedUrl(null);
+              }}
+              className="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl px-4 py-2.5 transition-colors"
+            >
+              Go
+            </button>
+          </div>
+        )}
+
         <span id="dropzone-hints" className="sr-only">
-          Accepts {acceptImages ? "MP4, MOV, WEBM, JPG, PNG, WEBP" : "MP4, MOV, WEBM"}. Max 200MB per file.
+          Accepts {acceptImages ? "MP4, MOV, WEBM, JPG, PNG, WEBP" : "MP4, MOV, WEBM"}. Max 500MB per file.
         </span>
         <input
           ref={fileInputRef}
