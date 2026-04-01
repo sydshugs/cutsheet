@@ -355,10 +355,8 @@ export function ScoreCard({
         </div>
       </div>{/* end main score card */}
 
-      {/* Predicted Performance — own card wrapper included in component */}
-      {(prediction || predictionLoading) && (
-        <PredictedPerformanceCard prediction={prediction ?? null} platform={platform} niche={niche} isOrganic={isOrganic} loading={predictionLoading && !prediction} />
-      )}
+      {/* Predicted Performance — always render once analysis is complete */}
+      <PredictedPerformanceCard prediction={prediction ?? null} platform={platform} niche={niche} isOrganic={isOrganic} loading={predictionLoading} />
 
       {/* Budget Recommendation — separate card */}
       {(engineBudget || budget) && (

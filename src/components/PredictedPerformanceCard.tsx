@@ -70,7 +70,7 @@ export default function PredictedPerformanceCard({ prediction, platform, niche: 
   const [driversOpen, setDriversOpen] = useState(false)
 
   // Loading skeleton
-  if (loading || !prediction) {
+  if (loading) {
     return (
       <div className="w-full bg-[#18181b] border border-white/[0.06] rounded-[17px] p-5 flex flex-col gap-5 font-['Geist',sans-serif]">
         <div className="flex items-center justify-between">
@@ -86,6 +86,16 @@ export default function PredictedPerformanceCard({ prediction, platform, niche: 
           <div className="h-[80px] rounded-[26px] bg-white/[0.03] animate-pulse" />
           <div className="h-[80px] rounded-[26px] bg-white/[0.03] animate-pulse" />
         </div>
+      </div>
+    )
+  }
+
+  // Unavailable state (API failed or no data)
+  if (!prediction) {
+    return (
+      <div className="w-full bg-[#18181b] border border-white/[0.06] rounded-[17px] p-5 flex flex-col gap-3 font-['Geist',sans-serif]">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#71717b]">PREDICTED PERFORMANCE</span>
+        <p className="text-[13px] text-[#52525c]">Prediction unavailable for this analysis.</p>
       </div>
     )
   }
