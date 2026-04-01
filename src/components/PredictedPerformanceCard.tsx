@@ -1,6 +1,6 @@
-// src/components/PredictedPerformanceCard.tsx — Predicted Performance (redesigned)
+// PredictedPerformanceCard — pixel-matched to Figma node 217:1893
 import { useState } from 'react'
-import { ChevronDown, TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { ChevronDown, Target, Clock, Activity } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 export interface PredictionResult {
@@ -22,169 +22,212 @@ export interface PredictionResult {
 }
 
 interface PredictedPerformanceCardProps {
-  prediction: PredictionResult
+  prediction: PredictionResult | null
   platform?: string
   niche?: string
   isOrganic?: boolean
   format?: 'video' | 'static'
+  loading?: boolean
 }
 
-const VERDICT_STYLES = {
-  below: { label: 'Below avg', color: '#ef4444', icon: TrendingDown },
-  at:    { label: 'On track', color: '#f59e0b', icon: Minus },
-  above: { label: 'Above avg', color: '#10b981', icon: TrendingUp },
-} as const
+const CONFIDENCE_BADGE: Record<string, { bg: string; border: string; text: string; label: string }> = {
+  High:   { bg: 'rgba(0,188,125,0.10)', border: 'rgba(0,188,125,0.20)', text: '#00d492', label: 'High confidence' },
+  Medium: { bg: 'rgba(245,158,11,0.10)', border: 'rgba(245,158,11,0.20)', text: '#f59e0b', label: 'Medium confidence' },
+  Low:    { bg: 'rgba(113,113,122,0.10)', border: 'rgba(113,113,122,0.20)', text: '#71717a', label: 'Low confidence' },
+}
 
-function CtrRangeBar({ low, high, nicheAvg }: { low: number; high: number; nicheAvg: number }) {
-  const MAX_CTR = 3.0
-  const fillLeft = Math.min((low / MAX_CTR) * 100, 100)
-  const fillRight = Math.min((high / MAX_CTR) * 100, 100)
-  const fillWidth = fillRight - fillLeft
-  const avgPos = Math.min((nicheAvg / MAX_CTR) * 100, 100)
+function RangeBar({ low, high, avg }: { low: number; high: number; avg: number }) {
+  const MAX = 3.0
+  const fillLeft = `${(low / MAX) * 100}%`
+  const fillWidth = `${((high - low) / MAX) * 100}%`
+  const avgLeft = `${(avg / MAX) * 100}%`
 
   return (
-    <div className="mt-4">
-      <div className="relative h-1.5 bg-white/[0.04] rounded-full w-full">
-        <div className="absolute h-full bg-indigo-500/80 rounded-full" style={{ left: `${fillLeft}%`, width: `${fillWidth}%` }} />
-        <div 
-          className="absolute w-0.5 h-3 bg-zinc-500 rounded-full" 
-          style={{ left: `${avgPos}%`, transform: 'translateX(-50%)', top: '-3px' }} 
+    <div className="relative pt-6 pb-1">
+      {/* Labels */}
+      <span className="absolute top-0 left-0 text-[11px] font-medium text-[#71717b]">0%</span>
+      <span className="absolute top-0 right-0 text-[11px] font-medium text-[#71717b]">3%+</span>
+      {/* Track */}
+      <div className="relative h-[4px] w-full bg-[#27272a] rounded-full">
+        {/* Avg marker */}
+        <div
+          className="absolute top-[-4px] w-[2px] h-[13px] bg-[#9f9fa9]"
+          style={{ left: avgLeft }}
         />
-      </div>
-      <div className="flex justify-between mt-1.5">
-        <span className="text-[10px] font-mono text-zinc-600">0%</span>
-        <span className="text-[10px] font-mono text-zinc-500">avg {nicheAvg}%</span>
-        <span className="text-[10px] font-mono text-zinc-600">{MAX_CTR}%+</span>
+        {/* Fill */}
+        <motion.div
+          className="absolute top-0 bottom-0 rounded-full bg-[#6366f1]"
+          initial={{ left: fillLeft, width: 0 }}
+          animate={{ left: fillLeft, width: fillWidth }}
+          transition={{ duration: 1, ease: 'easeOut' }}
+        />
       </div>
     </div>
   )
 }
 
-export default function PredictedPerformanceCard({ prediction, platform, niche, isOrganic, format }: PredictedPerformanceCardProps) {
+export default function PredictedPerformanceCard({ prediction, platform, niche: _niche, isOrganic, loading }: PredictedPerformanceCardProps) {
   const [driversOpen, setDriversOpen] = useState(false)
-  const organic = isOrganic || prediction.isOrganic
-  const verdict = VERDICT_STYLES[prediction.ctr.vsAvg]
-  const VerdictIcon = verdict.icon
-  const platformLabel = platform ?? 'Meta'
-  const nicheLabel = niche ?? 'general'
 
-  // Labels swap for organic
-  const primaryLabel = organic ? 'Save Rate' : 'Est. CTR'
+  // Loading skeleton
+  if (loading) {
+    return (
+      <div className="w-full bg-[#18181b] border border-white/[0.06] rounded-[17px] p-5 flex flex-col gap-5 font-['Geist',sans-serif]">
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#71717b]">PREDICTED PERFORMANCE</span>
+          <div className="h-[30px] w-[130px] rounded-[6px] bg-white/[0.04] animate-pulse" />
+        </div>
+        <div className="flex flex-col gap-3">
+          <div className="h-[12px] w-[80px] rounded bg-white/[0.04] animate-pulse" />
+          <div className="h-[42px] w-[180px] rounded bg-white/[0.04] animate-pulse" />
+          <div className="h-[4px] w-full rounded-full bg-white/[0.04] animate-pulse mt-2" />
+        </div>
+        <div className="grid grid-cols-2 gap-[17px]">
+          <div className="h-[80px] rounded-[26px] bg-white/[0.03] animate-pulse" />
+          <div className="h-[80px] rounded-[26px] bg-white/[0.03] animate-pulse" />
+        </div>
+      </div>
+    )
+  }
+
+  // No data — component should not be rendered (gated by parent)
+  if (!prediction) return null;
+
+  const organic = isOrganic || prediction.isOrganic
+  const badge = CONFIDENCE_BADGE[prediction.confidence] ?? CONFIDENCE_BADGE.Medium
+  const platformLabel = platform ?? 'Meta'
+
+  const primaryLabel = organic ? 'Est. Save Rate' : 'Est. CTR'
   const secondaryLabel = organic ? 'Share / DM Potential' : 'CVR Potential'
-  const tertiaryLabel = organic
-    ? 'Scroll-Stop Score'
-    : (prediction.hookRetention ? 'Hook Retention' : 'Conv. Rate')
-  const fatigueLabel = organic ? 'Post longevity' : 'Creative fatigue'
+
+  const fatigueDisplay = organic && prediction.organicMetrics?.longevity
+    ? `~${prediction.organicMetrics.longevity.days}d`
+    : `~${Math.round((prediction.fatigueDays.low + prediction.fatigueDays.high) / 2)} days`
+
+  const avgLabel = `${platformLabel} avg · ${prediction.ctr.benchmark}%`
+
+  // Build insight string — highlight any numeric score mentions
+  const aiInsight = prediction.confidenceReason || ''
+
+  const hasDrivers = prediction.positiveSignals.length > 0 || prediction.negativeSignals.length > 0
 
   return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
-      {/* Header with verdict */}
-      <div className="flex items-center justify-between mb-4">
-        <span className="text-xs font-medium text-zinc-400 uppercase tracking-wide">Predicted Performance</span>
-        <div className="flex items-center gap-1.5" style={{ color: verdict.color }}>
-          <VerdictIcon size={12} />
-          <span className="text-[11px] font-medium">{verdict.label}</span>
-        </div>
-      </div>
+    <div className="w-full bg-[#18181b] border border-white/[0.06] rounded-[17px] p-5 flex flex-col gap-5 font-['Geist',sans-serif] text-[#f4f4f5]">
 
-      {/* Main CTR metric */}
-      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-        <div className="flex items-baseline justify-between">
-          <div>
-            <span className="text-[11px] text-zinc-500 uppercase tracking-wide">{primaryLabel}</span>
-            <p className="text-2xl font-medium font-mono text-zinc-100 mt-1 tracking-tight">
-              {prediction.ctr.low}–{prediction.ctr.high}%
-            </p>
-          </div>
-          <span className="text-[11px] text-zinc-500 text-right">
-            {platformLabel} · {nicheLabel}<br/>{prediction.ctr.benchmark}%
-          </span>
-        </div>
-        <CtrRangeBar low={prediction.ctr.low} high={prediction.ctr.high} nicheAvg={prediction.ctr.benchmark} />
-      </div>
-
-      {/* Secondary metrics grid */}
-      <div className="grid grid-cols-2 gap-2 mt-3">
-        <div className="rounded-xl border border-white/[0.05] bg-white/[0.015] p-3">
-          <span className="text-[10px] text-zinc-500 uppercase tracking-wide block mb-1">{secondaryLabel}</span>
-          <p className="text-lg font-medium font-mono text-zinc-200">{prediction.cvr.low}–{prediction.cvr.high}%</p>
-        </div>
-        <div className="rounded-xl border border-white/[0.05] bg-white/[0.015] p-3">
-          <span className="text-[10px] text-zinc-500 uppercase tracking-wide block mb-1">
-            {tertiaryLabel}
-          </span>
-          <p className="text-lg font-medium font-mono text-zinc-200">
-            {prediction.hookRetention ? `${prediction.hookRetention.low}–${prediction.hookRetention.high}%` : `~${((prediction.cvr.low + prediction.cvr.high) / 2).toFixed(1)}%`}
-          </p>
-        </div>
-      </div>
-
-      {/* Fatigue indicator */}
-      <div className="flex items-center justify-between mt-3 py-2.5 px-3 rounded-xl bg-amber-500/[0.05] border border-amber-500/10">
-        <span className="text-xs text-zinc-400">{fatigueLabel}</span>
-        <span className="text-sm font-medium font-mono text-amber-400">
-          {organic && prediction.organicMetrics?.longevity
-            ? `~${prediction.organicMetrics.longevity.days}d · ${prediction.organicMetrics.longevity.label}`
-            : `~${prediction.fatigueDays.low}–${prediction.fatigueDays.high}d`}
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#71717b]">
+          PREDICTED PERFORMANCE
         </span>
+        <div
+          className="px-[9px] py-[4px] rounded-[6px] border text-[12px] font-medium tracking-[0.025em] whitespace-nowrap"
+          style={{ background: badge.bg, borderColor: badge.border, color: badge.text }}
+        >
+          {badge.label}
+        </div>
       </div>
 
-      {/* Confidence note */}
-      <p className="text-[11px] text-zinc-600 mt-3 leading-relaxed">
-        {prediction.confidence} confidence · {prediction.confidenceReason || 'Based on creative quality signals.'}
-      </p>
+      {/* EST. CTR */}
+      <div className="flex flex-col gap-3">
+        <div className="flex items-end justify-between">
+          {/* Left: label + value */}
+          <div className="flex flex-col gap-[9px]">
+            <span className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#71717b]">
+              {primaryLabel}
+            </span>
+            <div className="flex items-baseline gap-0 leading-none">
+              <span className="text-[35px] font-bold tracking-[-0.025em] text-[#f4f4f5]">
+                {prediction.ctr.low}%
+              </span>
+              <span className="text-[26px] font-medium text-[#71717b] mx-2">–</span>
+              <span className="text-[35px] font-bold tracking-[-0.025em] text-[#f4f4f5]">
+                {prediction.ctr.high}%
+              </span>
+            </div>
+          </div>
+          {/* Right: avg label */}
+          <span className="text-[13px] font-medium text-[#9f9fa9] self-end mb-1">
+            {avgLabel}
+          </span>
+        </div>
+
+        {/* Range bar */}
+        <RangeBar low={prediction.ctr.low} high={prediction.ctr.high} avg={prediction.ctr.benchmark} />
+      </div>
+
+      {/* Metric tiles */}
+      <div className="grid grid-cols-2 gap-[17px]">
+        {/* CVR Potential */}
+        <div
+          className="flex flex-col gap-[9px] p-[19px] rounded-[26px] border"
+          style={{ background: 'rgba(255,255,255,0.01)', borderColor: 'rgba(255,255,255,0.04)' }}
+        >
+          <div className="flex items-center gap-[7px] text-[#71717b]">
+            <Target size={13} />
+            <span className="text-[12px] font-semibold uppercase tracking-[0.12em] leading-tight">
+              {secondaryLabel}
+            </span>
+          </div>
+          <span className="text-[19.5px] font-semibold text-[#e4e4e7]">
+            {prediction.cvr.low}% – {prediction.cvr.high}%
+          </span>
+        </div>
+
+        {/* Creative Fatigue */}
+        <div
+          className="flex flex-col gap-[9px] p-[19px] rounded-[26px] border"
+          style={{ background: 'rgba(255,255,255,0.01)', borderColor: 'rgba(255,255,255,0.04)' }}
+        >
+          <div className="flex items-center gap-[7px] text-[#71717b]">
+            <Clock size={13} />
+            <span className="text-[12px] font-semibold uppercase tracking-[0.12em] leading-tight">
+              Creative Fatigue
+            </span>
+          </div>
+          <span className="text-[19.5px] font-semibold text-[#e4e4e7]">
+            {fatigueDisplay}
+          </span>
+        </div>
+      </div>
+
+      {/* AI Insight */}
+      {aiInsight && (
+        <p className="text-[15px] text-[#9f9fa9] leading-[1.6]">
+          {aiInsight}
+        </p>
+      )}
 
       {/* What's driving this */}
-      {(prediction.positiveSignals.length > 0 || prediction.negativeSignals.length > 0) && (
-        <div className="mt-2.5">
+      {hasDrivers && (
+        <div className="flex flex-col border-t border-white/[0.04] pt-[1px]">
           <button
             type="button"
-            onClick={() => setDriversOpen(prev => !prev)}
-            aria-expanded={driversOpen}
-            aria-label={`${driversOpen ? 'Collapse' : 'Expand'} driving factors`}
-            className="w-full flex items-center justify-between py-1.5 px-0.5 bg-transparent border-none cursor-pointer text-xs font-medium text-zinc-500 font-sans focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:outline-none rounded"
+            onClick={() => setDriversOpen(v => !v)}
+            className="w-full flex items-center justify-between h-[48px] group focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:outline-none"
           >
-            <span>What's driving this</span>
-            <ChevronDown size={14} className="text-zinc-700 transition-transform duration-200" style={{ transform: driversOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} />
-          </button>
-          <div className="overflow-hidden transition-all duration-200" style={{ maxHeight: driversOpen ? 300 : 0 }}>
-            <div className="flex flex-col pt-0.5 pb-1">
-              {prediction.positiveSignals.map((signal, i) => {
-                const parts = signal.split(/[.–—]\s*/)
-                const label = parts[0]?.trim() ?? signal
-                const note = parts.slice(1).join('. ').trim()
-                return (
-                  <div key={`pos-${i}`} className="flex items-start gap-2.5 py-[7px]" style={{ borderBottom: i < prediction.positiveSignals.length - 1 || prediction.negativeSignals.length > 0 ? '0.5px solid rgba(255,255,255,0.05)' : 'none' }}>
-                    <div className="w-4 h-4 rounded-full shrink-0 mt-px flex items-center justify-center bg-emerald-500/10">
-                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="text-[11px] font-medium text-zinc-200">{label}</span>
-                      {note && <span className="text-[11px] text-zinc-600 block mt-px">{note}</span>}
-                    </div>
-                  </div>
-                )
-              })}
-              {prediction.negativeSignals.map((signal, i) => {
-                const parts = signal.split(/[.–—]\s*/)
-                const label = parts[0]?.trim() ?? signal
-                const note = parts.slice(1).join('. ').trim()
-                return (
-                  <div key={`neg-${i}`} className="flex items-start gap-2.5 py-[7px]" style={{ borderBottom: i < prediction.negativeSignals.length - 1 ? '0.5px solid rgba(255,255,255,0.05)' : 'none' }}>
-                    <div className="w-4 h-4 rounded-full shrink-0 mt-px flex items-center justify-center bg-amber-500/10">
-                      <svg width="8" height="2" viewBox="0 0 8 2"><rect width="8" height="2" rx="1" fill="#f59e0b"/></svg>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="text-[11px] font-medium text-zinc-200">{label}</span>
-                      {note && <span className="text-[11px] text-zinc-600 block mt-px">{note}</span>}
-                    </div>
-                  </div>
-                )
-              })}
+            <div className="flex items-center gap-[9px]">
+              <Activity size={17} className="text-[#6366f1]" />
+              <span className="text-[15px] font-medium text-[#d4d4d8] group-hover:text-white transition-colors">
+                What's driving this
+              </span>
             </div>
+            <ChevronDown
+              size={17}
+              className="text-[#71717b] transition-transform duration-200"
+              style={{ transform: driversOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+            />
+          </button>
+
+          <div
+            className="overflow-hidden transition-all duration-200"
+            style={{ maxHeight: driversOpen ? 400 : 0 }}
+          >
+            <p className="text-[14px] text-[#9f9fa9] leading-[1.6] pb-3">
+              {[...prediction.positiveSignals, ...prediction.negativeSignals].join(' ')}
+            </p>
           </div>
         </div>
       )}
-    </motion.div>
+    </div>
   )
 }

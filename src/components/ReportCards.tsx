@@ -14,7 +14,8 @@ import {
 import type { Verdict, StructuredImprovement } from "../services/analyzerService";
 import { CreativeAnalysis } from "./CreativeAnalysis";
 import { CreativeVerdictAndSecondEye } from "./CreativeVerdictAndSecondEye";
-import { MotionPreviewPlayer } from "./MotionPreviewPlayer";
+import { DesignReviewCard } from "./DesignReviewCard";
+import { MotionTestIdeaCard } from "./MotionTestIdeaCard";
 import PlatformScoreCard from "./PlatformScoreCard";
 
 interface ReportCardsProps {
@@ -358,30 +359,32 @@ export function ReportCards({
     <div className="flex flex-col gap-4">
       {/* Media preview — cleaner card */}
       {file && fileUrl && (
-        <div className="rounded-2xl overflow-hidden border border-white/[0.06] bg-black/20">
-          {isImage ? (
-            <div className="flex justify-center p-4">
+        <div className="w-full h-[55vh] max-h-[420px] relative flex flex-col shrink-0 rounded-2xl border border-white/[0.06] bg-black/20">
+          <div className="flex-1 w-full relative flex items-center justify-center rounded-t-2xl overflow-hidden bg-zinc-900">
+            {isImage ? (
               <img
                 src={fileUrl}
                 alt={sanitizeFileName(file.name)}
-                className="max-w-full max-h-[420px] object-contain rounded-xl"
+                className="w-full h-full object-cover"
               />
-            </div>
-          ) : (
-            <video
-              ref={videoRef}
-              src={fileUrl}
-              poster={thumbnailDataUrl ?? undefined}
-              controls
-              className="w-full max-h-[360px] object-contain"
-            />
-          )}
+            ) : (
+              <video
+                ref={videoRef}
+                src={fileUrl}
+                poster={thumbnailDataUrl ?? undefined}
+                controls
+                className="w-full h-full object-contain"
+              />
+            )}
+          </div>
           {/* File info bar */}
-          <div className="flex items-center justify-between px-4 py-3 border-t border-white/[0.05] bg-white/[0.02]">
-            <p className="text-xs text-zinc-500 font-mono truncate" title={file.name}>
-              {(() => { const n = sanitizeFileName(file.name); return n.length > 35 ? n.slice(0, 32) + "…" : n; })()} 
-            </p>
-            <span className="text-xs text-zinc-600">{(file.size / 1024 / 1024).toFixed(1)} MB</span>
+          <div className="w-full flex items-center justify-between border-t border-white/[0.05] px-4 py-3 shrink-0">
+            <span className="font-mono text-xs text-zinc-500 truncate" title={file.name}>
+              {(() => { const n = sanitizeFileName(file.name); return n.length > 35 ? n.slice(0, 32) + "…" : n; })()}
+            </span>
+            <span className="text-xs text-zinc-500">
+              {(file.size / 1024 / 1024).toFixed(1)} MB
+            </span>
           </div>
         </div>
       )}
@@ -455,15 +458,8 @@ export function ReportCards({
         ];
         const colClass = tools.length === 4 ? 'grid-cols-4' : 'grid-cols-3';
         return (
-          <div className="mt-6">
-            {/* Section header */}
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">Tools</span>
-              <div className="flex-1 h-px bg-white/[0.04]" />
-            </div>
-
-            {/* Tools grid */}
-            <div className={`grid ${colClass} gap-2`}>
+          <div className="w-full">
+            <div className={`grid ${colClass} gap-[12px]`}>
               {tools.map((t) => {
                 const Icon = t.icon;
                 const isDisabled = !!t.disabled;
@@ -474,32 +470,22 @@ export function ReportCards({
                     onClick={() => !isDisabled && !isLoading && t.onClick?.()}
                     disabled={isDisabled || isLoading}
                     title={isDisabled ? 'Only available for static ads' : undefined}
-                    className="group relative flex flex-col items-center text-center p-4 rounded-xl border border-white/[0.05] bg-white/[0.02] backdrop-blur-sm transition-all hover:bg-white/[0.04] hover:border-white/[0.08] active:scale-[0.98] disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer"
+                    className="group rounded-[17px] border border-white/[0.06] bg-[rgba(24,24,27,0.5)] py-[23px] px-1 flex flex-col items-center gap-[13px] hover:bg-[rgba(30,30,34,0.7)] hover:border-white/[0.12] transition-colors w-full active:scale-[0.98] disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer h-[125px]"
                   >
-                    {/* Icon */}
-                    <div 
-                      className="relative w-10 h-10 rounded-xl flex items-center justify-center mb-3 transition-transform group-hover:scale-105"
-                      style={{ background: `${t.iconColor}12` }}
+                    <div
+                      className="w-[44px] h-[44px] rounded-[26px] flex items-center justify-center shrink-0 transition-transform group-hover:scale-105"
+                      style={{ background: `${t.iconColor}26` }}
                     >
                       {isLoading ? (
-                        <div 
-                          className="w-4 h-4 border-2 rounded-full animate-spin" 
-                          style={{ borderColor: `${t.iconColor}30`, borderTopColor: t.iconColor }} 
+                        <div
+                          className="w-4 h-4 border-2 rounded-full animate-spin"
+                          style={{ borderColor: `${t.iconColor}30`, borderTopColor: t.iconColor }}
                         />
                       ) : (
-                        <Icon size={18} style={{ color: t.iconColor }} />
+                        <Icon size={17} style={{ color: t.iconColor }} />
                       )}
                     </div>
-                    
-                    {/* Name */}
-                    <span className="text-xs font-medium text-zinc-200 mb-0.5">{t.name}</span>
-                    
-                    {/* Credit badge */}
-                    <span 
-                      className="text-[9px] font-medium text-zinc-500"
-                    >
-                      {t.credit}
-                    </span>
+                    <span className="text-[15px] font-medium text-[#e4e4e7] text-center leading-tight">{t.name}</span>
                   </button>
                 );
               })}
@@ -556,8 +542,32 @@ export function ReportCards({
         const vState = (effectiveVerdict?.state ?? (scores?.overall && scores.overall >= 8 ? 'ready' : scores?.overall && scores.overall >= 5 ? 'needs_work' : 'not_ready')) as 'not_ready' | 'needs_work' | 'ready';
         const detail = sentences.slice(1, 3).join(' ');
 
-        // Video: combined verdict + second eye
+        // Video: use DesignReviewCard with secondEye flags, fallback to old component
         if (format === 'video') {
+          if (secondEyeData?.flags?.length) {
+            const videoFlags = secondEyeData.flags.map(f => ({
+              category: f.category === 'scroll_trigger' ? 'Motion'
+                      : f.category === 'hierarchy' ? 'Hierarchy'
+                      : f.category === 'contrast' ? 'Contrast'
+                      : f.category === 'layout' ? 'Layout'
+                      : f.category === 'typography' ? 'Typography'
+                      : f.category,
+              severity: f.severity as 'critical' | 'warning' | 'info',
+              issue: f.issue,
+              fix: f.fix,
+              timestamp: f.timestamp,
+            }));
+            const topFlag = videoFlags.find(f => f.severity === 'critical') ?? videoFlags[0];
+            return (
+              <DesignReviewCard
+                verdictState={vState}
+                verdictHeadline={oneLiner}
+                priorityFix={topFlag?.fix}
+                flags={videoFlags}
+                onFixWithAI={onFixIt}
+              />
+            );
+          }
           return (
             <CreativeVerdictAndSecondEye
               verdictState={vState}
@@ -569,7 +579,27 @@ export function ReportCards({
           );
         }
 
-        // Static: CreativeAnalysis (verdict + design review)
+        // Static: use DesignReviewCard with designReview flags
+        if (designReviewData?.flags?.length) {
+          const staticFlags = designReviewData.flags.map(f => ({
+            category: f.area,
+            severity: (f.severity === 'critical' ? 'critical' : f.severity === 'warning' ? 'warning' : 'info') as 'critical' | 'warning' | 'info',
+            issue: f.issue,
+            fix: f.fix,
+          }));
+          const topFix2 = designReviewData.flags.find(f => f.severity === 'critical') ?? designReviewData.flags[0];
+          return (
+            <DesignReviewCard
+              verdictState={vState}
+              verdictHeadline={designReviewData.overallDesignVerdict ?? oneLiner}
+              priorityFix={topFix2?.fix}
+              flags={staticFlags}
+              onFixWithAI={onFixIt}
+            />
+          );
+        }
+
+        // Fallback for static without design review data
         const fixes = (designReviewData?.flags ?? []).map(f => ({
           fix: f.fix, category: f.area,
           severity: f.severity === 'critical' ? 'high' : f.severity === 'warning' ? 'medium' : 'low',
@@ -604,127 +634,35 @@ export function ReportCards({
         </motion.div>
       )}
 
-      {/* ─── Motion Test Idea — Premium redesign with cinematic feel (paid only) ─── */}
-      {!isOrganic && <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: 'easeOut', delay: 0.18 }}>
-      {centerSections.filter(s => /motion.*(?:test|idea)/i.test(s.title ?? '')).map((section, i) => {
-        const conceptText = section.content
+
+      {/* ─── Motion Test Idea — matches Figma node 217:2401 ─── */}
+      {!isOrganic && (() => {
+        const motionSection = centerSections.find(s => /motion.*(?:test|idea)/i.test(s.title ?? ''));
+        if (!motionSection) return null;
+        // Parse AI-derived phase descriptions (comma-separated clauses)
+        const conceptText = motionSection.content
           .replace(/^MOTION TEST IDEA:\s*/i, '')
-          .replace(/^-\s*Primary emotion.*$/gim, '')
-          .replace(/^-\s*Tone:.*$/gim, '')
-          .replace(/^-\s*Does the emotion.*$/gim, '')
-          .replace(/\*\*/g, '')
-          .replace(/[-\s]+$/, '')
-          .trim();
-        
-        // Parse concept into phases - ensure we always have 3
+          .replace(/\*\*/g, '').trim();
         const rawPhases = conceptText.split(/,\s*then\s+|,\s*ending\s+with\s+|,\s*followed\s+by\s+/i).filter(Boolean);
-        const phases = [
-          rawPhases[0] || 'Opening scene',
-          rawPhases[1] || 'Main transition',
-          rawPhases[2] || 'Product reveal with CTA'
+        const phaseDescs: [string, string, string] = [
+          rawPhases[0]?.trim() || 'Fast-paced jump cuts. High contrast visual hook.',
+          rawPhases[1]?.trim() || 'Quick UI zoom. Satisfying synchronized audio cue.',
+          rawPhases[2]?.trim() || 'Pulsing CTA button. Instant offer presentation.',
         ];
-        
-        // Brand guide colors
-        const phaseConfig = [
-          { label: 'Opening', time: '0-2s', color: '#818cf8' },
-          { label: 'Transition', time: '2-5s', color: '#10b981' },
-          { label: 'Payoff', time: '5-8s', color: '#f59e0b' },
-        ];
-        
-        const platformTag = platform ?? 'Meta';
-        const durationTag = '6–8s';
-        
         return (
-          <div key={`motion-${i}`} className="relative rounded-xl overflow-hidden mt-4 border border-white/[0.05] bg-white/[0.015] backdrop-blur-sm">
-            {/* Header */}
-            <div className="relative flex items-center justify-between px-4 py-3 border-b border-white/[0.04]">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-white/[0.04] flex items-center justify-center">
-                  <Film size={14} className="text-zinc-400" />
-                </div>
-                <div>
-                  <span className="text-[13px] font-medium text-zinc-200">Motion Test Idea</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-[9px] font-medium bg-white/[0.04] rounded-md px-2 py-1 text-zinc-500">{platformTag}</span>
-                <span className="text-[9px] font-medium bg-white/[0.04] rounded-md px-2 py-1 text-zinc-500">{durationTag}</span>
-              </div>
-            </div>
-            
-            {/* Storyboard section */}
-            <div className="relative p-4">
-              {/* Phase cards */}
-              <div className="grid grid-cols-3 gap-2 mb-4">
-                {phaseConfig.map((config, pi) => (
-                  <div 
-                    key={pi} 
-                    className="rounded-lg p-3 border border-white/[0.04] bg-white/[0.02]"
-                  >
-                    {/* Phase header */}
-                    <div className="flex items-center justify-between mb-2">
-                      <span 
-                        className="text-[10px] font-semibold uppercase tracking-wide"
-                        style={{ color: config.color }}
-                      >
-                        {config.label}
-                      </span>
-                      <span className="text-[9px] font-mono text-zinc-600">{config.time}</span>
-                    </div>
-                    
-                    {/* Phase description */}
-                    <p className="text-[11px] text-zinc-400 leading-relaxed">
-                      {phases[pi].trim().charAt(0).toUpperCase() + phases[pi].trim().slice(1).replace(/^product and cta$/i, 'Product reveal with clear CTA')}
-                    </p>
-                  </div>
-                ))}
-              </div>
-              
-              {/* Timeline bar */}
-              <div className="relative mb-4">
-                <div className="flex items-center h-1 rounded-full overflow-hidden bg-white/[0.04]">
-                  {phaseConfig.map((config, pi) => (
-                    <div 
-                      key={pi} 
-                      className="flex-1 h-full"
-                      style={{ background: `${config.color}50` }} 
-                    />
-                  ))}
-                </div>
-                {/* Time labels */}
-                <div className="flex justify-between mt-1.5">
-                  <span className="text-[8px] font-mono text-zinc-600">0s</span>
-                  <span className="text-[8px] font-mono text-zinc-600">2s</span>
-                  <span className="text-[8px] font-mono text-zinc-600">5s</span>
-                  <span className="text-[8px] font-mono text-zinc-600">8s</span>
-                </div>
-              </div>
-
-              {/* Performance insight */}
-              <div className="flex items-center gap-2 text-[10px] text-zinc-500">
-                <TrendingUp size={12} className="text-zinc-500" />
-                <span>Motion ads drive 2-3x higher engagement on {platformTag}</span>
-              </div>
-              
-              {/* Motion Preview — animates original image, no Gemini edit */}
-              {format === 'static' && (
-                <div className="mt-3">
-                  <MotionPreviewPlayer
-                    videoUrl={motionVideoUrl}
-                    stillFrameUrl={thumbnailDataUrl}
-                    isLoading={!!motionLoading}
-                    loadingLabel="Generating 5s video clip..."
-                    onAnimate={!motionVideoUrl && !motionLoading ? onMotionPreview : undefined}
-                    error={motionError}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: 'easeOut', delay: 0.18 }}>
+            <MotionTestIdeaCard
+              platform={platform ?? undefined}
+              phaseDescs={phaseDescs}
+              onGenerate={!motionVideoUrl && !motionLoading ? onMotionPreview : undefined}
+              isGenerating={!!motionLoading}
+              videoUrl={motionVideoUrl}
+              error={motionError}
+            />
+          </motion.div>
         );
-      })}
+      })()}
 
-      </motion.div>}
 
       {/* Pacing & Retention — VIDEO ONLY, redesigned to match branding */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: 'easeOut', delay: 0.24 }}>
