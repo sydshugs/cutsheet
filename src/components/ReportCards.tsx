@@ -358,30 +358,32 @@ export function ReportCards({
     <div className="flex flex-col gap-4">
       {/* Media preview — cleaner card */}
       {file && fileUrl && (
-        <div className="rounded-2xl overflow-hidden border border-white/[0.06] bg-black/20">
-          {isImage ? (
-            <div className="flex justify-center p-4">
+        <div className="w-full h-[55vh] max-h-[420px] relative flex flex-col shrink-0 rounded-2xl border border-white/[0.06] bg-black/20">
+          <div className="flex-1 w-full relative flex items-center justify-center rounded-t-2xl overflow-hidden bg-zinc-900">
+            {isImage ? (
               <img
                 src={fileUrl}
                 alt={sanitizeFileName(file.name)}
-                className="max-w-full max-h-[420px] object-contain rounded-xl"
+                className="w-full h-full object-cover"
               />
-            </div>
-          ) : (
-            <video
-              ref={videoRef}
-              src={fileUrl}
-              poster={thumbnailDataUrl ?? undefined}
-              controls
-              className="w-full max-h-[360px] object-contain"
-            />
-          )}
+            ) : (
+              <video
+                ref={videoRef}
+                src={fileUrl}
+                poster={thumbnailDataUrl ?? undefined}
+                controls
+                className="w-full h-full object-contain"
+              />
+            )}
+          </div>
           {/* File info bar */}
-          <div className="flex items-center justify-between px-4 py-3 border-t border-white/[0.05] bg-white/[0.02]">
-            <p className="text-xs text-zinc-500 font-mono truncate" title={file.name}>
-              {(() => { const n = sanitizeFileName(file.name); return n.length > 35 ? n.slice(0, 32) + "…" : n; })()} 
-            </p>
-            <span className="text-xs text-zinc-600">{(file.size / 1024 / 1024).toFixed(1)} MB</span>
+          <div className="w-full flex items-center justify-between border-t border-white/[0.05] px-4 py-3 shrink-0">
+            <span className="font-mono text-xs text-zinc-500 truncate" title={file.name}>
+              {(() => { const n = sanitizeFileName(file.name); return n.length > 35 ? n.slice(0, 32) + "…" : n; })()}
+            </span>
+            <span className="text-xs text-zinc-500">
+              {(file.size / 1024 / 1024).toFixed(1)} MB
+            </span>
           </div>
         </div>
       )}
@@ -455,15 +457,8 @@ export function ReportCards({
         ];
         const colClass = tools.length === 4 ? 'grid-cols-4' : 'grid-cols-3';
         return (
-          <div className="mt-6">
-            {/* Section header */}
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">Tools</span>
-              <div className="flex-1 h-px bg-white/[0.04]" />
-            </div>
-
-            {/* Tools grid */}
-            <div className={`grid ${colClass} gap-2`}>
+          <div className="w-full">
+            <div className={`grid ${colClass} gap-[12px]`}>
               {tools.map((t) => {
                 const Icon = t.icon;
                 const isDisabled = !!t.disabled;
@@ -474,32 +469,22 @@ export function ReportCards({
                     onClick={() => !isDisabled && !isLoading && t.onClick?.()}
                     disabled={isDisabled || isLoading}
                     title={isDisabled ? 'Only available for static ads' : undefined}
-                    className="group relative flex flex-col items-center text-center p-4 rounded-xl border border-white/[0.05] bg-white/[0.02] backdrop-blur-sm transition-all hover:bg-white/[0.04] hover:border-white/[0.08] active:scale-[0.98] disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer"
+                    className="group rounded-2xl border border-white/[0.06] bg-[#18181b] p-5 flex flex-col items-center gap-3 hover:bg-[#1f1f22] hover:border-white/[0.12] transition-colors w-full active:scale-[0.98] disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer"
                   >
-                    {/* Icon */}
-                    <div 
-                      className="relative w-10 h-10 rounded-xl flex items-center justify-center mb-3 transition-transform group-hover:scale-105"
-                      style={{ background: `${t.iconColor}12` }}
+                    <div
+                      className="w-[40px] h-[40px] rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105"
+                      style={{ background: `${t.iconColor}26` }}
                     >
                       {isLoading ? (
-                        <div 
-                          className="w-4 h-4 border-2 rounded-full animate-spin" 
-                          style={{ borderColor: `${t.iconColor}30`, borderTopColor: t.iconColor }} 
+                        <div
+                          className="w-4 h-4 border-2 rounded-full animate-spin"
+                          style={{ borderColor: `${t.iconColor}30`, borderTopColor: t.iconColor }}
                         />
                       ) : (
-                        <Icon size={18} style={{ color: t.iconColor }} />
+                        <Icon size={16} style={{ color: t.iconColor }} />
                       )}
                     </div>
-                    
-                    {/* Name */}
-                    <span className="text-xs font-medium text-zinc-200 mb-0.5">{t.name}</span>
-                    
-                    {/* Credit badge */}
-                    <span 
-                      className="text-[9px] font-medium text-zinc-500"
-                    >
-                      {t.credit}
-                    </span>
+                    <span className="text-sm font-medium text-zinc-200 text-center">{t.name}</span>
                   </button>
                 );
               })}
