@@ -5,7 +5,7 @@
 import { useEffect, useState } from "react";
 import { HookAnalysisExpanded } from "./HookAnalysisExpanded";
 import { HashtagsC2 } from "./HashtagsC2";
-import { Copy, CheckCircle, Loader2, RotateCcw, FileText, Lightbulb, DollarSign } from "lucide-react";
+import { Copy, CheckCircle, Loader2, RotateCcw, Lightbulb } from "lucide-react";
 import type { BudgetRecommendation, Hashtags, Scene, HookDetail } from "../services/analyzerService";
 import type { EngineBudgetRecommendation } from "../services/budgetService";
 import { getNicheAwareBenchmark, type BenchmarkResult } from "../lib/benchmarks";
@@ -324,13 +324,13 @@ export function ScoreCard({
         </div>
 
         {/* Actions row */}
-        <div className="flex gap-[13px] pt-2">
+        <div className="flex gap-3 pt-2">
           {onReanalyze && (
             <button
               onClick={onReanalyze}
-              className="flex-1 flex items-center justify-center gap-[6px] rounded-full h-[46px] border border-white/[0.08] bg-transparent text-[#d4d4d8] text-[15px] font-medium hover:bg-white/[0.04] transition-colors"
+              className="flex-1 flex items-center justify-center gap-[6px] rounded-xl border border-white/[0.08] bg-transparent text-zinc-300 text-sm font-medium py-2.5 hover:bg-white/[0.04] transition-colors"
             >
-              <RotateCcw size={14} className="text-zinc-400" />
+              <RotateCcw size={13} className="text-zinc-400" />
               {isOrganic ? 'Analyze another' : 'Re-analyze'}
             </button>
           )}
@@ -338,7 +338,7 @@ export function ScoreCard({
             <button
               onClick={onGenerateBrief}
               disabled={briefLoading}
-              className="flex-1 flex items-center justify-center rounded-full h-[46px] bg-[#615fff] hover:bg-[#5553e0] text-white text-[15px] font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 flex items-center justify-center rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium py-2.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {briefLoading ? (
                 <><Loader2 size={14} className="animate-spin mr-1.5" /> Generating...</>
@@ -350,26 +350,18 @@ export function ScoreCard({
         </div>
       </div>{/* end main score card */}
 
-      {/* Predicted Performance — separate card */}
+      {/* Predicted Performance — own card wrapper included in component */}
       {prediction && (
-        <div className="w-full bg-[#18181b] border border-white/[0.06] rounded-[16px] p-5">
-          <PredictedPerformanceCard prediction={prediction} platform={platform} niche={niche} isOrganic={isOrganic} />
-        </div>
+        <PredictedPerformanceCard prediction={prediction} platform={platform} niche={niche} isOrganic={isOrganic} />
       )}
 
       {/* Budget Recommendation — separate card */}
       {(engineBudget || budget) && (
-        <div className="w-full bg-[#18181b] border border-white/[0.06] rounded-[16px] p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <DollarSign size={14} className="text-zinc-500" />
-            <span className="text-xs font-medium text-zinc-400 uppercase tracking-wide">Budget</span>
-          </div>
-          <BudgetCard
-            engineBudget={engineBudget}
-            budget={budget}
-            onNavigateSettings={onNavigateSettings}
-          />
-        </div>
+        <BudgetCard
+          engineBudget={engineBudget}
+          budget={budget}
+          onNavigateSettings={onNavigateSettings}
+        />
       )}
 
       {/* Toast notification */}

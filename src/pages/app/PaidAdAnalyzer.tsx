@@ -2,7 +2,7 @@
 import { Helmet } from 'react-helmet-async';
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useOutletContext, useNavigate, Link } from "react-router-dom";
-import { RotateCcw, Upload, Sparkles, Lock, Zap } from "lucide-react";
+import { RotateCcw, Upload, Sparkles, Lock, Zap, Copy, FileDown, Share2 } from "lucide-react";
 import { Toast } from "../../components/Toast";
 import { AnalyzerView } from "../../components/AnalyzerView";
 import { BriefResultView, type BriefSection } from "../../components/BriefResultView";
@@ -1160,8 +1160,9 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
 
       {/* Right panel — ScoreCard */}
       <div
-        className={`shrink-0 bg-[#111113] border-l border-white/[0.06] overflow-y-auto overflow-x-hidden pb-12 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-white/[0.06] ${showRightPanel ? "w-[380px] max-lg:w-full opacity-100" : "w-0 max-lg:w-0 opacity-0"}`}
+        className={`shrink-0 bg-[#111113] border-l border-white/[0.06] overflow-y-auto overflow-x-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-white/[0.06] relative ${showRightPanel ? "w-[380px] max-lg:w-full opacity-100" : "w-0 max-lg:w-0 opacity-0"}`}
       >
+        <div className="p-[24px] pb-[72px] flex flex-col gap-[16px]">
         <AnimatePresence mode="wait">
         {showRightPanel && activeResult?.scores && rightTab === "analysis" && !(reanalyzeMode && !comparisonResult) && (
           <motion.div
@@ -1170,7 +1171,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -16 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="flex flex-col"
+            className="flex flex-col gap-[16px]"
           >
             {/* Platform Switcher + YouTube format moved inside ScoreCard */}
             <div ref={scorecardRef}>
@@ -1492,6 +1493,34 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
         )}
 
         </AnimatePresence>
+        </div>
+
+        {/* Bottom bar — Copy, PDF, Share */}
+        {showRightPanel && (
+          <div className="sticky bottom-0 w-full h-[48px] bg-[#111113] border-t border-white/[0.06] flex items-center justify-end px-6 gap-[12px]">
+            <button
+              onClick={handleCopy}
+              className="h-8 px-[12px] rounded-lg border border-white/[0.06] bg-transparent text-zinc-400 flex items-center gap-1.5 text-[13px] font-medium hover:text-zinc-300 hover:bg-white/[0.02] transition-colors"
+            >
+              <Copy size={14} />
+              Copy
+            </button>
+            <button
+              onClick={() => {}}
+              className="h-8 px-[12px] rounded-lg border border-white/[0.06] bg-transparent text-zinc-400 flex items-center gap-1.5 text-[13px] font-medium hover:text-zinc-300 hover:bg-white/[0.02] transition-colors"
+            >
+              <FileDown size={14} />
+              PDF
+            </button>
+            <button
+              onClick={handleShareLink}
+              className="h-8 px-[12px] rounded-lg bg-[#6366f1] text-white flex items-center gap-1.5 text-[13px] font-medium hover:bg-[#4f46e5] transition-colors"
+            >
+              <Share2 size={14} />
+              Share
+            </button>
+          </div>
+        )}
       </div>
 
       {/* History drawer */}

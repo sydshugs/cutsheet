@@ -14,6 +14,8 @@ import {
 import type { Verdict, StructuredImprovement } from "../services/analyzerService";
 import { CreativeAnalysis } from "./CreativeAnalysis";
 import { CreativeVerdictAndSecondEye } from "./CreativeVerdictAndSecondEye";
+import { DesignReviewCard } from "./DesignReviewCard";
+import { MotionTestIdeaCard } from "./MotionTestIdeaCard";
 import { MotionPreviewPlayer } from "./MotionPreviewPlayer";
 import PlatformScoreCard from "./PlatformScoreCard";
 
@@ -541,8 +543,32 @@ export function ReportCards({
         const vState = (effectiveVerdict?.state ?? (scores?.overall && scores.overall >= 8 ? 'ready' : scores?.overall && scores.overall >= 5 ? 'needs_work' : 'not_ready')) as 'not_ready' | 'needs_work' | 'ready';
         const detail = sentences.slice(1, 3).join(' ');
 
-        // Video: combined verdict + second eye
+        // Video: use DesignReviewCard with secondEye flags, fallback to old component
         if (format === 'video') {
+          if (secondEyeData?.flags?.length) {
+            const videoFlags = secondEyeData.flags.map(f => ({
+              category: f.category === 'scroll_trigger' ? 'Motion'
+                      : f.category === 'hierarchy' ? 'Hierarchy'
+                      : f.category === 'contrast' ? 'Contrast'
+                      : f.category === 'layout' ? 'Layout'
+                      : f.category === 'typography' ? 'Typography'
+                      : f.category,
+              severity: f.severity as 'critical' | 'warning' | 'info',
+              issue: f.issue,
+              fix: f.fix,
+              timestamp: f.timestamp,
+            }));
+            const topFlag = videoFlags.find(f => f.severity === 'critical') ?? videoFlags[0];
+            return (
+              <DesignReviewCard
+                verdictState={vState}
+                verdictHeadline={oneLiner}
+                priorityFix={topFlag?.fix}
+                flags={videoFlags}
+                onFixWithAI={onFixIt}
+              />
+            );
+          }
           return (
             <CreativeVerdictAndSecondEye
               verdictState={vState}
@@ -554,7 +580,27 @@ export function ReportCards({
           );
         }
 
-        // Static: CreativeAnalysis (verdict + design review)
+        // Static: use DesignReviewCard with designReview flags
+        if (designReviewData?.flags?.length) {
+          const staticFlags = designReviewData.flags.map(f => ({
+            category: f.area,
+            severity: (f.severity === 'critical' ? 'critical' : f.severity === 'warning' ? 'warning' : 'info') as 'critical' | 'warning' | 'info',
+            issue: f.issue,
+            fix: f.fix,
+          }));
+          const topFix2 = designReviewData.flags.find(f => f.severity === 'critical') ?? designReviewData.flags[0];
+          return (
+            <DesignReviewCard
+              verdictState={vState}
+              verdictHeadline={designReviewData.overallDesignVerdict ?? oneLiner}
+              priorityFix={topFix2?.fix}
+              flags={staticFlags}
+              onFixWithAI={onFixIt}
+            />
+          );
+        }
+
+        // Fallback for static without design review data
         const fixes = (designReviewData?.flags ?? []).map(f => ({
           fix: f.fix, category: f.area,
           severity: f.severity === 'critical' ? 'high' : f.severity === 'warning' ? 'medium' : 'low',
