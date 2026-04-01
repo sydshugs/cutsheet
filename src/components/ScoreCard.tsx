@@ -3,7 +3,6 @@
 // Pass 1: Consolidated layout — removed Deep Dive, tabs, Compare link. Reordered sections.
 
 import { useEffect, useState } from "react";
-import ReactMarkdown from "react-markdown";
 import { HookAnalysisExpanded } from "./HookAnalysisExpanded";
 import { HashtagsC2 } from "./HashtagsC2";
 import { Copy, CheckCircle, Loader2, RotateCcw, FileText, Lightbulb, DollarSign } from "lucide-react";
@@ -100,59 +99,6 @@ export function getScoreColorByValue(score: number): string {
   return "#ef4444";
 }
 
-/** Token-based score color for inline styles that need CSS custom properties */
-function getScoreTokenColor(score: number): string {
-  if (score >= 7) return "var(--score-excellent)";
-  if (score >= 5) return "var(--score-average)";
-  return "var(--score-weak)";
-}
-
-function getScoreLabel(score: number): { label: string; color: string } {
-  if (score >= 7) return { label: "Strong", color: "var(--score-excellent)" };
-  if (score >= 5) return { label: "Average", color: "var(--score-average)" };
-  return { label: "Weak", color: "var(--score-weak)" };
-}
-
-// ─── Improvements list with "Show all" expander ─────────────────────────────
-const MAX_VISIBLE_IMPROVEMENTS = 3;
-
-function ImprovementsList({ improvements, loading }: { improvements: string[]; loading?: boolean }) {
-  const [expanded, setExpanded] = useState(false);
-  const hasMore = improvements.length > MAX_VISIBLE_IMPROVEMENTS;
-  const visible = expanded ? improvements : improvements.slice(0, MAX_VISIBLE_IMPROVEMENTS);
-
-  return (
-    <div style={{ transition: "opacity 200ms", opacity: loading ? 0.4 : 1 }}>
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wider m-0">
-          Improve This Ad
-        </h3>
-        {loading && (
-          <div style={{ width: 12, height: 12, border: "2px solid rgba(99,102,241,0.2)", borderTopColor: "var(--accent)", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
-        )}
-      </div>
-      <ul className="flex flex-col gap-1">
-        {visible.map((item, i) => (
-          <li key={i} className="flex gap-2 items-start py-1.5">
-            <span className="w-1 h-1 rounded-full bg-indigo-400 mt-2 flex-shrink-0" />
-            <span className="text-xs text-zinc-400 leading-relaxed">{item}</span>
-          </li>
-        ))}
-      </ul>
-      {hasMore && (
-        <button
-          type="button"
-          onClick={() => setExpanded(!expanded)}
-          className="text-[11px] text-indigo-400 hover:text-indigo-300 mt-2 cursor-pointer bg-transparent border-none font-medium transition-[color]"
-          style={{ minHeight: 24, minWidth: 44, padding: "0 4px" }}
-        >
-          {expanded ? "Show less" : `Show all ${improvements.length} \u2192`}
-        </button>
-      )}
-    </div>
-  );
-}
-
 function formatRelativeTime(date: Date): string {
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -219,7 +165,6 @@ export function ScoreCard({
   dimensionDeltas,
 }: ScoreCardProps) {
   const displayScore = platformScore ?? scores.overall;
-  const { label: overallLabel } = getScoreLabel(displayScore);
   const heroVerdict = displayScore >= 7 ? "Strong" : displayScore >= 5 ? "Average" : "Needs Work";
   const benchmark: BenchmarkResult = getNicheAwareBenchmark(niche, platform, format === 'video' ? 'video' : 'static');
   const [relativeTime, setRelativeTime] = useState<string>("");
@@ -298,137 +243,123 @@ export function ScoreCard({
   };
 
   return (
-    <div className="scorecard flex flex-col">
-      {/* Header — cleaner, minimal */}
-      <div className="px-5 pt-5 pb-4 flex items-center justify-between border-b border-white/[0.05]">
-        <span className="text-sm font-medium text-zinc-300">Score Overview</span>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleCopy}
-            aria-label="Copy scores to clipboard"
-            className="inline-flex items-center gap-1.5 text-xs font-medium rounded-lg cursor-pointer transition-[color,background-color] hover:bg-white/[0.06] focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:outline-none px-2.5 py-1.5"
-            style={{
-              background: 'transparent',
-              color: copied ? '#10b981' : '#71717a',
-            }}
-          >
-            {copied ? <CheckCircle size={12} /> : <Copy size={12} />}
-            {copied ? "Copied" : "Copy"}
-          </button>
+    <div className="scorecard flex flex-col gap-4">
+      {/* ── Main score card ── */}
+      <div className="w-full bg-[#18181b] border border-white/[0.06] rounded-[16px] p-5 flex flex-col gap-5 font-['Geist',sans-serif] text-[#f4f4f5]">
+
+        {/* Header — label + platform pills */}
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500">
+            SCORE OVERVIEW
+          </span>
+          <div className="flex items-center gap-2">
+            {platformSwitcher}
+            <button
+              onClick={handleCopy}
+              aria-label="Copy scores to clipboard"
+              className="inline-flex items-center gap-1.5 text-xs font-medium rounded-lg cursor-pointer transition-[color,background-color] hover:bg-white/[0.06] focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:outline-none px-2.5 py-1.5"
+              style={{
+                background: 'transparent',
+                color: copied ? '#10b981' : '#71717a',
+              }}
+            >
+              {copied ? <CheckCircle size={12} /> : <Copy size={12} />}
+            </button>
+          </div>
         </div>
-      </div>
 
-      {/* Verdict block — cleaner inline style */}
-      {/* Main content card — cleaner styling */}
-      <div className="mx-4 mt-3 rounded-2xl overflow-hidden border border-white/[0.06] bg-white/[0.015]">
-          {/* 1. Platform switcher — above score for organic */}
-          {platformSwitcher && (
-            <div className="px-4 pt-4 pb-2">
-              {platformSwitcher}
+        {/* ScoreHero — score number + benchmark bar + dimension scores */}
+        <ScoreHero
+          score={displayScore}
+          verdict={heroVerdict}
+          benchmark={benchmark.averageScore}
+          benchmarkLabelOverride={benchmark.sampleLabel}
+          platform={platform}
+          format={format}
+          youtubeFormat={youtubeFormat}
+          scoreRange={scoreRange}
+          overallDelta={overallDelta}
+          overallDeltaLabel={overallDeltaLabel}
+          dimensionDeltas={dimensionDeltas}
+          dimensions={dimensionOverrides ?? [
+            { name: "Hook",   score: scores.hook },
+            { name: "Copy",   score: scores.clarity },
+            { name: "Visual", score: scores.production },
+            { name: "CTA",    score: scores.cta },
+          ]}
+        />
+
+        {winner && (
+          <div className="flex justify-center">
+            <div className="px-3 py-1 rounded-full text-xs font-semibold font-mono bg-amber-500/10 text-amber-400 border border-amber-500/25">
+              &#9733; Winner
             </div>
-          )}
+          </div>
+        )}
 
-          {/* 2. ScoreHero — score number + benchmark bar + dimension grid */}
-          <ScoreHero
-            score={displayScore}
-            verdict={heroVerdict}
-            benchmark={benchmark.averageScore}
-            benchmarkLabelOverride={benchmark.sampleLabel}
-            platform={platform}
-            format={format}
-            youtubeFormat={youtubeFormat}
-            scoreRange={scoreRange}
-            overallDelta={overallDelta}
-            overallDeltaLabel={overallDeltaLabel}
-            dimensionDeltas={dimensionDeltas}
-            dimensions={dimensionOverrides ?? [
-              { name: "Hook",   score: scores.hook },
-              { name: "Copy",   score: scores.clarity },
-              { name: "Visual", score: scores.production },
-              { name: "CTA",    score: scores.cta },
-            ]}
-          />
-
-          {winner && (
-            <div className="flex justify-center pb-2">
-              <div className="px-3 py-1 rounded-full text-xs font-semibold font-mono bg-amber-500/10 text-amber-400 border border-amber-500/25">
-                &#9733; Winner
-              </div>
-            </div>
-          )}
-
-          {/* ScoreAdaptiveCTA moved below Hashtags */}
-
-          {/* Action row (AI Rewrite / Visualize / Policies) moved to center column tools grid */}
-
-          {/* Fix It result removed — only shows in dedicated slide-out panel in PaidAdAnalyzer */}
-
-          {/* Predicted Performance + Budget moved outside glass card */}
-
-          {/* Analysis sections — only Hook analysis */}
+        {/* Deep dive rows */}
+        <div className="flex flex-col border-t border-white/[0.04]">
+          {/* Hook Analysis */}
           {analysisSections && analysisSections.length > 0 && (() => {
-            // Only show Hook analysis section
             const hookSection = analysisSections.find(s => /hook/i.test(s.title));
-
             if (!hookSection) return null;
-
             return (
-            <div className="px-4 pt-4 space-y-1">
-              <CollapsibleSection
-                title={hookSection.title}
-                icon={<Lightbulb size={14} />}
-              >
-                <HookAnalysisExpanded content={hookSection.content} format={format ?? 'static'} platform={platform} />
-              </CollapsibleSection>
-            </div>
-          );
+              <div className="border-b border-white/[0.04]">
+                <CollapsibleSection
+                  title={hookSection.title}
+                  icon={<Lightbulb size={14} />}
+                >
+                  <HookAnalysisExpanded content={hookSection.content} format={format ?? 'static'} platform={platform} />
+                </CollapsibleSection>
+              </div>
+            );
           })()}
 
-          {/* 11. Hashtags — inside the main card */}
+          {/* Hashtags */}
           {hashtags && (hashtags.tiktok?.length > 0 || hashtags.meta?.length > 0 || hashtags.instagram?.length > 0 || hashtags.pinterest?.length > 0 || hashtags.reels?.length > 0 || hashtags.youtube_shorts?.length > 0) && (
-            <div className="px-4 pt-4 pb-2">
+            <div className="border-b border-white/[0.04]">
               <HashtagsC2 hashtags={hashtags} format={format} />
             </div>
           )}
+        </div>
 
-      </div>{/* end main card */}
-
-      {/* Re-analyze / Analyze another button */}
-      {onReanalyze && (
-        <button
-          onClick={onReanalyze}
-          className="mx-4 mt-4 w-[calc(100%-2rem)] flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-medium transition-[background-color,color] hover:bg-indigo-500/15 bg-indigo-500/[0.08] text-indigo-400 border border-indigo-500/20"
-        >
-          <RotateCcw size={14} />
-          {isOrganic ? 'Analyze another creative' : 'Re-analyze improved version'}
-        </button>
-      )}
-
-      {/* Generate Brief button */}
-      {onGenerateBrief && (
-        <button
-          onClick={onGenerateBrief}
-          disabled={briefLoading}
-          className="mx-4 mt-4 w-[calc(100%-2rem)] flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-medium transition-[background-color,color] hover:bg-indigo-500/15 bg-indigo-500/[0.08] text-indigo-400 border border-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {briefLoading ? (
-            <><Loader2 size={14} className="animate-spin" /> Generating...</>
-          ) : (
-            <><FileText size={14} /> {hasBrief ? 'Regenerate Brief' : 'Generate Brief'}</>
+        {/* Actions row */}
+        <div className="flex gap-3 pt-2">
+          {onReanalyze && (
+            <button
+              onClick={onReanalyze}
+              className="flex-1 flex items-center justify-center gap-[6px] rounded-xl border border-white/[0.08] bg-transparent text-zinc-300 text-sm font-medium py-2.5 hover:bg-white/[0.04] transition-colors"
+            >
+              <RotateCcw size={13} className="text-zinc-400" />
+              {isOrganic ? 'Analyze another' : 'Re-analyze'}
+            </button>
           )}
-        </button>
-      )}
+          {onGenerateBrief && (
+            <button
+              onClick={onGenerateBrief}
+              disabled={briefLoading}
+              className="flex-1 flex items-center justify-center rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium py-2.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {briefLoading ? (
+                <><Loader2 size={13} className="animate-spin mr-1.5" /> Generating...</>
+              ) : (
+                <>{hasBrief ? 'Regenerate Brief' : 'Generate Brief'}</>
+              )}
+            </button>
+          )}
+        </div>
+      </div>{/* end main score card */}
 
-      {/* Predicted Performance */}
+      {/* Predicted Performance — separate card */}
       {prediction && (
-        <div className="mx-4 mt-4 rounded-2xl border border-white/[0.06] bg-white/[0.015] p-5">
+        <div className="w-full bg-[#18181b] border border-white/[0.06] rounded-[16px] p-5">
           <PredictedPerformanceCard prediction={prediction} platform={platform} niche={niche} isOrganic={isOrganic} />
         </div>
       )}
 
-      {/* Budget Recommendation */}
+      {/* Budget Recommendation — separate card */}
       {(engineBudget || budget) && (
-        <div className="mx-4 mt-4 rounded-2xl border border-white/[0.06] bg-white/[0.015] p-5">
+        <div className="w-full bg-[#18181b] border border-white/[0.06] rounded-[16px] p-5">
           <div className="flex items-center gap-2 mb-4">
             <DollarSign size={14} className="text-zinc-500" />
             <span className="text-xs font-medium text-zinc-400 uppercase tracking-wide">Budget</span>
@@ -440,8 +371,6 @@ export function ScoreCard({
           />
         </div>
       )}
-
-
 
       {/* Toast notification */}
       {toast && (
