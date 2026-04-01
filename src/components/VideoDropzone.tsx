@@ -157,7 +157,7 @@ export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, 
             or browse files
           </button>
 
-          <p className="text-xs text-zinc-500">{hintText}</p>
+          <p className="text-xs text-zinc-600">{hintText}</p>
 
           {error && (
             <p className="text-xs text-red-400">{error}</p>
