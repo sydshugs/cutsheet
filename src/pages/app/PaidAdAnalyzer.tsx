@@ -75,7 +75,7 @@ function PaidEmptyState({
   onFileSelect: (f: File | null) => void;
   onUrlSubmit?: (url: string) => void;
 }) {
-  const PILLS = ["Hook strength", "CTA score", "Budget recommendation"];
+  const PILLS = ["Score any format", "Platform benchmarks", "Priority fix list"];
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px", minHeight: "calc(100vh - 120px)" }}>
       {/* Section icon */}
