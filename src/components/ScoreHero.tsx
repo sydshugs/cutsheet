@@ -321,8 +321,8 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
                   </span>
                 </div>
                 <div className="relative h-1 w-full bg-[#27272a] rounded-full overflow-hidden">
-                  {/* Confidence band */}
-                  {hasRange && showDeltas && (
+                  {/* Confidence band — always visible when range data exists */}
+                  {hasRange && (
                     <div
                       className="absolute top-0 bottom-0 rounded-full bg-white/[0.12] transition-opacity duration-300"
                       style={{

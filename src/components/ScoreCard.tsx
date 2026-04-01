@@ -165,7 +165,7 @@ export function ScoreCard({
   dimensionDeltas,
 }: ScoreCardProps) {
   const displayScore = platformScore ?? scores.overall;
-  const heroVerdict = displayScore >= 7 ? "Strong" : displayScore >= 5 ? "Average" : "Needs Work";
+  const heroVerdict = displayScore >= 8 ? "Strong Performance" : displayScore >= 7 ? "Good Potential" : displayScore >= 5 ? "Average" : "Needs Work";
   const benchmark: BenchmarkResult = getNicheAwareBenchmark(niche, platform, format === 'video' ? 'video' : 'static');
   const [relativeTime, setRelativeTime] = useState<string>("");
   const [toast, setToast] = useState<string | null>(null);
