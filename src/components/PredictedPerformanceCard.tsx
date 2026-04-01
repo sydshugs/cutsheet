@@ -22,11 +22,12 @@ export interface PredictionResult {
 }
 
 interface PredictedPerformanceCardProps {
-  prediction: PredictionResult
+  prediction: PredictionResult | null
   platform?: string
   niche?: string
   isOrganic?: boolean
   format?: 'video' | 'static'
+  loading?: boolean
 }
 
 const CONFIDENCE_BADGE: Record<string, { bg: string; border: string; text: string; label: string }> = {
@@ -65,8 +66,30 @@ function RangeBar({ low, high, avg }: { low: number; high: number; avg: number }
   )
 }
 
-export default function PredictedPerformanceCard({ prediction, platform, niche, isOrganic }: PredictedPerformanceCardProps) {
+export default function PredictedPerformanceCard({ prediction, platform, niche: _niche, isOrganic, loading }: PredictedPerformanceCardProps) {
   const [driversOpen, setDriversOpen] = useState(false)
+
+  // Loading skeleton
+  if (loading || !prediction) {
+    return (
+      <div className="w-full bg-[#18181b] border border-white/[0.06] rounded-[17px] p-5 flex flex-col gap-5 font-['Geist',sans-serif]">
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#71717b]">PREDICTED PERFORMANCE</span>
+          <div className="h-[30px] w-[130px] rounded-[6px] bg-white/[0.04] animate-pulse" />
+        </div>
+        <div className="flex flex-col gap-3">
+          <div className="h-[12px] w-[80px] rounded bg-white/[0.04] animate-pulse" />
+          <div className="h-[42px] w-[180px] rounded bg-white/[0.04] animate-pulse" />
+          <div className="h-[4px] w-full rounded-full bg-white/[0.04] animate-pulse mt-2" />
+        </div>
+        <div className="grid grid-cols-2 gap-[17px]">
+          <div className="h-[80px] rounded-[26px] bg-white/[0.03] animate-pulse" />
+          <div className="h-[80px] rounded-[26px] bg-white/[0.03] animate-pulse" />
+        </div>
+      </div>
+    )
+  }
+
   const organic = isOrganic || prediction.isOrganic
   const badge = CONFIDENCE_BADGE[prediction.confidence] ?? CONFIDENCE_BADGE.Medium
   const platformLabel = platform ?? 'Meta'

@@ -205,6 +205,7 @@ export default function PaidAdAnalyzer() {
 
   // ── Predicted Performance state ──────────────────────────────────────────
   const [prediction, setPrediction] = useState<PredictionResult | null>(null);
+  const [predictionLoading, setPredictionLoading] = useState(false);
   const scorecardRef = useRef<HTMLDivElement | null>(null);
   const leftPanelRef = useRef<HTMLDivElement | null>(null);
   const lastSavedRef = useRef<string | null>(null);
@@ -248,6 +249,7 @@ export default function PaidAdAnalyzer() {
     setFixItResult(null);
     setFixItLoading(false);
     setPrediction(null);
+    setPredictionLoading(false);
   }, [reset]);
 
   // Re-analyze handler: upload improved version, score, compare
@@ -431,11 +433,13 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
     }
 
     if (result.scores) {
+      setPredictionLoading(true);
       generatePrediction(
         result.markdown, result.scores,
         platform === "all" ? rawUserContext?.platform : platform,
         format as 'video' | 'static', rawUserContext?.niche,
-      ).then(setPrediction).catch((err) => console.error('Prediction failed (silent):', err));
+      ).then(r => { setPrediction(r); setPredictionLoading(false); })
+       .catch((err) => { console.error('Prediction failed (silent):', err); setPredictionLoading(false); });
     }
   }, [status, result]); // eslint-disable-line
 
@@ -1215,6 +1219,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                 fixItResult={fixItResult}
                 fixItLoading={fixItLoading}
                 prediction={prediction}
+                predictionLoading={predictionLoading}
                 onCompare={() => navigate('/app/competitor')}
                 onVisualize={handleVisualize}
                 visualizeLoading={visualizeStatus === "loading"}

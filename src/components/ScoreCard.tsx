@@ -62,6 +62,7 @@ interface ScoreCardProps {
   fixItLoading?: boolean;
   // Predicted Performance
   prediction?: PredictionResult | null;
+  predictionLoading?: boolean;
   // Compare (moved from standalone link)
   onCompare?: () => void;
   // Visualize It (moved from left panel)
@@ -146,6 +147,7 @@ export function ScoreCard({
   fixItResult,
   fixItLoading,
   prediction,
+  predictionLoading,
   onCompare,
   onVisualize,
   visualizeLoading,
@@ -354,8 +356,8 @@ export function ScoreCard({
       </div>{/* end main score card */}
 
       {/* Predicted Performance — own card wrapper included in component */}
-      {prediction && (
-        <PredictedPerformanceCard prediction={prediction} platform={platform} niche={niche} isOrganic={isOrganic} />
+      {(prediction || predictionLoading) && (
+        <PredictedPerformanceCard prediction={prediction ?? null} platform={platform} niche={niche} isOrganic={isOrganic} loading={predictionLoading && !prediction} />
       )}
 
       {/* Budget Recommendation — separate card */}
