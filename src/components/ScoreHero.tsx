@@ -208,15 +208,15 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
             </span>
             <div className="flex items-center gap-3">
               <span
-                className="text-[52px] font-bold leading-none tracking-tight"
+                className="text-[57px] font-bold leading-none tracking-[-0.025em]"
                 style={{ color: effectiveColor }}
               >
                 {animatedScore.toFixed(1)}
               </span>
-              <span className="text-[24px] font-bold leading-none text-zinc-600 self-end pb-1">/10</span>
+              <span className="text-[26px] font-bold leading-none text-[#52525c] self-end pb-1">/10</span>
             </div>
           </div>
-          <div className={`px-2.5 py-1 rounded-md border text-[12px] font-semibold tracking-wide uppercase mb-1 ${badgeStyles}`}>
+          <div className={`px-2.5 py-1 rounded-[7px] border text-[13px] font-semibold tracking-[0.025em] uppercase mb-1 ${badgeStyles}`}>
             {verdict}
           </div>
         </div>
@@ -292,7 +292,7 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
               <div key={dim.name} className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-zinc-400">{dim.name}</span>
+                    <span className="text-[15px] font-medium text-[#9f9fa9]">{dim.name}</span>
                     <AnimatePresence>
                       {hasDimDelta && (
                         <motion.span
@@ -313,7 +313,7 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
                     </AnimatePresence>
                   </div>
                   <span
-                    className="text-sm font-bold leading-none"
+                    className="text-[15px] font-bold leading-none"
                     style={{ color: dimDisplayColor }}
                     aria-label={`${dim.name}: ${dim.score.toFixed(1)} — ${dim.score >= 7 ? "Strong" : dim.score >= 5 ? "Average" : "Weak"}`}
                   >

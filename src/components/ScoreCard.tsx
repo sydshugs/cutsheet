@@ -324,13 +324,13 @@ export function ScoreCard({
         </div>
 
         {/* Actions row */}
-        <div className="flex gap-3 pt-2">
+        <div className="flex gap-[13px] pt-2">
           {onReanalyze && (
             <button
               onClick={onReanalyze}
-              className="flex-1 flex items-center justify-center gap-[6px] rounded-xl border border-white/[0.08] bg-transparent text-zinc-300 text-sm font-medium py-2.5 hover:bg-white/[0.04] transition-colors"
+              className="flex-1 flex items-center justify-center gap-[6px] rounded-full h-[46px] border border-white/[0.08] bg-transparent text-[#d4d4d8] text-[15px] font-medium hover:bg-white/[0.04] transition-colors"
             >
-              <RotateCcw size={13} className="text-zinc-400" />
+              <RotateCcw size={14} className="text-zinc-400" />
               {isOrganic ? 'Analyze another' : 'Re-analyze'}
             </button>
           )}
@@ -338,10 +338,10 @@ export function ScoreCard({
             <button
               onClick={onGenerateBrief}
               disabled={briefLoading}
-              className="flex-1 flex items-center justify-center rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium py-2.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 flex items-center justify-center rounded-full h-[46px] bg-[#615fff] hover:bg-[#5553e0] text-white text-[15px] font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {briefLoading ? (
-                <><Loader2 size={13} className="animate-spin mr-1.5" /> Generating...</>
+                <><Loader2 size={14} className="animate-spin mr-1.5" /> Generating...</>
               ) : (
                 <>{hasBrief ? 'Regenerate Brief' : 'Generate Brief'}</>
               )}
