@@ -470,10 +470,10 @@ export function ReportCards({
                     onClick={() => !isDisabled && !isLoading && t.onClick?.()}
                     disabled={isDisabled || isLoading}
                     title={isDisabled ? 'Only available for static ads' : undefined}
-                    className="group rounded-2xl border border-white/[0.06] bg-[#18181b] p-5 flex flex-col items-center gap-3 hover:bg-[#1f1f22] hover:border-white/[0.12] transition-colors w-full active:scale-[0.98] disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer"
+                    className="group rounded-[17px] border border-white/[0.06] bg-[rgba(24,24,27,0.5)] py-[23px] px-1 flex flex-col items-center gap-[13px] hover:bg-[rgba(30,30,34,0.7)] hover:border-white/[0.12] transition-colors w-full active:scale-[0.98] disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer h-[125px]"
                   >
                     <div
-                      className="w-[40px] h-[40px] rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105"
+                      className="w-[44px] h-[44px] rounded-[26px] flex items-center justify-center shrink-0 transition-transform group-hover:scale-105"
                       style={{ background: `${t.iconColor}26` }}
                     >
                       {isLoading ? (
@@ -482,10 +482,10 @@ export function ReportCards({
                           style={{ borderColor: `${t.iconColor}30`, borderTopColor: t.iconColor }}
                         />
                       ) : (
-                        <Icon size={16} style={{ color: t.iconColor }} />
+                        <Icon size={17} style={{ color: t.iconColor }} />
                       )}
                     </div>
-                    <span className="text-sm font-medium text-zinc-200 text-center">{t.name}</span>
+                    <span className="text-[15px] font-medium text-[#e4e4e7] text-center leading-tight">{t.name}</span>
                   </button>
                 );
               })}
