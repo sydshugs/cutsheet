@@ -49,10 +49,10 @@ const NETWORKS = [
 // ─── EMPTY STATE ─────────────────────────────────────────────────────────────
 
 function EmptyState({ onFileSelect }: { onFileSelect: (f: File | null) => void }) {
-  const PILLS = ["Format detection", "Placement scoring", "Real-life mockup"];
+  const PILLS = ["Format detection", "Placement mockup", "GDN compliance"];
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px", minHeight: "calc(100vh - 120px)" }}>
-      <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ width: 76, height: 76, borderRadius: 16, background: "rgba(6,182,212,0.12)", border: "1px solid rgba(6,182,212,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <Monitor size={28} color="#06b6d4" />
       </div>
       <h1 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>Score your display ad</h1>
@@ -69,7 +69,7 @@ function EmptyState({ onFileSelect }: { onFileSelect: (f: File | null) => void }
 
       {/* Dropzone — using shared VideoDropzone component */}
       <div style={{ width: "100%", maxWidth: 520, marginTop: 32 }}>
-        <VideoDropzone onFileSelect={onFileSelect} file={null} acceptImages />
+        <VideoDropzone onFileSelect={onFileSelect} file={null} acceptImages heading="Drop your banner here" />
       </div>
     </div>
   );
@@ -861,7 +861,7 @@ Return JSON only — no prose:
                   onCancel={handleReset}
                   format="static"
                   icon={Monitor}
-                  title="Analyzing your ad"
+                  title="Analyzing your display ad"
                 />
               )}
 
@@ -1154,7 +1154,7 @@ Return JSON only — no prose:
       </div>
 
       {/* Right panel — scores sidebar (Single mode only, when complete) - matching Organic layout */}
-      <div className={`shrink-0 bg-zinc-900/50 backdrop-blur-xl border-l border-white/5 overflow-y-auto overflow-x-hidden pb-12 transition-[width,opacity] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-white/5 ${mode === "single" && status === "complete" && result ? "w-[440px] max-lg:w-full opacity-100" : "w-0 max-lg:w-0 opacity-0"}`}>
+      <div className={`shrink-0 bg-[#111113] border-l border-white/[0.06] overflow-y-auto overflow-x-hidden pb-12 transition-[width,opacity] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-white/[0.06] ${mode === "single" && status === "complete" && result ? "w-[380px] max-lg:w-full opacity-100" : "w-0 max-lg:w-0 opacity-0"}`}>
         {mode === "single" && status === "complete" && result && (
           <>
             <ScoreCard
