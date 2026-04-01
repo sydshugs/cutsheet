@@ -247,11 +247,11 @@ export function ScoreCard({
   return (
     <div className="scorecard flex flex-col gap-4">
       {/* ── Main score card ── */}
-      <div className="w-full bg-[#18181b] border border-white/[0.06] rounded-[16px] p-5 flex flex-col gap-5 font-['Geist',sans-serif] text-[#f4f4f5]">
+      <div className="w-full bg-[#18181b] border border-white/[0.06] rounded-[17.5px] p-[22px] flex flex-col gap-5 font-['Geist',sans-serif] text-[#f4f4f5]">
 
         {/* Header — label + platform pills */}
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500">
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-semibold uppercase text-[#71717b]" style={{ letterSpacing: '1.315px' }}>
             SCORE OVERVIEW
           </span>
           <div className="flex items-center gap-2">

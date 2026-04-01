@@ -175,7 +175,7 @@ export function ScoreHero({
           </div>
           {/* Right: verdict badge */}
           <div
-            className="px-[11px] py-[5px] rounded-[7px] border text-[13px] font-semibold tracking-[0.025em] uppercase whitespace-nowrap self-end mb-1"
+            className="px-[13px] py-[6px] rounded-full border text-[13px] font-semibold tracking-[0.025em] uppercase whitespace-nowrap self-end mb-1"
             style={{ background: badgeBg, borderColor: badgeBorder, color: badgeText }}
           >
             {verdict}
