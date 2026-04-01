@@ -10,6 +10,8 @@ interface VideoDropzoneProps {
   isDark?: boolean;  // Preserved for out-of-scope views. Always renders dark.
   acceptImages?: boolean;
   onUrlSubmit?: (url: string) => void;
+  /** Override the dropzone heading text (default: "Drop your ad here") */
+  heading?: string;
 }
 
 const VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
@@ -20,7 +22,7 @@ function isImageFile(f: File): boolean {
   return f.type.startsWith("image/");
 }
 
-export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, isDark = true, acceptImages = false, onUrlSubmit }: VideoDropzoneProps) {
+export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, isDark = true, acceptImages = false, onUrlSubmit, heading = "Drop your ad here" }: VideoDropzoneProps) {
   const acceptedTypes = acceptImages ? [...VIDEO_TYPES, ...IMAGE_TYPES] : VIDEO_TYPES;
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -144,7 +146,7 @@ export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, 
             className={`transition-transform ${isDragging ? 'scale-110 -translate-y-0.5 text-indigo-400' : 'text-zinc-500'}`}
           />
 
-          <div className="text-base font-medium text-white">Drop your ad here</div>
+          <div className="text-base font-medium text-white">{heading}</div>
 
           <button
             type="button"

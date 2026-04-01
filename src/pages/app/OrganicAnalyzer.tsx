@@ -66,10 +66,10 @@ function OrganicEmptyState({
   onFileSelect: (f: File | null) => void;
   onUrlSubmit?: (url: string) => void;
 }) {
-  const PILLS = ["Retention score", "Platform fit", "Shareability"];
+  const PILLS = ["Platform optimization", "Hashtag suggestions", "Algorithm scoring"];
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px", minHeight: "calc(100vh - 120px)" }}>
-      <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ width: 76, height: 76, borderRadius: 16, background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <TrendingUp size={28} color="#10b981" />
       </div>
       <h1 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>
@@ -90,7 +90,7 @@ function OrganicEmptyState({
 
       {/* Dropzone */}
       <div style={{ width: "100%", maxWidth: 520, marginTop: 32 }}>
-        <VideoDropzone onFileSelect={onFileSelect} file={null} onUrlSubmit={onUrlSubmit} acceptImages />
+        <VideoDropzone onFileSelect={onFileSelect} file={null} onUrlSubmit={onUrlSubmit} acceptImages heading="Drop your content here" />
       </div>
     </div>
   );
@@ -611,7 +611,7 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
       </div>
 
       {/* Right panel */}
-      <div className={`shrink-0 bg-zinc-900/50 backdrop-blur-xl border-l border-white/5 overflow-y-auto overflow-x-hidden pb-12 transition-[width,opacity] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-white/5 ${showRightPanel ? "w-[440px] max-lg:w-full opacity-100" : "w-0 max-lg:w-0 opacity-0"}`}>
+      <div className={`shrink-0 bg-[#111113] border-l border-white/[0.06] overflow-y-auto overflow-x-hidden pb-12 transition-[width,opacity] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-white/[0.06] ${showRightPanel ? "w-[380px] max-lg:w-full opacity-100" : "w-0 max-lg:w-0 opacity-0"}`}>
         {showRightPanel && activeResult?.scores && rightTab === "analysis" && (
           <>
             <div ref={scorecardRef}>
