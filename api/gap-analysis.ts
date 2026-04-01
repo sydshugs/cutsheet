@@ -2,6 +2,7 @@
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Anthropic from "@anthropic-ai/sdk";
+import { createClient } from "@supabase/supabase-js";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
 import { sanitizeSessionMemory, sanitizeUserInput } from "./_lib/sanitizeMemory";
 
@@ -20,6 +21,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const rl = await checkRateLimit("gap-analysis", user.id, user.tier, RATE);
   if (!rl.allowed) {
     return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
+  }
+
+  // Fetch brand voice from user profile (non-fatal)
+  let brandVoiceContext = "";
+  try {
+    const supabaseAdmin = createClient(
+      (process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL)!,
+      (process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.VITE_SUPABASE_SERVICE_ROLE_KEY)!,
+      { auth: { persistSession: false } }
+    );
+    const { data: profileData } = await supabaseAdmin
+      .from("user_profiles")
+      .select("brand_voice_description, brand_voice_tags")
+      .eq("user_id", user.id)
+      .single();
+    const rawDesc = profileData?.brand_voice_description ?? "";
+    const rawTags: string[] = profileData?.brand_voice_tags ?? [];
+    if (rawDesc) {
+      brandVoiceContext = `\nBrand voice: ${sanitizeSessionMemory(rawDesc)}\nVoice tags: ${rawTags.map((t: string) => sanitizeSessionMemory(t)).join(", ")}\n\nAll copy rewrites, hooks, CTAs, and suggestions must match this voice exactly. A voice mismatch is worse than keeping the original copy.\n`;
+    }
+  } catch {
+    // Profile fetch failure is non-fatal — proceed without brand voice
   }
 
   const {
@@ -59,7 +82,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const systemPrompt = `You are a competitive intelligence analyst specializing in ${nicheLabel} advertising on ${platformLabel}. You don't sugarcoat — if the user's ad is losing, say so clearly and explain exactly what the competitor does better for ${nicheLabel} audiences.
 
-The user's weakest dimensions are: ${userWeakDims.map(d => `${d.dim} (${d.score}/10)`).join(", ")}. Every action plan item must be specific and steal-worthy — not "improve your hook" but "steal the competitor's [specific technique] and adapt it for ${nicheLabel} on ${platformLabel}". Rank actions by impact on the user's weakest dimensions first.`;
+The user's weakest dimensions are: ${userWeakDims.map(d => `${d.dim} (${d.score}/10)`).join(", ")}. Every action plan item must be specific and steal-worthy — not "improve your hook" but "steal the competitor's [specific technique] and adapt it for ${nicheLabel} on ${platformLabel}". Rank actions by impact on the user's weakest dimensions first.${brandVoiceContext}`;
 
   const prompt = `You have scored two ${nicheLabel} ad creatives head-to-head on ${platformLabel}.
 

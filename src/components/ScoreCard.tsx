@@ -84,28 +84,31 @@ interface ScoreCardProps {
   // Analysis sections for right panel (Hook, Hierarchy, Copy, Messaging, Emotional)
   analysisSections?: { title: string; content: string }[];
   // Dimension overrides — when provided, ScoreHero uses these instead of scores.hook/clarity/etc.
-  dimensionOverrides?: { name: string; score: number }[];
+  dimensionOverrides?: { name: string; score: number; rangeLow?: number; rangeHigh?: number }[];
+  // Confidence interval for overall score — "X.X – Y.Y range" shown below score number
+  scoreRange?: { low: number; high: number };
+  // Score delta vs previous analysis
+  overallDelta?: number;
+  overallDeltaLabel?: string;
+  dimensionDeltas?: Record<string, number>;
 }
 
-/** Score band color for chips/overlays: 9-10 green, 7-8 indigo, 5-6 amber, 1-4 red (scores 0-10). */
+/** Score band color — design spec: 7.0+ emerald, 5.0–6.9 amber, below 5.0 red */
 export function getScoreColorByValue(score: number): string {
-  if (score >= 9) return "#10B981";
-  if (score >= 7) return "#6366F1";
-  if (score >= 5) return "#F59E0B";
-  return "#EF4444";
+  if (score >= 7) return "#10b981";
+  if (score >= 5) return "#f59e0b";
+  return "#ef4444";
 }
 
 /** Token-based score color for inline styles that need CSS custom properties */
 function getScoreTokenColor(score: number): string {
-  if (score >= 9) return "var(--score-excellent)";
-  if (score >= 7) return "var(--score-good)";
+  if (score >= 7) return "var(--score-excellent)";
   if (score >= 5) return "var(--score-average)";
   return "var(--score-weak)";
 }
 
 function getScoreLabel(score: number): { label: string; color: string } {
-  if (score >= 9) return { label: "Excellent", color: "var(--score-excellent)" };
-  if (score >= 7) return { label: "Good", color: "var(--score-good)" };
+  if (score >= 7) return { label: "Strong", color: "var(--score-excellent)" };
   if (score >= 5) return { label: "Average", color: "var(--score-average)" };
   return { label: "Weak", color: "var(--score-weak)" };
 }
@@ -210,10 +213,14 @@ export function ScoreCard({
   hasBrief,
   analysisSections,
   dimensionOverrides,
+  scoreRange,
+  overallDelta,
+  overallDeltaLabel,
+  dimensionDeltas,
 }: ScoreCardProps) {
   const displayScore = platformScore ?? scores.overall;
   const { label: overallLabel } = getScoreLabel(displayScore);
-  const heroVerdict = displayScore >= 8 ? "Strong" : displayScore >= 4 ? "Average" : "Needs Work";
+  const heroVerdict = displayScore >= 7 ? "Strong" : displayScore >= 5 ? "Average" : "Needs Work";
   const benchmark: BenchmarkResult = getNicheAwareBenchmark(niche, platform, format === 'video' ? 'video' : 'static');
   const [relativeTime, setRelativeTime] = useState<string>("");
   const [toast, setToast] = useState<string | null>(null);
@@ -330,6 +337,10 @@ export function ScoreCard({
             platform={platform}
             format={format}
             youtubeFormat={youtubeFormat}
+            scoreRange={scoreRange}
+            overallDelta={overallDelta}
+            overallDeltaLabel={overallDeltaLabel}
+            dimensionDeltas={dimensionDeltas}
             dimensions={dimensionOverrides ?? [
               { name: "Hook",   score: scores.hook },
               { name: "Copy",   score: scores.clarity },
@@ -367,7 +378,7 @@ export function ScoreCard({
                 title={hookSection.title}
                 icon={<Lightbulb size={14} />}
               >
-                <HookAnalysisExpanded content={hookSection.content} format={format ?? 'static'} />
+                <HookAnalysisExpanded content={hookSection.content} format={format ?? 'static'} platform={platform} />
               </CollapsibleSection>
             </div>
           );

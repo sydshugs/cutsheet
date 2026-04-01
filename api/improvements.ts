@@ -2,6 +2,7 @@
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Anthropic from "@anthropic-ai/sdk";
+import { createClient } from "@supabase/supabase-js";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
 import { sanitizeSessionMemory } from "./_lib/sanitizeMemory";
 
@@ -24,6 +25,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const rl = await checkRateLimit("improvements", user.id, user.tier, RATE);
   if (!rl.allowed) {
     return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
+  }
+
+  // Fetch brand voice from user profile (non-fatal)
+  let brandVoiceContext = "";
+  try {
+    const supabaseAdmin = createClient(
+      (process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL)!,
+      (process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.VITE_SUPABASE_SERVICE_ROLE_KEY)!,
+      { auth: { persistSession: false } }
+    );
+    const { data: profileData } = await supabaseAdmin
+      .from("user_profiles")
+      .select("brand_voice_description, brand_voice_tags")
+      .eq("user_id", user.id)
+      .single();
+    const rawDesc = profileData?.brand_voice_description ?? "";
+    const rawTags: string[] = profileData?.brand_voice_tags ?? [];
+    if (rawDesc) {
+      brandVoiceContext = `\nBrand voice: ${sanitizeSessionMemory(rawDesc)}\nVoice tags: ${rawTags.map((t: string) => sanitizeSessionMemory(t)).join(", ")}\n\nAll copy rewrites, hooks, CTAs, and suggestions must match this voice exactly. A voice mismatch is worse than keeping the original copy.\n`;
+    }
+  } catch {
+    // Profile fetch failure is non-fatal — proceed without brand voice
   }
 
   const { action, payload } = req.body ?? {};
@@ -53,7 +76,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const message = await getClient().messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 1024,
-      system: `You are a senior performance marketing creative strategist. You write short, specific, actionable improvement suggestions for ads. Each suggestion should be 1-2 sentences max. Focus on the weakest scoring areas. No fluff, no preamble.${contextBlock}${platformBlock}${memoryBlock}`,
+      system: `You are a senior performance marketing creative strategist. You write short, specific, actionable improvement suggestions for ads. Each suggestion should be 1-2 sentences max. Focus on the weakest scoring areas. No fluff, no preamble.${contextBlock}${platformBlock}${memoryBlock}${brandVoiceContext}`,
       messages: [
         {
           role: "user",
@@ -87,7 +110,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const message = await getClient().messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 512,
-      system: `You are a direct-response copywriter. You write short, punchy CTAs for paid social ads. Each CTA should be under 8 words. Focus on urgency, clarity, and conversion.${contextBlock}${memoryBlock}`,
+      system: `You are a direct-response copywriter. You write short, punchy CTAs for paid social ads. Each CTA should be under 8 words. Focus on urgency, clarity, and conversion.${contextBlock}${memoryBlock}${brandVoiceContext}`,
       messages: [
         {
           role: "user",
@@ -134,7 +157,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const message = await getClient().messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 2048,
-      system: `You are a senior creative strategist at a top performance marketing agency. You write tight, actionable creative briefs that creative teams can execute immediately. Your briefs are specific to the ad analyzed — not generic templates.${contextBlock}${memoryBlock}${platformBlock}`,
+      system: `You are a senior creative strategist at a top performance marketing agency. You write tight, actionable creative briefs that creative teams can execute immediately. Your briefs are specific to the ad analyzed — not generic templates.${contextBlock}${memoryBlock}${platformBlock}${brandVoiceContext}`,
       messages: [
         {
           role: "user",
