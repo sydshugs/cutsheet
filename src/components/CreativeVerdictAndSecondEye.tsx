@@ -1,6 +1,5 @@
-// CreativeVerdictAndSecondEye — combined for video format only
-// Verdict band → SecondEyePanel (full expandable panel with timeline + flag cards)
-// Enhanced with motion-specific annotations and unified styling
+// CreativeVerdictAndSecondEye — redesigned to match Figma node 229:2054
+// Video format only (paid + organic). Outer card shell wrapping verdict band + SecondEyePanel.
 import { useMemo } from "react";
 import { Eye, TrendingUp, AlertCircle, CheckCircle } from "lucide-react";
 import type { SecondEyeResult } from "../services/claudeService";
@@ -15,29 +14,35 @@ interface CreativeVerdictAndSecondEyeProps {
 }
 
 const VERDICT_CHIP = {
-  not_ready: { 
-    bg: 'rgba(239,68,68,0.1)', 
-    color: '#ef4444', 
-    label: 'Not ready',
-    icon: AlertCircle,
-    gradient: 'linear-gradient(135deg, rgba(239,68,68,0.08) 0%, rgba(239,68,68,0.02) 100%)',
-    borderColor: 'rgba(239,68,68,0.15)'
+  not_ready: {
+    pillBg:    "rgba(251,44,54,0.10)",
+    pillColor: "#ff6467",
+    label:     "Not ready",
+    icon:      AlertCircle,
+    gradient:  "linear-gradient(171.28deg, rgba(239,68,68,0.08) 0%, rgba(239,68,68,0.02) 100%)",
+    borderColor: "rgba(255,255,255,0.06)",
+    avatarBg:  "rgba(251,44,54,0.15)",
+    labelColor: "#ff6467",
   },
-  needs_work: { 
-    bg: 'rgba(251,191,36,0.12)', 
-    color: '#d97706', 
-    label: 'Needs work',
-    icon: TrendingUp,
-    gradient: 'linear-gradient(135deg, rgba(251,191,36,0.08) 0%, rgba(251,191,36,0.02) 100%)',
-    borderColor: 'rgba(251,191,36,0.15)'
+  needs_work: {
+    pillBg:    "rgba(254,154,0,0.10)",
+    pillColor: "#ffb900",
+    label:     "Needs work",
+    icon:      TrendingUp,
+    gradient:  "linear-gradient(171.28deg, rgba(254,154,0,0.08) 0%, rgba(254,154,0,0.02) 100%)",
+    borderColor: "rgba(255,255,255,0.06)",
+    avatarBg:  "rgba(254,154,0,0.15)",
+    labelColor: "#ffb900",
   },
-  ready: { 
-    bg: 'rgba(16,185,129,0.1)', 
-    color: '#10b981', 
-    label: 'Strong',
-    icon: CheckCircle,
-    gradient: 'linear-gradient(135deg, rgba(16,185,129,0.08) 0%, rgba(16,185,129,0.02) 100%)',
-    borderColor: 'rgba(16,185,129,0.15)'
+  ready: {
+    pillBg:    "rgba(0,188,125,0.10)",
+    pillColor: "#00d492",
+    label:     "Strong",
+    icon:      CheckCircle,
+    gradient:  "linear-gradient(171.28deg, rgba(0,188,125,0.08) 0%, rgba(0,188,125,0.02) 100%)",
+    borderColor: "rgba(255,255,255,0.06)",
+    avatarBg:  "rgba(0,188,125,0.15)",
+    labelColor: "#00d492",
   },
 };
 
@@ -51,27 +56,59 @@ export function CreativeVerdictAndSecondEye({
   const chip = VERDICT_CHIP[verdictState];
   const ChipIcon = chip.icon;
 
-  // Count critical issues from second eye flags
   const criticalCount = useMemo(() => {
     if (!secondEyeResult?.flags) return 0;
-    return secondEyeResult.flags.filter(f => 
-      f.category === 'scroll_trigger' || f.severity === 'critical'
+    return secondEyeResult.flags.filter(
+      (f) => f.category === "scroll_trigger" || f.severity === "critical"
     ).length;
   }, [secondEyeResult]);
 
   return (
-    <div className="rounded-xl border border-white/5 overflow-hidden mt-3" style={{ background: 'var(--surface, rgba(255,255,255,0.02))' }}>
-      {/* Header — Enhanced with status chip and critical count */}
-      <div className="flex items-center justify-between px-3.5 py-2.5" style={{ borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
-        <div className="flex items-center gap-2">
-          <Eye size={13} className="text-zinc-500 opacity-60" />
-          <span className="text-[13px] font-medium text-zinc-200">Creative verdict & second eye</span>
+    <div
+      style={{
+        background: "#18181b",
+        border: "1px solid rgba(255,255,255,0.06)",
+        borderRadius: 16,
+        overflow: "hidden",
+        fontFamily: "'Geist', sans-serif",
+        marginTop: 12,
+      }}
+    >
+      {/* ── Header bar (45px) ── */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "0 16px",
+          height: 45,
+          borderBottom: "1px solid rgba(255,255,255,0.06)",
+        }}
+      >
+        {/* Left: icon + title */}
+        <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+          <Eye size={13} color="#52525c" />
+          <span style={{ fontSize: 14, fontWeight: 500, color: "#e4e4e7" }}>
+            Creative verdict &amp; second eye
+          </span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] text-zinc-600">Fresh viewer perspective</span>
-          <span 
-            className="text-[10px] font-semibold rounded-full px-2 py-0.5 flex items-center gap-1" 
-            style={{ background: chip.bg, color: chip.color }}
+
+        {/* Right: subtitle + verdict pill */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 11, color: "#52525c" }}>Fresh viewer perspective</span>
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 4,
+              fontSize: 10,
+              fontWeight: 600,
+              color: chip.pillColor,
+              background: chip.pillBg,
+              borderRadius: 999,
+              padding: "3px 9px",
+              whiteSpace: "nowrap",
+            }}
           >
             <ChipIcon size={10} />
             {chip.label}
@@ -79,46 +116,78 @@ export function CreativeVerdictAndSecondEye({
         </div>
       </div>
 
-      {/* Creative verdict band — Enhanced visual hierarchy */}
-      <div 
-        className="flex items-start gap-3 px-4 py-4" 
-        style={{ 
+      {/* ── Creative Verdict banner ── */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          gap: 12,
+          padding: "16px",
           background: chip.gradient,
-          borderBottom: `0.5px solid ${chip.borderColor}` 
+          borderBottom: "1px solid rgba(255,255,255,0.06)",
         }}
       >
-        <div 
-          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" 
-          style={{ background: `${chip.color}15` }}
+        {/* Avatar */}
+        <div
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: 16,
+            background: chip.avatarBg,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
         >
-          <TrendingUp size={16} style={{ color: chip.color }} />
+          <ChipIcon size={16} color={chip.labelColor} />
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1.5">
-            <span 
-              className="text-[10px] font-semibold uppercase tracking-[0.05em]" 
-              style={{ color: chip.color }}
+
+        {/* Content */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {/* Label row */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 600,
+                color: chip.labelColor,
+                textTransform: "uppercase",
+                letterSpacing: "0.5px",
+              }}
             >
-              Creative verdict
+              Creative Verdict
             </span>
-            {criticalCount > 0 && verdictState !== 'ready' && (
-              <span className="text-[10px] text-zinc-500">
-                {criticalCount} critical {criticalCount === 1 ? 'fix' : 'fixes'}
+            {criticalCount > 0 && verdictState !== "ready" && (
+              <span style={{ fontSize: 10, color: "#71717b" }}>
+                {criticalCount} critical {criticalCount === 1 ? "fix" : "fixes"}
               </span>
             )}
           </div>
-          <p className="text-[14px] font-medium text-zinc-100 leading-[1.5] mb-1">
+
+          {/* Headline */}
+          <p
+            style={{
+              fontSize: 14,
+              fontWeight: 500,
+              color: "#f4f4f5",
+              margin: "0 0 4px",
+              lineHeight: 1.5,
+            }}
+          >
             {verdictOneLiner}
           </p>
+
+          {/* Detail */}
           {verdictDetail && (
-            <p className="text-[12px] text-zinc-400 leading-relaxed">
+            <p style={{ fontSize: 12, color: "#9f9fa9", margin: 0, lineHeight: 1.55 }}>
               {verdictDetail}
             </p>
           )}
         </div>
       </div>
 
-      {/* Second Eye — full panel with expandable flag cards, timeline, scroll alert */}
+      {/* ── Second Eye Review ── */}
       <SecondEyePanel
         result={secondEyeResult ?? null}
         loading={secondEyeLoading ?? false}

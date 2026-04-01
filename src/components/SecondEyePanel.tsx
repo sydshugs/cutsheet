@@ -1,5 +1,5 @@
-// src/components/SecondEyePanel.tsx — Second Eye Review (redesigned)
-// Fix-first hierarchy, flag timeline, scroll alert block
+// src/components/SecondEyePanel.tsx — redesigned to match Figma node 229:2054
+// Flows inside CreativeVerdictAndSecondEye outer card — no own card wrapper.
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Eye, CheckCircle, ChevronDown } from "lucide-react";
@@ -9,23 +9,52 @@ import type { SecondEyeResult, SecondEyeFlag } from "../services/claudeService";
 
 const TAG_STYLES: Record<
   SecondEyeFlag["category"],
-  { label: string; bg: string; color: string; dot: string }
+  { label: string; bg: string; color: string; dot: string; activeBg: string; activeBorder: string }
 > = {
-  scroll_trigger: { label: "Scroll risk", bg: "rgba(239,68,68,0.12)", color: "#ef4444", dot: "#ef4444" },
-  sound_off:      { label: "Sound-off",   bg: "rgba(16,185,129,0.12)", color: "#10b981", dot: "#10b981" },
-  pacing:         { label: "Pacing",      bg: "rgba(168,85,247,0.12)", color: "#a855f7", dot: "#a855f7" },
-  clarity:        { label: "Clarity",     bg: "rgba(59,130,246,0.12)", color: "#3b82f6", dot: "#3b82f6" },
+  scroll_trigger: {
+    label: "Scroll risk",
+    bg: "rgba(251,44,54,0.10)",
+    color: "#ff6467",
+    dot: "#fb2c36",
+    activeBg: "rgba(251,44,54,0.04)",
+    activeBorder: "rgba(251,44,54,0.20)",
+  },
+  sound_off: {
+    label: "Sound-off",
+    bg: "rgba(0,188,125,0.10)",
+    color: "#00d492",
+    dot: "#00bc7d",
+    activeBg: "rgba(0,188,125,0.04)",
+    activeBorder: "rgba(0,188,125,0.20)",
+  },
+  pacing: {
+    label: "Pacing",
+    bg: "rgba(173,70,255,0.10)",
+    color: "#c27aff",
+    dot: "#ad46ff",
+    activeBg: "rgba(173,70,255,0.04)",
+    activeBorder: "rgba(173,70,255,0.20)",
+  },
+  clarity: {
+    label: "Clarity",
+    bg: "rgba(43,127,255,0.10)",
+    color: "#51a2ff",
+    dot: "#2b7fff",
+    activeBg: "rgba(43,127,255,0.04)",
+    activeBorder: "rgba(43,127,255,0.30)",
+  },
 };
 
-// ─── SHIMMER (loading) ───────────────────────────────────────────────────────
+// ─── LOADING SHIMMER ─────────────────────────────────────────────────────────
 
 function ShimmerRow({ width }: { width: string }) {
   return (
     <div
       style={{
-        height: 44,
-        borderRadius: 8,
-        background: "linear-gradient(90deg, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.02) 75%)",
+        height: 56,
+        borderRadius: 24,
+        background:
+          "linear-gradient(90deg, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.02) 75%)",
         backgroundSize: "200% 100%",
         animation: "shimmer 1.5s infinite",
         width,
@@ -34,7 +63,7 @@ function ShimmerRow({ width }: { width: string }) {
   );
 }
 
-// ─── SCROLL ALERT ────────────────────────────────────────────────────────────
+// ─── SCROLL ALERT CARD ───────────────────────────────────────────────────────
 
 function ScrollAlert({ scrollMoment }: { scrollMoment: string }) {
   const timestamp = scrollMoment.match(/^[\d:]+/)?.[0] ?? "";
@@ -43,43 +72,49 @@ function ScrollAlert({ scrollMoment }: { scrollMoment: string }) {
   return (
     <div
       style={{
-        borderRadius: 10,
-        padding: "12px 14px",
-        background: "linear-gradient(135deg, rgba(239,68,68,0.08) 0%, rgba(239,68,68,0.03) 100%)",
-        border: "1px solid rgba(239,68,68,0.15)",
+        borderRadius: 24,
+        padding: "13px 15px",
+        background: "rgba(251,44,54,0.08)",
+        border: "1px solid rgba(251,44,54,0.15)",
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        {/* "Would scroll" badge */}
         <span
           style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 5,
             fontSize: 10,
             fontWeight: 600,
-            color: "#ef4444",
-            background: "rgba(239,68,68,0.15)",
-            borderRadius: 6,
+            color: "#ff6467",
+            background: "rgba(251,44,54,0.15)",
+            borderRadius: 999,
             padding: "3px 10px",
-            lineHeight: "14px",
-            display: "flex",
-            alignItems: "center",
-            gap: 4,
+            whiteSpace: "nowrap",
           }}
         >
-          <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#ef4444" }} />
+          <span
+            style={{ width: 5, height: 5, borderRadius: "50%", background: "#ff6467", flexShrink: 0 }}
+          />
           Would scroll
         </span>
-        <span
-          style={{
-            fontSize: 11,
-            fontFamily: "var(--mono)",
-            color: "#ef4444",
-            fontWeight: 600,
-          }}
-        >
-          {timestamp}
-        </span>
+        {/* Timestamp */}
+        {timestamp && (
+          <span
+            style={{
+              fontSize: 11,
+              fontFamily: "var(--mono, 'SF Mono', monospace)",
+              fontWeight: 600,
+              color: "#ff6467",
+            }}
+          >
+            {timestamp}
+          </span>
+        )}
       </div>
       {reason && (
-        <p style={{ fontSize: 12, color: "#a1a1aa", margin: "8px 0 0", lineHeight: 1.55 }}>
+        <p style={{ fontSize: 12, color: "#9f9fa9", margin: "8px 0 0", lineHeight: 1.55 }}>
           {reason}
         </p>
       )}
@@ -87,7 +122,7 @@ function ScrollAlert({ scrollMoment }: { scrollMoment: string }) {
   );
 }
 
-// ─── FLAG TIMELINE ───────────────────────────────────────────────────────────
+// ─── FLAG TIMELINE ────────────────────────────────────────────────────────────
 
 function FlagTimeline({
   flags,
@@ -100,33 +135,43 @@ function FlagTimeline({
 }) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
-  // Parse timestamp "M:SS" to seconds for positioning
   const parseTime = (ts: string): number => {
     const match = ts.match(/(\d+):(\d+)/);
     if (!match) return 0;
     return parseInt(match[1]) * 60 + parseInt(match[2]);
   };
 
-  // Get max time for normalization
-  const times = flags.map(f => parseTime(f.timestamp.split("-")[0].trim()));
+  const times = flags.map((f) => parseTime(f.timestamp.split("-")[0].trim()));
   const maxTime = Math.max(...times, 1);
 
-  // Deduplicate legend entries
-  const legendEntries = [...new Map(flags.map(f => [f.category, TAG_STYLES[f.category]])).entries()];
+  // Unique categories for legend (preserve insertion order)
+  const legendEntries = [...new Map(flags.map((f) => [f.category, TAG_STYLES[f.category]])).entries()];
 
   return (
-    <div style={{ marginBottom: 12 }}>
-      {/* Legend */}
-      <div style={{ display: "flex", gap: 12, marginBottom: 6 }}>
+    <div style={{ padding: "12px 0 0" }}>
+      {/* Legend row */}
+      <div style={{ display: "flex", gap: 16, marginBottom: 10 }}>
         {legendEntries.map(([cat, style]) => (
-          <div key={cat} style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: style.dot, flexShrink: 0 }} />
-            <span style={{ fontSize: 9, color: "#52525b" }}>{style.label}</span>
+          <div key={cat} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span
+              style={{ width: 6, height: 6, borderRadius: "50%", background: style.dot, flexShrink: 0 }}
+            />
+            <span
+              style={{
+                fontSize: 9,
+                fontWeight: 600,
+                color: "#52525c",
+                textTransform: "uppercase",
+                letterSpacing: "0.45px",
+              }}
+            >
+              {style.label}
+            </span>
           </div>
         ))}
       </div>
 
-      {/* Timeline bar */}
+      {/* Track */}
       <div
         style={{
           position: "relative",
@@ -137,15 +182,15 @@ function FlagTimeline({
         }}
       >
         {flags.map((flag, i) => {
-          const pct = (times[i] / maxTime) * 92 + 4; // 4-96% range to keep dots visible
+          const pct = (times[i] / maxTime) * 90 + 5; // 5–95% to keep dots on-track
           const cat = TAG_STYLES[flag.category];
           const isActive = activeIndex === i;
           const isHovered = hoveredIndex === i;
-          const showLabel = isActive || isHovered;
+          const showTooltip = isActive || isHovered;
 
           return (
             <div
-              key={`${flag.timestamp}-${i}`}
+              key={`dot-${i}`}
               style={{
                 position: "absolute",
                 left: `${pct}%`,
@@ -158,37 +203,45 @@ function FlagTimeline({
               onMouseEnter={() => setHoveredIndex(i)}
               onMouseLeave={() => setHoveredIndex(null)}
             >
-              {/* Dot */}
+              {/* Dot / handle */}
               <div
                 style={{
                   width: isActive ? 10 : 8,
                   height: isActive ? 10 : 8,
                   borderRadius: "50%",
                   background: cat.dot,
-                  border: isActive ? "1.5px solid white" : "none",
-                  transition: "all 150ms",
+                  border: isActive ? "1.5px solid #fff" : "none",
                   boxShadow: isActive ? `0 0 6px ${cat.dot}` : "none",
+                  transition: "all 150ms",
                 }}
               />
-              {/* Timestamp tooltip */}
-              {showLabel && (
-                <span
+              {/* Tooltip */}
+              {showTooltip && (
+                <div
                   style={{
                     position: "absolute",
                     bottom: 14,
                     left: "50%",
                     transform: "translateX(-50%)",
-                    fontSize: 9,
-                    fontFamily: "var(--mono)",
-                    color: cat.color,
-                    background: "rgba(0,0,0,0.8)",
+                    background: "#18181b",
+                    border: "1px solid rgba(255,255,255,0.10)",
                     borderRadius: 4,
-                    padding: "1px 5px",
+                    padding: "2px 6px",
+                    boxShadow: "0px 4px 6px rgba(0,0,0,0.1)",
                     whiteSpace: "nowrap",
+                    pointerEvents: "none",
                   }}
                 >
-                  {flag.timestamp.split("-")[0].trim()}
-                </span>
+                  <span
+                    style={{
+                      fontSize: 10,
+                      fontFamily: "var(--mono, 'SF Mono', monospace)",
+                      color: "#d4d4d8",
+                    }}
+                  >
+                    {flag.timestamp.split("-")[0].trim()}
+                  </span>
+                </div>
               )}
             </div>
           );
@@ -198,7 +251,7 @@ function FlagTimeline({
   );
 }
 
-// ─── FLAG CARD (fix-first, expandable) ───────────────────────────────────────
+// ─── FLAG CARD ────────────────────────────────────────────────────────────────
 
 function FlagCard({
   flag,
@@ -212,82 +265,97 @@ function FlagCard({
   onClick: () => void;
 }) {
   const cat = TAG_STYLES[flag.category];
-  const isScrollRisk = flag.category === 'scroll_trigger';
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25, delay: index * 0.04 }}
+      transition={{ duration: 0.22, delay: index * 0.04 }}
       onClick={onClick}
       style={{
-        border: isActive 
-          ? "1px solid rgba(255,255,255,0.12)" 
-          : isScrollRisk 
-            ? "1px solid rgba(239,68,68,0.1)" 
-            : "1px solid rgba(255,255,255,0.05)",
-        background: isActive 
-          ? "rgba(255,255,255,0.025)" 
-          : isScrollRisk
-            ? "linear-gradient(135deg, rgba(239,68,68,0.03) 0%, rgba(255,255,255,0.01) 100%)"
-            : "rgba(255,255,255,0.01)",
-        borderRadius: 10,
-        padding: "12px 14px",
+        borderRadius: 24,
+        border: isActive
+          ? `1px solid ${cat.activeBorder}`
+          : "1px solid rgba(255,255,255,0.06)",
+        background: isActive ? cat.activeBg : "rgba(255,255,255,0.02)",
+        padding: "13px 17px 13px 17px",
         cursor: "pointer",
         transition: "border-color 150ms, background 150ms",
+        position: "relative",
       }}
     >
-      {/* Top row: tag + timestamp */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+      {/* Top row: category badge + timestamp + chevron */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        {/* Category badge */}
         <span
           style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 5,
             fontSize: 10,
             fontWeight: 600,
             color: cat.color,
             background: cat.bg,
-            borderRadius: 6,
+            borderRadius: 999,
             padding: "3px 8px",
-            lineHeight: "14px",
-            display: "flex",
-            alignItems: "center",
-            gap: 4,
+            whiteSpace: "nowrap",
           }}
         >
-          <span 
-            style={{ 
-              width: 5, 
-              height: 5, 
-              borderRadius: "50%", 
-              background: cat.dot,
-            }} 
-          />
+          <span style={{ width: 5, height: 5, borderRadius: "50%", background: cat.dot }} />
           {cat.label}
         </span>
+
+        {/* Timestamp */}
         <span
           style={{
             fontSize: 10,
-            fontFamily: "var(--mono)",
-            color: "#52525b",
-            background: "rgba(255,255,255,0.04)",
-            borderRadius: 6,
-            padding: "3px 8px",
+            fontFamily: "var(--mono, 'SF Mono', monospace)",
+            color: "#52525c",
           }}
         >
           {flag.timestamp}
         </span>
+
+        {/* Chevron */}
+        <ChevronDown
+          size={14}
+          color="#52525c"
+          style={{
+            marginLeft: "auto",
+            transform: isActive ? "rotate(180deg)" : "rotate(0deg)",
+            transition: "transform 200ms",
+            flexShrink: 0,
+          }}
+        />
       </div>
 
-      {/* Fix label + fix text (always visible, primary) */}
+      {/* FIX label + fix text */}
       <div style={{ marginTop: 10 }}>
-        <span style={{ fontSize: 9, color: "#52525b", letterSpacing: "0.06em", textTransform: "uppercase" as const, fontWeight: 500 }}>
+        <span
+          style={{
+            fontSize: 9,
+            fontWeight: 600,
+            color: "#52525c",
+            textTransform: "uppercase",
+            letterSpacing: "0.45px",
+          }}
+        >
           FIX
         </span>
-        <p style={{ fontSize: 13, color: "#e4e4e7", fontWeight: 500, margin: "4px 0 0", lineHeight: 1.55 }}>
+        <p
+          style={{
+            fontSize: 14,
+            fontWeight: 400,
+            color: "#e4e4e7",
+            margin: "4px 0 0",
+            lineHeight: 1.5,
+          }}
+        >
           {flag.fix}
         </p>
       </div>
 
-      {/* Issue (expandable) */}
+      {/* Issue text — expanded only */}
       <div
         style={{
           maxHeight: isActive ? 120 : 0,
@@ -296,28 +364,76 @@ function FlagCard({
         }}
       >
         <div style={{ borderTop: "1px solid rgba(255,255,255,0.04)", marginTop: 10, paddingTop: 10 }}>
-          <p style={{ fontSize: 12, color: "#71717a", margin: 0, lineHeight: 1.55 }}>
+          <p style={{ fontSize: 12, color: "#71717b", margin: 0, lineHeight: 1.55 }}>
             {flag.issue}
           </p>
         </div>
-      </div>
-
-      {/* Expand indicator */}
-      <div style={{ display: "flex", justifyContent: "center", marginTop: 6 }}>
-        <ChevronDown
-          size={12}
-          color="#3f3f46"
-          style={{
-            transform: isActive ? "rotate(180deg)" : "rotate(0deg)",
-            transition: "transform 200ms",
-          }}
-        />
       </div>
     </motion.div>
   );
 }
 
+// ─── COMMUNICATES / MISSES CARD ───────────────────────────────────────────────
+
+function CommunicatesCard({ communicates, misses }: { communicates: string; misses: string }) {
+  return (
+    <div
+      style={{
+        borderRadius: 24,
+        background: "rgba(255,255,255,0.02)",
+        border: "1px solid rgba(255,255,255,0.04)",
+        padding: "13px 17px",
+        display: "flex",
+        flexDirection: "column",
+        gap: 12,
+      }}
+    >
+      {communicates && (
+        <div>
+          <span
+            style={{
+              fontSize: 9,
+              fontWeight: 500,
+              color: "#00bc7d",
+              textTransform: "uppercase",
+              letterSpacing: "0.45px",
+              display: "block",
+              marginBottom: 4,
+            }}
+          >
+            Communicates
+          </span>
+          <p style={{ fontSize: 12, color: "#9f9fa9", margin: 0, lineHeight: 1.55 }}>
+            {communicates}
+          </p>
+        </div>
+      )}
+      {misses && (
+        <div>
+          <span
+            style={{
+              fontSize: 9,
+              fontWeight: 500,
+              color: "#ff6467",
+              textTransform: "uppercase",
+              letterSpacing: "0.45px",
+              display: "block",
+              marginBottom: 4,
+            }}
+          >
+            Misses
+          </span>
+          <p style={{ fontSize: 12, color: "#9f9fa9", margin: 0, lineHeight: 1.55 }}>
+            {misses}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── MAIN PANEL ──────────────────────────────────────────────────────────────
+// No own card wrapper — flows inside CreativeVerdictAndSecondEye outer card.
 
 export function SecondEyePanel({
   result,
@@ -326,7 +442,7 @@ export function SecondEyePanel({
   result: SecondEyeResult | null;
   loading: boolean;
 }) {
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [activeIndex, setActiveIndex] = useState<number | null>(0);
 
   if (!loading && !result) return null;
 
@@ -334,53 +450,49 @@ export function SecondEyePanel({
   const isEmpty = result && result.flags.length === 0;
 
   const handleCardClick = (index: number) => {
-    setActiveIndex(prev => (prev === index ? null : index));
+    setActiveIndex((prev) => (prev === index ? null : index));
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35 }}
-      style={{
-        margin: "16px",
-        borderRadius: 12,
-        background: "rgba(255,255,255,0.015)",
-        border: "1px solid rgba(255,255,255,0.05)",
-        padding: 16,
-      }}
-    >
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Eye size={14} color="#71717a" />
-          <span style={{ fontSize: 13, fontWeight: 600, color: "#f4f4f5" }}>
-            Second Eye Review
-          </span>
-        </div>
-        <span style={{ fontSize: 11, color: "#52525b", fontStyle: "italic" }}>
-          Fresh viewer perspective
+    <div>
+      {/* Sub-header */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          padding: "16px 16px 0",
+        }}
+      >
+        <Eye size={14} color="#71717b" />
+        <span style={{ fontSize: 14, fontWeight: 600, color: "#e4e4e7" }}>
+          Second Eye Review
         </span>
       </div>
 
       <AnimatePresence mode="wait">
-        {/* Loading state */}
+        {/* Loading */}
         {loading && !result && (
           <motion.div
             key="loading"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            style={{ display: "flex", flexDirection: "column", gap: 8 }}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+              padding: "12px 16px 16px",
+            }}
           >
             <ShimmerRow width="100%" />
-            <ShimmerRow width="92%" />
-            <ShimmerRow width="96%" />
+            <ShimmerRow width="94%" />
+            <ShimmerRow width="97%" />
             <style>{`@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
           </motion.div>
         )}
 
-        {/* Empty state */}
+        {/* Empty */}
         {isEmpty && (
           <motion.div
             key="empty"
@@ -390,16 +502,16 @@ export function SecondEyePanel({
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              padding: "20px 0",
-              gap: 6,
+              padding: "24px 16px",
+              gap: 8,
             }}
           >
-            <CheckCircle size={24} color="#10b981" />
-            <span style={{ fontSize: 14, color: "#f4f4f5", fontWeight: 500 }}>
+            <CheckCircle size={22} color="#00bc7d" />
+            <span style={{ fontSize: 14, fontWeight: 500, color: "#f4f4f5" }}>
               No major issues found
             </span>
-            <span style={{ fontSize: 12, color: "#71717a" }}>
-              This looks clean to a first-time viewer.
+            <span style={{ fontSize: 12, color: "#71717b" }}>
+              Looks clean to a first-time viewer.
             </span>
           </motion.div>
         )}
@@ -410,102 +522,61 @@ export function SecondEyePanel({
             key="flags"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            style={{ display: "flex", flexDirection: "column", gap: 8 }}
+            style={{ display: "flex", flexDirection: "column", gap: 0 }}
           >
-            {/* 1. Scroll alert — separate from cards */}
-            {result.scrollMoment && <ScrollAlert scrollMoment={result.scrollMoment} />}
+            {/* Scroll alert */}
+            {result.scrollMoment && (
+              <div style={{ padding: "12px 16px 0" }}>
+                <ScrollAlert scrollMoment={result.scrollMoment} />
+              </div>
+            )}
 
-            {/* 2. Flag timeline */}
-            <FlagTimeline
-              flags={result.flags}
-              activeIndex={activeIndex}
-              onDotClick={handleCardClick}
-            />
-
-            {/* 3. Flag cards — fix-first, expandable */}
-            {result.flags.map((flag, i) => (
-              <FlagCard
-                key={`${flag.timestamp}-${i}`}
-                flag={flag}
-                index={i}
-                isActive={activeIndex === i}
-                onClick={() => handleCardClick(i)}
+            {/* Timeline */}
+            <div style={{ padding: "0 16px" }}>
+              <FlagTimeline
+                flags={result.flags}
+                activeIndex={activeIndex}
+                onDotClick={handleCardClick}
               />
-            ))}
+            </div>
 
-            {/* Summary - What video communicates/misses */}
+            {/* Fix cards */}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+                padding: "12px 16px 0",
+              }}
+            >
+              {result.flags.map((flag, i) => (
+                <FlagCard
+                  key={`${flag.timestamp}-${i}`}
+                  flag={flag}
+                  index={i}
+                  isActive={activeIndex === i}
+                  onClick={() => handleCardClick(i)}
+                />
+              ))}
+            </div>
+
+            {/* Communicates / Misses */}
             {(result.whatItCommunicates || result.whatItFails) && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: result.flags.length * 0.04 }}
-                style={{
-                  marginTop: 12,
-                  padding: "12px 14px",
-                  background: "rgba(255,255,255,0.015)",
-                  borderRadius: 10,
-                  border: "1px solid rgba(255,255,255,0.04)",
-                }}
+                style={{ padding: "8px 16px 16px" }}
               >
-                {result.whatItCommunicates && (
-                  <div style={{ marginBottom: result.whatItFails ? 10 : 0 }}>
-                    <span 
-                      style={{ 
-                        fontSize: 9, 
-                        fontWeight: 500, 
-                        color: "#10b981", 
-                        textTransform: "uppercase" as const, 
-                        letterSpacing: "0.05em",
-                        display: "block",
-                        marginBottom: 4,
-                      }}
-                    >
-                      Communicates
-                    </span>
-                    <p
-                      style={{
-                        fontSize: 12,
-                        color: "#a1a1aa",
-                        margin: 0,
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      {result.whatItCommunicates}
-                    </p>
-                  </div>
-                )}
-                {result.whatItFails && (
-                  <div>
-                    <span 
-                      style={{ 
-                        fontSize: 9, 
-                        fontWeight: 500, 
-                        color: "#ef4444", 
-                        textTransform: "uppercase" as const, 
-                        letterSpacing: "0.05em",
-                        display: "block",
-                        marginBottom: 4,
-                      }}
-                    >
-                      Misses
-                    </span>
-                    <p
-                      style={{
-                        fontSize: 12,
-                        color: "#a1a1aa",
-                        margin: 0,
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      {result.whatItFails}
-                    </p>
-                  </div>
-                )}
+                <CommunicatesCard
+                  communicates={result.whatItCommunicates ?? ""}
+                  misses={result.whatItFails ?? ""}
+                />
               </motion.div>
             )}
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </div>
   );
 }
