@@ -104,13 +104,6 @@ function scoreColor(score: number): string {
   return "#ef4444";
 }
 
-/** Colorblind-safe indicator: shape that communicates score band without relying on color */
-function scoreIndicator(score: number): string {
-  if (score >= 7) return "\u25B2"; // ▲ up triangle = strong
-  if (score >= 5) return "\u25CF"; // ● circle = average
-  return "\u25BC"; // ▼ down triangle = weak
-}
-
 /** Count-up animation from 0 → target over `duration` ms */
 function useCountUp(target: number, duration = 600): number {
   const [value, setValue] = useState(0);
@@ -135,59 +128,6 @@ function useCountUp(target: number, duration = 600): number {
   }, [target, duration]);
 
   return value;
-}
-
-// ── Benchmark bar ──────────────────────────────────────────────────────────────
-
-interface BenchmarkBarProps {
-  score: number;
-  benchmark: number;
-  color: string;
-  platform?: string;
-  label?: string;
-}
-
-function BenchmarkBar({ score, benchmark, color, label }: BenchmarkBarProps) {
-  const fillPct = `${(score / 10) * 100}%`;
-  const tickPct = `${(benchmark / 10) * 100}%`;
-
-  return (
-    <div className="w-full flex flex-col">
-      {/* Labels above bar */}
-      <div className="flex items-center justify-between mb-2">
-        <span className="font-mono text-[10px] text-zinc-400">
-          You · {score.toFixed(1)}
-        </span>
-        <span 
-          className="font-mono text-[10px] text-zinc-500 truncate max-w-[55%] text-right"
-          title={`${label ?? "Avg"} · ${benchmark.toFixed(1)}`}
-        >
-          {label ?? "Avg"} · {benchmark.toFixed(1)}
-        </span>
-      </div>
-      
-      {/* Bar track */}
-      <div className="relative w-full h-1 bg-white/[0.04] rounded-full">
-        {/* Score fill */}
-        <motion.div
-          className="absolute h-full rounded-full left-0 top-0"
-          style={{ background: `${color}80` }}
-          initial={{ width: 0 }}
-          animate={{ width: fillPct }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-        />
-        {/* Benchmark tick */}
-        <div
-          className="absolute w-0.5 h-2.5 bg-zinc-500 rounded-sm"
-          style={{
-            top: -3,
-            left: tickPct,
-            transform: "translateX(-50%)",
-          }}
-        />
-      </div>
-    </div>
-  );
 }
 
 // ── ScoreHero ──────────────────────────────────────────────────────────────────
@@ -238,156 +178,169 @@ export function ScoreHero({ score, verdict, benchmark, dimensions, platform, for
     ? (PLATFORM_BENCHMARK_LABELS[platform] ?? `${platform} avg`)
     : "Avg");
 
+  // Badge style based on score band
+  const badgeStyles = score >= 7
+    ? "bg-emerald-500/[0.15] border-emerald-500/[0.3] text-emerald-400"
+    : score >= 5
+    ? "bg-[#6366f1]/[0.15] border-[#6366f1]/[0.3] text-[#818cf8]"
+    : "bg-red-500/[0.15] border-red-500/[0.3] text-red-400";
+
+  // Benchmark diff text
+  const benchmarkDiffText = showBenchmark
+    ? (() => {
+        const diff = score - resolvedBenchmark!;
+        const absDiff = Math.abs(diff).toFixed(1);
+        return diff >= 0
+          ? `↑ ${absDiff} pts above avg · ${benchmarkLabel.replace(' avg', '')}`
+          : `↓ ${absDiff} pts below avg · ${benchmarkLabel.replace(' avg', '')}`;
+      })()
+    : null;
+  const aboveBenchmark = showBenchmark ? score >= resolvedBenchmark! : true;
+
   return (
-    <div className="flex flex-col items-center w-full px-4 pt-5 pb-4">
-      {/* Score display — brand guide: Geist Mono, 40px, Bold */}
-      <div className="flex items-baseline gap-1">
-        <span
-          className="font-mono tabular-nums tracking-tight"
-          style={{
-            fontSize: 40,
-            fontWeight: 700,
-            lineHeight: 1,
-            color: effectiveColor,
-            letterSpacing: '-0.03em',
-          }}
-        >
-          {animatedScore.toFixed(1)}
-        </span>
-        <span className="font-mono text-sm text-zinc-500">/10</span>
+    <div className="flex flex-col w-full">
+      {/* Hero score section */}
+      <div className="flex flex-col gap-4">
+        <div className="flex items-end justify-between">
+          <div className="flex flex-col gap-1">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-500">
+              OVERALL SCORE
+            </span>
+            <div className="flex items-center gap-3">
+              <span
+                className="text-[52px] font-bold leading-none tracking-tight"
+                style={{ color: effectiveColor }}
+              >
+                {animatedScore.toFixed(1)}
+              </span>
+              <span className="text-[24px] font-bold leading-none text-zinc-600 self-end pb-1">/10</span>
+            </div>
+          </div>
+          <div className={`px-2.5 py-1 rounded-md border text-[12px] font-semibold tracking-wide uppercase mb-1 ${badgeStyles}`}>
+            {verdict}
+          </div>
+        </div>
+
+        {/* Confidence range */}
+        {scoreRange && (
+          <span className="text-[11px] text-zinc-600 font-mono -mt-2">
+            {scoreRange.low.toFixed(1)} – {scoreRange.high.toFixed(1)} range
+          </span>
+        )}
+
+        {/* Benchmark bar */}
+        {showBenchmark && (
+          <div className="flex flex-col gap-2 pt-4">
+            <div className="flex items-center justify-between w-full flex-nowrap gap-2">
+              <span className="text-sm text-zinc-500 whitespace-nowrap shrink-0">
+                You · {score.toFixed(1)}
+              </span>
+              <div className={`rounded-full border font-mono px-3 py-1.5 flex items-center gap-1.5 whitespace-nowrap shrink-0 text-[11px] ${
+                aboveBenchmark
+                  ? 'border-emerald-500/20 text-emerald-400'
+                  : 'border-red-500/20 text-red-400'
+              }`}>
+                <span>{benchmarkDiffText}</span>
+              </div>
+            </div>
+            <div className="relative h-1.5 w-full bg-[#3f3f46] rounded-full overflow-hidden">
+              {/* Average marker */}
+              <div
+                className="absolute top-0 bottom-0 w-0.5 bg-zinc-500 z-10"
+                style={{ left: `${(resolvedBenchmark! / 10) * 100}%` }}
+              />
+              {/* Score fill */}
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${(score / 10) * 100}%` }}
+                transition={{ duration: 1, ease: "easeOut" }}
+                className="absolute top-0 bottom-0 left-0 rounded-full"
+                style={{ backgroundColor: effectiveColor }}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Verdict label — neutral, not accent-colored */}
-      <span
-        className="text-xs font-semibold mt-1.5"
-        style={{ color: '#a1a1aa' }}
-      >
-        {verdict}
-      </span>
-
-      {/* Confidence range — shown when scoreRange is provided */}
-      {scoreRange && (
-        <span className="text-[11px] text-zinc-600 font-mono mt-1">
-          {scoreRange.low.toFixed(1)} – {scoreRange.high.toFixed(1)} range
-        </span>
-      )}
-
-      {/* Score delta pill — shown when a previous analysis exists */}
-      {hasDelta && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.2, ease: "easeOut" }}
-          className="flex items-center gap-1 mt-2 px-2.5 py-1 rounded-full font-mono text-[11px] font-semibold"
-          style={{
-            background: overallDelta! > 0 ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
-            color: overallDelta! > 0 ? '#10b981' : '#ef4444',
-          }}
-        >
-          <span>{overallDelta! > 0 ? '▲' : '▼'}</span>
-          <span>{Math.abs(overallDelta!).toFixed(1)}</span>
-          {overallDeltaLabel && (
-            <span className="font-normal opacity-70 ml-0.5">{overallDeltaLabel}</span>
-          )}
-        </motion.div>
-      )}
-
-      {/* Benchmark bar */}
-      {showBenchmark && (
-        <div className="w-full mt-4">
-          <BenchmarkBar
-            score={score}
-            benchmark={resolvedBenchmark!}
-            color={accentColor ?? color}
-            platform={platform}
-            label={benchmarkLabel}
-          />
-        </div>
-      )}
-
-      {/* Dimension grid — score + mini bar with optional confidence band */}
-      <div className="w-full mt-4 pt-4 border-t border-white/[0.04]">
-        {/* "Show changes" toggle — only visible when delta data exists */}
-        {hasDelta && dimensionDeltas && (
-          <div className="flex justify-end mb-2">
+      {/* Dimension scores — vertical list */}
+      <div className="flex flex-col gap-4 pt-6">
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-500">
+            Dimension Scores
+          </span>
+          {hasDelta && dimensionDeltas && (
             <button
               onClick={() => setShowDeltas(v => !v)}
-              className="text-[10px] font-medium text-zinc-500 hover:text-zinc-300 transition-opacity"
+              className={`rounded-full px-3 py-1 text-[10px] font-medium transition-colors ${
+                showDeltas
+                  ? "border border-indigo-500/20 bg-indigo-500/[0.06] text-indigo-400"
+                  : "border border-white/[0.06] bg-white/[0.02] text-zinc-600 hover:text-zinc-400"
+              }`}
             >
               {showDeltas ? 'Hide changes' : 'Show changes'}
             </button>
-          </div>
-        )}
-        <div className="grid grid-cols-4 gap-1.5">
+          )}
+        </div>
+        <div className="flex flex-col gap-3.5">
           {resolvedDimensions.map((dim, i) => {
             const dimColor = scoreColor(dim.score);
-            // When accentColor is provided (e.g. Display), use neutral white for tiles
-            // so page accent color never bleeds into individual score tiles.
             const dimDisplayColor = accentColor != null ? '#f4f4f5' : dimColor;
             const hasRange = dim.rangeLow != null && dim.rangeHigh != null;
+            const dimDelta = dimensionDeltas?.[dim.name];
+            const hasDimDelta = showDeltas && dimDelta != null && Math.abs(dimDelta) >= 0.05;
             return (
-              <motion.div
-                key={dim.name}
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.25, delay: i * 0.04, ease: "easeOut" }}
-                className="flex flex-col items-center gap-1.5 py-2.5 px-1 rounded-lg"
-                style={{ background: 'rgba(255,255,255,0.015)' }}
-              >
-                <span
-                  className="font-mono text-xs font-medium tabular-nums"
-                  style={{ color: dimDisplayColor }}
-                  aria-label={`${dim.name}: ${dim.score.toFixed(1)} — ${dim.score >= 7 ? "Strong" : dim.score >= 5 ? "Average" : "Weak"}`}
-                >
-                  {scoreIndicator(dim.score)} {dim.score.toFixed(1)}
-                </span>
-
-                {/* Mini bar track with optional confidence band */}
-                <div className="relative w-full h-[3px] bg-white/[0.06] rounded-full overflow-hidden">
-                  {/* Confidence band — lighter overlay spanning rangeLow → rangeHigh */}
-                  {hasRange && (
+              <div key={dim.name} className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-zinc-400">{dim.name}</span>
+                    <AnimatePresence>
+                      {hasDimDelta && (
+                        <motion.span
+                          key="delta"
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          transition={{ duration: 0.15 }}
+                          className={`text-[10px] font-semibold rounded px-1.5 py-0.5 ${
+                            dimDelta! > 0
+                              ? "text-emerald-500 bg-emerald-500/[0.06]"
+                              : "text-red-400 bg-red-500/[0.06]"
+                          }`}
+                        >
+                          {dimDelta! > 0 ? "↑" : "↓"}{Math.abs(dimDelta!).toFixed(1)}
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                  <span
+                    className="text-sm font-bold leading-none"
+                    style={{ color: dimDisplayColor }}
+                    aria-label={`${dim.name}: ${dim.score.toFixed(1)} — ${dim.score >= 7 ? "Strong" : dim.score >= 5 ? "Average" : "Weak"}`}
+                  >
+                    {dim.score.toFixed(1)}
+                  </span>
+                </div>
+                <div className="relative h-1 w-full bg-[#27272a] rounded-full overflow-hidden">
+                  {/* Confidence band */}
+                  {hasRange && showDeltas && (
                     <div
-                      className="absolute h-full rounded-full"
+                      className="absolute top-0 bottom-0 rounded-full bg-white/[0.12] transition-opacity duration-300"
                       style={{
                         left: `${(dim.rangeLow! / 10) * 100}%`,
                         width: `${((dim.rangeHigh! - dim.rangeLow!) / 10) * 100}%`,
-                        background: `${dimDisplayColor}30`,
                       }}
                     />
                   )}
                   {/* Score fill */}
                   <motion.div
-                    className="absolute h-full rounded-full left-0 top-0"
-                    style={{ background: dimDisplayColor }}
+                    className="absolute top-0 bottom-0 left-0 rounded-full z-10"
+                    style={{ backgroundColor: dimDisplayColor }}
                     initial={{ width: 0 }}
                     animate={{ width: `${(dim.score / 10) * 100}%` }}
-                    transition={{ duration: 0.5, ease: "easeOut", delay: i * 0.04 }}
+                    transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }}
                   />
                 </div>
-
-                <span className="text-[9px] text-zinc-500 text-center leading-tight whitespace-nowrap">
-                  {dim.name}
-                </span>
-
-                {/* Per-dimension delta chip */}
-                <AnimatePresence>
-                  {showDeltas && dimensionDeltas && dimensionDeltas[dim.name] != null && Math.abs(dimensionDeltas[dim.name]) >= 0.05 && (
-                    <motion.span
-                      key="delta"
-                      initial={{ opacity: 0, y: 2 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 2 }}
-                      transition={{ duration: 0.15 }}
-                      className="font-mono text-[9px] font-semibold"
-                      style={{
-                        color: dimensionDeltas[dim.name] > 0 ? '#10b981' : '#ef4444',
-                      }}
-                    >
-                      {dimensionDeltas[dim.name] > 0 ? '+' : ''}{dimensionDeltas[dim.name].toFixed(1)}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </motion.div>
+              </div>
             );
           })}
         </div>
