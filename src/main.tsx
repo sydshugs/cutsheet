@@ -10,6 +10,15 @@ import "./index.css";
 
 inject();
 
+// Plausible lives in public/plausible-boot.js so index.html has no inline scripts
+// (avoids Vite 6 import-analysis misparsing the HTML shell).
+if (import.meta.env.PROD) {
+  const s = document.createElement("script");
+  s.src = "/plausible-boot.js";
+  s.defer = true;
+  document.body.appendChild(s);
+}
+
 // ── Critical path (landing + auth) — eagerly loaded ──────────────────────────
 import LandingPage from "./pages/LandingPage.tsx";
 import Login from "./pages/Login.tsx";

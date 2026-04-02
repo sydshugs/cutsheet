@@ -1,6 +1,12 @@
 import { useRef, useState, useCallback, useEffect, type RefObject } from "react";
 import { CloudUpload, Video, Image } from "lucide-react";
 import { sanitizeFileName } from "../utils/sanitize";
+import {
+  isAcceptedUploadFile,
+  isImageUploadFile,
+  UPLOAD_IMAGE_MIMES,
+  UPLOAD_VIDEO_MIMES,
+} from "../utils/uploadFileValidation";
 
 interface VideoDropzoneProps {
   onFileSelect: (file: File | null) => void;
@@ -14,16 +20,10 @@ interface VideoDropzoneProps {
   heading?: string;
 }
 
-const VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
-const IMAGE_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
 const MAX_SIZE_MB = 200;
 
-function isImageFile(f: File): boolean {
-  return f.type.startsWith("image/");
-}
-
 export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, isDark = true, acceptImages = false, onUrlSubmit, heading = "Drop your ad here" }: VideoDropzoneProps) {
-  const acceptedTypes = acceptImages ? [...VIDEO_TYPES, ...IMAGE_TYPES] : VIDEO_TYPES;
+  const acceptedTypes = acceptImages ? [...UPLOAD_VIDEO_MIMES, ...UPLOAD_IMAGE_MIMES] : [...UPLOAD_VIDEO_MIMES];
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
@@ -57,9 +57,8 @@ export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, 
   }, []);
 
   const validate = (f: File): string | null => {
-    // Get extension for clearer error messages
     const ext = f.name.split(".").pop()?.toLowerCase() ?? "";
-    if (!acceptedTypes.includes(f.type)) {
+    if (!isAcceptedUploadFile(f, acceptImages)) {
       return `We can't read .${ext} files — upload as ${acceptImages ? "MP4, MOV, WEBM, JPG, PNG, or WEBP" : "MP4, MOV, or WEBM"}`;
     }
     if (f.size > MAX_SIZE_MB * 1024 * 1024) {
@@ -204,7 +203,7 @@ export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, 
   }
 
   // Preview state — file loaded
-  const fileIsImage = isImageFile(file);
+  const fileIsImage = isImageUploadFile(file);
   return (
     <div className="relative">
       <div className="rounded-2xl overflow-hidden bg-zinc-950 border border-white/5">

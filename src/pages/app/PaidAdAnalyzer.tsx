@@ -1129,7 +1129,6 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                         onHistoryEntryClick={(entry) => setLoadedEntry(entry)}
                         platform={platform !== "all" ? platform : (rawUserContext?.platform ?? undefined)}
                         icon={Zap}
-                        format={format}
                         niche={rawUserContext?.niche}
                         onFixIt={handleFixIt}
                         onVisualize={handleVisualize}
@@ -1145,7 +1144,17 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                         policyLoading={policyLoading}
                         policyResult={policyResult}
                         visualizeLoading={visualizeStatus === 'loading'}
-                        visualizeResult={visualizeResult ? { url: visualizeResult.imageUrl ?? visualizeResult.videoUrl, type: visualizeResult.videoUrl ? 'video' : 'image' } : null}
+                        visualizeResult={(() => {
+                          if (!visualizeResult) return null;
+                          const url =
+                            visualizeResult.generatedImageUrl ??
+                            visualizeResult.originalImageUrl;
+                          if (!url) return null;
+                          const isVideo =
+                            url.startsWith("data:video/") ||
+                            /\.(mp4|webm|mov)(\?|$)/i.test(url);
+                          return { url, type: isVideo ? "video" : "image" };
+                        })()}
                         designReviewData={staticSecondEyeResult ? {
                           flags: staticSecondEyeResult.flags ?? [],
                           topIssue: staticSecondEyeResult.topIssue,

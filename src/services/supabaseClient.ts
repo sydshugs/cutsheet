@@ -11,6 +11,8 @@ export const supabase = supabaseUrl && supabaseAnonKey
       auth: {
         persistSession: false,
         autoRefreshToken: false,
+        // Avoid second GoTrueClient on same storage key as lib/supabase.ts
+        storageKey: "cutsheet-share-link-client",
       },
     })
   : null;

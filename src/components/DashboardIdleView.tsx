@@ -3,10 +3,13 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import { BarChart3, GitCompare, Layers, FlaskConical, Paperclip, Upload } from "lucide-react";
 import { type HistoryEntry } from "../hooks/useHistory";
+import {
+  isAcceptedUploadFile,
+  UPLOAD_IMAGE_MIMES,
+  UPLOAD_VIDEO_MIMES,
+} from "../utils/uploadFileValidation";
 
-const VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
-const IMAGE_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
-const ACCEPTED_TYPES = [...VIDEO_TYPES, ...IMAGE_TYPES];
+const ACCEPTED_TYPES = [...UPLOAD_VIDEO_MIMES, ...UPLOAD_IMAGE_MIMES];
 const MAX_SIZE_MB = 200;
 
 const FORMAT_PILLS = ["MP4", "MOV", "WEBM", "JPG", "PNG"];
@@ -68,7 +71,7 @@ export function DashboardIdleView({
   }, []);
 
   const validate = (f: File): string | null => {
-    if (!ACCEPTED_TYPES.includes(f.type)) {
+    if (!isAcceptedUploadFile(f, true)) {
       return "Unsupported format. Use MP4, WebM, MOV, PNG, JPEG, or WebP.";
     }
     if (f.size > MAX_SIZE_MB * 1024 * 1024) return `File too large. Max ${MAX_SIZE_MB}MB.`;

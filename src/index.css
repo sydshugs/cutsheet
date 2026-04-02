@@ -1,3 +1,7 @@
+/* Fonts: keep Google Fonts URLs here so index.html stays free of `&` / entities
+   (Vite 6 import-analysis can mis-parse those inside index.html). */
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap");
 @import "./styles/tokens.css";
 @import "tailwindcss";
 
