@@ -2,8 +2,20 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Menu, Settings, CreditCard, BarChart3, HelpCircle, LogOut } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { UserAvatar } from "./UserAvatar";
+
+const ROUTE_TITLES: Record<string, string> = {
+  "/app/paid": "Paid Ad Analyzer",
+  "/app/organic": "Organic Analyzer",
+  "/app/display": "Display Analyzer",
+  "/app/ab-test": "A/B Test",
+  "/app/competitor": "Competitor Analyzer",
+  "/app/batch": "Rank Creatives",
+  "/app/deconstructor": "Ad Breakdown",
+  "/app/swipe-file": "Saved Ads",
+  "/settings": "Settings",
+};
 
 interface TopBarProps {
   onNewAnalysis: () => void;
@@ -51,28 +63,28 @@ export function TopBar({
     };
   }, [popoverOpen]);
 
+  const location = useLocation();
+  const pageTitle = ROUTE_TITLES[location.pathname] ?? "Analyzer";
+
   return (
-    <div className="h-14 bg-zinc-950/80 backdrop-blur-xl border-b border-white/5 flex items-center px-4 gap-3 relative z-20">
-      <button
-        className="lg:hidden text-zinc-400 hover:text-zinc-200 p-1"
-        onClick={onMobileMenuToggle}
-        aria-label="Open menu"
-      >
-        <Menu size={20} />
-      </button>
-
-      <div className="flex-1" />
-
-      {/* Plan badge */}
-      <div style={{
-        padding: "4px 10px", borderRadius: 6,
-        background: isPaid ? "rgba(99,102,241,0.08)" : "rgba(255,255,255,0.03)",
-        border: `1px solid ${isPaid ? "rgba(99,102,241,0.2)" : "rgba(255,255,255,0.06)"}`,
-        display: "flex", alignItems: "center", gap: 6,
-      }}>
-        <div style={{ width: 5, height: 5, borderRadius: "50%", background: isPaid ? "#6366f1" : "#52525b" }} />
-        <span style={{ fontSize: 11, fontWeight: 500, color: isPaid ? "#818cf8" : "#71717a" }}>{planLabel}</span>
+    <div className="h-[48px] shrink-0 border-b border-white/[0.06] flex items-center justify-between px-6 relative z-20">
+      <div className="flex items-center gap-3">
+        <button
+          className="md:hidden text-zinc-400 hover:text-zinc-200 p-1"
+          onClick={onMobileMenuToggle}
+          aria-label="Open menu"
+        >
+          <Menu size={20} />
+        </button>
+        <h2 className="text-[14px] font-medium text-white hidden md:block">{pageTitle}</h2>
       </div>
+
+      <div className="flex items-center gap-4">
+        {/* Plan badge */}
+        <div className="bg-[rgba(99,102,241,0.1)] border border-[rgba(99,102,241,0.2)] text-[#818cf8] text-[12px] font-medium rounded-full py-[4px] px-[12px] flex items-center gap-[6px]">
+          <span>●</span>
+          <span>{planLabel}</span>
+        </div>
 
       {/* Avatar + popover */}
       {userName && (
