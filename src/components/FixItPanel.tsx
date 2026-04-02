@@ -30,11 +30,11 @@ interface FixItPanelProps {
 // ─── BRAND COLORS ───────────────────────────────────────────────────────────
 
 const COLORS = {
-  hook: { main: "#10b981", bg: "rgba(16,185,129,0.08)", border: "rgba(16,185,129,0.15)" },
-  body: { main: "#6366f1", bg: "rgba(99,102,241,0.08)", border: "rgba(99,102,241,0.15)" },
-  cta: { main: "#f59e0b", bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.15)" },
+  hook: { main: "#7c86ff", bg: "rgba(124,134,255,0.06)", border: "rgba(124,134,255,0.12)" },
+  body: { main: "#7c86ff", bg: "rgba(124,134,255,0.06)", border: "rgba(124,134,255,0.12)" },
+  cta: { main: "#ffb900", bg: "rgba(254,154,0,0.04)", border: "rgba(254,154,0,0.2)" },
   overlay: { main: "#8b5cf6", bg: "rgba(139,92,246,0.08)", border: "rgba(139,92,246,0.15)" },
-  improvement: { main: "#14b8a6", bg: "rgba(20,184,166,0.08)", border: "rgba(20,184,166,0.15)" },
+  improvement: { main: "#71717b", bg: "rgba(255,255,255,0.02)", border: "rgba(255,255,255,0.06)" },
 };
 
 // ─── HELPERS ────────────────────────────────────────────────────────────────
@@ -103,7 +103,7 @@ function Card({
       style={{
         background: accentColor?.bg || "rgba(255,255,255,0.02)",
         border: `1px solid ${accentColor?.border || "rgba(255,255,255,0.06)"}`,
-        borderRadius: 14,
+        borderRadius: 17.5,
         ...style,
       }}
       className={cn("p-4", className)}
@@ -298,16 +298,12 @@ export default function FixItPanel({ result, onCopyAll, mediaType = "video", ana
         {/* ── New CTA ────────────────────────────────────────────── */}
         <Card accentColor={COLORS.cta}>
           <SectionHeader icon={ArrowRight} label="New CTA" color={COLORS.cta.main} />
-          <div 
-            className="inline-block px-4 py-2.5 rounded-lg mb-3"
-            style={{ background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.2)" }}
-          >
-            <span className="text-[15px] font-semibold" style={{ color: "#fbbf24" }}>
-              {result.newCTA.copy}
-            </span>
-          </div>
-          <p className="text-xs text-zinc-500">
-            <span className="font-medium text-zinc-400">Placement:</span> {result.newCTA.placement}
+          <p className="text-[17px] font-semibold text-[#f4f4f5] mb-2 tracking-[-0.3px] leading-snug">
+            {result.newCTA.copy}
+          </p>
+          <p className="text-[13px] leading-[1.6]">
+            <span className="font-medium text-[#71717b]">Placement: </span>
+            <span className="text-[#9f9fa9]">{result.newCTA.placement}</span>
           </p>
           <FeedbackRow
             analysisId={analysisId}
@@ -366,18 +362,12 @@ export default function FixItPanel({ result, onCopyAll, mediaType = "video", ana
                     <span className="text-[13px] font-medium text-zinc-200">
                       {imp.dimension}
                     </span>
-                    <div className="flex items-center gap-2">
-                      <span 
-                        className="text-sm font-mono px-2 py-0.5 rounded"
-                        style={{ background: "rgba(255,255,255,0.05)", color: "#71717a" }}
-                      >
+                    <div className="flex items-center gap-[6px]">
+                      <span className="text-[13px] font-normal" style={{ color: "#52525c" }}>
                         {imp.oldScore}
                       </span>
-                      <ArrowRight size={14} className="text-zinc-600" />
-                      <span 
-                        className="text-sm font-mono font-semibold px-2 py-0.5 rounded"
-                        style={{ background: "rgba(20,184,166,0.15)", color: "#2dd4bf" }}
-                      >
+                      <ArrowRight size={11} className="text-zinc-600" />
+                      <span className="text-[13px] font-semibold" style={{ color: "#00d492" }}>
                         {imp.newScore}
                       </span>
                     </div>

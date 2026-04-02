@@ -377,11 +377,18 @@ export function ReportCards({
                 preload="auto"
                 playsInline
                 className="w-full h-full object-contain"
-                onLoadedMetadata={(e) => {
+                onLoadedData={(e) => {
                   if (!thumbnailDataUrl) {
                     const v = e.currentTarget;
-                    v.currentTime = 1.0;
+                    if (v.readyState >= 2) {
+                      v.currentTime = Math.min(1.0, (v.duration || 10) * 0.1);
+                    }
                   }
+                }}
+                onSeeked={(e) => {
+                  const v = e.currentTarget;
+                  v.style.opacity = '0.99';
+                  requestAnimationFrame(() => { v.style.opacity = ''; });
                 }}
               />
             )}

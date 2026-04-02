@@ -122,9 +122,17 @@ export function ProgressCard({ file, status, onCancel, onComplete, format = "vid
               preload="auto"
               autoPlay={false}
               className="absolute inset-0 w-full h-full object-cover"
-              onLoadedMetadata={(e) => {
+              onLoadedData={(e) => {
                 const v = e.currentTarget;
-                v.currentTime = 1.0;
+                if (v.readyState >= 2) {
+                  v.currentTime = Math.min(1.0, (v.duration || 10) * 0.1);
+                }
+              }}
+              onSeeked={(e) => {
+                // Force repaint to avoid black frame artifact on some browsers
+                const v = e.currentTarget;
+                v.style.opacity = '0.99';
+                requestAnimationFrame(() => { v.style.opacity = ''; });
               }}
             />
           ) : isImage && previewUrl ? (

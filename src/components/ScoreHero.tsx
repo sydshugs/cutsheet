@@ -173,12 +173,12 @@ export function ScoreHero({
               >
                 {animatedScore.toFixed(1)}
               </span>
-              <span className="text-[26px] font-bold leading-none text-[#52525c] ml-0.5 self-end pb-1">/10</span>
+              <span className="text-[24px] font-bold leading-none text-[#52525c] ml-0.5 self-end pb-1">/10</span>
             </div>
           </div>
           {/* Right: verdict badge */}
           <div
-            className="px-[13px] py-[6px] rounded-full border text-[13px] font-semibold tracking-[0.025em] uppercase whitespace-nowrap self-end mb-1"
+            className="px-[10px] h-[28px] flex items-center rounded-[6px] border text-[12px] font-semibold tracking-[0.3px] uppercase whitespace-nowrap self-end mb-1"
             style={{ background: badgeBg, borderColor: badgeBorder, color: badgeText }}
           >
             {verdict}
@@ -257,7 +257,7 @@ export function ScoreHero({
           )}
         </div>
 
-        <div className="flex flex-col gap-[15px]">
+        <div className="flex flex-col gap-[14px]">
           {resolvedDimensions.map((dim) => {
             const dimColor = scoreColor(dim.score);
             const dimDisplayColor = accentColor != null ? '#f4f4f5' : dimColor;
@@ -302,7 +302,7 @@ export function ScoreHero({
                     </AnimatePresence>
                   </div>
                   <span
-                    className="text-[15px] font-bold leading-none"
+                    className="text-[14px] font-bold leading-none"
                     style={{ color: dimDisplayColor }}
                     aria-label={`${dim.name}: ${dim.score.toFixed(1)}`}
                   >

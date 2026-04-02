@@ -302,31 +302,31 @@ export function ScoreCard({
           </div>
         )}
 
-        {/* Deep dive rows */}
-        <div className="flex flex-col border-t border-white/[0.04]">
-          {/* Hook Analysis */}
-          {analysisSections && analysisSections.length > 0 && (() => {
-            const hookSection = analysisSections.find(s => /hook/i.test(s.title));
-            if (!hookSection) return null;
-            return (
-              <div className="border-b border-white/[0.04]">
-                <CollapsibleSection
-                  title={hookSection.title}
-                  icon={<Activity size={14} />}
-                >
-                  <HookAnalysisExpanded content={hookSection.content} format={format ?? 'static'} platform={platform} />
-                </CollapsibleSection>
-              </div>
-            );
-          })()}
-
-          {/* Hashtags */}
-          {hashtags && (hashtags.tiktok?.length > 0 || hashtags.meta?.length > 0 || hashtags.instagram?.length > 0 || hashtags.pinterest?.length > 0 || hashtags.reels?.length > 0 || hashtags.youtube_shorts?.length > 0) && (
-            <div className="border-b border-white/[0.04]">
-              <HashtagsC2 hashtags={hashtags} format={format} />
+        {/* Deep dive rows — only render border-t when content exists */}
+        {(() => {
+          const hookSection = analysisSections?.find(s => /hook/i.test(s.title));
+          const hasHashtags = hashtags && (hashtags.tiktok?.length > 0 || hashtags.meta?.length > 0 || hashtags.instagram?.length > 0 || hashtags.pinterest?.length > 0 || hashtags.reels?.length > 0 || hashtags.youtube_shorts?.length > 0);
+          if (!hookSection && !hasHashtags) return null;
+          return (
+            <div className="flex flex-col border-t border-white/[0.04]">
+              {hookSection && (
+                <div className="border-b border-white/[0.04]">
+                  <CollapsibleSection
+                    title={hookSection.title}
+                    icon={<Activity size={14} />}
+                  >
+                    <HookAnalysisExpanded content={hookSection.content} format={format ?? 'static'} platform={platform} />
+                  </CollapsibleSection>
+                </div>
+              )}
+              {hasHashtags && (
+                <div className="border-b border-white/[0.04]">
+                  <HashtagsC2 hashtags={hashtags} format={format} />
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          );
+        })()}
 
         {/* Actions row */}
         <div className="flex gap-[13px] pt-2">
