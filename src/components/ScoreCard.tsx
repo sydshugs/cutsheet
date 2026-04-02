@@ -91,6 +91,7 @@ interface ScoreCardProps {
   overallDelta?: number;
   overallDeltaLabel?: string;
   dimensionDeltas?: Record<string, number>;
+  platformCta?: string | null;
 }
 
 /** Score band color — design spec: 7.0+ emerald, 5.0–6.9 amber, below 5.0 red */
@@ -165,6 +166,7 @@ export function ScoreCard({
   overallDelta,
   overallDeltaLabel,
   dimensionDeltas,
+  platformCta,
 }: ScoreCardProps) {
   const displayScore = platformScore ?? scores.overall;
   const heroVerdict = displayScore >= 8 ? "Strong Performance" : displayScore >= 7 ? "Good Potential" : displayScore >= 5 ? "Average" : "Needs Work";
@@ -283,6 +285,7 @@ export function ScoreCard({
           overallDelta={overallDelta}
           overallDeltaLabel={overallDeltaLabel}
           dimensionDeltas={dimensionDeltas}
+          platformCta={platformCta}
           dimensions={dimensionOverrides ?? [
             { name: "Hook",   score: scores.hook },
             { name: "Copy",   score: scores.clarity },

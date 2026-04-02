@@ -1228,6 +1228,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                 briefLoading={briefLoading}
                 hasBrief={!!brief}
                 verdict={activeResult.verdict}
+                platformCta={activeResult.platformCta}
                 analysisSections={extractRightPanelSections(activeResult.markdown)}
                 platformSwitcher={
                   <>
