@@ -5,7 +5,7 @@ import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
 import { sanitizeFileName } from "../utils/sanitize";
 import {
-  Copy, FileDown, Share2, Anchor, MessageSquare, MousePointerClick,
+  Anchor, MessageSquare, MousePointerClick,
   Clapperboard, DollarSign, Hash, Eye, Lightbulb, BarChart3,
   Layout, Target, Palette, FileText, Upload, Wand2, Image, ShieldCheck,
   Zap, Film, AlignLeft, AlertCircle, Sparkles, ChevronRight, TrendingUp,
@@ -22,11 +22,6 @@ interface ReportCardsProps {
   file: File | null;
   markdown: string;
   thumbnailDataUrl?: string;
-  onCopy: () => void;
-  onExportPdf: () => void;
-  onShare: () => void;
-  copied?: boolean;
-  shareLoading?: boolean;
   onReset?: () => void;
   onFileSelect?: (file: File | null) => void;
   // New props for redesigned layout
@@ -251,7 +246,7 @@ export function extractRightPanelSections(markdown: string): { title: string; co
 }
 
 export function ReportCards({
-  file, markdown, thumbnailDataUrl, onCopy, onExportPdf, onShare, copied, shareLoading,
+  file, markdown, thumbnailDataUrl,
   onReset, onFileSelect,
   verdict, structuredImprovements, improvements, scores, format,
   platform, hashtags,
@@ -776,34 +771,6 @@ export function ReportCards({
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: 'easeOut', delay: 0.3 }}>
       {secondEyeSlot}
       </motion.div>
-
-      {/* Sticky action bar - matching screenshot design */}
-      <div className="sticky bottom-0 bg-zinc-950/95 backdrop-blur-xl border-t border-white/[0.06] px-5 md:px-6 py-3 pb-[calc(12px+env(safe-area-inset-bottom,0px))] md:pb-3 flex items-center gap-2 mt-8 -mx-4 md:-mx-8 -mb-6">
-        <button
-          onClick={onCopy}
-          className="flex items-center gap-1.5 bg-transparent hover:bg-white/[0.04] text-zinc-400 hover:text-zinc-200 text-xs font-medium rounded-lg px-3.5 py-2 transition-colors border border-white/[0.06] cursor-pointer"
-        >
-          <Copy size={13} />
-          {copied ? "Copied!" : "Copy"}
-        </button>
-        <button
-          onClick={onExportPdf}
-          disabled
-          title="PDF export coming soon"
-          className="flex items-center gap-1.5 bg-transparent text-zinc-500 text-xs font-medium rounded-lg px-3.5 py-2 opacity-40 cursor-not-allowed select-none border border-white/[0.04]"
-        >
-          <FileDown size={13} />
-          PDF
-        </button>
-        <button
-          onClick={onShare}
-          disabled={shareLoading}
-          className="flex items-center gap-1.5 bg-indigo-500 hover:bg-indigo-400 text-white text-xs font-medium rounded-lg px-4 py-2 transition-all disabled:opacity-50 ml-auto shadow-md shadow-indigo-500/25 cursor-pointer"
-        >
-          <Share2 size={13} />
-          {shareLoading ? "Sharing..." : "Share"}
-        </button>
-      </div>
     </div>
   );
 }

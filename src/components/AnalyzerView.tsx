@@ -20,13 +20,8 @@ interface AnalyzerViewProps {
   onUrlSubmit?: (url: string) => void;
   onAnalyze: () => void;
   onReset: () => void;
-  onCopy: () => void;
-  onExportPdf: () => void;
-  onShare: () => void;
   onGenerateBrief: () => void;
   onAddToSwipeFile: () => void;
-  copied?: boolean;
-  shareLoading?: boolean;
   historyEntries?: HistoryEntry[];
   onHistoryEntryClick?: (entry: HistoryEntry) => void;
   onModeChange?: (mode: string) => void;
@@ -75,12 +70,7 @@ export function AnalyzerView({
   onUrlSubmit,
   onAnalyze,
   onReset,
-  onCopy,
-  onExportPdf,
-  onShare,
   onGenerateBrief,
-  copied,
-  shareLoading,
   historyEntries,
   onHistoryEntryClick,
   onModeChange,
@@ -169,11 +159,6 @@ export function AnalyzerView({
             file={file}
             markdown={result.markdown}
             thumbnailDataUrl={thumbnailDataUrl}
-            onCopy={onCopy}
-            onExportPdf={onExportPdf}
-            onShare={onShare}
-            copied={copied}
-            shareLoading={shareLoading}
             onReset={onReset}
             onFileSelect={onFileSelect}
             verdict={result.verdict}

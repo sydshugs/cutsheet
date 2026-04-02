@@ -1,6 +1,8 @@
 import { useState, useCallback } from "react";
-import { X, Shield, AlertTriangle, CheckCircle2, Loader2, Sparkles, XCircle, Wand2 } from "lucide-react";
+import { X, Shield, AlertTriangle, CheckCircle2, Loader2, Sparkles, XCircle } from "lucide-react";
 import { supabase } from "../lib/supabase";
+import { cn } from "../lib/utils";
+import { SafeZonePlatformChrome } from "./SafeZonePlatformChrome";
 
 const PLATFORMS = [
   { key: "tiktok",            label: "TikTok" },
@@ -133,74 +135,64 @@ function PhoneMockup({ imageUrl, platform, mode }: { imageUrl: string; platform:
   const pct = toSafeZonePct(dims);
 
   return (
-    <div
-      className="relative overflow-hidden"
-      style={{
-        width: 285,
-        aspectRatio: '9/16',
-        background: '#18181b',
-        border: '1px solid rgba(255,255,255,0.1)',
-        borderRadius: 17.5,
-      }}
-    >
-      {/* Ad image */}
+    <div className="relative mx-auto aspect-[9/16] w-full max-w-[260px] shrink-0 overflow-hidden rounded-2xl border border-white/10 bg-zinc-900 shadow-xl">
       {imageUrl ? (
         <img
           src={imageUrl}
           alt="Ad creative"
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{ opacity: 0.9 }}
+          className="absolute inset-0 h-full w-full object-cover opacity-90"
         />
       ) : (
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-[#3f3f46] text-xs font-medium">No image</span>
+          <span className="text-xs font-medium text-zinc-600">No image</span>
         </div>
       )}
 
-      {/* Top danger zone */}
       {pct.top > 0 && (
         <div
-          className="absolute top-0 left-0 right-0 pointer-events-none"
-          style={{ height: `${pct.top}%`, background: 'rgba(251,44,54,0.2)' }}
+          className="pointer-events-none absolute left-0 right-0 top-0 bg-red-500/20"
+          style={{ height: `${pct.top}%` }}
         />
       )}
-
-      {/* Bottom danger zone */}
       {pct.bottom > 0 && (
         <div
-          className="absolute bottom-0 left-0 right-0 pointer-events-none"
-          style={{ height: `${pct.bottom}%`, background: 'rgba(251,44,54,0.2)' }}
+          className="pointer-events-none absolute bottom-0 left-0 right-0 bg-red-500/20"
+          style={{ height: `${pct.bottom}%` }}
         />
       )}
-
-      {/* Right danger zone */}
+      {/* Side danger bands: inset vertically so they do not stack on top/bottom strips (matches Figma mock) */}
       {pct.right > 0 && (
         <div
-          className="absolute top-0 bottom-0 right-0 pointer-events-none"
-          style={{ width: `${pct.right}%`, background: 'rgba(251,44,54,0.2)' }}
+          className="pointer-events-none absolute right-0 bg-red-500/20"
+          style={{
+            top: `${pct.top}%`,
+            bottom: `${pct.bottom}%`,
+            width: `${pct.right}%`,
+          }}
         />
       )}
-
-      {/* Left danger zone */}
       {pct.left > 0 && (
         <div
-          className="absolute top-0 bottom-0 left-0 pointer-events-none"
-          style={{ width: `${pct.left}%`, background: 'rgba(251,44,54,0.2)' }}
+          className="pointer-events-none absolute left-0 bg-red-500/20"
+          style={{
+            top: `${pct.top}%`,
+            bottom: `${pct.bottom}%`,
+            width: `${pct.left}%`,
+          }}
         />
       )}
 
-      {/* Safe zone border */}
       <div
-        className="absolute pointer-events-none"
+        className="pointer-events-none absolute rounded-sm border-2 border-dashed border-emerald-500/80"
         style={{
           top: `${pct.top}%`,
           bottom: `${pct.bottom}%`,
           left: `${pct.left}%`,
           right: `${pct.right}%`,
-          border: '2.2px dashed rgba(0,188,125,0.8)',
-          borderRadius: 8.76,
         }}
       />
+
+      <SafeZonePlatformChrome platform={platform} />
     </div>
   );
 }
@@ -303,263 +295,156 @@ export function SafeZoneModal({ open, onClose, thumbnailSrc, mode = "paid" }: Sa
   const riskStyle = riskStyles[risk] ?? riskStyles.unknown;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 font-sans">
       <div
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
         onClick={onClose}
         aria-hidden="true"
       />
 
-      {/* Modal panel */}
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Safe Zone Check"
-        className="relative w-full max-h-[92vh] overflow-y-auto font-['Geist',sans-serif]"
-        style={{
-          maxWidth: 820,
-          background: '#18181b',
-          border: '1px solid rgba(255,255,255,0.08)',
-          borderRadius: 17.5,
-          boxShadow: '0px 27.4px 54.8px -13.1px rgba(0,0,0,0.25)',
-        }}
+        className="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-white/[0.08] bg-[#18181b] shadow-2xl"
       >
-        {/* ── Header ── */}
-        <div
-          className="flex items-center justify-between px-[26px]"
-          style={{ height: 75.5, borderBottom: '1px solid rgba(255,255,255,0.06)' }}
-        >
+        <div className="flex shrink-0 items-center justify-between border-b border-white/[0.06] px-6 py-4">
           <div className="flex items-center gap-3">
-            <div
-              className="flex items-center justify-center shrink-0"
-              style={{
-                width: 35,
-                height: 35,
-                background: 'rgba(14,165,233,0.12)',
-                border: '1px solid rgba(14,165,233,0.08)',
-                borderRadius: 10,
-              }}
-            >
-              <Shield size={15} style={{ color: '#38bdf8' }} />
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[color:rgba(var(--accent-rgb),0.08)] bg-[color:rgba(var(--accent-rgb),0.12)]">
+              <Shield size={16} className="text-[color:var(--accent-light)]" aria-hidden />
             </div>
-            <div className="flex flex-col gap-0.5">
-              <h2
-                className="font-semibold text-[#f4f4f5]"
-                style={{ fontSize: 15.3, letterSpacing: -0.165 }}
-              >
-                Safe Zone Check
-              </h2>
-              <p className="text-[#71717b]" style={{ fontSize: 12 }}>
-                Red zones = platform UI overlap risk
-              </p>
+            <div className="flex flex-col">
+              <h2 className="text-sm font-semibold leading-tight text-zinc-100">Safe Zone Check</h2>
+              <span className="mt-0.5 text-[11px] text-zinc-500">Red zones = platform UI overlap risk</span>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close safe zone modal"
-            className="flex items-center justify-center text-[#71717b] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50"
-            style={{
-              width: 30.7,
-              height: 30.7,
-              borderRadius: 10,
-              background: 'transparent',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
-              e.currentTarget.style.color = '#d4d4d8';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.color = '#71717b';
-            }}
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-white/[0.04] hover:text-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50 active:opacity-90"
           >
-            <X size={14} />
+            <X size={16} />
           </button>
         </div>
 
-        {/* ── Platform tabs + organic/paid toggle ── */}
-        <div className="px-[26px] pt-[22px] pb-5 flex flex-wrap items-center gap-3">
-          <div className="flex flex-wrap gap-2">
-            {PLATFORMS.map((p) => {
-              const isActive = activePlatform === p.key;
-              return (
-                <button
-                  key={p.key}
-                  type="button"
-                  onClick={() => handlePlatformChange(p.key)}
-                  className="cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50"
-                  style={{
-                    height: isActive ? 30.7 : 32.9,
-                    padding: '0 14px',
-                    borderRadius: 999,
-                    fontSize: 13.1,
-                    fontWeight: 500,
-                    background: isActive ? '#615fff' : 'rgba(255,255,255,0.04)',
-                    border: isActive ? 'none' : '1px solid rgba(255,255,255,0.06)',
-                    color: isActive ? '#fff' : '#9f9fa9',
-                    boxShadow: isActive ? '0 1px 4px rgba(97,95,255,0.3)' : 'none',
-                  }}
-                >
-                  {p.label}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Organic / Paid toggle */}
-          <div
-            className="flex items-center gap-0.5 p-0.5 rounded-full shrink-0 ml-auto"
-            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
-          >
-            {(["organic", "paid"] as const).map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => handleModeChange(m)}
-                className="px-3 py-1 rounded-full text-xs font-medium capitalize cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50"
-                style={
-                  activeMode === m
-                    ? { background: '#615fff', color: '#fff' }
-                    : { background: 'transparent', color: '#9f9fa9' }
-                }
-              >
-                {m}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* ── Main content ── */}
-        <div className="px-[26px] pb-[26px] flex flex-col md:flex-row gap-6">
-
-          {/* Left: phone mockup + AI button */}
-          <div className="shrink-0 flex flex-col gap-3">
-            <PhoneMockup
-              imageUrl={thumbnailSrc ?? ""}
-              platform={activePlatform}
-              mode={activeMode}
-            />
-
-            {/* Legend */}
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <div
-                  style={{
-                    width: 13.1,
-                    height: 13.1,
-                    borderRadius: 8.76,
-                    background: 'rgba(251,44,54,0.2)',
-                    border: '1px solid rgba(251,44,54,0.5)',
-                  }}
-                />
-                <span className="text-[#71717b]" style={{ fontSize: 11 }}>Danger zone</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div
-                  style={{
-                    width: 13.1,
-                    height: 0,
-                    borderTop: '2.2px dashed rgba(0,188,125,0.8)',
-                  }}
-                />
-                <span className="text-[#71717b]" style={{ fontSize: 11 }}>Safe zone</span>
+        <div className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
+          <div className="px-6 pb-2 pt-5">
+            <div className="flex flex-wrap items-center gap-2 gap-y-2">
+              {PLATFORMS.map((p) => {
+                const isActive = activePlatform === p.key;
+                return (
+                  <button
+                    key={p.key}
+                    type="button"
+                    onClick={() => handlePlatformChange(p.key)}
+                    className={cn(
+                      "rounded-full px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50 active:opacity-90",
+                      isActive
+                        ? "bg-indigo-500 text-white shadow-sm"
+                        : "border border-white/[0.06] bg-white/[0.04] text-zinc-400 hover:bg-white/[0.08]",
+                    )}
+                  >
+                    {p.label}
+                  </button>
+                );
+              })}
+              <div className="ml-auto flex shrink-0 items-center gap-0.5 rounded-full border border-white/[0.06] bg-white/[0.04] p-0.5">
+                {(["organic", "paid"] as const).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => handleModeChange(m)}
+                    className={cn(
+                      "rounded-full px-3 py-1 text-xs font-medium capitalize transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50 active:opacity-90",
+                      activeMode === m
+                        ? "bg-indigo-500 text-white"
+                        : "text-zinc-400 hover:text-zinc-300",
+                    )}
+                  >
+                    {m}
+                  </button>
+                ))}
               </div>
             </div>
-
-            {/* Check with AI button */}
-            {thumbnailSrc && (
-              <button
-                type="button"
-                onClick={handleCheckWithAI}
-                disabled={aiLoading}
-                aria-label="Check this creative for safe zone violations using AI"
-                className="flex items-center justify-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                style={{
-                  width: 285,
-                  height: 41.6,
-                  borderRadius: 26.3,
-                  background: 'rgba(97,95,255,0.1)',
-                  border: '1px solid rgba(97,95,255,0.3)',
-                  color: '#a3b3ff',
-                  fontSize: 13.1,
-                  fontWeight: 600,
-                }}
-                onMouseEnter={(e) => { if (!aiLoading) e.currentTarget.style.background = 'rgba(97,95,255,0.18)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(97,95,255,0.1)'; }}
-              >
-                {aiLoading ? (
-                  <>
-                    <Loader2 size={13} className="animate-spin" />
-                    Scanning…
-                  </>
-                ) : (
-                  <>
-                    <Wand2 size={13} />
-                    Check with AI
-                  </>
-                )}
-              </button>
-            )}
           </div>
 
-          {/* Right: guidelines */}
-          <div className="flex-1 flex flex-col min-w-0 gap-5">
-            {/* Section title */}
-            <span
-              className="font-semibold text-[#e4e4e7] uppercase"
-              style={{ fontSize: 13.1, letterSpacing: 0.33 }}
-            >
-              {platformLabel} Guidelines
-            </span>
-
-            {/* Tips */}
-            <div className="flex flex-col gap-4">
-              {tips.map((tip, i) => (
-                <div key={i} className="flex items-start gap-3">
-                  <CheckCircle2
-                    size={15.3}
-                    className="shrink-0 mt-0.5"
-                    style={{ color: '#10b981' }}
-                  />
-                  <span className="text-[#9f9fa9] leading-[1.63]" style={{ fontSize: 13.1 }}>
-                    {tip}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            {/* Platform update callout — amber */}
-            <div
-              className="flex items-start gap-3 mt-auto"
-              style={{
-                background: 'rgba(254,154,0,0.05)',
-                border: '1px solid rgba(254,154,0,0.2)',
-                borderRadius: 26.3,
-                padding: '17.5px',
-              }}
-            >
-              <AlertTriangle
-                size={15.3}
-                className="shrink-0 mt-0.5"
-                style={{ color: '#f59e0b' }}
+          <div className="flex flex-col gap-8 p-6 md:flex-row">
+            <div className="flex w-full shrink-0 flex-col items-center md:w-[260px]">
+              <PhoneMockup
+                imageUrl={thumbnailSrc ?? ""}
+                platform={activePlatform}
+                mode={activeMode}
               />
-              <p className="text-[#71717b]" style={{ fontSize: 12 }}>
-                <span className="font-semibold text-[#d4d4d8]">Platform Update: </span>
-                {updateNote}
-              </p>
+
+              <div className="mt-4 flex w-full items-center justify-center gap-4">
+                <div className="flex items-center gap-1.5">
+                  <div className="h-3 w-3 rounded-sm border border-red-500/50 bg-red-500/20" />
+                  <span className="text-[10px] text-zinc-600">Danger zone</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="h-0 w-3 border-t-2 border-dashed border-emerald-500/80" />
+                  <span className="text-[10px] text-zinc-600">Safe zone</span>
+                </div>
+              </div>
+
+              {thumbnailSrc && (
+                <button
+                  type="button"
+                  onClick={handleCheckWithAI}
+                  disabled={aiLoading}
+                  aria-label="Check this creative for safe zone violations using AI"
+                  className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-indigo-500/30 bg-indigo-500/[0.10] py-2.5 text-indigo-300 shadow-[0_0_15px_rgba(99,102,241,0.1)] transition-colors hover:border-indigo-500/40 hover:bg-indigo-500/[0.15] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50 disabled:cursor-not-allowed disabled:opacity-50 active:opacity-90"
+                >
+                  {aiLoading ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      <span className="text-xs font-semibold">Scanning</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={14} aria-hidden />
+                      <span className="text-xs font-semibold">Check with AI</span>
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+
+            <div className="flex min-w-0 flex-1 flex-col">
+              <h3 className="mb-4 text-xs font-semibold uppercase tracking-wide text-zinc-200">
+                {platformLabel} Guidelines
+              </h3>
+
+              <div className="mb-6 flex flex-col gap-3.5">
+                {tips.map((tip, i) => (
+                  <div key={i} className="flex items-start gap-2.5">
+                    <CheckCircle2
+                      size={14}
+                      className="mt-[2px] shrink-0 text-[color:var(--success)]"
+                      aria-hidden
+                    />
+                    <p className="text-xs leading-relaxed text-zinc-400">{tip}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-auto flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/[0.05] px-4 py-3.5">
+                <AlertTriangle
+                  size={14}
+                  className="mt-0.5 shrink-0 text-[color:var(--warn)]"
+                  aria-hidden
+                />
+                <p className="text-[11px] leading-relaxed text-zinc-500">
+                  <span className="font-medium text-zinc-400">Platform Update:</span> {updateNote}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* ── AI Results section ── */}
-        {(aiResult || aiError) && (
-          <div className="px-[26px] pb-[26px]">
-            <div
-              className="rounded-xl overflow-hidden"
-              style={{ border: '1px solid rgba(255,255,255,0.06)' }}
-            >
+          {(aiResult || aiError) && (
+          <div className="px-6 pb-6">
+            <div className="overflow-hidden rounded-xl border border-white/[0.06]">
               {/* Results header */}
               <div
                 className="flex items-center justify-between px-4 py-3"
@@ -629,19 +514,16 @@ export function SafeZoneModal({ open, onClose, thumbnailSrc, mode = "paid" }: Sa
               )}
 
               {aiResult && aiResult.safe_elements.length > 0 && (
-                <div
-                  className="px-4 py-3"
-                  style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}
-                >
-                  <p className="text-[10px] text-[#52525c] uppercase tracking-wider mb-2 font-medium">Correctly placed</p>
+                <div className="border-t border-white/[0.04] px-4 py-3">
+                  <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-zinc-600">Correctly placed</p>
                   <div className="flex flex-wrap gap-1.5">
                     {aiResult.safe_elements.map((el, i) => (
                       <span
                         key={i}
-                        className="text-[11px] text-[#9f9fa9] px-2 py-0.5 rounded-full"
-                        style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)' }}
+                        className="inline-flex items-center gap-1.5 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-2 py-1 text-[10px] font-medium text-emerald-400"
                       >
-                        ✓ {el}
+                        <CheckCircle2 size={10} className="shrink-0" aria-hidden />
+                        {el}
                       </span>
                     ))}
                   </div>
@@ -649,7 +531,8 @@ export function SafeZoneModal({ open, onClose, thumbnailSrc, mode = "paid" }: Sa
               )}
             </div>
           </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
