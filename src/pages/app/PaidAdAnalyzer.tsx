@@ -1164,7 +1164,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
 
       {/* Right panel — ScoreCard */}
       <div
-        className={`shrink-0 bg-[#111113] border-l border-white/[0.06] overflow-y-auto overflow-x-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-white/[0.06] relative ${showRightPanel ? "w-[380px] max-lg:w-full opacity-100" : "w-0 max-lg:w-0 opacity-0"}`}
+        className={`shrink-0 bg-[#111113] border-l border-white/[0.06] overflow-y-auto overflow-x-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-white/[0.06] relative ${showRightPanel ? "w-[350px] max-lg:w-full opacity-100" : "w-0 max-lg:w-0 opacity-0"}`}
       >
         <div className="p-[24px] pb-[72px] flex flex-col gap-[16px]">
         <AnimatePresence mode="wait">

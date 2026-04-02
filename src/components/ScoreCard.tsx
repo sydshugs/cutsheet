@@ -249,11 +249,11 @@ export function ScoreCard({
   return (
     <div className="scorecard flex flex-col gap-4">
       {/* ── Main score card ── */}
-      <div className="w-full bg-[#18181b] border border-white/[0.06] rounded-[17.5px] p-[22px] flex flex-col gap-5 font-['Geist',sans-serif] text-[#f4f4f5]">
+      <div className="w-full bg-[#18181b] border border-white/[0.06] rounded-[16px] p-[19px] flex flex-col gap-4 font-['Geist',sans-serif] text-[#f4f4f5]">
 
         {/* Header — label + platform pills */}
         <div className="flex items-center justify-between">
-          <span className="text-[11px] font-semibold uppercase text-[#71717b]" style={{ letterSpacing: '1.315px' }}>
+          <span className="text-[10px] font-semibold uppercase text-[#71717b]" style={{ letterSpacing: '1.15px' }}>
             SCORE OVERVIEW
           </span>
           <div className="flex items-center gap-2">
@@ -329,13 +329,13 @@ export function ScoreCard({
         })()}
 
         {/* Actions row */}
-        <div className="flex gap-[13px] pt-2">
+        <div className="flex gap-[12px] pt-2">
           {onReanalyze && (
             <button
               onClick={onReanalyze}
-              className="flex-1 flex items-center justify-center gap-[9px] rounded-full h-[46px] border border-white/[0.08] bg-transparent text-[#d4d4d8] text-[15px] font-medium hover:bg-white/[0.04] transition-colors"
+              className="flex-1 flex items-center justify-center gap-[8px] rounded-full h-[40px] border border-white/[0.08] bg-transparent text-[#d4d4d8] text-[13px] font-medium hover:bg-white/[0.04] transition-colors"
             >
-              <RotateCcw size={14} className="text-zinc-400" />
+              <RotateCcw size={13} className="text-zinc-400" />
               {isOrganic ? 'Analyze another' : 'Re-analyze'}
             </button>
           )}
@@ -343,7 +343,7 @@ export function ScoreCard({
             <button
               onClick={onGenerateBrief}
               disabled={briefLoading}
-              className="flex-1 flex items-center justify-center rounded-full h-[46px] text-white text-[15px] font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 flex items-center justify-center rounded-full h-[40px] text-white text-[13px] font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ background: briefLoading ? '#4f4dcc' : '#615fff' }}
               onMouseEnter={e => { if (!briefLoading) e.currentTarget.style.background = '#5250e5'; }}
               onMouseLeave={e => { if (!briefLoading) e.currentTarget.style.background = '#615fff'; }}

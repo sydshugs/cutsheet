@@ -163,17 +163,17 @@ export function ScoreHero({
         <div className="flex items-end justify-between">
           {/* Left: OVERALL SCORE label + big number */}
           <div className="flex flex-col gap-1">
-            <span className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#71717b]">
+            <span className="text-[11px] font-semibold uppercase tracking-[1.27px] text-[#71717b]">
               OVERALL SCORE
             </span>
             <div className="flex items-baseline gap-0 leading-none">
               <span
-                className="text-[52px] font-bold leading-none tracking-tight"
+                className="text-[50px] font-bold leading-none tracking-tight"
                 style={{ color: effectiveColor }}
               >
                 {animatedScore.toFixed(1)}
               </span>
-              <span className="text-[24px] font-bold leading-none text-[#52525c] ml-0.5 self-end pb-1">/10</span>
+              <span className="text-[23px] font-bold leading-none text-[#52525c] ml-0.5 self-end pb-0.5">/10</span>
             </div>
           </div>
           {/* Right: verdict badge */}
@@ -197,18 +197,18 @@ export function ScoreHero({
           <div className="flex flex-col gap-[9px] pt-4">
             {/* Labels row */}
             <div className="flex items-center justify-between w-full gap-2">
-              <span className="text-[15px] text-[#71717b] whitespace-nowrap shrink-0">
+              <span className="text-[13px] text-[#71717b] whitespace-nowrap shrink-0">
                 You · {score.toFixed(1)}
               </span>
               <div
-                className="rounded-full border flex items-center gap-[7px] px-[14px] min-w-0 overflow-hidden"
+                className="rounded-full border flex items-center gap-[6px] px-[12px] min-w-0 overflow-hidden"
                 style={{
-                  height: 33,
+                  height: 29,
                   borderColor: aboveBenchmark ? 'rgba(0,188,125,0.2)' : 'rgba(239,68,68,0.2)',
                 }}
               >
                 <span
-                  className="font-mono text-[12px] truncate"
+                  className="font-mono text-[11px] truncate"
                   style={{ color: aboveBenchmark ? '#00d492' : '#f87171' }}
                 >
                   {benchmarkDiffText}
@@ -237,9 +237,9 @@ export function ScoreHero({
       </div>
 
       {/* ── Dimension scores ── */}
-      <div className="flex flex-col gap-[17px] pt-6">
+      <div className="flex flex-col gap-[15px] pt-5">
         <div className="flex items-center justify-between">
-          <span className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#71717b]">
+          <span className="text-[11px] font-semibold uppercase tracking-[1.27px] text-[#71717b]">
             Dimension Scores
           </span>
           {hasDelta && dimensionDeltas && (
@@ -257,7 +257,7 @@ export function ScoreHero({
           )}
         </div>
 
-        <div className="flex flex-col gap-[14px]">
+        <div className="flex flex-col gap-[13px]">
           {resolvedDimensions.map((dim) => {
             const dimColor = scoreColor(dim.score);
             const dimDisplayColor = accentColor != null ? '#f4f4f5' : dimColor;
@@ -265,10 +265,10 @@ export function ScoreHero({
             const dimDelta = dimensionDeltas?.[dim.name];
             const hasDimDelta = showDeltas && dimDelta != null && Math.abs(dimDelta) >= 0.05;
             return (
-              <div key={dim.name} className="flex flex-col gap-[13px]">
+              <div key={dim.name} className="flex flex-col gap-[11px]">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-[9px]">
-                    <span className="text-[15px] font-medium text-[#9f9fa9]">{dim.name}</span>
+                  <div className="flex items-center gap-[8px]">
+                    <span className="text-[13px] font-medium text-[#9f9fa9]">{dim.name}</span>
                     {dim.name === 'CTA' && platformCta && (
                       <span
                         className="text-[10px] font-medium rounded px-[5px] py-[1px]"
@@ -302,7 +302,7 @@ export function ScoreHero({
                     </AnimatePresence>
                   </div>
                   <span
-                    className="text-[14px] font-bold leading-none"
+                    className="text-[13px] font-bold leading-none"
                     style={{ color: dimDisplayColor }}
                     aria-label={`${dim.name}: ${dim.score.toFixed(1)}`}
                   >
