@@ -105,9 +105,31 @@ export function ProgressCard({ file, status, onCancel, onComplete, format = "vid
 
         {/* ── Left — creative preview ── */}
         <div className="relative bg-[#09090b] rounded-xl m-[6px] overflow-hidden flex-1 min-h-[280px]">
-          {displayUrl ? (
+          {thumbnailDataUrl ? (
             <motion.img
-              src={displayUrl}
+              src={thumbnailDataUrl}
+              alt={file ? sanitizeFileName(file.name) : "Ad creative"}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.4 }}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          ) : !isImage && previewUrl ? (
+            <video
+              src={previewUrl}
+              muted
+              playsInline
+              preload="auto"
+              autoPlay={false}
+              className="absolute inset-0 w-full h-full object-cover"
+              onLoadedMetadata={(e) => {
+                const v = e.currentTarget;
+                v.currentTime = 1.0;
+              }}
+            />
+          ) : isImage && previewUrl ? (
+            <motion.img
+              src={previewUrl}
               alt={file ? sanitizeFileName(file.name) : "Ad creative"}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
