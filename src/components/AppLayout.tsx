@@ -144,7 +144,10 @@ export default function AppLayout() {
           hasResult={hasAnalysisResult}
           onLogout={async () => { await supabase.auth.signOut(); navigate("/login"); }}
         />
-        <main id="main-content" className="flex-1 flex flex-col overflow-auto pb-[68px] md:pb-0">
+        <main
+          id="main-content"
+          className="flex min-h-0 flex-1 flex-col overflow-auto pb-[68px] md:pb-0"
+        >
           <Outlet context={ctx} />
         </main>
       </div>

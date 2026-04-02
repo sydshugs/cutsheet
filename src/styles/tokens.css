@@ -151,6 +151,32 @@
   /* ── Section spacing ── */
   --section-gap: 16px;
   --content-gap: 12px;
+
+  /* Ad Breakdown results — Figma 263-416 pixel parity (violet #615fff family).
+     Primary CTAs site-wide stay --accent; this scope is teardown cards + brief only. */
+  --decon-accent: #615fff;
+  --decon-accent-light: #7c86ff;
+  --decon-accent-label: #a3b3ff;
+  --decon-accent-rgb: 97, 95, 255;
+  --decon-accent-soft: rgba(97, 95, 255, 0.04);
+  --decon-accent-softer: rgba(97, 95, 255, 0.06);
+  --decon-accent-border: rgba(97, 95, 255, 0.2);
+  --decon-accent-border-muted: rgba(97, 95, 255, 0.1);
+  --decon-accent-border-strong: rgba(97, 95, 255, 0.25);
+  --decon-core-claim-ring: rgba(97, 95, 255, 0.15);
+  --decon-copy-btn-bg: rgba(97, 95, 255, 0.08);
+  --decon-copy-btn-hover: rgba(97, 95, 255, 0.15);
+  --decon-body-muted: #d4d4d8;
+  --decon-markdown-muted: #9f9fa9;
+  --decon-momentum-text: #00d492;
+  --decon-momentum-bg: rgba(0, 188, 125, 0.08);
+  --decon-momentum-border: rgba(0, 188, 125, 0.15);
+  --decon-url-pill-mono: #52525c;
+  --decon-footer-attribution: #3f3f47;
+  --decon-brief-mono: rgba(198, 210, 255, 0.8);
+  --decon-topbar-plan-bg: rgba(97, 95, 255, 0.1);
+  --decon-topbar-plan-border: rgba(97, 95, 255, 0.2);
+  --decon-topbar-avatar-ring: rgba(97, 95, 255, 0.3);
 }
 
 /* ─── ANIMATIONS ──────────────────────────────────────────── */

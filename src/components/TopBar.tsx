@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Menu, Settings, CreditCard, BarChart3, HelpCircle, LogOut } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { UserAvatar } from "./UserAvatar";
+import { cn } from "../lib/utils";
 
 const ROUTE_TITLES: Record<string, string> = {
   "/app/paid": "Paid Ad Analyzer",
@@ -44,7 +45,6 @@ export function TopBar({
   const navigate = useNavigate();
 
   const planLabel = userPlan === "team" ? "Team" : userPlan === "pro" ? "Pro" : "Free";
-  const isPaid = userPlan === "pro" || userPlan === "team";
   const displayName = userName?.split("@")[0] || "User";
 
   useEffect(() => {
@@ -65,9 +65,10 @@ export function TopBar({
 
   const location = useLocation();
   const pageTitle = ROUTE_TITLES[location.pathname] ?? "Analyzer";
+  const isAdBreakdown = location.pathname === "/app/deconstructor";
 
   return (
-    <div className="h-[48px] shrink-0 bg-[#09090b] border-b border-white/[0.06] flex items-center justify-between px-6 relative z-20">
+    <div className="relative z-20 flex h-[48px] shrink-0 items-center justify-between border-b border-white/[0.06] bg-[color:var(--bg)] px-6">
       <div className="flex items-center gap-3">
         <button
           className="md:hidden text-zinc-400 hover:text-zinc-200 p-1"
@@ -80,9 +81,16 @@ export function TopBar({
       </div>
 
       <div className="flex items-center gap-4">
-        {/* Plan badge */}
-        <div className="bg-[rgba(99,102,241,0.1)] border border-[rgba(99,102,241,0.2)] text-[#818cf8] text-[12px] font-medium rounded-full py-[4px] px-[12px] flex items-center gap-[6px]">
-          <span>●</span>
+        {/* Plan badge — Figma violet on Ad Breakdown; brand indigo elsewhere */}
+        <div
+          className={cn(
+            "flex items-center gap-[6px] rounded-full border py-[4px] px-3 text-[12px] font-medium",
+            isAdBreakdown
+              ? "border-[color:var(--decon-topbar-plan-border)] bg-[color:var(--decon-topbar-plan-bg)] text-[color:var(--decon-accent-light)]"
+              : "border-[color:var(--accent-border)] bg-[color:var(--accent-soft)] text-[color:var(--accent-light)]",
+          )}
+        >
+          <span aria-hidden>●</span>
           <span>{planLabel}</span>
         </div>
 
@@ -92,7 +100,11 @@ export function TopBar({
           <button
             type="button"
             onClick={() => setPopoverOpen((p) => !p)}
-            className="flex items-center hover:bg-white/[0.04] rounded-lg p-1 transition-colors"
+            className={cn(
+              "flex items-center rounded-full p-1 transition-[background-color,box-shadow] duration-200 hover:bg-white/[0.04]",
+              isAdBreakdown &&
+                "ring-1 ring-[color:var(--decon-topbar-avatar-ring)] ring-offset-0",
+            )}
             style={{ background: "transparent", border: "none", cursor: "pointer" }}
             aria-label="Profile menu"
             aria-expanded={popoverOpen}

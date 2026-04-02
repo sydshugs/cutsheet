@@ -606,7 +606,7 @@ function TeardownSectionCard({
     (pacingMetrics.avgDisplay != null || pacingMetrics.momentum != null);
 
   return (
-    <div className="overflow-hidden rounded-[15px] border border-white/[0.06] bg-[color:var(--surface)]">
+    <div className="overflow-hidden rounded-[15px] border border-[color:var(--border)] bg-[color:var(--surface)]">
       <button
         type="button"
         onClick={() => setOpen((p) => !p)}
@@ -636,11 +636,11 @@ function TeardownSectionCard({
           >
             <div
               className="px-[19px] pb-5 text-[13px] leading-[22px] teardown-content-figma"
-              style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}
+              style={{ borderTop: "1px solid var(--border)" }}
             >
               <style>{`
                 .teardown-content-figma p { margin: 8px 0; line-height: 22px; }
-                .teardown-content-figma p, .teardown-content-figma li { color: var(--ink-secondary); }
+                .teardown-content-figma p, .teardown-content-figma li { color: var(--decon-markdown-muted); }
                 .teardown-content-figma strong { color: var(--ink); font-weight: 600; }
                 .teardown-content-figma ul, .teardown-content-figma ol { padding-left: 18px; margin: 8px 0; }
                 .teardown-content-figma li { margin: 4px 0; }
@@ -653,9 +653,9 @@ function TeardownSectionCard({
                 .teardown-content-figma blockquote {
                   margin: 12px 0;
                   padding: 12px 16px 12px 19px;
-                  border-left: 3px solid var(--accent);
+                  border-left: 3px solid var(--decon-accent);
                   border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
-                  background: var(--accent-subtle);
+                  background: var(--decon-accent-soft);
                 }
                 .teardown-content-figma blockquote p { margin: 4px 0; color: var(--ink); }
               `}</style>
@@ -663,19 +663,19 @@ function TeardownSectionCard({
                 {hookRange && totalSec != null && hookBarPct != null && (
                   <div className="mb-5 flex items-center gap-2">
                     <div
-                      className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-white/[0.06]"
+                      className="h-[5px] min-w-0 flex-1 overflow-hidden rounded-full bg-white/[0.06]"
                       role="presentation"
                     >
                       <div
-                        className="h-full rounded-full bg-[color:var(--accent)] transition-[width] duration-300"
+                        className="h-full rounded-full bg-[color:var(--decon-accent)] transition-[width] duration-300"
                         style={{ width: `${hookBarPct}%` }}
                       />
                     </div>
-                    <div className="flex shrink-0 items-baseline gap-1.5 font-mono text-[9.5px] tabular-nums">
-                      <span className="font-bold text-[color:var(--accent-light)]">
+                    <div className="flex shrink-0 items-baseline gap-1.5 font-mono text-[9.5px] tabular-nums leading-[15px]">
+                      <span className="font-bold text-[color:var(--decon-accent-light)]">
                         {hookRange.labelStart} — {hookRange.labelEnd}
                       </span>
-                      <span className="text-[color:var(--ink-muted)]">
+                      <span className="text-[color:var(--decon-url-pill-mono)]">
                         / {formatSecondsAsMmSs(totalSec)}
                       </span>
                     </div>
@@ -701,11 +701,11 @@ function TeardownSectionCard({
                     )}
                     {pacingMetrics.momentum && (
                       <span
-                        className="rounded-full px-2.5 py-1 text-[11.5px] font-medium"
+                        className="rounded-full border px-2.5 py-1 text-[11.5px] font-medium"
                         style={{
-                          background: "var(--score-excellent-bg)",
-                          color: "var(--success)",
-                          border: "1px solid var(--score-excellent-border)",
+                          background: "var(--decon-momentum-bg)",
+                          color: "var(--decon-momentum-text)",
+                          borderColor: "var(--decon-momentum-border)",
                         }}
                       >
                         Momentum: {pacingMetrics.momentum}
@@ -718,13 +718,13 @@ function TeardownSectionCard({
                   <div
                     className="mb-4 flex flex-col gap-1.5 rounded-3xl py-3 pl-5 pr-4"
                     style={{
-                      background: "rgba(99, 102, 241, 0.04)",
-                      border: "1px solid rgba(99, 102, 241, 0.15)",
+                      background: "var(--decon-accent-soft)",
+                      border: "1px solid var(--decon-core-claim-ring)",
                       borderLeftWidth: 3,
-                      borderLeftColor: "var(--accent)",
+                      borderLeftColor: "var(--decon-accent)",
                     }}
                   >
-                    <span className="text-[8.5px] font-semibold uppercase tracking-[0.04em] text-[color:var(--accent-light)]">
+                    <span className="text-[8.5px] font-semibold uppercase tracking-[0.043em] text-[color:var(--decon-accent-light)]">
                       Core claim
                     </span>
                     <p className="text-[13px] font-semibold leading-snug text-[color:var(--ink)]">
@@ -750,19 +750,22 @@ function TeardownSectionCard({
 function WhyItWorksCard({ content }: { content: string }) {
   return (
     <div
-      className="flex shrink-0 flex-col gap-3 rounded-[15px] border px-5 pb-5 pt-5"
+      className="flex shrink-0 flex-col gap-[11px] rounded-[15px] border px-5 pb-5 pt-5"
       style={{
-        background: "rgba(99, 102, 241, 0.04)",
-        borderColor: "rgba(99, 102, 241, 0.2)",
+        background: "var(--decon-accent-soft)",
+        borderColor: "var(--decon-accent-border)",
       }}
     >
       <div className="flex items-center gap-2">
-        <div className="size-[6px] shrink-0 rounded-full bg-[color:var(--accent)]" />
-        <span className="text-[9.5px] font-semibold uppercase tracking-[0.05em] text-[color:var(--accent-light)]">
+        <div
+          className="size-[5.75px] shrink-0 rounded-full bg-[color:var(--decon-accent)]"
+          aria-hidden
+        />
+        <span className="text-[9.5px] font-semibold uppercase tracking-[0.12em] text-[color:var(--decon-accent-light)]">
           Why it works
         </span>
       </div>
-      <div className="why-works-md text-[13px] leading-[22px] text-[color:var(--ink)] [opacity:0.88]">
+      <div className="why-works-md text-[13px] leading-[22px] text-[color:var(--decon-body-muted)]">
         <style>{`
           .why-works-md p { margin: 0; }
           .why-works-md p + p { margin-top: 10px; }
@@ -789,8 +792,8 @@ function StealThisBriefCard({ content }: { content: string }) {
     <div
       className="mb-6 shrink-0 overflow-hidden rounded-[15px] border"
       style={{
-        background: "rgba(99,102,241,0.06)",
-        borderColor: "rgba(99,102,241,0.25)",
+        background: "var(--decon-accent-softer)",
+        borderColor: "var(--decon-accent-border-strong)",
       }}
     >
       <button
@@ -799,15 +802,18 @@ function StealThisBriefCard({ content }: { content: string }) {
         className="flex min-h-[50px] w-full items-center justify-between px-5 py-0 text-left transition-colors hover:bg-white/[0.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg)]"
       >
         <div className="flex items-center gap-2">
-          <div className="h-1.5 w-1.5 rounded-full bg-[color:var(--accent)]" />
-          <span className="text-[13px] font-semibold text-[color:var(--accent-light)]">
+          <div
+            className="size-[5.75px] shrink-0 rounded-full bg-[color:var(--decon-accent)]"
+            aria-hidden
+          />
+          <span className="text-[13px] font-semibold text-[color:var(--decon-accent-label)]">
             {BRIEF_DISPLAY_TITLE}
           </span>
         </div>
         <ChevronDown
           size={14}
           className={cn(
-            "text-[color:var(--accent-light)]/50 transition-transform duration-200",
+            "text-[color:var(--decon-accent-light)]/50 transition-transform duration-200",
             open && "rotate-180",
           )}
           aria-hidden
@@ -825,15 +831,15 @@ function StealThisBriefCard({ content }: { content: string }) {
           >
             <div
               className="border-t px-5 pb-5 pt-4"
-              style={{ borderColor: "rgba(99,102,241,0.1)" }}
+              style={{ borderColor: "var(--decon-accent-border-muted)" }}
             >
               <div
                 className="mb-4 flex items-center justify-between border-b pb-3"
-                style={{ borderColor: "rgba(99,102,241,0.1)" }}
+                style={{ borderColor: "var(--decon-accent-border-muted)" }}
               >
                 <div className="flex items-center gap-2">
-                  <FileText className="h-3.5 w-3.5 text-[color:var(--accent-light)]" aria-hidden />
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[color:var(--accent-light)]">
+                  <FileText className="h-3.5 w-3.5 text-[color:var(--decon-accent-light)]" aria-hidden />
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[color:var(--decon-accent-light)]">
                     Steal-this brief
                   </span>
                 </div>
@@ -843,7 +849,7 @@ function StealThisBriefCard({ content }: { content: string }) {
                     e.stopPropagation();
                     void handleCopy();
                   }}
-                  className="flex items-center gap-1.5 rounded-[6px] bg-[color:var(--accent-soft)] px-2.5 py-1 text-[11.5px] text-[color:var(--accent-light)] transition-[background-color,opacity] duration-200 hover:bg-[color:var(--accent-border)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg)]"
+                  className="flex items-center gap-1.5 rounded-[6px] bg-[color:var(--decon-copy-btn-bg)] px-2.5 py-1 text-[11.5px] text-[color:var(--decon-accent-light)] transition-[background-color,opacity] duration-200 hover:bg-[color:var(--decon-copy-btn-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg)]"
                 >
                   {copied ? (
                     <>
@@ -858,11 +864,14 @@ function StealThisBriefCard({ content }: { content: string }) {
                   )}
                 </button>
               </div>
-              <div className="brief-body-markdown font-mono text-[12px] leading-[1.7] text-[color:var(--accent-light)]/80">
+              <div
+                className="brief-body-markdown font-mono text-[11.5px] leading-[1.7]"
+                style={{ color: "var(--decon-brief-mono)" }}
+              >
                 <style>{`
-                  .brief-body-markdown p { margin: 0.5em 0; }
+                  .brief-body-markdown p { margin: 0.5em 0; line-height: 1.7; }
                   .brief-body-markdown ul, .brief-body-markdown ol { padding-left: 1.1em; margin: 0.5em 0; }
-                  .brief-body-markdown strong { font-weight: 600; color: var(--accent-light); }
+                  .brief-body-markdown strong { font-weight: 600; color: var(--decon-accent-light); }
                 `}</style>
                 <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{content}</ReactMarkdown>
               </div>
@@ -903,31 +912,44 @@ function ResultsSplit({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
-      className="flex min-h-0 w-full flex-1 flex-col overflow-hidden lg:h-full lg:min-h-0 lg:flex-row"
-      data-ad-breakdown-results="figma-split"
+      className="flex min-h-0 w-full max-h-[calc(100dvh-48px-68px)] flex-1 flex-col overflow-hidden md:max-h-[calc(100dvh-48px)] lg:min-h-[calc(100dvh-48px)] lg:flex-row"
+      data-ad-breakdown-results="figma-263-416"
     >
-      {/* Left — creative + meta (Figma 263-525) */}
-      <div className="flex w-full shrink-0 flex-col overflow-y-auto border-b border-white/[0.04] bg-[color:var(--bg)] lg:w-[min(22.75rem,100%)] lg:max-w-[380px] lg:border-b-0 lg:border-r lg:border-white/[0.04]">
-        <div className="flex items-start justify-between gap-3 border-b border-[color:var(--border)] px-4 pb-3 pt-4">
-          <div className="flex min-w-0 flex-1 flex-col gap-1">
-            <span
-              className="w-fit rounded-full border px-2.5 py-0.5 text-[9.5px] font-semibold uppercase leading-tight tracking-wide"
-              style={resultsRailSourcePillStyle(result.sourceType)}
+      {/* Left — creative + meta (Figma 263:660) */}
+      <div className="flex w-full shrink-0 flex-col overflow-y-auto border-b border-white/[0.04] bg-[color:var(--bg)] lg:w-[min(22.8125rem,100%)] lg:max-w-[380px] lg:border-b-0 lg:border-r lg:border-white/[0.04]">
+        <div className="border-b border-[color:var(--border)] px-4 pb-3 pt-4">
+          <h1 className="mb-3 text-[13px] font-medium leading-tight text-[color:var(--ink)] md:hidden">
+            Ad Breakdown
+          </h1>
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+              <span
+                className="w-fit rounded-full border px-2.5 py-0.5 text-[9.5px] font-semibold uppercase leading-tight tracking-wide"
+                style={resultsRailSourcePillStyle(result.sourceType)}
+              >
+                {getSourceLabel(result.sourceType)}
+              </span>
+              <h3 className="line-clamp-3 text-[13px] font-medium leading-snug text-[color:var(--ink)]">
+                {result.adTitle}
+              </h3>
+            </div>
+            <button
+              type="button"
+              onClick={onReset}
+              className="flex shrink-0 items-center gap-1 pt-0.5 text-[11.5px] text-[color:var(--ink-muted)] transition-colors hover:text-[color:var(--ink-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg)]"
             >
-              {getSourceLabel(result.sourceType)}
-            </span>
-            <h2 className="line-clamp-3 text-[13px] font-medium leading-snug text-[color:var(--ink)]">
-              {result.adTitle}
-            </h2>
+              <RotateCcw className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              <span>Analyze another</span>
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={onReset}
-            className="flex shrink-0 items-center gap-1 pt-0.5 text-[11.5px] text-[color:var(--ink-muted)] transition-colors hover:text-[color:var(--ink-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg)]"
-          >
-            <RotateCcw className="h-3.5 w-3.5 shrink-0" aria-hidden />
-            <span>Analyze another</span>
-          </button>
+          {submittedUrl ? (
+            <p
+              className="mt-2 truncate font-mono text-[11px] leading-snug text-[color:var(--decon-url-pill-mono)]"
+              title={submittedUrl}
+            >
+              {submittedUrl}
+            </p>
+          ) : null}
         </div>
 
         <div className="group relative mx-4 mt-4 flex flex-col overflow-hidden rounded-[15px] border border-[color:var(--border)] bg-[color:var(--card)]">
@@ -957,7 +979,7 @@ function ResultsSplit({
               </div>
             )}
           </div>
-          <div className="flex items-center justify-between border-t border-[color:var(--border)] bg-black/40 px-3 py-2">
+          <div className="flex items-center justify-between gap-2 border-t border-[color:var(--border)] bg-black/40 px-3 py-2">
             <div className="flex min-w-0 items-center gap-1.5">
               <span className="truncate text-[10.5px] font-medium text-[color:var(--ink-secondary)]">
                 {footerMeta.placement}
@@ -970,9 +992,15 @@ function ResultsSplit({
                 {footerMeta.aspect}
               </span>
             </div>
-            <span className="shrink-0 font-mono text-[10.5px] text-[color:var(--ink-muted)]">
-              {footerMeta.duration}
-            </span>
+            <div className="flex shrink-0 items-center gap-1.5">
+              <span className="font-mono text-[10.5px] text-[color:var(--ink-muted)] tabular-nums">
+                {footerMeta.duration}
+              </span>
+              <ChevronDown
+                className="size-3 shrink-0 text-[color:var(--ink-faint)] opacity-70"
+                aria-hidden
+              />
+            </div>
           </div>
         </div>
 
@@ -988,11 +1016,11 @@ function ResultsSplit({
 
       {/* Right — URL + why + sections + brief (Figma 263-538) */}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto bg-[color:var(--bg)] px-5 py-5 lg:px-6">
-        <div className="mx-auto flex w-full max-w-[51rem] flex-col gap-4">
-        <div className="flex min-h-[37px] items-center justify-between gap-2 rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-1">
+        <div className="mx-auto flex w-full max-w-[51rem] flex-col gap-5">
+        <div className="flex min-h-9 items-center justify-between gap-2 rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-1">
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <Link2 className="h-3.5 w-3.5 shrink-0 text-[color:var(--ink-muted)]" aria-hidden />
-            <span className="truncate font-mono text-[11.5px] text-[color:var(--ink-muted)]">
+            <span className="truncate font-mono text-[11.5px] text-[color:var(--decon-url-pill-mono)]">
               {submittedUrl}
             </span>
           </div>
@@ -1012,7 +1040,7 @@ function ResultsSplit({
           </div>
         )}
 
-        <div className="flex shrink-0 flex-col gap-2">
+        <div className="flex shrink-0 flex-col gap-[7.69px]">
           {middleSections.map((section, i) => (
             <TeardownSectionCard
               key={section.title}
@@ -1025,7 +1053,7 @@ function ResultsSplit({
 
         {briefSection && <StealThisBriefCard content={briefSection.content} />}
 
-        <p className="mt-auto pb-4 pt-8 text-center font-mono text-[10.5px] text-[color:var(--ink-muted)] opacity-80">
+        <p className="mt-auto pb-4 pt-8 text-center font-mono text-[10.5px] leading-[15.9px] text-[color:var(--decon-footer-attribution)]">
           Powered by Gemini + Claude
         </p>
         </div>
@@ -1153,10 +1181,17 @@ export default function Deconstructor() {
 
   return (
     <div
-      className="relative flex min-h-0 flex-1 flex-col overflow-auto bg-[color:var(--bg)]"
-      style={{ minHeight: "calc(100vh - 120px)" }}
+      className={cn(
+        "relative flex min-h-0 flex-1 flex-col bg-[color:var(--bg)]",
+        !(result && !loading) && "overflow-auto",
+      )}
+      style={
+        !(result && !loading)
+          ? { minHeight: "calc(100vh - 120px)" }
+          : undefined
+      }
       data-cutsheet-page="ad-breakdown"
-      data-deconstructor-build="figma-263-525"
+      data-deconstructor-build="figma-263-416"
     >
       <Helmet>
         <title>Ad Breakdown — Cutsheet</title>
@@ -1181,7 +1216,12 @@ export default function Deconstructor() {
         />
       )}
 
-      <div className="relative z-10 flex min-h-0 flex-1 flex-col">
+      <div
+        className={cn(
+          "relative z-10 flex min-h-0 flex-1 flex-col",
+          result && !loading && "min-h-0 overflow-hidden",
+        )}
+      >
         {result && !loading ? (
           <ResultsSplit
             result={result}
@@ -1250,7 +1290,7 @@ export default function Deconstructor() {
             )}
 
             {loading && (
-              <p className="mt-8 pb-8 text-center font-mono text-[11px] text-zinc-700">
+              <p className="mt-8 pb-8 text-center font-mono text-[11px] text-[color:var(--decon-footer-attribution)]">
                 Powered by Gemini + Claude Sonnet
               </p>
             )}
