@@ -48,9 +48,9 @@ export function ProgressCard({ file, status, onCancel, onComplete, format = "vid
   const isImage = file?.type.startsWith("image/") ?? false;
 
   const previewUrl = useMemo(() => {
-    if (isImage && file) return URL.createObjectURL(file);
+    if (file) return URL.createObjectURL(file);
     return null;
-  }, [file, isImage]);
+  }, [file]);
 
   useEffect(() => {
     return () => { if (previewUrl) URL.revokeObjectURL(previewUrl); };

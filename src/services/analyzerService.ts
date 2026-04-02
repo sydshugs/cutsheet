@@ -110,7 +110,7 @@ For each scene:
 - **Format:** [Problem-Agitate-Solution / Before-After / Tutorial / Testimonial / Day-in-life / Skit / Other]
 - **Core claim:** The single biggest promise this ad makes
 - **Proof points:** Evidence or credibility signals used
-- **CTA:** Exact action requested and timestamp (if no CTA exists, flag this as a problem)
+- **CTA:** Exact action requested and timestamp. If no in-creative CTA exists but the platform provides a native CTA button (e.g. Meta's "Shop Now", "Learn More"), note: "Platform CTA: [button text]" — this is not a problem, it's an intentional platform-native approach.
 
 ---
 
@@ -136,7 +136,7 @@ Clean timestamped transcript of all spoken audio and on-screen text:
 ---
 
 ## 📋 VERDICT
-- State: [not_ready | needs_work | ready] — "not_ready" if missing CTA or fundamental issues, "needs_work" if 5-7/10, "ready" if 8+/10
+- State: [not_ready | needs_work | ready] — "not_ready" if fundamental issues present (note: relying on platform-native CTA is NOT a fundamental issue), "needs_work" if 5-7/10, "ready" if 8+/10
 - Headline: [one sentence verdict — what this ad does and what's missing, max 15 words]
 - Sub: [one sentence explanation — the key issue or strength, max 20 words]
 
@@ -162,7 +162,7 @@ Scoring rubric (apply consistently every time):
 A 7/10 means the same thing every time.
 - Hook Strength: X/10
 - Message Clarity: X/10
-- CTA Effectiveness: X/10
+- CTA Effectiveness: X/10 (if the creative relies on a platform-native CTA button instead of an in-creative CTA, score the end-frame's ability to drive action INTO that button — visual direction, timing, and clarity of the final moment — not the presence of CTA text in the video itself)
 - Production Quality: X/10
 - Overall Ad Strength: X/10
 
@@ -417,6 +417,7 @@ export interface AnalysisResult {
   thumbnailDataUrl?: string;
   timestamp: Date;
   fileName: string;
+  platformCta?: string | null;
 }
 
 export type AnalysisStatus =
@@ -514,6 +515,13 @@ export function parseHookDetail(markdown: string): HookDetail | undefined {
   } catch {
     return undefined;
   }
+}
+
+/** Extract platform CTA if the AI detected one (e.g. "Platform CTA: Shop Now") */
+export function parsePlatformCta(markdown: string): string | null {
+  const match = markdown.match(/Platform CTA:\s*(.+?)(?:\n|$)/i);
+  if (!match) return null;
+  return match[1].trim().replace(/^["']|["']$/g, '');
 }
 
 export function parseImprovements(markdown: string): string[] {
@@ -833,6 +841,7 @@ export async function analyzeVideo(
       scenes,
       timestamp: new Date(),
       fileName: file.name,
+      platformCta: !isImage ? parsePlatformCta(markdown) : null,
     };
   } catch (err) {
     // Clean up on failure too

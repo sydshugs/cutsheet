@@ -3,6 +3,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Info } from "lucide-react";
 
 /** Platforms that do NOT support static image ads — benchmark should be hidden for these */
 const STATIC_INCOMPATIBLE_PLATFORMS = new Set(['TikTok', 'YouTube', 'YouTube Shorts', 'Instagram Reels']);
@@ -26,6 +27,7 @@ export interface ScoreHeroProps {
   overallDelta?: number;
   overallDeltaLabel?: string;
   dimensionDeltas?: Record<string, number>;
+  platformCta?: string | null;
 }
 
 const PLATFORM_BENCHMARKS: Record<string, number> = {
@@ -106,6 +108,7 @@ function useCountUp(target: number, duration = 600): number {
 export function ScoreHero({
   score, verdict, benchmark, dimensions, platform, format, youtubeFormat,
   accentColor, benchmarkLabelOverride, scoreRange, overallDelta, dimensionDeltas,
+  platformCta,
 }: ScoreHeroProps) {
   const animatedScore = useCountUp(score, 600);
   const color = scoreColor(score);
@@ -165,7 +168,7 @@ export function ScoreHero({
             </span>
             <div className="flex items-baseline gap-0 leading-none">
               <span
-                className="text-[57px] font-bold leading-none tracking-tight"
+                className="text-[52px] font-bold leading-none tracking-tight"
                 style={{ color: effectiveColor }}
               >
                 {animatedScore.toFixed(1)}
@@ -210,6 +213,7 @@ export function ScoreHero({
                 >
                   {benchmarkDiffText}
                 </span>
+                <Info size={13} className="shrink-0 cursor-help" style={{ color: '#71717a' }} aria-label="Benchmark comparison info" />
               </div>
             </div>
             {/* Bar track */}
@@ -265,6 +269,19 @@ export function ScoreHero({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-[9px]">
                     <span className="text-[15px] font-medium text-[#9f9fa9]">{dim.name}</span>
+                    {dim.name === 'CTA' && platformCta && (
+                      <span
+                        className="text-[10px] font-medium rounded px-[5px] py-[1px]"
+                        style={{
+                          background: 'rgba(255,255,255,0.04)',
+                          border: '1px solid rgba(255,255,255,0.08)',
+                          color: '#71717a',
+                        }}
+                        title={`Platform CTA: ${platformCta}`}
+                      >
+                        Platform
+                      </span>
+                    )}
                     <AnimatePresence>
                       {hasDimDelta && (
                         <motion.span

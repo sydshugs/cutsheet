@@ -15,16 +15,19 @@ export function useThumbnail(file: File | null): string | null {
       return () => URL.revokeObjectURL(url);
     }
 
-    // Video files: seek to 0.1s, capture frame via canvas
+    // Video files: seek to 1.0s (skip black intros), capture frame via canvas
     let revoked = false;
+    let seekTimeoutId: ReturnType<typeof setTimeout> | null = null;
     const url = URL.createObjectURL(file);
     const video = document.createElement("video");
     video.muted = true;
     video.preload = "auto";
     video.playsInline = true;
+    // NOTE: do NOT set crossOrigin — it blocks local blob URLs
     video.src = url;
 
     const cleanup = () => {
+      if (seekTimeoutId) clearTimeout(seekTimeoutId);
       if (!revoked) {
         URL.revokeObjectURL(url);
         revoked = true;
@@ -33,7 +36,7 @@ export function useThumbnail(file: File | null): string | null {
       video.load();
     };
 
-    const onSeeked = () => {
+    const captureFrame = () => {
       try {
         const canvas = document.createElement("canvas");
         canvas.width = video.videoWidth || 640;
@@ -43,18 +46,33 @@ export function useThumbnail(file: File | null): string | null {
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
           setThumbnailDataUrl(canvas.toDataURL("image/jpeg", 0.8));
         }
-      } catch {
-        // Silently fall back to gray placeholder
+      } catch (err) {
+        console.warn('[useThumbnail] Canvas capture failed:', err);
       } finally {
         cleanup();
       }
     };
 
-    const onLoaded = () => {
-      video.currentTime = 0.1;
+    const onSeeked = () => {
+      if (seekTimeoutId) clearTimeout(seekTimeoutId);
+      captureFrame();
     };
 
-    const onError = () => cleanup();
+    const onLoaded = () => {
+      video.currentTime = 1.0;
+      // Timeout fallback: if seeked hasn't fired in 3s, try again at 0s
+      seekTimeoutId = setTimeout(() => {
+        if (!revoked) {
+          console.warn('[useThumbnail] seeked timeout — retrying at 0s');
+          video.currentTime = 0;
+        }
+      }, 3000);
+    };
+
+    const onError = () => {
+      console.warn('[useThumbnail] Video error event');
+      cleanup();
+    };
 
     video.addEventListener("loadeddata", onLoaded);
     video.addEventListener("seeked", onSeeked);
