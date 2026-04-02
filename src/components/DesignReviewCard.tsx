@@ -1,5 +1,6 @@
-// DesignReviewCard — pixel-matched to Figma node 217:612
-// Verdict headline + priority fix + filter pills + flag rows
+// DesignReviewCard — matched to Figma Make reference design
+// Header: verdict pill + critical count | Verdict headline | Priority Fix (left-border accent)
+// Category filter pills | Fix rows with hover state
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import { CircleX, Type, Layers, Box, Activity, AlertCircle, ChevronRight, Wand2, X } from "lucide-react";
@@ -26,15 +27,15 @@ const VERDICT_BADGE = {
   ready:      { label: 'Ready',      bg: 'rgba(16,185,129,0.1)', border: 'rgba(16,185,129,0.2)', text: '#10b981' },
 } as const;
 
-// Category → icon + exact Figma rgba colors
+// Category → icon + Figma rgba colors
 type IconComp = (props: { size?: number; className?: string; style?: Record<string, string | number> }) => ReturnType<() => null>;
 const CATEGORY_META: Record<string, { icon: IconComp; bg: string; color: string }> = {
-  typography:  { icon: Type,       bg: 'rgba(254,154,0,0.1)',   color: '#fe9a00' },
+  typography:  { icon: Type,       bg: 'rgba(245,158,11,0.1)',  color: '#f59e0b' },
   hierarchy:   { icon: Layers,     bg: 'rgba(99,102,241,0.1)',  color: '#6366f1' },
-  layout:      { icon: Box,        bg: 'rgba(0,188,125,0.1)',   color: '#00bc7d' },
+  layout:      { icon: Box,        bg: 'rgba(16,185,129,0.1)',  color: '#10b981' },
   contrast:    { icon: CircleX,    bg: 'rgba(239,68,68,0.1)',   color: '#ef4444' },
   motion:      { icon: Activity,   bg: 'rgba(99,102,241,0.1)',  color: '#6366f1' },
-  scroll:      { icon: Activity,   bg: 'rgba(254,154,0,0.1)',   color: '#fe9a00' },
+  scroll:      { icon: Activity,   bg: 'rgba(245,158,11,0.1)',  color: '#f59e0b' },
 };
 
 function getCategoryMeta(category: string) {
@@ -79,82 +80,54 @@ export function DesignReviewCard({ verdictState, verdictHeadline, priorityFix, f
     filterId === 'All' ? flags.length : flags.filter(f => f.category.toLowerCase() === filterId.toLowerCase()).length;
 
   return (
-    <div
-      className="w-full flex flex-col shrink-0 overflow-hidden font-['Geist',sans-serif]"
-      style={{ background: '#18181b', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 20 }}
-    >
-      {/* ── Content ── */}
-      <div className="p-5 flex flex-col gap-5">
-        {/* Header row — verdict pill + critical count */}
+    <div className="w-full flex flex-col shrink-0 rounded-2xl border border-white/[0.08] bg-[#18181b] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] overflow-hidden font-['Geist',sans-serif]">
+
+      {/* ── Header bar — verdict pill + critical count ── */}
+      <div className="px-5 py-3.5 border-b border-white/[0.04] flex items-center">
         <div className="flex items-center gap-3">
           <div
-            className="flex items-center gap-[6.5px] px-3 py-1 rounded-full border"
-            style={{ background: badge.bg, borderColor: badge.border }}
+            className="flex items-center gap-1.5 rounded-full px-2.5 py-1 border text-[10px] font-bold uppercase tracking-widest"
+            style={{ background: badge.bg, borderColor: badge.border, color: badge.text }}
           >
-            <CircleX size={13} style={{ color: badge.text, flexShrink: 0 }} />
-            <span
-              className="font-bold uppercase whitespace-nowrap"
-              style={{ fontSize: 10.959, letterSpacing: '1.096px', color: badge.text }}
-            >
-              {badge.label}
-            </span>
+            <CircleX size={12} strokeWidth={2.5} />
+            <span>{badge.label}</span>
           </div>
           {criticalCount > 0 && (
             <>
-              <div className="w-[4px] h-[4px] rounded-full bg-white/20 shrink-0" />
-              <span
-                className="font-medium whitespace-nowrap"
-                style={{ fontSize: 13, color: '#71717b' }}
-              >
+              <div className="w-1 h-1 rounded-full bg-white/20 shrink-0" />
+              <span className="text-xs font-medium text-zinc-500 tracking-wide">
                 {criticalCount} Critical {criticalCount === 1 ? 'Fix' : 'Fixes'}
               </span>
             </>
           )}
         </div>
+      </div>
+
+      {/* ── Content ── */}
+      <div className="p-5 flex flex-col gap-6">
 
         {/* Verdict headline */}
-        <h2
-          className="font-semibold text-[#f4f4f5] leading-snug"
-          style={{ fontSize: 20, letterSpacing: '-0.025em' }}
-        >
+        <h2 className="text-lg font-semibold text-[#f4f4f5] leading-snug tracking-tight">
           {verdictHeadline}
         </h2>
 
-        {/* Priority Fix */}
+        {/* Priority Fix — left-border accent (not full amber border) */}
         {priorityFix && !priorityDismissed && (
-          <div
-            className="relative flex flex-col gap-[9px] pt-[14px] pb-[10px] pl-5 pr-5"
-            style={{
-              border: '1px solid rgba(254,154,0,0.4)',
-              borderRadius: 20,
-              background: 'rgba(24,24,27,0.7)',
-              boxShadow: 'inset 0 1px 0 0 rgba(255,255,255,0.05)',
-            }}
-          >
-            {/* Header row */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-[9px]">
-                <AlertCircle size={14} style={{ color: '#fe9a00', flexShrink: 0 }} />
-                <span
-                  className="font-semibold uppercase text-[#fe9a00]"
-                  style={{ fontSize: 10.959, letterSpacing: '0.5479px' }}
-                >
-                  PRIORITY FIX
-                </span>
-              </div>
-              {/* Chevron — opens dismiss/AI popover */}
-              <div className="relative" ref={popoverRef}>
+          <div className="rounded-xl border border-white/[0.08] border-l-[2px] border-l-amber-500/40 bg-[#18181b] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] px-4 py-3">
+            <div className="flex items-center gap-2">
+              <AlertCircle size={13} className="text-[#f59e0b] shrink-0" />
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-500">
+                PRIORITY FIX
+              </span>
+              <div className="relative ml-auto" ref={popoverRef}>
                 <button
                   onClick={() => setPopoverOpen(v => !v)}
-                  className="flex items-center justify-center w-[22px] h-[22px] rounded-[6.575px] hover:bg-white/[0.06] transition-colors"
+                  className="flex items-center justify-center w-5 h-5 rounded-md hover:bg-white/[0.06] transition-colors"
                 >
-                  <ChevronRight size={12} style={{ color: '#fe9a00' }} />
+                  <ChevronRight size={11} className="text-amber-500" />
                 </button>
                 {popoverOpen && (
-                  <div
-                    className="absolute right-0 top-full mt-1 w-48 z-10 rounded-xl p-1"
-                    style={{ border: '1px solid rgba(255,255,255,0.06)', background: '#18181b', boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}
-                  >
+                  <div className="absolute right-0 top-full mt-1 w-48 z-10 rounded-xl border border-white/[0.06] bg-[#18181b] shadow-xl p-1">
                     {onFixWithAI && (
                       <button
                         onClick={() => { setPopoverOpen(false); onFixWithAI(); }}
@@ -175,8 +148,7 @@ export function DesignReviewCard({ verdictState, verdictHeadline, priorityFix, f
                 )}
               </div>
             </div>
-            {/* Fix text */}
-            <p className="text-[#e4e4e7]" style={{ fontSize: 15.342, lineHeight: '24.932px', fontWeight: 400 }}>
+            <p className="text-sm text-zinc-200 leading-relaxed mt-2">
               {priorityFix}
             </p>
           </div>
@@ -184,7 +156,7 @@ export function DesignReviewCard({ verdictState, verdictHeadline, priorityFix, f
 
         {/* Filter pills */}
         {availableFilters.length > 1 && (
-          <div className="flex gap-2 overflow-x-auto pb-0.5">
+          <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
             {availableFilters.map(filterId => {
               const count = getCount(filterId);
               const isActive = activeFilter === filterId;
@@ -192,22 +164,17 @@ export function DesignReviewCard({ verdictState, verdictHeadline, priorityFix, f
                 <button
                   key={filterId}
                   onClick={() => setActiveFilter(filterId)}
-                  className="flex items-center gap-[7px] px-3 h-[33px] rounded-full text-[12px] font-medium transition-all whitespace-nowrap shrink-0"
-                  style={{
-                    background: isActive ? 'rgba(255,255,255,0.06)' : 'transparent',
-                    border: isActive ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(255,255,255,0.04)',
-                    color: isActive ? '#e4e4e7' : '#71717b',
-                  }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all whitespace-nowrap shrink-0 ${
+                    isActive
+                      ? 'bg-white/[0.06] border border-white/[0.10] text-zinc-200'
+                      : 'bg-transparent border border-white/[0.04] text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.04]'
+                  }`}
                 >
                   {filterId}
                   {count > 0 && (
-                    <span
-                      className="px-[5px] py-[1px] rounded-[6px] text-[11px] font-semibold leading-none"
-                      style={{
-                        background: isActive ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.05)',
-                        color: isActive ? '#fff' : '#71717b',
-                      }}
-                    >
+                    <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-semibold leading-none ${
+                      isActive ? 'bg-white/10 text-white' : 'bg-white/5 text-zinc-500'
+                    }`}>
                       {count}
                     </span>
                   )}
@@ -217,8 +184,8 @@ export function DesignReviewCard({ verdictState, verdictHeadline, priorityFix, f
           </div>
         )}
 
-        {/* Flag rows */}
-        <div className="flex flex-col gap-[11px]">
+        {/* Fix rows */}
+        <div className="flex flex-col gap-2.5">
           {visibleFlags.map((flag, i) => {
             const meta = getCategoryMeta(flag.category);
             const IconComp = meta.icon;
@@ -226,61 +193,29 @@ export function DesignReviewCard({ verdictState, verdictHeadline, priorityFix, f
             return (
               <div
                 key={i}
-                className="flex flex-col gap-[11px] pl-4 pr-[1px] py-4"
-                style={{
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  borderRadius: 20,
-                  background: 'rgba(24,24,27,0.7)',
-                  boxShadow: 'inset 0 1px 0 0 rgba(255,255,255,0.05)',
-                }}
+                className="group relative flex flex-col gap-2.5 rounded-xl bg-[#18181b] border border-white/[0.08] p-3.5 hover:bg-white/[0.05] hover:border-white/[0.12] transition-all cursor-pointer shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]"
               >
-                {/* Category row */}
-                <div className="flex items-center gap-0 justify-between pr-[15px]">
-                  <div className="flex items-center gap-[14px]">
-                    {/* Icon box */}
-                    <div
-                      className="flex items-center justify-center shrink-0"
-                      style={{
-                        width: 28, height: 28,
-                        borderRadius: 6.575,
-                        background: meta.bg,
-                      }}
-                    >
-                      <IconComp size={15} style={{ color: meta.color }} />
-                    </div>
-                    {/* Category label */}
-                    <span
-                      className="font-semibold text-[#d4d4d8] capitalize"
-                      style={{ fontSize: 13.151 }}
-                    >
-                      {flag.category}
-                    </span>
-                  </div>
-                  {/* Priority badge */}
+                <div className="flex items-center gap-3">
                   <div
-                    className="flex items-center px-[6.5px]"
+                    className="flex items-center justify-center p-1.5 rounded-md shrink-0"
+                    style={{ background: meta.bg }}
+                  >
+                    <IconComp size={14} style={{ color: meta.color }} />
+                  </div>
+                  <span className="text-xs font-semibold text-zinc-300 capitalize">
+                    {flag.category}
+                  </span>
+                  <span
+                    className="ml-auto text-[9px] font-semibold uppercase rounded px-1.5 py-0.5"
                     style={{
-                      height: 19,
-                      borderRadius: 4.384,
-                      background: isHigh ? 'rgba(251,44,54,0.1)' : 'rgba(245,158,11,0.1)',
+                      background: isHigh ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)',
+                      color: isHigh ? '#f87171' : '#f59e0b',
                     }}
                   >
-                    <span
-                      className="font-semibold uppercase whitespace-nowrap"
-                      style={{
-                        fontSize: 9.863,
-                        color: isHigh ? '#ff6467' : '#f59e0b',
-                      }}
-                    >
-                      {isHigh ? 'HIGH PRIORITY' : 'MEDIUM'}
-                    </span>
-                  </div>
+                    {isHigh ? 'HIGH PRIORITY' : 'MEDIUM'}
+                  </span>
                 </div>
-                {/* Fix text — indented to align with label */}
-                <p
-                  className="text-[#d4d4d8] pr-4"
-                  style={{ fontSize: 14.247, lineHeight: '23.151px', fontWeight: 400, paddingLeft: 42 }}
-                >
+                <p className="text-[13px] text-zinc-300 leading-relaxed pl-[38px] pr-4">
                   {flag.fix || flag.issue}
                 </p>
               </div>
@@ -291,7 +226,6 @@ export function DesignReviewCard({ verdictState, verdictHeadline, priorityFix, f
           )}
         </div>
       </div>
-
     </div>
   );
 }

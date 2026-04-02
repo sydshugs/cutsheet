@@ -30,9 +30,9 @@ const VIDEO_SUBTITLES = [
 ];
 
 const STATIC_SUBTITLES = [
-  "Scanning visual hierarchy...",
+  "Detecting banner format...",
   "Checking brand presence...",
-  "Scoring CTA clarity...",
+  "Scoring placement fit...",
   "Analyzing platform best practices...",
   "Finalizing scorecard...",
 ];
