@@ -64,6 +64,79 @@ function sourcePillStyle(source: SourceType): CSSProperties {
   };
 }
 
+/** Figma 263-525 — left-rail platform pill (TikTok mint, Meta/YouTube tuned) */
+function resultsRailSourcePillStyle(source: SourceType): CSSProperties {
+  switch (source) {
+    case "tiktok":
+      return {
+        background: "rgba(0, 187, 167, 0.1)",
+        borderColor: "rgba(0, 187, 167, 0.2)",
+        color: "#5eead4",
+      };
+    case "meta":
+      return {
+        background: "rgba(24, 119, 242, 0.1)",
+        borderColor: "rgba(24, 119, 242, 0.2)",
+        color: "#60a5fa",
+      };
+    case "youtube":
+      return {
+        background: "rgba(239, 68, 68, 0.1)",
+        borderColor: "rgba(239, 68, 68, 0.2)",
+        color: "#f87171",
+      };
+    default:
+      return sourcePillStyle(source);
+  }
+}
+
+function parseMmSsToSeconds(token: string): number | null {
+  const t = token.trim();
+  const m = t.match(/^(\d+):(\d{2})$/);
+  if (!m) return null;
+  return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+}
+
+function formatSecondsAsMmSs(sec: number): string {
+  const s = Math.max(0, Math.round(sec));
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return `${m}:${r.toString().padStart(2, "0")}`;
+}
+
+/** Parse e.g. "The Hook (0:00 - 0:03)" → start/end seconds */
+function parseHookRangeFromTitle(title: string): {
+  startSec: number;
+  endSec: number;
+  labelStart: string;
+  labelEnd: string;
+} | null {
+  const match = title.match(/hook\s*\(([^)]+)\)/i);
+  if (!match) return null;
+  const inner = match[1];
+  const parts = inner.split(/\s*[-–—]\s*/).map((p) => p.trim());
+  if (parts.length < 2) return null;
+  const startSec = parseMmSsToSeconds(parts[0]);
+  const endSec = parseMmSsToSeconds(parts[1]);
+  if (startSec == null || endSec == null) return null;
+  return {
+    startSec,
+    endSec,
+    labelStart: parts[0],
+    labelEnd: parts[1],
+  };
+}
+
+function parseTotalDurationSeconds(raw: string): number | null {
+  const t = raw.trim();
+  if (!t || t === "—") return null;
+  const colon = parseMmSsToSeconds(t);
+  if (colon != null) return colon;
+  const sec = t.match(/^(\d+(?:\.\d+)?)\s*s(?:ec(?:onds?)?)?$/i);
+  if (sec) return Math.round(parseFloat(sec[1]));
+  return null;
+}
+
 /** Figma results — left rail footer (placement · aspect · duration) */
 function creativeFooterMeta(result: DeconstructResult): {
   placement: string;
@@ -386,35 +459,46 @@ function DeconstructLoadingPanel({
 
 // ─── TEARDOWN SECTION ─────────────────────────────────────────────────────────
 
-/** Figma 263-535 — standard teardown accordion (not the brief block) */
+/** Figma 263-525 — standard teardown accordion (not the brief block) */
 function TeardownSectionCard({
   section,
   defaultOpen = false,
+  totalDurationStr,
 }: {
   section: TeardownSection;
   defaultOpen?: boolean;
+  /** Total ad length for Hook timeline (e.g. from API meta) */
+  totalDurationStr?: string;
 }) {
   const [open, setOpen] = useState(defaultOpen);
+  const hookRange = parseHookRangeFromTitle(section.title);
+  const totalSec =
+    totalDurationStr != null ? parseTotalDurationSeconds(totalDurationStr) : null;
+  const hookBarPct =
+    hookRange && totalSec && totalSec > 0
+      ? Math.min(100, Math.max(0, (hookRange.endSec / totalSec) * 100))
+      : null;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+    <div className="overflow-hidden rounded-[15px] border border-white/[0.06] bg-[color:var(--surface)]">
       <button
         type="button"
         onClick={() => setOpen((p) => !p)}
-        className="flex w-full items-center justify-between px-5 py-4 text-left transition-colors hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg)]"
+        className="flex min-h-[50px] w-full items-center justify-between px-5 py-0 text-left transition-colors hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg)]"
       >
-        <span className="text-sm font-semibold text-[color:var(--ink)]">{section.title}</span>
+        <span className="pr-3 text-[13px] font-semibold leading-snug text-[color:var(--ink)]">
+          {section.title}
+        </span>
         <ChevronDown
-          size={16}
+          size={14}
           className={cn(
-            "shrink-0 text-zinc-600 transition-transform duration-200",
+            "shrink-0 text-[color:var(--ink-muted)] transition-transform duration-200",
             open && "rotate-180",
           )}
           aria-hidden
         />
       </button>
 
-      {/* Content */}
       <AnimatePresence initial={false}>
         {open && (
           <motion.div
@@ -425,22 +509,51 @@ function TeardownSectionCard({
             style={{ overflow: "hidden" }}
           >
             <div
-              className="px-5 pb-5 text-sm text-zinc-400 leading-relaxed teardown-content"
+              className="px-5 pb-5 text-[13px] leading-relaxed text-[color:var(--ink-secondary)] teardown-content"
               style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}
             >
               <style>{`
-                .teardown-content p { margin: 8px 0; color: rgba(255,255,255,0.7); }
-                .teardown-content strong { color: rgba(255,255,255,0.9); font-weight: 600; }
+                .teardown-content p { margin: 8px 0; color: var(--ink-secondary); }
+                .teardown-content strong { color: var(--ink); font-weight: 600; }
                 .teardown-content ul, .teardown-content ol { padding-left: 18px; margin: 8px 0; }
-                .teardown-content li { margin: 4px 0; color: rgba(255,255,255,0.65); }
+                .teardown-content li { margin: 4px 0; color: var(--ink-secondary); }
                 .teardown-content h3, .teardown-content h4 {
                   font-size: 11px; font-weight: 600; text-transform: uppercase;
-                  letter-spacing: 0.08em; color: rgba(255,255,255,0.4);
+                  letter-spacing: 0.08em; color: var(--ink-muted);
                   margin: 14px 0 6px;
                 }
-                .teardown-content hr { border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 12px 0; }
+                .teardown-content hr { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+                .teardown-content blockquote {
+                  margin: 12px 0;
+                  padding: 12px 16px 12px 19px;
+                  border-left: 3px solid var(--accent);
+                  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+                  background: var(--accent-subtle);
+                }
+                .teardown-content blockquote p { margin: 4px 0; color: var(--ink); }
               `}</style>
               <div className="pt-4">
+                {hookRange && totalSec != null && hookBarPct != null && (
+                  <div className="mb-5 flex items-center gap-2">
+                    <div
+                      className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-white/[0.06]"
+                      role="presentation"
+                    >
+                      <div
+                        className="h-full rounded-full bg-[color:var(--accent)] transition-[width] duration-300"
+                        style={{ width: `${hookBarPct}%` }}
+                      />
+                    </div>
+                    <div className="flex shrink-0 items-baseline gap-1 font-mono text-[10px] tabular-nums">
+                      <span className="text-[color:var(--accent-light)]">
+                        {hookRange.labelStart} — {hookRange.labelEnd}
+                      </span>
+                      <span className="text-[color:var(--ink-muted)]">
+                        / {formatSecondsAsMmSs(totalSec)}
+                      </span>
+                    </div>
+                  </div>
+                )}
                 <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{section.content}</ReactMarkdown>
               </div>
             </div>
@@ -456,19 +569,24 @@ function TeardownSectionCard({
 function WhyItWorksCard({ content }: { content: string }) {
   return (
     <div
-      className="shrink-0 rounded-2xl border p-5"
+      className="shrink-0 rounded-[15px] border px-5 pb-5 pt-5"
       style={{
-        background: "rgba(99,102,241,0.04)",
-        borderColor: "rgba(99,102,241,0.2)",
+        background: "rgba(99, 102, 241, 0.04)",
+        borderColor: "rgba(99, 102, 241, 0.2)",
       }}
     >
       <div className="mb-3 flex items-center gap-2">
-        <div className="h-1.5 w-1.5 rounded-full bg-[color:var(--accent)]" />
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--accent-light)]">
-          Why It Works
+        <div className="size-[6px] shrink-0 rounded-full bg-[color:var(--accent)]" />
+        <span className="text-[9.5px] font-semibold uppercase tracking-[0.05em] text-[color:var(--accent-light)]">
+          Why it works
         </span>
       </div>
-      <div className="text-sm leading-relaxed text-zinc-300">
+      <div className="why-works-md text-[13px] leading-[22px] text-[color:var(--ink-secondary)]">
+        <style>{`
+          .why-works-md p { margin: 0; }
+          .why-works-md p + p { margin-top: 10px; }
+          .why-works-md strong { color: var(--ink); font-weight: 600; }
+        `}</style>
         <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{content}</ReactMarkdown>
       </div>
     </div>
@@ -488,7 +606,7 @@ function StealThisBriefCard({ content }: { content: string }) {
 
   return (
     <div
-      className="mb-6 shrink-0 overflow-hidden rounded-2xl border"
+      className="mb-6 shrink-0 overflow-hidden rounded-[15px] border"
       style={{
         background: "rgba(99,102,241,0.06)",
         borderColor: "rgba(99,102,241,0.25)",
@@ -497,18 +615,18 @@ function StealThisBriefCard({ content }: { content: string }) {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center justify-between px-5 py-4 text-left transition-colors hover:bg-white/[0.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg)]"
+        className="flex min-h-[50px] w-full items-center justify-between px-5 py-0 text-left transition-colors hover:bg-white/[0.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg)]"
       >
         <div className="flex items-center gap-2">
           <div className="h-1.5 w-1.5 rounded-full bg-[color:var(--accent)]" />
-          <span className="text-sm font-semibold text-[color:var(--accent-light)]">
+          <span className="text-[13px] font-semibold text-[color:var(--accent-light)]">
             {BRIEF_DISPLAY_TITLE}
           </span>
         </div>
         <ChevronDown
-          size={16}
+          size={14}
           className={cn(
-            "text-[color:var(--accent)]/50 transition-transform duration-200",
+            "text-[color:var(--accent-light)]/50 transition-transform duration-200",
             open && "rotate-180",
           )}
           aria-hidden
@@ -563,7 +681,7 @@ function StealThisBriefCard({ content }: { content: string }) {
                 <style>{`
                   .brief-body-markdown p { margin: 0.5em 0; }
                   .brief-body-markdown ul, .brief-body-markdown ol { padding-left: 1.1em; margin: 0.5em 0; }
-                  .brief-body-markdown strong { font-weight: 600; color: rgba(199, 210, 254, 0.95); }
+                  .brief-body-markdown strong { font-weight: 600; color: var(--accent-light); }
                 `}</style>
                 <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{content}</ReactMarkdown>
               </div>
@@ -602,31 +720,31 @@ function ResultsSplit({
       transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
       className="flex min-h-0 w-full flex-1 flex-col overflow-hidden lg:h-full lg:min-h-0 lg:flex-row"
     >
-      {/* Left — creative + meta */}
-      <div className="flex w-full shrink-0 flex-col overflow-y-auto border-b border-[color:var(--border)] bg-[color:var(--bg)] lg:w-[380px] lg:border-b-0 lg:border-r lg:border-[color:var(--border)]">
+      {/* Left — creative + meta (Figma 263-525) */}
+      <div className="flex w-full shrink-0 flex-col overflow-y-auto border-b border-white/[0.04] bg-[color:var(--bg)] lg:w-[min(22.75rem,100%)] lg:max-w-[380px] lg:border-b-0 lg:border-r lg:border-white/[0.04]">
         <div className="flex items-start justify-between gap-3 border-b border-[color:var(--border)] px-4 pb-3 pt-4">
-          <div className="flex min-w-0 flex-1 flex-col">
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
             <span
-              className="mb-1 w-fit rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase"
-              style={sourcePillStyle(result.sourceType)}
+              className="w-fit rounded-full border px-2.5 py-0.5 text-[9.5px] font-semibold uppercase leading-tight tracking-wide"
+              style={resultsRailSourcePillStyle(result.sourceType)}
             >
               {getSourceLabel(result.sourceType)}
             </span>
-            <h2 className="line-clamp-2 text-sm font-medium leading-snug text-zinc-200">
+            <h2 className="line-clamp-3 text-[13px] font-medium leading-snug text-[color:var(--ink)]">
               {result.adTitle}
             </h2>
           </div>
           <button
             type="button"
             onClick={onReset}
-            className="flex shrink-0 items-center gap-1 pt-1 text-xs text-zinc-500 transition-colors hover:text-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg)]"
+            className="flex shrink-0 items-center gap-1 pt-0.5 text-[11.5px] text-[color:var(--ink-muted)] transition-colors hover:text-[color:var(--ink-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg)]"
           >
-            <RotateCcw className="h-3.5 w-3.5" aria-hidden />
+            <RotateCcw className="h-3.5 w-3.5 shrink-0" aria-hidden />
             <span>Analyze another</span>
           </button>
         </div>
 
-        <div className="group relative mx-4 mt-4 flex flex-col overflow-hidden rounded-2xl border border-[color:var(--border)] bg-zinc-900">
+        <div className="group relative mx-4 mt-4 flex flex-col overflow-hidden rounded-[15px] border border-[color:var(--border)] bg-[color:var(--card)]">
           <div className="relative flex aspect-[9/16] w-full items-center justify-center overflow-hidden bg-black">
             {result.thumbnailUrl ? (
               <>
@@ -636,52 +754,67 @@ function ResultsSplit({
                   className="h-full w-full object-cover opacity-80 transition-opacity duration-200 group-hover:opacity-60"
                 />
                 <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-white/10 backdrop-blur-md">
-                    <Play className="ml-0.5 h-5 w-5 text-white" fill="currentColor" aria-hidden />
+                  <div
+                    className="flex h-12 w-12 items-center justify-center rounded-full border backdrop-blur-md transition-[border-color,background-color] duration-200"
+                    style={{
+                      borderColor: "var(--border-strong)",
+                      background: "rgba(255,255,255,0.06)",
+                    }}
+                  >
+                    <Play className="ml-0.5 h-5 w-5 text-[color:var(--ink)]" fill="currentColor" aria-hidden />
                   </div>
                 </div>
               </>
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-xs text-zinc-600">
+              <div className="flex h-full w-full items-center justify-center text-xs text-[color:var(--ink-muted)]">
                 No preview
               </div>
             )}
           </div>
-          <div className="flex items-center justify-between border-t border-[color:var(--border)] bg-black/40 px-3 py-2.5">
+          <div className="flex items-center justify-between border-t border-[color:var(--border)] bg-black/40 px-3 py-2">
             <div className="flex min-w-0 items-center gap-1.5">
-              <span className="truncate text-[11px] font-medium text-zinc-400">
+              <span className="truncate text-[10.5px] font-medium text-[color:var(--ink-secondary)]">
                 {footerMeta.placement}
               </span>
-              <span className="h-1 w-1 shrink-0 rounded-full bg-zinc-700" />
-              <span className="shrink-0 text-[11px] text-zinc-500">{footerMeta.aspect}</span>
+              <span
+                className="size-1 shrink-0 rounded-full"
+                style={{ background: "var(--elevated)" }}
+              />
+              <span className="shrink-0 text-[10.5px] text-[color:var(--ink-muted)]">
+                {footerMeta.aspect}
+              </span>
             </div>
-            <span className="shrink-0 font-mono text-[11px] text-zinc-600">{footerMeta.duration}</span>
+            <span className="shrink-0 font-mono text-[10.5px] text-[color:var(--ink-muted)]">
+              {footerMeta.duration}
+            </span>
           </div>
         </div>
 
         <button
           type="button"
           onClick={onSaveToSwipeFile}
-          className="mx-4 mb-6 mt-3 flex items-center justify-center gap-2 rounded-xl border border-[color:var(--border)] bg-white/[0.02] py-2.5 text-sm text-zinc-400 transition-[transform,opacity,background-color,border-color] duration-200 hover:bg-white/[0.04] hover:text-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg)] active:scale-[0.99]"
+          className="mx-4 mb-6 mt-3 flex h-10 items-center justify-center gap-2 rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] text-[13px] text-[color:var(--ink-secondary)] transition-[transform,opacity,background-color,border-color] duration-200 hover:bg-[color:var(--surface-el)] hover:text-[color:var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg)] active:scale-[0.99]"
         >
-          <Bookmark className="h-4 w-4" aria-hidden />
+          <Bookmark className="h-4 w-4 shrink-0 opacity-90" aria-hidden />
           <span>Save to Library</span>
         </button>
       </div>
 
-      {/* Right — URL + why + sections + brief (Figma order) */}
+      {/* Right — URL + why + sections + brief (Figma 263-525) */}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto bg-[color:var(--bg)] px-6 py-5">
-        <div className="mb-5 flex items-center justify-between gap-2 rounded-xl border border-[color:var(--border)] bg-white/[0.02] px-4 py-2.5">
+        <div className="mb-5 flex h-9 items-center justify-between gap-2 rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] px-4">
           <div className="flex min-w-0 flex-1 items-center gap-2">
-            <Link2 className="h-3.5 w-3.5 shrink-0 text-zinc-600" aria-hidden />
-            <span className="truncate font-mono text-xs text-zinc-600">{submittedUrl}</span>
+            <Link2 className="h-3.5 w-3.5 shrink-0 text-[color:var(--ink-muted)]" aria-hidden />
+            <span className="truncate font-mono text-[11.5px] text-[color:var(--ink-muted)]">
+              {submittedUrl}
+            </span>
           </div>
           <button
             type="button"
             onClick={onReset}
-            className="flex shrink-0 items-center gap-1 text-xs text-zinc-500 transition-colors hover:text-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg)]"
+            className="flex shrink-0 items-center gap-1 text-[11.5px] text-[color:var(--ink-muted)] transition-colors hover:text-[color:var(--ink-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg)]"
           >
-            <RotateCcw className="h-3.5 w-3.5" aria-hidden />
+            <RotateCcw className="h-3.5 w-3.5 shrink-0" aria-hidden />
             <span>New</span>
           </button>
         </div>
@@ -698,13 +831,14 @@ function ResultsSplit({
               key={section.title}
               section={section}
               defaultOpen={i === 0}
+              totalDurationStr={footerMeta.duration}
             />
           ))}
         </div>
 
         {briefSection && <StealThisBriefCard content={briefSection.content} />}
 
-        <p className="mt-auto pb-4 pt-8 text-center font-mono text-[11px] text-zinc-700">
+        <p className="mt-auto pb-4 pt-8 text-center font-mono text-[10.5px] text-[color:var(--ink-muted)] opacity-80">
           Powered by Gemini + Claude
         </p>
       </div>
@@ -866,7 +1000,7 @@ export default function Deconstructor() {
             onSaveToSwipeFile={handleSaveToSwipeFile}
           />
         ) : (
-          <div className="mx-auto flex w-full max-w-[720px] flex-1 flex-col items-center px-6 py-12">
+          <div className="mx-auto flex w-full max-w-[720px] flex-1 flex-col items-center justify-center px-6 py-12">
             {/* Figma 263-124 — hero only on idle */}
             {!result && !loading && (
               <div className="mb-8 shrink-0 text-center">
