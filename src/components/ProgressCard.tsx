@@ -119,11 +119,12 @@ export function ProgressCard({ file, status, onCancel, onComplete, format = "vid
               src={previewUrl}
               muted
               playsInline
-              preload="metadata"
+              preload="auto"
+              autoPlay={false}
               className="absolute inset-0 w-full h-full object-cover"
-              onLoadedData={(e) => {
+              onLoadedMetadata={(e) => {
                 const v = e.currentTarget;
-                if (v.currentTime === 0) v.currentTime = 0.1;
+                v.currentTime = 1.0;
               }}
             />
           ) : isImage && previewUrl ? (

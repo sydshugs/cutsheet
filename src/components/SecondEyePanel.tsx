@@ -38,8 +38,10 @@ const CATEGORY_CONFIG: Record<
 };
 
 function getCategoryConfig(category: string) {
-  return CATEGORY_CONFIG[category] ?? {
-    label: category.replace(/_/g, " "),
+  // Normalize to lowercase so AI-returned values like "Sound_off" or "Clarity" match the config keys
+  const key = category.toLowerCase();
+  return CATEGORY_CONFIG[key] ?? {
+    label: category.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
     icon: AlertTriangle,
     color: "#71717a",
     bg: "rgba(255,255,255,0.08)",

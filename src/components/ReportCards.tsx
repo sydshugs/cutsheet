@@ -374,13 +374,13 @@ export function ReportCards({
                 src={fileUrl}
                 poster={thumbnailDataUrl ?? undefined}
                 controls
-                preload="metadata"
+                preload="auto"
                 playsInline
                 className="w-full h-full object-contain"
-                onLoadedData={(e) => {
+                onLoadedMetadata={(e) => {
                   if (!thumbnailDataUrl) {
                     const v = e.currentTarget;
-                    if (v.currentTime === 0) v.currentTime = 0.1;
+                    v.currentTime = 1.0;
                   }
                 }}
               />
@@ -551,32 +551,8 @@ export function ReportCards({
         const vState = (effectiveVerdict?.state ?? (scores?.overall && scores.overall >= 8 ? 'ready' : scores?.overall && scores.overall >= 5 ? 'needs_work' : 'not_ready')) as 'not_ready' | 'needs_work' | 'ready';
         const detail = sentences.slice(1, 3).join(' ');
 
-        // Video: use DesignReviewCard with secondEye flags, fallback to old component
+        // Video: always use CreativeVerdictAndSecondEye
         if (format === 'video') {
-          if (secondEyeData?.flags?.length) {
-            const videoFlags = secondEyeData.flags.map(f => ({
-              category: f.category === 'scroll_trigger' ? 'Motion'
-                      : f.category === 'hierarchy' ? 'Hierarchy'
-                      : f.category === 'contrast' ? 'Contrast'
-                      : f.category === 'layout' ? 'Layout'
-                      : f.category === 'typography' ? 'Typography'
-                      : f.category,
-              severity: f.severity as 'critical' | 'warning' | 'info',
-              issue: f.issue,
-              fix: f.fix,
-              timestamp: f.timestamp,
-            }));
-            const topFlag = videoFlags.find(f => f.severity === 'critical') ?? videoFlags[0];
-            return (
-              <DesignReviewCard
-                verdictState={vState}
-                verdictHeadline={oneLiner}
-                priorityFix={topFlag?.fix}
-                flags={videoFlags}
-                onFixWithAI={onFixIt}
-              />
-            );
-          }
           return (
             <CreativeVerdictAndSecondEye
               verdictState={vState}
