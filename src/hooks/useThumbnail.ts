@@ -1,15 +1,26 @@
 import { useState, useEffect } from "react";
 
-/** Capture a poster frame from a video file via canvas, or use objectURL for images. */
-export function useThumbnail(file: File | null): string | null {
+/**
+ * Capture a poster frame from a video file via canvas, or use objectURL for images.
+ *
+ * @param sharedObjectUrl  Optional blob URL already created by the parent for the same file.
+ *   - For images: used directly, hook will NOT revoke it (parent owns it).
+ *   - For videos: used as the `src` for the hidden capture element; hook will NOT revoke it.
+ *   If omitted the hook creates and revokes its own URL as before.
+ */
+export function useThumbnail(file: File | null, sharedObjectUrl?: string | null): string | null {
   const [thumbnailDataUrl, setThumbnailDataUrl] = useState<string | null>(null);
 
   useEffect(() => {
     setThumbnailDataUrl(null);
     if (!file) return;
 
-    // Image files: use object URL directly — no canvas needed
+    // Image files: use shared URL if available, else create + revoke own
     if (file.type.startsWith("image/")) {
+      if (sharedObjectUrl) {
+        setThumbnailDataUrl(sharedObjectUrl);
+        return; // parent owns + revokes the URL
+      }
       const url = URL.createObjectURL(file);
       setThumbnailDataUrl(url);
       return () => URL.revokeObjectURL(url);
@@ -20,7 +31,9 @@ export function useThumbnail(file: File | null): string | null {
     let seekTimeoutId: ReturnType<typeof setTimeout> | null = null;
     let captureAttempts = 0;
     const MAX_CAPTURE_ATTEMPTS = 3;
-    const url = URL.createObjectURL(file);
+
+    const ownsUrl = !sharedObjectUrl;
+    const url = sharedObjectUrl || URL.createObjectURL(file);
     const video = document.createElement("video");
     video.muted = true;
     video.preload = "auto";
@@ -30,7 +43,7 @@ export function useThumbnail(file: File | null): string | null {
 
     const cleanup = () => {
       if (seekTimeoutId) clearTimeout(seekTimeoutId);
-      if (!revoked) {
+      if (ownsUrl && !revoked) {
         URL.revokeObjectURL(url);
         revoked = true;
       }
@@ -114,7 +127,8 @@ export function useThumbnail(file: File | null): string | null {
       video.removeEventListener("error", onError);
       cleanup();
     };
-  }, [file]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [file, sharedObjectUrl]);
 
   return thumbnailDataUrl;
 }

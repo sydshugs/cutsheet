@@ -168,19 +168,19 @@ export function AnalysisProgressCard({
   const Icon = config.icon;
   const [stageIndex, setStageIndex] = useState(0);
   
-  // Get thumbnail for first file
+  // Get thumbnail for first file — one shared blob URL owned here
   const primaryFile = files[0];
-  const thumbnailDataUrl = useThumbnail(primaryFile);
-  const isImage = primaryFile?.type.startsWith("image/");
-  
-  const previewUrl = useMemo(() => {
-    if (primaryFile && isImage) return URL.createObjectURL(primaryFile);
-    return null;
-  }, [primaryFile, isImage]);
-  
+  const primaryFileObjectUrl = useMemo(
+    () => (primaryFile ? URL.createObjectURL(primaryFile) : null),
+    [primaryFile],
+  );
   useEffect(() => {
-    return () => { if (previewUrl) URL.revokeObjectURL(previewUrl); };
-  }, [previewUrl]);
+    return () => { if (primaryFileObjectUrl) URL.revokeObjectURL(primaryFileObjectUrl); };
+  }, [primaryFileObjectUrl]);
+  const thumbnailDataUrl = useThumbnail(primaryFile ?? null, primaryFileObjectUrl);
+  const isImage = primaryFile?.type.startsWith("image/");
+  // Use the shared URL for the visible preview (covers both image and video)
+  const previewUrl = primaryFileObjectUrl;
 
   // Progress through stages
   useEffect(() => {

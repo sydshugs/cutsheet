@@ -17,6 +17,8 @@ interface ProgressCardProps {
   format?: "video" | "static";
   icon?: LucideIcon;
   title?: string;
+  /** Blob URL already owned by the parent. If provided, ProgressCard uses it directly and will NOT revoke it. */
+  sharedFileObjectUrl?: string | null;
 }
 
 const DIMENSIONS = ["Hook Strength", "Message Clarity", "CTA Effectiveness", "Production Quality"];
@@ -39,7 +41,7 @@ const STATIC_SUBTITLES = [
 
 const STEP_DELAYS = [3000, 2500, 3500, 2500, 2000];
 
-export function ProgressCard({ file, status, onCancel, onComplete, format = "video", title: titleProp }: ProgressCardProps) {
+export function ProgressCard({ file, status, onCancel, onComplete, format = "video", title: titleProp, sharedFileObjectUrl }: ProgressCardProps) {
   const title = titleProp ?? "Analyzing your ad";
   const SUBTITLES = format === "static" ? STATIC_SUBTITLES : VIDEO_SUBTITLES;
 
@@ -47,14 +49,18 @@ export function ProgressCard({ file, status, onCancel, onComplete, format = "vid
   const thumbnailDataUrl = useThumbnail(file ?? null);
   const isImage = file?.type.startsWith("image/") ?? false;
 
-  const previewUrl = useMemo(() => {
-    if (file) return URL.createObjectURL(file);
-    return null;
-  }, [file]);
+  // If parent passed a shared blob URL, use it directly (parent owns the lifecycle).
+  // Otherwise create and revoke our own.
+  const ownPreviewUrl = useMemo(() => {
+    if (sharedFileObjectUrl || !file) return null;
+    return URL.createObjectURL(file);
+  }, [file, sharedFileObjectUrl]);
 
   useEffect(() => {
-    return () => { if (previewUrl) URL.revokeObjectURL(previewUrl); };
-  }, [previewUrl]);
+    return () => { if (ownPreviewUrl) URL.revokeObjectURL(ownPreviewUrl); };
+  }, [ownPreviewUrl]);
+
+  const previewUrl = sharedFileObjectUrl ?? ownPreviewUrl;
 
   // Step sequencer — setTimeout chain matching Figma animation timing
   useEffect(() => {
