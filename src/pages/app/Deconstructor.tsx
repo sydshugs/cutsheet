@@ -1,6 +1,13 @@
 // src/pages/app/Deconstructor.tsx — Winning Ad Deconstructor
 
-import { useState, useRef, useCallback, useEffect, type CSSProperties } from "react";
+import {
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
+  useMemo,
+  type CSSProperties,
+} from "react";
 import { Helmet } from "react-helmet-async";
 import { useOutletContext } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -26,6 +33,8 @@ import {
   deconstructAd,
   parseTeardownSections,
   getSourceLabel,
+  isWhyThisAdWorksTitle,
+  matchesBriefHeading,
   type SourceType,
   type DeconstructResult,
   type TeardownSection,
@@ -158,6 +167,86 @@ function creativeFooterMeta(result: DeconstructResult): {
         ? (g.videoLength as string)
         : "—";
   return { placement, aspect, duration };
+}
+
+// ─── FIGMA 263-538 — right-rail section helpers ──────────────────────────────
+
+function isPacingSectionTitle(title: string): boolean {
+  const t = title.toLowerCase();
+  return (
+    (t.includes("pacing") || t.includes("composition")) && !t.includes("hook")
+  );
+}
+
+function parsePacingMetricsFromMarkdown(md: string): {
+  avgDisplay: string | null;
+  momentum: string | null;
+} {
+  const text = md.replace(/\*\*/g, "");
+  let avgDisplay: string | null = null;
+  const patterns = [
+    /(\d+(?:\.\d+)?)\s*s(?:ec(?:onds?)?)?\s+(?:avg|average)\s+scene/i,
+    /(?:avg|average)\s+scene\s+(?:length\s*)?[:(]?\s*(\d+(?:\.\d+)?)\s*s\b/i,
+  ];
+  for (const p of patterns) {
+    const m = text.match(p);
+    if (m) {
+      avgDisplay = `${m[1]}s`;
+      break;
+    }
+  }
+  const mom = text.match(/\bmomentum\s*[:\s]+\s*(high|medium|low)\b/i);
+  const momentum = mom
+    ? `${mom[1].charAt(0).toUpperCase()}${mom[1].slice(1).toLowerCase()}`
+    : null;
+  return { avgDisplay, momentum };
+}
+
+function stripPacingMetricLines(md: string): string {
+  return md
+    .split("\n")
+    .filter((line) => {
+      const t = line.replace(/\*\*/g, "");
+      if (/\bmomentum\s*[:\s]+\s*(high|medium|low)\b/i.test(t)) return false;
+      if (
+        /(\d+(?:\.\d+)?)\s*s\b.*(avg|average)\s+scene/i.test(t) ||
+        /(avg|average)\s+scene.*(\d+(?:\.\d+)?)\s*s/i.test(t)
+      )
+        return false;
+      return true;
+    })
+    .join("\n")
+    .trim();
+}
+
+function isMessagingSectionTitle(title: string): boolean {
+  const t = title.toLowerCase();
+  return (
+    t.includes("messaging") ||
+    t.includes("copywriting") ||
+    (t.includes("copy") && !t.includes("copyright"))
+  );
+}
+
+function splitMessagingCoreClaim(md: string): {
+  callout: { quote: string } | null;
+  rest: string;
+} {
+  const lines = md.split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    const plain = lines[i].replace(/\*\*/g, "").trim();
+    const m =
+      plain.match(/^[-*•]\s*core claim\s*:?\s*(.+)$/i) ||
+      plain.match(/^core claim\s*:?\s*(.+)$/i);
+    if (m) {
+      const quote = m[1].replace(/^["'""'']|["'""'']$/g, "").trim();
+      const rest = [...lines.slice(0, i), ...lines.slice(i + 1)]
+        .join("\n")
+        .trim();
+      return { callout: quote ? { quote } : null, rest };
+    }
+  }
+  return { callout: null, rest: md };
 }
 
 // ─── URL INPUT ────────────────────────────────────────────────────────────────
@@ -459,7 +548,7 @@ function DeconstructLoadingPanel({
 
 // ─── TEARDOWN SECTION ─────────────────────────────────────────────────────────
 
-/** Figma 263-525 — standard teardown accordion (not the brief block) */
+/** Figma 263-538 — standard teardown accordion (not the brief block) */
 function TeardownSectionCard({
   section,
   defaultOpen = false,
@@ -479,12 +568,49 @@ function TeardownSectionCard({
       ? Math.min(100, Math.max(0, (hookRange.endSec / totalSec) * 100))
       : null;
 
+  const pacingMetrics = useMemo(
+    () =>
+      isPacingSectionTitle(section.title)
+        ? parsePacingMetricsFromMarkdown(section.content)
+        : { avgDisplay: null, momentum: null },
+    [section.title, section.content],
+  );
+
+  const messagingSplit = useMemo(
+    () =>
+      isMessagingSectionTitle(section.title)
+        ? splitMessagingCoreClaim(section.content)
+        : { callout: null as { quote: string } | null, rest: section.content },
+    [section.title, section.content],
+  );
+
+  const markdownBody = useMemo(() => {
+    if (isMessagingSectionTitle(section.title)) return messagingSplit.rest;
+    if (
+      isPacingSectionTitle(section.title) &&
+      (pacingMetrics.avgDisplay || pacingMetrics.momentum)
+    ) {
+      return stripPacingMetricLines(section.content);
+    }
+    return section.content;
+  }, [
+    section.title,
+    section.content,
+    messagingSplit.rest,
+    pacingMetrics.avgDisplay,
+    pacingMetrics.momentum,
+  ]);
+
+  const showPacingRow =
+    isPacingSectionTitle(section.title) &&
+    (pacingMetrics.avgDisplay != null || pacingMetrics.momentum != null);
+
   return (
     <div className="overflow-hidden rounded-[15px] border border-white/[0.06] bg-[color:var(--surface)]">
       <button
         type="button"
         onClick={() => setOpen((p) => !p)}
-        className="flex min-h-[50px] w-full items-center justify-between px-5 py-0 text-left transition-colors hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg)]"
+        className="flex min-h-[50px] w-full items-center justify-between px-[19px] py-0 text-left transition-colors hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg)]"
       >
         <span className="pr-3 text-[13px] font-semibold leading-snug text-[color:var(--ink)]">
           {section.title}
@@ -509,28 +635,29 @@ function TeardownSectionCard({
             style={{ overflow: "hidden" }}
           >
             <div
-              className="px-5 pb-5 text-[13px] leading-relaxed text-[color:var(--ink-secondary)] teardown-content"
+              className="px-[19px] pb-5 text-[13px] leading-[22px] teardown-content-figma"
               style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}
             >
               <style>{`
-                .teardown-content p { margin: 8px 0; color: var(--ink-secondary); }
-                .teardown-content strong { color: var(--ink); font-weight: 600; }
-                .teardown-content ul, .teardown-content ol { padding-left: 18px; margin: 8px 0; }
-                .teardown-content li { margin: 4px 0; color: var(--ink-secondary); }
-                .teardown-content h3, .teardown-content h4 {
+                .teardown-content-figma p { margin: 8px 0; line-height: 22px; }
+                .teardown-content-figma p, .teardown-content-figma li { color: var(--ink-secondary); }
+                .teardown-content-figma strong { color: var(--ink); font-weight: 600; }
+                .teardown-content-figma ul, .teardown-content-figma ol { padding-left: 18px; margin: 8px 0; }
+                .teardown-content-figma li { margin: 4px 0; }
+                .teardown-content-figma h3, .teardown-content-figma h4 {
                   font-size: 11px; font-weight: 600; text-transform: uppercase;
                   letter-spacing: 0.08em; color: var(--ink-muted);
                   margin: 14px 0 6px;
                 }
-                .teardown-content hr { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
-                .teardown-content blockquote {
+                .teardown-content-figma hr { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+                .teardown-content-figma blockquote {
                   margin: 12px 0;
                   padding: 12px 16px 12px 19px;
                   border-left: 3px solid var(--accent);
                   border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
                   background: var(--accent-subtle);
                 }
-                .teardown-content blockquote p { margin: 4px 0; color: var(--ink); }
+                .teardown-content-figma blockquote p { margin: 4px 0; color: var(--ink); }
               `}</style>
               <div className="pt-4">
                 {hookRange && totalSec != null && hookBarPct != null && (
@@ -544,8 +671,8 @@ function TeardownSectionCard({
                         style={{ width: `${hookBarPct}%` }}
                       />
                     </div>
-                    <div className="flex shrink-0 items-baseline gap-1 font-mono text-[10px] tabular-nums">
-                      <span className="text-[color:var(--accent-light)]">
+                    <div className="flex shrink-0 items-baseline gap-1.5 font-mono text-[9.5px] tabular-nums">
+                      <span className="font-bold text-[color:var(--accent-light)]">
                         {hookRange.labelStart} — {hookRange.labelEnd}
                       </span>
                       <span className="text-[color:var(--ink-muted)]">
@@ -554,7 +681,61 @@ function TeardownSectionCard({
                     </div>
                   </div>
                 )}
-                <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{section.content}</ReactMarkdown>
+
+                {showPacingRow && (
+                  <div
+                    className={cn(
+                      "mb-4 flex min-h-[67px] items-center rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2",
+                      pacingMetrics.avgDisplay ? "justify-between" : "justify-end",
+                    )}
+                  >
+                    {pacingMetrics.avgDisplay && (
+                      <div className="flex flex-col gap-1">
+                        <p className="text-[23px] font-bold leading-none tracking-tight text-[color:var(--ink)]">
+                          {pacingMetrics.avgDisplay}
+                        </p>
+                        <p className="text-[11.5px] text-[color:var(--ink-muted)]">
+                          avg scene length
+                        </p>
+                      </div>
+                    )}
+                    {pacingMetrics.momentum && (
+                      <span
+                        className="rounded-full px-2.5 py-1 text-[11.5px] font-medium"
+                        style={{
+                          background: "var(--score-excellent-bg)",
+                          color: "var(--success)",
+                          border: "1px solid var(--score-excellent-border)",
+                        }}
+                      >
+                        Momentum: {pacingMetrics.momentum}
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {messagingSplit.callout && (
+                  <div
+                    className="mb-4 flex flex-col gap-1.5 rounded-3xl py-3 pl-5 pr-4"
+                    style={{
+                      background: "rgba(99, 102, 241, 0.04)",
+                      border: "1px solid rgba(99, 102, 241, 0.15)",
+                      borderLeftWidth: 3,
+                      borderLeftColor: "var(--accent)",
+                    }}
+                  >
+                    <span className="text-[8.5px] font-semibold uppercase tracking-[0.04em] text-[color:var(--accent-light)]">
+                      Core claim
+                    </span>
+                    <p className="text-[13px] font-semibold leading-snug text-[color:var(--ink)]">
+                      {messagingSplit.callout.quote}
+                    </p>
+                  </div>
+                )}
+
+                <ReactMarkdown rehypePlugins={[rehypeSanitize]}>
+                  {markdownBody}
+                </ReactMarkdown>
               </div>
             </div>
           </motion.div>
@@ -569,19 +750,19 @@ function TeardownSectionCard({
 function WhyItWorksCard({ content }: { content: string }) {
   return (
     <div
-      className="shrink-0 rounded-[15px] border px-5 pb-5 pt-5"
+      className="flex shrink-0 flex-col gap-3 rounded-[15px] border px-5 pb-5 pt-5"
       style={{
         background: "rgba(99, 102, 241, 0.04)",
         borderColor: "rgba(99, 102, 241, 0.2)",
       }}
     >
-      <div className="mb-3 flex items-center gap-2">
+      <div className="flex items-center gap-2">
         <div className="size-[6px] shrink-0 rounded-full bg-[color:var(--accent)]" />
         <span className="text-[9.5px] font-semibold uppercase tracking-[0.05em] text-[color:var(--accent-light)]">
           Why it works
         </span>
       </div>
-      <div className="why-works-md text-[13px] leading-[22px] text-[color:var(--ink-secondary)]">
+      <div className="why-works-md text-[13px] leading-[22px] text-[color:var(--ink)] [opacity:0.88]">
         <style>{`
           .why-works-md p { margin: 0; }
           .why-works-md p + p { margin-top: 10px; }
@@ -662,7 +843,7 @@ function StealThisBriefCard({ content }: { content: string }) {
                     e.stopPropagation();
                     void handleCopy();
                   }}
-                  className="flex items-center gap-1.5 rounded-md bg-[color:var(--accent-soft)] px-2.5 py-1 text-xs text-[color:var(--accent-light)] transition-[background-color,opacity] duration-200 hover:bg-[color:var(--accent-border)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg)]"
+                  className="flex items-center gap-1.5 rounded-[6px] bg-[color:var(--accent-soft)] px-2.5 py-1 text-[11.5px] text-[color:var(--accent-light)] transition-[background-color,opacity] duration-200 hover:bg-[color:var(--accent-border)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg)]"
                 >
                   {copied ? (
                     <>
@@ -707,10 +888,14 @@ function ResultsSplit({
   onSaveToSwipeFile: () => void;
 }) {
   const sections = parseTeardownSections(result.teardown);
-  const whySection = sections.find((s) => s.title === "Why This Ad Works");
-  const withoutWhy = sections.filter((s) => s.title !== "Why This Ad Works");
-  const briefSection = withoutWhy.find((s) => BRIEF_SECTION_TITLES.has(s.title));
-  const middleSections = withoutWhy.filter((s) => !BRIEF_SECTION_TITLES.has(s.title));
+  const whySection = sections.find((s) => isWhyThisAdWorksTitle(s.title));
+  const withoutWhy = sections.filter((s) => !isWhyThisAdWorksTitle(s.title));
+  const briefSection = withoutWhy.find((s) =>
+    matchesBriefHeading(s.title, BRIEF_SECTION_TITLES),
+  );
+  const middleSections = withoutWhy.filter(
+    (s) => !matchesBriefHeading(s.title, BRIEF_SECTION_TITLES),
+  );
   const footerMeta = creativeFooterMeta(result);
 
   return (
@@ -719,6 +904,7 @@ function ResultsSplit({
       animate={{ opacity: 1 }}
       transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
       className="flex min-h-0 w-full flex-1 flex-col overflow-hidden lg:h-full lg:min-h-0 lg:flex-row"
+      data-ad-breakdown-results="figma-split"
     >
       {/* Left — creative + meta (Figma 263-525) */}
       <div className="flex w-full shrink-0 flex-col overflow-y-auto border-b border-white/[0.04] bg-[color:var(--bg)] lg:w-[min(22.75rem,100%)] lg:max-w-[380px] lg:border-b-0 lg:border-r lg:border-white/[0.04]">
@@ -800,9 +986,10 @@ function ResultsSplit({
         </button>
       </div>
 
-      {/* Right — URL + why + sections + brief (Figma 263-525) */}
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto bg-[color:var(--bg)] px-6 py-5">
-        <div className="mb-5 flex h-9 items-center justify-between gap-2 rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] px-4">
+      {/* Right — URL + why + sections + brief (Figma 263-538) */}
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto bg-[color:var(--bg)] px-5 py-5 lg:px-6">
+        <div className="mx-auto flex w-full max-w-[51rem] flex-col gap-4">
+        <div className="flex min-h-[37px] items-center justify-between gap-2 rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-1">
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <Link2 className="h-3.5 w-3.5 shrink-0 text-[color:var(--ink-muted)]" aria-hidden />
             <span className="truncate font-mono text-[11.5px] text-[color:var(--ink-muted)]">
@@ -820,12 +1007,12 @@ function ResultsSplit({
         </div>
 
         {whySection && (
-          <div className="mb-4 shrink-0">
+          <div className="shrink-0">
             <WhyItWorksCard content={whySection.content} />
           </div>
         )}
 
-        <div className="mb-4 flex shrink-0 flex-col gap-2">
+        <div className="flex shrink-0 flex-col gap-2">
           {middleSections.map((section, i) => (
             <TeardownSectionCard
               key={section.title}
@@ -841,6 +1028,7 @@ function ResultsSplit({
         <p className="mt-auto pb-4 pt-8 text-center font-mono text-[10.5px] text-[color:var(--ink-muted)] opacity-80">
           Powered by Gemini + Claude
         </p>
+        </div>
       </div>
     </motion.div>
   );
@@ -967,6 +1155,8 @@ export default function Deconstructor() {
     <div
       className="relative flex min-h-0 flex-1 flex-col overflow-auto bg-[color:var(--bg)]"
       style={{ minHeight: "calc(100vh - 120px)" }}
+      data-cutsheet-page="ad-breakdown"
+      data-deconstructor-build="figma-263-525"
     >
       <Helmet>
         <title>Ad Breakdown — Cutsheet</title>

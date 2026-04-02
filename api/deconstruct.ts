@@ -187,6 +187,12 @@ Bullet list of every trigger used. For each: where it appears, why it works spec
 ## Structure Breakdown
 The narrative arc: Hook → Tension → Resolution → CTA. What each beat achieves for ${nicheLabel} conversion. Where does this structure differ from the typical ${platformLabel} ${nicheLabel} ad?
 
+## Visual Pacing & Composition
+On one line, state approximate average scene length as a number with "s" (e.g. **1.2s avg scene length**). On the next line, state **Momentum: High**, **Momentum: Medium**, or **Momentum: Low** with a short justification. Then bullet **Color Grading:** and **Framing:** with specifics for this creative.
+
+## Messaging & Copywriting
+Start with one line exactly in this form: **Core Claim:** [the dominant claim in quotes]. Follow with 1-2 sentences on message focus for ${nicheLabel} buyers on ${platformLabel}. If the ad handles a common buyer worry, add **Objection Handling:** with the specific technique used.
+
 ## CTA Mechanics
 Exact CTA language, placement, urgency signals. Does this CTA follow ${platformLabel} best practices for ${nicheLabel}? What makes it convert for this specific audience?
 
