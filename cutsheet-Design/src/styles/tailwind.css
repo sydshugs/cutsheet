@@ -1,0 +1,19 @@
+@import 'tailwindcss' source(none);
+@source '../**/*.{js,ts,jsx,tsx}';
+
+@import 'tw-animate-css';
+/* Cutsheet Tailwind token mapping */
+/* These mirror the CSS vars above as Tailwind values */
+
+/* bg-[#09090b]        → page background */
+/* bg-[#18181b]        → card surface */
+/* border-white/[0.06] → all card borders */
+/* bg-white/[0.02]     → card surface overlay */
+/* text-[#f4f4f5]      → primary text */
+/* text-zinc-500       → muted text (#71717a) */
+/* text-indigo-400     → accent text (#818cf8) */
+/* bg-indigo-600       → primary CTA button */
+/* rounded-2xl         → card border radius (16px) */
+/* rounded-xl          → inner element radius (12px) */
+/* p-6                 → standard card padding (24px) */
+/* py-20 sm:py-28      → section vertical padding */

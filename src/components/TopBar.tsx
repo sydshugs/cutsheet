@@ -67,7 +67,7 @@ export function TopBar({
   const pageTitle = ROUTE_TITLES[location.pathname] ?? "Analyzer";
 
   return (
-    <div className="h-[48px] shrink-0 border-b border-white/[0.06] flex items-center justify-between px-6 relative z-20">
+    <div className="h-[48px] shrink-0 bg-[#09090b] border-b border-white/[0.06] flex items-center justify-between px-6 relative z-20">
       <div className="flex items-center gap-3">
         <button
           className="md:hidden text-zinc-400 hover:text-zinc-200 p-1"

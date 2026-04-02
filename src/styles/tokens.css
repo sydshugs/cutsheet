@@ -12,6 +12,8 @@
   /* ── Core palette (from brand guide) ── */
   --bg:          #09090b;
   --card:        #18181b;
+  /* Modals / dropdowns — cutsheet-Design parity */
+  --elevated:    #1f1f23;
   --card-hover:  #1c1c1f;
   --surface:     rgba(255,255,255,0.02);
   --surface-el:  rgba(255,255,255,0.03);

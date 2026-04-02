@@ -2,7 +2,7 @@
 import { Helmet } from 'react-helmet-async';
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useOutletContext, useNavigate, Link } from "react-router-dom";
-import { RotateCcw, Upload, Sparkles, Lock, Zap, Copy, FileDown, Share2 } from "lucide-react";
+import { RotateCcw, Upload, Sparkles, Lock, Zap } from "lucide-react";
 import { Toast } from "../../components/Toast";
 import { AnalyzerView } from "../../components/AnalyzerView";
 import { BriefResultView, type BriefSection } from "../../components/BriefResultView";
@@ -42,12 +42,11 @@ import { StaticSecondEyePanel } from "../../components/StaticSecondEyePanel";
 import { PolicyCheckPanel } from "../../components/PolicyCheckPanel";
 import { runPolicyCheck, type PolicyCheckResult } from "../../lib/policyCheckService";
 import { SafeZoneModal } from "../../components/SafeZoneModal";
+import { getImageDimensions, getImageDimensionsFromSrc } from "../../utils/getImageDimensions";
 import { BeforeAfterComparison } from "../../components/BeforeAfterComparison";
 import { generateComparison, type ComparisonResult } from "../../services/claudeService";
-import { createShare } from "../../services/shareService";
 import { saveAnalysis } from "../../services/historyService";
 import type { AnalysisRecord } from "../../services/historyService";
-import { checkShareLimit, incrementShareCount } from "../../utils/rateLimiter";
 import { getUserContext, formatUserContextBlock } from "../../services/userContextService";
 import { getSessionMemory } from "@/src/lib/userMemoryService";
 import { generateBudgetRecommendation, type EngineBudgetRecommendation } from "../../services/budgetService";
@@ -161,7 +160,6 @@ export default function PaidAdAnalyzer() {
 
   // ── Local analyzer state ───────────────────────────────────────────────────
   const [file, setFile] = useState<File | null>(null);
-  const [copied, setCopied] = useState(false);
   const [urlInput, setUrlInput] = useState("");
   const [urlError, setUrlError] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
@@ -177,9 +175,7 @@ export default function PaidAdAnalyzer() {
   const [policyResult, setPolicyResult] = useState<PolicyCheckResult | null>(null);
   const [policyLoading, setPolicyLoading] = useState(false);
   const [policyError, setPolicyError] = useState<string | null>(null);
-  const [shareToast, setShareToast] = useState(false);
   const [infoToast, setInfoToast] = useState<string | null>(null);
-  const [shareLoading, setShareLoading] = useState(false);
   const [rateLimitError, setRateLimitError] = useState<string | null>(null);
   const [analysisCompletedAt, setAnalysisCompletedAt] = useState<Date | null>(null);
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
@@ -202,6 +198,7 @@ export default function PaidAdAnalyzer() {
 
   // ── Safe Zone state ───────────────────────────────────────────────────────
   const [safeZoneOpen, setSafeZoneOpen] = useState(false);
+  const [staticImageDims, setStaticImageDims] = useState<{ width: number; height: number } | null>(null);
 
   // ── Predicted Performance state ──────────────────────────────────────────
   const [prediction, setPrediction] = useState<PredictionResult | null>(null);
@@ -254,6 +251,7 @@ export default function PaidAdAnalyzer() {
     setFixItLoading(false);
     setPrediction(null);
     setPredictionLoading(false);
+    setStaticImageDims(null);
   }, [reset]);
 
   // Re-analyze handler: upload improved version, score, compare
@@ -605,6 +603,49 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
       }
     : liveResult;
 
+  useEffect(() => {
+    if (format !== "static") {
+      setStaticImageDims(null);
+      return;
+    }
+    if (file && file.type.startsWith("image/")) {
+      let cancelled = false;
+      getImageDimensions(file)
+        .then((d) => {
+          if (!cancelled) setStaticImageDims(d);
+        })
+        .catch(() => {
+          if (!cancelled) setStaticImageDims(null);
+        });
+      return () => {
+        cancelled = true;
+      };
+    }
+    const thumb = activeResult?.thumbnailDataUrl ?? thumbnailDataUrl;
+    if (thumb) {
+      let cancelled = false;
+      getImageDimensionsFromSrc(thumb)
+        .then((d) => {
+          if (!cancelled) setStaticImageDims(d);
+        })
+        .catch(() => {
+          if (!cancelled) setStaticImageDims(null);
+        });
+      return () => {
+        cancelled = true;
+      };
+    }
+    setStaticImageDims(null);
+    return undefined;
+  }, [format, file, activeResult?.thumbnailDataUrl, thumbnailDataUrl]);
+
+  const showSafeZone = useMemo(
+    () =>
+      format === "video" ||
+      (format === "static" && staticImageDims?.width === 1080 && staticImageDims?.height === 1920),
+    [format, staticImageDims],
+  );
+
   const effectiveStatus = (loadedEntry || loadedFromHistory) ? ("complete" as const) : status;
   const showRightPanel = effectiveStatus === "complete" && activeResult !== null;
 
@@ -649,8 +690,6 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
   const handleCopy = async () => {
     if (activeResult) await copyToClipboard(activeResult.markdown);
     else await copy();
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
 
   const handleDownload = () => {
@@ -658,11 +697,6 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
     else download();
   };
   void handleDownload;
-
-  const handleExportPdf = async () => {
-    setInfoToast("PDF export coming soon — we're working on it.");
-    setTimeout(() => setInfoToast(null), 3000);
-  };
 
   const handleGenerateBrief = async () => {
     if (!activeResult || briefLoading) return;
@@ -977,32 +1011,6 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
     setTimeout(() => setInfoToast(null), 2500);
   };
 
-  const handleShareLink = async () => {
-    if (!activeResult || shareLoading) return;
-    const { allowed, resetAt } = checkShareLimit();
-    if (!allowed) {
-      setRateLimitError(`Share limit reached (10/hour). Resets at ${resetAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`);
-      setTimeout(() => setRateLimitError(null), 5000);
-      return;
-    }
-    setShareLoading(true);
-    setRateLimitError(null);
-    try {
-      const slug = await createShare({
-        file_name: activeResult.fileName,
-        scores: activeResult.scores,
-        markdown: activeResult.markdown,
-      });
-      await navigator.clipboard.writeText(`${window.location.origin}/s/${slug}`);
-      incrementShareCount();
-      setShareToast(true);
-      setTimeout(() => setShareToast(false), 3000);
-    } catch (err) {
-      setRateLimitError(err instanceof Error ? err.message : "Failed to create share link");
-      setTimeout(() => setRateLimitError(null), 5000);
-    } finally { setShareLoading(false); }
-  };
-
   const importFromUrl = async (rawUrl: string) => {
     const trimmed = rawUrl.trim();
     if (!trimmed || isAnalyzing || isImporting) return;
@@ -1116,13 +1124,8 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                         onUrlSubmit={async (u) => { setUrlInput(u); await importFromUrl(u); }}
                         onAnalyze={handleAnalyze}
                         onReset={handleReset}
-                        onCopy={handleCopy}
-                        onExportPdf={handleExportPdf}
-                        onShare={handleShareLink}
                         onGenerateBrief={handleGenerateBrief}
                         onAddToSwipeFile={handleAddToSwipeFile}
-                        copied={copied}
-                        shareLoading={shareLoading}
                         historyEntries={historyEntries}
                         onHistoryEntryClick={(entry) => setLoadedEntry(entry)}
                         platform={platform !== "all" ? platform : (rawUserContext?.platform ?? undefined)}
@@ -1135,7 +1138,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                         motionLoading={motionLoading}
                         motionError={motionError}
                         onCheckPolicies={handleCheckPolicies}
-                        onSafeZone={() => setSafeZoneOpen(true)}
+                        onSafeZone={showSafeZone ? () => setSafeZoneOpen(true) : undefined}
                         onCompare={() => navigate('/app/competitor')}
                         fixItLoading={fixItLoading}
                         fixItResult={fixItResult}
@@ -1168,9 +1171,9 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
 
       {/* Right panel — ScoreCard */}
       <div
-        className={`shrink-0 bg-[#111113] border-l border-white/[0.06] overflow-y-auto overflow-x-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-white/[0.06] relative ${showRightPanel ? "w-[350px] max-lg:w-full opacity-100" : "w-0 max-lg:w-0 opacity-0"}`}
+        className={`shrink-0 min-w-0 bg-[#111113] border-l border-white/[0.06] overflow-y-auto overflow-x-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-white/[0.06] relative ${showRightPanel ? "w-[350px] max-lg:w-full opacity-100" : "w-0 max-lg:w-0 opacity-0"}`}
       >
-        <div className="p-[24px] pb-[72px] flex flex-col gap-[16px]">
+        <div className="flex min-w-0 flex-col gap-[16px] p-[24px]">
         <AnimatePresence mode="wait">
         {showRightPanel && activeResult?.scores && rightTab === "analysis" && !(reanalyzeMode && !comparisonResult) && (
           <motion.div
@@ -1365,19 +1368,12 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -16 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="flex flex-col h-full"
+            className="flex min-w-0 flex-col h-full"
           >
-            <div className="p-4 border-b border-white/5 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setRightTab("analysis")}
-                className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer flex items-center gap-1.5 bg-transparent border-none"
-              >
-                ← Back to Scores
-              </button>
-              <span className="text-xs text-zinc-600 font-mono">Claude Sonnet</span>
+            <div className="flex min-w-0 items-center justify-end gap-2 border-b border-white/5 px-3 py-2 sm:px-4">
+              <span className="shrink-0 text-xs font-mono text-zinc-600">Claude Sonnet</span>
             </div>
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-3 py-3 sm:px-4">
               {policyLoading && !policyResult && (
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 0", gap: 12 }}>
                   <div style={{ width: 20, height: 20, border: "2px solid rgba(245,158,11,0.3)", borderTopColor: "#f59e0b", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
@@ -1391,7 +1387,11 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                 </div>
               )}
               {policyResult && !policyLoading && (
-                <PolicyCheckPanel result={policyResult} onClose={() => setRightTab("analysis")} />
+                <PolicyCheckPanel
+                  embedded
+                  result={policyResult}
+                  onClose={() => setRightTab("analysis")}
+                />
               )}
             </div>
           </motion.div>
@@ -1407,15 +1407,6 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
             transition={{ duration: 0.2, ease: 'easeOut' }}
             className="flex flex-col h-full"
           >
-            <div className="px-4 py-2.5 border-b border-white/5 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setRightTab("analysis")}
-                className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer flex items-center gap-1.5 bg-transparent border-none"
-              >
-                ← Back to Scores
-              </button>
-            </div>
             <div className="flex-1 overflow-y-auto p-4">
               {fixItLoading && !fixItResult && (
                 <div className="flex flex-col items-center justify-center py-10 gap-3">
@@ -1426,6 +1417,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
               {fixItResult && !fixItLoading && (
                 <FixItPanel
                   result={fixItResult}
+                  onClose={() => setRightTab("analysis")}
                   mediaType={format as "static" | "video"}
                   analysisId={savedAnalysisId ?? undefined}
                   platform={platform !== "all" ? platform : (rawUserContext?.platform ?? undefined)}
@@ -1504,33 +1496,6 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
 
         </AnimatePresence>
         </div>
-
-        {/* Bottom bar — Copy, PDF, Share */}
-        {showRightPanel && (
-          <div className="sticky bottom-0 w-full h-[48px] bg-[#111113] border-t border-white/[0.06] flex items-center justify-end px-6 gap-[12px]">
-            <button
-              onClick={handleCopy}
-              className="h-8 px-[12px] rounded-lg border border-white/[0.06] bg-transparent text-zinc-400 flex items-center gap-1.5 text-[13px] font-medium hover:text-zinc-300 hover:bg-white/[0.02] transition-colors"
-            >
-              <Copy size={14} />
-              Copy
-            </button>
-            <button
-              onClick={() => {}}
-              className="h-8 px-[12px] rounded-lg border border-white/[0.06] bg-transparent text-zinc-400 flex items-center gap-1.5 text-[13px] font-medium hover:text-zinc-300 hover:bg-white/[0.02] transition-colors"
-            >
-              <FileDown size={14} />
-              PDF
-            </button>
-            <button
-              onClick={handleShareLink}
-              className="h-8 px-[12px] rounded-lg bg-[#6366f1] text-white flex items-center gap-1.5 text-[13px] font-medium hover:bg-[#4f46e5] transition-colors"
-            >
-              <Share2 size={14} />
-              Share
-            </button>
-          </div>
-        )}
       </div>
 
       {/* History drawer */}
@@ -1545,15 +1510,6 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
       />
 
       {/* Toasts */}
-      {shareToast && (
-        <div
-          role="status"
-          aria-live="polite"
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-3 bg-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-xl text-xs font-mono text-zinc-300 shadow-lg z-[100]"
-        >
-          Link copied to clipboard
-        </div>
-      )}
       {rateLimitError && (
         <div
           role="alert"

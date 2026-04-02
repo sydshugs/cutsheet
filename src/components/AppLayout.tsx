@@ -130,7 +130,7 @@ export default function AppLayout() {
         onShowShortcuts={() => setShowShortcuts(true)}
       />
 
-      <div className="flex flex-col flex-1 min-w-0">
+      <div className="flex flex-col flex-1 min-w-0 bg-[#09090b]">
         <OfflineBanner />
         <TopBar
           onNewAnalysis={() => onNewAnalysisRef.current()}

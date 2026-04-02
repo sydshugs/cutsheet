@@ -4,6 +4,7 @@
 import { generateImprovements as claudeImprovements } from "./claudeService";
 import { supabase } from "../lib/supabase";
 import { incrementAnalysisCount } from "./usageService";
+import { inferUploadMimeType } from "../utils/uploadFileValidation";
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 
@@ -47,6 +48,12 @@ async function callGeminiProxy(params: {
   }
 
   if (!response.ok) {
+    const ct = response.headers.get("content-type") ?? "";
+    if (response.status === 404 || ct.includes("text/html")) {
+      throw new Error(
+        "Analyze API is not reachable (404). Plain Vite does not run /api routes. Add DEV_API_PROXY_TARGET to .env or .env.local (e.g. https://cutsheet.xyz — same Supabase as VITE_SUPABASE_URL), restart dev, or run pnpm run dev:vercel from the repo root. Vite does not load .env.example.",
+      );
+    }
     const data = await response.json().catch(() => ({}));
     throw new Error((data as { error?: string }).error ?? `API error ${response.status}`);
   }
@@ -764,8 +771,13 @@ export async function analyzeVideo(
     const uploaded = await uploadToStorage(file);
     storagePath = uploaded.storagePath;
 
+    const resolvedMime = inferUploadMimeType(file);
+    if (resolvedMime === "application/octet-stream") {
+      throw new Error("Could not detect file type — rename the file with a standard extension (.mp4, .mov, .jpg, …) or pick the file using Browse.");
+    }
+
     // 2. Build prompt — format-aware
-    const isImage = file.type.startsWith("image/");
+    const isImage = resolvedMime.startsWith("image/");
     emit("processing", isImage ? "Analyzing your static creative..." : "Analyzing your creative...");
 
     const basePrompt = isImage ? STATIC_ANALYSIS_PROMPT : ANALYSIS_PROMPT;
@@ -778,7 +790,7 @@ export async function analyzeVideo(
     // 3. Call server-side Gemini proxy with file URL (not base64)
     const markdown = await callGeminiProxy({
       fileUrl: uploaded.fileUrl,
-      mimeType: file.type,
+      mimeType: resolvedMime,
       prompt,
       systemInstruction: SYSTEM_PROMPT,
       maxOutputTokens: MAX_TOKENS,

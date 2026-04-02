@@ -1,174 +1,134 @@
-// src/components/PolicyCheckPanel.tsx — redesigned to match Figma node 228:1098
+// src/components/PolicyCheckPanel.tsx — Figma node 228:1098 / cutsheet-Design PolicyCheckPanel parity
 
 import { useState } from "react";
 import {
-  ShieldCheck, ShieldAlert, ShieldX, ChevronDown, ChevronRight,
-  Copy, Check, AlertTriangle, FileText, X, CheckCircle2, XCircle,
+  ShieldCheck,
+  ShieldAlert,
+  ShieldX,
+  ChevronDown,
+  ChevronUp,
+  ChevronRight,
+  Copy,
+  Check,
+  AlertTriangle,
+  FileText,
+  X,
+  CheckCircle,
+  XCircle,
+  Wrench,
+  ChevronLeft,
 } from "lucide-react";
+import { cn } from "@/src/lib/utils";
 import type { PolicyCheckResult, PolicyCategory } from "../lib/policyCheckService";
 import { formatPolicyReportAsText } from "../lib/policyCheckService";
 
-// ─── VERDICT CONFIG ───────────────────────────────────────────────────────────
+// ─── VERDICT → summary banner (semantic bands) ───────────────────────────────
 
-const VERDICT_CONFIG = {
+const VERDICT_BANNER = {
   good: {
-    bg:     "rgba(0,188,125,0.06)",
-    border: "rgba(0,188,125,0.2)",
-    color:  "#00d492",
-    icon:   ShieldCheck,
-    label:  "Good to launch",
+    wrap: "border-emerald-500/20 bg-emerald-500/[0.06]",
+    title: "text-emerald-400",
+    icon: ShieldCheck,
   },
   fix: {
-    bg:     "rgba(254,154,0,0.06)",
-    border: "rgba(254,154,0,0.2)",
-    color:  "#ffb900",
-    icon:   ShieldAlert,
-    label:  "Fix before launching",
+    wrap: "border-amber-500/20 bg-amber-500/[0.06]",
+    title: "text-amber-400",
+    icon: ShieldAlert,
   },
   high_risk: {
-    bg:     "rgba(251,44,54,0.06)",
-    border: "rgba(251,44,54,0.2)",
-    color:  "#ff6467",
-    icon:   ShieldX,
-    label:  "High rejection risk",
+    wrap: "border-red-500/20 bg-red-500/[0.06]",
+    title: "text-red-400",
+    icon: ShieldX,
   },
 } as const;
 
-// ─── STATUS CONFIG ────────────────────────────────────────────────────────────
+// ─── Category status → Figma row labels ──────────────────────────────────────
 
-const STATUS_CONFIG = {
-  clear:     { color: "#00d492", bg: "rgba(0,188,125,0.1)",  label: "Clear",            Icon: CheckCircle2 },
-  review:    { color: "#ffb900", bg: "rgba(254,154,0,0.1)",  label: "Review",           Icon: AlertTriangle },
-  rejection: { color: "#ff6467", bg: "rgba(251,44,54,0.1)",  label: "Likely Rejection", Icon: XCircle },
+const STATUS_ROW = {
+  clear: {
+    label: "Clear" as const,
+    Icon: CheckCircle,
+    pill: "bg-emerald-500/10",
+    iconClass: "text-[var(--success)]",
+    textClass: "text-emerald-400",
+  },
+  review: {
+    label: "Review" as const,
+    Icon: AlertTriangle,
+    pill: "bg-amber-500/10",
+    iconClass: "text-[var(--warn)]",
+    textClass: "text-amber-400",
+  },
+  rejection: {
+    label: "Likely Rejection" as const,
+    Icon: XCircle,
+    pill: "bg-red-500/10",
+    iconClass: "text-[var(--error)]",
+    textClass: "text-red-400",
+  },
 } as const;
 
-// ─── RISK BADGE CONFIG ────────────────────────────────────────────────────────
-
-const RISK_CONFIG = {
-  high:   { bg: "rgba(251,44,54,0.1)",  color: "#ff6467", label: "HIGH RISK" },
-  medium: { bg: "rgba(254,154,0,0.1)",  color: "#ffb900", label: "MEDIUM RISK" },
-  low:    { bg: "rgba(0,188,125,0.1)",  color: "#00d492", label: "LOW RISK" },
+const RISK_BADGE = {
+  high: "bg-red-500/10 text-red-400",
+  medium: "bg-amber-500/10 text-amber-400",
+  low: "bg-emerald-500/10 text-emerald-400",
 } as const;
 
-// ─── CATEGORY CARD ────────────────────────────────────────────────────────────
+const RISK_LABEL: Record<PolicyCategory["riskLevel"], string> = {
+  high: "HIGH RISK",
+  medium: "MEDIUM RISK",
+  low: "LOW RISK",
+};
 
-function CategoryCard({ category }: { category: PolicyCategory }) {
-  const [expanded, setExpanded] = useState(category.status !== "clear");
-  const statusCfg = STATUS_CONFIG[category.status];
-  const StatusIcon = statusCfg.Icon;
-  const riskCfg = RISK_CONFIG[category.riskLevel];
+// ─── Category card (Figma accordion row) ─────────────────────────────────────
+
+function PolicyCategoryCard({ category }: { category: PolicyCategory }) {
+  const [open, setOpen] = useState(category.status !== "clear");
+  const row = STATUS_ROW[category.status];
+  const StatusIcon = row.Icon;
+  const riskClass = RISK_BADGE[category.riskLevel];
 
   return (
-    <div
-      style={{
-        borderRadius: 17.5,
-        border: "1px solid rgba(255,255,255,0.06)",
-        background: "rgba(255,255,255,0.02)",
-        overflow: "hidden",
-      }}
-    >
-      {/* Header row */}
+    <div className="mb-2 flex flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02]">
       <button
         type="button"
-        onClick={() => setExpanded((e) => !e)}
-        style={{
-          width: "100%",
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          padding: "0 17.5px",
-          minHeight: category.status === "clear" ? 50.4 : 72.3,
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          textAlign: "left",
-        }}
-      >
-        {/* Status pill */}
-        <span
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 5,
-            fontSize: 10.95,
-            fontWeight: 600,
-            padding: "3px 8.76px",
-            borderRadius: 9999,
-            background: statusCfg.bg,
-            color: statusCfg.color,
-            flexShrink: 0,
-            whiteSpace: "nowrap",
-          }}
-        >
-          <StatusIcon size={13} />
-          {statusCfg.label}
-        </span>
-
-        {/* Category name */}
-        <span
-          style={{
-            fontSize: 15.3,
-            fontWeight: 500,
-            color: "#e4e4e7",
-            flex: 1,
-            lineHeight: "21.9px",
-          }}
-        >
-          {category.name}
-        </span>
-
-        {/* Risk badge — only for non-clear */}
-        {category.status !== "clear" && (
-          <span
-            style={{
-              fontSize: 9.86,
-              fontWeight: 600,
-              padding: "2px 6px",
-              borderRadius: 4.38,
-              background: riskCfg.bg,
-              color: riskCfg.color,
-              textTransform: "uppercase",
-              flexShrink: 0,
-            }}
-          >
-            {riskCfg.label}
-          </span>
+        onClick={() => setOpen((o) => !o)}
+        className={cn(
+          "flex w-full min-w-0 items-start justify-between gap-2 px-4 py-3 text-left",
+          "hover:bg-white/[0.04] transition-colors",
+          "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
         )}
-
-        {/* Chevron */}
-        <ChevronDown
-          size={15.3}
-          color="#52525c"
-          style={{
-            flexShrink: 0,
-            transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
-            transition: "transform 200ms",
-          }}
-        />
+      >
+        <div className="min-w-0 flex-1 space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className={cn("flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5", row.pill)}>
+              <StatusIcon size={12} className={row.iconClass} aria-hidden />
+              <span className={cn("text-[10px] font-semibold", row.textClass)}>{row.label}</span>
+            </div>
+            {category.status !== "clear" && (
+              <span className={cn("rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase", riskClass)}>
+                {RISK_LABEL[category.riskLevel]}
+              </span>
+            )}
+          </div>
+          <p className="break-words text-sm font-medium leading-snug text-zinc-200">{category.name}</p>
+        </div>
+        <div className="shrink-0 pt-0.5">
+          {open ? (
+            <ChevronUp size={14} className="text-zinc-500" aria-hidden />
+          ) : (
+            <ChevronDown size={14} className="text-zinc-500" aria-hidden />
+          )}
+        </div>
       </button>
 
-      {/* Expanded detail */}
-      {expanded && (
-        <div style={{ padding: "0 17.5px 17.5px" }}>
-          <p style={{ fontSize: 13.1, color: "#9f9fa9", margin: "0 0 10px", lineHeight: 1.6 }}>
-            {category.finding}
-          </p>
+      {open && (
+        <div className="border-t border-white/[0.04] px-4 pb-4">
+          <p className="mb-3 mt-3 break-words text-sm leading-relaxed text-zinc-400">{category.finding}</p>
           {category.status !== "clear" && (
-            <div
-              style={{
-                padding: "10px 13px",
-                borderRadius: 10,
-                background: "rgba(97,95,255,0.06)",
-                border: "1px solid rgba(97,95,255,0.15)",
-                display: "flex",
-                gap: 8,
-                alignItems: "flex-start",
-              }}
-            >
-              <ChevronRight size={13} color="#818cf8" style={{ marginTop: 2, flexShrink: 0 }} />
-              <p style={{ fontSize: 13.1, color: "#818cf8", margin: 0, lineHeight: 1.55 }}>
-                {category.fix}
-              </p>
+            <div className="flex items-start gap-2 rounded-xl border border-[var(--accent-border)] bg-[var(--accent-soft)] px-3 py-2.5">
+              <Wrench size={12} className="mt-0.5 shrink-0 text-[var(--accent)]" aria-hidden />
+              <p className="min-w-0 break-words text-sm leading-snug text-[var(--accent-light)]">{category.fix}</p>
             </div>
           )}
         </div>
@@ -177,79 +137,76 @@ function CategoryCard({ category }: { category: PolicyCategory }) {
   );
 }
 
-// ─── CATEGORY GROUP ───────────────────────────────────────────────────────────
+// ─── Category list + show clear (Figma order) ────────────────────────────────
 
-function CategoryGroup({ categories }: { categories: PolicyCategory[] }) {
+function PolicyCategoryList({ categories }: { categories: PolicyCategory[] }) {
   const flagged = categories.filter((c) => c.status !== "clear");
-  const clear   = categories.filter((c) => c.status === "clear");
+  const clearOnly = categories.filter((c) => c.status === "clear");
   const [showClear, setShowClear] = useState(false);
 
   if (categories.length === 0) return null;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 8.76 }}>
-      {flagged.map((c) => <CategoryCard key={c.id} category={c} />)}
+    <div className="flex flex-col">
+      {flagged.map((c) => (
+        <PolicyCategoryCard key={c.id} category={c} />
+      ))}
 
-      {/* Clear items toggle */}
-      {clear.length > 0 && (
-        <>
+      {clearOnly.length > 0 && (
+        <div className="mb-2 mt-2 flex justify-center">
           <button
             type="button"
             onClick={() => setShowClear((v) => !v)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 6.57,
-              fontSize: 13.1,
-              color: "#71717b",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: "6px 0",
-            }}
+            className={cn(
+              "flex cursor-pointer items-center gap-1.5 py-2 text-xs text-zinc-500",
+              "hover:text-zinc-300 transition-colors",
+              "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+            )}
           >
-            <ChevronDown
-              size={15.3}
-              style={{ transform: showClear ? "rotate(180deg)" : "rotate(0)", transition: "transform 200ms" }}
-            />
-            {showClear ? "Hide" : `Show`} {clear.length} clear {clear.length === 1 ? "item" : "items"}
+            {showClear ? <ChevronUp size={14} aria-hidden /> : <ChevronDown size={14} aria-hidden />}
+            <span>
+              {showClear ? "Hide" : "Show"} {clearOnly.length} clear {clearOnly.length === 1 ? "item" : "items"}
+            </span>
           </button>
-          {showClear && clear.map((c) => <CategoryCard key={c.id} category={c} />)}
-        </>
+        </div>
       )}
+
+      {showClear && clearOnly.map((c) => <PolicyCategoryCard key={c.id} category={c} />)}
     </div>
   );
 }
 
-// ─── PROPS ───────────────────────────────────────────────────────────────────
+// ─── Props ───────────────────────────────────────────────────────────────────
 
 interface PolicyCheckPanelProps {
   result: PolicyCheckResult;
   onClose?: () => void;
+  /** Right-rail / narrow column: hide duplicate “Back” and stack header so Copy/actions fit */
+  embedded?: boolean;
 }
 
-// ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
+// ─── Main ────────────────────────────────────────────────────────────────────
 
-export function PolicyCheckPanel({ result, onClose }: PolicyCheckPanelProps) {
+export function PolicyCheckPanel({ result, onClose, embedded = false }: PolicyCheckPanelProps) {
   const [activeTab, setActiveTab] = useState<"meta" | "tiktok">(
     result.platform === "tiktok" ? "tiktok" : "meta"
   );
   const [copied, setCopied] = useState(false);
-  const [notesExpanded, setNotesExpanded] = useState(false);
+  const [notesOpen, setNotesOpen] = useState(false);
 
-  const verdictCfg = VERDICT_CONFIG[result.verdict];
-  const VerdictIcon = verdictCfg.icon;
+  const banner = VERDICT_BANNER[result.verdict];
+  const BannerIcon = banner.icon;
 
   const showTabs = result.platform === "both";
   const activeCategories = activeTab === "meta" ? result.metaCategories : result.tiktokCategories;
   const flaggedCount = activeCategories.filter((c) => c.status !== "clear").length;
-  const totalCount = activeCategories.filter((c) => c.status !== "clear").length;
 
   const platformSubtitle =
-    result.platform === "both" ? "Meta & TikTok · Ad policy scan"
-    : result.platform === "tiktok" ? "TikTok · Ad policy scan"
-    : "Meta · Ad policy scan";
+    result.platform === "both"
+      ? "Meta & TikTok · Ad policy scan"
+      : result.platform === "tiktok"
+        ? "TikTok · Ad policy scan"
+        : "Meta · Ad policy scan";
 
   const handleCopyReport = async () => {
     try {
@@ -262,196 +219,117 @@ export function PolicyCheckPanel({ result, onClose }: PolicyCheckPanelProps) {
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 0,
-        fontFamily: "'Geist', sans-serif",
-      }}
-    >
-
-      {/* ── Header ── */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          padding: "0 0 22px",
-        }}
-      >
-        {/* Amber icon tile */}
-        <div
-          style={{
-            width: 43.8,
-            height: 43.8,
-            borderRadius: 26.3,
-            background: "rgba(254,154,0,0.12)",
-            border: "1.1px solid rgba(254,154,0,0.08)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-          }}
+    <div className="flex min-w-0 w-full max-w-full flex-col overflow-x-hidden font-[family-name:var(--sans)]">
+      {onClose && (
+        <button
+          type="button"
+          onClick={onClose}
+          className="group mb-4 flex w-fit cursor-pointer items-center gap-1.5 text-zinc-500 transition-colors hover:text-zinc-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
         >
-          <VerdictIcon size={17.5} color="#fe9a00" />
-        </div>
+          <ChevronLeft size={12} className="transition-transform group-hover:-translate-x-0.5" aria-hidden />
+          <span className="text-xs font-medium">Back to Scores</span>
+        </button>
+      )}
 
-        {/* Title + subtitle */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontSize: 15.3, fontWeight: 600, color: "#f4f4f5", margin: 0, letterSpacing: -0.165 }}>
-            Policy Check
-          </p>
-          <p style={{ fontSize: 13.1, color: "#71717b", margin: 0 }}>
-            {platformSubtitle}
-          </p>
+      {/* Header — stack in embedded rail (~270px content); row on full-width page */}
+      <div
+        className={cn(
+          "mb-4 flex gap-3",
+          embedded ? "min-w-0 flex-col" : "min-w-0 flex-col sm:flex-row sm:items-center sm:justify-between"
+        )}
+      >
+        <div className="flex min-w-0 items-center gap-3">
+          <div
+            className={cn(
+              "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
+              "border border-amber-500/[0.08] bg-amber-500/[0.12]"
+            )}
+          >
+            <ShieldCheck size={16} className="text-[var(--warn)]" aria-hidden />
+          </div>
+          <div className="min-w-0 flex flex-col">
+            <h2 className="text-sm font-semibold leading-tight text-zinc-100">Policy Check</h2>
+            <span className="mt-0.5 break-words text-xs text-zinc-500">{platformSubtitle}</span>
+          </div>
         </div>
-
-        {/* Action buttons */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8.76, flexShrink: 0 }}>
+        <div className={cn("flex shrink-0 flex-wrap items-center gap-2", embedded ? "w-full justify-end" : "justify-end")}>
           <button
             type="button"
             onClick={handleCopyReport}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              height: 32.9,
-              padding: "0 14.2px",
-              borderRadius: 17.5,
-              background: "rgba(255,255,255,0.02)",
-              border: "1.1px solid rgba(255,255,255,0.06)",
-              color: "#9f9fa9",
-              fontSize: 13.1,
-              cursor: "pointer",
-              whiteSpace: "nowrap",
-            }}
+            title="Copy full policy report to clipboard"
+            className={cn(
+              "inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 text-xs text-zinc-400",
+              "hover:bg-white/[0.04] hover:text-zinc-300 transition-colors",
+              "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+            )}
           >
-            {copied ? <Check size={13} color="#00d492" /> : <Copy size={13} />}
-            {copied ? "Copied" : "Copy Report"}
+            {copied ? <Check size={12} className="text-[var(--success)]" aria-hidden /> : <Copy size={12} aria-hidden />}
+            {copied ? "Copied" : embedded ? "Copy" : "Copy Report"}
           </button>
-
           {onClose && (
             <button
               type="button"
               onClick={onClose}
               aria-label="Close policy check"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: 28.5,
-                height: 41.6,
-                borderRadius: 17.5,
-                background: "rgba(255,255,255,0.02)",
-                border: "1.1px solid rgba(255,255,255,0.06)",
-                color: "#71717b",
-                cursor: "pointer",
-              }}
+              className={cn(
+                "flex size-8 shrink-0 items-center justify-center rounded-lg border border-white/[0.06] bg-white/[0.02] text-zinc-400",
+                "hover:bg-white/[0.04] hover:text-zinc-300 transition-colors",
+                "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+              )}
             >
-              <X size={13} />
+              <X size={12} aria-hidden />
             </button>
           )}
         </div>
       </div>
 
-      {/* ── Risk Summary Card ── */}
-      <div
-        style={{
-          borderRadius: 17.5,
-          background: verdictCfg.bg,
-          border: `1.1px solid ${verdictCfg.border}`,
-          padding: 18.6,
-          display: "flex",
-          alignItems: "center",
-          gap: 13,
-          marginBottom: 8.76,
-        }}
-      >
-        <VerdictIcon size={19.7} color={verdictCfg.color} style={{ flexShrink: 0 }} />
-        <div>
-          <p style={{ fontSize: 15.3, fontWeight: 600, color: verdictCfg.color, margin: "0 0 2px" }}>
-            {verdictCfg.label}
-          </p>
-          <p style={{ fontSize: 13.1, color: "#71717b", margin: 0 }}>
-            {totalCount > 0
-              ? `${totalCount} item${totalCount !== 1 ? "s" : ""} need${totalCount === 1 ? "s" : ""} attention`
-              : "No issues found"}
-          </p>
+      {/* Verdict summary — Figma banner */}
+      <div className={cn("mb-3 flex w-full min-w-0 items-start rounded-2xl border p-4", banner.wrap)}>
+        <div className="flex min-w-0 gap-3">
+          <BannerIcon className={cn("mt-0.5 size-[18px] shrink-0", banner.title)} aria-hidden />
+          <div className="min-w-0 flex flex-col">
+            <span className={cn("break-words text-sm font-semibold", banner.title)}>{result.verdictLabel}</span>
+            <span className="mt-0.5 break-words text-xs text-zinc-500">
+              {flaggedCount > 0
+                ? `${flaggedCount} item${flaggedCount !== 1 ? "s" : ""} need${flaggedCount === 1 ? "s" : ""} attention`
+                : "No issues found"}
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* ── Top 3 Fixes Card ── */}
+      {/* Top 3 fixes — Figma amber card */}
       {result.topFixes.length > 0 && result.verdict !== "good" && (
-        <div
-          style={{
-            borderRadius: 17.5,
-            background: "rgba(254,154,0,0.04)",
-            border: "1.1px solid rgba(254,154,0,0.2)",
-            padding: 18.6,
-            marginBottom: 8.76,
-          }}
-        >
-          {/* Section label */}
-          <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 13 }}>
-            <AlertTriangle size={15.3} color="#fe9a00" />
-            <span
-              style={{
-                fontSize: 10.95,
-                fontWeight: 600,
-                color: "#fe9a00",
-                textTransform: "uppercase",
-                letterSpacing: 0.5475,
-              }}
-            >
-              Top 3 Fixes
-            </span>
+        <div className="mb-3 flex min-w-0 flex-col rounded-2xl border border-amber-500/20 bg-amber-500/[0.04] p-4">
+          <div className="mb-3 flex items-center gap-2">
+            <AlertTriangle size={14} className="shrink-0 text-[var(--warn)]" aria-hidden />
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-500">Top 3 Fixes</span>
           </div>
-
-          {/* Fix items */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-            {result.topFixes.map((fix, i) => (
+          <div className="flex min-w-0 flex-col">
+            {result.topFixes.map((fix, i, arr) => (
               <div
                 key={i}
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: 10,
-                  padding: "10.95px 0",
-                  borderBottom: i < result.topFixes.length - 1
-                    ? "1.095px solid rgba(255,255,255,0.04)"
-                    : "none",
-                }}
+                className={cn(
+                  "flex min-w-0 items-start gap-2 py-2",
+                  i !== arr.length - 1 && "border-b border-white/[0.04]"
+                )}
               >
-                <ChevronRight size={10.95} color="#fe9a00" style={{ marginTop: 5, flexShrink: 0 }} />
-                <p style={{ fontSize: 15.3, color: "#d4d4d8", margin: 0, lineHeight: "21.08px" }}>
-                  {fix}
-                </p>
+                <ChevronRight size={10} className="mt-1 shrink-0 text-[var(--warn)]" aria-hidden />
+                <span className="min-w-0 break-words text-sm leading-snug text-zinc-300">{fix}</span>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* ── Policy Categories label ── */}
-      <p
-        style={{
-          fontSize: 10.95,
-          fontWeight: 600,
-          textTransform: "uppercase",
-          letterSpacing: 0.5475,
-          color: "#52525c",
-          margin: "8.76px 0 8.76px",
-        }}
-      >
+      <div className="mb-2 mt-1 px-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">
         Policy Categories
-      </p>
+      </div>
 
-      {/* ── Platform tabs (only for "both") ── */}
       {showTabs && (
-        <div style={{ display: "flex", gap: 7, marginBottom: 10 }}>
+        <div className="mb-3 flex min-w-0 flex-wrap gap-2">
           {(["meta", "tiktok"] as const).map((p) => {
-            const cats  = p === "meta" ? result.metaCategories : result.tiktokCategories;
+            const cats = p === "meta" ? result.metaCategories : result.tiktokCategories;
             const flags = cats.filter((c) => c.status !== "clear").length;
             const isActive = activeTab === p;
             return (
@@ -459,33 +337,20 @@ export function PolicyCheckPanel({ result, onClose }: PolicyCheckPanelProps) {
                 key={p}
                 type="button"
                 onClick={() => setActiveTab(p)}
-                style={{
-                  height: 30.7,
-                  padding: "0 14px",
-                  borderRadius: 9999,
-                  fontSize: 13.1,
-                  fontWeight: 500,
-                  cursor: "pointer",
-                  background: isActive ? "#615fff" : "rgba(255,255,255,0.04)",
-                  border: isActive ? "none" : "1px solid rgba(255,255,255,0.06)",
-                  color: isActive ? "#fff" : "#9f9fa9",
-                  boxShadow: isActive ? "0 1px 4px rgba(97,95,255,0.3)" : "none",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                }}
+                className={cn(
+                  "inline-flex h-[31px] items-center gap-1.5 rounded-full px-3.5 text-[13px] font-medium transition-colors",
+                  isActive
+                    ? "bg-[var(--accent)] text-white shadow-[0_1px_4px_rgba(99,102,241,0.3)]"
+                    : "border border-white/[0.06] bg-white/[0.04] text-zinc-400 hover:bg-white/[0.06] hover:text-zinc-300"
+                )}
               >
                 {p === "meta" ? "Meta" : "TikTok"}
                 {flags > 0 && (
                   <span
-                    style={{
-                      fontSize: 10,
-                      fontWeight: 700,
-                      padding: "1px 5px",
-                      borderRadius: 9999,
-                      background: isActive ? "rgba(255,255,255,0.2)" : "rgba(251,44,54,0.2)",
-                      color: isActive ? "#fff" : "#ff6467",
-                    }}
+                    className={cn(
+                      "rounded-full px-1.5 py-px text-[10px] font-bold",
+                      isActive ? "bg-white/20 text-white" : "bg-red-500/20 text-red-400"
+                    )}
                   >
                     {flags}
                   </span>
@@ -496,55 +361,40 @@ export function PolicyCheckPanel({ result, onClose }: PolicyCheckPanelProps) {
         </div>
       )}
 
-      {/* ── Category cards ── */}
-      <CategoryGroup categories={activeCategories} />
+      <PolicyCategoryList categories={activeCategories} />
 
-      {/* ── Reviewer Notes ── */}
       {result.reviewerNotes && (
-        <div
-          style={{
-            marginTop: 8.76,
-            borderRadius: 17.5,
-            border: "1.1px solid rgba(255,255,255,0.06)",
-            background: "rgba(255,255,255,0.02)",
-            overflow: "hidden",
-          }}
-        >
+        <div className="mt-2 flex flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02]">
           <button
             type="button"
-            onClick={() => setNotesExpanded((v) => !v)}
-            style={{
-              width: "100%",
-              display: "flex",
-              alignItems: "center",
-              gap: 8.76,
-              padding: "0 17.5px",
-              height: 50.4,
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              textAlign: "left",
-            }}
+            onClick={() => setNotesOpen((v) => !v)}
+            className={cn(
+              "flex w-full min-w-0 cursor-pointer items-start justify-between gap-2 px-3 py-3 text-left sm:items-center sm:gap-3 sm:px-4",
+              "hover:bg-white/[0.04] transition-colors",
+              "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+            )}
           >
-            <FileText size={15.3} color="#52525c" style={{ flexShrink: 0 }} />
-            <span style={{ fontSize: 15.3, fontWeight: 500, color: "#d4d4d8", flex: 1 }}>
-              Reviewer Notes
-            </span>
-            <span style={{ fontSize: 13.1, color: "#52525c" }}>For appeal if flagged</span>
-            <ChevronDown
-              size={15.3}
-              color="#52525c"
-              style={{
-                flexShrink: 0,
-                transform: notesExpanded ? "rotate(180deg)" : "rotate(0deg)",
-                transition: "transform 200ms",
-              }}
-            />
+            <div className="flex min-w-0 items-center gap-2">
+              <FileText size={14} className="shrink-0 text-zinc-500" aria-hidden />
+              <span className="min-w-0 text-sm font-medium text-zinc-300">Reviewer Notes</span>
+            </div>
+            <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+              {!embedded && (
+                <span className="hidden text-xs text-zinc-600 sm:inline">For appeal if flagged</span>
+              )}
+              {embedded && (
+                <span className="sr-only">For appeal if flagged</span>
+              )}
+              {notesOpen ? (
+                <ChevronUp size={14} className="text-zinc-500" aria-hidden />
+              ) : (
+                <ChevronDown size={14} className="text-zinc-500" aria-hidden />
+              )}
+            </div>
           </button>
-
-          {notesExpanded && (
-            <div style={{ padding: "0 17.5px 17.5px" }}>
-              <p style={{ fontSize: 13.1, color: "#71717b", margin: 0, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
+          {notesOpen && (
+            <div className="border-t border-white/[0.04] px-3 pb-4 sm:px-4">
+              <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-400">
                 {result.reviewerNotes}
               </p>
             </div>

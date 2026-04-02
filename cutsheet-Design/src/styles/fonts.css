@@ -1,0 +1,24 @@
+/* Geist is already loaded in your codebase via index.css */
+/* Set these as Figma text styles to match */
+
+/* Display — hero headlines */
+/* 72px / Bold / tracking -0.035em */
+
+/* Heading 1 — section headlines */  
+/* 40px / Semibold / tracking -0.025em */
+
+/* Heading 2 — card titles */
+/* 24px / Semibold / tracking -0.02em */
+
+/* Label — section labels, tags */
+/* 11px / Semibold / uppercase / tracking 0.12em */
+
+/* Body — descriptions */
+/* 14px / Regular / line-height 1.6 */
+
+/* Small — metadata, captions */
+/* 12px / Regular / zinc-500 */
+
+/* Mono — scores, numbers */
+/* 52px / Bold for hero score */
+/* 18px / Semibold for dimension scores */
