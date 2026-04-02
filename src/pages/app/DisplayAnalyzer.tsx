@@ -820,7 +820,7 @@ Return JSON only — no prose:
               </div>
             )}
 
-            <div className={`relative flex flex-col flex-1 ${status === "analyzing" ? "items-center justify-center" : ""}`} style={{ maxWidth: 800, margin: "0 auto", width: "100%" }}>
+            <div className={`relative flex flex-col flex-1 ${status === "analyzing" ? "justify-center" : ""}`} style={{ maxWidth: 800, margin: "0 auto", width: "100%" }}>
               {/* Dropzone or preview */}
               {!file && status === "idle" && (
                 <div
