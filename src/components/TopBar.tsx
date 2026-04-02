@@ -165,5 +165,6 @@ export function TopBar({
         </div>
       )}
     </div>
+    </div>
   );
 }
