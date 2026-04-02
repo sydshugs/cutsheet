@@ -122,7 +122,7 @@ export async function generateCTARewrites(
 
 export interface SecondEyeFlag {
   timestamp: string;
-  category: "scroll_trigger" | "sound_off" | "pacing" | "clarity";
+  category: "scroll_trigger" | "sound_off" | "pacing" | "clarity" | string;
   severity: "critical" | "warning" | "note";
   issue: string;
   fix: string;
@@ -242,9 +242,9 @@ export interface ComparisonResult {
 export interface PlatformScore {
   platform: 'tiktok' | 'reels' | 'shorts';
   score: number;
-  signals: { label: string; pass: boolean }[];
+  signals?: { label: string; pass: boolean }[];
   verdict: string;
-  improvements: string[];
+  improvements?: string[];
 }
 
 

@@ -66,6 +66,7 @@ interface ReportCardsProps {
   // Platform optimization scores for organic content
   platformScores?: { platform: string; score: number; verdict: string; signals?: { label: string; pass: boolean }[]; improvements?: string[] }[];
   platformScoresLoading?: boolean;
+  niche?: string;
 }
 
 const JSON_TITLE_RE = /json|scene|raw\s*data|budget\s*recommend/i;
