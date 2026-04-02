@@ -59,6 +59,8 @@ interface AnalyzerViewProps {
   // Platform optimization scores for organic content
   platformScores?: { platform: string; score: number; verdict: string; signals?: { label: string; pass: boolean }[]; improvements?: string[] }[];
   platformScoresLoading?: boolean;
+  /** `URL.createObjectURL(file)` owned by parent; same string must be passed to `useThumbnail(file, url)`. */
+  fileObjectUrl?: string | null;
 }
 
 export function AnalyzerView({
@@ -109,6 +111,7 @@ export function AnalyzerView({
   isOrganic,
   platformScores,
   platformScoresLoading,
+  fileObjectUrl,
 }: AnalyzerViewProps) {
   return (
     <AnimatePresence mode="wait">
@@ -144,6 +147,8 @@ export function AnalyzerView({
             platform={platform}
             format={format}
             title={isOrganic ? "Analyzing your content" : undefined}
+            prefetchedThumbnail={thumbnailDataUrl}
+            sharedFileObjectUrl={fileObjectUrl}
           />
         </div>
       )}

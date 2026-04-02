@@ -17,6 +17,10 @@ interface ProgressCardProps {
   format?: "video" | "static";
   icon?: LucideIcon;
   title?: string;
+  /** Parent `useThumbnail(file)` result. When set (including `null`), skips a second in-card capture — avoids duplicate decoders on the same file during loading. */
+  prefetchedThumbnail?: string | null;
+  /** When provided (including `null`), use this blob URL for the visible `<video>` instead of calling `createObjectURL` again — must match the URL passed into `useThumbnail(file, …)` on the parent. */
+  sharedFileObjectUrl?: string | null;
 }
 
 const DIMENSIONS = ["Hook Strength", "Message Clarity", "CTA Effectiveness", "Production Quality"];
@@ -39,22 +43,27 @@ const STATIC_SUBTITLES = [
 
 const STEP_DELAYS = [3000, 2500, 3500, 2500, 2000];
 
-export function ProgressCard({ file, status, onCancel, onComplete, format = "video", title: titleProp }: ProgressCardProps) {
+export function ProgressCard({ file, status, onCancel, onComplete, format = "video", title: titleProp, prefetchedThumbnail, sharedFileObjectUrl }: ProgressCardProps) {
   const title = titleProp ?? "Analyzing your ad";
   const SUBTITLES = format === "static" ? STATIC_SUBTITLES : VIDEO_SUBTITLES;
 
   const [currentStep, setCurrentStep] = useState(0);
-  const thumbnailDataUrl = useThumbnail(file ?? null);
+  const useInternalThumb = prefetchedThumbnail === undefined;
+  const internalThumb = useThumbnail(useInternalThumb && file ? file : null);
+  const thumbnailDataUrl = useInternalThumb ? internalThumb : prefetchedThumbnail;
   const isImage = file?.type.startsWith("image/") ?? false;
 
   const previewUrl = useMemo(() => {
+    if (sharedFileObjectUrl !== undefined) return sharedFileObjectUrl;
     if (file) return URL.createObjectURL(file);
     return null;
-  }, [file]);
+  }, [file, sharedFileObjectUrl]);
 
   useEffect(() => {
-    return () => { if (previewUrl) URL.revokeObjectURL(previewUrl); };
-  }, [previewUrl]);
+    return () => {
+      if (sharedFileObjectUrl === undefined && previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl, sharedFileObjectUrl]);
 
   // Step sequencer — setTimeout chain matching Figma animation timing
   useEffect(() => {
@@ -85,7 +94,6 @@ export function ProgressCard({ file, status, onCancel, onComplete, format = "vid
     return "pending";
   };
 
-  const displayUrl = thumbnailDataUrl || previewUrl;
   const subtitle = SUBTITLES[Math.min(currentStep, SUBTITLES.length - 1)];
   const truncatedName = (() => {
     if (!file) return "";
@@ -116,6 +124,7 @@ export function ProgressCard({ file, status, onCancel, onComplete, format = "vid
             />
           ) : !isImage && previewUrl ? (
             <video
+              key={previewUrl}
               src={previewUrl}
               muted
               playsInline

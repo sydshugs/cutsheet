@@ -170,17 +170,19 @@ export function AnalysisProgressCard({
   
   // Get thumbnail for first file
   const primaryFile = files[0];
-  const thumbnailDataUrl = useThumbnail(primaryFile);
-  const isImage = primaryFile?.type.startsWith("image/");
-  
-  const previewUrl = useMemo(() => {
-    if (primaryFile && isImage) return URL.createObjectURL(primaryFile);
-    return null;
-  }, [primaryFile, isImage]);
-  
+  const primaryFileObjectUrl = useMemo(
+    () => (primaryFile ? URL.createObjectURL(primaryFile) : null),
+    [primaryFile],
+  );
   useEffect(() => {
-    return () => { if (previewUrl) URL.revokeObjectURL(previewUrl); };
-  }, [previewUrl]);
+    return () => {
+      if (primaryFileObjectUrl) URL.revokeObjectURL(primaryFileObjectUrl);
+    };
+  }, [primaryFileObjectUrl]);
+
+  const thumbnailDataUrl = useThumbnail(primaryFile, primaryFileObjectUrl);
+  const isImage = primaryFile?.type.startsWith("image/");
+  const previewUrl = primaryFileObjectUrl;
 
   // Progress through stages
   useEffect(() => {
@@ -190,8 +192,9 @@ export function AnalysisProgressCard({
     return () => clearInterval(interval);
   }, [config.checkItems.length]);
 
-  const displayUrl = previewUrl || thumbnailDataUrl;
   const total = totalCount ?? files.length;
+  const hasSinglePreview = files.length === 1 && (!!thumbnailDataUrl || !!previewUrl);
+
   const progressText = total > 1 
     ? `Analyzing ${currentIndex + 1} of ${total}...` 
     : statusMessage || "Processing...";
@@ -206,28 +209,44 @@ export function AnalysisProgressCard({
         >
           {/* ── Left half — creative preview ── */}
           <div className="flex-1 bg-[#1a1a1c] border-b md:border-b-0 md:border-r border-white/[0.05] flex flex-col items-center justify-center relative min-h-[220px] md:min-h-[360px] p-6">
-            {files.length === 1 && displayUrl ? (
+            {hasSinglePreview ? (
               <>
-                {isImage ? (
+                {thumbnailDataUrl ? (
                   <motion.img
-                    src={displayUrl}
+                    src={thumbnailDataUrl}
                     alt=""
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.4 }}
                     className="max-w-full max-h-[280px] object-contain rounded-lg"
                   />
-                ) : (
+                ) : !isImage && previewUrl ? (
                   <motion.video
-                    src={displayUrl}
+                    src={previewUrl}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.4 }}
                     className="max-w-full max-h-[280px] object-contain rounded-lg"
                     muted
                     playsInline
+                    preload="auto"
+                    onLoadedData={(e) => {
+                      const v = e.currentTarget;
+                      if (v.readyState >= 2) {
+                        v.currentTime = Math.min(1.0, (v.duration || 10) * 0.1);
+                      }
+                    }}
                   />
-                )}
+                ) : isImage && previewUrl ? (
+                  <motion.img
+                    src={previewUrl}
+                    alt=""
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.4 }}
+                    className="max-w-full max-h-[280px] object-contain rounded-lg"
+                  />
+                ) : null}
               </>
             ) : files.length > 1 ? (
               <div className="grid grid-cols-2 gap-2 w-full max-w-[240px]">

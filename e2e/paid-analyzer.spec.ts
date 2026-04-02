@@ -49,24 +49,11 @@ async function skipOnboardingIfPresent(page: Page) {
 test.describe('PaidAdAnalyzer — happy path', () => {
 
   // ─── Network mocks ────────────────────────────────────────────────────────
-  // Mock all external API calls so tests run without Vercel dev server or real
-  // Gemini/Supabase Storage calls. Only REST profile reads and the analyze
-  // proxy are mocked — all other calls (auth, etc.) go through.
+  // Mock analyze/storage APIs only. Profile reads hit real Supabase so the E2E
+  // user's row (auth.setup sets onboarding_completed + beta_access) drives
+  // ProtectedRoute / AuthContext — no fake beta gate mismatch for your email.
   test.beforeEach(async ({ page }) => {
-    // 1. Profiles GET — ProtectedRoute needs onboarding_completed: true
-    await page.route('**/rest/v1/profiles**', async (route) => {
-      if (route.request().method() === 'GET') {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({ onboarding_completed: true, subscription_status: 'free' }),
-        });
-      } else {
-        await route.continue();
-      }
-    });
-
-    // 2. Supabase Storage upload — returns success without actually uploading
+    // 1. Supabase Storage upload — returns success without actually uploading
     await page.route('**/storage/v1/object/uploads/**', async (route) => {
       if (route.request().method() === 'POST') {
         await route.fulfill({
@@ -79,7 +66,7 @@ test.describe('PaidAdAnalyzer — happy path', () => {
       }
     });
 
-    // 3. Supabase Storage signed URL — returns a fake signed URL
+    // 2. Supabase Storage signed URL — returns a fake signed URL
     await page.route('**/storage/v1/object/sign/**', async (route) => {
       if (route.request().method() === 'POST') {
         await route.fulfill({
@@ -92,7 +79,7 @@ test.describe('PaidAdAnalyzer — happy path', () => {
       }
     });
 
-    // 4. /api/analyze — returns markdown that matches parseScores() regexes exactly:
+    // 3. /api/analyze — returns markdown that matches parseScores() regexes exactly:
     //   /Hook Strength:\s*(\d+)\/10/       ← no ** between colon and digit
     //   /Message Clarity:\s*(\d+)\/10/
     //   /CTA Effectiveness:\s*(\d+)\/10/
@@ -157,7 +144,7 @@ Recommendation: This creative is ready for broad testing at $50/day.
       }
     });
 
-    // 5. /api/platform-score — returns a realistic platform score if called
+    // 4. /api/platform-score — returns a realistic platform score if called
     await page.route('/api/platform-score', async (route) => {
       if (route.request().method() === 'POST') {
         await route.fulfill({
@@ -170,7 +157,7 @@ Recommendation: This creative is ready for broad testing at $50/day.
       }
     });
 
-    // 6. /api/improvements — used for brief generation (action: "brief")
+    // 5. /api/improvements — used for brief generation (action: "brief")
     // Brief string is parsed with /^\*\*(.+?)\*\*:?\s*(.*)/ to create BriefSection[] objects.
     // Labels must be wrapped in **bold** so the parser picks them up as section headers.
     await page.route('/api/improvements', async (route) => {
@@ -219,9 +206,9 @@ Recommendation: This creative is ready for broad testing at $50/day.
       page.getByText('Score Overview')
     ).toBeVisible({ timeout: 60_000 });
 
-    // Verify score ring is rendered (a number out of 10)
+    // Verify score ring is rendered (a number out of 10) — many "/10" on page; pin to first match
     await expect(
-      page.getByText(/\/\s*10/)
+      page.getByText(/\/\s*10/).first()
     ).toBeVisible({ timeout: 5_000 });
 
     // Verify dimension scores are visible (at least one dimension label)

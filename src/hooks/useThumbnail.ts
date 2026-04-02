@@ -1,18 +1,22 @@
 import { useState, useEffect } from "react";
 
 /** Capture a poster frame from a video file via canvas, or use objectURL for images. */
-export function useThumbnail(file: File | null): string | null {
+export function useThumbnail(file: File | null, sharedObjectUrl?: string | null): string | null {
   const [thumbnailDataUrl, setThumbnailDataUrl] = useState<string | null>(null);
 
   useEffect(() => {
     setThumbnailDataUrl(null);
     if (!file) return;
 
+    const useSharedBlob = typeof sharedObjectUrl === "string" && sharedObjectUrl.length > 0;
+
     // Image files: use object URL directly — no canvas needed
     if (file.type.startsWith("image/")) {
-      const url = URL.createObjectURL(file);
+      const url = useSharedBlob ? sharedObjectUrl! : URL.createObjectURL(file);
       setThumbnailDataUrl(url);
-      return () => URL.revokeObjectURL(url);
+      return () => {
+        if (!useSharedBlob) URL.revokeObjectURL(url);
+      };
     }
 
     // Video files: seek to 1.0s (skip black intros), capture frame via canvas
@@ -20,7 +24,7 @@ export function useThumbnail(file: File | null): string | null {
     let seekTimeoutId: ReturnType<typeof setTimeout> | null = null;
     let captureAttempts = 0;
     const MAX_CAPTURE_ATTEMPTS = 3;
-    const url = URL.createObjectURL(file);
+    const url = useSharedBlob ? sharedObjectUrl! : URL.createObjectURL(file);
     const video = document.createElement("video");
     video.muted = true;
     video.preload = "auto";
@@ -31,7 +35,7 @@ export function useThumbnail(file: File | null): string | null {
     const cleanup = () => {
       if (seekTimeoutId) clearTimeout(seekTimeoutId);
       if (!revoked) {
-        URL.revokeObjectURL(url);
+        if (!useSharedBlob) URL.revokeObjectURL(url);
         revoked = true;
       }
       video.removeAttribute("src");
@@ -114,7 +118,7 @@ export function useThumbnail(file: File | null): string | null {
       video.removeEventListener("error", onError);
       cleanup();
     };
-  }, [file]);
+  }, [file, sharedObjectUrl]);
 
   return thumbnailDataUrl;
 }

@@ -1,26 +1,48 @@
 import { test as setup } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Load from repo root (same cascade as playwright.config.ts). Runs at import time so
+// setup workers always see env even if the config load order differs.
+const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+dotenv.config({ path: path.join(projectRoot, '.env.local') });
+dotenv.config({ path: path.join(projectRoot, '.env') });
 
 const authFile = 'e2e/.auth/user.json';
 
-setup('authenticate', async ({ page }) => {
-  const supabaseUrl = process.env.VITE_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const email = process.env.E2E_EMAIL;
-  const password = process.env.E2E_PASSWORD;
+const REQUIRED_ENV = [
+  'VITE_SUPABASE_URL',
+  'VITE_SUPABASE_ANON_KEY',
+  'SUPABASE_SERVICE_ROLE_KEY',
+  'E2E_EMAIL',
+  'E2E_PASSWORD',
+] as const;
 
-  if (!supabaseUrl || !serviceRoleKey || !email || !password) {
+setup('authenticate', async ({ page }) => {
+  const missing = REQUIRED_ENV.filter((key) => {
+    const v = process.env[key];
+    return v === undefined || v === '';
+  });
+  if (missing.length > 0) {
     throw new Error(
-      'Missing required env vars: VITE_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, E2E_EMAIL, E2E_PASSWORD'
+      `Missing or empty env: ${missing.join(', ')}. Set them in .env.local or .env at the repo root (see .env.example).`
     );
   }
 
+  const supabaseUrl = process.env.VITE_SUPABASE_URL!;
+  const anonKey = process.env.VITE_SUPABASE_ANON_KEY!;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  const email = process.env.E2E_EMAIL!;
+  const password = process.env.E2E_PASSWORD!;
+
   // Sign in via Supabase JS client directly — bypasses bot detection on the login form
-  const supabase = createClient(supabaseUrl, serviceRoleKey, {
+  const anonClient = createClient(supabaseUrl, anonKey, {
     auth: { autoRefreshToken: false, persistSession: false }
   });
 
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await anonClient.auth.signInWithPassword({ email, password });
 
   if (error || !data.session) {
     throw new Error(`Supabase auth failed: ${error?.message ?? 'No session returned'}`);
@@ -48,9 +70,14 @@ setup('authenticate', async ({ page }) => {
   // Ensure the test account has onboarding_completed = true so ProtectedRoute
   // never redirects to /welcome during tests. Uses the admin client (service role)
   // to bypass RLS — the user's anon client can't reliably write this on first run.
-  const { error: profileError } = await supabase.from('profiles').upsert({
+  const adminClient = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false }
+  });
+
+  const { error: profileError } = await adminClient.from('profiles').upsert({
     id: data.session.user.id,
     onboarding_completed: true,
+    beta_access: true,
     niche: 'E-commerce',
     platform: 'Meta',
   });

@@ -213,7 +213,13 @@ export default function PaidAdAnalyzer() {
   const sessionMemoryRef = useRef<string>('');
 
   const { status, statusMessage, result, error, analysisError, analyze, download, copy, reset } = useVideoAnalyzer();
-  const thumbnailDataUrl = useThumbnail(file);
+  const fileObjectUrl = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
+  useEffect(() => {
+    return () => {
+      if (fileObjectUrl) URL.revokeObjectURL(fileObjectUrl);
+    };
+  }, [fileObjectUrl]);
+  const thumbnailDataUrl = useThumbnail(file, fileObjectUrl);
 
   const isAnalyzing = status === "uploading" || status === "processing";
 
@@ -1105,7 +1111,8 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                         result={activeResult}
                         error={error}
                         analysisError={analysisError}
-                        thumbnailDataUrl={activeResult?.thumbnailDataUrl}
+                        fileObjectUrl={fileObjectUrl}
+                        thumbnailDataUrl={activeResult?.thumbnailDataUrl ?? thumbnailDataUrl}
                         format={format}
                         onFileSelect={(f) => handleFileWithFormatCheck(f)}
                         onUrlSubmit={async (u) => { setUrlInput(u); await importFromUrl(u); }}

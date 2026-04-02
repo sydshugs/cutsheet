@@ -6,8 +6,10 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load .env.local for E2E credentials
+// Cascade: .env.local first, then .env — dotenv does not override existing keys by default,
+// so .env.local wins on conflicts; keys only in .env (e.g. VITE_SUPABASE_ANON_KEY) still load.
 dotenv.config({ path: path.resolve(__dirname, '.env.local') });
+dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 export default defineConfig({
   testDir: './e2e',
