@@ -48,9 +48,9 @@ export function ProgressCard({ file, status, onCancel, onComplete, format = "vid
   const isImage = file?.type.startsWith("image/") ?? false;
 
   const previewUrl = useMemo(() => {
-    if (isImage && file) return URL.createObjectURL(file);
+    if (file) return URL.createObjectURL(file);
     return null;
-  }, [file, isImage]);
+  }, [file]);
 
   useEffect(() => {
     return () => { if (previewUrl) URL.revokeObjectURL(previewUrl); };
@@ -105,9 +105,30 @@ export function ProgressCard({ file, status, onCancel, onComplete, format = "vid
 
         {/* ── Left — creative preview ── */}
         <div className="relative bg-[#09090b] rounded-xl m-[6px] overflow-hidden flex-1 min-h-[280px]">
-          {displayUrl ? (
+          {thumbnailDataUrl ? (
             <motion.img
-              src={displayUrl}
+              src={thumbnailDataUrl}
+              alt={file ? sanitizeFileName(file.name) : "Ad creative"}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.4 }}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          ) : !isImage && previewUrl ? (
+            <video
+              src={previewUrl}
+              muted
+              playsInline
+              preload="metadata"
+              className="absolute inset-0 w-full h-full object-cover"
+              onLoadedData={(e) => {
+                const v = e.currentTarget;
+                if (v.currentTime === 0) v.currentTime = 0.1;
+              }}
+            />
+          ) : isImage && previewUrl ? (
+            <motion.img
+              src={previewUrl}
               alt={file ? sanitizeFileName(file.name) : "Ad creative"}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

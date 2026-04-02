@@ -374,7 +374,15 @@ export function ReportCards({
                 src={fileUrl}
                 poster={thumbnailDataUrl ?? undefined}
                 controls
+                preload="metadata"
+                playsInline
                 className="w-full h-full object-contain"
+                onLoadedData={(e) => {
+                  if (!thumbnailDataUrl) {
+                    const v = e.currentTarget;
+                    if (v.currentTime === 0) v.currentTime = 0.1;
+                  }
+                }}
               />
             )}
           </div>

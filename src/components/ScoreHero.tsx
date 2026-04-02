@@ -3,6 +3,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Info } from "lucide-react";
 
 /** Platforms that do NOT support static image ads — benchmark should be hidden for these */
 const STATIC_INCOMPATIBLE_PLATFORMS = new Set(['TikTok', 'YouTube', 'YouTube Shorts', 'Instagram Reels']);
@@ -212,6 +213,7 @@ export function ScoreHero({
                 >
                   {benchmarkDiffText}
                 </span>
+                <Info size={13} className="shrink-0 cursor-help" style={{ color: '#71717a' }} aria-label="Benchmark comparison info" />
               </div>
             </div>
             {/* Bar track */}

@@ -43,8 +43,8 @@ export function useThumbnail(file: File | null): string | null {
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
           setThumbnailDataUrl(canvas.toDataURL("image/jpeg", 0.8));
         }
-      } catch {
-        // Silently fall back to gray placeholder
+      } catch (err) {
+        console.warn('[useThumbnail] Canvas capture failed:', err);
       } finally {
         cleanup();
       }

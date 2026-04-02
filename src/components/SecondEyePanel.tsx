@@ -1,374 +1,196 @@
-// src/components/SecondEyePanel.tsx — redesigned to match Figma node 229:2054
+// src/components/SecondEyePanel.tsx — redesigned to match screenshot
+// Category icon cards + PRIORITY FIX amber card + bottom verdict bar. No timeline.
 // Flows inside CreativeVerdictAndSecondEye outer card — no own card wrapper.
-import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Eye, CheckCircle, ChevronDown } from "lucide-react";
+import { AlertTriangle, VolumeX, Activity, Info, CheckCircle, XCircle, type LucideIcon } from "lucide-react";
 import type { SecondEyeResult, SecondEyeFlag } from "../services/claudeService";
 
 // ─── CATEGORY CONFIG ─────────────────────────────────────────────────────────
 
-const TAG_STYLES: Record<
-  SecondEyeFlag["category"],
-  { label: string; bg: string; color: string; dot: string; activeBg: string; activeBorder: string }
+const CATEGORY_CONFIG: Record<
+  string,
+  { label: string; icon: LucideIcon; color: string; bg: string }
 > = {
   scroll_trigger: {
-    label: "Scroll risk",
-    bg: "rgba(251,44,54,0.10)",
+    label: "Scroll Risk",
+    icon: AlertTriangle,
     color: "#ff6467",
-    dot: "#fb2c36",
-    activeBg: "rgba(251,44,54,0.04)",
-    activeBorder: "rgba(251,44,54,0.20)",
+    bg: "rgba(251,44,54,0.12)",
   },
   sound_off: {
-    label: "Sound-off",
-    bg: "rgba(0,188,125,0.10)",
+    label: "Sound-Off",
+    icon: VolumeX,
     color: "#00d492",
-    dot: "#00bc7d",
-    activeBg: "rgba(0,188,125,0.04)",
-    activeBorder: "rgba(0,188,125,0.20)",
+    bg: "rgba(0,188,125,0.12)",
   },
   pacing: {
-    label: "Pacing",
-    bg: "rgba(173,70,255,0.10)",
+    label: "Motion",
+    icon: Activity,
     color: "#c27aff",
-    dot: "#ad46ff",
-    activeBg: "rgba(173,70,255,0.04)",
-    activeBorder: "rgba(173,70,255,0.20)",
+    bg: "rgba(173,70,255,0.12)",
   },
   clarity: {
     label: "Clarity",
-    bg: "rgba(43,127,255,0.10)",
+    icon: Info,
     color: "#51a2ff",
-    dot: "#2b7fff",
-    activeBg: "rgba(43,127,255,0.04)",
-    activeBorder: "rgba(43,127,255,0.30)",
+    bg: "rgba(43,127,255,0.12)",
   },
 };
 
-// ─── LOADING SHIMMER ─────────────────────────────────────────────────────────
+function getCategoryConfig(category: string) {
+  return CATEGORY_CONFIG[category] ?? {
+    label: category.replace(/_/g, " "),
+    icon: AlertTriangle,
+    color: "#71717a",
+    bg: "rgba(255,255,255,0.08)",
+  };
+}
 
-function ShimmerRow({ width }: { width: string }) {
+// ─── SHIMMER ─────────────────────────────────────────────────────────────────
+
+function ShimmerCard({ height = 80 }: { height?: number }) {
   return (
     <div
       style={{
-        height: 56,
-        borderRadius: 24,
+        height,
+        borderRadius: 14,
         background:
           "linear-gradient(90deg, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.02) 75%)",
         backgroundSize: "200% 100%",
         animation: "shimmer 1.5s infinite",
-        width,
       }}
     />
   );
 }
 
-// ─── SCROLL ALERT CARD ───────────────────────────────────────────────────────
+// ─── PRIORITY FIX CARD (amber) ────────────────────────────────────────────────
 
-function ScrollAlert({ scrollMoment }: { scrollMoment: string }) {
-  const timestamp = scrollMoment.match(/^[\d:]+/)?.[0] ?? "";
-  const reason = scrollMoment.replace(/^[\d:]+\s*[-—–]?\s*/, "");
-
+function PriorityFixCard({ text }: { text: string }) {
   return (
     <div
       style={{
-        borderRadius: 24,
+        borderRadius: 14,
+        background: "rgba(254,154,0,0.06)",
+        border: "1px solid rgba(254,154,0,0.18)",
         padding: "13px 15px",
-        background: "rgba(251,44,54,0.08)",
-        border: "1px solid rgba(251,44,54,0.15)",
+        display: "flex",
+        gap: 12,
+        alignItems: "flex-start",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        {/* "Would scroll" badge */}
-        <span
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 5,
-            fontSize: 10,
-            fontWeight: 600,
-            color: "#ff6467",
-            background: "rgba(251,44,54,0.15)",
-            borderRadius: 999,
-            padding: "3px 10px",
-            whiteSpace: "nowrap",
-          }}
-        >
-          <span
-            style={{ width: 5, height: 5, borderRadius: "50%", background: "#ff6467", flexShrink: 0 }}
-          />
-          Would scroll
-        </span>
-        {/* Timestamp */}
-        {timestamp && (
-          <span
-            style={{
-              fontSize: 11,
-              fontFamily: "var(--mono, 'SF Mono', monospace)",
-              fontWeight: 600,
-              color: "#ff6467",
-            }}
-          >
-            {timestamp}
-          </span>
-        )}
-      </div>
-      {reason && (
-        <p style={{ fontSize: 12, color: "#9f9fa9", margin: "8px 0 0", lineHeight: 1.55 }}>
-          {reason}
-        </p>
-      )}
-    </div>
-  );
-}
-
-// ─── FLAG TIMELINE ────────────────────────────────────────────────────────────
-
-function FlagTimeline({
-  flags,
-  activeIndex,
-  onDotClick,
-}: {
-  flags: SecondEyeFlag[];
-  activeIndex: number | null;
-  onDotClick: (index: number) => void;
-}) {
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-
-  const parseTime = (ts: string): number => {
-    const match = ts.match(/(\d+):(\d+)/);
-    if (!match) return 0;
-    return parseInt(match[1]) * 60 + parseInt(match[2]);
-  };
-
-  const times = flags.map((f) => parseTime(f.timestamp.split("-")[0].trim()));
-  const maxTime = Math.max(...times, 1);
-
-  // Unique categories for legend (preserve insertion order)
-  const legendEntries = [...new Map(flags.map((f) => [f.category, TAG_STYLES[f.category]])).entries()];
-
-  return (
-    <div style={{ padding: "12px 0 0" }}>
-      {/* Legend row */}
-      <div style={{ display: "flex", gap: 16, marginBottom: 10 }}>
-        {legendEntries.map(([cat, style]) => (
-          <div key={cat} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span
-              style={{ width: 6, height: 6, borderRadius: "50%", background: style.dot, flexShrink: 0 }}
-            />
-            <span
-              style={{
-                fontSize: 9,
-                fontWeight: 600,
-                color: "#52525c",
-                textTransform: "uppercase",
-                letterSpacing: "0.45px",
-              }}
-            >
-              {style.label}
-            </span>
-          </div>
-        ))}
-      </div>
-
-      {/* Track */}
       <div
         style={{
-          position: "relative",
-          height: 5,
-          background: "rgba(255,255,255,0.06)",
-          borderRadius: 99,
-          width: "100%",
+          width: 32,
+          height: 32,
+          borderRadius: 10,
+          background: "rgba(254,154,0,0.12)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
         }}
       >
-        {flags.map((flag, i) => {
-          const pct = (times[i] / maxTime) * 90 + 5; // 5–95% to keep dots on-track
-          const cat = TAG_STYLES[flag.category];
-          const isActive = activeIndex === i;
-          const isHovered = hoveredIndex === i;
-          const showTooltip = isActive || isHovered;
-
-          return (
-            <div
-              key={`dot-${i}`}
-              style={{
-                position: "absolute",
-                left: `${pct}%`,
-                top: "50%",
-                transform: "translate(-50%, -50%)",
-                cursor: "pointer",
-                zIndex: isActive ? 2 : 1,
-              }}
-              onClick={() => onDotClick(i)}
-              onMouseEnter={() => setHoveredIndex(i)}
-              onMouseLeave={() => setHoveredIndex(null)}
-            >
-              {/* Dot / handle */}
-              <div
-                style={{
-                  width: isActive ? 10 : 8,
-                  height: isActive ? 10 : 8,
-                  borderRadius: "50%",
-                  background: cat.dot,
-                  border: isActive ? "1.5px solid #fff" : "none",
-                  boxShadow: isActive ? `0 0 6px ${cat.dot}` : "none",
-                  transition: "all 150ms",
-                }}
-              />
-              {/* Tooltip */}
-              {showTooltip && (
-                <div
-                  style={{
-                    position: "absolute",
-                    bottom: 14,
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    background: "#18181b",
-                    border: "1px solid rgba(255,255,255,0.10)",
-                    borderRadius: 4,
-                    padding: "2px 6px",
-                    boxShadow: "0px 4px 6px rgba(0,0,0,0.1)",
-                    whiteSpace: "nowrap",
-                    pointerEvents: "none",
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: 10,
-                      fontFamily: "var(--mono, 'SF Mono', monospace)",
-                      color: "#d4d4d8",
-                    }}
-                  >
-                    {flag.timestamp.split("-")[0].trim()}
-                  </span>
-                </div>
-              )}
-            </div>
-          );
-        })}
+        <AlertTriangle size={15} color="#fea000" />
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <span
+          style={{
+            display: "block",
+            fontSize: 10,
+            fontWeight: 700,
+            color: "#fea000",
+            textTransform: "uppercase",
+            letterSpacing: "0.6px",
+            marginBottom: 4,
+          }}
+        >
+          Priority Fix
+        </span>
+        <p style={{ fontSize: 13, fontWeight: 500, color: "#e4e4e7", margin: 0, lineHeight: 1.5 }}>
+          {text}
+        </p>
       </div>
     </div>
   );
 }
 
-// ─── FLAG CARD ────────────────────────────────────────────────────────────────
+// ─── CATEGORY FIX CARD ────────────────────────────────────────────────────────
 
-function FlagCard({
-  flag,
-  index,
-  isActive,
-  onClick,
-}: {
-  flag: SecondEyeFlag;
-  index: number;
-  isActive: boolean;
-  onClick: () => void;
-}) {
-  const cat = TAG_STYLES[flag.category];
+function CategoryFixCard({ flag, index }: { flag: SecondEyeFlag; index: number }) {
+  const cfg = getCategoryConfig(flag.category);
+  const CatIcon = cfg.icon;
+  const isCritical = flag.severity === "critical";
+  const isWarning = flag.severity === "warning";
+
+  const badgeColor = isCritical ? "#ff6467" : isWarning ? "#fea000" : "#71717a";
+  const badgeBg = isCritical
+    ? "rgba(251,44,54,0.10)"
+    : isWarning
+    ? "rgba(254,154,0,0.10)"
+    : "rgba(255,255,255,0.06)";
+  const badgeLabel = isCritical ? "High Priority" : isWarning ? "Med Priority" : "Note";
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.22, delay: index * 0.04 }}
-      onClick={onClick}
+      transition={{ duration: 0.22, delay: index * 0.05 }}
       style={{
-        borderRadius: 24,
-        border: isActive
-          ? `1px solid ${cat.activeBorder}`
-          : "1px solid rgba(255,255,255,0.06)",
-        background: isActive ? cat.activeBg : "rgba(255,255,255,0.02)",
-        padding: "13px 17px 13px 17px",
-        cursor: "pointer",
-        transition: "border-color 150ms, background 150ms",
-        position: "relative",
+        borderRadius: 14,
+        border: "1px solid rgba(255,255,255,0.06)",
+        background: "rgba(255,255,255,0.02)",
+        padding: "13px 15px",
       }}
     >
-      {/* Top row: category badge + timestamp + chevron */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        {/* Category badge */}
-        <span
+      {/* Top row: icon box + category name + priority badge */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div
           style={{
-            display: "inline-flex",
+            width: 32,
+            height: 32,
+            borderRadius: 10,
+            background: cfg.bg,
+            display: "flex",
             alignItems: "center",
-            gap: 5,
-            fontSize: 10,
-            fontWeight: 600,
-            color: cat.color,
-            background: cat.bg,
-            borderRadius: 999,
-            padding: "3px 8px",
-            whiteSpace: "nowrap",
-          }}
-        >
-          <span style={{ width: 5, height: 5, borderRadius: "50%", background: cat.dot }} />
-          {cat.label}
-        </span>
-
-        {/* Timestamp */}
-        <span
-          style={{
-            fontSize: 10,
-            fontFamily: "var(--mono, 'SF Mono', monospace)",
-            color: "#52525c",
-          }}
-        >
-          {flag.timestamp}
-        </span>
-
-        {/* Chevron */}
-        <ChevronDown
-          size={14}
-          color="#52525c"
-          style={{
-            marginLeft: "auto",
-            transform: isActive ? "rotate(180deg)" : "rotate(0deg)",
-            transition: "transform 200ms",
+            justifyContent: "center",
             flexShrink: 0,
           }}
-        />
-      </div>
+        >
+          <CatIcon size={15} color={cfg.color} />
+        </div>
 
-      {/* FIX label + fix text */}
-      <div style={{ marginTop: 10 }}>
+        <span style={{ fontSize: 13, fontWeight: 600, color: "#e4e4e7", flex: 1 }}>
+          {cfg.label}
+        </span>
+
         <span
           style={{
-            fontSize: 9,
+            fontSize: 10,
             fontWeight: 600,
-            color: "#52525c",
+            color: badgeColor,
+            background: badgeBg,
+            borderRadius: 999,
+            padding: "3px 9px",
+            whiteSpace: "nowrap",
             textTransform: "uppercase",
-            letterSpacing: "0.45px",
+            letterSpacing: "0.3px",
           }}
         >
-          FIX
+          {badgeLabel}
         </span>
-        <p
-          style={{
-            fontSize: 14,
-            fontWeight: 400,
-            color: "#e4e4e7",
-            margin: "4px 0 0",
-            lineHeight: 1.5,
-          }}
-        >
-          {flag.fix}
-        </p>
       </div>
 
-      {/* Issue text — expanded only */}
-      <div
+      {/* Fix text */}
+      <p
         style={{
-          maxHeight: isActive ? 120 : 0,
-          overflow: "hidden",
-          transition: "max-height 200ms ease-in-out",
+          fontSize: 13,
+          color: "#9f9fa9",
+          margin: "10px 0 0",
+          lineHeight: 1.55,
         }}
       >
-        <div style={{ borderTop: "1px solid rgba(255,255,255,0.04)", marginTop: 10, paddingTop: 10 }}>
-          <p style={{ fontSize: 12, color: "#71717b", margin: 0, lineHeight: 1.55 }}>
-            {flag.issue}
-          </p>
-        </div>
-      </div>
+        {flag.fix}
+      </p>
     </motion.div>
   );
 }
@@ -379,10 +201,10 @@ function CommunicatesCard({ communicates, misses }: { communicates: string; miss
   return (
     <div
       style={{
-        borderRadius: 24,
+        borderRadius: 14,
         background: "rgba(255,255,255,0.02)",
         border: "1px solid rgba(255,255,255,0.04)",
-        padding: "13px 17px",
+        padding: "13px 15px",
         display: "flex",
         flexDirection: "column",
         gap: 12,
@@ -392,11 +214,11 @@ function CommunicatesCard({ communicates, misses }: { communicates: string; miss
         <div>
           <span
             style={{
-              fontSize: 9,
-              fontWeight: 500,
+              fontSize: 10,
+              fontWeight: 600,
               color: "#00bc7d",
               textTransform: "uppercase",
-              letterSpacing: "0.45px",
+              letterSpacing: "0.5px",
               display: "block",
               marginBottom: 4,
             }}
@@ -412,11 +234,11 @@ function CommunicatesCard({ communicates, misses }: { communicates: string; miss
         <div>
           <span
             style={{
-              fontSize: 9,
-              fontWeight: 500,
+              fontSize: 10,
+              fontWeight: 600,
               color: "#ff6467",
               textTransform: "uppercase",
-              letterSpacing: "0.45px",
+              letterSpacing: "0.5px",
               display: "block",
               marginBottom: 4,
             }}
@@ -442,34 +264,32 @@ export function SecondEyePanel({
   result: SecondEyeResult | null;
   loading: boolean;
 }) {
-  const [activeIndex, setActiveIndex] = useState<number | null>(0);
-
   if (!loading && !result) return null;
 
   const hasFlags = result && result.flags.length > 0;
   const isEmpty = result && result.flags.length === 0;
 
-  const handleCardClick = (index: number) => {
-    setActiveIndex((prev) => (prev === index ? null : index));
-  };
+  // Pick the priority fix: scrollMoment text or first critical flag's fix
+  const priorityFixText =
+    result?.scrollMoment ??
+    result?.flags.find((f) => f.severity === "critical")?.fix ??
+    null;
+
+  // Remaining flags (exclude the one used as priority fix if it was a flag)
+  const displayFlags =
+    result?.flags.filter((f) => {
+      if (!result.scrollMoment && f.severity === "critical") {
+        // Skip the first critical flag since it's shown as priority fix
+        const firstCritical = result.flags.find((x) => x.severity === "critical");
+        return f !== firstCritical;
+      }
+      return true;
+    }) ?? [];
+
+  const criticalCount = result?.flags.filter((f) => f.severity === "critical").length ?? 0;
 
   return (
     <div>
-      {/* Sub-header */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          padding: "16px 16px 0",
-        }}
-      >
-        <Eye size={14} color="#71717b" />
-        <span style={{ fontSize: 14, fontWeight: 600, color: "#e4e4e7" }}>
-          Second Eye Review
-        </span>
-      </div>
-
       <AnimatePresence mode="wait">
         {/* Loading */}
         {loading && !result && (
@@ -478,16 +298,11 @@ export function SecondEyePanel({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 8,
-              padding: "12px 16px 16px",
-            }}
+            style={{ display: "flex", flexDirection: "column", gap: 8, padding: "16px" }}
           >
-            <ShimmerRow width="100%" />
-            <ShimmerRow width="94%" />
-            <ShimmerRow width="97%" />
+            <ShimmerCard height={72} />
+            <ShimmerCard height={88} />
+            <ShimmerCard height={88} />
             <style>{`@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
           </motion.div>
         )}
@@ -522,51 +337,26 @@ export function SecondEyePanel({
             key="flags"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            style={{ display: "flex", flexDirection: "column", gap: 0 }}
+            style={{ display: "flex", flexDirection: "column", gap: 8, padding: "0 16px 16px" }}
           >
-            {/* Scroll alert */}
-            {result.scrollMoment && (
-              <div style={{ padding: "12px 16px 0" }}>
-                <ScrollAlert scrollMoment={result.scrollMoment} />
-              </div>
-            )}
+            {/* Priority Fix card */}
+            {priorityFixText && <PriorityFixCard text={priorityFixText} />}
 
-            {/* Timeline */}
-            <div style={{ padding: "0 16px" }}>
-              <FlagTimeline
-                flags={result.flags}
-                activeIndex={activeIndex}
-                onDotClick={handleCardClick}
+            {/* Category fix cards */}
+            {displayFlags.map((flag, i) => (
+              <CategoryFixCard
+                key={`${flag.category}-${i}`}
+                flag={flag}
+                index={i}
               />
-            </div>
-
-            {/* Fix cards */}
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 8,
-                padding: "12px 16px 0",
-              }}
-            >
-              {result.flags.map((flag, i) => (
-                <FlagCard
-                  key={`${flag.timestamp}-${i}`}
-                  flag={flag}
-                  index={i}
-                  isActive={activeIndex === i}
-                  onClick={() => handleCardClick(i)}
-                />
-              ))}
-            </div>
+            ))}
 
             {/* Communicates / Misses */}
             {(result.whatItCommunicates || result.whatItFails) && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: result.flags.length * 0.04 }}
-                style={{ padding: "8px 16px 16px" }}
+                transition={{ delay: displayFlags.length * 0.05 }}
               >
                 <CommunicatesCard
                   communicates={result.whatItCommunicates ?? ""}
@@ -574,6 +364,40 @@ export function SecondEyePanel({
                 />
               </motion.div>
             )}
+
+            {/* Bottom verdict bar */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                paddingTop: 4,
+              }}
+            >
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 5,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: criticalCount > 0 ? "#ff6467" : "#fea000",
+                  background: criticalCount > 0 ? "rgba(251,44,54,0.10)" : "rgba(254,154,0,0.10)",
+                  borderRadius: 999,
+                  padding: "4px 10px",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                <XCircle size={11} />
+                {criticalCount > 0 ? "Not Ready" : "Needs Work"}
+              </span>
+              <span style={{ width: 3, height: 3, borderRadius: "50%", background: "rgba(255,255,255,0.15)", flexShrink: 0 }} />
+              <span style={{ fontSize: 12, color: "#71717b" }}>
+                {criticalCount > 0
+                  ? `${criticalCount} critical ${criticalCount === 1 ? "fix" : "fixes"}`
+                  : `${result.flags.length} ${result.flags.length === 1 ? "issue" : "issues"} flagged`}
+              </span>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
