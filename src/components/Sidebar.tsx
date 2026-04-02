@@ -57,7 +57,7 @@ const MORE_ITEMS = [...ANALYZE.slice(3), ...COMPARE.slice(1), ...LIBRARY];
 
 function SectionLabel({ label }: { label: string }) {
   return (
-    <div role="heading" aria-level={2} style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.5)", padding: "0 12px", marginTop: 24, marginBottom: 2 }}>
+    <div role="heading" aria-level={2} className="text-[10px] uppercase text-zinc-600 tracking-[0.12em] font-semibold px-[12px] pt-[16px] pb-[6px]">
       {label}
     </div>
   );
@@ -85,7 +85,8 @@ function NavItemRow({ item, collapsed }: { item: NavItem; collapsed: boolean }) 
 
       {/* Icon */}
       <Icon
-        size={18}
+        size={16}
+        strokeWidth={2}
         className={
           isActive
             ? "text-[#818cf8]"
@@ -145,7 +146,7 @@ function NavItemRow({ item, collapsed }: { item: NavItem; collapsed: boolean }) 
     display: "flex",
     alignItems: "center",
     gap: 10,
-    height: collapsed ? 40 : 52,
+    height: collapsed ? 40 : 36,
     opacity: item.comingSoon ? 0.4 : 1,
     textDecoration: "none",
   };
@@ -199,7 +200,7 @@ function DesktopSidebar({
   const navigate = useNavigate();
   const { user } = useAuth();
   const initial = (user?.email ?? userEmail).charAt(0).toUpperCase() || "U";
-  const width = collapsed ? 64 : 240;
+  const width = collapsed ? 64 : 220;
 
   return (
     <nav
@@ -266,52 +267,83 @@ function DesktopSidebar({
       )}
 
       {/* Nav items */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden py-1">
-        {!collapsed ? <SectionLabel label="Analyze" /> : <div style={{ height: 20 }} />}
-        {ANALYZE.map((item) => <NavItemRow key={item.path} item={item} collapsed={collapsed} />)}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden px-[12px] pb-[24px] gap-[16px] flex flex-col pt-[8px]">
+        <div className="flex flex-col gap-[2px]">
+          {!collapsed ? <SectionLabel label="Analyze" /> : <div style={{ height: 20 }} />}
+          {ANALYZE.map((item) => <NavItemRow key={item.path} item={item} collapsed={collapsed} />)}
+        </div>
 
-        {!collapsed ? <SectionLabel label="Compare" /> : <div style={{ height: 20 }} />}
-        {COMPARE.map((item) => <NavItemRow key={item.path} item={item} collapsed={collapsed} />)}
+        <div className="flex flex-col gap-[2px]">
+          {!collapsed ? <SectionLabel label="Compare" /> : <div style={{ height: 20 }} />}
+          {COMPARE.map((item) => <NavItemRow key={item.path} item={item} collapsed={collapsed} />)}
+        </div>
 
-        {!collapsed ? <SectionLabel label="Library" /> : <div style={{ height: 20 }} />}
-        {LIBRARY.map((item) => <NavItemRow key={item.path} item={item} collapsed={collapsed} />)}
+        <div className="flex flex-col gap-[2px]">
+          {!collapsed ? <SectionLabel label="Library" /> : <div style={{ height: 20 }} />}
+          {LIBRARY.map((item) => <NavItemRow key={item.path} item={item} collapsed={collapsed} />)}
+        </div>
       </div>
 
       {/* Bottom */}
-      <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "8px 8px 12px", display: "flex", flexDirection: "column", gap: 2 }}>
-        {/* Plan badge moved to TopBar */}
+      <div className="mt-auto shrink-0 flex flex-col pt-4 pb-4 px-[12px] border-t border-white/[0.04]">
+        {/* User Profile Row */}
+        {!collapsed && (
+          <div className="flex items-center h-[36px] gap-2.5 px-[12px] mb-4 rounded-[8px] hover:bg-white/[0.04] transition-colors cursor-pointer">
+            <div className="w-[28px] h-[28px] rounded-full bg-[rgba(99,102,241,0.2)] flex items-center justify-center shrink-0">
+              <span className="text-[11px] font-medium text-indigo-300">{initial}</span>
+            </div>
+            <span className="text-[12px] text-zinc-500 truncate font-medium">
+              {userEmail.length > 20 ? userEmail.slice(0, 18) + '...' : userEmail}
+            </span>
+          </div>
+        )}
 
-        {/* Help & Support */}
-        <a
-          href="mailto:support@cutsheet.xyz"
-          style={{
-            display: "flex", alignItems: "center", gap: 10,
-            padding: collapsed ? "8px 0" : "8px 16px",
-            justifyContent: collapsed ? "center" : "flex-start",
-            color: "rgba(255,255,255,0.5)", fontSize: 13, textDecoration: "none",
-            transition: "color 150ms", borderRadius: 8,
-          }}
-          title={collapsed ? "Help & Support" : undefined}
-          onMouseEnter={e => (e.currentTarget.style.color = "#a1a1aa")}
-          onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.5)")}
-        >
-          <HelpCircle size={18} />
-          {!collapsed && <span>Help &amp; Support</span>}
-        </a>
+        {/* Usage Indicator (free users only) */}
+        {!isPro && !collapsed && (
+          <div className="flex flex-col mb-4 px-[12px]">
+            <span className="text-[12px] text-zinc-500 font-medium mb-[6px]">
+              {usageCount} of {FREE_LIMIT} analyses used
+            </span>
+            <div className="h-[3px] w-full bg-zinc-800 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-[#6366f1] rounded-full transition-all"
+                style={{ width: `${Math.min((usageCount / FREE_LIMIT) * 100, 100)}%` }}
+              />
+            </div>
+          </div>
+        )}
 
-        {/* Settings */}
-        <button
-          type="button"
-          onClick={() => navigate("/settings")}
-          className="group flex items-center gap-[10px] transition-colors hover:bg-[rgba(255,255,255,0.04)] rounded-[8px]"
-          style={{ height: 40, padding: collapsed ? 0 : "0 16px", background: "transparent", border: "none", cursor: "pointer", justifyContent: collapsed ? "center" : "flex-start" }}
-          aria-label="Settings"
-        >
-          <Settings size={18} className="text-[#71717a] group-hover:text-[#a1a1aa] transition-colors" />
-          {!collapsed && (
-            <span style={{ fontSize: 13, fontWeight: 500, color: "#a1a1aa" }}>Settings</span>
+        {/* Help + Settings row */}
+        <div className="flex items-center gap-[4px]">
+          <a
+            href="mailto:hello@cutsheet.xyz"
+            className="w-[32px] h-[36px] rounded-[8px] text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.04] transition-colors flex shrink-0 items-center justify-center"
+            title="Help & Support"
+          >
+            <HelpCircle size={16} strokeWidth={2} />
+          </a>
+          {!collapsed ? (
+            <div className="flex-1 min-w-0">
+              <button
+                type="button"
+                onClick={() => navigate("/settings")}
+                className="flex items-center w-full h-[36px] px-3 gap-2.5 rounded-[8px] text-[13px] font-medium text-zinc-400 hover:bg-white/[0.04] hover:text-zinc-300 transition-colors bg-transparent border-none cursor-pointer"
+              >
+                <Settings size={16} strokeWidth={2} className="text-zinc-500" />
+                Settings
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => navigate("/settings")}
+              className="w-[32px] h-[36px] rounded-[8px] text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.04] transition-colors flex shrink-0 items-center justify-center bg-transparent border-none cursor-pointer"
+              aria-label="Settings"
+            >
+              <Settings size={16} strokeWidth={2} />
+            </button>
           )}
-        </button>
+        </div>
       </div>
     </nav>
   );
