@@ -85,6 +85,33 @@ export function DesignReviewCard({ verdictState, verdictHeadline, priorityFix, f
     >
       {/* ── Content ── */}
       <div className="p-5 flex flex-col gap-5">
+        {/* Header row — verdict pill + critical count */}
+        <div className="flex items-center gap-3">
+          <div
+            className="flex items-center gap-[6.5px] px-3 py-1 rounded-full border"
+            style={{ background: badge.bg, borderColor: badge.border }}
+          >
+            <CircleX size={13} style={{ color: badge.text, flexShrink: 0 }} />
+            <span
+              className="font-bold uppercase whitespace-nowrap"
+              style={{ fontSize: 10.959, letterSpacing: '1.096px', color: badge.text }}
+            >
+              {badge.label}
+            </span>
+          </div>
+          {criticalCount > 0 && (
+            <>
+              <div className="w-[4px] h-[4px] rounded-full bg-white/20 shrink-0" />
+              <span
+                className="font-medium whitespace-nowrap"
+                style={{ fontSize: 13, color: '#71717b' }}
+              >
+                {criticalCount} Critical {criticalCount === 1 ? 'Fix' : 'Fixes'}
+              </span>
+            </>
+          )}
+        </div>
+
         {/* Verdict headline */}
         <h2
           className="font-semibold text-[#f4f4f5] leading-snug"
@@ -265,35 +292,6 @@ export function DesignReviewCard({ verdictState, verdictHeadline, priorityFix, f
         </div>
       </div>
 
-      {/* ── Footer: verdict badge + critical count ── */}
-      <div
-        className="flex items-center gap-[13px] px-[22px] h-[54px] shrink-0"
-        style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}
-      >
-        <div
-          className="flex items-center gap-[6.5px] px-[12px] py-[1px] rounded-full border"
-          style={{ background: badge.bg, borderColor: badge.border }}
-        >
-          <CircleX size={13} style={{ color: badge.text, flexShrink: 0 }} />
-          <span
-            className="font-bold uppercase whitespace-nowrap"
-            style={{ fontSize: 10.959, letterSpacing: '1.096px', color: badge.text }}
-          >
-            {badge.label}
-          </span>
-        </div>
-        {criticalCount > 0 && (
-          <>
-            <div className="w-[4px] h-[4px] rounded-full bg-white/20 shrink-0" />
-            <span
-              className="font-medium uppercase whitespace-nowrap"
-              style={{ fontSize: 13.151, letterSpacing: '0.329px', color: '#71717b' }}
-            >
-              {criticalCount} Critical {criticalCount === 1 ? 'Fix' : 'Fixes'}
-            </span>
-          </>
-        )}
-      </div>
     </div>
   );
 }

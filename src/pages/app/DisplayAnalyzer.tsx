@@ -3,7 +3,7 @@
 import { Helmet } from "react-helmet-async";
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useOutletContext } from "react-router-dom";
-import { Monitor, Eye, Download, X, Plus, CheckCircle, ShieldCheck, Sparkles, Upload, AlertCircle, AlertTriangle, XCircle, Layers, Type, Layout } from "lucide-react";
+import { Monitor, Eye, Download, X, Plus, CheckCircle, ShieldCheck, Sparkles, Upload } from "lucide-react";
 import { VideoDropzone } from "../../components/VideoDropzone";
 import { ProgressCard } from "../../components/ProgressCard";
 import { sanitizeFileName } from "../../utils/sanitize";
@@ -16,6 +16,7 @@ import { runPolicyCheck, type PolicyCheckResult } from "../../lib/policyCheckSer
 import { getImageDimensions, detectDisplayFormat, getFormatGuidance, type DisplayFormat } from "../../utils/displayAdUtils";
 import { generateDisplayMockup, generateSuiteMockup } from "../../services/mockupService";
 import { DisplayAnalyzerMockup } from "../../components/DisplayAnalyzerMockup";
+import { DesignReviewCard } from "../../components/DesignReviewCard";
 import { analyzeVideo, generateBrief } from "../../services/analyzerService";
 import { analyzeSuiteCohesion, generateCTARewrites, type SuiteCohesionResult } from "../../services/claudeService";
 import { getUserContext, formatUserContextBlock } from "../../services/userContextService";
@@ -1007,183 +1008,21 @@ Return JSON only — no prose:
                     </div>
                   )}
 
-                  {/* ── 5. Verdict + Priority Fix ── */}
-                  {result.verdict && (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                      {/* Status badge row */}
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <div style={{
-                          display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 10px", borderRadius: 9999,
-                          background: result.overallScore >= 8 ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)",
-                          border: `1px solid ${result.overallScore >= 8 ? "rgba(16,185,129,0.2)" : "rgba(239,68,68,0.2)"}`,
-                        }}>
-                          <div style={{ width: 5, height: 5, borderRadius: "50%", background: result.overallScore >= 8 ? "#10b981" : "#ef4444" }} />
-                          <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.06em", color: result.overallScore >= 8 ? "#10b981" : "#f87171" }}>
-                            {result.overallScore >= 8 ? "Ready" : result.overallScore >= 4 ? "Not Ready" : "Not Ready"}
-                          </span>
-                        </div>
-                        {result.improvements && result.improvements.length > 0 && (
-                          <span style={{ fontSize: 11, color: "#71717a", letterSpacing: "0.04em" }}>
-                            · {result.improvements.length} Critical Fix{result.improvements.length !== 1 ? "es" : ""}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Verdict text */}
-                      <p style={{ fontSize: 17, fontWeight: 600, color: "#f4f4f5", lineHeight: 1.4, margin: 0, letterSpacing: "-0.025em" }}>
-                        {result.verdict}
-                      </p>
-
-                      {/* Priority fix card — amber border */}
-                      {result.improvements && result.improvements.length > 0 && (() => {
-                        const topFix = result.improvements[0];
-                        return (
-                          <div style={{ borderRadius: 20, background: "#18181b", border: "1px solid rgba(254,154,0,0.4)", boxShadow: "inset 0px 1px 0px rgba(255,255,255,0.05)" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "12px 17px 8px" }}>
-                              <AlertCircle size={12} color="#fe9a00" />
-                              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.05em", color: "#fe9a00", textTransform: "uppercase" as const }}>PRIORITY FIX</span>
-                            </div>
-                            <div style={{ padding: "0 17px 14px" }}>
-                              <p style={{ fontSize: 13, color: "#e4e4e7", lineHeight: 1.6, margin: 0 }}>{topFix.fix}</p>
-                            </div>
-                          </div>
-                        );
-                      })()}
-                    </div>
+                  {/* ── 5. Design Review Card ── */}
+                  {result.verdict && result.improvements && (
+                    <DesignReviewCard
+                      verdictState={result.overallScore >= 8 ? 'ready' : result.overallScore >= 5 ? 'needs_work' : 'not_ready'}
+                      verdictHeadline={result.verdict}
+                      priorityFix={result.improvements[0]?.fix}
+                      flags={result.improvements.map(imp => ({
+                        category: imp.category,
+                        severity: imp.severity,
+                        issue: imp.fix,
+                        fix: imp.fix,
+                      }))}
+                      onFixWithAI={handleCTARewrite}
+                    />
                   )}
-
-                  {/* ── 6. Category filter + remaining improvements ── */}
-                  {result.improvements && result.improvements.length > 1 && (() => {
-                    const remaining = result.improvements.slice(1);
-                    const categories = Array.from(new Set(remaining.map(i => i.category)));
-                    const CAT_MAP: Record<string, { icon: typeof Layers; color: string; bg: string }> = {
-                      hierarchy: { icon: Layers, color: '#818cf8', bg: 'rgba(129,140,248,0.1)' },
-                      typography: { icon: Type, color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
-                      layout: { icon: Layout, color: '#10b981', bg: 'rgba(16,185,129,0.1)' },
-                      contrast: { icon: AlertCircle, color: '#ef4444', bg: 'rgba(239,68,68,0.1)' },
-                    };
-                    const filtered = selectedCategory === "all" ? remaining : remaining.filter(i => i.category === selectedCategory);
-                    return (
-                      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                        {/* Filter pills */}
-                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" as const }}>
-                          {[
-                            { key: "all", label: "All", count: remaining.length },
-                            ...categories.map(cat => ({ key: cat, label: cat.charAt(0).toUpperCase() + cat.slice(1), count: remaining.filter(i => i.category === cat).length })),
-                          ].map(({ key, label, count }) => (
-                            <button
-                              key={key}
-                              type="button"
-                              onClick={() => setSelectedCategory(key)}
-                              style={{
-                                height: 28, padding: "0 10px", borderRadius: 9999, fontSize: 11, fontWeight: 500, cursor: "pointer",
-                                display: "flex", alignItems: "center", gap: 4, background: "none",
-                                border: selectedCategory === key ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(255,255,255,0.04)",
-                                color: selectedCategory === key ? "#f4f4f5" : "#71717a",
-                                backgroundColor: selectedCategory === key ? "rgba(255,255,255,0.06)" : "transparent",
-                                transition: "background 150ms, border-color 150ms, color 150ms",
-                              }}
-                            >
-                              {label}
-                              <span style={{ fontSize: 9, fontWeight: 600, padding: "0 4px", borderRadius: 4, background: "rgba(255,255,255,0.05)", color: "#71717a" }}>{count}</span>
-                            </button>
-                          ))}
-                        </div>
-
-                        {/* Improvement cards */}
-                        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                          {filtered.map((imp, i) => {
-                            const cat = CAT_MAP[imp.category] ?? CAT_MAP.layout;
-                            const CatIcon = cat.icon;
-                            const sevColor = imp.severity === 'high' ? '#f87171' : imp.severity === 'medium' ? '#fbbf24' : '#a1a1aa';
-                            const sevBg = imp.severity === 'high' ? 'rgba(248,113,113,0.08)' : imp.severity === 'medium' ? 'rgba(251,191,36,0.08)' : 'rgba(161,161,170,0.08)';
-                            return (
-                              <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "12px 14px", borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}>
-                                <div style={{ width: 28, height: 28, borderRadius: 8, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: cat.bg }}>
-                                  <CatIcon size={13} color={cat.color} />
-                                </div>
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                                    <span style={{ fontSize: 12, fontWeight: 600, color: cat.color, textTransform: "capitalize" as const }}>{imp.category}</span>
-                                    <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 4, background: sevBg, color: sevColor, textTransform: "uppercase" as const, letterSpacing: "0.05em" }}>
-                                      {imp.severity} priority
-                                    </span>
-                                  </div>
-                                  <p style={{ fontSize: 13, fontWeight: 500, color: "#e4e4e7", lineHeight: 1.5, margin: 0 }}>{imp.fix}</p>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })()}
-
-                  {/* ── 7. GDN Compliance ── */}
-                  <div style={{ marginTop: 4 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-                      <span style={{ fontSize: 10, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em", color: "#52525b" }}>GDN Compliance</span>
-                      <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.04)" }} />
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                      {/* File size */}
-                      {(() => {
-                        const kb = Math.round(file!.size / 1024);
-                        const over = kb > 150;
-                        return (
-                          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 10, background: over ? "rgba(245,158,11,0.06)" : "rgba(16,185,129,0.06)", border: `1px solid ${over ? "rgba(245,158,11,0.2)" : "rgba(16,185,129,0.2)"}` }}>
-                            {over ? <AlertTriangle size={13} color="#f59e0b" /> : <CheckCircle size={13} color="#10b981" />}
-                            <span style={{ fontSize: 12, color: over ? "#f59e0b" : "#10b981" }}>{kb}KB {over ? "— over GDN 150KB limit" : "— within GDN file size limit"}</span>
-                          </div>
-                        );
-                      })()}
-                      {/* Text ratio */}
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 10, background: result.textRatioFlag ? "rgba(245,158,11,0.06)" : "rgba(16,185,129,0.06)", border: `1px solid ${result.textRatioFlag ? "rgba(245,158,11,0.2)" : "rgba(16,185,129,0.2)"}` }}>
-                        {result.textRatioFlag ? <AlertTriangle size={13} color="#f59e0b" /> : <CheckCircle size={13} color="#10b981" />}
-                        <span style={{ fontSize: 12, color: result.textRatioFlag ? "#f59e0b" : "#10b981" }}>{result.textToImageRatio} text {result.textRatioFlag ? "— Google recommends under 30%" : "— within text ratio policy"}</span>
-                      </div>
-                      {/* Format match */}
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 10, background: detectedFormat ? "rgba(16,185,129,0.06)" : "rgba(245,158,11,0.06)", border: `1px solid ${detectedFormat ? "rgba(16,185,129,0.2)" : "rgba(245,158,11,0.2)"}` }}>
-                        {detectedFormat ? <CheckCircle size={13} color="#10b981" /> : <AlertTriangle size={13} color="#f59e0b" />}
-                        <span style={{ fontSize: 12, color: detectedFormat ? "#10b981" : "#f59e0b" }}>{detectedFormat ? `${detectedFormat.key} — recognized GDN format` : "Non-standard size — verify placement eligibility"}</span>
-                      </div>
-                      {/* CTA presence */}
-                      {result.scores.ctaVisibility < 5 && (
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 10, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)" }}>
-                          <XCircle size={13} color="#ef4444" />
-                          <span style={{ fontSize: 12, color: "#ef4444" }}>Weak CTA — display ads require an in-creative call to action</span>
-                        </div>
-                      )}
-                      {/* Logo visibility */}
-                      {result.scores.brandClarity < 5 && (
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 10, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)" }}>
-                          <XCircle size={13} color="#ef4444" />
-                          <span style={{ fontSize: 12, color: "#ef4444" }}>Brand/logo unclear — viewers can't identify advertiser in 1–2 seconds</span>
-                        </div>
-                      )}
-                      {/* Placement risk */}
-                      <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "8px 12px", borderRadius: 10, background: result.placementRisk === "high" ? "rgba(239,68,68,0.06)" : result.placementRisk === "medium" ? "rgba(245,158,11,0.06)" : "rgba(16,185,129,0.06)", border: `1px solid ${result.placementRisk === "high" ? "rgba(239,68,68,0.2)" : result.placementRisk === "medium" ? "rgba(245,158,11,0.2)" : "rgba(16,185,129,0.2)"}` }}>
-                        <div style={{ flexShrink: 0, marginTop: 1 }}>
-                          {result.placementRisk === "high" && <XCircle size={13} color="#ef4444" />}
-                          {result.placementRisk === "medium" && <AlertTriangle size={13} color="#f59e0b" />}
-                          {result.placementRisk === "low" && <CheckCircle size={13} color="#10b981" />}
-                        </div>
-                        <div>
-                          <span style={{ fontSize: 12, fontWeight: 500, color: result.placementRisk === "high" ? "#ef4444" : result.placementRisk === "medium" ? "#f59e0b" : "#10b981", display: "block" }}>
-                            {result.placementRisk === "high" ? "High" : result.placementRisk === "medium" ? "Medium" : "Low"} placement risk
-                          </span>
-                          <span style={{ fontSize: 11, color: "#71717a" }}>{result.placementRiskNote}</span>
-                        </div>
-                      </div>
-                      {/* Animation / GIF loops */}
-                      {file?.type === "image/gif" && (
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 10, background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)" }}>
-                          <AlertTriangle size={13} color="#f59e0b" />
-                          <span style={{ fontSize: 12, color: "#f59e0b" }}>GIF detected — GDN limits animation to 30 seconds, max 3 loops</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
 
                 </div>
               )}

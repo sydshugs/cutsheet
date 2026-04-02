@@ -112,7 +112,7 @@ export function ProgressCard({ file, status, onCancel, onComplete, format = "vid
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.4 }}
-              className="absolute inset-0 w-full h-full object-cover"
+              className={`absolute inset-0 w-full h-full ${format === "static" ? "object-contain" : "object-cover"}`}
             />
           ) : !isImage && previewUrl ? (
             <video
@@ -142,7 +142,7 @@ export function ProgressCard({ file, status, onCancel, onComplete, format = "vid
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.4 }}
-              className="absolute inset-0 w-full h-full object-cover"
+              className={`absolute inset-0 w-full h-full ${format === "static" ? "object-contain" : "object-cover"}`}
             />
           ) : (
             <div className="absolute inset-0 bg-white/[0.02]" />
