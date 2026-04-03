@@ -1,5 +1,6 @@
 import { useRef, useState, useCallback, useEffect, type RefObject } from "react";
 import { CloudUpload, Video, Image } from "lucide-react";
+import { cn } from "../lib/utils";
 import { sanitizeFileName } from "../utils/sanitize";
 
 interface VideoDropzoneProps {
@@ -12,6 +13,10 @@ interface VideoDropzoneProps {
   onUrlSubmit?: (url: string) => void;
   /** Override the dropzone heading text (default: "Drop your ad here") */
   heading?: string;
+  /** Override the small format line under the heading (default by acceptImages) */
+  formatHint?: string;
+  /** Extra classes on the outer wrapper (e.g. max-w-none for two-column layouts) */
+  wrapperClassName?: string;
 }
 
 const VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
@@ -22,7 +27,18 @@ function isImageFile(f: File): boolean {
   return f.type.startsWith("image/");
 }
 
-export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, isDark = true, acceptImages = false, onUrlSubmit, heading = "Drop your ad here" }: VideoDropzoneProps) {
+export function VideoDropzone({
+  onFileSelect,
+  file,
+  disabled = false,
+  videoRef,
+  isDark = true,
+  acceptImages = false,
+  onUrlSubmit,
+  heading = "Drop your ad here",
+  formatHint,
+  wrapperClassName,
+}: VideoDropzoneProps) {
   const acceptedTypes = acceptImages ? [...VIDEO_TYPES, ...IMAGE_TYPES] : VIDEO_TYPES;
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -117,16 +133,18 @@ export function VideoDropzone({ onFileSelect, file, disabled = false, videoRef, 
 
   // Empty state — dropzone
   if (!file) {
-    const hintText = acceptImages ? "MP4 · MOV · JPG · PNG · up to 500MB" : "MP4 · MOV · WEBM · up to 500MB";
+    const hintText =
+      formatHint ??
+      (acceptImages ? "MP4 · MOV · JPG · PNG · up to 500MB" : "MP4 · MOV · WEBM · up to 500MB");
     return (
-      <div className="w-full max-w-[640px] mx-auto">
+      <div className={cn("mx-auto w-full max-w-[640px]", wrapperClassName)}>
         <div
           onClick={() => !disabled && fileInputRef.current?.click()}
           onDrop={onDrop}
           onDragOver={onDragOver}
           onDragLeave={onDragLeave}
           role="button"
-          aria-label="Drop your ad here to upload"
+          aria-label={`${heading} — choose file to upload`}
           aria-describedby="dropzone-hints"
           tabIndex={0}
           onKeyDown={(e) => {

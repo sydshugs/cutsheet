@@ -274,6 +274,24 @@ function MetricsRow({
   );
 }
 
+/** Figma 263-1335 — body copy with "Version C" emphasized when it appears in AI text */
+function HybridOpportunityBody({ text }: { text: string }) {
+  const parts = text.split(/(Version C)/gi);
+  return (
+    <p className="mt-3 text-[13px] leading-relaxed text-[color:var(--ab-test-type-inactive-text)]">
+      {parts.map((part, i) =>
+        /^Version C$/i.test(part) ? (
+          <strong key={i} className="font-medium text-[color:var(--ink)]">
+            {part}
+          </strong>
+        ) : (
+          <span key={i}>{part}</span>
+        ),
+      )}
+    </p>
+  );
+}
+
 export interface PreFlightResultsViewProps {
   comparison: ComparisonResult;
   analyses: AnalysisResult[];
@@ -435,15 +453,10 @@ export function PreFlightResultsView({
           </div>
         </section>
 
-        {/* Insight cards */}
-        <section
-          className={cn(
-            "mb-10 grid grid-cols-1 gap-4 sm:mb-12 sm:gap-5",
-            comparison.hybridNote ? "sm:grid-cols-2" : "sm:max-w-xl",
-          )}
-        >
+        {/* Insight cards — Figma: recommendation (left) + hybrid 263-1335 (right) */}
+        <section className="mb-10 grid grid-cols-1 gap-4 sm:mb-12 sm:grid-cols-2 sm:items-stretch sm:gap-5">
           <div
-            className="relative overflow-hidden rounded-2xl border pl-1 sm:pl-1"
+            className="relative flex min-h-0 flex-col overflow-hidden rounded-2xl border pl-1 sm:pl-1"
             style={{
               background: "var(--ab-results-rec-card-bg)",
               borderColor: "var(--ab-results-rec-card-border)",
@@ -457,7 +470,7 @@ export function PreFlightResultsView({
               }}
               aria-hidden
             />
-            <div className="px-5 py-6 pl-6 sm:px-7 sm:py-7">
+            <div className="flex flex-1 flex-col px-5 py-6 pl-6 sm:px-7 sm:py-7">
               <div className="mb-3 flex items-center gap-2">
                 <Check className="h-4 w-4 text-[color:var(--ab-results-winner-pill-text)]" strokeWidth={2.5} aria-hidden />
                 <span className="text-[10.5px] font-bold uppercase tracking-[0.12em] text-[color:var(--ab-results-winner-pill-text)]">
@@ -473,36 +486,39 @@ export function PreFlightResultsView({
             </div>
           </div>
 
-          {comparison.hybridNote ? (
+          <div
+            className="relative flex min-h-0 flex-col overflow-hidden rounded-2xl border pl-1 sm:pl-1"
+            style={{
+              background: "var(--ab-results-hybrid-card-bg)",
+              borderColor: "var(--ab-results-hybrid-card-border)",
+            }}
+          >
             <div
-              className="relative overflow-hidden rounded-2xl border pl-1 sm:pl-1"
+              className="absolute bottom-0 left-0 top-0 w-1 rounded-l-2xl"
               style={{
-                background: "var(--ab-results-hybrid-card-bg)",
-                borderColor: "var(--ab-results-hybrid-card-border)",
+                background: "var(--ab-results-hybrid-accent-bar)",
+                boxShadow: "var(--ab-results-hybrid-bar-glow)",
               }}
-            >
-              <div
-                className="absolute bottom-0 left-0 top-0 w-1 rounded-l-2xl"
-                style={{
-                  background: "var(--ab-results-hybrid-accent-bar)",
-                  boxShadow: "0 0 19px rgba(99,102,241,0.35)",
-                }}
-                aria-hidden
-              />
-              <div className="px-5 py-6 pl-6 sm:px-7 sm:py-7">
-                <div className="mb-3 flex items-center gap-2">
-                  <Zap className="h-4 w-4 text-[color:var(--decon-accent-light)]" aria-hidden />
-                  <span className="text-[10.5px] font-bold uppercase tracking-[0.12em] text-[color:var(--decon-accent-light)]">
-                    Hybrid Opportunity
-                  </span>
-                </div>
-                <h3 className="text-lg font-semibold tracking-tight text-[color:var(--ink)] sm:text-xl">Create Version C</h3>
-                <p className="mt-3 text-[13px] leading-relaxed text-[color:var(--ab-test-type-inactive-text)]">
-                  {comparison.hybridNote}
-                </p>
+              aria-hidden
+            />
+            <div className="flex flex-1 flex-col px-5 py-6 pl-6 sm:px-7 sm:py-7">
+              <div className="mb-3 flex items-center gap-2">
+                <Zap className="h-4 w-4 shrink-0 text-[color:var(--decon-accent-light)]" strokeWidth={2.25} aria-hidden />
+                <span className="text-[10.5px] font-bold uppercase tracking-[0.12em] text-[color:var(--decon-accent-light)]">
+                  Hybrid Opportunity
+                </span>
               </div>
+              <h3 className="text-lg font-semibold tracking-tight text-[color:var(--ink)] sm:text-xl">Create Version C</h3>
+              {comparison.hybridNote ? (
+                <HybridOpportunityBody text={comparison.hybridNote} />
+              ) : (
+                <p className="mt-3 text-[13px] leading-relaxed text-[color:var(--ab-test-type-inactive-text)]">
+                  No hybrid was suggested for this run. Use the head-to-head metrics to combine the strongest hook, message,
+                  CTA, or production cues from each variant into a new creative.
+                </p>
+              )}
             </div>
-          ) : null}
+          </div>
         </section>
 
         {/* Footer actions */}

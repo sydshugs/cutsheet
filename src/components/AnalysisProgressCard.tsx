@@ -8,6 +8,7 @@ import {
   type LucideIcon
 } from "lucide-react";
 import { useThumbnail } from "../hooks/useThumbnail";
+import { cn } from "../lib/utils";
 import { sanitizeFileName } from "../utils/sanitize";
 
 // Page-specific configurations
@@ -202,7 +203,17 @@ export function AnalysisProgressCard({
       <div className="flex-1 flex items-center justify-center p-6">
         {/* Unified container — split panel */}
         <div
-          className="w-full max-w-[720px] min-w-[480px] bg-[#111113] border border-white/[0.06] rounded-2xl overflow-hidden flex flex-col md:flex-row min-h-[360px]"
+          className={cn(
+            "w-full max-w-[720px] min-w-0 sm:min-w-[320px] md:min-w-[480px] bg-[#111113] border rounded-2xl overflow-hidden flex flex-col md:flex-row min-h-[360px]",
+            pageType === "competitor"
+              ? "border-[color:var(--competitor-loading-card-border)]"
+              : "border-white/[0.06]",
+          )}
+          style={
+            pageType === "competitor"
+              ? { boxShadow: "var(--competitor-loading-card-shadow)" }
+              : undefined
+          }
         >
           {/* ── Left half — creative preview ── */}
           <div className="flex-1 bg-[#1a1a1c] border-b md:border-b-0 md:border-r border-white/[0.05] flex flex-col items-center justify-center relative min-h-[220px] md:min-h-[360px] p-6">

@@ -336,7 +336,7 @@ export function PreFlightView({ apiKey }: PreFlightViewProps) {
                         className="flex min-h-[200px] cursor-pointer flex-col items-center justify-center gap-3 py-2 transition-opacity duration-150 hover:opacity-90 focus-within:opacity-100"
                       >
                         <CloudUpload className="h-8 w-8 text-[color:var(--ink-muted)]" strokeWidth={1.75} aria-hidden />
-                        <span className="text-sm font-medium text-[color:var(--ink-secondary)]">Upload video</span>
+                        <span className="text-sm font-medium text-[color:var(--ink-secondary)]">Drop creative here</span>
                         <span className="font-mono text-[11px] text-[color:var(--ab-variant-label)]">MP4 · MOV · JPG</span>
                         <input
                           id={fileInputId}

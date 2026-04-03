@@ -1,10 +1,40 @@
-// CompetitorResult.tsx — Full comparison result display
+// CompetitorResult.tsx — Full comparison result display (winner / loser / tied layouts)
 
-import { useState } from "react";
-import { TrendingUp, TrendingDown, Minus, CheckCircle, XCircle, Zap, ChevronDown } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { Link } from "react-router-dom";
+import {
+  Minus,
+  Check,
+  CheckCircle,
+  XCircle,
+  Zap,
+  ChevronDown,
+  Target,
+  TrendingDown,
+  TrendingUp,
+  Sparkles,
+  BarChart3,
+  ArrowUpRight,
+} from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import type { CompetitorResult as CResult } from "../services/competitorService";
+import { cn } from "../lib/utils";
+import { useThumbnail } from "../hooks/useThumbnail";
+import { getBenchmark } from "../lib/platformBenchmarks";
+import type { CompetitorResult as CResult, GapAnalysis } from "../services/competitorService";
 import { ScoreCard } from "./ScoreCard";
+
+// ─── OUTCOME (scores are source of truth for which page to show) ───────────
+
+export type CompetitorOutcome = "winning" | "losing" | "tied";
+
+/** Which results layout to show: your overall vs competitor overall. */
+export function getCompetitorOutcome(result: CResult): CompetitorOutcome {
+  const y = result.your.scores?.overall ?? 0;
+  const c = result.competitor.scores?.overall ?? 0;
+  if (y > c) return "winning";
+  if (y < c) return "losing";
+  return "tied";
+}
 
 // ─── HELPERS ────────────────────────────────────────────────────────────────
 
@@ -13,9 +43,9 @@ function truncate(s: string, n: number) {
 }
 
 function diffColor(diff: number) {
-  if (diff > 0) return "#10b981";
-  if (diff < 0) return "#ef4444";
-  return "#71717a";
+  if (diff > 0) return "var(--success)";
+  if (diff < 0) return "var(--error)";
+  return "var(--ink-muted)";
 }
 
 function diffLabel(diff: number) {
@@ -26,256 +56,246 @@ function diffLabel(diff: number) {
 const IMPACT_COLORS = { high: "#10b981", medium: "#f59e0b", low: "#71717a" } as const;
 const EFFORT_LABELS = { quick: "Quick win", medium: "Medium effort", heavy: "Heavy lift" } as const;
 
-// ─── COMPONENT ──────────────────────────────────────────────────────────────
+// ─── SHARED SECTIONS ───────────────────────────────────────────────────────
 
-export function CompetitorResultPanel({
-  result,
+function ScoreComparisonTable({
+  yourScores,
+  compScores,
   yourFileName,
   competitorFileName,
 }: {
-  result: CResult;
+  yourScores: NonNullable<CResult["your"]["scores"]>;
+  compScores: NonNullable<CResult["competitor"]["scores"]>;
   yourFileName: string;
   competitorFileName: string;
 }) {
-  const { gap } = result;
-  const [yourExpanded, setYourExpanded] = useState(false);
-  const [compExpanded, setCompExpanded] = useState(false);
-
-  const yourScores = result.your.scores!;
-  const compScores = result.competitor.scores!;
-
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      {/* ── VERDICT BANNER ──────────────────────────────────────────── */}
+    <div
+      className="overflow-hidden rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)]"
+    >
       <div
-        style={{
-          padding: 20,
-          borderRadius: 12,
-          border: `1px solid ${gap.verdict === "winning" ? "rgba(16,185,129,0.2)" : gap.verdict === "losing" ? "rgba(239,68,68,0.2)" : "rgba(245,158,11,0.2)"}`,
-          background: gap.verdict === "winning" ? "rgba(16,185,129,0.06)" : gap.verdict === "losing" ? "rgba(239,68,68,0.06)" : "rgba(245,158,11,0.06)",
-        }}
+        className="grid border-b border-[color:var(--border)] bg-[color:var(--surface-el)] px-4 py-2.5"
+        style={{ gridTemplateColumns: "1fr 60px 30px 60px 50px" }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-          {gap.verdict === "winning" && <TrendingUp size={20} color="#10b981" />}
-          {gap.verdict === "losing" && <TrendingDown size={20} color="#ef4444" />}
-          {gap.verdict === "tied" && <Minus size={20} color="#f59e0b" />}
-          <span style={{
-            fontSize: 18,
-            fontWeight: 600,
-            color: gap.verdict === "winning" ? "#10b981" : gap.verdict === "losing" ? "#ef4444" : "#f59e0b",
-          }}>
-            {gap.verdict === "winning" ? "You're winning" : gap.verdict === "losing" ? "Competitor is ahead" : "Evenly matched"}
-          </span>
-          {gap.scoreDiff !== 0 && (
-            <span style={{
-              fontSize: 14,
-              color: gap.scoreDiff > 0 ? "#10b981" : "#ef4444",
-            }}>
-              {gap.scoreDiff > 0 ? `+${gap.scoreDiff} points ahead` : `${Math.abs(gap.scoreDiff)} points behind`}
-            </span>
-          )}
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-          <span style={{
-            fontSize: 12,
-            color: "#818cf8",
-            background: "rgba(99,102,241,0.1)",
-            borderRadius: 9999,
-            padding: "3px 10px",
-          }}>
-            {gap.winProbability}% win probability
-          </span>
-        </div>
-        <p style={{ fontSize: 14, color: "#a1a1aa", lineHeight: 1.6, margin: 0 }}>{gap.summary}</p>
+        <span className="text-[11px] uppercase text-[color:var(--ink-muted)]">Metric</span>
+        <span className="text-center text-[11px] text-[color:var(--ink-muted)]">{truncate(yourFileName, 12)}</span>
+        <span />
+        <span className="text-center text-[11px] text-[color:var(--ink-muted)]">{truncate(competitorFileName, 12)}</span>
+        <span className="text-right text-[11px] text-[color:var(--ink-muted)]">Diff</span>
       </div>
+      {(["overall", "hook", "clarity", "cta", "production"] as const).map((key) => {
+        const labels: Record<string, string> = {
+          overall: "Overall",
+          hook: "Hook",
+          clarity: "Clarity",
+          cta: "CTA",
+          production: "Production",
+        };
+        const yours = yourScores[key];
+        const theirs = compScores[key];
+        const diff = yours - theirs;
+        return (
+          <div
+            key={key}
+            className="grid items-center border-b border-[color:var(--border)] px-4 py-2 last:border-b-0"
+            style={{ gridTemplateColumns: "1fr 60px 30px 60px 50px" }}
+          >
+            <span
+              className={cn(
+                "text-[13px]",
+                key === "overall" ? "font-semibold text-[color:var(--ink)]" : "text-[color:var(--ink-secondary)]",
+              )}
+            >
+              {labels[key]}
+            </span>
+            <span
+              className="text-center text-[14px] font-semibold"
+              style={{ fontFamily: "var(--mono)", color: diffColor(diff) }}
+            >
+              {yours}
+            </span>
+            <span className="text-center text-[11px] text-[color:var(--ink-muted)]">vs</span>
+            <span
+              className="text-center text-[14px] font-semibold"
+              style={{ fontFamily: "var(--mono)", color: diffColor(-diff) }}
+            >
+              {theirs}
+            </span>
+            <span
+              className="text-right text-[12px] font-medium"
+              style={{ fontFamily: "var(--mono)", color: diffColor(diff) }}
+            >
+              {diff !== 0 ? diffLabel(diff) : "—"}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
-      {/* ── SCORE COMPARISON TABLE ──────────────────────────────────── */}
-      <div style={{
-        background: "rgba(255,255,255,0.02)",
-        border: "1px solid rgba(255,255,255,0.06)",
-        borderRadius: 12,
-        overflow: "hidden",
-      }}>
-        {/* Header */}
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 60px 30px 60px 50px",
-          padding: "10px 16px",
-          borderBottom: "1px solid rgba(255,255,255,0.06)",
-          background: "rgba(255,255,255,0.02)",
-        }}>
-          <span style={{ fontSize: 11, color: "#52525b", textTransform: "uppercase" }}>Metric</span>
-          <span style={{ fontSize: 11, color: "#52525b", textAlign: "center" }}>{truncate(yourFileName, 12)}</span>
-          <span />
-          <span style={{ fontSize: 11, color: "#52525b", textAlign: "center" }}>{truncate(competitorFileName, 12)}</span>
-          <span style={{ fontSize: 11, color: "#52525b", textAlign: "right" }}>Diff</span>
-        </div>
-        {/* Rows */}
-        {(["overall", "hook", "clarity", "cta", "production"] as const).map((key) => {
-          const labels: Record<string, string> = { overall: "Overall", hook: "Hook", clarity: "Clarity", cta: "CTA", production: "Production" };
-          const yours = yourScores[key];
-          const theirs = compScores[key];
-          const diff = yours - theirs;
+function StrengthsSection({ strengths }: { strengths: GapAnalysis["strengths"] }) {
+  if (strengths.length === 0) return null;
+  return (
+    <div>
+      <div className="mb-2.5 flex items-center gap-1.5">
+        <CheckCircle className="h-4 w-4 shrink-0 text-[color:var(--success)]" aria-hidden />
+        <span className="text-sm font-semibold text-[color:var(--success)]">Where you&apos;re winning</span>
+      </div>
+      <div className="flex flex-col gap-2">
+        {strengths.map((s, i) => (
+          <div
+            key={i}
+            className="rounded-[10px] border-l-2 border-[color:var(--success)] bg-[color-mix(in_srgb,var(--success)_8%,transparent)] px-3.5 py-2.5"
+          >
+            <div className="mb-1 flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-[color-mix(in_srgb,var(--accent)_12%,transparent)] px-2 py-0.5 text-[11px] text-[color:var(--accent-light)]">
+                {s.metric}
+              </span>
+              <span className="text-xs text-[color:var(--ink-muted)]">
+                {s.yourScore} vs {s.competitorScore}
+              </span>
+            </div>
+            <p className="m-0 text-[13px] leading-relaxed text-[color:var(--ink-secondary)]">{s.insight}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function WeaknessesSection({ weaknesses }: { weaknesses: GapAnalysis["weaknesses"] }) {
+  if (weaknesses.length === 0) return null;
+  return (
+    <div>
+      <div className="mb-2.5 flex items-center gap-1.5">
+        <XCircle className="h-4 w-4 shrink-0 text-[color:var(--error)]" aria-hidden />
+        <span className="text-sm font-semibold text-[color:var(--error)]">Where they&apos;re beating you</span>
+      </div>
+      <div className="flex flex-col gap-2">
+        {weaknesses.map((w, i) => (
+          <div
+            key={i}
+            className="rounded-[10px] border-l-2 border-[color:var(--error)] bg-[color-mix(in_srgb,var(--error)_8%,transparent)] px-3.5 py-2.5"
+          >
+            <div className="mb-1 flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-[color-mix(in_srgb,var(--accent)_12%,transparent)] px-2 py-0.5 text-[11px] text-[color:var(--accent-light)]">
+                {w.metric}
+              </span>
+              <span className="text-xs text-[color:var(--ink-muted)]">
+                {w.yourScore} vs {w.competitorScore}
+              </span>
+            </div>
+            <p className="m-0 text-[13px] leading-relaxed text-[color:var(--ink-secondary)]">{w.insight}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ActionPlanSection({
+  actionPlan,
+  heading,
+}: {
+  actionPlan: GapAnalysis["actionPlan"];
+  heading: string;
+}) {
+  if (actionPlan.length === 0) return null;
+  return (
+    <div>
+      <div className="mb-2.5 flex items-center gap-1.5">
+        <Zap className="h-4 w-4 shrink-0 text-[color:var(--ink)]" aria-hidden />
+        <span className="text-sm font-semibold text-[color:var(--ink)]">{heading}</span>
+      </div>
+      <div className="flex flex-col gap-2">
+        {actionPlan.map((a, i) => {
+          const priorityColors = { 1: "#6366f1", 2: "#f59e0b", 3: "#71717a" };
+          const pColor = priorityColors[a.priority] ?? "#71717a";
           return (
             <div
-              key={key}
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 60px 30px 60px 50px",
-                padding: "8px 16px",
-                borderBottom: "1px solid rgba(255,255,255,0.03)",
-                alignItems: "center",
-              }}
+              key={i}
+              className={cn(
+                "rounded-[10px] border border-[color:var(--border)] bg-[color:var(--surface)] px-3.5 py-3",
+                a.priority === 1 && "border-[color:var(--accent-border)]",
+                a.priority === 3 && "opacity-80",
+              )}
             >
-              <span style={{ fontSize: 13, color: key === "overall" ? "#f4f4f5" : "#a1a1aa", fontWeight: key === "overall" ? 600 : 400 }}>
-                {labels[key]}
-              </span>
-              <span style={{ fontSize: 14, fontFamily: "var(--font-mono, monospace)", textAlign: "center", color: diffColor(diff), fontWeight: 600 }}>
-                {yours}
-              </span>
-              <span style={{ fontSize: 11, color: "#52525b", textAlign: "center" }}>vs</span>
-              <span style={{ fontSize: 14, fontFamily: "var(--font-mono, monospace)", textAlign: "center", color: diffColor(-diff), fontWeight: 600 }}>
-                {theirs}
-              </span>
-              <span style={{
-                fontSize: 12,
-                fontFamily: "var(--font-mono, monospace)",
-                textAlign: "right",
-                color: diffColor(diff),
-                fontWeight: 500,
-              }}>
-                {diff !== 0 ? diffLabel(diff) : "—"}
-              </span>
+              <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
+                <span
+                  className="rounded-full px-2 py-0.5 text-[10px] font-bold"
+                  style={{ color: pColor, background: `${pColor}15` }}
+                >
+                  P{a.priority}
+                </span>
+                <span
+                  className="rounded-full px-2 py-0.5 text-[10px]"
+                  style={{ color: IMPACT_COLORS[a.impact], background: `${IMPACT_COLORS[a.impact]}15` }}
+                >
+                  {a.impact === "high" ? "High impact" : a.impact === "medium" ? "Medium" : "Low"}
+                </span>
+                <span className="rounded-full bg-[color:var(--surface-el)] px-2 py-0.5 text-[10px] text-[color:var(--ink-muted)]">
+                  {EFFORT_LABELS[a.effort] ?? a.effort}
+                </span>
+                <span className="rounded-full bg-[color-mix(in_srgb,var(--accent)_12%,transparent)] px-2 py-0.5 text-[10px] text-[color:var(--accent-light)]">
+                  {a.metric}
+                </span>
+              </div>
+              <p
+                className={cn(
+                  "m-0 leading-relaxed text-[color:var(--ink)]",
+                  a.priority === 1 ? "text-sm font-semibold" : "text-[13px] font-normal",
+                )}
+              >
+                {a.action}
+              </p>
             </div>
           );
         })}
       </div>
+    </div>
+  );
+}
 
-      {/* ── STRENGTHS ──────────────────────────────────────────────── */}
-      {gap.strengths.length > 0 && (
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
-            <CheckCircle size={16} color="#10b981" />
-            <span style={{ fontSize: 14, fontWeight: 600, color: "#10b981" }}>Where you're winning</span>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {gap.strengths.map((s, i) => (
-              <div key={i} style={{
-                padding: "10px 14px",
-                borderRadius: 10,
-                background: "rgba(16,185,129,0.04)",
-                borderLeft: "2px solid #10b981",
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                  <span style={{ fontSize: 11, color: "#818cf8", background: "rgba(99,102,241,0.1)", borderRadius: 9999, padding: "2px 8px" }}>{s.metric}</span>
-                  <span style={{ fontSize: 12, color: "#71717a" }}>{s.yourScore} vs {s.competitorScore}</span>
-                </div>
-                <p style={{ fontSize: 13, color: "#a1a1aa", margin: 0, lineHeight: 1.5 }}>{s.insight}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ── WEAKNESSES ─────────────────────────────────────────────── */}
-      {gap.weaknesses.length > 0 && (
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
-            <XCircle size={16} color="#ef4444" />
-            <span style={{ fontSize: 14, fontWeight: 600, color: "#ef4444" }}>Where they're beating you</span>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {gap.weaknesses.map((w, i) => (
-              <div key={i} style={{
-                padding: "10px 14px",
-                borderRadius: 10,
-                background: "rgba(239,68,68,0.04)",
-                borderLeft: "2px solid #ef4444",
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                  <span style={{ fontSize: 11, color: "#818cf8", background: "rgba(99,102,241,0.1)", borderRadius: 9999, padding: "2px 8px" }}>{w.metric}</span>
-                  <span style={{ fontSize: 12, color: "#71717a" }}>{w.yourScore} vs {w.competitorScore}</span>
-                </div>
-                <p style={{ fontSize: 13, color: "#a1a1aa", margin: 0, lineHeight: 1.5 }}>{w.insight}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ── ACTION PLAN ────────────────────────────────────────────── */}
-      {gap.actionPlan.length > 0 && (
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
-            <Zap size={16} color="#f4f4f5" />
-            <span style={{ fontSize: 14, fontWeight: 600, color: "#f4f4f5" }}>Action plan to win</span>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {gap.actionPlan.map((a, i) => {
-              const priorityColors = { 1: "#6366f1", 2: "#f59e0b", 3: "#71717a" };
-              const pColor = priorityColors[a.priority] ?? "#71717a";
-              return (
-                <div
-                  key={i}
-                  style={{
-                    padding: "12px 14px",
-                    borderRadius: 10,
-                    background: "rgba(255,255,255,0.02)",
-                    border: `1px solid ${a.priority === 1 ? "rgba(99,102,241,0.3)" : "rgba(255,255,255,0.06)"}`,
-                    opacity: a.priority === 3 ? 0.8 : 1,
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6, flexWrap: "wrap" }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: pColor, background: `${pColor}15`, borderRadius: 9999, padding: "2px 8px" }}>
-                      P{a.priority}
-                    </span>
-                    <span style={{ fontSize: 10, color: IMPACT_COLORS[a.impact], background: `${IMPACT_COLORS[a.impact]}15`, borderRadius: 9999, padding: "2px 8px" }}>
-                      {a.impact === "high" ? "High impact" : a.impact === "medium" ? "Medium" : "Low"}
-                    </span>
-                    <span style={{ fontSize: 10, color: "#71717a", background: "rgba(255,255,255,0.04)", borderRadius: 9999, padding: "2px 8px" }}>
-                      {EFFORT_LABELS[a.effort] ?? a.effort}
-                    </span>
-                    <span style={{ fontSize: 10, color: "#818cf8", background: "rgba(99,102,241,0.1)", borderRadius: 9999, padding: "2px 8px" }}>
-                      {a.metric}
-                    </span>
-                  </div>
-                  <p style={{ fontSize: a.priority === 1 ? 14 : 13, fontWeight: a.priority === 1 ? 600 : 400, color: "#f4f4f5", margin: 0, lineHeight: 1.5 }}>
-                    {a.action}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* ── INDIVIDUAL SCORECARDS (collapsible) ────────────────────── */}
+function CollapsibleDualScorecards({
+  result,
+  yourExpanded,
+  setYourExpanded,
+  compExpanded,
+  setCompExpanded,
+}: {
+  result: CResult;
+  yourExpanded: boolean;
+  setYourExpanded: (v: boolean) => void;
+  compExpanded: boolean;
+  setCompExpanded: (v: boolean) => void;
+}) {
+  return (
+    <>
       {[
         { label: "Your Ad", expanded: yourExpanded, toggle: () => setYourExpanded(!yourExpanded), data: result.your },
-        { label: "Competitor Ad", expanded: compExpanded, toggle: () => setCompExpanded(!compExpanded), data: result.competitor },
+        {
+          label: "Competitor Ad",
+          expanded: compExpanded,
+          toggle: () => setCompExpanded(!compExpanded),
+          data: result.competitor,
+        },
       ].map(({ label, expanded, toggle, data }) => (
         <div key={label}>
           <button
             type="button"
             onClick={toggle}
-            style={{
-              width: "100%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "10px 14px",
-              background: "rgba(255,255,255,0.02)",
-              border: "1px solid rgba(255,255,255,0.06)",
-              borderRadius: expanded ? "12px 12px 0 0" : 12,
-              cursor: "pointer",
-              color: "#a1a1aa",
-              fontSize: 13,
-              fontWeight: 500,
-              transition: "all 150ms",
-            }}
+            className={cn(
+              "flex w-full cursor-pointer items-center justify-between border border-[color:var(--border)] bg-[color:var(--surface)] px-3.5 py-2.5 text-[13px] font-medium text-[color:var(--ink-secondary)] transition-[border-radius,background-color] duration-150",
+              "hover:bg-[color:var(--surface-el)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)]",
+              expanded ? "rounded-t-xl border-b-0" : "rounded-xl",
+            )}
           >
             {label} — Full Scorecard
-            <ChevronDown size={14} style={{ transform: expanded ? "rotate(180deg)" : "none", transition: "transform 200ms" }} />
+            <ChevronDown
+              className={cn("h-3.5 w-3.5 shrink-0 transition-transform duration-200", expanded && "rotate-180")}
+              aria-hidden
+            />
           </button>
           <AnimatePresence>
             {expanded && data.scores && (
@@ -284,7 +304,7 @@ export function CompetitorResultPanel({
                 animate={{ height: "auto", opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
                 transition={{ duration: 0.3 }}
-                style={{ overflow: "hidden", borderLeft: "1px solid rgba(255,255,255,0.06)", borderRight: "1px solid rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.06)", borderRadius: "0 0 12px 12px" }}
+                className="overflow-hidden rounded-b-xl border border-t-0 border-[color:var(--border)]"
               >
                 <ScoreCard
                   scores={data.scores}
@@ -299,6 +319,957 @@ export function CompetitorResultPanel({
           </AnimatePresence>
         </div>
       ))}
+    </>
+  );
+}
+
+function WinProbabilityPill({ value }: { value: number }) {
+  return (
+    <span className="inline-flex items-center rounded-full bg-[color-mix(in_srgb,var(--accent)_12%,transparent)] px-2.5 py-1 text-xs text-[color:var(--accent-light)]">
+      {value}% modeled win probability
+    </span>
+  );
+}
+
+// ─── LOSING — Figma 263-1702 ───────────────────────────────────────────────
+
+function fmtScoreOne(n: number) {
+  return n.toFixed(1);
+}
+
+function LoserWinProbabilityPill({ value }: { value: number }) {
+  return (
+    <div className="relative flex items-center justify-center gap-2 overflow-hidden rounded-full border border-[color-mix(in_srgb,var(--error)_22%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,var(--surface))] px-5 py-2 shadow-[0_0_20px_color-mix(in_srgb,var(--error)_16%,transparent)]">
+      <span
+        className="h-2.5 w-2.5 shrink-0 rounded-full bg-[color:var(--error)] shadow-[0_0_10px_var(--error)]"
+        aria-hidden
+      />
+      <span className="text-center text-[11px] font-bold uppercase tracking-[0.14em] text-[color-mix(in_srgb,var(--error)_88%,white)]">
+        {value}% win probability
+      </span>
     </div>
   );
+}
+
+function WinnerWinProbabilityPill({ value }: { value: number }) {
+  return (
+    <div className="relative flex items-center justify-center gap-2 overflow-hidden rounded-full border border-[color-mix(in_srgb,var(--success)_28%,transparent)] bg-[color-mix(in_srgb,var(--success)_12%,var(--surface))] px-5 py-2 shadow-[0_0_20px_color-mix(in_srgb,var(--success)_18%,transparent)]">
+      <span
+        className="h-2.5 w-2.5 shrink-0 rounded-full bg-[color:var(--success)] shadow-[0_0_10px_var(--success)]"
+        aria-hidden
+      />
+      <span className="text-center text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--success)]">
+        {value}% win probability
+      </span>
+    </div>
+  );
+}
+
+function formatPredictedCtrBand(overall: number, hook: number) {
+  const bench = getBenchmark("meta");
+  const mult = 0.5 + (overall / 10) * 0.38 + (hook / 10) * 0.28;
+  const low = Math.max(0.12, bench.ctrAvg * mult * 0.72);
+  const high = Math.max(low + 0.08, bench.ctrAvg * mult * 1.28);
+  return {
+    band: `${low.toFixed(1)}% — ${high.toFixed(1)}%`,
+    avgLabel: `~${bench.ctrAvg}%`,
+  };
+}
+
+function budgetTargetsFromResult(
+  budget: CResult["your"]["budget"],
+  overall: number,
+): { target: string; daily: string } {
+  const dailyStr = budget?.daily ?? "";
+  const matches = dailyStr.match(/\$[\d,]+/g);
+  if (matches && matches.length >= 2) {
+    return { target: matches[0]!, daily: matches[matches.length - 1]! };
+  }
+  if (matches && matches.length === 1) {
+    return { target: matches[0]!, daily: matches[0]! };
+  }
+  const base = 120 + Math.round(overall * 38);
+  return { target: `$${Math.round(base * 0.42)}`, daily: `$${base}` };
+}
+
+function fatigueResistanceCopy(hookScore: number): string {
+  const days = hookScore >= 9 ? "14+" : hookScore >= 7 ? "10–14" : hookScore >= 5 ? "7–10" : "5–7";
+  return `Your hook strength gives this creative solid fatigue resistance — estimated ${days} days before meaningful performance decay.`;
+}
+
+function MetricBarRow({ label, value }: { label: string; value: number }) {
+  const pct = Math.min(100, Math.max(0, (value / 10) * 100));
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-end justify-between">
+        <span className="text-[9px] font-semibold uppercase tracking-[0.1em] text-[color:var(--ink-muted)]">{label}</span>
+        <span className="font-mono text-[15px] leading-none text-[color:var(--ink-muted)]">{fmtScoreOne(value)}</span>
+      </div>
+      <div
+        className="h-1.5 w-full overflow-hidden rounded-full"
+        style={{ background: "var(--competitor-metric-bar-track)" }}
+      >
+        <div
+          className="h-full rounded-full"
+          style={{ width: `${pct}%`, background: "var(--competitor-metric-bar-fill)" }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function MatchupMetricCard({
+  label,
+  yours,
+  theirs,
+}: {
+  label: string;
+  yours: number;
+  theirs: number;
+}) {
+  const diff = yours - theirs;
+  const diffStr = (diff > 0 ? "+" : "") + fmtScoreOne(diff);
+  const diffPositive = diff > 0;
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] shadow-[0_1px_3px_rgba(0,0,0,0.1)]">
+      {diff > 0 ? (
+        <div
+          className="pointer-events-none absolute right-0 top-0 size-28 translate-x-1/3 -translate-y-1/3 rounded-full bg-[color-mix(in_srgb,var(--success)_10%,transparent)] blur-3xl"
+          aria-hidden
+        />
+      ) : null}
+      {diff < 0 ? (
+        <div
+          className="pointer-events-none absolute right-0 top-0 size-28 translate-x-1/3 -translate-y-1/3 rounded-full bg-[color-mix(in_srgb,var(--error)_8%,transparent)] blur-3xl"
+          aria-hidden
+        />
+      ) : null}
+      <div className="relative flex flex-col gap-3 p-4">
+        <div className="flex items-start justify-between gap-2">
+          <h4 className="text-xs font-bold uppercase tracking-wide text-[color:var(--ink-secondary)]">{label}</h4>
+          <span
+            className={cn(
+              "shrink-0 rounded-md border px-2 py-0.5 font-mono text-[10px] font-bold",
+              diffPositive
+                ? "border-[color-mix(in_srgb,var(--success)_25%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[color:var(--success)]"
+                : "border-[color-mix(in_srgb,var(--error)_25%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] text-[color-mix(in_srgb,var(--error)_85%,white)]",
+            )}
+          >
+            {diff === 0 ? "—" : diffStr}
+          </span>
+        </div>
+        <div className="flex flex-col gap-3">
+          <MetricBarRow label="Yours" value={yours} />
+          <MetricBarRow label="Theirs" value={theirs} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MatchupMetricGrid({
+  yourScores,
+  compScores,
+}: {
+  yourScores: NonNullable<CResult["your"]["scores"]>;
+  compScores: NonNullable<CResult["competitor"]["scores"]>;
+}) {
+  const rows: { key: keyof NonNullable<CResult["your"]["scores"]>; label: string }[] = [
+    { key: "overall", label: "Overall" },
+    { key: "hook", label: "Hook" },
+    { key: "clarity", label: "Clarity" },
+    { key: "cta", label: "CTA" },
+    { key: "production", label: "Production" },
+  ];
+  return (
+    <section className="flex flex-col gap-3" aria-labelledby="competitor-matchup-metrics-heading">
+      <div id="competitor-matchup-metrics-heading" className="flex items-center gap-2 pl-1">
+        <BarChart3 className="h-4 w-4 text-[color:var(--ink-muted)]" aria-hidden />
+        <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--ink-muted)]">
+          Score comparison
+        </span>
+      </div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        {rows.map(({ key, label }) => (
+          <MatchupMetricCard key={key} label={label} yours={yourScores[key]} theirs={compScores[key]} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function CreativePreviewCard({
+  src,
+  variant,
+  badge,
+  roleLine,
+  score,
+  scoreColorVar,
+}: {
+  src: string | null;
+  variant: "target" | "winner";
+  badge: ReactNode;
+  roleLine: string;
+  score: number;
+  scoreColorVar: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "relative flex min-h-[260px] flex-col overflow-hidden rounded-2xl border md:min-h-[300px] lg:max-h-[384px]",
+        variant === "target" && "opacity-70 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.25)]",
+        variant === "target" && "border-[color:var(--border)]",
+        variant === "winner" &&
+          "border-[color-mix(in_srgb,var(--success)_42%,var(--border))] shadow-[0_0_48px_color-mix(in_srgb,var(--success)_15%,transparent)]",
+      )}
+    >
+      {src ? (
+        <img src={src} alt="" className="absolute inset-0 size-full object-cover" />
+      ) : (
+        <div className="absolute inset-0 bg-[color:var(--surface-el)]" aria-hidden />
+      )}
+      <div
+        className="absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,0.9)] via-[rgba(0,0,0,0.38)] to-transparent"
+        aria-hidden
+      />
+      {variant === "winner" ? (
+        <div className="absolute inset-0 bg-[color-mix(in_srgb,var(--success)_10%,transparent)]" aria-hidden />
+      ) : null}
+      <div className="absolute left-3 top-3 z-[1]">{badge}</div>
+      <div className="relative z-[1] mt-auto flex flex-col gap-1 px-4 pb-5 pt-20">
+        <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-[color:var(--ink-muted)]">{roleLine}</p>
+        <p
+          className="font-mono text-[clamp(1.75rem,5.5vw,2.75rem)] font-bold leading-none"
+          style={{ color: scoreColorVar }}
+        >
+          {fmtScoreOne(score)}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function CompetitorLosingHero({
+  yourScore,
+  compScore,
+  summary,
+  winProbability,
+  heroYourSrc,
+  heroCompetitorSrc,
+}: {
+  yourScore: number;
+  compScore: number;
+  summary: string;
+  winProbability: number;
+  heroYourSrc: string | null;
+  heroCompetitorSrc: string | null;
+}) {
+  const targetBadge = (
+    <span className="rounded-md border border-[color:var(--border)] bg-[rgba(0,0,0,0.45)] px-2 py-1 text-[8px] font-bold uppercase tracking-wider text-[color:var(--ink-secondary)]">
+      Target
+    </span>
+  );
+  const winnerBadge = (
+    <span className="rounded-md bg-[color:var(--success)] px-2.5 py-1 text-[8px] font-bold uppercase tracking-wider text-[color:var(--bg)] shadow-[0_0_14px_color-mix(in_srgb,var(--success)_40%,transparent)]">
+      Winner
+    </span>
+  );
+
+  const yourCard = (
+    <CreativePreviewCard
+      src={heroYourSrc}
+      variant="target"
+      badge={targetBadge}
+      roleLine="Your Ad"
+      score={yourScore}
+      scoreColorVar="var(--warn)"
+    />
+  );
+  const competitorCard = (
+    <CreativePreviewCard
+      src={heroCompetitorSrc}
+      variant="winner"
+      badge={winnerBadge}
+      roleLine="Competitor"
+      score={compScore}
+      scoreColorVar="var(--success)"
+    />
+  );
+
+  const center = (
+    <div className="flex flex-col items-center text-center">
+      <div className="flex justify-center">
+        <div className="rotate-3">
+          <div className="flex size-[76px] items-center justify-center rounded-2xl border border-[color-mix(in_srgb,var(--error)_22%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] shadow-[0_0_40px_color-mix(in_srgb,var(--error)_18%,transparent)]">
+            <TrendingDown className="size-8 text-[color:var(--error)]" strokeWidth={2} aria-hidden />
+          </div>
+        </div>
+      </div>
+      <h2 className="mt-6 max-w-lg text-balance text-3xl font-bold leading-tight tracking-tight text-[color:var(--ink)] shadow-[0_4px_8px_rgba(0,0,0,0.15)] md:text-4xl md:leading-[1.1]">
+        You are losing
+        <br />
+        this matchup.
+      </h2>
+      <div className="mt-5">
+        <LoserWinProbabilityPill value={winProbability} />
+      </div>
+      <p className="mt-5 max-w-xl text-pretty text-[15px] leading-relaxed text-[color:var(--ink-secondary)]">{summary}</p>
+    </div>
+  );
+
+  return (
+    <section
+      className="relative overflow-hidden rounded-2xl px-2 py-8 md:px-4 md:py-10"
+      style={{ backgroundImage: "var(--competitor-losing-hero-glow)" }}
+      aria-labelledby="competitor-losing-hero-title"
+    >
+      <h2 id="competitor-losing-hero-title" className="sr-only">
+        Matchup summary: you are behind on overall score
+      </h2>
+      <div className="flex flex-col gap-8 lg:hidden">
+        {center}
+        <div className="grid grid-cols-2 gap-3">{yourCard}{competitorCard}</div>
+      </div>
+      <div className="hidden gap-6 lg:grid lg:grid-cols-[minmax(0,260px)_1fr_minmax(0,260px)] lg:items-stretch lg:gap-10">
+        <div className="min-w-0">{yourCard}</div>
+        <div className="flex min-w-0 items-center justify-center py-4">{center}</div>
+        <div className="min-w-0">{competitorCard}</div>
+      </div>
+    </section>
+  );
+}
+
+function CompetitorWinningHero({
+  yourScore,
+  compScore,
+  summary,
+  winProbability,
+  heroYourSrc,
+  heroCompetitorSrc,
+}: {
+  yourScore: number;
+  compScore: number;
+  summary: string;
+  winProbability: number;
+  heroYourSrc: string | null;
+  heroCompetitorSrc: string | null;
+}) {
+  const winnerBadge = (
+    <span className="rounded-md bg-[color:var(--success)] px-2.5 py-1 text-[8px] font-bold uppercase tracking-wider text-[color:var(--bg)] shadow-[0_0_14px_color-mix(in_srgb,var(--success)_40%,transparent)]">
+      Winner
+    </span>
+  );
+  const targetBadge = (
+    <span className="rounded-md border border-[color:var(--border)] bg-[color-mix(in_srgb,var(--bg)_50%,transparent)] px-2 py-1 text-[8px] font-bold uppercase tracking-wider text-[color:var(--ink-secondary)]">
+      Target
+    </span>
+  );
+
+  const yourCard = (
+    <CreativePreviewCard
+      src={heroYourSrc}
+      variant="winner"
+      badge={winnerBadge}
+      roleLine="Your Ad"
+      score={yourScore}
+      scoreColorVar="var(--success)"
+    />
+  );
+  const competitorCard = (
+    <CreativePreviewCard
+      src={heroCompetitorSrc}
+      variant="target"
+      badge={targetBadge}
+      roleLine="Competitor"
+      score={compScore}
+      scoreColorVar="var(--warn)"
+    />
+  );
+
+  const center = (
+    <div className="flex flex-col items-center text-center">
+      <div className="flex justify-center">
+        <div className="-rotate-3">
+          <div className="flex size-[76px] items-center justify-center rounded-2xl border border-[color-mix(in_srgb,var(--success)_28%,transparent)] bg-[color-mix(in_srgb,var(--success)_12%,transparent)] shadow-[0_0_40px_color-mix(in_srgb,var(--success)_22%,transparent)]">
+            <TrendingUp className="size-8 text-[color:var(--success)]" strokeWidth={2} aria-hidden />
+          </div>
+        </div>
+      </div>
+      <h2 className="mt-6 max-w-lg text-balance text-3xl font-bold leading-tight tracking-tight text-[color:var(--ink)] shadow-[0_4px_8px_rgba(0,0,0,0.15)] md:text-4xl md:leading-[1.15]">
+        You are winning
+        <br />
+        this matchup.
+      </h2>
+      <div className="mt-5">
+        <WinnerWinProbabilityPill value={winProbability} />
+      </div>
+      <p className="mt-5 max-w-xl text-pretty text-[15px] leading-relaxed text-[color:var(--ink-secondary)]">{summary}</p>
+    </div>
+  );
+
+  return (
+    <section
+      className="relative overflow-hidden rounded-2xl px-2 py-8 md:px-4 md:py-10"
+      style={{ backgroundImage: "var(--competitor-winning-hero-glow)" }}
+      aria-labelledby="competitor-winning-hero-title"
+    >
+      <h2 id="competitor-winning-hero-title" className="sr-only">
+        Matchup summary: you are ahead on overall score
+      </h2>
+      <div className="flex flex-col gap-8 lg:hidden">
+        {center}
+        <div className="grid grid-cols-2 gap-3">
+          {yourCard}
+          {competitorCard}
+        </div>
+      </div>
+      <div className="hidden gap-6 lg:grid lg:grid-cols-[minmax(0,260px)_1fr_minmax(0,260px)] lg:items-stretch lg:gap-10">
+        <div className="min-w-0">{yourCard}</div>
+        <div className="flex min-w-0 items-center justify-center py-4">{center}</div>
+        <div className="min-w-0">{competitorCard}</div>
+      </div>
+    </section>
+  );
+}
+
+function WinnerScaleSection({
+  result,
+  gap,
+  onReanalyze,
+}: {
+  result: CResult;
+  gap: GapAnalysis;
+  onReanalyze?: () => void;
+}) {
+  const yourScores = result.your.scores!;
+  const ctr = formatPredictedCtrBand(yourScores.overall, yourScores.hook);
+  const budgets = budgetTargetsFromResult(result.your.budget, yourScores.overall);
+  const strongEdge = gap.winProbability >= 58;
+
+  return (
+    <section
+      className="relative overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--success)_22%,var(--border))] p-6 md:p-8"
+      style={{ background: "var(--competitor-winning-scale-ambient)" }}
+      aria-labelledby="competitor-winning-scale-heading"
+    >
+      <div className="flex flex-wrap items-center gap-2">
+        <span
+          className="h-2 w-2 shrink-0 rounded-full bg-[color:var(--success)] shadow-[0_0_10px_var(--success)]"
+          aria-hidden
+        />
+        <span
+          id="competitor-winning-scale-heading"
+          className="text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--success)]"
+        >
+          High confidence — ready to scale
+        </span>
+      </div>
+      <h3 className="mt-4 max-w-3xl text-pretty text-xl font-semibold tracking-tight text-[color:var(--ink)] md:text-2xl">
+        Your creative is outperforming the benchmark. Time to push budget.
+      </h3>
+
+      <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
+        <div className="rounded-2xl border border-[color:var(--border)] bg-[color-mix(in_srgb,var(--surface)_65%,transparent)] p-5">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[color:var(--ink-muted)]">
+            Win probability
+          </p>
+          <div className="mt-2 flex flex-wrap items-baseline gap-2">
+            <span className="font-mono text-4xl font-bold text-[color:var(--success)]">{gap.winProbability}%</span>
+            {strongEdge ? (
+              <span className="inline-flex items-center gap-0.5 text-xs font-semibold text-[color:var(--success)]">
+                <ArrowUpRight className="size-3.5" aria-hidden />
+                Strong edge
+              </span>
+            ) : null}
+          </div>
+        </div>
+        <div className="rounded-2xl border border-[color:var(--border)] bg-[color-mix(in_srgb,var(--surface)_65%,transparent)] p-5">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[color:var(--ink-muted)]">
+            Predicted CTR
+          </p>
+          <p className="mt-2 font-mono text-xl font-semibold text-[color:var(--ink)] md:text-2xl">{ctr.band}</p>
+          <p className="mt-1 text-xs text-[color:var(--ink-muted)]">vs. platform avg {ctr.avgLabel}</p>
+        </div>
+        <div className="rounded-2xl border border-[color:var(--border)] bg-[color-mix(in_srgb,var(--surface)_65%,transparent)] p-5">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[color:var(--ink-muted)]">
+            Target budget
+          </p>
+          <div className="mt-3 flex flex-wrap items-end gap-6">
+            <div>
+              <p className="text-[10px] uppercase tracking-wide text-[color:var(--ink-muted)]">Target</p>
+              <p className="font-mono text-lg font-semibold text-[color:var(--ink-secondary)]">{budgets.target}</p>
+            </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-wide text-[color:var(--ink-muted)]">Daily starting point</p>
+              <p className="font-mono text-3xl font-bold text-[color:var(--ink)]">{budgets.daily}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-6 flex gap-3 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-3 md:px-5 md:py-4">
+        <Check className="mt-0.5 size-5 shrink-0 text-[color:var(--success)]" strokeWidth={2.5} aria-hidden />
+        <p className="text-sm leading-relaxed text-[color:var(--ink-secondary)]">
+          <span className="font-semibold text-[color:var(--ink)]">Fatigue resistance: </span>
+          {fatigueResistanceCopy(yourScores.hook)}
+        </p>
+      </div>
+
+      <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+        <Link
+          to="/app/paid"
+          className="inline-flex h-11 min-w-[200px] items-center justify-center rounded-full bg-[color:var(--accent)] px-8 text-sm font-medium text-white transition-[background-color,transform] duration-150 hover:bg-[color:var(--accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] active:scale-[0.99]"
+        >
+          Generate Creative Brief
+        </Link>
+        {onReanalyze ? (
+          <button
+            type="button"
+            onClick={onReanalyze}
+            className="inline-flex h-11 min-w-[140px] items-center justify-center rounded-full border border-[color:var(--border)] bg-transparent px-8 text-sm font-medium text-[color:var(--ink-secondary)] transition-[border-color,color,transform] duration-150 hover:border-[color:var(--border-hover)] hover:text-[color:var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] active:scale-[0.99]"
+          >
+            Re-analyze
+          </button>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+function LoserInsightCardFigma({
+  variant,
+  title,
+  yourScore,
+  competitorScore,
+  body,
+}: {
+  variant: "ahead" | "behind";
+  title: string;
+  yourScore: number;
+  competitorScore: number;
+  body: string;
+}) {
+  const ahead = variant === "ahead";
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[color-mix(in_srgb,var(--surface)_82%,transparent)] shadow-[0_10px_14px_-3px_rgba(0,0,0,0.12)]">
+      <div
+        className={cn(
+          "absolute left-0 top-0 h-full w-1",
+          ahead
+            ? "bg-[color:var(--success)] shadow-[0_0_20px_color-mix(in_srgb,var(--success)_55%,transparent)]"
+            : "bg-[color:var(--error)] shadow-[0_0_20px_color-mix(in_srgb,var(--error)_55%,transparent)]",
+        )}
+        aria-hidden
+      />
+      <div
+        className={cn(
+          "pointer-events-none absolute inset-0 bg-gradient-to-r to-transparent",
+          ahead ? "from-[color-mix(in_srgb,var(--success)_4%,transparent)]" : "from-[color-mix(in_srgb,var(--error)_4%,transparent)]",
+        )}
+        aria-hidden
+      />
+      <div className="relative px-5 py-5 pl-6">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h4 className="text-[15px] font-medium tracking-tight text-[color:var(--ink)]">{title}</h4>
+          <div className="flex items-center gap-2 rounded-2xl border border-[color:var(--border)] bg-[rgba(0,0,0,0.35)] px-2.5 py-1">
+            <span
+              className={cn(
+                "font-mono text-sm",
+                ahead ? "text-[color:var(--success)]" : "text-[color:var(--warn)]",
+              )}
+            >
+              {fmtScoreOne(yourScore)}
+            </span>
+            <span className="text-[11px] text-[color:var(--ink-muted)]">vs</span>
+            <span className="font-mono text-sm text-[color:var(--success)]">{fmtScoreOne(competitorScore)}</span>
+          </div>
+        </div>
+        <p className="mt-3 text-[13px] leading-relaxed text-[color:var(--ink-secondary)]">{body}</p>
+      </div>
+    </div>
+  );
+}
+
+function GapTwoColumnFigma({ gap }: { gap: GapAnalysis }) {
+  return (
+    <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-10">
+      <div>
+        <div className="mb-3 flex items-center gap-2 pl-1">
+          <div className="flex h-6 w-6 items-center justify-center rounded-full border border-[color-mix(in_srgb,var(--success)_22%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)]">
+            <CheckCircle className="h-3.5 w-3.5 text-[color:var(--success)]" aria-hidden />
+          </div>
+          <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--success)]">
+            Where you&apos;re winning
+          </span>
+        </div>
+        <div className="flex flex-col gap-3">
+          {gap.strengths.length === 0 ? (
+            <p className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-4 text-sm text-[color:var(--ink-muted)]">
+              No dimension where you lead on score — prioritize the action plan below.
+            </p>
+          ) : (
+            gap.strengths.map((s, i) => (
+              <LoserInsightCardFigma
+                key={i}
+                variant="ahead"
+                title={s.metric}
+                yourScore={s.yourScore}
+                competitorScore={s.competitorScore}
+                body={s.insight}
+              />
+            ))
+          )}
+        </div>
+      </div>
+      <div>
+        <div className="mb-3 flex items-center gap-2 pl-1">
+          <div className="flex h-6 w-6 items-center justify-center rounded-full border border-[color-mix(in_srgb,var(--error)_22%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)]">
+            <Target className="h-3.5 w-3.5 text-[color:var(--error)]" aria-hidden />
+          </div>
+          <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--error)]">
+            Where they&apos;re beating you
+          </span>
+        </div>
+        <div className="flex flex-col gap-3">
+          {gap.weaknesses.length === 0 ? (
+            <p className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-4 text-sm text-[color:var(--ink-muted)]">
+              No gap breakdown returned — see score comparison above.
+            </p>
+          ) : (
+            gap.weaknesses.map((w, i) => (
+              <LoserInsightCardFigma
+                key={i}
+                variant="behind"
+                title={w.metric}
+                yourScore={w.yourScore}
+                competitorScore={w.competitorScore}
+                body={w.insight}
+              />
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function splitActionTitleBody(action: string): { title: string; body: string } {
+  const idx = action.indexOf(".");
+  if (idx > 0 && idx < action.length - 2) {
+    return { title: action.slice(0, idx + 1).trim(), body: action.slice(idx + 1).trim() };
+  }
+  return { title: action.trim(), body: "" };
+}
+
+function LoserActionPlanFigma({ actionPlan }: { actionPlan: GapAnalysis["actionPlan"] }) {
+  if (actionPlan.length === 0) return null;
+
+  const primary = actionPlan.find((a) => a.priority === 1) ?? actionPlan[0]!;
+  const others = actionPlan.filter((a) => a !== primary);
+  const { title: pTitle, body: pBody } = splitActionTitleBody(primary.action);
+  const showCriticalFix = primary.priority === 1;
+
+  return (
+    <section className="flex flex-col gap-6" aria-labelledby="competitor-loser-action-heading">
+      <div className="flex items-center justify-center gap-3 px-2">
+        <div className="h-px flex-1 bg-gradient-to-r from-transparent to-[color-mix(in_srgb,var(--accent)_32%,transparent)]" />
+        <div
+          className="flex size-8 shrink-0 items-center justify-center rounded-full border border-[color-mix(in_srgb,var(--accent)_32%,transparent)] bg-[color-mix(in_srgb,var(--accent)_10%,transparent)] shadow-[var(--competitor-loser-action-p1-glow)]"
+          aria-hidden
+        >
+          <Sparkles className="h-3.5 w-3.5 text-[color:var(--accent-light)]" />
+        </div>
+        <h3
+          id="competitor-loser-action-heading"
+          className="text-[11px] font-bold uppercase tracking-[0.2em] text-[color:var(--ink)]"
+        >
+          Action Plan To Win
+        </h3>
+        <div className="h-px flex-1 bg-gradient-to-l from-transparent to-[color-mix(in_srgb,var(--accent)_32%,transparent)]" />
+      </div>
+
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
+        <div className="relative overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--accent)_22%,transparent)] bg-[color-mix(in_srgb,var(--accent)_5%,var(--surface))] shadow-[var(--competitor-loser-action-p1-glow)]">
+          <div
+            className="absolute left-0 top-0 h-full w-1 bg-[color:var(--accent)] shadow-[0_0_20px_color-mix(in_srgb,var(--accent)_55%,transparent)]"
+            aria-hidden
+          />
+          <div
+            className="pointer-events-none absolute inset-0 opacity-90"
+            style={{
+              background:
+                "radial-gradient(ellipse 120% 80% at 0% 0%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 55%)",
+            }}
+            aria-hidden
+          />
+          <div className="relative px-6 py-6 pl-8">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-xl bg-[color:var(--accent)] px-2.5 py-1 text-[11px] font-bold text-white">
+                P{primary.priority}
+              </span>
+              {showCriticalFix ? (
+                <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--accent-light)]">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--accent-light)] shadow-[0_0_8px_var(--accent-light)]" />
+                  Critical Fix
+                </span>
+              ) : null}
+            </div>
+            <p className="mt-3 text-xl font-semibold tracking-tight text-[color:var(--ink)] md:text-2xl">{pTitle}</p>
+            {pBody ? (
+              <p className="mt-3 text-sm leading-relaxed text-[color-mix(in_srgb,var(--accent-light)_70%,var(--ink-secondary))]">
+                {pBody}
+              </p>
+            ) : null}
+          </div>
+        </div>
+
+        {others.map((a, i) => {
+          const { title, body } = splitActionTitleBody(a.action);
+          return (
+            <div
+              key={i}
+              className="relative overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[color-mix(in_srgb,var(--surface)_50%,transparent)]"
+            >
+              <div className="flex flex-col gap-2 px-5 py-5 pl-6">
+                <span className="w-fit rounded-xl bg-[color:var(--surface-el)] px-2.5 py-1 text-[11px] font-bold text-[color:var(--ink-muted)]">
+                  P{a.priority}
+                </span>
+                <p className="text-lg font-medium tracking-tight text-[color:var(--ink-secondary)]">{title}</p>
+                {body ? <p className="text-[13px] leading-relaxed text-[color:var(--ink-muted)]">{body}</p> : null}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+// ─── LAYOUTS (winner vs loser vs tied) ───────────────────────────────────────
+
+function CompetitorWinnerLayout({
+  result,
+  gap,
+  yourExpanded,
+  setYourExpanded,
+  compExpanded,
+  setCompExpanded,
+  heroYourSrc,
+  heroCompetitorSrc,
+  onReanalyze,
+}: {
+  result: CResult;
+  gap: GapAnalysis;
+  yourExpanded: boolean;
+  setYourExpanded: (v: boolean) => void;
+  compExpanded: boolean;
+  setCompExpanded: (v: boolean) => void;
+  heroYourSrc: string | null;
+  heroCompetitorSrc: string | null;
+  onReanalyze?: () => void;
+}) {
+  const yourScores = result.your.scores!;
+  const compScores = result.competitor.scores!;
+
+  return (
+    <div className="flex flex-col gap-8 md:gap-10" data-competitor-outcome="winning">
+      <CompetitorWinningHero
+        yourScore={yourScores.overall}
+        compScore={compScores.overall}
+        summary={gap.summary}
+        winProbability={gap.winProbability}
+        heroYourSrc={heroYourSrc}
+        heroCompetitorSrc={heroCompetitorSrc}
+      />
+      <MatchupMetricGrid yourScores={yourScores} compScores={compScores} />
+      <GapTwoColumnFigma gap={gap} />
+      <WinnerScaleSection result={result} gap={gap} onReanalyze={onReanalyze} />
+      <CollapsibleDualScorecards
+        result={result}
+        yourExpanded={yourExpanded}
+        setYourExpanded={setYourExpanded}
+        compExpanded={compExpanded}
+        setCompExpanded={setCompExpanded}
+      />
+    </div>
+  );
+}
+
+function CompetitorLoserLayout({
+  result,
+  gap,
+  yourExpanded,
+  setYourExpanded,
+  compExpanded,
+  setCompExpanded,
+  heroYourSrc,
+  heroCompetitorSrc,
+}: {
+  result: CResult;
+  gap: GapAnalysis;
+  yourExpanded: boolean;
+  setYourExpanded: (v: boolean) => void;
+  compExpanded: boolean;
+  setCompExpanded: (v: boolean) => void;
+  heroYourSrc: string | null;
+  heroCompetitorSrc: string | null;
+}) {
+  const yourScores = result.your.scores!;
+  const compScores = result.competitor.scores!;
+
+  return (
+    <div className="flex flex-col gap-8 md:gap-10" data-competitor-outcome="losing">
+      <CompetitorLosingHero
+        yourScore={yourScores.overall}
+        compScore={compScores.overall}
+        summary={gap.summary}
+        winProbability={gap.winProbability}
+        heroYourSrc={heroYourSrc}
+        heroCompetitorSrc={heroCompetitorSrc}
+      />
+      <MatchupMetricGrid yourScores={yourScores} compScores={compScores} />
+      <GapTwoColumnFigma gap={gap} />
+      <LoserActionPlanFigma actionPlan={gap.actionPlan} />
+      <CollapsibleDualScorecards
+        result={result}
+        yourExpanded={yourExpanded}
+        setYourExpanded={setYourExpanded}
+        compExpanded={compExpanded}
+        setCompExpanded={setCompExpanded}
+      />
+    </div>
+  );
+}
+
+function CompetitorTiedLayout({
+  result,
+  gap,
+  yourFileName,
+  competitorFileName,
+  yourExpanded,
+  setYourExpanded,
+  compExpanded,
+  setCompExpanded,
+}: {
+  result: CResult;
+  gap: GapAnalysis;
+  yourFileName: string;
+  competitorFileName: string;
+  yourExpanded: boolean;
+  setYourExpanded: (v: boolean) => void;
+  compExpanded: boolean;
+  setCompExpanded: (v: boolean) => void;
+}) {
+  const yourScores = result.your.scores!;
+  const compScores = result.competitor.scores!;
+
+  return (
+    <div className="flex flex-col gap-4" data-competitor-outcome="tied">
+      <section
+        className="rounded-xl border border-[color-mix(in_srgb,var(--warn)_35%,var(--border))] bg-[color-mix(in_srgb,var(--warn)_8%,var(--surface))] p-5"
+        aria-labelledby="competitor-tied-heading"
+      >
+        <div className="flex flex-wrap items-center gap-2.5">
+          <div
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[color-mix(in_srgb,var(--warn)_40%,transparent)] bg-[color-mix(in_srgb,var(--warn)_12%,transparent)]"
+            aria-hidden
+          >
+            <Minus className="h-5 w-5 text-[color:var(--warn)]" strokeWidth={2} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h2 id="competitor-tied-heading" className="text-lg font-semibold tracking-tight text-[color:var(--warn)]">
+              Evenly matched on overall score
+            </h2>
+            <p className="mt-1 text-sm text-[color:var(--ink-secondary)]">
+              The winner will come down to hook, clarity, and CTA — see where each ad leads.
+            </p>
+          </div>
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <WinProbabilityPill value={gap.winProbability} />
+        </div>
+        <p className="mt-3 text-sm leading-relaxed text-[color:var(--ink-secondary)]">{gap.summary}</p>
+      </section>
+
+      <ScoreComparisonTable
+        yourScores={yourScores}
+        compScores={compScores}
+        yourFileName={yourFileName}
+        competitorFileName={competitorFileName}
+      />
+      <StrengthsSection strengths={gap.strengths} />
+      <WeaknessesSection weaknesses={gap.weaknesses} />
+      <ActionPlanSection actionPlan={gap.actionPlan} heading="Action plan to win" />
+      <CollapsibleDualScorecards
+        result={result}
+        yourExpanded={yourExpanded}
+        setYourExpanded={setYourExpanded}
+        compExpanded={compExpanded}
+        setCompExpanded={setCompExpanded}
+      />
+    </div>
+  );
+}
+
+// ─── PUBLIC PANEL ───────────────────────────────────────────────────────────
+
+export function CompetitorResultPanel({
+  result,
+  yourFileName,
+  competitorFileName,
+  yourFile,
+  competitorFile,
+  onReanalyze,
+}: {
+  result: CResult;
+  yourFileName: string;
+  competitorFileName: string;
+  /** Optional: hero thumbnails on winning / losing layouts */
+  yourFile?: File | null;
+  competitorFile?: File | null;
+  /** Winning layout: secondary CTA to run another comparison */
+  onReanalyze?: () => void;
+}) {
+  const { gap } = result;
+  const [yourExpanded, setYourExpanded] = useState(false);
+  const [compExpanded, setCompExpanded] = useState(false);
+
+  const yourThumb = useThumbnail(yourFile ?? null);
+  const compThumb = useThumbnail(competitorFile ?? null);
+  const heroYourSrc = yourThumb ?? result.your.thumbnailDataUrl ?? null;
+  const heroCompetitorSrc = compThumb ?? result.competitor.thumbnailDataUrl ?? null;
+
+  const outcome = getCompetitorOutcome(result);
+
+  const common = {
+    result,
+    gap,
+    yourFileName,
+    competitorFileName,
+    yourExpanded,
+    setYourExpanded,
+    compExpanded,
+    setCompExpanded,
+  };
+
+  if (outcome === "winning") {
+    return (
+      <CompetitorWinnerLayout
+        {...common}
+        heroYourSrc={heroYourSrc}
+        heroCompetitorSrc={heroCompetitorSrc}
+        onReanalyze={onReanalyze}
+      />
+    );
+  }
+  if (outcome === "losing") {
+    return (
+      <CompetitorLoserLayout
+        {...common}
+        heroYourSrc={heroYourSrc}
+        heroCompetitorSrc={heroCompetitorSrc}
+      />
+    );
+  }
+  return <CompetitorTiedLayout {...common} />;
 }

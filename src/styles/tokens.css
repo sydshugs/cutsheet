@@ -227,7 +227,50 @@
   --ab-results-hybrid-card-bg: rgba(97, 95, 255, 0.03);
   --ab-results-hybrid-card-border: rgba(97, 95, 255, 0.2);
   --ab-results-hybrid-accent-bar: var(--decon-accent);
+  /* Figma 263-1335 — left rail glow on hybrid card */
+  --ab-results-hybrid-bar-glow: 0 0 19px rgba(99, 102, 241, 0.55);
   --ab-results-primary-btn-shadow: 0 0 14px rgba(99, 102, 241, 0.2);
+
+  /* Competitor Analyzer idle — Figma 263-1358 */
+  --competitor-upload-ambient: radial-gradient(
+    ellipse 85% 55% at 50% 38%,
+    rgba(14, 165, 233, 0.08) 0%,
+    transparent 68%
+  );
+  --competitor-tile-bg: rgba(14, 165, 233, 0.12);
+  --competitor-tile-border: rgba(14, 165, 233, 0.2);
+  --competitor-tile-icon: #0ea5e9;
+  --competitor-pill-bg: rgba(14, 165, 233, 0.08);
+  --competitor-pill-border: rgba(14, 165, 233, 0.2);
+  --competitor-pill-text: #00bcff;
+  /* Competitor analyzing — matches upload ambient family */
+  --competitor-loading-card-border: rgba(14, 165, 233, 0.14);
+  --competitor-loading-card-shadow: 0 0 48px rgba(14, 165, 233, 0.07);
+  /* Competitor losing results — Figma 263-1702 */
+  --competitor-losing-hero-glow: radial-gradient(
+    ellipse 90% 50% at 50% 0%,
+    color-mix(in srgb, var(--error) 14%, transparent) 0%,
+    transparent 60%
+  );
+  --competitor-metric-bar-track: rgba(0, 0, 0, 0.4);
+  --competitor-metric-bar-fill: color-mix(in srgb, var(--ink) 26%, transparent);
+  --competitor-loser-action-p1-glow: 0 0 24px color-mix(in srgb, var(--accent) 35%, transparent);
+  /* Competitor winning results — Figma 263-2118 */
+  --competitor-winning-hero-glow: radial-gradient(
+    ellipse 90% 50% at 50% 0%,
+    color-mix(in srgb, var(--success) 14%, transparent) 0%,
+    transparent 60%
+  );
+  --competitor-winning-scale-ambient: radial-gradient(
+      ellipse 115% 70% at 50% -20%,
+      color-mix(in srgb, var(--success) 16%, transparent) 0%,
+      transparent 58%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--success) 7%, var(--surface)) 0%,
+      var(--surface) 100%
+    );
 }
 
 /* ─── ANIMATIONS ──────────────────────────────────────────── */
