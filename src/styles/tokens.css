@@ -177,6 +177,57 @@
   --decon-topbar-plan-bg: rgba(97, 95, 255, 0.1);
   --decon-topbar-plan-border: rgba(97, 95, 255, 0.2);
   --decon-topbar-avatar-ring: rgba(97, 95, 255, 0.3);
+
+  /* A/B Test — Figma /app/a-b-test idle + rose flow accents */
+  --ab-ambient-gradient: radial-gradient(ellipse 70% 55% at 50% 38%, rgba(236, 72, 153, 0.08) 0%, transparent 65%);
+  --ab-tile-bg: rgba(255, 32, 86, 0.1);
+  --ab-tile-border: rgba(255, 32, 86, 0.2);
+  --ab-icon: #ec4899;
+  --ab-pill-bg: rgba(236, 72, 153, 0.08);
+  --ab-pill-border: rgba(236, 72, 153, 0.2);
+  --ab-pill-text: #ff637e;
+  --ab-variant-label: #52525c;
+  --ab-dropzone-bg: rgba(255, 255, 255, 0.02);
+  --ab-dropzone-border: rgba(255, 255, 255, 0.06);
+  --ab-test-type-inactive-bg: rgba(255, 255, 255, 0.04);
+  --ab-test-type-inactive-border: rgba(255, 255, 255, 0.06);
+  --ab-test-type-inactive-text: var(--decon-markdown-muted);
+  --ab-test-type-active-bg: rgba(97, 95, 255, 0.1);
+  --ab-test-type-active-border: rgba(97, 95, 255, 0.3);
+  --ab-test-type-active-text: var(--decon-accent-label);
+  --ab-run-disabled-bg: rgba(255, 255, 255, 0.04);
+  --ab-run-disabled-border: rgba(255, 255, 255, 0.06);
+  --ab-run-disabled-text: #71717b;
+  --ab-drag-hover-bg: rgba(236, 72, 153, 0.06);
+  --ab-drag-hover-border: rgba(236, 72, 153, 0.35);
+  --ab-highlight-bg: rgba(236, 72, 153, 0.1);
+  --ab-highlight-border: rgba(236, 72, 153, 0.2);
+  /* A/B loading — Figma 263-900 */
+  --ab-loading-hero-tile-bg: rgba(255, 32, 86, 0.12);
+  --ab-loading-card-border: rgba(97, 95, 255, 0.3);
+  --ab-loading-card-inner-border: rgba(97, 95, 255, 0.2);
+  --ab-loading-card-glow: 0 0 19px rgba(99, 102, 241, 0.05);
+  --ab-loading-overlay: rgba(9, 9, 11, 0.5);
+  --ab-loading-badge-bg: rgba(99, 102, 241, 0.1);
+  --ab-loading-badge-border: rgba(97, 95, 255, 0.3);
+  --ab-loading-badge-dot: var(--decon-accent);
+  --ab-loading-spinner-ring: rgba(97, 95, 255, 0.2);
+  --ab-loading-format-bg: rgba(255, 255, 255, 0.1);
+  --ab-loading-format-border: rgba(255, 255, 255, 0.1);
+  /* A/B results — Figma 263-1070 */
+  --ab-results-hero-winner-border: rgba(16, 185, 129, 0.4);
+  --ab-results-hero-winner-shadow: 0 19px 48px rgba(16, 185, 129, 0.15);
+  --ab-results-hero-winner-glow: rgba(0, 188, 125, 0.15);
+  --ab-results-winner-pill-bg: rgba(0, 188, 125, 0.1);
+  --ab-results-winner-pill-border: rgba(0, 188, 125, 0.2);
+  --ab-results-winner-pill-text: #00bc7d;
+  --ab-results-rec-card-bg: rgba(0, 188, 125, 0.03);
+  --ab-results-rec-card-border: rgba(0, 188, 125, 0.2);
+  --ab-results-rec-accent-bar: #00bc7d;
+  --ab-results-hybrid-card-bg: rgba(97, 95, 255, 0.03);
+  --ab-results-hybrid-card-border: rgba(97, 95, 255, 0.2);
+  --ab-results-hybrid-accent-bar: var(--decon-accent);
+  --ab-results-primary-btn-shadow: 0 0 14px rgba(99, 102, 241, 0.2);
 }
 
 /* ─── ANIMATIONS ──────────────────────────────────────────── */
