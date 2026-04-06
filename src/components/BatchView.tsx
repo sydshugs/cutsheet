@@ -1,506 +1,803 @@
 // BatchView.tsx — Rank Creatives: multi-file upload, parallel analysis, ranked leaderboard
 
-import { useState, useRef, useCallback, useMemo, useEffect } from "react";
-import { Trophy, Upload, Zap, X, ChevronDown, Square } from "lucide-react";
+import { type ComponentType } from "react";
+import { Link } from "react-router-dom";
+import {
+  Trophy,
+  X,
+  BarChart3,
+  ArrowLeftRight,
+  Sparkles,
+  Layers,
+  CloudUpload,
+  Plus,
+  Play,
+  Image as ImageIcon,
+  Check,
+  Loader2,
+  Clock,
+  XCircle,
+} from "lucide-react";
 import { sanitizeFileName } from "../utils/sanitize";
 import { AnimatePresence, motion } from "framer-motion";
-import { analyzeVideo, recalculateOverallScore, type AnalysisResult } from "../services/analyzerService";
+import { recalculateOverallScore } from "../services/analyzerService";
 import { ScoreCard } from "./ScoreCard";
 import { UpgradeModal } from "./UpgradeModal";
 import { Toast } from "./Toast";
 import { AlertDialog } from "./ui/AlertDialog";
-import { ProgressCard } from "./ProgressCard";
-import type { ThemeTokens } from "../theme";
+import { cn } from "@/src/lib/utils";
+import {
+  ACCEPTED_TYPES,
+  MAX_FILES,
+  MAX_SIZE_MB,
+  RANK_PLATFORMS,
+  RANK_TEST_TYPES,
+  useRankBatch,
+  type BatchItem,
+  type RankTestType,
+  type RankedRow,
+} from "../context/RankBatchContext";
 
-const ACCEPTED_TYPES = ["video/mp4", "video/webm", "video/quicktime", "image/jpeg", "image/png", "image/webp"];
-const MAX_FILES = 10;
-const MAX_SIZE_MB = 200;
+const FEATURE_CHIPS: { icon: ComponentType<{ className?: string; "aria-hidden"?: boolean }>; label: string }[] = [
+  { icon: BarChart3, label: "AI Scoring" },
+  { icon: ArrowLeftRight, label: "Head-to-head comparison" },
+  { icon: Sparkles, label: "Scale recommendations" },
+  { icon: Layers, label: "Multi-platform" },
+];
 
-type BatchItemStatus = "pending" | "analyzing" | "complete" | "error";
-
-interface BatchItem {
-  id: string;
-  file: File;
-  format: "video" | "static";
-  status: BatchItemStatus;
-  result: AnalysisResult | null;
-  error: string | null;
+function formatRankScoreDisplay(n: number): string {
+  return Number.isInteger(n) ? String(n) : n.toFixed(1);
 }
 
-function formatSize(bytes: number): string {
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)}KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
+function rankTestTypeLabel(testType: RankTestType): string {
+  return RANK_TEST_TYPES.find((o) => o.value === testType)?.label ?? "Full Creative";
 }
 
-function scoreColor(score: number): string {
-  if (score >= 8) return "#10b981";
-  if (score >= 5) return "#f59e0b";
-  return "#ef4444";
-}
-
-function rankStyle(rank: number): { bg: string; color: string } {
-  if (rank === 1) return { bg: "rgba(250,204,21,0.15)", color: "#fbbf24" };
-  if (rank === 2) return { bg: "rgba(168,162,158,0.15)", color: "#a8a29e" };
-  if (rank === 3) return { bg: "rgba(180,83,9,0.15)", color: "#d97706" };
-  return { bg: "rgba(255,255,255,0.04)", color: "#52525b" };
-}
-
-// ─── EMPTY STATE ──────────────────────────────────────────────────────────────
-
-function RankEmptyState({ onStart, onFileDrop }: { onStart: () => void; onFileDrop: (files: FileList) => void }) {
-  const [isDragOver, setIsDragOver] = useState(false);
-  const steps = [
-    { icon: Upload, label: "Upload 5-10 creative variations" },
-    { icon: Zap, label: "Cutsheet scores them all in parallel" },
-    { icon: Trophy, label: "Get a ranked list — test the top 2-3" },
-  ];
+/** Shared hero — Figma Rank page 264-2926 / 286-677 */
+function RankPageHero({ title, creativeCount, testTypeLabel }: { title: string; creativeCount: number; testTypeLabel: string }) {
   return (
-    <div
-      onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
-      onDragLeave={(e) => { if (e.currentTarget.contains(e.relatedTarget as Node)) return; setIsDragOver(false); }}
-      onDrop={(e) => { e.preventDefault(); setIsDragOver(false); if (e.dataTransfer.files.length > 0) onFileDrop(e.dataTransfer.files); }}
-      style={{
-        position: "relative", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px", gap: 16, flex: 1,
-        minHeight: "calc(100vh - 120px)",
-        border: isDragOver ? "2px dashed var(--accent, #6366f1)" : "2px dashed transparent",
-        background: isDragOver ? "rgba(99,102,241,0.04)" : "transparent",
-        borderRadius: 16, transition: "border-color 150ms, background 150ms",
-      }}
-    >
-      <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <Trophy size={28} color="#8b5cf6" />
+    <div className="flex w-full flex-col items-center gap-2">
+      <div
+        className="relative flex size-[83px] shrink-0 items-center justify-center overflow-visible rounded-[17.5px] border border-[color:var(--rank-tile-border)] bg-[color:var(--rank-tile-bg)]"
+        aria-hidden
+      >
+        <div
+          className="pointer-events-none absolute -inset-[38px] rounded-[17.5px] border border-[color:var(--rank-tile-border)] opacity-30"
+          aria-hidden
+        />
+        <Trophy className="relative z-[1] size-[35px] text-[color:var(--rank-tile-icon)]" strokeWidth={1.75} />
       </div>
-      <h1 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", margin: 0 }}>Rank your creatives</h1>
-      <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)", textAlign: "center", maxWidth: 320, lineHeight: 1.6, margin: 0 }}>
-        Upload up to 10 ad variations. Cutsheet scores them all and ranks them — so you know which 2-3 to actually test before spending a dollar.
-      </p>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 4 }}>
-        {["Score all at once", "Ranked by strength", "Know before you spend"].map((p) => (
-          <span key={p} style={{ fontSize: 12, color: "#8b5cf6", background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.15)", borderRadius: 9999, padding: "4px 12px" }}>{p}</span>
-        ))}
+      <h2 className="m-0 text-center text-[clamp(2rem,5vw,2.75rem)] font-bold tracking-[-0.025em] text-[color:var(--ink)]">{title}</h2>
+      <div className="inline-flex h-[31px] items-center gap-2 rounded-full border border-[color:var(--rank-loading-meta-pill-border)] bg-[color:var(--rank-loading-meta-pill-bg)] px-3.5">
+        <span className="size-[6.5px] shrink-0 rounded-full bg-[color:var(--rank-loading-meta-dot)] opacity-90" aria-hidden />
+        <span className="text-[13px] font-medium text-[color:var(--rank-loading-meta-text)]">
+          {creativeCount} {creativeCount === 1 ? "creative" : "creatives"} · {testTypeLabel}
+        </span>
       </div>
-      {/* Step explanation */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 24, flexWrap: "wrap", justifyContent: "center" }}>
-        {steps.map((s, i) => {
-          const Icon = s.icon;
-          return (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              {i > 0 && <span style={{ color: "#52525b", fontSize: 14 }}>→</span>}
-              <Icon size={18} color="#6366f1" />
-              <span style={{ fontSize: 12, color: "#a1a1aa" }}>{s.label}</span>
-            </div>
-          );
-        })}
-      </div>
-      <button type="button" onClick={onStart}
-        style={{ marginTop: 28, height: 52, padding: "0 32px", borderRadius: 9999, border: "none", background: "#6366f1", color: "white", fontSize: 15, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
-        Upload creatives to rank <Trophy size={16} />
-      </button>
     </div>
   );
 }
 
-// ─── MAIN ─────────────────────────────────────────────────────────────────────
+type RankLoadCardPhase = "complete" | "analyzing" | "pending" | "error";
 
-interface BatchViewProps {
-  isDark: boolean;
-  apiKey: string;
-  addHistoryEntry: (entry: { fileName: string; timestamp: string; scores: AnalysisResult["scores"]; markdown: string }) => void;
-  t: ThemeTokens;
-  canAnalyze: boolean;
-  isPro: boolean;
-  increment: () => number;
-  FREE_LIMIT: number;
+function rankItemLoadPhase(item: BatchItem): RankLoadCardPhase {
+  if (item.status === "complete") return "complete";
+  if (item.status === "analyzing") return "analyzing";
+  if (item.status === "error") return "error";
+  return "pending";
 }
 
-export function BatchView({ apiKey, addHistoryEntry, t, canAnalyze, isPro, increment, FREE_LIMIT }: BatchViewProps) {
-  const [items, setItems] = useState<BatchItem[]>([]);
-  const [isRunning, setIsRunning] = useState(false);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [showUpload, setShowUpload] = useState(false);
-  const [rejectionToast, setRejectionToast] = useState<{ message: string } | null>(null);
-  const [confirmResetOpen, setConfirmResetOpen] = useState(false);
-  const stopRequestedRef = useRef(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+interface RankBatchLoadingViewProps {
+  items: BatchItem[];
+  previewUrls: Record<string, string>;
+  rankTestType: RankTestType;
+  showStopLink: boolean;
+  onRequestStopAfterCurrent: () => void;
+}
 
-  const allDone = items.length > 0 && items.every((i) => i.status === "complete" || i.status === "error");
-  const completed = items.filter((i) => i.status === "complete" && i.result?.scores);
+function RankBatchLoadingView({ items, previewUrls, rankTestType, showStopLink, onRequestStopAfterCurrent }: RankBatchLoadingViewProps) {
+  const total = items.length;
+  const finished = items.filter((i) => i.status === "complete" || i.status === "error").length;
+  const analyzingNow = items.some((i) => i.status === "analyzing");
+  const pct =
+    total > 0 ? Math.min(100, Math.round(((finished + (analyzingNow ? 0.6 : 0)) / total) * 100)) : 0;
 
-  const ranked = useMemo(() => {
-    return completed
-      .map((item) => {
-        const s = item.result!.scores!;
-        const norm = recalculateOverallScore(s) ?? s;
-        return { item, overall: norm.overall, scores: norm };
-      })
-      .sort((a, b) => b.overall - a.overall);
-  }, [completed]);
+  return (
+    <div className="relative flex min-h-[calc(100vh-120px)] flex-col bg-[color:var(--bg)] pb-10">
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-[min(548px,50vh)]"
+        style={{ background: "var(--rank-ambient)" }}
+        aria-hidden
+      />
+      <div className="relative z-[1] mx-auto flex w-full max-w-[1042px] flex-col items-center gap-10 px-6 pt-8 sm:pt-12">
+        <RankPageHero
+          title="Ranking Creatives"
+          creativeCount={total}
+          testTypeLabel={rankTestTypeLabel(rankTestType)}
+        />
 
-  const detectFormat = (file: File): "video" | "static" => {
-    return file.type.startsWith("video/") ? "video" : "static";
-  };
+        <div className="flex w-full gap-[13px] overflow-x-auto pb-2 [scrollbar-width:thin]">
+          {items.map((item) => {
+            const phase = rankItemLoadPhase(item);
+            const name = sanitizeFileName(item.file.name);
+            const displayName = name.length > 24 ? `${name.slice(0, 21)}…` : name;
+            const score =
+              item.result?.scores != null ? (recalculateOverallScore(item.result.scores) ?? item.result.scores).overall : null;
 
-  const addFiles = useCallback((files: FileList | File[]) => {
-    let skippedFormat = 0;
-    let skippedSize = 0;
+            const shell = cn(
+              "relative flex h-[min(393px,70vh)] w-[186px] shrink-0 flex-col overflow-hidden rounded-[26px] border",
+              phase === "complete" &&
+                "border-[color:var(--rank-load-card-complete-border)] bg-[color:var(--rank-load-card-complete-bg)]",
+              phase === "analyzing" &&
+                "border-[color:var(--rank-load-card-analyzing-border)] bg-[color:var(--rank-load-card-analyzing-bg)]",
+              (phase === "pending" || phase === "error") &&
+                "border-[color:var(--rank-load-card-pending-border)] bg-[color:var(--rank-load-card-pending-bg)]",
+            );
 
-    setItems((prev) => {
-      let next = [...prev];
-      for (const file of Array.from(files)) {
-        if (next.length >= MAX_FILES) break;
-        if (!ACCEPTED_TYPES.includes(file.type)) { skippedFormat++; continue; }
-        if (file.size > MAX_SIZE_MB * 1024 * 1024) { skippedSize++; continue; }
-        if (next.some((i) => i.file.name === file.name && i.file.size === file.size)) continue;
-        next.push({
-          id: crypto.randomUUID(),
-          file,
-          format: detectFormat(file),
-          status: "pending",
-          result: null,
-          error: null,
-        });
-      }
-      return next.slice(0, MAX_FILES);
-    });
+            return (
+              <div key={item.id} className={shell}>
+                <div className="relative min-h-0 flex-1 overflow-hidden">
+                  <div className="absolute inset-0 opacity-80">
+                    {item.format === "static" ? (
+                      <img src={previewUrls[item.id]} alt="" className="size-full object-cover" />
+                    ) : (
+                      <video src={previewUrls[item.id]} className="size-full object-cover" muted playsInline preload="metadata" />
+                    )}
+                  </div>
 
-    // Surface rejection feedback via toast
-    const parts: string[] = [];
-    if (skippedFormat > 0) parts.push(`${skippedFormat} file${skippedFormat > 1 ? "s" : ""} skipped: unsupported format`);
-    if (skippedSize > 0) parts.push(`${skippedSize} file${skippedSize > 1 ? "s" : ""} skipped: exceeds ${MAX_SIZE_MB}MB limit`);
-    if (parts.length > 0) {
-      setRejectionToast({ message: parts.join(". ") });
-    }
-  }, []);
+                  <div className="pointer-events-none absolute bottom-2 left-2 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9.9px] font-medium text-white bg-[color:var(--rank-badge-overlay)]">
+                    {item.format === "video" ? (
+                      <Play className="size-2 shrink-0 text-white" aria-hidden />
+                    ) : (
+                      <ImageIcon className="size-2 shrink-0 text-white" aria-hidden />
+                    )}
+                    {item.format === "video" ? "Video" : "Static"}
+                  </div>
 
-  const removeItem = useCallback((id: string) => {
-    setItems((prev) => prev.filter((i) => i.id !== id));
-  }, []);
+                  {phase === "complete" && score != null && (
+                    <div className="absolute right-2 top-2 rounded-md bg-[color:var(--rank-load-score-badge-bg)] px-2 py-0.5 font-bold tabular-nums text-[12px] text-[color:var(--rank-load-score-text)]">
+                      {score}
+                    </div>
+                  )}
 
-  const runBatch = useCallback(async () => {
-    if (items.length === 0 || isRunning) return;
-    if (!canAnalyze && !isPro) { setShowUpgradeModal(true); return; }
+                  {phase === "complete" && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/0">
+                      <div className="flex size-10 items-center justify-center rounded-full bg-[color:var(--rank-load-complete-check-bg)] shadow-sm">
+                        <Check className="size-5 text-white" strokeWidth={2.5} aria-hidden />
+                      </div>
+                    </div>
+                  )}
 
-    setIsRunning(true);
-    stopRequestedRef.current = false;
+                  {phase === "analyzing" && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                      <div className="flex size-10 items-center justify-center rounded-full bg-[color:var(--rank-load-analyzing-spinner-bg)]">
+                        <Loader2 className="size-5 animate-spin text-white" strokeWidth={2} aria-hidden />
+                      </div>
+                    </div>
+                  )}
 
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      if (item.status !== "pending") continue;
+                  {phase === "pending" && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                      <div className="flex size-10 items-center justify-center rounded-full bg-[color:var(--rank-load-pending-icon-bg)]">
+                        <Clock className="size-[18px] text-[color:var(--ink-muted)]" strokeWidth={2} aria-hidden />
+                      </div>
+                    </div>
+                  )}
+                  {phase === "error" && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/15">
+                      <div className="flex size-10 items-center justify-center rounded-full bg-[color:var(--rank-load-pending-icon-bg)]">
+                        <XCircle className="size-[18px] text-[color:var(--error)]" strokeWidth={2} aria-hidden />
+                      </div>
+                    </div>
+                  )}
+                </div>
 
-      // Check if stop was requested before starting next item
-      if (stopRequestedRef.current) break;
+                <div className="flex shrink-0 flex-col gap-0.5 px-2.5 pb-2.5 pt-1">
+                  <p
+                    className={cn(
+                      "m-0 text-[9.9px] font-semibold uppercase tracking-[0.05em]",
+                      phase === "complete" && "text-[color:var(--rank-load-complete-label)]",
+                      phase === "analyzing" && "text-[color:var(--rank-load-analyzing-label)]",
+                      phase === "pending" && "text-[color:var(--rank-load-pending-label)]",
+                      phase === "error" && "text-[color:var(--error)]",
+                    )}
+                  >
+                    {phase === "complete" && "Complete"}
+                    {phase === "analyzing" && "Analyzing…"}
+                    {phase === "pending" && "Pending"}
+                    {phase === "error" && "Failed"}
+                  </p>
+                  <p className="m-0 truncate text-[11px] leading-snug text-[color:var(--rank-feature-pill-text)]">{displayName}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
 
-      setItems((prev) => prev.map((x) => (x.id === item.id ? { ...x, status: "analyzing" as const } : x)));
+        <div className="flex w-full max-w-[1042px] flex-col gap-3">
+          <div className="flex w-full items-center gap-3">
+            <p className="m-0 shrink-0 text-[14px] font-medium text-[color:var(--rank-load-progress-label)]" aria-live="polite">
+              {finished} of {total} analyzed
+            </p>
+            <div className="relative h-1 min-w-0 flex-1 overflow-hidden rounded-full bg-[color:var(--rank-load-progress-track)]">
+              <div
+                className="absolute left-0 top-0 h-full rounded-full bg-[color:var(--rank-load-progress-fill)] transition-[width] duration-300"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <p className="m-0 w-10 shrink-0 text-right font-mono text-[13px] font-medium text-[color:var(--rank-load-progress-pct)]">{pct}%</p>
+          </div>
+          {showStopLink && (
+            <div className="flex justify-center">
+              <button
+                type="button"
+                onClick={onRequestStopAfterCurrent}
+                className="border-0 bg-transparent p-0 text-[13px] font-normal text-[color:var(--rank-load-stop-link)] underline decoration-solid underline-offset-2 transition-[color,opacity] duration-150 hover:text-[color:var(--ink-muted)] focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] active:opacity-90"
+              >
+                Stop after current
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
-      try {
-        const contextPrefix = item.format === "static"
-          ? "This is a STATIC image ad. Analyze as a single-frame visual creative. Do NOT provide scene breakdown or timestamps."
-          : undefined;
-        const result = await analyzeVideo(item.file, apiKey, undefined, contextPrefix);
-        setItems((prev) => prev.map((x) => (x.id === item.id ? { ...x, status: "complete" as const, result, error: null } : x)));
-        addHistoryEntry({ fileName: result.fileName, timestamp: result.timestamp.toISOString(), scores: result.scores, markdown: result.markdown });
-        const newCount = increment();
-        if (newCount >= FREE_LIMIT && !isPro) { setShowUpgradeModal(true); break; }
-      } catch (err) {
-        setItems((prev) => prev.map((x) => (x.id === item.id ? { ...x, status: "error" as const, error: err instanceof Error ? err.message : "Failed" } : x)));
-      }
-    }
+interface RankBatchResultsViewProps {
+  items: BatchItem[];
+  ranked: RankedRow[];
+  previewUrls: Record<string, string>;
+  rankTestType: RankTestType;
+  expandedId: string | null;
+  setExpandedId: (id: string | null) => void;
+  isDark: boolean;
+  onRankMore: () => void;
+}
 
-    stopRequestedRef.current = false;
-    setIsRunning(false);
-  }, [items, isRunning, apiKey, addHistoryEntry, canAnalyze, isPro, increment, FREE_LIMIT]);
+/** Results — same shell + complete-style cards as Figma 286-677 (loading row), no progress strip */
+function RankBatchResultsView({
+  items,
+  ranked,
+  previewUrls,
+  rankTestType,
+  expandedId,
+  setExpandedId,
+  isDark,
+  onRankMore,
+}: RankBatchResultsViewProps) {
+  const errorItems = items.filter((i) => i.status === "error");
+  const testLabel = rankTestTypeLabel(rankTestType);
+  const expandedRow = ranked.find((r) => r.item.id === expandedId);
 
-  // Preview URLs
-  const previewUrls = useMemo(() => {
-    const map: Record<string, string> = {};
-    items.forEach((item) => { map[item.id] = URL.createObjectURL(item.file); });
-    return map;
-  }, [items]);
-  useEffect(() => { return () => Object.values(previewUrls).forEach(URL.revokeObjectURL); }, [previewUrls]);
+  return (
+    <div className="relative flex min-h-[calc(100vh-120px)] flex-col bg-[color:var(--bg)] pb-10">
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-[min(548px,50vh)]"
+        style={{ background: "var(--rank-ambient)" }}
+        aria-hidden
+      />
+      <div className="relative z-[1] mx-auto flex w-full max-w-[1042px] flex-col gap-8 px-6 pb-10 pt-8 sm:gap-10 sm:pt-12">
+        <RankPageHero title="Creatives ranked" creativeCount={items.length} testTypeLabel={testLabel} />
 
-  // ── RENDER ────────────────────────────────────────────────────────────────
+        {ranked.length >= 2 && (
+          <div className="flex items-start gap-2.5 rounded-xl border border-[color:var(--ab-results-hybrid-card-border)] bg-[color:var(--ab-results-hybrid-card-bg)] px-4 py-3.5">
+            <Trophy className="mt-0.5 size-4 shrink-0 text-[color:var(--decon-accent-light)]" strokeWidth={2} aria-hidden />
+            <div className="min-w-0">
+              <p className="m-0 text-[14px] font-semibold text-[color:var(--ink)]">
+                Test these two: {ranked[0].item.result!.fileName.split(".")[0]} and {ranked[1].item.result!.fileName.split(".")[0]}
+              </p>
+              <p className="m-0 mt-1 text-[12px] text-[color:var(--ink-muted)]">They scored highest across hook, CTA, and clarity.</p>
+            </div>
+          </div>
+        )}
 
-  if (items.length === 0 && !showUpload) {
+        <div className="flex w-full gap-[13px] overflow-x-auto pb-1 [scrollbar-width:thin]">
+          {ranked.map(({ item, overall }, idx) => {
+            const rank = idx + 1;
+            const fn = item.result?.fileName ?? sanitizeFileName(item.file.name);
+            const displayName = fn.length > 24 ? `${fn.slice(0, 21)}…` : fn;
+            const isExpanded = expandedId === item.id;
+            return (
+              <div
+                key={item.id}
+                className={cn(
+                  "flex h-[min(393px,70vh)] w-[186px] shrink-0 flex-col overflow-hidden rounded-[26px] border border-[color:var(--rank-load-card-complete-border)] bg-[color:var(--rank-load-card-complete-bg)] transition-[box-shadow] duration-150",
+                  isExpanded && "shadow-[0_0_0_2px_var(--accent)]",
+                )}
+              >
+                <button
+                  type="button"
+                  onClick={() => setExpandedId(isExpanded ? null : item.id)}
+                  aria-expanded={isExpanded}
+                  className="relative min-h-0 flex-1 overflow-hidden text-left transition-opacity duration-150 hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] active:opacity-90"
+                >
+                  <div className="absolute inset-0 opacity-80">
+                    {item.format === "static" ? (
+                      <img src={previewUrls[item.id]} alt="" className="size-full object-cover" />
+                    ) : (
+                      <video src={previewUrls[item.id]} className="size-full object-cover" muted playsInline preload="metadata" />
+                    )}
+                  </div>
+                  <div className="pointer-events-none absolute bottom-2 left-2 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9.9px] font-medium text-white bg-[color:var(--rank-badge-overlay)]">
+                    {item.format === "video" ? (
+                      <Play className="size-2 shrink-0 text-white" aria-hidden />
+                    ) : (
+                      <ImageIcon className="size-2 shrink-0 text-white" aria-hidden />
+                    )}
+                    {item.format === "video" ? "Video" : "Static"}
+                  </div>
+                  <div className="pointer-events-none absolute right-2 top-2 rounded-md bg-[color:var(--rank-load-score-badge-bg)] px-2 py-0.5 font-bold tabular-nums text-[12px] text-[color:var(--rank-load-score-text)]">
+                    {formatRankScoreDisplay(overall)}
+                  </div>
+                  <div className="absolute inset-0 flex items-center justify-center bg-transparent">
+                    <div className="flex size-10 items-center justify-center rounded-full bg-[color:var(--rank-load-complete-check-bg)] shadow-sm">
+                      <Check className="size-5 text-white" strokeWidth={2.5} aria-hidden />
+                    </div>
+                  </div>
+                </button>
+                <div className="flex shrink-0 flex-col gap-0.5 px-2.5 pb-2.5 pt-1">
+                  <p className="m-0 text-[9.9px] font-semibold uppercase tracking-[0.05em] text-[color:var(--rank-load-complete-label)]">#{rank}</p>
+                  <p className="m-0 truncate text-[11px] leading-snug text-[color:var(--rank-feature-pill-text)]">{displayName}</p>
+                </div>
+              </div>
+            );
+          })}
+          {errorItems.map((item) => {
+            const name = sanitizeFileName(item.file.name);
+            const displayName = name.length > 24 ? `${name.slice(0, 21)}…` : name;
+            return (
+              <div
+                key={item.id}
+                className="flex h-[min(393px,70vh)] w-[186px] shrink-0 flex-col overflow-hidden rounded-[26px] border border-[color:var(--rank-load-card-pending-border)] bg-[color:var(--rank-load-card-pending-bg)]"
+              >
+                <div className="relative min-h-0 flex-1 overflow-hidden">
+                  <div className="absolute inset-0 opacity-50">
+                    {item.format === "static" ? (
+                      <img src={previewUrls[item.id]} alt="" className="size-full object-cover" />
+                    ) : (
+                      <video src={previewUrls[item.id]} className="size-full object-cover" muted playsInline preload="metadata" />
+                    )}
+                  </div>
+                  <div className="pointer-events-none absolute bottom-2 left-2 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9.9px] font-medium text-white bg-[color:var(--rank-badge-overlay)]">
+                    {item.format === "video" ? (
+                      <Play className="size-2 shrink-0 text-white" aria-hidden />
+                    ) : (
+                      <ImageIcon className="size-2 shrink-0 text-white" aria-hidden />
+                    )}
+                    {item.format === "video" ? "Video" : "Static"}
+                  </div>
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                    <div className="flex size-10 items-center justify-center rounded-full bg-[color:var(--rank-load-pending-icon-bg)]">
+                      <XCircle className="size-[18px] text-[color:var(--error)]" strokeWidth={2} aria-hidden />
+                    </div>
+                  </div>
+                </div>
+                <div className="flex shrink-0 flex-col gap-0.5 px-2.5 pb-2.5 pt-1">
+                  <p className="m-0 text-[9.9px] font-semibold uppercase tracking-[0.05em] text-[color:var(--error)]">Failed</p>
+                  <p className="m-0 truncate text-[11px] leading-snug text-[color:var(--rank-feature-pill-text)]">{displayName}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {ranked.length === 0 && errorItems.length > 0 && (
+          <p className="m-0 text-center text-[14px] text-[color:var(--ink-muted)]">Every creative failed to analyze. Try different files or try again.</p>
+        )}
+
+        <AnimatePresence initial={false}>
+          {expandedRow?.item.result?.scores && (
+            <motion.div
+              key={expandedRow.item.id}
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.28 }}
+              className="overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)]"
+            >
+              <div className="flex flex-col">
+                <ScoreCard
+                  scores={expandedRow.item.result.scores}
+                  improvements={expandedRow.item.result.improvements}
+                  budget={expandedRow.item.result.budget}
+                  hashtags={expandedRow.item.result.hashtags}
+                  fileName={expandedRow.item.result.fileName}
+                  isDark={isDark}
+                  format={expandedRow.item.format}
+                />
+                <div className="flex justify-center border-t border-[color:var(--border)] bg-[color:var(--card)] px-4 py-3">
+                  <Link
+                    to={`scorecard/${expandedRow.item.id}`}
+                    className="text-[13px] font-medium text-[color:var(--accent)] underline decoration-solid underline-offset-2 transition-[color,opacity] duration-150 hover:opacity-90 focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] active:opacity-90"
+                  >
+                    View full scorecard
+                  </Link>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {ranked.length >= 4 && ranked[ranked.length - 1].overall <= 5 && (
+          <div className="flex items-start gap-2 rounded-xl border border-[color:var(--score-weak-border)] bg-[color:var(--score-weak-bg)] px-3.5 py-2.5">
+            <X className="mt-0.5 size-3.5 shrink-0 text-[color:var(--error)]" aria-hidden />
+            <div>
+              <span className="text-[12px] font-medium text-[color:var(--error)]">
+                Don&apos;t spend on #{ranked.length}
+                {ranked.length >= 5 ? ` or #${ranked.length - 1}` : ""}
+              </span>
+              <p className="m-0 mt-0.5 text-[11px] text-[color:var(--ink-muted)]">Score too low to justify ad spend. Fix improvements first.</p>
+            </div>
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={onRankMore}
+          className="flex h-[46px] w-full items-center justify-center gap-2 rounded-[11.5px] text-[13.5px] font-semibold text-white transition-[transform,background-color,opacity] duration-150 bg-[color:var(--rank-cta-bg)] hover:bg-[color:var(--rank-cta-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] active:scale-[0.99]"
+        >
+          <Trophy className="size-[15px]" strokeWidth={2} aria-hidden />
+          Rank more creatives
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** Rank Creatives workspace UI — state lives in RankBatchProvider (see BatchPage). */
+export function BatchView() {
+  const {
+    isDark,
+    t,
+    items,
+    setItems,
+    isRunning,
+    showUpgradeModal,
+    setShowUpgradeModal,
+    expandedId,
+    setExpandedId,
+    rejectionToast,
+    setRejectionToast,
+    confirmResetOpen,
+    setConfirmResetOpen,
+    rankPlatform,
+    setRankPlatform,
+    rankTestType,
+    setRankTestType,
+    dropzoneDrag,
+    setDropzoneDrag,
+    stopAfterCurrentUi,
+    setStopAfterCurrentUi,
+    stopRequestedRef,
+    fileInputRef,
+    allDone,
+    ranked,
+    previewUrls,
+    addFiles,
+    removeItem,
+    runBatch,
+    canStartRanking,
+  } = useRankBatch();
+
+  // ── RENDER: Figma 286-677 batch loading ───────────────────────────────────
+  if (!allDone && isRunning && items.length > 0) {
     return (
       <>
-        <RankEmptyState onStart={() => setShowUpload(true)} onFileDrop={(files) => { addFiles(files); setShowUpload(true); }} />
+        <RankBatchLoadingView
+          items={items}
+          previewUrls={previewUrls}
+          rankTestType={rankTestType}
+          showStopLink={!stopAfterCurrentUi}
+          onRequestStopAfterCurrent={() => {
+            stopRequestedRef.current = true;
+            setStopAfterCurrentUi(true);
+          }}
+        />
         {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} t={t} />}
+        {rejectionToast && (
+          <Toast message={rejectionToast.message} variant="warning" duration={4000} onClose={() => setRejectionToast(null)} />
+        )}
+        <AlertDialog
+          open={confirmResetOpen}
+          onClose={() => setConfirmResetOpen(false)}
+          onConfirm={() => {
+            setItems([]);
+            setExpandedId(null);
+          }}
+          title="Start a new batch?"
+          description="Your current rankings will be cleared. Consider exporting first."
+          confirmLabel="Clear & Start Over"
+          variant="default"
+        />
       </>
     );
   }
 
-  return (
-    <div style={{ maxWidth: 800, margin: "0 auto", padding: "24px 16px" }}>
-      {/* Upload section */}
-      {!allDone && (
-        <>
-          <h3 style={{ fontSize: 18, fontWeight: 600, color: "#f4f4f5", margin: "0 0 4px" }}>
-            {items.length === 0 ? "Upload creatives to rank" : `${items.length} creative${items.length > 1 ? "s" : ""} queued`}
-          </h3>
-          <p style={{ fontSize: 13, color: "#71717a", margin: "0 0 20px" }}>
-            {items.length === 0 ? "Drop up to 10 video or static ad files." : isRunning ? `Analyzing ${items.filter((i) => i.status === "analyzing").length > 0 ? items.findIndex((i) => i.status === "analyzing") + 1 : ""}...` : "Add more or start analysis."}
-          </p>
-
-          {/* Batch progress counter */}
-          {isRunning && (() => {
-            const analyzingIdx = items.findIndex((i) => i.status === "analyzing");
-            const currentNum = analyzingIdx >= 0 ? analyzingIdx + 1 : items.filter((i) => i.status === "complete" || i.status === "error").length;
-            return (
-              <p style={{ fontSize: 13, color: "var(--ink-muted, #71717a)", margin: "0 0 8px" }}>
-                Analyzing {currentNum} of {items.length}...
+  // ── RENDER: Figma 264-2926 workspace ─────────────────────────────────────
+  if (!allDone) {
+    return (
+      <>
+        <div className="relative flex min-h-[calc(100vh-120px)] flex-col bg-[color:var(--bg)] pb-10">
+          <div
+            className="pointer-events-none absolute inset-x-0 top-0 h-[min(480px,45vh)]"
+            style={{ background: "var(--rank-ambient)" }}
+            aria-hidden
+          />
+          <div className="relative z-[1] mx-auto flex w-full max-w-[916px] flex-col items-stretch gap-8 px-6 pt-10">
+            <div className="flex w-full flex-col items-center gap-2">
+              <div
+                className="flex size-[73px] shrink-0 items-center justify-center rounded-[15px] border border-[color:var(--rank-tile-border)] bg-[color:var(--rank-tile-bg)]"
+                aria-hidden
+              >
+                <Trophy className="size-[31px] text-[color:var(--rank-tile-icon)]" strokeWidth={1.75} />
+              </div>
+              <h2 className="m-0 text-center text-[clamp(1.75rem,4vw,2.4rem)] font-bold tracking-[-0.025em] text-[color:var(--ink)]">
+                Rank your creatives
+              </h2>
+              <p className="m-0 max-w-[390px] text-center text-[13.5px] leading-[1.6] text-[color:var(--ink-muted)]">
+                Upload up to 10 ad creatives. Cutsheet ranks them by predicted performance so you know exactly where to put your budget.
               </p>
-            );
-          })()}
+              <div className="mt-4 flex max-w-full flex-wrap items-center justify-center gap-2">
+                {FEATURE_CHIPS.map(({ icon: Icon, label }) => (
+                  <span
+                    key={label}
+                    className="inline-flex h-[27px] items-center gap-1.5 rounded-full border border-[color:var(--rank-feature-pill-border)] bg-[color:var(--rank-feature-pill-bg)] px-3 text-[11.5px] text-[color:var(--rank-feature-pill-text)]"
+                  >
+                    <Icon className="size-[11.5px] shrink-0 opacity-90" aria-hidden />
+                    {label}
+                  </span>
+                ))}
+              </div>
+            </div>
 
-          {/* File list */}
-          {items.length > 0 && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16 }}>
-              {items.map((item) => (
-                <div key={item.id} style={{
-                  display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
-                  background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10,
-                }}>
-                  <div style={{ width: 48, height: 32, borderRadius: 6, overflow: "hidden", background: "#09090b", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    {item.format === "static"
-                      ? <img src={previewUrls[item.id]} alt="" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
-                      : <video src={previewUrls[item.id]} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
-                    }
-                  </div>
-                  <span style={{ fontSize: 12, color: "#a1a1aa", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {(() => { const n = sanitizeFileName(item.file.name); return n.length > 28 ? n.slice(0, 25) + "..." : n; })()}
-                  </span>
-                  <span style={{ fontSize: 10, color: item.format === "video" ? "#818cf8" : "#f59e0b", background: item.format === "video" ? "rgba(99,102,241,0.1)" : "rgba(245,158,11,0.1)", borderRadius: 9999, padding: "1px 6px" }}>
-                    {item.format === "video" ? "Video" : "Static"}
-                  </span>
-                  {item.status === "analyzing" && <div style={{ width: 12, height: 12, border: "2px solid rgba(99,102,241,0.3)", borderTopColor: "#6366f1", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />}
-                  {item.status === "complete" && item.result?.scores && (
-                    <span style={{ fontSize: 13, fontWeight: 600, fontFamily: "var(--font-mono, monospace)", color: scoreColor(item.result.scores.overall) }}>
-                      {(recalculateOverallScore(item.result.scores) ?? item.result.scores).overall}/10
-                    </span>
-                  )}
-                  {item.status === "error" && <span style={{ fontSize: 10, color: "#ef4444" }}>Error</span>}
-                  {!isRunning && <button type="button" onClick={() => removeItem(item.id)} style={{ background: "none", border: "none", color: "#52525b", cursor: "pointer", padding: 2 }}><X size={14} /></button>}
+            <div className="flex w-full flex-col gap-4 sm:flex-row sm:flex-wrap sm:gap-8">
+              <div className="flex min-w-0 flex-1 flex-col gap-[7.7px]">
+                <p className="m-0 text-[9.6px] font-semibold uppercase tracking-[0.12em] text-[color:var(--rank-section-label)]">Platform</p>
+                <div className="flex flex-wrap items-center gap-[5.8px]">
+                  {RANK_PLATFORMS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setRankPlatform(opt.value)}
+                      className={cn(
+                        "inline-flex h-[27px] shrink-0 items-center justify-center rounded-full border px-3 text-[12.5px] font-medium transition-[background-color,border-color,color,opacity,transform] duration-150",
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]",
+                        "active:scale-[0.99]",
+                        rankPlatform === opt.value
+                          ? "border-[color:var(--ab-test-type-active-border)] bg-[color:var(--ab-test-type-active-bg)] text-[color:var(--ab-test-type-active-text)]"
+                          : "border-[color:var(--ab-test-type-inactive-border)] bg-[color:var(--ab-test-type-inactive-bg)] text-[color:var(--ab-test-type-inactive-text)] hover:border-[color:var(--border-hover)]",
+                      )}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
                 </div>
-              ))}
+              </div>
+              <div className="flex min-w-0 flex-1 flex-col gap-[7.7px]">
+                <p className="m-0 text-[9.6px] font-semibold uppercase tracking-[0.12em] text-[color:var(--rank-section-label)]">Test type</p>
+                <div className="flex flex-wrap items-center gap-[5.8px]">
+                  {RANK_TEST_TYPES.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setRankTestType(opt.value)}
+                      className={cn(
+                        "inline-flex h-[27px] shrink-0 items-center justify-center rounded-full border px-3 text-[11.5px] font-medium transition-[background-color,border-color,color,opacity,transform] duration-150",
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]",
+                        "active:scale-[0.99]",
+                        rankTestType === opt.value
+                          ? "border-[color:var(--ab-test-type-active-border)] bg-[color:var(--ab-test-type-active-bg)] text-[color:var(--ab-test-type-active-text)]"
+                          : "border-[color:var(--ab-test-type-inactive-border)] bg-[color:var(--ab-test-type-inactive-bg)] text-[color:var(--ab-test-type-inactive-text)] hover:border-[color:var(--border-hover)]",
+                      )}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
-          )}
 
-          {/* Dropzone */}
-          {items.length < MAX_FILES && !isRunning && (
-            <div
-              style={{ height: 80, border: "1px dashed rgba(255,255,255,0.08)", borderRadius: 12, background: "rgba(255,255,255,0.02)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, cursor: "pointer", transition: "border-color 150ms, background 150ms", marginBottom: 16 }}
-              onClick={() => fileInputRef.current?.click()}
-              onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)"; }}
-              onDragLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
-              onDrop={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; addFiles(e.dataTransfer.files); }}
-            >
-              <Upload size={16} color="#52525b" />
-              <span style={{ fontSize: 13, color: "#71717a" }}>{items.length === 0 ? "Drop creatives or click to browse" : "Add more"}</span>
+            {items.length < MAX_FILES && (
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDropzoneDrag(true);
+                }}
+                onDragLeave={(e) => {
+                  if (!e.currentTarget.contains(e.relatedTarget as Node)) setDropzoneDrag(false);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDropzoneDrag(false);
+                  if (e.dataTransfer.files.length > 0) addFiles(e.dataTransfer.files);
+                }}
+                className={cn(
+                  "flex min-h-[155px] w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-[15px] border border-dashed px-4 py-8 transition-[border-color,background-color] duration-150",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]",
+                  dropzoneDrag ? "border-[color:var(--accent-border)] bg-[color:var(--ab-drag-hover-bg)]" : "border-[color:var(--border)] bg-[color:var(--rank-dropzone-bg)]",
+                )}
+              >
+                <div className="flex size-[38px] items-center justify-center rounded-[23px] border border-[color:var(--rank-feature-pill-border)] bg-[color:var(--rank-dropzone-inner-icon-bg)]">
+                  <CloudUpload className="size-[17px] text-[color:var(--ink-muted)]" aria-hidden />
+                </div>
+                <div className="flex flex-col items-center gap-1 text-center">
+                  <p className="m-0 text-[13.5px] font-medium text-[color:var(--ink)]">
+                    Drop creatives here or{" "}
+                    <button
+                      type="button"
+                      className="text-[color:var(--rank-browse-link)] underline-offset-2 transition-opacity duration-150 hover:opacity-90 focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] active:opacity-80"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        fileInputRef.current?.click();
+                      }}
+                    >
+                      browse files
+                    </button>
+                  </p>
+                  <p className="m-0 text-[11.5px] text-[color:var(--rank-add-more-text)]">MP4, MOV, JPG, PNG · Max 200MB per file</p>
+                </div>
+              </div>
+            )}
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept={ACCEPTED_TYPES.join(",")}
+              multiple
+              className="sr-only"
+              onChange={(e) => {
+                if (e.target.files) addFiles(e.target.files);
+                e.target.value = "";
+              }}
+            />
+
+            <div className="flex w-full flex-col gap-3">
+              <div className="flex items-center justify-between gap-4">
+                <p className="m-0 text-[10.6px] font-semibold uppercase tracking-[0.12em] text-[color:var(--rank-queue-label)]">
+                  Queue · {items.length} {items.length === 1 ? "creative" : "creatives"}
+                </p>
+                {items.length < MAX_FILES && items.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="inline-flex items-center gap-1.5 text-[11.5px] font-medium text-[color:var(--rank-add-more-text)] transition-[color,opacity] duration-150 hover:text-[color:var(--ink-muted)] focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] active:opacity-90"
+                  >
+                    <Plus className="size-3" aria-hidden />
+                    Add more
+                  </button>
+                )}
+              </div>
+              {items.length > 0 && (
+                <div className="-mx-1 flex gap-3 overflow-x-auto pb-1 px-1 [scrollbar-width:thin]">
+                  {items.map((item) => {
+                    const name = sanitizeFileName(item.file.name);
+                    const displayName = name.length > 22 ? `${name.slice(0, 19)}…` : name;
+                    return (
+                      <div
+                        key={item.id}
+                        className="relative h-[280px] w-[160px] shrink-0 overflow-hidden rounded-[23px] border border-[color:var(--border)] bg-[color:var(--card)] sm:h-[309px] sm:w-[174px]"
+                      >
+                        <div className="absolute inset-0 opacity-80">
+                          {item.format === "static" ? (
+                            <img src={previewUrls[item.id]} alt="" className="size-full object-cover" />
+                          ) : (
+                            <video src={previewUrls[item.id]} className="size-full object-cover" muted playsInline />
+                          )}
+                        </div>
+                        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[52px] bg-gradient-to-t from-[rgba(0,0,0,0.8)] to-transparent px-2 pt-3">
+                          <p className="m-0 truncate text-[8.7px] font-medium text-white">{displayName}</p>
+                        </div>
+                        <div className="pointer-events-none absolute bottom-14 left-2 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[8.7px] font-medium text-white bg-[color:var(--rank-badge-overlay)]">
+                          {item.format === "video" ? (
+                            <Play className="size-[7px] shrink-0 text-white" aria-hidden />
+                          ) : (
+                            <ImageIcon className="size-[7px] shrink-0 text-white" aria-hidden />
+                          )}
+                          {item.format === "video" ? "Video" : "Static"}
+                        </div>
+                        {item.status === "analyzing" && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                            <div
+                              className="size-8 rounded-full border-2 border-[color:var(--accent)] border-t-transparent"
+                              style={{ animation: "batch-spin 0.65s linear infinite" }}
+                              aria-hidden
+                            />
+                          </div>
+                        )}
+                        {item.status === "complete" && item.result?.scores && (
+                          <div className="absolute right-2 top-2 rounded-md bg-[color:var(--rank-badge-overlay)] px-1.5 py-0.5 font-mono text-[10px] font-semibold text-white">
+                            {(recalculateOverallScore(item.result.scores) ?? item.result.scores).overall}
+                          </div>
+                        )}
+                        {item.status === "error" && (
+                          <div className="absolute right-2 top-2 rounded-md bg-[color:var(--error)]/90 px-1.5 py-0.5 text-[9px] font-medium text-white">Error</div>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => removeItem(item.id)}
+                          className="absolute left-2 top-2 flex size-7 items-center justify-center rounded-lg border border-[color:var(--border)] bg-black/50 text-[color:var(--ink-muted)] transition-[color,background-color,opacity] duration-150 hover:bg-black/70 hover:text-[color:var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] active:opacity-90"
+                          aria-label={`Remove ${name}`}
+                        >
+                          <X className="size-3.5" aria-hidden />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          )}
-          <input ref={fileInputRef} type="file" accept={ACCEPTED_TYPES.join(",")} multiple style={{ display: "none" }}
-            onChange={(e) => { if (e.target.files) addFiles(e.target.files); e.target.value = ""; }} />
 
-          {/* Analyze button */}
-          {items.length >= 2 && !isRunning && (
-            <button type="button" onClick={runBatch}
-              disabled={items.every((i) => i.status !== "pending")}
-              style={{
-                width: "100%", height: 52, borderRadius: 9999, border: "none",
-                background: items.some((i) => i.status === "pending") ? "#6366f1" : "rgba(99,102,241,0.3)",
-                color: "white", fontSize: 15, fontWeight: 600, cursor: "pointer",
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-              }}>
-              <Zap size={18} /> Rank {items.filter((i) => i.status === "pending").length} Creatives
-            </button>
-          )}
-
-          {/* Progress card while analyzing */}
-          {isRunning && (
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className="flex-1 flex flex-col"
-              style={{ marginTop: 24 }}
-            >
-              <ProgressCard
-                file={items.find(i => i.status === "analyzing")?.file ?? items[0]?.file ?? null}
-                status="processing"
-                statusMessage={`Analyzing creative ${items.filter(i => i.status === "complete" || i.status === "analyzing").length + 1} of ${items.length}`}
-                onCancel={() => { stopRequestedRef.current = true; }}
-                icon={Trophy}
-                title="Analyzing your ad"
-              />
-            </motion.div>
-          )}
-
-          {/* Stop after current button */}
-          {isRunning && !stopRequestedRef.current && (
             <button
               type="button"
-              onClick={() => { stopRequestedRef.current = true; }}
-              style={{
-                width: "100%", marginTop: 8, background: "none", border: "none",
-                color: "var(--ink-muted, #71717a)", fontSize: 13, cursor: "pointer",
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                padding: "8px 0",
-              }}
+              onClick={runBatch}
+              disabled={!canStartRanking}
+              className={cn(
+                "flex h-[46px] w-full items-center justify-center gap-2 rounded-[11.5px] text-[13.5px] font-semibold text-white transition-[transform,background-color,opacity] duration-150",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]",
+                canStartRanking
+                  ? "bg-[color:var(--rank-cta-bg)] hover:bg-[color:var(--rank-cta-hover)] active:scale-[0.99]"
+                  : "cursor-not-allowed bg-[color:var(--rank-cta-disabled-bg)] text-[color:var(--rank-cta-disabled-text)]",
+              )}
             >
-              <Square size={14} /> Stop after current
-            </button>
-          )}
-        </>
-      )}
-
-      {/* ── RESULTS: Ranked Leaderboard ────────────────────────────────────── */}
-      {allDone && ranked.length > 0 && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div>
-              <h3 style={{ fontSize: 18, fontWeight: 600, color: "#f4f4f5", margin: 0 }}>{ranked.length} creatives ranked</h3>
-              <p style={{ fontSize: 13, color: "#71717a", margin: "2px 0 0" }}>Based on overall ad strength</p>
-            </div>
-            <button type="button" onClick={() => setConfirmResetOpen(true)}
-              style={{ fontSize: 12, color: "#71717a", background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "6px 12px", cursor: "pointer" }}>
-              Rank more →
+              <Trophy className="size-[15px]" strokeWidth={2} aria-hidden />
+              Start Ranking
             </button>
           </div>
-
-          {/* Top 2 recommendation */}
-          {ranked.length >= 2 && (
-            <div style={{ padding: "14px 16px", borderRadius: 12, background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.2)", display: "flex", alignItems: "flex-start", gap: 10 }}>
-              <Trophy size={16} color="#818cf8" style={{ flexShrink: 0, marginTop: 2 }} />
-              <div>
-                <p style={{ fontSize: 14, fontWeight: 600, color: "#f4f4f5", margin: 0 }}>
-                  Test these two: {ranked[0].item.result!.fileName.split(".")[0]} and {ranked[1].item.result!.fileName.split(".")[0]}
-                </p>
-                <p style={{ fontSize: 12, color: "#71717a", margin: "4px 0 0" }}>They scored highest across hook, CTA, and clarity.</p>
-              </div>
-            </div>
-          )}
-
-          {/* Ranked list */}
-          {ranked.map(({ item, overall, scores }, idx) => {
-            const rank = idx + 1;
-            const rs = rankStyle(rank);
-            const isExpanded = expandedId === item.id;
-            return (
-              <div key={item.id}>
-                <div
-                  onClick={() => setExpandedId(isExpanded ? null : item.id)}
-                  style={{
-                    display: "flex", alignItems: "center", gap: 12, padding: "12px 14px",
-                    background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
-                    borderRadius: isExpanded ? "12px 12px 0 0" : 12, cursor: "pointer", transition: "border-color 150ms",
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; }}
-                >
-                  {/* Rank badge */}
-                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: rs.bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: rs.color }}>#{rank}</span>
-                  </div>
-
-                  {/* Thumbnail */}
-                  <div style={{ width: 48, height: 32, borderRadius: 6, overflow: "hidden", background: "#09090b", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    {item.format === "static"
-                      ? <img src={previewUrls[item.id]} alt="" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
-                      : <video src={previewUrls[item.id]} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
-                    }
-                  </div>
-
-                  {/* Name + format */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <span style={{ fontSize: 13, color: "#f4f4f5", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {item.result!.fileName.length > 28 ? item.result!.fileName.slice(0, 25) + "..." : item.result!.fileName}
-                    </span>
-                    <span style={{ fontSize: 10, color: item.format === "video" ? "#818cf8" : "#f59e0b" }}>
-                      {item.format === "video" ? "Video" : "Static"}
-                    </span>
-                  </div>
-
-                  {/* Mini score bars */}
-                  <div style={{ display: "flex", gap: 3, alignItems: "flex-end", height: 20 }}>
-                    {([scores.hook, scores.cta, scores.clarity, scores.production] as number[]).map((s, j) => (
-                      <div key={j} style={{ width: 4, height: `${Math.max(4, s * 2)}px`, borderRadius: 1, background: scoreColor(s) }} />
-                    ))}
-                  </div>
-
-                  {/* Overall score */}
-                  <span style={{ fontSize: 20, fontWeight: 700, fontFamily: "var(--font-mono, monospace)", color: scoreColor(overall), width: 50, textAlign: "right" }}>
-                    {overall}
-                  </span>
-
-                  <ChevronDown size={14} color="#52525b" style={{ transform: isExpanded ? "rotate(180deg)" : "none", transition: "transform 200ms" }} />
-                </div>
-
-                {/* Expanded scorecard */}
-                <AnimatePresence>
-                  {isExpanded && item.result?.scores && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                      style={{ overflow: "hidden", borderLeft: "1px solid rgba(255,255,255,0.06)", borderRight: "1px solid rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.06)", borderRadius: "0 0 12px 12px" }}
-                    >
-                      <ScoreCard
-                        scores={item.result.scores}
-                        improvements={item.result.improvements}
-                        budget={item.result.budget}
-                        hashtags={item.result.hashtags}
-                        fileName={item.result.fileName}
-                        isDark
-                        format={item.format}
-                      />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            );
-          })}
-
-          {/* Bottom 2 warning */}
-          {ranked.length >= 4 && ranked[ranked.length - 1].overall <= 5 && (
-            <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(239,68,68,0.04)", border: "1px solid rgba(239,68,68,0.1)", display: "flex", alignItems: "flex-start", gap: 8 }}>
-              <X size={14} color="#ef4444" style={{ flexShrink: 0, marginTop: 2 }} />
-              <div>
-                <span style={{ fontSize: 12, color: "#ef4444", fontWeight: 500 }}>
-                  Don't spend on #{ranked.length}{ranked.length >= 5 ? ` or #${ranked.length - 1}` : ""}
-                </span>
-                <p style={{ fontSize: 11, color: "#71717a", margin: "2px 0 0" }}>Score too low to justify ad spend. Fix improvements first.</p>
-              </div>
-            </div>
-          )}
         </div>
-      )}
+
+        {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} t={t} />}
+        {rejectionToast && (
+          <Toast message={rejectionToast.message} variant="warning" duration={4000} onClose={() => setRejectionToast(null)} />
+        )}
+        <AlertDialog
+          open={confirmResetOpen}
+          onClose={() => setConfirmResetOpen(false)}
+          onConfirm={() => {
+            setItems([]);
+            setExpandedId(null);
+          }}
+          title="Start a new batch?"
+          description="Your current rankings will be cleared. Consider exporting first."
+          confirmLabel="Clear & Start Over"
+          variant="default"
+        />
+        <style>{`@keyframes batch-spin { to { transform: rotate(360deg) } }`}</style>
+      </>
+    );
+  }
+
+  // ── RESULTS: Figma 286-677 card row (complete state) + detail ─────────────
+  return (
+    <>
+      <RankBatchResultsView
+        items={items}
+        ranked={ranked}
+        previewUrls={previewUrls}
+        rankTestType={rankTestType}
+        expandedId={expandedId}
+        setExpandedId={setExpandedId}
+        isDark={isDark}
+        onRankMore={() => setConfirmResetOpen(true)}
+      />
 
       {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} t={t} />}
 
-      {/* Rejection toast */}
-      {rejectionToast && (
-        <Toast
-          message={rejectionToast.message}
-          variant="warning"
-          duration={4000}
-          onClose={() => setRejectionToast(null)}
-        />
-      )}
+      {rejectionToast && <Toast message={rejectionToast.message} variant="warning" duration={4000} onClose={() => setRejectionToast(null)} />}
 
-      {/* Confirm reset dialog */}
       <AlertDialog
         open={confirmResetOpen}
         onClose={() => setConfirmResetOpen(false)}
-        onConfirm={() => { setItems([]); setExpandedId(null); setShowUpload(true); }}
+        onConfirm={() => {
+          setItems([]);
+          setExpandedId(null);
+        }}
         title="Start a new batch?"
         description="Your current rankings will be cleared. Consider exporting first."
         confirmLabel="Clear & Start Over"
         variant="default"
       />
-
-      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
-    </div>
+    </>
   );
 }

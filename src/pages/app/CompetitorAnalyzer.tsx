@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CompetitorResultPanel } from "../../components/CompetitorResult";
-import { AnalysisProgressCard } from "../../components/AnalysisProgressCard";
+import { CompetitorLoadingView } from "../../components/CompetitorLoadingView";
 import { analyzeCompetitor, type CompetitorResult } from "../../services/competitorService";
 import type { AppSharedContext } from "../../components/AppLayout";
 import { VideoDropzone } from "../../components/VideoDropzone";
@@ -28,7 +28,7 @@ const PLATFORMS = ["all", "Meta", "TikTok", "Google", "YouTube"] as const;
 const FORMATS = ["video", "static"] as const;
 type Platform = (typeof PLATFORMS)[number];
 type Format = (typeof FORMATS)[number];
-/** 0 = dual upload (Figma 263-1358), 2 = configure + run, 3 = results */
+/** 0 = dual upload (Figma 263-1483), 2 = configure + run, 3 = results */
 type Step = 0 | 2 | 3;
 
 const SLIDE = { initial: { opacity: 0, x: 40 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -40 }, transition: { duration: 0.25, ease: [0.16, 1, 0.3, 1] as const } };
@@ -334,118 +334,130 @@ export default function CompetitorAnalyzer() {
               aria-hidden
             />
             <div className="relative z-[1] flex flex-1 flex-col">
-              <AnalysisProgressCard
-                pageType="competitor"
-                files={[yourFile, competitorFile]}
-                statusMessage={statusMsg || "Comparing ads..."}
+              <CompetitorLoadingView
+                yourFile={yourFile}
+                competitorFile={competitorFile}
+                format={format}
+                statusMessage={statusMsg || "Analyzing both ads..."}
                 onCancel={handleReset}
               />
             </div>
           </motion.div>
         ) : (
-        <div className="mx-auto max-w-[760px] px-5 py-8 sm:px-6 sm:py-10">
+        <div className={cn(step === 0 ? "w-full px-6 py-8" : "mx-auto max-w-[760px] px-5 py-8 sm:px-6 sm:py-10")}>
           <AnimatePresence mode="wait">
 
-            {/* ── UPLOAD — Figma 263-1358 (dual dropzones + Analyze Gap) ───────────────── */}
+            {/* ── UPLOAD — Figma 263-1483 (dual dropzones + Analyze Gap) ───────────────── */}
             {step === 0 && (
               <motion.div
                 key="upload"
                 {...SLIDE}
-                className="relative flex min-h-[min(100%,560px)] flex-col items-center"
+                className="relative flex min-h-[min(100%,560px)] flex-col items-center overflow-hidden rounded-none"
+                style={{ backgroundColor: "var(--bg)" }}
               >
                 <div
-                  className="pointer-events-none absolute inset-0 -z-10 rounded-[var(--radius-lg)] opacity-100"
-                  style={{ backgroundImage: "var(--competitor-upload-ambient)", backgroundRepeat: "no-repeat", backgroundSize: "100% 70%" }}
+                  className="pointer-events-none absolute inset-0 z-0"
+                  style={{
+                    backgroundImage: "var(--competitor-upload-ambient)",
+                    backgroundRepeat: "no-repeat",
+                    backgroundSize: "100% 100%",
+                  }}
                   aria-hidden
                 />
 
-                <div
-                  className="flex h-[76px] w-[76px] shrink-0 items-center justify-center rounded-[14px] border"
-                  style={{
-                    background: "var(--competitor-tile-bg)",
-                    borderColor: "var(--competitor-tile-border)",
-                    boxShadow: "0 0 24px rgba(14, 165, 233, 0.12)",
-                  }}
-                >
-                  <Swords className="h-7 w-7" style={{ color: "var(--competitor-tile-icon)" }} strokeWidth={2} aria-hidden />
-                </div>
-
-                <h1 className="mt-5 text-center text-[clamp(1.25rem,3.5vw,1.45rem)] font-semibold tracking-tight text-[color:var(--ink)]">
-                  Competitor Analysis
-                </h1>
-                <p className="mt-2.5 max-w-md text-center text-[13px] leading-relaxed text-[color:var(--ink-muted)]">
-                  Upload your ad and a competitor&apos;s. AI finds the gap and builds your win strategy.
-                </p>
-
-                <div className="mt-5 flex flex-wrap justify-center gap-2">
-                  {FEATURE_PILLS.map((pill) => (
-                    <span
-                      key={pill}
-                      className="rounded-full border px-3 py-1 text-xs font-normal"
-                      style={{
-                        background: "var(--competitor-pill-bg)",
-                        borderColor: "var(--competitor-pill-border)",
-                        color: "var(--competitor-pill-text)",
-                      }}
-                    >
-                      {pill}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="mt-8 grid w-full max-w-[723px] grid-cols-1 gap-5 md:grid-cols-2 md:gap-5">
-                  <div className="flex min-w-0 flex-col">
-                    <p className="mb-2 text-center text-[9.5px] font-semibold uppercase tracking-[0.12em] text-[color:var(--ink-muted)]">
-                      Your ad
-                    </p>
-                    {yourFile ? (
-                      <FilePreview file={yourFile} onRemove={() => setYourFile(null)} />
-                    ) : (
-                      <VideoDropzone
-                        file={null}
-                        onFileSelect={(f) => {
-                          if (f) setYourFile(f);
-                        }}
-                        acceptImages
-                        heading="Drop your creative here"
-                        formatHint="MP4 · MOV · JPG"
-                        wrapperClassName="max-w-none mx-0"
-                      />
-                    )}
+                <div className="relative z-[1] flex w-full max-w-[724px] flex-col items-center">
+                  <div
+                    className="flex size-[73px] shrink-0 items-center justify-center rounded-[15px] border"
+                    style={{
+                      background: "var(--competitor-tile-bg)",
+                      borderColor: "var(--competitor-tile-border)",
+                    }}
+                  >
+                    <Swords
+                      className="size-[31px] text-[color:var(--competitor-tile-icon)]"
+                      strokeWidth={1.75}
+                      aria-hidden
+                    />
                   </div>
-                  <div className="flex min-w-0 flex-col">
-                    <p className="mb-2 text-center text-[9.5px] font-semibold uppercase tracking-[0.12em] text-[color:var(--ink-muted)]">
-                      Competitor ad
-                    </p>
-                    {competitorFile ? (
-                      <FilePreview file={competitorFile} onRemove={() => setCompetitorFile(null)} />
-                    ) : (
-                      <VideoDropzone
-                        file={null}
-                        onFileSelect={(f) => {
-                          if (f) setCompetitorFile(f);
-                        }}
-                        acceptImages
-                        heading="Drop your creative here"
-                        formatHint="MP4 · MOV · JPG"
-                        wrapperClassName="max-w-none mx-0"
-                      />
-                    )}
-                  </div>
-                </div>
 
-                <div className="mt-8 flex w-full max-w-[723px] flex-col gap-4">
+                  <h1 className="mt-[23px] text-center text-[23px] font-bold leading-tight tracking-[-0.025em] text-[color:var(--ink)]">
+                    Competitor Analysis
+                  </h1>
+                  <p className="mt-2.5 max-w-[340px] text-center text-[13.5px] leading-[1.6] text-[color:var(--ink-muted)]">
+                    Upload your ad and a competitor&apos;s. AI finds the gap and builds your win strategy.
+                  </p>
+
+                  <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+                    {FEATURE_PILLS.map((pill) => (
+                      <span
+                        key={pill}
+                        className="rounded-full border px-3 py-1 text-[11.5px] font-normal leading-[15px]"
+                        style={{
+                          background: "var(--competitor-pill-bg)",
+                          borderColor: "var(--competitor-pill-border)",
+                          color: "var(--competitor-pill-text)",
+                        }}
+                      >
+                        {pill}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="mt-8 grid w-full grid-cols-1 gap-[19px] md:grid-cols-2">
+                    <div className="flex min-w-0 flex-col gap-[26px]">
+                      <p className="text-center text-[9.6px] font-semibold uppercase tracking-[0.12em] text-[color:var(--ink-muted)]">
+                        Your ad
+                      </p>
+                      {yourFile ? (
+                        <FilePreview file={yourFile} onRemove={() => setYourFile(null)} />
+                      ) : (
+                        <VideoDropzone
+                          file={null}
+                          onFileSelect={(f) => {
+                            if (f) setYourFile(f);
+                          }}
+                          acceptImages
+                          heading="Drop your creative here"
+                          formatHint="MP4 · MOV · JPG"
+                          layoutVariant="competitor"
+                          wrapperClassName="max-w-none"
+                        />
+                      )}
+                    </div>
+                    <div className="flex min-w-0 flex-col gap-[26px]">
+                      <p className="text-center text-[9.6px] font-semibold uppercase tracking-[0.12em] text-[color:var(--ink-muted)]">
+                        Competitor ad
+                      </p>
+                      {competitorFile ? (
+                        <FilePreview file={competitorFile} onRemove={() => setCompetitorFile(null)} />
+                      ) : (
+                        <VideoDropzone
+                          file={null}
+                          onFileSelect={(f) => {
+                            if (f) setCompetitorFile(f);
+                          }}
+                          acceptImages
+                          heading="Drop your creative here"
+                          formatHint="MP4 · MOV · JPG"
+                          layoutVariant="competitor"
+                          wrapperClassName="max-w-none"
+                        />
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mt-8 flex w-full max-w-[724px] flex-col gap-4">
                   <div className="flex justify-center">
                     <button
                       type="button"
                       onClick={() => setStep(2)}
                       disabled={!yourFile || !competitorFile}
                       className={cn(
-                        "h-11 min-w-[140px] rounded-full px-8 text-[13px] font-medium transition-[background-color,border-color,color,transform] duration-150",
-                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] active:scale-[0.99]",
+                        "flex h-[44px] min-w-[121px] items-center justify-center rounded-full px-8 text-[12.5px] font-medium transition-[background-color,border-color,color,transform,opacity] duration-150",
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] active:scale-[0.99]",
                         yourFile && competitorFile
                           ? "bg-[color:var(--accent)] text-white hover:bg-[color:var(--accent-hover)]"
-                          : "cursor-not-allowed border border-[color:var(--border)] bg-[color:var(--surface-raised)] text-[color:var(--ink-muted)]",
+                          : "cursor-not-allowed border border-[color:var(--ab-run-disabled-border)] bg-[color:var(--ab-run-disabled-bg)] text-[color:var(--decon-url-pill-mono)]",
                       )}
                     >
                       Analyze Gap
@@ -484,6 +496,7 @@ export default function CompetitorAnalyzer() {
                       <MetaSearch onFileSelect={(f) => setCompetitorFile(f)} />
                     </>
                   ) : null}
+                  </div>
                 </div>
               </motion.div>
             )}
@@ -566,21 +579,14 @@ export default function CompetitorAnalyzer() {
 
             {/* ── STEP 3: RESULTS ─────────────────────────────────── */}
             {step === 3 && result && (
-              <motion.div key="s3" {...SLIDE} style={{ paddingTop: 20 }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-                  <button type="button" onClick={handleReset} style={{ background: "none", border: "none", color: "#52525b", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
-                    <ChevronLeft size={14} /> Compare another
-                  </button>
-                  <span style={{ fontSize: 11, color: "#818cf8", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)", borderRadius: 9999, padding: "4px 12px" }}>
-                    Analysis complete
-                  </span>
-                </div>
+              <motion.div key="s3" {...SLIDE} className="pt-5">
                 <CompetitorResultPanel
                   result={result}
                   yourFileName={yourFile?.name ?? "Your Ad"}
                   competitorFileName={competitorFile?.name ?? "Competitor"}
                   yourFile={yourFile ?? undefined}
                   competitorFile={competitorFile ?? undefined}
+                  onStartOver={handleReset}
                   onReanalyze={() => {
                     setResult(null);
                     setStatus("idle");

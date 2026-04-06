@@ -102,7 +102,7 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/app/display" element={<DisplayAnalyzer />} />
             <Route path="/app/ab-test" element={<ABTestPage />} />
             <Route path="/app/competitor" element={<CompetitorAnalyzer />} />
-            <Route path="/app/batch" element={<BatchPage />} />
+            <Route path="/app/batch/*" element={<BatchPage />} />
             <Route path="/app/swipe-file" element={<SwipeFilePage />} />
             <Route path="/app/deconstructor" element={<Deconstructor />} />
             <Route path="/app/policy-check" element={<PolicyCheck />} />

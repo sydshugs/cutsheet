@@ -226,41 +226,44 @@ export function PreFlightView({ apiKey }: PreFlightViewProps) {
     };
   }, [variantThumbnailUrls]);
 
-  // ─── UPLOAD UI — Figma /app/a-b-test (263-720) ─────────────────────────────────
+  // ─── UPLOAD UI — Figma /app/a-b-test idle (263-842) ───────────────────────────
   if (phase === "idle" || phase === "error") {
     const PILLS = ["Hook comparison", "CTA analysis", "Winner prediction"];
 
     return (
-      <div className="relative flex min-h-[calc(100vh-120px)] flex-1 flex-col items-center justify-center overflow-hidden px-6 py-8">
+      <div
+        className="relative flex min-h-[calc(100vh-120px)] flex-1 flex-col items-center justify-center overflow-hidden px-6 py-8"
+        style={{ backgroundColor: "var(--bg)" }}
+      >
         <div
           className="pointer-events-none absolute inset-0"
           style={{ backgroundImage: "var(--ab-ambient-gradient)" }}
           aria-hidden
         />
 
-        <div className="relative z-[1] flex w-full max-w-[640px] flex-col items-center">
+        <div className="relative z-[1] flex w-full max-w-[580px] flex-col items-center">
           <div
-            className="flex h-[76px] w-[76px] shrink-0 items-center justify-center rounded-[14px] border"
+            className="flex size-[73px] shrink-0 items-center justify-center rounded-[15px] border"
             style={{
               background: "var(--ab-tile-bg)",
               borderColor: "var(--ab-tile-border)",
             }}
           >
-            <GitBranch className="h-7 w-7 text-[color:var(--ab-icon)]" strokeWidth={2} aria-hidden />
+            <GitBranch className="size-[31px] text-[color:var(--ab-icon)]" strokeWidth={1.75} aria-hidden />
           </div>
 
-          <h1 className="mt-5 text-center text-[clamp(1.5rem,4vw,2.375rem)] font-semibold leading-tight tracking-tight text-[color:var(--ink)]">
+          <h1 className="mt-[23px] text-center text-[2.375rem] font-semibold leading-tight tracking-[-0.025em] text-[color:var(--ink)]">
             Run an A/B Test
           </h1>
-          <p className="mt-2.5 max-w-md text-center text-sm leading-relaxed text-[color:var(--ink-faint)]">
+          <p className="mt-2.5 max-w-[392px] text-center text-[13.5px] leading-[1.6] text-[color:var(--decon-markdown-muted)]">
             Upload two variants. Our AI extracts visual features, pacing, and hooks to predict the undisputed winner.
           </p>
 
-          <div className="mt-5 flex flex-wrap justify-center gap-2">
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
             {PILLS.map((pill) => (
               <span
                 key={pill}
-                className="rounded-full border px-3 py-1 text-xs font-medium"
+                className="rounded-full border px-3 py-1 text-[11.5px] font-normal leading-[15px]"
                 style={{
                   background: "var(--ab-pill-bg)",
                   borderColor: "var(--ab-pill-border)",
@@ -272,27 +275,27 @@ export function PreFlightView({ apiKey }: PreFlightViewProps) {
             ))}
           </div>
 
-          <div className="mt-8 grid w-full grid-cols-2 gap-3">
+          <div className="mt-8 grid w-full grid-cols-2 gap-[15px]">
             {variants.map((v, i) => {
               const fileInputId = `preflight-file-${v.id}`;
               const hasFile = !!v.file;
               const isDrag = dragHoverIdx === i;
               return (
-                <div key={v.id} className="flex min-w-0 flex-col gap-2">
-                  <div className="flex items-center justify-center gap-1 px-0.5">
+                <div key={v.id} className="flex min-w-0 flex-col gap-[22px]">
+                  <div className="flex h-[14px] items-center justify-center gap-1">
                     <input
                       type="text"
                       value={v.label}
                       maxLength={40}
                       onChange={(e) => handleLabelChange(i, e.target.value)}
-                      className="min-w-0 flex-1 bg-transparent px-1 text-center font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-[color:var(--ab-variant-label)] outline-none transition-opacity focus-visible:rounded focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
+                      className="min-w-0 max-w-full bg-transparent text-center text-[9.6px] font-semibold uppercase tracking-[0.05em] text-[color:var(--ab-variant-label)] outline-none transition-opacity placeholder:text-[color:var(--ab-variant-label)] focus-visible:rounded focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
                       aria-label={`Variant label ${i + 1}`}
                     />
                     {variants.length > MIN_VARIANTS && (
                       <button
                         type="button"
                         onClick={() => removeVariant(i)}
-                        className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-[5px] border border-[color:var(--border)] bg-transparent text-[color:var(--ab-variant-label)] transition-[color,border-color] duration-150 hover:border-[color:rgba(239,68,68,0.3)] hover:text-[color:var(--error)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] active:scale-[0.98]"
+                        className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-[5px] border border-[color:var(--border)] bg-transparent text-[color:var(--ab-variant-label)] transition-[color,border-color,opacity] duration-150 hover:border-[color:rgba(239,68,68,0.3)] hover:text-[color:var(--error)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] active:scale-[0.98]"
                         aria-label={`Remove ${v.label}`}
                       >
                         <X className="h-3 w-3" aria-hidden />
@@ -302,7 +305,7 @@ export function PreFlightView({ apiKey }: PreFlightViewProps) {
 
                   <div
                     className={cn(
-                      "rounded-[15px] border p-5 transition-[border-color,background-color] duration-150",
+                      "rounded-[15px] border transition-[border-color,background-color,opacity] duration-150",
                       !hasFile && !isDrag && "bg-[color:var(--ab-dropzone-bg)]",
                       !hasFile && isDrag && "bg-[color:var(--ab-drag-hover-bg)]",
                       hasFile && "bg-[color:var(--ab-dropzone-bg)]",
@@ -333,11 +336,15 @@ export function PreFlightView({ apiKey }: PreFlightViewProps) {
                     {!hasFile ? (
                       <label
                         htmlFor={fileInputId}
-                        className="flex min-h-[200px] cursor-pointer flex-col items-center justify-center gap-3 py-2 transition-opacity duration-150 hover:opacity-90 focus-within:opacity-100"
+                        className="flex min-h-[268px] cursor-pointer flex-col items-center justify-center gap-0 px-0.5 py-10 transition-opacity duration-150 hover:opacity-90 focus-within:opacity-100"
                       >
-                        <CloudUpload className="h-8 w-8 text-[color:var(--ink-muted)]" strokeWidth={1.75} aria-hidden />
-                        <span className="text-sm font-medium text-[color:var(--ink-secondary)]">Drop creative here</span>
-                        <span className="font-mono text-[11px] text-[color:var(--ab-variant-label)]">MP4 · MOV · JPG</span>
+                        <CloudUpload className="size-[19px] shrink-0 text-[color:var(--ink-muted)]" strokeWidth={2} aria-hidden />
+                        <span className="mt-[11px] text-[13.5px] font-normal leading-tight text-[color:var(--decon-markdown-muted)]">
+                          Upload video
+                        </span>
+                        <span className="mt-4 text-[11.5px] font-normal leading-[15px] text-[color:var(--ab-variant-label)]">
+                          MP4 · MOV · JPG
+                        </span>
                         <input
                           id={fileInputId}
                           type="file"
@@ -350,7 +357,7 @@ export function PreFlightView({ apiKey }: PreFlightViewProps) {
                         />
                       </label>
                     ) : (
-                      <div className="flex min-h-[200px] flex-col justify-center gap-2">
+                      <div className="flex min-h-[268px] flex-col justify-center gap-2 px-2 py-4">
                         <div
                           className="flex items-center gap-2 rounded-lg border px-2.5 py-2"
                           style={{
@@ -386,7 +393,7 @@ export function PreFlightView({ apiKey }: PreFlightViewProps) {
               <button
                 type="button"
                 onClick={addVariant}
-                className="col-span-2 flex items-center justify-center gap-2 rounded-xl border border-dashed border-[color:var(--border)] bg-transparent px-5 py-3.5 text-[13px] font-medium text-[color:var(--ink-muted)] transition-[border-color,color] duration-150 hover:border-[color:var(--accent-border)] hover:text-[color:var(--accent-light)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] active:scale-[0.99]"
+                className="col-span-2 flex items-center justify-center gap-2 rounded-xl border border-dashed border-[color:var(--border)] bg-transparent px-5 py-3.5 text-[13px] font-medium text-[color:var(--ink-muted)] transition-[border-color,color,opacity] duration-150 hover:border-[color:var(--accent-border)] hover:text-[color:var(--accent-light)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] active:scale-[0.99]"
               >
                 <Plus className="h-3.5 w-3.5" aria-hidden />
                 Add variant
@@ -394,27 +401,29 @@ export function PreFlightView({ apiKey }: PreFlightViewProps) {
             )}
           </div>
 
-          <p className="mt-8 w-full text-left text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--ab-variant-label)]">
-            Test type
-          </p>
-          <div className="mt-2 flex w-full flex-wrap gap-2">
-            {TEST_TYPE_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => setTestType(opt.value)}
-                className={cn(
-                  "rounded-[10px] border px-4 py-2 text-[13px] font-medium transition-[background-color,border-color,color] duration-150",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]",
-                  "active:scale-[0.99]",
-                  testType === opt.value
-                    ? "border-[color:var(--ab-test-type-active-border)] bg-[color:var(--ab-test-type-active-bg)] text-[color:var(--ab-test-type-active-text)]"
-                    : "border-[color:var(--ab-test-type-inactive-border)] bg-[color:var(--ab-test-type-inactive-bg)] text-[color:var(--ab-test-type-inactive-text)] hover:border-[color:var(--border-hover)]",
-                )}
-              >
-                {opt.label}
-              </button>
-            ))}
+          <div className="mt-10 flex w-full flex-col items-center gap-[7.7px]">
+            <p className="text-center text-[9.6px] font-semibold uppercase tracking-[0.05em] text-[color:var(--ab-variant-label)]">
+              Test type
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-[7.7px]">
+              {TEST_TYPE_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setTestType(opt.value)}
+                  className={cn(
+                    "inline-flex h-[27px] shrink-0 items-center justify-center rounded-full border px-3 text-[11.5px] font-medium transition-[background-color,border-color,color,opacity] duration-150",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]",
+                    "active:scale-[0.99] hover:opacity-95",
+                    testType === opt.value
+                      ? "border-[color:var(--ab-test-type-active-border)] bg-[color:var(--ab-test-type-active-bg)] text-[color:var(--ab-test-type-active-text)]"
+                      : "border-[color:var(--ab-test-type-inactive-border)] bg-[color:var(--ab-test-type-inactive-bg)] text-[color:var(--ab-test-type-inactive-text)] hover:border-[color:var(--border-hover)]",
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {phase === "error" && errorMsg && (
@@ -430,13 +439,13 @@ export function PreFlightView({ apiKey }: PreFlightViewProps) {
             </div>
           )}
 
-          <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:gap-4">
+          <div className="mt-10 flex flex-col items-center">
             <button
               type="button"
               onClick={handleRun}
               disabled={!canRun}
               className={cn(
-                "rounded-[10px] px-8 py-3 text-sm font-semibold transition-[transform,background-color,border-color,color] duration-150",
+                "flex h-[38px] min-w-[231px] items-center justify-center rounded-[10px] px-8 text-[12.5px] font-medium transition-[transform,background-color,border-color,color,opacity] duration-150",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]",
                 canRun
                   ? "bg-[color:var(--accent)] text-white hover:bg-[color:var(--accent-hover)] active:scale-[0.99]"
@@ -445,8 +454,8 @@ export function PreFlightView({ apiKey }: PreFlightViewProps) {
             >
               Run Comparison
             </button>
-            <span className="font-mono text-xs text-[color:var(--ink-muted)]">
-              {readyCount}/{variants.length} variants ready
+            <span className="sr-only">
+              {readyCount} of {variants.length} variants ready to run
             </span>
           </div>
         </div>

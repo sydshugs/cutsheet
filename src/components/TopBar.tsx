@@ -64,7 +64,10 @@ export function TopBar({
   }, [popoverOpen]);
 
   const location = useLocation();
-  const pageTitle = ROUTE_TITLES[location.pathname] ?? "Analyzer";
+  const pageTitle =
+    location.pathname.startsWith("/app/batch/scorecard")
+      ? "Rank Creatives"
+      : ROUTE_TITLES[location.pathname] ?? "Analyzer";
   const isAdBreakdown = location.pathname === "/app/deconstructor";
 
   return (

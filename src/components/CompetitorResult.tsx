@@ -9,12 +9,14 @@ import {
   XCircle,
   Zap,
   ChevronDown,
+  ChevronLeft,
   Target,
   TrendingDown,
   TrendingUp,
   Sparkles,
   BarChart3,
   ArrowUpRight,
+  Swords,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "../lib/utils";
@@ -331,6 +333,56 @@ function WinProbabilityPill({ value }: { value: number }) {
   );
 }
 
+// ─── RESULTS PAGE HEADER — Figma 263-1702 (shared) ───────────────────────────
+
+function CompetitorResultsPageHeader({ onStartOver }: { onStartOver?: () => void }) {
+  return (
+    <header className="mb-6 flex flex-col gap-3 md:mb-8">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <div
+            className="flex size-[38px] shrink-0 items-center justify-center rounded-[23px] border border-[color:var(--decon-accent-border)] bg-[color:var(--decon-accent-soft)]"
+            style={{ boxShadow: "0 0 19px color-mix(in srgb, var(--accent) 20%, transparent)" }}
+          >
+            <Swords className="size-[17px] text-[color:var(--decon-accent-light)]" strokeWidth={1.75} aria-hidden />
+          </div>
+          <h1 className="m-0 min-w-0 text-[21px] font-bold leading-tight tracking-[-0.025em] text-[color:var(--ink)] md:text-[23px]">
+            Competitor Analysis
+          </h1>
+        </div>
+        <div
+          className="flex shrink-0 items-center gap-2 rounded-full border border-[color:var(--border)] bg-[color:var(--surface-raised)] px-3 py-1.5"
+          style={{ boxShadow: "var(--shadow-sm)" }}
+        >
+          <span
+            className="size-1.5 shrink-0 rounded-full bg-[color:var(--success)]"
+            style={{ boxShadow: "0 0 8px var(--success)" }}
+            aria-hidden
+          />
+          <span className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-[color:var(--decon-markdown-muted)]">
+            Analysis complete
+          </span>
+        </div>
+      </div>
+      {onStartOver ? (
+        <button
+          type="button"
+          onClick={onStartOver}
+          className={cn(
+            "flex w-fit items-center gap-1 border-none bg-transparent p-0 text-[12px] text-[color:var(--ink-muted)]",
+            "cursor-pointer transition-[color,opacity] duration-150 hover:text-[color:var(--ink)]",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg)]",
+            "active:opacity-80",
+          )}
+        >
+          <ChevronLeft className="size-3.5 shrink-0" aria-hidden />
+          Compare another
+        </button>
+      ) : null}
+    </header>
+  );
+}
+
 // ─── LOSING — Figma 263-1702 ───────────────────────────────────────────────
 
 function fmtScoreOne(n: number) {
@@ -344,7 +396,7 @@ function LoserWinProbabilityPill({ value }: { value: number }) {
         className="h-2.5 w-2.5 shrink-0 rounded-full bg-[color:var(--error)] shadow-[0_0_10px_var(--error)]"
         aria-hidden
       />
-      <span className="text-center text-[11px] font-bold uppercase tracking-[0.14em] text-[color-mix(in_srgb,var(--error)_88%,white)]">
+      <span className="text-center text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--competitor-losing-win-prob-text)]">
         {value}% win probability
       </span>
     </div>
@@ -358,7 +410,7 @@ function WinnerWinProbabilityPill({ value }: { value: number }) {
         className="h-2.5 w-2.5 shrink-0 rounded-full bg-[color:var(--success)] shadow-[0_0_10px_var(--success)]"
         aria-hidden
       />
-      <span className="text-center text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--success)]">
+      <span className="text-center text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--competitor-winning-win-prob-text)]">
         {value}% win probability
       </span>
     </div>
@@ -394,16 +446,46 @@ function budgetTargetsFromResult(
 
 function fatigueResistanceCopy(hookScore: number): string {
   const days = hookScore >= 9 ? "14+" : hookScore >= 7 ? "10–14" : hookScore >= 5 ? "7–10" : "5–7";
+  if (hookScore >= 8) {
+    return `Your hook dominance gives this creative strong fatigue resistance — estimated ${days} days before performance drop.`;
+  }
   return `Your hook strength gives this creative solid fatigue resistance — estimated ${days} days before meaningful performance decay.`;
 }
 
-function MetricBarRow({ label, value }: { label: string; value: number }) {
+type MetricBarTone = "muted" | "ahead-yours" | "ahead-theirs";
+
+function MetricBarRow({
+  label,
+  value,
+  valueColorVar,
+  tone,
+}: {
+  label: string;
+  value: number;
+  valueColorVar: string;
+  tone: MetricBarTone;
+}) {
   const pct = Math.min(100, Math.max(0, (value / 10) * 100));
+  const fill =
+    tone === "muted"
+      ? "var(--competitor-metric-bar-muted-fill)"
+      : tone === "ahead-yours"
+        ? "var(--competitor-metric-bar-yours-ahead-fill)"
+        : "var(--competitor-metric-bar-theirs-ahead-fill)";
+  const barShadow =
+    tone === "ahead-yours"
+      ? "var(--competitor-metric-bar-yours-ahead-glow)"
+      : tone === "ahead-theirs"
+        ? "var(--competitor-metric-bar-theirs-ahead-glow)"
+        : "none";
+
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-end justify-between">
         <span className="text-[9px] font-semibold uppercase tracking-[0.1em] text-[color:var(--ink-muted)]">{label}</span>
-        <span className="font-mono text-[15px] leading-none text-[color:var(--ink-muted)]">{fmtScoreOne(value)}</span>
+        <span className="font-mono text-[15px] leading-none" style={{ color: valueColorVar }}>
+          {fmtScoreOne(value)}
+        </span>
       </div>
       <div
         className="h-1.5 w-full overflow-hidden rounded-full"
@@ -411,7 +493,11 @@ function MetricBarRow({ label, value }: { label: string; value: number }) {
       >
         <div
           className="h-full rounded-full"
-          style={{ width: `${pct}%`, background: "var(--competitor-metric-bar-fill)" }}
+          style={{
+            width: `${pct}%`,
+            background: fill,
+            boxShadow: barShadow,
+          }}
         />
       </div>
     </div>
@@ -430,17 +516,30 @@ function MatchupMetricCard({
   const diff = yours - theirs;
   const diffStr = (diff > 0 ? "+" : "") + fmtScoreOne(diff);
   const diffPositive = diff > 0;
+  const youLead = yours >= theirs;
+  const theyLead = theirs > yours;
+
+  const yoursValueColor = theyLead ? "var(--ink-muted)" : "var(--ink)";
+  const theirsValueColor = youLead ? "var(--ink-muted)" : "var(--ink)";
+
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] shadow-[0_1px_3px_rgba(0,0,0,0.1)]">
-      {diff > 0 ? (
+    <div
+      className={cn(
+        "relative overflow-hidden rounded-[15px] border shadow-[var(--shadow-sm)]",
+        diffPositive
+          ? "border-[color:var(--competitor-metric-card-positive-border)] bg-[color:var(--competitor-metric-card-positive-bg)]"
+          : "border-[color-mix(in_srgb,var(--ink)_4%,var(--border))] bg-[color:var(--card)]",
+      )}
+    >
+      {diffPositive ? (
         <div
-          className="pointer-events-none absolute right-0 top-0 size-28 translate-x-1/3 -translate-y-1/3 rounded-full bg-[color-mix(in_srgb,var(--success)_10%,transparent)] blur-3xl"
+          className="pointer-events-none absolute right-0 top-0 size-28 translate-x-1/3 -translate-y-1/3 rounded-full bg-[color:var(--competitor-metric-card-positive-glow)] blur-3xl"
           aria-hidden
         />
       ) : null}
       {diff < 0 ? (
         <div
-          className="pointer-events-none absolute right-0 top-0 size-28 translate-x-1/3 -translate-y-1/3 rounded-full bg-[color-mix(in_srgb,var(--error)_8%,transparent)] blur-3xl"
+          className="pointer-events-none absolute right-0 top-0 size-28 translate-x-1/3 -translate-y-1/3 rounded-full bg-[color:var(--competitor-metric-card-negative-glow)] blur-3xl"
           aria-hidden
         />
       ) : null}
@@ -449,18 +548,30 @@ function MatchupMetricCard({
           <h4 className="text-xs font-bold uppercase tracking-wide text-[color:var(--ink-secondary)]">{label}</h4>
           <span
             className={cn(
-              "shrink-0 rounded-md border px-2 py-0.5 font-mono text-[10px] font-bold",
+              "shrink-0 rounded border px-2 py-0.5 font-mono text-[10px] font-bold",
               diffPositive
-                ? "border-[color-mix(in_srgb,var(--success)_25%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[color:var(--success)]"
-                : "border-[color-mix(in_srgb,var(--error)_25%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] text-[color-mix(in_srgb,var(--error)_85%,white)]",
+                ? "border-[color-mix(in_srgb,var(--success)_20%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[color:var(--success)]"
+                : diff === 0
+                  ? "border-[color:var(--border)] bg-[color:var(--surface-el)] text-[color:var(--ink-muted)]"
+                  : "border-[color-mix(in_srgb,var(--error)_20%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] text-[color:var(--competitor-losing-win-prob-text)]",
             )}
           >
             {diff === 0 ? "—" : diffStr}
           </span>
         </div>
         <div className="flex flex-col gap-3">
-          <MetricBarRow label="Yours" value={yours} />
-          <MetricBarRow label="Theirs" value={theirs} />
+          <MetricBarRow
+            label="Yours"
+            value={yours}
+            valueColorVar={yoursValueColor}
+            tone={youLead ? "ahead-yours" : "muted"}
+          />
+          <MetricBarRow
+            label="Theirs"
+            value={theirs}
+            valueColorVar={theirsValueColor}
+            tone={theyLead ? "ahead-theirs" : "muted"}
+          />
         </div>
       </div>
     </div>
@@ -500,27 +611,40 @@ function MatchupMetricGrid({
 
 function CreativePreviewCard({
   src,
-  variant,
+  matchup,
+  side,
   badge,
   roleLine,
   score,
   scoreColorVar,
+  roleLineColorVar = "var(--ink-muted)",
 }: {
   src: string | null;
-  variant: "target" | "winner";
+  matchup: "winning" | "losing";
+  side: "your" | "competitor";
   badge: ReactNode;
   roleLine: string;
   score: number;
   scoreColorVar: string;
+  roleLineColorVar?: string;
 }) {
+  const isLosingYour = matchup === "losing" && side === "your";
+  const isLosingComp = matchup === "losing" && side === "competitor";
+  const isWinningYour = matchup === "winning" && side === "your";
+  const isWinningComp = matchup === "winning" && side === "competitor";
+  const showWinnerGlow = isLosingComp || isWinningYour;
+  const winnerBadgeCorner = isLosingComp || isWinningYour;
+  const targetFrame = isLosingYour || isWinningComp;
+  const winnerFrame = isLosingComp || isWinningYour;
+
   return (
     <div
       className={cn(
-        "relative flex min-h-[260px] flex-col overflow-hidden rounded-2xl border md:min-h-[300px] lg:max-h-[384px]",
-        variant === "target" && "opacity-70 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.25)]",
-        variant === "target" && "border-[color:var(--border)]",
-        variant === "winner" &&
-          "border-[color-mix(in_srgb,var(--success)_42%,var(--border))] shadow-[0_0_48px_color-mix(in_srgb,var(--success)_15%,transparent)]",
+        "relative flex min-h-[260px] flex-col overflow-hidden md:min-h-[300px] lg:max-h-[384px]",
+        targetFrame &&
+          "rounded-[15px] border border-white/[0.1] opacity-70 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.25)]",
+        winnerFrame &&
+          "rounded-[15px] border border-[color:var(--competitor-losing-competitor-card-border)] shadow-[var(--competitor-losing-competitor-card-shadow)] opacity-100",
       )}
     >
       {src ? (
@@ -529,17 +653,34 @@ function CreativePreviewCard({
         <div className="absolute inset-0 bg-[color:var(--surface-el)]" aria-hidden />
       )}
       <div
-        className="absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,0.9)] via-[rgba(0,0,0,0.38)] to-transparent"
+        className={cn(
+          "absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,0.9)] to-transparent",
+          targetFrame ? "via-[rgba(0,0,0,0.4)]" : "via-[rgba(0,0,0,0.2)]",
+        )}
         aria-hidden
       />
-      {variant === "winner" ? (
+      {showWinnerGlow ? (
         <div className="absolute inset-0 bg-[color-mix(in_srgb,var(--success)_10%,transparent)]" aria-hidden />
       ) : null}
-      <div className="absolute left-3 top-3 z-[1]">{badge}</div>
+      <div
+        className={cn("absolute top-3 z-[1]", winnerBadgeCorner ? "right-3 left-auto" : "left-3")}
+      >
+        {badge}
+      </div>
       <div className="relative z-[1] mt-auto flex flex-col gap-1 px-4 pb-5 pt-20">
-        <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-[color:var(--ink-muted)]">{roleLine}</p>
         <p
-          className="font-mono text-[clamp(1.75rem,5.5vw,2.75rem)] font-bold leading-none"
+          className="text-[9px] font-semibold uppercase tracking-[0.1em]"
+          style={{ color: roleLineColorVar }}
+        >
+          {roleLine}
+        </p>
+        <p
+          className={cn(
+            "font-mono font-bold leading-none",
+            isLosingComp || isWinningYour
+              ? "text-[clamp(1.85rem,5.5vw,2.9rem)]"
+              : "text-[clamp(1.75rem,5.5vw,2.75rem)]",
+          )}
           style={{ color: scoreColorVar }}
         >
           {fmtScoreOne(score)}
@@ -565,12 +706,12 @@ function CompetitorLosingHero({
   heroCompetitorSrc: string | null;
 }) {
   const targetBadge = (
-    <span className="rounded-md border border-[color:var(--border)] bg-[rgba(0,0,0,0.45)] px-2 py-1 text-[8px] font-bold uppercase tracking-wider text-[color:var(--ink-secondary)]">
+    <span className="rounded border border-white/20 bg-black/40 px-2 py-1 text-[8px] font-bold uppercase tracking-wider text-[color:var(--decon-markdown-muted)]">
       Target
     </span>
   );
   const winnerBadge = (
-    <span className="rounded-md bg-[color:var(--success)] px-2.5 py-1 text-[8px] font-bold uppercase tracking-wider text-[color:var(--bg)] shadow-[0_0_14px_color-mix(in_srgb,var(--success)_40%,transparent)]">
+    <span className="rounded bg-[color:var(--success)] px-2.5 py-1 text-[8px] font-bold uppercase tracking-wider text-[color:var(--bg)] shadow-[0_0_14px_color-mix(in_srgb,var(--success)_40%,transparent)]">
       Winner
     </span>
   );
@@ -578,9 +719,11 @@ function CompetitorLosingHero({
   const yourCard = (
     <CreativePreviewCard
       src={heroYourSrc}
-      variant="target"
+      matchup="losing"
+      side="your"
       badge={targetBadge}
       roleLine="Your Ad"
+      roleLineColorVar="var(--decon-markdown-muted)"
       score={yourScore}
       scoreColorVar="var(--warn)"
     />
@@ -588,9 +731,11 @@ function CompetitorLosingHero({
   const competitorCard = (
     <CreativePreviewCard
       src={heroCompetitorSrc}
-      variant="winner"
+      matchup="losing"
+      side="competitor"
       badge={winnerBadge}
       roleLine="Competitor"
+      roleLineColorVar="var(--success)"
       score={compScore}
       scoreColorVar="var(--success)"
     />
@@ -600,12 +745,15 @@ function CompetitorLosingHero({
     <div className="flex flex-col items-center text-center">
       <div className="flex justify-center">
         <div className="rotate-3">
-          <div className="flex size-[76px] items-center justify-center rounded-2xl border border-[color-mix(in_srgb,var(--error)_22%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] shadow-[0_0_40px_color-mix(in_srgb,var(--error)_18%,transparent)]">
+          <div className="flex size-[77px] items-center justify-center rounded-2xl border border-[color-mix(in_srgb,var(--error)_22%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,transparent)] shadow-[0_0_40px_color-mix(in_srgb,var(--error)_18%,transparent)]">
             <TrendingDown className="size-8 text-[color:var(--error)]" strokeWidth={2} aria-hidden />
           </div>
         </div>
       </div>
-      <h2 className="mt-6 max-w-lg text-balance text-3xl font-bold leading-tight tracking-tight text-[color:var(--ink)] shadow-[0_4px_8px_rgba(0,0,0,0.15)] md:text-4xl md:leading-[1.1]">
+      <h2
+        className="mt-6 max-w-lg text-balance text-[clamp(1.75rem,4.5vw,3.125rem)] font-bold leading-[1.05] tracking-[-0.03em] text-[color:var(--ink)] md:leading-[1.08]"
+        style={{ textShadow: "var(--competitor-losing-headline-shadow)" }}
+      >
         You are losing
         <br />
         this matchup.
@@ -613,7 +761,7 @@ function CompetitorLosingHero({
       <div className="mt-5">
         <LoserWinProbabilityPill value={winProbability} />
       </div>
-      <p className="mt-5 max-w-xl text-pretty text-[15px] leading-relaxed text-[color:var(--ink-secondary)]">{summary}</p>
+      <p className="mt-5 max-w-xl text-pretty text-[15px] leading-relaxed text-[color:var(--decon-markdown-muted)]">{summary}</p>
     </div>
   );
 
@@ -655,12 +803,12 @@ function CompetitorWinningHero({
   heroCompetitorSrc: string | null;
 }) {
   const winnerBadge = (
-    <span className="rounded-md bg-[color:var(--success)] px-2.5 py-1 text-[8px] font-bold uppercase tracking-wider text-[color:var(--bg)] shadow-[0_0_14px_color-mix(in_srgb,var(--success)_40%,transparent)]">
+    <span className="rounded bg-[color:var(--success)] px-2.5 py-1 text-[8px] font-bold uppercase tracking-wider text-[color:var(--bg)] shadow-[0_0_14px_color-mix(in_srgb,var(--success)_40%,transparent)]">
       Winner
     </span>
   );
   const targetBadge = (
-    <span className="rounded-md border border-[color:var(--border)] bg-[color-mix(in_srgb,var(--bg)_50%,transparent)] px-2 py-1 text-[8px] font-bold uppercase tracking-wider text-[color:var(--ink-secondary)]">
+    <span className="rounded border border-white/20 bg-black/40 px-2 py-1 text-[8px] font-bold uppercase tracking-wider text-[color:var(--decon-markdown-muted)]">
       Target
     </span>
   );
@@ -668,34 +816,41 @@ function CompetitorWinningHero({
   const yourCard = (
     <CreativePreviewCard
       src={heroYourSrc}
-      variant="winner"
+      matchup="winning"
+      side="your"
       badge={winnerBadge}
       roleLine="Your Ad"
+      roleLineColorVar="var(--success)"
       score={yourScore}
-      scoreColorVar="var(--success)"
+      scoreColorVar="var(--ink)"
     />
   );
   const competitorCard = (
     <CreativePreviewCard
       src={heroCompetitorSrc}
-      variant="target"
+      matchup="winning"
+      side="competitor"
       badge={targetBadge}
       roleLine="Competitor"
+      roleLineColorVar="var(--decon-markdown-muted)"
       score={compScore}
-      scoreColorVar="var(--warn)"
+      scoreColorVar="var(--decon-body-muted)"
     />
   );
 
   const center = (
     <div className="flex flex-col items-center text-center">
       <div className="flex justify-center">
-        <div className="-rotate-3">
-          <div className="flex size-[76px] items-center justify-center rounded-2xl border border-[color-mix(in_srgb,var(--success)_28%,transparent)] bg-[color-mix(in_srgb,var(--success)_12%,transparent)] shadow-[0_0_40px_color-mix(in_srgb,var(--success)_22%,transparent)]">
+        <div className="rotate-3">
+          <div className="flex size-[77px] items-center justify-center rounded-2xl border border-[color-mix(in_srgb,var(--success)_28%,transparent)] bg-[color-mix(in_srgb,var(--success)_12%,transparent)] shadow-[0_0_40px_color-mix(in_srgb,var(--success)_22%,transparent)]">
             <TrendingUp className="size-8 text-[color:var(--success)]" strokeWidth={2} aria-hidden />
           </div>
         </div>
       </div>
-      <h2 className="mt-6 max-w-lg text-balance text-3xl font-bold leading-tight tracking-tight text-[color:var(--ink)] shadow-[0_4px_8px_rgba(0,0,0,0.15)] md:text-4xl md:leading-[1.15]">
+      <h2
+        className="mt-6 max-w-lg text-balance text-[clamp(1.75rem,4.5vw,3.125rem)] font-bold leading-[1.05] tracking-[-0.03em] text-[color:var(--ink)] md:leading-[1.08]"
+        style={{ textShadow: "var(--competitor-losing-headline-shadow)" }}
+      >
         You are winning
         <br />
         this matchup.
@@ -703,7 +858,7 @@ function CompetitorWinningHero({
       <div className="mt-5">
         <WinnerWinProbabilityPill value={winProbability} />
       </div>
-      <p className="mt-5 max-w-xl text-pretty text-[15px] leading-relaxed text-[color:var(--ink-secondary)]">{summary}</p>
+      <p className="mt-5 max-w-xl text-pretty text-[15px] leading-relaxed text-[color:var(--decon-markdown-muted)]">{summary}</p>
     </div>
   );
 
@@ -746,79 +901,136 @@ function WinnerScaleSection({
   const budgets = budgetTargetsFromResult(result.your.budget, yourScores.overall);
   const strongEdge = gap.winProbability >= 58;
 
+  const ctrParts = ctr.band.split(/\s*[—–-]\s*/);
+
   return (
     <section
-      className="relative overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--success)_22%,var(--border))] p-6 md:p-8"
-      style={{ background: "var(--competitor-winning-scale-ambient)" }}
+      className="relative overflow-hidden rounded-[15px] border border-[color:var(--competitor-winning-scale-shell-border)] px-4 pb-6 pt-5 md:px-8 md:pb-8 md:pt-6"
+      style={{
+        backgroundColor: "var(--competitor-winning-scale-shell-bg)",
+        boxShadow: "var(--competitor-winning-scale-shell-shadow)",
+      }}
       aria-labelledby="competitor-winning-scale-heading"
     >
-      <div className="flex flex-wrap items-center gap-2">
-        <span
-          className="h-2 w-2 shrink-0 rounded-full bg-[color:var(--success)] shadow-[0_0_10px_var(--success)]"
-          aria-hidden
-        />
-        <span
-          id="competitor-winning-scale-heading"
-          className="text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--success)]"
-        >
-          High confidence — ready to scale
-        </span>
-      </div>
-      <h3 className="mt-4 max-w-3xl text-pretty text-xl font-semibold tracking-tight text-[color:var(--ink)] md:text-2xl">
-        Your creative is outperforming the benchmark. Time to push budget.
-      </h3>
+      <div
+        className="absolute left-0 right-0 top-0 z-20 h-1 bg-[color:var(--success)]"
+        style={{ boxShadow: "var(--competitor-winning-scale-top-glow)" }}
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-0 z-0"
+        style={{
+          backgroundImage:
+            "var(--competitor-winning-scale-inner-wash), var(--competitor-winning-scale-ambient)",
+        }}
+        aria-hidden
+      />
 
-      <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
-        <div className="rounded-2xl border border-[color:var(--border)] bg-[color-mix(in_srgb,var(--surface)_65%,transparent)] p-5">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[color:var(--ink-muted)]">
+      <div className="relative z-10 flex flex-col items-center gap-2 pt-2 text-center">
+        <div className="flex items-center justify-center gap-2">
+          <span
+            className="size-2 shrink-0 rounded-full bg-[color:var(--success)] opacity-95"
+            style={{ boxShadow: "0 0 8px var(--success)" }}
+            aria-hidden
+          />
+          <span
+            id="competitor-winning-scale-heading"
+            className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[color:var(--success)]"
+          >
+            High confidence — ready to scale
+          </span>
+        </div>
+        <h3 className="m-0 max-w-[52rem] text-pretty text-center text-[clamp(1.35rem,3.5vw,2.4rem)] font-semibold leading-snug tracking-[-0.025em] text-[color:var(--ink)]">
+          Your creative is outperforming the benchmark.
+          <br className="hidden sm:block" />
+          <span className="sm:ml-1">Time to push budget.</span>
+        </h3>
+      </div>
+
+      <div className="relative z-10 mt-8 grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-5">
+        <div
+          className="rounded-[15px] border border-[color:var(--border)] p-5"
+          style={{ backgroundColor: "color-mix(in srgb, var(--surface) 98%, transparent)" }}
+        >
+          <p className="text-center text-[10px] font-semibold uppercase tracking-[0.12em] text-[color:var(--ink-muted)]">
             Win probability
           </p>
-          <div className="mt-2 flex flex-wrap items-baseline gap-2">
-            <span className="font-mono text-4xl font-bold text-[color:var(--success)]">{gap.winProbability}%</span>
-            {strongEdge ? (
-              <span className="inline-flex items-center gap-0.5 text-xs font-semibold text-[color:var(--success)]">
-                <ArrowUpRight className="size-3.5" aria-hidden />
-                Strong edge
-              </span>
-            ) : null}
-          </div>
+          <p className="mt-3 text-center font-mono text-[clamp(2rem,5vw,2.4rem)] font-bold leading-none text-[color:var(--ink)]">
+            {gap.winProbability}%
+          </p>
+          {strongEdge ? (
+            <p className="mt-2 flex items-center justify-center gap-1 text-center text-[11.5px] font-medium text-[color:var(--success)]">
+              <ArrowUpRight className="size-3.5 shrink-0" aria-hidden />
+              Strong edge
+            </p>
+          ) : (
+            <p className="mt-2 h-[17px]" aria-hidden />
+          )}
         </div>
-        <div className="rounded-2xl border border-[color:var(--border)] bg-[color-mix(in_srgb,var(--surface)_65%,transparent)] p-5">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[color:var(--ink-muted)]">
+
+        <div
+          className="rounded-[15px] border border-[color:var(--border)] p-5"
+          style={{ backgroundColor: "color-mix(in srgb, var(--surface) 98%, transparent)" }}
+        >
+          <p className="text-center text-[10px] font-semibold uppercase tracking-[0.12em] text-[color:var(--ink-muted)]">
             Predicted CTR
           </p>
-          <p className="mt-2 font-mono text-xl font-semibold text-[color:var(--ink)] md:text-2xl">{ctr.band}</p>
-          <p className="mt-1 text-xs text-[color:var(--ink-muted)]">vs. platform avg {ctr.avgLabel}</p>
+          <p className="mt-3 text-center font-mono text-[clamp(1.5rem,4vw,2.4rem)] font-bold leading-tight text-[color:var(--ink)]">
+            {ctrParts.length >= 2 ? (
+              <>
+                <span>{ctrParts[0]?.trim()}</span>
+                <span className="text-[color:var(--ink-muted)]"> — </span>
+                <span>{ctrParts[1]?.trim()}</span>
+              </>
+            ) : (
+              ctr.band
+            )}
+          </p>
+          <p className="mt-2 text-center text-[11.5px] text-[color:var(--decon-markdown-muted)]">
+            vs platform avg {ctr.avgLabel.replace(/^~/, "")}
+          </p>
         </div>
-        <div className="rounded-2xl border border-[color:var(--border)] bg-[color-mix(in_srgb,var(--surface)_65%,transparent)] p-5">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[color:var(--ink-muted)]">
+
+        <div
+          className="rounded-[15px] border border-[color:var(--competitor-winning-budget-card-border)] p-5"
+          style={{
+            backgroundColor: "var(--competitor-winning-budget-card-bg)",
+            boxShadow: "var(--competitor-winning-budget-card-shadow)",
+          }}
+        >
+          <p className="text-center text-[10px] font-semibold uppercase tracking-[0.12em] text-[color:var(--success)]">
             Target budget
           </p>
-          <div className="mt-3 flex flex-wrap items-end gap-6">
-            <div>
-              <p className="text-[10px] uppercase tracking-wide text-[color:var(--ink-muted)]">Target</p>
-              <p className="font-mono text-lg font-semibold text-[color:var(--ink-secondary)]">{budgets.target}</p>
-            </div>
-            <div>
-              <p className="text-[10px] uppercase tracking-wide text-[color:var(--ink-muted)]">Daily starting point</p>
-              <p className="font-mono text-3xl font-bold text-[color:var(--ink)]">{budgets.daily}</p>
-            </div>
-          </div>
+          <p className="mt-3 text-center font-mono text-[clamp(1.5rem,4vw,2.4rem)] font-bold leading-tight text-[color:var(--success)]">
+            <span>{budgets.target}</span>
+            <span className="text-[color:var(--competitor-winning-budget-dash)]"> — </span>
+            <span>{budgets.daily}</span>
+          </p>
+          <p
+            className="mt-2 text-center text-[11.5px]"
+            style={{ color: "var(--competitor-winning-budget-sublabel)" }}
+          >
+            Daily starting point
+          </p>
         </div>
       </div>
 
-      <div className="mt-6 flex gap-3 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-3 md:px-5 md:py-4">
-        <Check className="mt-0.5 size-5 shrink-0 text-[color:var(--success)]" strokeWidth={2.5} aria-hidden />
-        <p className="text-sm leading-relaxed text-[color:var(--ink-secondary)]">
-          <span className="font-semibold text-[color:var(--ink)]">Fatigue resistance: </span>
-          {fatigueResistanceCopy(yourScores.hook)}
+      <div
+        className="relative z-10 mt-5 flex gap-3 rounded-[15px] border border-[color:var(--border)] px-4 py-3.5 md:px-5 md:py-4"
+        style={{ backgroundColor: "color-mix(in srgb, var(--surface) 98%, transparent)" }}
+      >
+        <Check className="mt-0.5 size-[17px] shrink-0 text-[color:var(--success)]" strokeWidth={2.5} aria-hidden />
+        <p className="m-0 text-[13px] leading-relaxed">
+          <span className="font-medium text-[color:var(--ink)]">Fatigue resistance: </span>
+          <span className="text-[color:var(--decon-body-muted)]">{fatigueResistanceCopy(yourScores.hook)}</span>
         </p>
       </div>
 
-      <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+      <div className="relative z-10 mt-8 flex flex-wrap items-center justify-center gap-3">
         <Link
           to="/app/paid"
-          className="inline-flex h-11 min-w-[200px] items-center justify-center rounded-full bg-[color:var(--accent)] px-8 text-sm font-medium text-white transition-[background-color,transform] duration-150 hover:bg-[color:var(--accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] active:scale-[0.99]"
+          className="inline-flex h-[38px] min-w-[200px] items-center justify-center rounded-[10px] bg-[color:var(--accent)] px-8 text-[12.5px] font-medium text-white transition-[background-color,transform] duration-150 hover:bg-[color:var(--accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] active:scale-[0.99]"
+          style={{ boxShadow: "var(--shadow-sm)" }}
         >
           Generate Creative Brief
         </Link>
@@ -826,7 +1038,7 @@ function WinnerScaleSection({
           <button
             type="button"
             onClick={onReanalyze}
-            className="inline-flex h-11 min-w-[140px] items-center justify-center rounded-full border border-[color:var(--border)] bg-transparent px-8 text-sm font-medium text-[color:var(--ink-secondary)] transition-[border-color,color,transform] duration-150 hover:border-[color:var(--border-hover)] hover:text-[color:var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] active:scale-[0.99]"
+            className="inline-flex h-[38px] min-w-[114px] items-center justify-center rounded-[10px] border border-[color:var(--border)] bg-transparent px-6 text-[12.5px] font-medium text-[color:var(--decon-markdown-muted)] transition-[border-color,color,transform] duration-150 hover:border-[color:var(--border-hover)] hover:text-[color:var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] active:scale-[0.99]"
           >
             Re-analyze
           </button>
@@ -1220,6 +1432,7 @@ export function CompetitorResultPanel({
   yourFile,
   competitorFile,
   onReanalyze,
+  onStartOver,
 }: {
   result: CResult;
   yourFileName: string;
@@ -1229,6 +1442,8 @@ export function CompetitorResultPanel({
   competitorFile?: File | null;
   /** Winning layout: secondary CTA to run another comparison */
   onReanalyze?: () => void;
+  /** Back to upload / new comparison (Figma header secondary action) */
+  onStartOver?: () => void;
 }) {
   const { gap } = result;
   const [yourExpanded, setYourExpanded] = useState(false);
@@ -1254,22 +1469,51 @@ export function CompetitorResultPanel({
 
   if (outcome === "winning") {
     return (
-      <CompetitorWinnerLayout
-        {...common}
-        heroYourSrc={heroYourSrc}
-        heroCompetitorSrc={heroCompetitorSrc}
-        onReanalyze={onReanalyze}
-      />
+      <>
+        <CompetitorResultsPageHeader onStartOver={onStartOver} />
+        <div className="relative">
+          <div
+            className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[min(1800px,300vh)]"
+            style={{ backgroundImage: "var(--competitor-winning-page-ambient)" }}
+            aria-hidden
+          />
+          <div className="relative z-[1]">
+            <CompetitorWinnerLayout
+              {...common}
+              heroYourSrc={heroYourSrc}
+              heroCompetitorSrc={heroCompetitorSrc}
+              onReanalyze={onReanalyze}
+            />
+          </div>
+        </div>
+      </>
     );
   }
   if (outcome === "losing") {
     return (
-      <CompetitorLoserLayout
-        {...common}
-        heroYourSrc={heroYourSrc}
-        heroCompetitorSrc={heroCompetitorSrc}
-      />
+      <>
+        <CompetitorResultsPageHeader onStartOver={onStartOver} />
+        <div className="relative">
+          <div
+            className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[min(1800px,300vh)]"
+            style={{ backgroundImage: "var(--competitor-losing-page-ambient)" }}
+            aria-hidden
+          />
+          <div className="relative z-[1]">
+            <CompetitorLoserLayout
+              {...common}
+              heroYourSrc={heroYourSrc}
+              heroCompetitorSrc={heroCompetitorSrc}
+            />
+          </div>
+        </div>
+      </>
     );
   }
-  return <CompetitorTiedLayout {...common} />;
+  return (
+    <>
+      <CompetitorResultsPageHeader onStartOver={onStartOver} />
+      <CompetitorTiedLayout {...common} />
+    </>
+  );
 }

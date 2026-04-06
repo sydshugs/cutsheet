@@ -17,6 +17,10 @@ interface VideoDropzoneProps {
   formatHint?: string;
   /** Extra classes on the outer wrapper (e.g. max-w-none for two-column layouts) */
   wrapperClassName?: string;
+  /** default | hero (single-column analyzers) | competitor (Figma 263-1483 dual slot, no browse link) */
+  layoutVariant?: "default" | "hero" | "competitor";
+  /** Hero dropzone accent: paid (indigo), display (cyan), organic (emerald Figma 295-300) */
+  heroAccent?: "indigo" | "display" | "organic";
 }
 
 const VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
@@ -38,6 +42,8 @@ export function VideoDropzone({
   heading = "Drop your ad here",
   formatHint,
   wrapperClassName,
+  layoutVariant = "default",
+  heroAccent = "indigo",
 }: VideoDropzoneProps) {
   const acceptedTypes = acceptImages ? [...VIDEO_TYPES, ...IMAGE_TYPES] : VIDEO_TYPES;
   const [isDragging, setIsDragging] = useState(false);
@@ -136,8 +142,18 @@ export function VideoDropzone({
     const hintText =
       formatHint ??
       (acceptImages ? "MP4 · MOV · JPG · PNG · up to 500MB" : "MP4 · MOV · WEBM · up to 500MB");
+    const isHero = layoutVariant === "hero";
+    const isCompetitor = layoutVariant === "competitor";
+    const isDisplayHero = isHero && heroAccent === "display";
+    const isOrganicHero = isHero && heroAccent === "organic";
     return (
-      <div className={cn("mx-auto w-full max-w-[640px]", wrapperClassName)}>
+      <div
+        className={cn(
+          "w-full",
+          isHero || isCompetitor ? "mx-auto" : "mx-auto max-w-[640px]",
+          wrapperClassName
+        )}
+      >
         <div
           onClick={() => !disabled && fileInputRef.current?.click()}
           onDrop={onDrop}
@@ -153,31 +169,87 @@ export function VideoDropzone({
               if (!disabled) fileInputRef.current?.click();
             }
           }}
-          className={`bg-white/[0.02] border border-white/[0.06] rounded-2xl px-8 py-12 flex flex-col items-center gap-3 transition-[border-color,box-shadow] cursor-pointer select-none text-center ${
+          className={cn(
+            "flex flex-col items-center cursor-pointer select-none text-center border transition-[border-color,box-shadow]",
+            "bg-[var(--surface)] border-[color:var(--border)]",
+            isCompetitor
+              ? "min-h-[269px] rounded-[15px] px-2 py-6 gap-3 justify-center"
+              : isHero
+                ? "min-h-[308px] rounded-[15px] px-8 py-10 gap-4 justify-center"
+                : "rounded-2xl px-8 py-12 gap-3",
             isDragging
-              ? 'border-indigo-500/40 shadow-[0_0_20px_rgba(99,102,241,0.12)]'
-              : 'hover:border-white/[0.10]'
-          } ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
+              ? isCompetitor
+                ? "border-[color:var(--competitor-slot-drag-border)] shadow-[var(--shadow-glow-competitor)]"
+                : isDisplayHero
+                  ? "border-[color:var(--display-border-strong)] shadow-[var(--shadow-glow-display)]"
+                  : isOrganicHero
+                    ? "border-[color:var(--organic-border-strong)] shadow-[var(--shadow-glow-organic)]"
+                    : "border-[color:var(--accent-border-strong)] shadow-[var(--shadow-glow)]"
+              : "hover:border-[color:var(--border-hover)] active:border-[color:var(--border-hover)]",
+            disabled && "cursor-not-allowed opacity-50"
+          )}
         >
           <CloudUpload
-            size={28}
-            className={`transition-transform ${isDragging ? 'scale-110 -translate-y-0.5 text-indigo-400' : 'text-zinc-500'}`}
+            size={isCompetitor ? 19 : isHero ? 27 : 28}
+            strokeWidth={isCompetitor ? 2 : isHero ? 1.75 : 2}
+            className={cn(
+              "transition-transform shrink-0 text-[color:var(--ink-muted)]",
+              isDragging &&
+                (isCompetitor
+                  ? "scale-110 -translate-y-0.5 text-[color:var(--competitor-tile-icon)]"
+                  : isDisplayHero
+                    ? "scale-110 -translate-y-0.5 text-[color:var(--display-cloud-active)]"
+                    : isOrganicHero
+                      ? "scale-110 -translate-y-0.5 text-[color:var(--organic-cloud-active)]"
+                      : "scale-110 -translate-y-0.5 text-[color:var(--accent-light)]")
+            )}
           />
 
-          <div className="text-base font-medium text-white">{heading}</div>
-
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (!disabled) fileInputRef.current?.click();
-            }}
-            className="text-sm text-indigo-400 hover:text-indigo-300 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 rounded"
+          <div
+            className={cn(
+              "font-medium",
+              isCompetitor
+                ? "text-[12.5px] leading-tight text-[color:var(--decon-body-muted)]"
+                : isHero
+                  ? "text-[14.5px] leading-snug text-[color:var(--ink)]"
+                  : "text-base text-[color:var(--ink)]"
+            )}
           >
-            or browse files
-          </button>
+            {heading}
+          </div>
 
-          <p className="text-xs text-zinc-600">{hintText}</p>
+          {!isCompetitor && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!disabled) fileInputRef.current?.click();
+              }}
+              className={cn(
+                "font-normal transition-opacity focus-visible:outline-none focus-visible:ring-2 rounded-md",
+                isDisplayHero
+                  ? "focus-visible:ring-[rgb(var(--display-accent-rgb)/0.35)] text-[color:var(--display-browse)]"
+                  : isOrganicHero
+                    ? "focus-visible:ring-[rgb(var(--organic-accent-rgb)/0.35)] text-[color:var(--organic-browse)]"
+                    : "focus-visible:ring-[rgb(var(--accent-rgb)/0.35)] text-[color:var(--accent-light)]",
+                "hover:opacity-90 active:opacity-80",
+                isHero ? "text-[12.5px] leading-normal" : "text-sm"
+              )}
+            >
+              or browse files
+            </button>
+          )}
+
+          <p
+            className={cn(
+              isCompetitor
+                ? "text-[11.5px] leading-[15px] text-[color:var(--decon-url-pill-mono)]"
+                : "text-[color:var(--ink-muted)] opacity-[0.85]",
+              !isCompetitor && (isHero ? "text-[11.5px] leading-tight" : "text-xs")
+            )}
+          >
+            {hintText}
+          </p>
 
           {error && (
             <p className="text-xs text-red-400">{error}</p>
@@ -191,7 +263,14 @@ export function VideoDropzone({
               type="text"
               value={pastedUrl}
               onChange={(e) => setPastedUrl(e.target.value)}
-              className="flex-1 bg-white/5 rounded-xl text-sm text-white px-4 py-2.5 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 border border-white/10 focus:border-indigo-500/50"
+              className={cn(
+                "flex-1 bg-[var(--surface-el)] rounded-xl text-sm text-[color:var(--ink)] px-4 py-2.5 outline-none focus-visible:ring-2 border border-[color:var(--border)]",
+                isDisplayHero
+                  ? "focus-visible:ring-[rgb(var(--display-accent-rgb)/0.35)] focus:border-[color:var(--display-border-strong)]"
+                  : isOrganicHero
+                    ? "focus-visible:ring-[rgb(var(--organic-accent-rgb)/0.35)] focus:border-[color:var(--organic-border-strong)]"
+                    : "focus-visible:ring-[rgb(var(--accent-rgb)/0.35)] focus:border-[color:var(--accent-border-strong)]"
+              )}
               onClick={(e) => e.stopPropagation()}
             />
             <button
@@ -200,7 +279,7 @@ export function VideoDropzone({
                 if (pastedUrl && onUrlSubmit) onUrlSubmit(pastedUrl);
                 setPastedUrl(null);
               }}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl px-4 py-2.5 transition-colors"
+              className="bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-sm font-medium rounded-xl px-4 py-2.5 transition-opacity hover:opacity-95 active:opacity-90"
             >
               Go
             </button>

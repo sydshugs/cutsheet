@@ -92,6 +92,30 @@
   --shadow-lg:   0 8px 24px rgba(0,0,0,0.3), 0 4px 8px rgba(0,0,0,0.2);
   --shadow-glow: 0 0 20px rgba(99,102,241,0.15);
 
+  /* Display analyzer idle — Figma 249-160 (cyan tile, pills, radial, dropzone link) */
+  --display-accent-rgb: 6, 182, 212;
+  --display-accent: #06b6d4;
+  --display-tile-bg: rgba(6, 182, 212, 0.12);
+  --display-border: rgba(6, 182, 212, 0.2);
+  --display-pill-bg: rgba(6, 182, 212, 0.08);
+  --display-pill-text: #00d3f3;
+  --display-browse: rgba(0, 211, 243, 0.8);
+  --display-cloud-active: #22d3ee;
+  --display-border-strong: rgba(6, 182, 212, 0.35);
+  --shadow-glow-display: 0 0 20px rgba(6, 182, 212, 0.12);
+
+  /* Organic analyzer idle — Figma 295-300 (emerald tile, pills, radial, dropzone link) */
+  --organic-accent-rgb: 16, 185, 129;
+  --organic-accent: #10b981;
+  --organic-tile-bg: rgba(16, 185, 129, 0.12);
+  --organic-border: rgba(16, 185, 129, 0.2);
+  --organic-pill-bg: rgba(16, 185, 129, 0.08);
+  --organic-pill-text: #00d492;
+  --organic-browse: rgba(0, 212, 146, 0.8);
+  --organic-cloud-active: #34d399;
+  --organic-border-strong: rgba(16, 185, 129, 0.35);
+  --shadow-glow-organic: 0 0 20px rgba(16, 185, 129, 0.12);
+
   /* ── Micro-interaction tokens ── */
   --duration-fast: 150ms;
   --duration-mid:  250ms;
@@ -195,6 +219,53 @@
   --ab-test-type-active-bg: rgba(97, 95, 255, 0.1);
   --ab-test-type-active-border: rgba(97, 95, 255, 0.3);
   --ab-test-type-active-text: var(--decon-accent-label);
+  /* Rank Creatives idle — Figma 264-2926 */
+  --rank-ambient: radial-gradient(
+    ellipse 73% 53% at 50% 0%,
+    rgba(139, 92, 246, 0.08) 0%,
+    transparent 70%
+  );
+  --rank-tile-bg: rgba(139, 92, 246, 0.12);
+  --rank-tile-border: rgba(142, 81, 255, 0.25);
+  --rank-tile-icon: #8b5cf6;
+  --rank-feature-pill-bg: rgba(255, 255, 255, 0.04);
+  --rank-feature-pill-border: rgba(255, 255, 255, 0.06);
+  --rank-feature-pill-text: #9f9fa9;
+  --rank-section-label: #52525c;
+  --rank-dropzone-bg: rgba(255, 255, 255, 0.01);
+  --rank-dropzone-inner-icon-bg: rgba(255, 255, 255, 0.04);
+  --rank-browse-link: #a684ff;
+  --rank-queue-label: #9f9fa9;
+  --rank-add-more-text: #71717b;
+  --rank-badge-overlay: rgba(0, 0, 0, 0.7);
+  --rank-cta-bg: #8b5cf6;
+  --rank-cta-hover: #7c3aed;
+  --rank-cta-disabled-bg: rgba(139, 92, 246, 0.35);
+  --rank-cta-disabled-text: rgba(255, 255, 255, 0.5);
+  /* Rank batch loading — Figma 286-677 */
+  --rank-loading-meta-pill-bg: rgba(99, 102, 241, 0.08);
+  --rank-loading-meta-pill-border: rgba(97, 95, 255, 0.2);
+  --rank-loading-meta-dot: #7c86ff;
+  --rank-loading-meta-text: #a3b3ff;
+  --rank-load-card-complete-bg: rgba(16, 185, 129, 0.04);
+  --rank-load-card-complete-border: rgba(16, 185, 129, 0.2);
+  --rank-load-complete-label: #00d492;
+  --rank-load-complete-check-bg: rgba(16, 185, 129, 0.9);
+  --rank-load-score-badge-bg: rgba(0, 0, 0, 0.7);
+  --rank-load-score-text: #10b981;
+  --rank-load-card-analyzing-bg: rgba(99, 102, 241, 0.05);
+  --rank-load-card-analyzing-border: rgba(99, 102, 241, 0.25);
+  --rank-load-analyzing-label: #7c86ff;
+  --rank-load-analyzing-spinner-bg: rgba(99, 102, 241, 0.85);
+  --rank-load-card-pending-bg: rgba(255, 255, 255, 0.02);
+  --rank-load-card-pending-border: rgba(255, 255, 255, 0.06);
+  --rank-load-pending-label: #52525c;
+  --rank-load-pending-icon-bg: rgba(0, 0, 0, 0.55);
+  --rank-load-progress-track: #27272a;
+  --rank-load-progress-fill: var(--accent);
+  --rank-load-progress-pct: #7c86ff;
+  --rank-load-progress-label: #9f9fa9;
+  --rank-load-stop-link: #52525c;
   --ab-run-disabled-bg: rgba(255, 255, 255, 0.04);
   --ab-run-disabled-border: rgba(255, 255, 255, 0.06);
   --ab-run-disabled-text: #71717b;
@@ -231,12 +302,14 @@
   --ab-results-hybrid-bar-glow: 0 0 19px rgba(99, 102, 241, 0.55);
   --ab-results-primary-btn-shadow: 0 0 14px rgba(99, 102, 241, 0.2);
 
-  /* Competitor Analyzer idle — Figma 263-1358 */
+  /* Competitor Analyzer idle — Figma 263-1483 (dual slots + hero) */
   --competitor-upload-ambient: radial-gradient(
-    ellipse 85% 55% at 50% 38%,
+    ellipse 73% 53% at 50% 40%,
     rgba(14, 165, 233, 0.08) 0%,
-    transparent 68%
+    transparent 70%
   );
+  --competitor-slot-drag-border: rgba(14, 165, 233, 0.35);
+  --shadow-glow-competitor: 0 0 20px rgba(14, 165, 233, 0.1);
   --competitor-tile-bg: rgba(14, 165, 233, 0.12);
   --competitor-tile-border: rgba(14, 165, 233, 0.2);
   --competitor-tile-icon: #0ea5e9;
@@ -246,14 +319,36 @@
   /* Competitor analyzing — matches upload ambient family */
   --competitor-loading-card-border: rgba(14, 165, 233, 0.14);
   --competitor-loading-card-shadow: 0 0 48px rgba(14, 165, 233, 0.07);
+  /* Figma 263-1539 — preview overlay on loading cards */
+  --competitor-loading-preview-scrim: color-mix(in srgb, var(--bg) 55%, transparent);
   /* Competitor losing results — Figma 263-1702 */
   --competitor-losing-hero-glow: radial-gradient(
     ellipse 90% 50% at 50% 0%,
     color-mix(in srgb, var(--error) 14%, transparent) 0%,
     transparent 60%
   );
+  /* Full scroll region behind losing results */
+  --competitor-losing-page-ambient: radial-gradient(
+    ellipse 98% 52% at 50% 0%,
+    color-mix(in srgb, var(--error) 8%, transparent) 0%,
+    transparent 58%
+  );
   --competitor-metric-bar-track: rgba(0, 0, 0, 0.4);
   --competitor-metric-bar-fill: color-mix(in srgb, var(--ink) 26%, transparent);
+  /* Telemetry cards — semantic bar fills (who leads per row) */
+  --competitor-metric-bar-muted-fill: color-mix(in srgb, var(--ink) 22%, transparent);
+  --competitor-metric-bar-theirs-ahead-fill: var(--error);
+  --competitor-metric-bar-yours-ahead-fill: var(--success);
+  --competitor-metric-bar-theirs-ahead-glow: 0 0 9px color-mix(in srgb, var(--error) 40%, transparent);
+  --competitor-metric-bar-yours-ahead-glow: 0 0 9px color-mix(in srgb, var(--success) 40%, transparent);
+  --competitor-metric-card-positive-border: color-mix(in srgb, var(--success) 20%, transparent);
+  --competitor-metric-card-positive-bg: color-mix(in srgb, var(--success) 3%, transparent);
+  --competitor-metric-card-positive-glow: color-mix(in srgb, var(--success) 10%, transparent);
+  --competitor-metric-card-negative-glow: color-mix(in srgb, var(--error) 5%, transparent);
+  --competitor-losing-competitor-card-border: color-mix(in srgb, var(--success) 40%, transparent);
+  --competitor-losing-competitor-card-shadow: 0 0 57px color-mix(in srgb, var(--success) 15%, transparent);
+  --competitor-losing-win-prob-text: color-mix(in srgb, var(--error) 82%, white);
+  --competitor-losing-headline-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
   --competitor-loser-action-p1-glow: 0 0 24px color-mix(in srgb, var(--accent) 35%, transparent);
   /* Competitor winning results — Figma 263-2118 */
   --competitor-winning-hero-glow: radial-gradient(
@@ -261,6 +356,12 @@
     color-mix(in srgb, var(--success) 14%, transparent) 0%,
     transparent 60%
   );
+  --competitor-winning-page-ambient: radial-gradient(
+    ellipse 98% 52% at 50% 0%,
+    color-mix(in srgb, var(--success) 8%, transparent) 0%,
+    transparent 58%
+  );
+  --competitor-winning-win-prob-text: color-mix(in srgb, var(--success) 88%, white);
   --competitor-winning-scale-ambient: radial-gradient(
       ellipse 115% 70% at 50% -20%,
       color-mix(in srgb, var(--success) 16%, transparent) 0%,
@@ -271,6 +372,21 @@
       color-mix(in srgb, var(--success) 7%, var(--surface)) 0%,
       var(--surface) 100%
     );
+  /* Scale card shell — Figma 263-2515 */
+  --competitor-winning-scale-shell-bg: color-mix(in srgb, var(--success) 4%, transparent);
+  --competitor-winning-scale-shell-border: color-mix(in srgb, var(--success) 20%, transparent);
+  --competitor-winning-scale-shell-shadow: 0 19px 48px -19px color-mix(in srgb, var(--success) 15%, transparent);
+  --competitor-winning-scale-top-glow: 0 0 19px color-mix(in srgb, var(--success) 80%, transparent);
+  --competitor-winning-scale-inner-wash: radial-gradient(
+    ellipse 95% 50% at 50% 0%,
+    color-mix(in srgb, var(--success) 12%, transparent) 0%,
+    transparent 60%
+  );
+  --competitor-winning-budget-card-bg: color-mix(in srgb, var(--success) 6%, transparent);
+  --competitor-winning-budget-card-border: color-mix(in srgb, var(--success) 20%, transparent);
+  --competitor-winning-budget-card-shadow: 0 0 14px color-mix(in srgb, var(--success) 5%, transparent);
+  --competitor-winning-budget-sublabel: color-mix(in srgb, var(--success) 80%, transparent);
+  --competitor-winning-budget-dash: color-mix(in srgb, var(--success) 50%, transparent);
 }
 
 /* ─── ANIMATIONS ──────────────────────────────────────────── */

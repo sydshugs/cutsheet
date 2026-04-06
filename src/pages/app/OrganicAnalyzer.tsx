@@ -35,6 +35,7 @@ import type { AnalysisRecord } from "../../services/historyService";
 import { getUserContext, formatUserContextBlock } from "../../services/userContextService";
 import { getSessionMemory } from "@/src/lib/userMemoryService";
 import type { AppSharedContext } from "../../components/AppLayout";
+import { cn } from "../../lib/utils";
 
 const API_KEY = ""; // Gemini calls are now server-side via /api/analyze
 
@@ -67,29 +68,60 @@ function OrganicEmptyState({
 }) {
   const PILLS = ["Platform optimization", "Hashtag suggestions", "Algorithm scoring"];
   return (
-    <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px", minHeight: "calc(100vh - 120px)" }}>
-      <div style={{ width: 76, height: 76, borderRadius: 16, background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <TrendingUp size={28} color="#10b981" />
-      </div>
-      <h1 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>
-        Score your organic content
-      </h1>
-      <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)", textAlign: "center", maxWidth: 320, marginTop: 10, lineHeight: 1.6 }}>
-        Upload a video or static creative. Get a full AI breakdown in 30 seconds.
-      </p>
+    <div
+      className={cn(
+        "relative flex flex-1 flex-col items-center justify-center overflow-hidden px-6 py-8",
+        "min-h-[min(100%,calc(100vh-120px))]"
+      )}
+      style={{
+        backgroundColor: "var(--bg)",
+        backgroundImage:
+          "radial-gradient(ellipse 73% 53% at 50% 40%, rgb(var(--organic-accent-rgb) / 0.08) 0%, transparent 70%)",
+      }}
+    >
+      <div className="relative z-0 flex w-full max-w-[731px] flex-col items-center">
+        <div
+          className={cn(
+            "flex size-[73px] shrink-0 items-center justify-center rounded-[15px] border border-[color:var(--organic-border)]",
+            "bg-[var(--organic-tile-bg)]"
+          )}
+        >
+          <TrendingUp className="size-[27px] text-[color:var(--organic-accent)]" strokeWidth={1.75} aria-hidden />
+        </div>
 
-      {/* Feature pills — green styled like paid page purple */}
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 20 }}>
-        {PILLS.map((pill) => (
-          <span key={pill} style={{ fontSize: 12, color: "#10b981", background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.15)", borderRadius: 9999, padding: "4px 12px" }}>
-            {pill}
-          </span>
-        ))}
-      </div>
+        <h1 className="mt-[23px] mb-0 text-center text-[19px] font-semibold leading-tight text-[color:var(--ink)]">
+          Score your organic content
+        </h1>
+        <p className="mt-2.5 mb-0 max-w-[276px] text-center text-[13.5px] leading-[1.6] text-[color:var(--ink-muted)]">
+          Upload a video or static creative. Get a full AI breakdown in 30 seconds.
+        </p>
 
-      {/* Dropzone */}
-      <div style={{ width: "100%", maxWidth: 520, marginTop: 32 }}>
-        <VideoDropzone onFileSelect={onFileSelect} file={null} onUrlSubmit={onUrlSubmit} acceptImages heading="Drop your content here" />
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+          {PILLS.map((pill) => (
+            <span
+              key={pill}
+              className={cn(
+                "rounded-full border border-[color:var(--organic-border)] bg-[var(--organic-pill-bg)]",
+                "px-3 py-1 text-[11.5px] font-normal leading-[15px] text-[color:var(--organic-pill-text)]"
+              )}
+            >
+              {pill}
+            </span>
+          ))}
+        </div>
+
+        <div className="mt-8 w-full max-w-[731px]">
+          <VideoDropzone
+            onFileSelect={onFileSelect}
+            file={null}
+            onUrlSubmit={onUrlSubmit}
+            acceptImages
+            heading="Drop your content here"
+            layoutVariant="hero"
+            heroAccent="organic"
+            wrapperClassName="max-w-none"
+          />
+        </div>
       </div>
     </div>
   );
