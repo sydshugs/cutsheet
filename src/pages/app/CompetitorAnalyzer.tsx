@@ -32,64 +32,6 @@ type Format = (typeof FORMATS)[number];
 type Step = 0 | 2 | 3;
 
 const SLIDE = { initial: { opacity: 0, x: 40 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -40 }, transition: { duration: 0.25, ease: [0.16, 1, 0.3, 1] as const } };
-const FEATURE_PILLS = ["Gap analysis", "Win probability", "Action plan"];
-
-// ─── STEP INDICATOR ─────────────────────────────────────────────────────────
-
-function StepIndicator({ step, yourFile, competitorFile, onStepClick }: { step: Step; yourFile: File | null; competitorFile: File | null; onStepClick: (s: Step) => void }) {
-  const steps: { num: Step; label: string; displayIndex: number; done: boolean }[] = [
-    { num: 0, label: "Upload", displayIndex: 1, done: step >= 2 && !!yourFile && !!competitorFile },
-    { num: 2, label: "Compare", displayIndex: 2, done: step > 2 },
-    { num: 3, label: "Results", displayIndex: 3, done: false },
-  ];
-  return (
-    <div className="flex items-center justify-center gap-0 px-6 pt-5">
-      {steps.map((s, i) => {
-        const active = step === s.num;
-        const completed = s.done && step > s.num;
-        const clickable = completed;
-        return (
-          <div key={s.num} className="flex items-center">
-            <div
-              className={cn(
-                "flex items-center gap-1.5 rounded-full px-2 py-1 transition-[background-color] duration-150",
-                clickable && "cursor-pointer hover:bg-[color:var(--surface-raised)]",
-              )}
-              onClick={clickable ? () => onStepClick(s.num) : undefined}
-            >
-              <div
-                className="flex h-[26px] w-[26px] items-center justify-center rounded-full text-[11px] font-semibold transition-[background-color,border-color,color] duration-200"
-                style={{
-                  background: completed ? "var(--success)" : active ? "var(--accent)" : "rgba(255,255,255,0.04)",
-                  border: `1px solid ${completed ? "var(--success)" : active ? "var(--accent)" : "rgba(255,255,255,0.08)"}`,
-                  color: completed || active ? "white" : "#52525b",
-                }}
-              >
-                {completed ? <Check size={12} /> : s.displayIndex}
-              </div>
-              <span
-                className={cn(
-                  "text-xs transition-colors duration-200",
-                  active && "font-semibold text-[color:var(--ink)]",
-                  !active && completed && "text-[color:var(--success)]",
-                  !active && !completed && "text-[color:var(--ink-muted)]",
-                )}
-              >
-                {s.label}
-              </span>
-            </div>
-            {i < steps.length - 1 && (
-              <div
-                className="mx-1.5 h-px w-8 transition-colors duration-200"
-                style={{ background: completed ? "var(--success)" : "rgba(255,255,255,0.06)" }}
-              />
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 // ─── FILE PREVIEW ───────────────────────────────────────────────────────────
 
@@ -311,11 +253,7 @@ export default function CompetitorAnalyzer() {
         <link rel="canonical" href="https://cutsheet.xyz/app/competitor" />
       </Helmet>
 
-      {!isAnalyzing ? (
-        <StepIndicator step={step} yourFile={yourFile} competitorFile={competitorFile} onStepClick={(s) => { setStatus("idle"); setStep(s); }} />
-      ) : null}
-
-      <div className="flex-1 overflow-auto">
+      <div className="flex min-h-0 flex-1 flex-col overflow-auto">
         {isAnalyzing ? (
           <motion.div
             key="competitor-loading"
@@ -344,15 +282,22 @@ export default function CompetitorAnalyzer() {
             </div>
           </motion.div>
         ) : (
-        <div className={cn(step === 0 ? "w-full px-6 py-8" : "mx-auto max-w-[760px] px-5 py-8 sm:px-6 sm:py-10")}>
+        <div
+          className={cn(
+            "flex w-full flex-col",
+            step === 0
+              ? "min-h-[min(100%,calc(100vh-120px))] flex-1 items-center justify-center px-6 py-8"
+              : "mx-auto max-w-[760px] px-5 py-8 sm:px-6 sm:py-10",
+          )}
+        >
           <AnimatePresence mode="wait">
 
-            {/* ── UPLOAD — Figma 263-1483 (dual dropzones + Analyze Gap) ───────────────── */}
+            {/* ── UPLOAD — centered idle (no stepper / no feature pills) ───────────────── */}
             {step === 0 && (
               <motion.div
                 key="upload"
                 {...SLIDE}
-                className="relative flex min-h-[min(100%,560px)] flex-col items-center overflow-hidden rounded-none"
+                className="relative flex w-full max-w-[724px] flex-col items-center overflow-hidden rounded-none"
                 style={{ backgroundColor: "var(--bg)" }}
               >
                 <div
@@ -365,7 +310,7 @@ export default function CompetitorAnalyzer() {
                   aria-hidden
                 />
 
-                <div className="relative z-[1] flex w-full max-w-[724px] flex-col items-center">
+                <div className="relative z-[1] flex w-full flex-col items-center">
                   <div
                     className="flex size-[73px] shrink-0 items-center justify-center rounded-[15px] border"
                     style={{
@@ -386,22 +331,6 @@ export default function CompetitorAnalyzer() {
                   <p className="mt-2.5 max-w-[340px] text-center text-[13.5px] leading-[1.6] text-[color:var(--ink-muted)]">
                     Upload your ad and a competitor&apos;s. AI finds the gap and builds your win strategy.
                   </p>
-
-                  <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-                    {FEATURE_PILLS.map((pill) => (
-                      <span
-                        key={pill}
-                        className="rounded-full border px-3 py-1 text-[11.5px] font-normal leading-[15px]"
-                        style={{
-                          background: "var(--competitor-pill-bg)",
-                          borderColor: "var(--competitor-pill-border)",
-                          color: "var(--competitor-pill-text)",
-                        }}
-                      >
-                        {pill}
-                      </span>
-                    ))}
-                  </div>
 
                   <div className="mt-8 grid w-full grid-cols-1 gap-[19px] md:grid-cols-2">
                     <div className="flex min-w-0 flex-col gap-[26px]">

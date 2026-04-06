@@ -518,13 +518,20 @@ export function BatchView() {
   if (!allDone) {
     return (
       <>
-        <div className="relative flex min-h-[calc(100vh-120px)] flex-col bg-[color:var(--bg)] pb-10">
+        <div
+          className={cn(
+            "relative flex w-full flex-1 flex-col overflow-y-auto bg-[color:var(--bg)] py-8 pb-10",
+            items.length === 0
+              ? "min-h-[min(100%,calc(100vh-120px))] justify-center"
+              : "min-h-[calc(100vh-120px)] justify-start",
+          )}
+        >
           <div
             className="pointer-events-none absolute inset-x-0 top-0 h-[min(480px,45vh)]"
             style={{ background: "var(--rank-ambient)" }}
             aria-hidden
           />
-          <div className="relative z-[1] mx-auto flex w-full max-w-[916px] flex-col items-stretch gap-8 px-6 pt-10">
+          <div className="relative z-[1] mx-auto flex w-full max-w-[916px] flex-col items-stretch gap-8 px-6">
             <div className="flex w-full flex-col items-center gap-2">
               <div
                 className="flex size-[73px] shrink-0 items-center justify-center rounded-[15px] border border-[color:var(--rank-tile-border)] bg-[color:var(--rank-tile-bg)]"

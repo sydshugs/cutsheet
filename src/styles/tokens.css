@@ -219,6 +219,25 @@
   --ab-test-type-active-bg: rgba(97, 95, 255, 0.1);
   --ab-test-type-active-border: rgba(97, 95, 255, 0.3);
   --ab-test-type-active-text: var(--decon-accent-label);
+
+  /* Paid / Organic / Display analyzer idle — ambient glow (A/B parity).
+     Do not use rgb(var(--*-rgb) / α) in gradients; comma-rgb + slash-alpha is invalid. */
+  --analyzer-idle-ambient-paid: radial-gradient(
+    ellipse 70% 55% at 50% 38%,
+    rgba(99, 102, 241, 0.08) 0%,
+    transparent 65%
+  );
+  --analyzer-idle-ambient-organic: radial-gradient(
+    ellipse 70% 55% at 50% 38%,
+    rgba(16, 185, 129, 0.08) 0%,
+    transparent 65%
+  );
+  --analyzer-idle-ambient-display: radial-gradient(
+    ellipse 70% 55% at 50% 38%,
+    rgba(6, 182, 212, 0.08) 0%,
+    transparent 65%
+  );
+
   /* Rank Creatives idle — Figma 264-2926 */
   --rank-ambient: radial-gradient(
     ellipse 73% 53% at 50% 0%,

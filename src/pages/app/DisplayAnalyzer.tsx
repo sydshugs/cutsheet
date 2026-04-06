@@ -59,13 +59,14 @@ function EmptyState({ onFileSelect }: { onFileSelect: (f: File | null) => void }
         "relative flex flex-1 flex-col items-center justify-center overflow-hidden px-6 py-8",
         "min-h-[min(100%,calc(100vh-120px))]"
       )}
-      style={{
-        backgroundColor: "var(--bg)",
-        backgroundImage:
-          "radial-gradient(ellipse 73% 53% at 50% 40%, rgb(var(--display-accent-rgb) / 0.08) 0%, transparent 70%)",
-      }}
+      style={{ backgroundColor: "var(--bg)" }}
     >
-      <div className="relative z-0 flex w-full max-w-[731px] flex-col items-center">
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{ backgroundImage: "var(--analyzer-idle-ambient-display)" }}
+        aria-hidden
+      />
+      <div className="relative z-[1] flex w-full max-w-[731px] flex-col items-center">
         <div
           className={cn(
             "flex size-[73px] shrink-0 items-center justify-center rounded-[15px] border border-[color:var(--display-border)]",

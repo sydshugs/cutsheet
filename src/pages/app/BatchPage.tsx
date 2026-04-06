@@ -14,7 +14,7 @@ const API_KEY = ""; // Gemini calls are now server-side via /api/analyze
 
 function BatchIndex() {
   return (
-    <>
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden" style={{ minHeight: "calc(100vh - 56px)" }}>
       <Helmet>
         <title>Rank Creatives — Cutsheet</title>
         <meta name="description" content="Upload up to 10 ad variations. Get them ranked by AI so you know which 2-3 to test before spending." />
@@ -22,7 +22,7 @@ function BatchIndex() {
       </Helmet>
       <h1 className="sr-only">Rank Creatives</h1>
       <BatchView />
-    </>
+    </div>
   );
 }
 
