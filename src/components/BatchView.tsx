@@ -17,11 +17,15 @@ import {
   Loader2,
   Clock,
   XCircle,
+  ChevronDown,
+  ChevronUp,
+  Zap,
+  TrendingUp,
+  AlertCircle,
 } from "lucide-react";
 import { sanitizeFileName } from "../utils/sanitize";
 import { AnimatePresence, motion } from "framer-motion";
-import { recalculateOverallScore } from "../services/analyzerService";
-import { ScoreCard } from "./ScoreCard";
+import { recalculateOverallScore, type AnalysisResult } from "../services/analyzerService";
 import { UpgradeModal } from "./UpgradeModal";
 import { Toast } from "./Toast";
 import { AlertDialog } from "./ui/AlertDialog";
@@ -53,26 +57,99 @@ function rankTestTypeLabel(testType: RankTestType): string {
   return RANK_TEST_TYPES.find((o) => o.value === testType)?.label ?? "Full Creative";
 }
 
-/** Shared hero — Figma Rank page 264-2926 / 286-677 */
-function RankPageHero({ title, creativeCount, testTypeLabel }: { title: string; creativeCount: number; testTypeLabel: string }) {
+function rankStrengthsFromScores(scores: NonNullable<AnalysisResult["scores"]>): string {
+  const pairs = [
+    { label: "hook", v: scores.hook },
+    { label: "CTA", v: scores.cta },
+    { label: "clarity", v: scores.clarity },
+    { label: "production", v: scores.production },
+  ].sort((a, b) => b.v - a.v);
+  const strong = pairs.filter((p) => p.v >= 7).slice(0, 2);
+  if (strong.length === 0) {
+    return `Balanced across dimensions (overall ${scores.overall.toFixed(1)}/10). Open the full scorecard for detail.`;
+  }
+  const readable = strong.map((p) =>
+    p.label === "CTA" ? "CTA" : p.label.charAt(0).toUpperCase() + p.label.slice(1),
+  );
+  return `Strongest on ${readable.join(" and ")} — typical of creatives that hold attention in-feed.`;
+}
+
+function rankWeaknessesFromImprovements(improvements: string[]): string {
+  if (!improvements.length) return "Open the full scorecard for prioritized fixes.";
+  return improvements.slice(0, 2).join(" ");
+}
+
+function rankOverallScoreColorClass(overall: number): string {
+  if (overall >= 7) return "text-[color:var(--success)]";
+  if (overall >= 5) return "text-[color:var(--score-average)]";
+  return "text-[color:var(--error)]";
+}
+
+/** Shared hero — Figma Rank page 264-2926 / 286-677; optional pulse while batch is running */
+function RankPageHero({
+  title,
+  creativeCount,
+  testTypeLabel,
+  showPulse,
+}: {
+  title: string;
+  creativeCount: number;
+  testTypeLabel: string;
+  showPulse?: boolean;
+}) {
   return (
-    <div className="flex w-full flex-col items-center gap-2">
+    <div className="flex w-full flex-col items-center gap-2 pt-1">
       <div
         className="relative flex size-[83px] shrink-0 items-center justify-center overflow-visible rounded-[17.5px] border border-[color:var(--rank-tile-border)] bg-[color:var(--rank-tile-bg)]"
         aria-hidden
       >
-        <div
-          className="pointer-events-none absolute -inset-[38px] rounded-[17.5px] border border-[color:var(--rank-tile-border)] opacity-30"
-          aria-hidden
-        />
+        {showPulse ? (
+          <span
+            className="pointer-events-none absolute inset-0 rounded-[17.5px] border border-[color:var(--rank-tile-border)] opacity-40 animate-ping"
+            aria-hidden
+          />
+        ) : (
+          <div
+            className="pointer-events-none absolute -inset-[38px] rounded-[17.5px] border border-[color:var(--rank-tile-border)] opacity-30"
+            aria-hidden
+          />
+        )}
         <Trophy className="relative z-[1] size-[35px] text-[color:var(--rank-tile-icon)]" strokeWidth={1.75} />
       </div>
       <h2 className="m-0 text-center text-[clamp(2rem,5vw,2.75rem)] font-bold tracking-[-0.025em] text-[color:var(--ink)]">{title}</h2>
       <div className="inline-flex h-[31px] items-center gap-2 rounded-full border border-[color:var(--rank-loading-meta-pill-border)] bg-[color:var(--rank-loading-meta-pill-bg)] px-3.5">
-        <span className="size-[6.5px] shrink-0 rounded-full bg-[color:var(--rank-loading-meta-dot)] opacity-90" aria-hidden />
+        <span
+          className="size-[6.5px] shrink-0 rounded-full bg-[color:var(--rank-loading-meta-dot)] opacity-90 data-[pulse=1]:animate-pulse"
+          data-pulse={showPulse ? 1 : 0}
+          aria-hidden
+        />
         <span className="text-[13px] font-medium text-[color:var(--rank-loading-meta-text)]">
           {creativeCount} {creativeCount === 1 ? "creative" : "creatives"} · {testTypeLabel}
         </span>
+      </div>
+    </div>
+  );
+}
+
+function RankDimensionBar({ label, score, delay }: { label: string; score: number; delay: number }) {
+  const pct = (score / 10) * 100;
+  const bar =
+    score >= 7 ? "bg-[color:var(--success)]" : score >= 5 ? "bg-[color:var(--score-average)]" : "bg-[color:var(--error)]";
+  return (
+    <div className="flex flex-col gap-1.5 py-1">
+      <div className="flex items-end justify-between">
+        <span className="text-[13px] font-medium text-[color:var(--ink-secondary)]">{label}</span>
+        <span className={cn("font-mono text-[13px] font-medium", rankOverallScoreColorClass(score))}>
+          {score.toFixed(1)}
+        </span>
+      </div>
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-[color:var(--rank-load-progress-track)]">
+        <motion.div
+          className={cn("h-full rounded-full", bar)}
+          initial={{ width: 0 }}
+          animate={{ width: `${pct}%` }}
+          transition={{ duration: 0.55, delay, ease: [0.16, 1, 0.3, 1] }}
+        />
       </div>
     </div>
   );
@@ -103,29 +180,30 @@ function RankBatchLoadingView({ items, previewUrls, rankTestType, showStopLink, 
     total > 0 ? Math.min(100, Math.round(((finished + (analyzingNow ? 0.6 : 0)) / total) * 100)) : 0;
 
   return (
-    <div className="relative flex min-h-[calc(100vh-120px)] flex-col bg-[color:var(--bg)] pb-10">
+    <div className="relative flex min-h-[min(100%,calc(100vh-120px))] flex-col justify-center bg-[color:var(--bg)] py-10 pb-12">
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-[min(548px,50vh)]"
         style={{ background: "var(--rank-ambient)" }}
         aria-hidden
       />
-      <div className="relative z-[1] mx-auto flex w-full max-w-[1042px] flex-col items-center gap-10 px-6 pt-8 sm:pt-12">
+      <div className="relative z-[1] mx-auto flex w-full max-w-4xl flex-col items-center gap-8 px-6">
         <RankPageHero
           title="Ranking Creatives"
           creativeCount={total}
           testTypeLabel={rankTestTypeLabel(rankTestType)}
+          showPulse
         />
 
-        <div className="flex w-full gap-[13px] overflow-x-auto pb-2 [scrollbar-width:thin]">
-          {items.map((item) => {
+        <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+          {items.map((item, i) => {
             const phase = rankItemLoadPhase(item);
             const name = sanitizeFileName(item.file.name);
-            const displayName = name.length > 24 ? `${name.slice(0, 21)}…` : name;
+            const displayName = name.length > 22 ? `${name.slice(0, 19)}…` : name;
             const score =
               item.result?.scores != null ? (recalculateOverallScore(item.result.scores) ?? item.result.scores).overall : null;
 
             const shell = cn(
-              "relative flex h-[min(393px,70vh)] w-[186px] shrink-0 flex-col overflow-hidden rounded-[26px] border",
+              "relative flex flex-col overflow-hidden rounded-xl border transition-[border-color,background-color] duration-200",
               phase === "complete" &&
                 "border-[color:var(--rank-load-card-complete-border)] bg-[color:var(--rank-load-card-complete-bg)]",
               phase === "analyzing" &&
@@ -134,10 +212,23 @@ function RankBatchLoadingView({ items, previewUrls, rankTestType, showStopLink, 
                 "border-[color:var(--rank-load-card-pending-border)] bg-[color:var(--rank-load-card-pending-bg)]",
             );
 
+            const mediaFilter =
+              phase === "pending" || phase === "error"
+                ? "grayscale-[0.85] brightness-[0.48]"
+                : phase === "analyzing"
+                  ? "brightness-[0.78]"
+                  : "brightness-[0.88]";
+
             return (
-              <div key={item.id} className={shell}>
-                <div className="relative min-h-0 flex-1 overflow-hidden">
-                  <div className="absolute inset-0 opacity-80">
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05, duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                className={shell}
+              >
+                <div className="relative aspect-[9/16] w-full overflow-hidden">
+                  <div className={cn("absolute inset-0", mediaFilter)}>
                     {item.format === "static" ? (
                       <img src={previewUrls[item.id]} alt="" className="size-full object-cover" />
                     ) : (
@@ -145,7 +236,7 @@ function RankBatchLoadingView({ items, previewUrls, rankTestType, showStopLink, 
                     )}
                   </div>
 
-                  <div className="pointer-events-none absolute bottom-2 left-2 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9.9px] font-medium text-white bg-[color:var(--rank-badge-overlay)]">
+                  <div className="pointer-events-none absolute bottom-2 left-2 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-medium text-white bg-[color:var(--rank-badge-overlay)]">
                     {item.format === "video" ? (
                       <Play className="size-2 shrink-0 text-white" aria-hidden />
                     ) : (
@@ -155,47 +246,49 @@ function RankBatchLoadingView({ items, previewUrls, rankTestType, showStopLink, 
                   </div>
 
                   {phase === "complete" && score != null && (
-                    <div className="absolute right-2 top-2 rounded-md bg-[color:var(--rank-load-score-badge-bg)] px-2 py-0.5 font-bold tabular-nums text-[12px] text-[color:var(--rank-load-score-text)]">
-                      {score}
+                    <div
+                      className={cn(
+                        "absolute right-2 top-2 rounded-md bg-[color:var(--rank-load-score-badge-bg)] px-2 py-0.5 font-bold tabular-nums text-[11px] backdrop-blur-sm",
+                        rankOverallScoreColorClass(score),
+                      )}
+                    >
+                      {formatRankScoreDisplay(score)}
                     </div>
                   )}
 
-                  {phase === "complete" && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/0">
-                      <div className="flex size-10 items-center justify-center rounded-full bg-[color:var(--rank-load-complete-check-bg)] shadow-sm">
-                        <Check className="size-5 text-white" strokeWidth={2.5} aria-hidden />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    {phase === "complete" && (
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: "spring", stiffness: 320, damping: 22 }}
+                        className="flex size-9 items-center justify-center rounded-full bg-[color:var(--rank-load-complete-check-bg)] shadow-sm"
+                      >
+                        <Check className="size-[18px] text-white" strokeWidth={2.5} aria-hidden />
+                      </motion.div>
+                    )}
+                    {phase === "analyzing" && (
+                      <div className="flex size-9 items-center justify-center rounded-full bg-[color:var(--rank-load-analyzing-spinner-bg)]">
+                        <Loader2 className="size-[18px] animate-spin text-white" strokeWidth={2} aria-hidden />
                       </div>
-                    </div>
-                  )}
-
-                  {phase === "analyzing" && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/10">
-                      <div className="flex size-10 items-center justify-center rounded-full bg-[color:var(--rank-load-analyzing-spinner-bg)]">
-                        <Loader2 className="size-5 animate-spin text-white" strokeWidth={2} aria-hidden />
+                    )}
+                    {phase === "pending" && (
+                      <div className="flex size-9 items-center justify-center rounded-full bg-[color:var(--rank-load-pending-icon-bg)]">
+                        <Clock className="size-4 text-[color:var(--ink-muted)]" strokeWidth={2} aria-hidden />
                       </div>
-                    </div>
-                  )}
-
-                  {phase === "pending" && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/10">
-                      <div className="flex size-10 items-center justify-center rounded-full bg-[color:var(--rank-load-pending-icon-bg)]">
-                        <Clock className="size-[18px] text-[color:var(--ink-muted)]" strokeWidth={2} aria-hidden />
+                    )}
+                    {phase === "error" && (
+                      <div className="flex size-9 items-center justify-center rounded-full bg-[color:var(--rank-load-pending-icon-bg)]">
+                        <XCircle className="size-4 text-[color:var(--error)]" strokeWidth={2} aria-hidden />
                       </div>
-                    </div>
-                  )}
-                  {phase === "error" && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/15">
-                      <div className="flex size-10 items-center justify-center rounded-full bg-[color:var(--rank-load-pending-icon-bg)]">
-                        <XCircle className="size-[18px] text-[color:var(--error)]" strokeWidth={2} aria-hidden />
-                      </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
 
-                <div className="flex shrink-0 flex-col gap-0.5 px-2.5 pb-2.5 pt-1">
+                <div className="flex min-h-[36px] items-center gap-1.5 px-2 pt-2">
                   <p
                     className={cn(
-                      "m-0 text-[9.9px] font-semibold uppercase tracking-[0.05em]",
+                      "m-0 text-[9px] font-semibold uppercase tracking-[0.08em]",
                       phase === "complete" && "text-[color:var(--rank-load-complete-label)]",
                       phase === "analyzing" && "text-[color:var(--rank-load-analyzing-label)]",
                       phase === "pending" && "text-[color:var(--rank-load-pending-label)]",
@@ -207,32 +300,33 @@ function RankBatchLoadingView({ items, previewUrls, rankTestType, showStopLink, 
                     {phase === "pending" && "Pending"}
                     {phase === "error" && "Failed"}
                   </p>
-                  <p className="m-0 truncate text-[11px] leading-snug text-[color:var(--rank-feature-pill-text)]">{displayName}</p>
                 </div>
-              </div>
+                <p className="m-0 truncate px-2 pb-2 text-[10px] leading-snug text-[color:var(--rank-feature-pill-text)]">{displayName}</p>
+              </motion.div>
             );
           })}
         </div>
 
-        <div className="flex w-full max-w-[1042px] flex-col gap-3">
+        <div className="flex w-full max-w-4xl flex-col gap-3">
           <div className="flex w-full items-center gap-3">
-            <p className="m-0 shrink-0 text-[14px] font-medium text-[color:var(--rank-load-progress-label)]" aria-live="polite">
+            <p className="m-0 shrink-0 text-[13px] font-medium text-[color:var(--rank-load-progress-label)]" aria-live="polite">
               {finished} of {total} analyzed
             </p>
             <div className="relative h-1 min-w-0 flex-1 overflow-hidden rounded-full bg-[color:var(--rank-load-progress-track)]">
-              <div
-                className="absolute left-0 top-0 h-full rounded-full bg-[color:var(--rank-load-progress-fill)] transition-[width] duration-300"
-                style={{ width: `${pct}%` }}
+              <motion.div
+                className="absolute left-0 top-0 h-full rounded-full bg-[color:var(--rank-load-progress-fill)]"
+                animate={{ width: `${pct}%` }}
+                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
               />
             </div>
-            <p className="m-0 w-10 shrink-0 text-right font-mono text-[13px] font-medium text-[color:var(--rank-load-progress-pct)]">{pct}%</p>
+            <p className="m-0 w-10 shrink-0 text-right font-mono text-[12px] font-medium text-[color:var(--rank-load-progress-pct)]">{pct}%</p>
           </div>
           {showStopLink && (
             <div className="flex justify-center">
               <button
                 type="button"
                 onClick={onRequestStopAfterCurrent}
-                className="border-0 bg-transparent p-0 text-[13px] font-normal text-[color:var(--rank-load-stop-link)] underline decoration-solid underline-offset-2 transition-[color,opacity] duration-150 hover:text-[color:var(--ink-muted)] focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] active:opacity-90"
+                className="border-0 bg-transparent p-0 text-[12px] font-normal text-[color:var(--rank-load-stop-link)] underline decoration-solid underline-offset-2 transition-[color,opacity] duration-150 hover:text-[color:var(--ink-muted)] focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] active:opacity-90"
               >
                 Stop after current
               </button>
@@ -255,7 +349,7 @@ interface RankBatchResultsViewProps {
   onRankMore: () => void;
 }
 
-/** Results — same shell + complete-style cards as Figma 286-677 (loading row), no progress strip */
+/** Results — header + “test these two” hero + expandable list (prototype parity, real data) */
 function RankBatchResultsView({
   items,
   ranked,
@@ -263,119 +357,284 @@ function RankBatchResultsView({
   rankTestType,
   expandedId,
   setExpandedId,
-  isDark,
+  isDark: _isDark,
   onRankMore,
 }: RankBatchResultsViewProps) {
+  void _isDark;
   const errorItems = items.filter((i) => i.status === "error");
   const testLabel = rankTestTypeLabel(rankTestType);
-  const expandedRow = ranked.find((r) => r.item.id === expandedId);
+  const baseName = (row: RankedRow) => row.item.result?.fileName ?? sanitizeFileName(row.item.file.name);
+  const shortBase = (row: RankedRow) => {
+    const n = baseName(row);
+    const dot = n.lastIndexOf(".");
+    return dot > 0 ? n.slice(0, dot) : n;
+  };
 
   return (
-    <div className="relative flex min-h-[calc(100vh-120px)] flex-col bg-[color:var(--bg)] pb-10">
+    <div className="relative flex min-h-[calc(100vh-120px)] flex-col bg-[color:var(--bg)] pb-12">
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-[min(548px,50vh)]"
         style={{ background: "var(--rank-ambient)" }}
         aria-hidden
       />
-      <div className="relative z-[1] mx-auto flex w-full max-w-[1042px] flex-col gap-8 px-6 pb-10 pt-8 sm:gap-10 sm:pt-12">
-        <RankPageHero title="Creatives ranked" creativeCount={items.length} testTypeLabel={testLabel} />
+      <div className="relative z-[1] mx-auto flex w-full max-w-[1000px] flex-col px-6 pb-10 pt-8 sm:pt-10">
+        <div className="mb-8 flex flex-col gap-4 sm:mb-10 md:flex-row md:items-center md:justify-between">
+          <div className="flex min-w-0 items-center gap-4">
+            <div
+              className="flex size-12 shrink-0 items-center justify-center rounded-xl border border-[color:var(--accent-border)] bg-[color:var(--accent-subtle)]"
+              style={{ boxShadow: "var(--shadow-glow)" }}
+              aria-hidden
+            >
+              <Trophy className="size-[22px] text-[color:var(--accent-light)]" strokeWidth={2} />
+            </div>
+            <h2 className="m-0 text-[clamp(1.75rem,4vw,2.5rem)] font-bold leading-tight tracking-[-0.025em] text-[color:var(--ink)]">
+              {items.length} creatives ranked
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={onRankMore}
+            className="inline-flex h-10 w-full shrink-0 items-center justify-center gap-2 rounded-[10px] text-[13px] font-medium text-white transition-[transform,background-color,opacity] duration-150 bg-[color:var(--accent)] hover:bg-[color:var(--accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] active:scale-[0.99] md:w-auto md:px-5"
+          >
+            <Zap className="size-3.5" strokeWidth={2} aria-hidden />
+            Rank more
+          </button>
+        </div>
+
+        <p className="m-0 mb-8 text-center text-[11px] font-medium uppercase tracking-[0.12em] text-[color:var(--ink-muted)] md:text-left">
+          {testLabel}
+        </p>
 
         {ranked.length >= 2 && (
-          <div className="flex items-start gap-2.5 rounded-xl border border-[color:var(--ab-results-hybrid-card-border)] bg-[color:var(--ab-results-hybrid-card-bg)] px-4 py-3.5">
-            <Trophy className="mt-0.5 size-4 shrink-0 text-[color:var(--decon-accent-light)]" strokeWidth={2} aria-hidden />
-            <div className="min-w-0">
-              <p className="m-0 text-[14px] font-semibold text-[color:var(--ink)]">
-                Test these two: {ranked[0].item.result!.fileName.split(".")[0]} and {ranked[1].item.result!.fileName.split(".")[0]}
-              </p>
-              <p className="m-0 mt-1 text-[12px] text-[color:var(--ink-muted)]">They scored highest across hook, CTA, and clarity.</p>
+          <div className="group relative mb-10 overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] shadow-[var(--shadow-md)]">
+            <div
+              className="pointer-events-none absolute left-0 top-0 z-10 h-full w-0.5 bg-[color:var(--success)]"
+              style={{ boxShadow: "0 0 20px color-mix(in srgb, var(--success) 45%, transparent)" }}
+              aria-hidden
+            />
+            <div
+              className="pointer-events-none absolute inset-0"
+              style={{
+                background:
+                  "linear-gradient(to right, color-mix(in srgb, var(--success) 5%, transparent), transparent)",
+              }}
+              aria-hidden
+            />
+            <div className="relative z-[1] flex flex-col gap-8 p-6 sm:p-8 md:flex-row md:items-center md:gap-10 lg:p-10">
+              <div className="min-w-0 flex-1">
+                <div className="mb-3 flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-[color:color-mix(in_srgb,var(--success)_22%,transparent)] bg-[color:color-mix(in_srgb,var(--success)_10%,transparent)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--success)]">
+                    <TrendingUp className="size-3" strokeWidth={2.5} aria-hidden />
+                    Test these two
+                  </span>
+                </div>
+                <h3 className="m-0 text-[clamp(1.15rem,2.5vw,1.75rem)] font-semibold leading-snug tracking-tight text-[color:var(--ink)]">
+                  <span className="text-[color:var(--success)]">{shortBase(ranked[0])}</span>
+                  {" and "}
+                  <span className="text-[color:var(--success)]">{shortBase(ranked[1])}</span>
+                </h3>
+                <p className="m-0 mt-2 max-w-xl text-[15px] leading-relaxed text-[color:var(--ink-secondary)]">
+                  They scored highest across hook, CTA, and clarity. Prioritize spend on these before testing the rest.
+                </p>
+              </div>
+              <div className="relative mx-auto hidden h-[160px] w-[280px] shrink-0 md:block">
+                <div className="absolute right-0 top-4 w-[160px] overflow-hidden rounded-xl border border-[color:var(--border)] opacity-60 shadow-lg rotate-6 transition-transform duration-300 group-hover:translate-x-1 group-hover:rotate-12">
+                  {ranked[1].item.format === "static" ? (
+                    <img src={previewUrls[ranked[1].item.id]} alt="" className="h-[120px] w-full object-cover grayscale-[30%]" />
+                  ) : (
+                    <video src={previewUrls[ranked[1].item.id]} className="h-[120px] w-full object-cover grayscale-[30%]" muted playsInline preload="metadata" />
+                  )}
+                  <div className="absolute right-2 top-2 rounded bg-[color:var(--rank-badge-overlay)] px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm">
+                    #2
+                  </div>
+                </div>
+                <div className="absolute left-0 top-0 w-[180px] overflow-hidden rounded-xl border-2 border-[color:color-mix(in_srgb,var(--success)_35%,transparent)] shadow-[0_10px_30px_color-mix(in_srgb,var(--success)_18%,transparent)] -rotate-2 transition-transform duration-300 group-hover:-translate-x-1 group-hover:-rotate-3">
+                  {ranked[0].item.format === "static" ? (
+                    <img src={previewUrls[ranked[0].item.id]} alt="" className="h-[135px] w-full object-cover" />
+                  ) : (
+                    <video src={previewUrls[ranked[0].item.id]} className="h-[135px] w-full object-cover" muted playsInline preload="metadata" />
+                  )}
+                  <div className="absolute left-2 top-2 rounded bg-[color:var(--success)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-[color:var(--bg)]">
+                    #1
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}
 
-        <div className="flex w-full gap-[13px] overflow-x-auto pb-1 [scrollbar-width:thin]">
+        <div className="flex flex-col gap-3">
           {ranked.map(({ item, overall }, idx) => {
             const rank = idx + 1;
             const fn = item.result?.fileName ?? sanitizeFileName(item.file.name);
-            const displayName = fn.length > 24 ? `${fn.slice(0, 21)}…` : fn;
+            const displayName = fn.length > 40 ? `${fn.slice(0, 37)}…` : fn;
             const isExpanded = expandedId === item.id;
+            const wouldScale = overall >= 7;
+            const scores = item.result?.scores;
+            const isGold = rank === 1;
+            const isSilver = rank === 2;
+            const isBronze = rank === 3;
+            const rankColor =
+              isGold
+                ? "text-[color:var(--warn)]"
+                : isSilver
+                  ? "text-[color:var(--ink-secondary)]"
+                  : isBronze
+                    ? "text-[color:var(--score-average)]"
+                    : "text-[color:var(--ink-muted)]";
+            const cardBorder = isGold
+              ? isExpanded
+                ? "border-[color:color-mix(in_srgb,var(--warn)_35%,transparent)]"
+                : "border-[color:color-mix(in_srgb,var(--warn)_22%,transparent)]"
+              : isExpanded
+                ? "border-[color:var(--accent-border-strong)]"
+                : "border-[color:var(--border)]";
+
             return (
-              <div
+              <motion.div
+                layout
                 key={item.id}
                 className={cn(
-                  "flex h-[min(393px,70vh)] w-[186px] shrink-0 flex-col overflow-hidden rounded-[26px] border border-[color:var(--rank-load-card-complete-border)] bg-[color:var(--rank-load-card-complete-bg)] transition-[box-shadow] duration-150",
-                  isExpanded && "shadow-[0_0_0_2px_var(--accent)]",
+                  "flex flex-col overflow-hidden rounded-xl border bg-[color:var(--card)] transition-[border-color,background-color] duration-200",
+                  cardBorder,
+                  isExpanded && "bg-[color:color-mix(in_srgb,var(--surface)_98%,transparent)]",
                 )}
               >
                 <button
                   type="button"
                   onClick={() => setExpandedId(isExpanded ? null : item.id)}
                   aria-expanded={isExpanded}
-                  className="relative min-h-0 flex-1 overflow-hidden text-left transition-opacity duration-150 hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] active:opacity-90"
+                  className="flex w-full cursor-pointer flex-col gap-5 p-5 text-left transition-[background-color] duration-150 hover:bg-[color:color-mix(in_srgb,var(--surface)_60%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] md:flex-row md:items-center md:justify-between md:gap-6"
                 >
-                  <div className="absolute inset-0 opacity-80">
-                    {item.format === "static" ? (
-                      <img src={previewUrls[item.id]} alt="" className="size-full object-cover" />
-                    ) : (
-                      <video src={previewUrls[item.id]} className="size-full object-cover" muted playsInline preload="metadata" />
-                    )}
+                  <div className="flex min-w-0 flex-1 items-center gap-4 md:gap-6">
+                    <div className={cn("w-10 shrink-0 text-center text-[28px] font-bold tabular-nums leading-none md:w-11", rankColor)}>
+                      #{rank}
+                    </div>
+                    <div
+                      className={cn(
+                        "relative shrink-0 overflow-hidden border border-[color:var(--border)] bg-black/40",
+                        isGold ? "size-20 rounded-xl" : "h-16 w-[100px] rounded-lg",
+                      )}
+                    >
+                      {item.format === "static" ? (
+                        <img src={previewUrls[item.id]} alt="" className="size-full object-cover opacity-90" />
+                      ) : (
+                        <video src={previewUrls[item.id]} className="size-full object-cover opacity-90" muted playsInline preload="metadata" />
+                      )}
+                      <div className="pointer-events-none absolute bottom-1 right-1 inline-flex items-center gap-0.5 rounded bg-[color:var(--rank-badge-overlay)] px-1 py-0.5 text-[8px] font-medium text-white">
+                        {item.format === "video" ? (
+                          <Play className="size-2 text-white" aria-hidden />
+                        ) : (
+                          <ImageIcon className="size-2 text-white" aria-hidden />
+                        )}
+                        {item.format === "video" ? "Video" : "Static"}
+                      </div>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="m-0 text-[15px] font-medium tracking-tight text-[color:var(--ink)]">{displayName}</p>
+                      <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                        {wouldScale ? (
+                          <span className="inline-flex items-center gap-1 rounded border border-[color:color-mix(in_srgb,var(--success)_22%,transparent)] bg-[color:color-mix(in_srgb,var(--success)_8%,transparent)] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-[color:var(--success)]">
+                            <Check className="size-2.5" strokeWidth={2.5} aria-hidden />
+                            Would scale
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded border border-[color:var(--border)] bg-[color:var(--surface-el)] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-[color:var(--ink-muted)]">
+                            <AlertCircle className="size-2.5" strokeWidth={2} aria-hidden />
+                            Needs rework
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <div className="pointer-events-none absolute bottom-2 left-2 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9.9px] font-medium text-white bg-[color:var(--rank-badge-overlay)]">
-                    {item.format === "video" ? (
-                      <Play className="size-2 shrink-0 text-white" aria-hidden />
-                    ) : (
-                      <ImageIcon className="size-2 shrink-0 text-white" aria-hidden />
-                    )}
-                    {item.format === "video" ? "Video" : "Static"}
-                  </div>
-                  <div className="pointer-events-none absolute right-2 top-2 rounded-md bg-[color:var(--rank-load-score-badge-bg)] px-2 py-0.5 font-bold tabular-nums text-[12px] text-[color:var(--rank-load-score-text)]">
-                    {formatRankScoreDisplay(overall)}
-                  </div>
-                  <div className="absolute inset-0 flex items-center justify-center bg-transparent">
-                    <div className="flex size-10 items-center justify-center rounded-full bg-[color:var(--rank-load-complete-check-bg)] shadow-sm">
-                      <Check className="size-5 text-white" strokeWidth={2.5} aria-hidden />
+                  <div className="flex items-center justify-between gap-4 pl-14 md:justify-end md:pl-0">
+                    <div className="flex flex-col items-end">
+                      <span className="mb-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--ink-muted)]">Overall</span>
+                      <div className="flex items-baseline gap-1">
+                        <span className={cn("font-mono text-[28px] font-bold leading-none tabular-nums", rankOverallScoreColorClass(overall))}>
+                          {formatRankScoreDisplay(overall)}
+                        </span>
+                        <span className="font-mono text-sm font-medium text-[color:var(--ink-muted)]">/10</span>
+                      </div>
+                    </div>
+                    <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[color:var(--surface-el)] text-[color:var(--ink-muted)] transition-[color,background-color] duration-150">
+                      {isExpanded ? <ChevronUp className="size-4" aria-hidden /> : <ChevronDown className="size-4" aria-hidden />}
                     </div>
                   </div>
                 </button>
-                <div className="flex shrink-0 flex-col gap-0.5 px-2.5 pb-2.5 pt-1">
-                  <p className="m-0 text-[9.9px] font-semibold uppercase tracking-[0.05em] text-[color:var(--rank-load-complete-label)]">#{rank}</p>
-                  <p className="m-0 truncate text-[11px] leading-snug text-[color:var(--rank-feature-pill-text)]">{displayName}</p>
-                </div>
-              </div>
+
+                <AnimatePresence initial={false}>
+                  {isExpanded && scores && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                      className="overflow-hidden border-t border-[color:var(--border)] bg-[color:color-mix(in_srgb,var(--bg)_85%,transparent)]"
+                    >
+                      <div className="flex flex-col gap-8 p-6 md:flex-row md:p-8 lg:gap-10">
+                        <div className="min-w-0 flex-1 space-y-6">
+                          <div>
+                            <h4 className="mb-2 flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.14em] text-[color:var(--success)]">
+                              <span className="size-1.5 rounded-full bg-[color:var(--success)] shadow-[0_0_8px_color-mix(in_srgb,var(--success)_80%,transparent)]" />
+                              Strengths
+                            </h4>
+                            <p className="m-0 text-[14px] leading-relaxed text-[color:var(--ink-secondary)]">{rankStrengthsFromScores(scores)}</p>
+                          </div>
+                          <div>
+                            <h4 className="mb-2 flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.14em] text-[color:var(--error)]">
+                              <span className="size-1.5 rounded-full bg-[color:var(--error)] shadow-[0_0_8px_color-mix(in_srgb,var(--error)_60%,transparent)]" />
+                              Gaps
+                            </h4>
+                            <p className="m-0 text-[14px] leading-relaxed text-[color:var(--ink-muted)]">
+                              {rankWeaknessesFromImprovements(item.result?.improvements ?? [])}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex w-full min-w-0 flex-col gap-1 md:max-w-[360px]">
+                          <h4 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[color:var(--ink-muted)]">Score breakdown</h4>
+                          <RankDimensionBar label="Hook" score={scores.hook} delay={0.05} />
+                          <RankDimensionBar label="Clarity" score={scores.clarity} delay={0.1} />
+                          <RankDimensionBar label="CTA" score={scores.cta} delay={0.15} />
+                          <RankDimensionBar label="Production" score={scores.production} delay={0.2} />
+                          <div className="mt-4 flex justify-end border-t border-[color:var(--border)] pt-4">
+                            <Link
+                              to={`scorecard/${item.id}`}
+                              className="text-[13px] font-medium text-[color:var(--accent)] underline decoration-solid underline-offset-2 transition-[opacity] duration-150 hover:opacity-90 focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] active:opacity-90"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              View full scorecard →
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
             );
           })}
+
           {errorItems.map((item) => {
             const name = sanitizeFileName(item.file.name);
-            const displayName = name.length > 24 ? `${name.slice(0, 21)}…` : name;
+            const displayName = name.length > 40 ? `${name.slice(0, 37)}…` : name;
             return (
               <div
                 key={item.id}
-                className="flex h-[min(393px,70vh)] w-[186px] shrink-0 flex-col overflow-hidden rounded-[26px] border border-[color:var(--rank-load-card-pending-border)] bg-[color:var(--rank-load-card-pending-bg)]"
+                className="flex flex-col overflow-hidden rounded-xl border border-[color:var(--score-weak-border)] bg-[color:var(--score-weak-bg)] p-5 md:flex-row md:items-center md:gap-6"
               >
-                <div className="relative min-h-0 flex-1 overflow-hidden">
-                  <div className="absolute inset-0 opacity-50">
+                <div className="flex items-center gap-4">
+                  <div className="relative h-16 w-[100px] shrink-0 overflow-hidden rounded-lg border border-[color:var(--border)] opacity-70">
                     {item.format === "static" ? (
                       <img src={previewUrls[item.id]} alt="" className="size-full object-cover" />
                     ) : (
                       <video src={previewUrls[item.id]} className="size-full object-cover" muted playsInline preload="metadata" />
                     )}
                   </div>
-                  <div className="pointer-events-none absolute bottom-2 left-2 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9.9px] font-medium text-white bg-[color:var(--rank-badge-overlay)]">
-                    {item.format === "video" ? (
-                      <Play className="size-2 shrink-0 text-white" aria-hidden />
-                    ) : (
-                      <ImageIcon className="size-2 shrink-0 text-white" aria-hidden />
-                    )}
-                    {item.format === "video" ? "Video" : "Static"}
+                  <div>
+                    <p className="m-0 text-[13px] font-semibold text-[color:var(--error)]">Analysis failed</p>
+                    <p className="m-0 mt-1 text-[12px] text-[color:var(--ink-muted)]">{displayName}</p>
                   </div>
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                    <div className="flex size-10 items-center justify-center rounded-full bg-[color:var(--rank-load-pending-icon-bg)]">
-                      <XCircle className="size-[18px] text-[color:var(--error)]" strokeWidth={2} aria-hidden />
-                    </div>
-                  </div>
-                </div>
-                <div className="flex shrink-0 flex-col gap-0.5 px-2.5 pb-2.5 pt-1">
-                  <p className="m-0 text-[9.9px] font-semibold uppercase tracking-[0.05em] text-[color:var(--error)]">Failed</p>
-                  <p className="m-0 truncate text-[11px] leading-snug text-[color:var(--rank-feature-pill-text)]">{displayName}</p>
                 </div>
               </div>
             );
@@ -383,44 +642,13 @@ function RankBatchResultsView({
         </div>
 
         {ranked.length === 0 && errorItems.length > 0 && (
-          <p className="m-0 text-center text-[14px] text-[color:var(--ink-muted)]">Every creative failed to analyze. Try different files or try again.</p>
+          <p className="m-0 mt-6 text-center text-[14px] text-[color:var(--ink-muted)]">
+            Every creative failed to analyze. Try different files or try again.
+          </p>
         )}
 
-        <AnimatePresence initial={false}>
-          {expandedRow?.item.result?.scores && (
-            <motion.div
-              key={expandedRow.item.id}
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.28 }}
-              className="overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)]"
-            >
-              <div className="flex flex-col">
-                <ScoreCard
-                  scores={expandedRow.item.result.scores}
-                  improvements={expandedRow.item.result.improvements}
-                  budget={expandedRow.item.result.budget}
-                  hashtags={expandedRow.item.result.hashtags}
-                  fileName={expandedRow.item.result.fileName}
-                  isDark={isDark}
-                  format={expandedRow.item.format}
-                />
-                <div className="flex justify-center border-t border-[color:var(--border)] bg-[color:var(--card)] px-4 py-3">
-                  <Link
-                    to={`scorecard/${expandedRow.item.id}`}
-                    className="text-[13px] font-medium text-[color:var(--accent)] underline decoration-solid underline-offset-2 transition-[color,opacity] duration-150 hover:opacity-90 focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] active:opacity-90"
-                  >
-                    View full scorecard
-                  </Link>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
         {ranked.length >= 4 && ranked[ranked.length - 1].overall <= 5 && (
-          <div className="flex items-start gap-2 rounded-xl border border-[color:var(--score-weak-border)] bg-[color:var(--score-weak-bg)] px-3.5 py-2.5">
+          <div className="mt-8 flex items-start gap-2 rounded-xl border border-[color:var(--score-weak-border)] bg-[color:var(--score-weak-bg)] px-3.5 py-2.5">
             <X className="mt-0.5 size-3.5 shrink-0 text-[color:var(--error)]" aria-hidden />
             <div>
               <span className="text-[12px] font-medium text-[color:var(--error)]">
@@ -435,7 +663,7 @@ function RankBatchResultsView({
         <button
           type="button"
           onClick={onRankMore}
-          className="flex h-[46px] w-full items-center justify-center gap-2 rounded-[11.5px] text-[13.5px] font-semibold text-white transition-[transform,background-color,opacity] duration-150 bg-[color:var(--rank-cta-bg)] hover:bg-[color:var(--rank-cta-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] active:scale-[0.99]"
+          className="mt-10 flex h-[46px] w-full items-center justify-center gap-2 rounded-[11.5px] text-[13.5px] font-semibold text-white transition-[transform,background-color,opacity] duration-150 bg-[color:var(--accent)] hover:bg-[color:var(--accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] active:scale-[0.99] md:hidden"
         >
           <Trophy className="size-[15px]" strokeWidth={2} aria-hidden />
           Rank more creatives
