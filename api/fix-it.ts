@@ -142,6 +142,7 @@ Return ONLY valid JSON, no markdown fencing.`;
     const message = await client.messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 2048,
+      temperature: 0,
       system: systemPrompt,
       messages: [{ role: "user", content: prompt }],
     });

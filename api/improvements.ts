@@ -76,6 +76,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const message = await getClient().messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 1024,
+      temperature: 0,
       system: `You are a senior performance marketing creative strategist. You write short, specific, actionable improvement suggestions for ads. Each suggestion should be 1-2 sentences max. Focus on the weakest scoring areas. No fluff, no preamble.${contextBlock}${platformBlock}${memoryBlock}${brandVoiceContext}`,
       messages: [
         {
@@ -110,6 +111,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const message = await getClient().messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 512,
+      temperature: 0,
       system: `You are a direct-response copywriter. You write short, punchy CTAs for paid social ads. Each CTA should be under 8 words. Focus on urgency, clarity, and conversion.${contextBlock}${memoryBlock}${brandVoiceContext}`,
       messages: [
         {
@@ -157,6 +159,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const message = await getClient().messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 2048,
+      temperature: 0,
       system: `You are a senior creative strategist at a top performance marketing agency. You write tight, actionable creative briefs that creative teams can execute immediately. Your briefs are specific to the ad analyzed — not generic templates.${contextBlock}${memoryBlock}${platformBlock}${brandVoiceContext}`,
       messages: [
         {

@@ -5,6 +5,7 @@ import { generateImprovements as claudeImprovements } from "./claudeService";
 import { supabase } from "../lib/supabase";
 import { incrementAnalysisCount } from "./usageService";
 import { inferUploadMimeType } from "../utils/uploadFileValidation";
+import { validateScores } from "../utils/scoreGuardrails";
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 
@@ -804,7 +805,8 @@ export async function analyzeVideo(
     if (!parsedScores) {
       throw new Error("Could not parse scores from the AI response. The output format may have changed — try again.");
     }
-    const scores = recalculateOverallScore(parsedScores);
+    const recalculated = recalculateOverallScore(parsedScores);
+    const scores = recalculated ? validateScores(recalculated as Record<string, number>) as typeof recalculated : recalculated;
 
     // 6. Parse improvements from markdown
     let improvements = parseImprovements(markdown);

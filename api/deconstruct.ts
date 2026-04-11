@@ -130,7 +130,7 @@ async function runGeminiAnalysis(
     const geminiKey = process.env.GEMINI_API_KEY;
     if (!geminiKey) return {};
     const genAI = new GoogleGenerativeAI(geminiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", generationConfig: { temperature: 0 } });
 
     const result = await model.generateContent([
       { inlineData: { mimeType: imageData.mimeType, data: imageData.data } },
@@ -337,6 +337,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const message = await client.messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 3000,
+      temperature: 0,
       ...(brandVoiceContext ? { system: brandVoiceContext } : {}),
       messages: [
         {

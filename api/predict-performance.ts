@@ -6,6 +6,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
 import { safePlatform, safeAdType, safeNiche } from "./_lib/validateInput";
 import { sanitizeAnalysisText } from "./_lib/sanitizeMemory";
+import { validatePrediction, validateConfidence } from "../src/utils/scoreGuardrails.js";
 
 // ── Inline benchmark data (avoids ESM import issue in Vercel CJS bundle) ──────
 interface NicheBenchmark {
@@ -191,6 +192,7 @@ Return ONLY valid JSON, no markdown fencing. Be calibrated — a hook score of 3
     const message = await client.messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 1024,
+      temperature: 0,
       system: systemPrompt,
       messages: [{ role: "user", content: prompt }],
     });
@@ -200,7 +202,9 @@ Return ONLY valid JSON, no markdown fencing. Be calibrated — a hook score of 3
 
     try {
       const parsed = JSON.parse(cleaned);
-      return res.status(200).json(parsed);
+      const validatedPrediction = validatePrediction(parsed, scores);
+      validatedPrediction.confidence = validateConfidence(parsed.confidence, scores);
+      return res.status(200).json(validatedPrediction);
     } catch {
       return res.status(200).json({
         ctr: { low: 0, high: 0, benchmark: 0, vsAvg: "at" },
