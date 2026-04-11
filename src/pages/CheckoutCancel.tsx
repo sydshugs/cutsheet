@@ -8,7 +8,7 @@ export default function CheckoutCancel() {
   return (
     <div
       className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden"
-      style={{ background: "#09090b" }}
+      style={{ background: "var(--bg)" }}
     >
       {/* Ambient glows */}
       <div

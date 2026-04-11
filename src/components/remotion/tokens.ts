@@ -5,7 +5,7 @@ import type { CSSProperties } from 'react';
 
 export const TOKENS = {
   // ── Backgrounds ──
-  bg: '#09090b',
+  bg: '#09090B',
   surface: 'rgba(255,255,255,0.03)',
   surfaceEl: 'rgba(255,255,255,0.05)',
 

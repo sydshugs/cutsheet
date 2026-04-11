@@ -628,7 +628,7 @@ Return JSON only — no prose:
                             background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
                             borderRadius: 10,
                           }}>
-                            <div style={{ width: 60, height: 40, borderRadius: 6, overflow: "hidden", background: "#09090b", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <div style={{ width: 60, height: 40, borderRadius: 6, overflow: "hidden", background: "var(--bg)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
                               <img src={URL.createObjectURL(b.file)} alt="" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
@@ -891,7 +891,7 @@ Return JSON only — no prose:
 
               {file && previewUrl && status !== "complete" && status !== "analyzing" && (
                 <div style={{ marginBottom: 16 }}>
-                  <div style={{ display: "flex", justifyContent: "center", background: "#09090b", borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)", padding: 16 }}>
+                  <div style={{ display: "flex", justifyContent: "center", background: "var(--bg)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)", padding: 16 }}>
                     <img src={previewUrl} alt={sanitizeFileName(file.name)} style={{ maxWidth: "100%", maxHeight: 400, objectFit: "contain" }} />
                   </div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8 }}>

@@ -389,7 +389,7 @@ export default function Welcome() {
   return (
     <div
       className="min-h-screen flex flex-col relative overflow-hidden"
-      style={{ background: "#09090b", fontFamily: "'Geist', sans-serif" }}
+      style={{ background: "var(--bg)", fontFamily: "'Geist', sans-serif" }}
     >
       <Helmet>
         <title>Welcome — Cutsheet</title>

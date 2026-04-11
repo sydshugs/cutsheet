@@ -10,7 +10,7 @@
 /* Cutsheet design tokens — official brand guide */
 :root {
   /* ── Core palette (from brand guide) ── */
-  --bg:          #09090b;
+  --bg:          #09090B;
   --card:        #18181b;
   /* Modals / dropdowns — cutsheet-Design parity */
   --elevated:    #1f1f23;
@@ -30,6 +30,21 @@
   --ink-faint:     rgba(255,255,255,0.5);
   --surface-dim:   rgba(255,255,255,0.015);
   --label:         #a1a1aa;
+  /* Landing — Figma 297:2828 / 297:2829 / hero / steps */
+  --landing-eyebrow: #52525c;
+  --landing-difference-sub: #71717b;
+  --landing-hero-sub: #9f9fa9;
+  --landing-step-muted: #b6b6b6;
+  --landing-mock-surface: #111113;
+  --landing-mock-shadow: 0px 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --landing-bar-track: #27272a;
+  --landing-score-amber: #ffb900;
+  --landing-score-amber-bar: #fe9a00;
+  --landing-strategist-badge-bg: rgba(254, 154, 0, 0.08);
+  --landing-strategist-badge-border: rgba(254, 154, 0, 0.2);
+  --landing-dtc-badge-bg: rgba(16, 185, 129, 0.08);
+  --landing-dtc-badge-border: rgba(16, 185, 129, 0.2);
+  --shadow-landing-mock: 0 24px 64px rgba(0, 0, 0, 0.45);
   
   /* ── Primary — Indigo (brand guide) ── */
   --accent:        #6366f1;
@@ -157,6 +172,12 @@
   --glass-sheet-border: rgba(255, 255, 255, 0.06);
   --glass-subtle-bg: rgba(255, 255, 255, 0.02);
   --glass-elevated-bg: rgba(255, 255, 255, 0.04);
+
+  /* Landing marketing nav — Figma 295-999 (91px bar, rgba(9,9,11,0.6)) */
+  --landing-nav-bg: rgba(9, 9, 11, 0.6);
+  --landing-nav-border: rgba(255, 255, 255, 0.04);
+  --landing-nav-pill-border: rgba(255, 255, 255, 0.1);
+  --landing-nav-cta-text: var(--decon-body-muted);
 
   /* ── Ambient glow — very subtle ── */
   --ambient-glow: radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.02) 0%, transparent 50%);
@@ -445,6 +466,10 @@
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+html {
+  background-color: var(--bg);
 }
 
 body {

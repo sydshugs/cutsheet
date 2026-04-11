@@ -2,8 +2,8 @@ import { Link } from "react-router-dom";
 
 export default function CutsheetFooter() {
   return (
-    <footer className="border-t border-white/[0.08] bg-zinc-950 pb-8 sm:pb-0">
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+    <footer className="border-t border-white/[0.08] bg-[var(--bg)] pb-8 sm:pb-0">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
         <div className="flex flex-col items-center gap-6 sm:flex-row sm:justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5">
@@ -17,7 +17,7 @@ export default function CutsheetFooter() {
           </Link>
 
           {/* Links */}
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 sm:justify-end">
             <Link
               to="/privacy"
               className="text-xs text-zinc-500 transition-colors hover:text-zinc-300"
@@ -37,10 +37,10 @@ export default function CutsheetFooter() {
               Changelog
             </Link>
             <a
-              href="mailto:hello@cutsheet.ai"
+              href="mailto:hello@cutsheet.xyz"
               className="text-xs text-zinc-500 transition-colors hover:text-zinc-300"
             >
-              hello@cutsheet.ai
+              hello@cutsheet.xyz
             </a>
           </div>
 

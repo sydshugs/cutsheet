@@ -174,7 +174,7 @@ export function ProgressCard({
 
           {/* Bottom gradient fade */}
           <div className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none"
-            style={{ background: "linear-gradient(to top, #09090b 0%, rgba(9,9,11,0.6) 50%, transparent 100%)" }}
+            style={{ background: "linear-gradient(to top, var(--bg) 0%, rgba(9,9,11,0.6) 50%, transparent 100%)" }}
           />
 
           {/* Filename */}

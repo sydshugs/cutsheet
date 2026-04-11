@@ -197,7 +197,7 @@ function PhoneFrame({
       <div
         className="relative rounded-[40px] overflow-hidden shadow-2xl shadow-black/60"
         style={{
-          background: "linear-gradient(160deg, #27272a 0%, #18181b 60%, #09090b 100%)",
+          background: "linear-gradient(160deg, #27272a 0%, #18181b 60%, var(--bg) 100%)",
           border: "1.5px solid rgba(255,255,255,0.10)",
           padding: "3px",
         }}

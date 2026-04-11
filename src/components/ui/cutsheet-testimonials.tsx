@@ -41,7 +41,7 @@ const PERSONAS = [
 
 export default function CutsheetTestimonials() {
   return (
-    <section className="relative overflow-hidden border-t border-white/5 bg-zinc-950 py-20 sm:py-24">
+    <section className="relative overflow-hidden border-t border-white/5 bg-[var(--bg)] py-20 sm:py-24">
       {/* Ambient glow */}
       <div
         className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[700px] rounded-full opacity-15 blur-[140px]"

@@ -36,7 +36,7 @@ export function IntroScene() {
 
   return (
     <AbsoluteFill style={{
-      backgroundColor: '#09090b',
+      backgroundColor: '#09090B',
       fontFamily: TOKENS.fontSans,
       display: 'flex',
       flexDirection: 'column',

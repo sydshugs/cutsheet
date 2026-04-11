@@ -1,327 +1,137 @@
-import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
-import WatchDemoButton from "./WatchDemoButton";
-import {
-  Zap,
-  Crown,
-  Star,
-  TrendingUp,
-  Clock,
-  BarChart2,
-  Target,
-  Smile,
-  MessageSquare,
-  Eye,
-  Volume2,
-  Layers,
-  Award,
-  ChevronDown,
-} from "lucide-react";
-const WAITLIST_INITIALS = ["S", "M", "E", "J"];
+import { ArrowRight } from "lucide-react";
+import { motion } from "framer-motion";
+import { cn } from "@/src/lib/utils";
 
-// Scoring categories for marquee
-const SCORE_CATEGORIES = [
-  { name: "Hook Strength", icon: Zap },
-  { name: "Pacing", icon: Clock },
-  { name: "CTA Clarity", icon: Target },
-  { name: "Emotional Pull", icon: Smile },
-  { name: "Visual Flow", icon: Eye },
-  { name: "Brand Recall", icon: Award },
-  { name: "Audio Mix", icon: Volume2 },
-  { name: "Retention", icon: TrendingUp },
-  { name: "Copy Punch", icon: MessageSquare },
-  { name: "Scene Balance", icon: Layers },
-  { name: "Scroll Stop", icon: BarChart2 },
-] as const;
+/** Figma node 297:2654 — Hero 2 product mock */
+const HERO_IMG = "/Hero_2.png";
 
-const StatItem = ({ value, label }: { value: string; label: string }) => (
-  <div className="flex flex-col items-center justify-center transition-transform hover:-translate-y-1 cursor-default">
-    <span className="text-xl font-bold text-white sm:text-2xl">{value}</span>
-    <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium sm:text-xs">
-      {label}
-    </span>
-  </div>
-);
-
+/**
+ * Marketing hero — Figma node 297:2654 (frame "03").
+ * Left: decon badge, headline, subcopy, indigo-outline CTA.
+ * Right: product mock screenshot.
+ * Mobile: single column stack, full-width CTA and image.
+ */
 export default function CutsheetHero() {
-  useEffect(() => {
-    const el = document.getElementById("hero-stats");
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          el.classList.add("hero-bars-visible");
-          obs.disconnect();
-        }
-      },
-      { rootMargin: "-40px" },
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
-
   return (
-    <div className="relative w-full bg-zinc-950 text-white overflow-hidden font-sans">
-      <style>{`
-        @keyframes fadeSlideIn {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes marquee {
-          from { transform: translateX(0); }
-          to { transform: translateX(-50%); }
-        }
-        @keyframes barFill {
-          from { width: 0%; }
-          to { width: var(--bar-width, 87%); }
-        }
-        .animate-fade-in {
-          animation: fadeSlideIn 600ms cubic-bezier(0.25,0.46,0.45,0.94) forwards;
-          opacity: 0;
-        }
-        .animate-marquee {
-          animation: marquee 35s linear infinite;
-        }
-        .hero-bar {
-          width: 0%;
-        }
-        .hero-bars-visible .hero-bar {
-          animation: barFill 800ms ease-out forwards;
-        }
-        .delay-0   { animation-delay: 0ms; }
-        .delay-150 { animation-delay: 150ms; }
-        .delay-300 { animation-delay: 300ms; }
-        .delay-450 { animation-delay: 450ms; }
-        .delay-550 { animation-delay: 550ms; }
-        .delay-650 { animation-delay: 650ms; }
-        @media (prefers-reduced-motion: reduce) {
-          *, *::before, *::after {
-            animation-duration: 0.01ms !important;
-            transition-duration: 0.01ms !important;
-          }
-        }
-      `}</style>
+    <section
+      className="relative w-full overflow-hidden font-sans text-white"
+      style={{ backgroundColor: "var(--bg)" }}
+      aria-labelledby="cutsheet-hero-heading"
+    >
+      <div className="relative z-10 mx-auto flex max-w-[1280px] flex-col items-center gap-8 px-4 pb-12 pt-[calc(91px+2rem)] sm:gap-10 sm:px-6 sm:pb-16 md:flex-row md:items-center md:gap-8 md:px-8 md:pb-[112px] md:pt-[calc(91px+2.75rem)] lg:gap-[45px] lg:px-8 xl:px-[109px]">
+        {/* Left: copy */}
+        <div className="flex w-full shrink-0 flex-col items-center text-center md:items-start md:text-left md:w-[42%] lg:w-[414px]">
+          {/* Badge */}
+          <div
+            className="mb-5 inline-flex w-fit max-w-[239px] items-center gap-[7px] overflow-hidden rounded-full border py-[7px] pl-2 pr-3"
+            style={{
+              backgroundColor: "rgba(97,95,255,0.08)",
+              borderColor: "rgba(97,95,255,0.3)",
+            }}
+          >
+            <span
+              className="size-[8.5px] shrink-0 rounded-full shadow-[0_0_8px_rgba(99,102,241,0.8)]"
+              style={{ backgroundColor: "#7c86ff", opacity: 0.9 }}
+              aria-hidden
+            />
+            <span
+              className="text-xs font-medium leading-4 tracking-[0.3px]"
+              style={{ color: "#a3b3ff", fontFamily: "var(--sans)" }}
+            >
+              AI-Powered Creative Intelligence
+            </span>
+          </div>
 
-      {/* Ambient glow background */}
-      <div className="absolute inset-0 z-0">
-        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-violet-600/8 rounded-full blur-[100px] pointer-events-none" />
-        {/* Subtle grid */}
-        <div
-          className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)",
-            backgroundSize: "60px 60px",
-          }}
-        />
-      </div>
+          {/* Headline */}
+          <motion.h1
+            id="cutsheet-hero-heading"
+            className={cn(
+              "font-bold text-white",
+              "text-[28px] leading-[1.1] tracking-[-0.03em]",
+              "sm:text-[36px] sm:leading-[1.08] sm:tracking-[-0.04em]",
+              "md:text-[40px] md:max-w-[380px] md:leading-[1.05] md:tracking-[-0.045em]",
+              "lg:text-[48px] lg:max-w-[529px]",
+              "xl:text-[64px] xl:leading-[67.2px] xl:tracking-[-3.2px]",
+            )}
+            style={{ fontFamily: "var(--sans)" }}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
+          >
+            Stop guessing why your ads underperform.
+          </motion.h1>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-4 pt-24 pb-12 sm:px-6 md:pt-32 md:pb-20 lg:px-8">
-        <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-8 items-start">
-          {/* Left column */}
-          <div className="lg:col-span-7 flex flex-col justify-center space-y-8 pt-8">
-            {/* Badge */}
-            <div className="animate-fade-in delay-0">
-              <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1.5 backdrop-blur-md transition-colors hover:bg-indigo-500/15">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500" />
-                </span>
-                <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-indigo-300 flex items-center gap-2">
-                  AI-Powered Creative Intelligence
-                  <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
-                </span>
-              </div>
-            </div>
+          {/* Subtext */}
+          <motion.p
+            className="mt-5 max-w-sm text-sm font-light leading-relaxed sm:mt-6 sm:max-w-[380px] md:mt-8 md:max-w-none md:text-base xl:mt-[46px] xl:text-lg xl:leading-[29.25px]"
+            style={{ color: "#9f9fa9", fontFamily: "var(--sans)" }}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.25, ease: "easeOut" }}
+          >
+            Upload any ad. Get a score, a priority fix, and an AI rewrite in
+            30 seconds. No ad account needed.
+          </motion.p>
 
-            {/* Heading */}
-            <h1
-              className="animate-fade-in delay-150 text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-medium tracking-tighter leading-[0.9]"
+          {/* CTA */}
+          <motion.div
+            className="mt-8 flex justify-center sm:mt-10 md:justify-start xl:mt-12"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
+          >
+            <Link
+              to="/access"
+              className={cn(
+                "inline-flex h-[47px] w-auto items-center justify-center gap-2.5 rounded-full px-5 text-white",
+                "sm:min-w-[242px]",
+                "border-[2.334px] border-solid",
+                "transition-opacity transition-transform duration-150 ease-out",
+                "hover:opacity-95 active:scale-[0.99]",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]",
+              )}
               style={{
-                maskImage:
-                  "linear-gradient(180deg, black 0%, black 80%, transparent 100%)",
-                WebkitMaskImage:
-                  "linear-gradient(180deg, black 0%, black 80%, transparent 100%)",
+                backgroundColor: "rgba(255,255,255,0.05)",
+                borderColor: "var(--accent)",
+                fontFamily: "var(--sans)",
+                fontSize: "18.38px",
+                fontWeight: 600,
               }}
             >
-              Analyze Any
-              <br />
-              <span className="bg-gradient-to-br from-white via-indigo-100 to-indigo-400 bg-clip-text text-transparent">
-                Ad Creative.
-              </span>
-              <br />
-              In Seconds.
-            </h1>
-
-            {/* Description */}
-            <p className="animate-fade-in delay-300 max-w-xl text-lg text-zinc-400 leading-relaxed">
-              Upload your video or static creative and get a full AI breakdown — hook strength,
-              pacing, CTA clarity, emotional pull, and a score that tells you
-              exactly what to fix before you spend a dollar on media.
-            </p>
-
-            {/* CTA Buttons */}
-            <div id="waitlist" className="animate-fade-in delay-450 flex flex-col gap-4">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                <Link
-                  to="/access"
-                  className="inline-flex items-center gap-2 rounded-full bg-indigo-600 px-7 py-3 text-sm font-semibold text-white transition-all duration-150 hover:bg-indigo-500 hover:scale-[1.02] hover:shadow-[0_0_24px_rgba(99,102,241,0.35)] active:scale-[0.97]"
-                >
-                  Enter Access Code
-                </Link>
-              </div>
-              <p className="text-xs text-zinc-600">
-                Private beta &middot; Limited spots available
-              </p>
-              <div className="flex items-center gap-4">
-                <a
-                  href="#how-it-works"
-                  className="text-sm text-zinc-400 hover:text-white transition-colors flex items-center gap-1.5"
-                >
-                  See how it works <ChevronDown size={14} />
-                </a>
-                <span className="text-zinc-700">|</span>
-                <WatchDemoButton />
-              </div>
-            </div>
-
-            {/* Social proof */}
-            <div className="animate-fade-in delay-550 flex items-center gap-3">
-              <div className="flex -space-x-2">
-                {WAITLIST_INITIALS.map((initial) => (
-                  <div
-                    key={initial}
-                    className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-500/20 text-xs font-medium text-indigo-400 ring-2 ring-zinc-950"
-                  >
-                    {initial}
-                  </div>
-                ))}
-              </div>
-              <p className="text-sm text-zinc-500 ml-2">
-                <span className="text-white font-medium">200+</span> marketers on the waitlist
-              </p>
-            </div>
-          </div>
-
-          {/* Right column */}
-          <div className="lg:col-span-5 space-y-5 lg:mt-8">
-            {/* Stats Card */}
-            <div id="hero-stats" className="animate-fade-in delay-450 relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-7 backdrop-blur-xl shadow-2xl">
-              <div className="absolute top-0 right-0 -mr-12 -mt-12 h-48 w-48 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
-
-              <div className="relative z-10">
-                {/* Top stat */}
-                <div className="flex items-center gap-4 mb-7">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/15 ring-1 ring-indigo-500/30">
-                    <BarChart2 className="h-6 w-6 text-indigo-400" />
-                  </div>
-                  <div>
-                    <div className="text-3xl font-bold tracking-tight text-white">
-                      8.7<span className="text-indigo-400">/10</span>
-                    </div>
-                    <div className="text-sm text-zinc-400">Average Ad Score</div>
-                  </div>
-                </div>
-
-                {/* Score bars */}
-                <div className="space-y-3 mb-7">
-                  {[
-                    { label: "Hook Strength", score: 9.2, color: "from-indigo-500 to-indigo-400", delay: 0 },
-                    { label: "CTA Clarity", score: 7.8, color: "from-violet-500 to-violet-400", delay: 100 },
-                    { label: "Pacing", score: 8.5, color: "from-cyan-500 to-cyan-400", delay: 200 },
-                  ].map(({ label, score, color, delay }) => (
-                    <div key={label}>
-                      <div className="flex justify-between text-xs mb-1.5">
-                        <span className="text-zinc-400">{label}</span>
-                        <span className="text-white font-medium">{score}</span>
-                      </div>
-                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-800/60">
-                        <div
-                          className={`h-full rounded-full bg-gradient-to-r ${color} hero-bar`}
-                          style={{
-                            ['--bar-width' as string]: `${score * 10}%`,
-                            animationDelay: `${delay}ms`,
-                          }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="h-px w-full bg-white/8 mb-5" />
-
-                {/* Mini stats */}
-                <div className="grid grid-cols-3 gap-2 text-center">
-                  <StatItem value="11" label="Metrics" />
-                  <div className="w-px bg-white/10 mx-auto" />
-                  <StatItem value="< 30s" label="Analysis" />
-                  <div className="w-px bg-white/10 mx-auto" />
-                  <div className="flex flex-col items-center justify-center transition-transform hover:-translate-y-1 cursor-default">
-                    <div className="flex items-center gap-1">
-                      <span className="text-sm font-bold text-white sm:text-base">Gemini</span>
-                      <span className="text-[10px] text-zinc-500 sm:text-xs">+</span>
-                      <span className="text-sm font-bold text-white sm:text-base">Claude</span>
-                    </div>
-                    <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium sm:text-xs">
-                      Powered
-                    </span>
-                  </div>
-                </div>
-
-                {/* Tags */}
-                <div className="mt-6 flex flex-wrap gap-2">
-                  <div className="inline-flex items-center gap-1.5 rounded-full border border-green-500/20 bg-green-500/10 px-3 py-1 text-[10px] font-medium tracking-wide text-green-400">
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
-                    </span>
-                    LIVE ANALYSIS
-                  </div>
-                  <div className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-medium tracking-wide text-zinc-300">
-                    <Crown className="w-3 h-3 text-yellow-500" />
-                    BATCH MODE
-                  </div>
-                  <div className="inline-flex items-center gap-1.5 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1 text-[10px] font-medium tracking-wide text-indigo-300">
-                    <Layers className="w-3 h-3" />
-                    COMPARE
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Marquee — scoring categories */}
-            <div className="animate-fade-in delay-650 relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 py-6 backdrop-blur-xl">
-              <h3 className="mb-4 px-6 text-xs font-medium text-zinc-500 uppercase tracking-widest">
-                What We Score
-              </h3>
-              <div
-                className="relative flex overflow-hidden"
-                style={{
-                  maskImage:
-                    "linear-gradient(to right, transparent, black 15%, black 85%, transparent)",
-                  WebkitMaskImage:
-                    "linear-gradient(to right, transparent, black 15%, black 85%, transparent)",
-                }}
-              >
-                <div className="animate-marquee flex gap-6 whitespace-nowrap px-4">
-                  {[...SCORE_CATEGORIES, ...SCORE_CATEGORIES].map((cat, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center gap-2 rounded-full border border-white/8 bg-white/5 px-3 py-1.5 opacity-60 hover:opacity-100 transition-opacity cursor-default"
-                    >
-                      <cat.icon className="h-3.5 w-3.5 text-indigo-400 shrink-0" />
-                      <span className="text-xs font-medium text-zinc-300">
-                        {cat.name}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
+              Get Early Access
+              <ArrowRight
+                className="size-[21px] shrink-0"
+                strokeWidth={2.25}
+                aria-hidden
+              />
+            </Link>
+          </motion.div>
         </div>
+
+        {/* Right: product mock — hidden on mobile */}
+        <motion.div
+          className="relative hidden w-full justify-center md:flex md:justify-end md:flex-1"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.5, ease: "easeOut" }}
+        >
+          <div
+            className="w-full max-w-[605px] overflow-hidden rounded-xl md:max-h-[420px] md:rounded-none"
+            style={{ aspectRatio: "605 / 627" }}
+          >
+            <img
+              src={HERO_IMG}
+              alt="Product preview: ad analyzer showing a food delivery ad with score 7.2/10, priority fix callout, and predicted CTR range."
+              className="h-full w-full object-contain object-center"
+              width={605}
+              height={627}
+              decoding="async"
+              fetchPriority="high"
+            />
+          </div>
+        </motion.div>
       </div>
-    </div>
+    </section>
   );
 }

@@ -3,7 +3,7 @@ import CutsheetFooter from "../components/ui/cutsheet-footer";
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-zinc-950">
+    <div className="min-h-screen" style={{ background: "#09090b" }}>
       <CutsheetNav />
 
       <main className="mx-auto max-w-3xl px-8 py-24">
@@ -33,7 +33,13 @@ export default function PrivacyPage() {
         <h2 className="text-lg font-semibold text-white mt-10 mb-3">Data Storage</h2>
         <p className="text-sm text-zinc-400 leading-relaxed">
           Your account data and analysis results are stored securely in Supabase.
-          Uploaded ad creatives are stored temporarily for processing and then deleted.
+          Uploaded ad creatives are deleted within 24 hours of analysis completion.
+        </p>
+
+        <h2 className="text-lg font-semibold text-white mt-10 mb-3">Cookies &amp; Local Storage</h2>
+        <p className="text-sm text-zinc-400 leading-relaxed">
+          We use browser local storage for authentication sessions (via Supabase).
+          We do not use third-party tracking cookies.
         </p>
 
         <h2 className="text-lg font-semibold text-white mt-10 mb-3">Your Rights</h2>
@@ -46,10 +52,10 @@ export default function PrivacyPage() {
         <p className="text-sm text-zinc-400 leading-relaxed">
           For privacy questions:{" "}
           <a
-            href="mailto:hello@cutsheet.xyz"
+            href="mailto:hello@cutsheet.ai"
             className="text-indigo-400 hover:text-indigo-300 transition-colors"
           >
-            hello@cutsheet.xyz
+            hello@cutsheet.ai
           </a>
         </p>
       </main>

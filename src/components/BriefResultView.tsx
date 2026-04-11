@@ -332,7 +332,7 @@ export function BriefResultView({ sections, platform, adFormat, onBack }: BriefR
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#09090b]">
+    <div className="flex flex-col h-full bg-[color:var(--bg)]">
       {/* ── Header ──────────────────────────────────────────────── */}
       <div className="px-5 py-4 border-b border-white/[0.06] shrink-0">
         <div className="flex items-center justify-between mb-4">
@@ -473,7 +473,7 @@ const MOCK_SECTIONS: BriefSection[] = [
 
 export function BriefResultViewPreview() {
   return (
-    <div className="w-full max-w-lg h-[780px] mx-auto bg-[#09090b] rounded-2xl border border-white/[0.06] overflow-hidden">
+    <div className="w-full max-w-lg h-[780px] mx-auto bg-[color:var(--bg)] rounded-2xl border border-white/[0.06] overflow-hidden">
       <BriefResultView
         sections={MOCK_SECTIONS}
         platform="Meta"

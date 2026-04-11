@@ -73,6 +73,30 @@ export function StaggerItem({ children, className }: { children: ReactNode; clas
   );
 }
 
+/**
+ * Scroll-triggered fade-up for a section or wrapper element.
+ * Identical to FadeIn but named clearly for section-level use.
+ */
+export function FadeInSection({
+  children,
+  className,
+  delay = 0,
+  duration = 0.6,
+}: FadeInProps) {
+  return (
+    <motion.div
+      variants={fadeUpVariants}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, amount: 0.1 }}
+      transition={{ duration, delay, ease: EASE_OUT_EXPO }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 const fadeUpScaleVariants: Variants = {
   hidden: { opacity: 0, y: 16, scale: 0.97 },
   visible: { opacity: 1, y: 0, scale: 1 },
