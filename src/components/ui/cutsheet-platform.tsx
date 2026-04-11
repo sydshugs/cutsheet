@@ -118,15 +118,46 @@ export default function CutsheetPlatform() {
         </FadeInSection>
 
         {/* ── Tab bar — Figma 295:2879 ──────────────────────────────────────── */}
-        {/*
-          Mobile: horizontally scrollable, compact sizing.
-          Desktop: full-width flex with Figma proportions.
-        */}
-        <FadeInSection delay={0.1} className="w-full">
-        {/* Scroll wrapper — clips on mobile, centers on sm+ */}
-        <div className="w-full overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <FadeInSection delay={0.1} className="w-full flex justify-center">
+          {/* Mobile tab bar (< lg): Figma 393:2547 — compact pill, all 4 tabs */}
           <div
-            className="mx-auto flex min-w-fit rounded-full sm:w-full sm:max-w-[769px]"
+            className="flex lg:hidden rounded-full"
+            style={{ backgroundColor: "rgba(255,255,255,0.05)", padding: "0.961px" }}
+            role="tablist"
+            aria-label="Platform tools"
+          >
+            {TABS.map((tab) => {
+              const Icon      = tab.icon;
+              const isOn      = active === tab.id;
+              const tabAccent = TAB_ACCENTS[tab.id];
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={isOn}
+                  onClick={() => setActive(tab.id)}
+                  className="relative flex cursor-pointer items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]"
+                  style={{ gap: "2.401px", paddingTop: "4.083px", paddingBottom: "4.083px", paddingLeft: "10.326px", paddingRight: "10.567px" }}
+                >
+                  <motion.div
+                    className="absolute inset-0 rounded-full"
+                    animate={{ backgroundColor: isOn ? tabAccent.bg : tabAccent.bgOff, borderColor: isOn ? tabAccent.border : tabAccent.borderOff }}
+                    style={{ border: "0.24px solid", boxShadow: "0px 0.48px 0.24px rgba(0,0,0,0.1)" }}
+                    transition={{ duration: 0.18, ease: "easeInOut" }}
+                  />
+                  <Icon aria-hidden className="relative z-10 shrink-0" style={{ width: "6.277px", height: "6.277px", color: isOn ? tabAccent.icon : "#71717b", transition: "color 0.18s ease" }} />
+                  <span className="relative z-10 whitespace-nowrap" style={{ fontFamily: "var(--sans)", fontWeight: 400, fontSize: "6.59px", lineHeight: "normal", color: isOn ? "#ffffff" : "#71717b", transition: "color 0.18s ease" }}>
+                    {tab.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Desktop tab bar (lg+): larger proportions */}
+          <div
+            className="hidden lg:flex w-full max-w-[769px] rounded-full"
             style={{ backgroundColor: "rgba(255,255,255,0.05)", padding: "2.887px" }}
             role="tablist"
             aria-label="Platform tools"
@@ -135,71 +166,33 @@ export default function CutsheetPlatform() {
               const Icon      = tab.icon;
               const isOn      = active === tab.id;
               const tabAccent = TAB_ACCENTS[tab.id];
-
               return (
                 <button
-                  key={tab.id}
+                  key={`desktop-${tab.id}`}
                   type="button"
                   role="tab"
                   aria-selected={isOn}
                   onClick={() => setActive(tab.id)}
-                  className="relative flex cursor-pointer items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] sm:flex-1"
-                  style={{
-                    gap: "6px",
-                    paddingTop: "10px",
-                    paddingBottom: "10px",
-                    paddingLeft: "14px",
-                    paddingRight: "14px",
-                  }}
+                  className="relative flex flex-1 cursor-pointer items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
+                  style={{ gap: "6px", paddingTop: "10px", paddingBottom: "10px", paddingLeft: "14px", paddingRight: "14px" }}
                 >
-                  {/* Animated pill background */}
                   <motion.div
                     className="absolute inset-0 rounded-full"
-                    animate={{
-                      backgroundColor: isOn ? tabAccent.bg    : tabAccent.bgOff,
-                      borderColor:     isOn ? tabAccent.border : tabAccent.borderOff,
-                    }}
+                    animate={{ backgroundColor: isOn ? tabAccent.bg : tabAccent.bgOff, borderColor: isOn ? tabAccent.border : tabAccent.borderOff }}
                     style={{ border: "0.722px solid", boxShadow: "0px 1.443px 0.722px rgba(0,0,0,0.1)" }}
                     transition={{ duration: 0.18, ease: "easeInOut" }}
                   />
-
-                  {/* Icon — accent when active, muted when inactive */}
-                  <Icon
-                    aria-hidden
-                    className="relative z-10 shrink-0"
-                    style={{
-                      width: "15px", height: "15px",
-                      color: isOn ? tabAccent.icon : "#71717b",
-                      transition: "color 0.18s ease",
-                    }}
-                  />
-
-                  {/* Label */}
-                  <span
-                    className="relative z-10 whitespace-nowrap text-[13px] sm:text-[15px] lg:text-[19.812px]"
-                    style={{
-                      fontFamily: "var(--sans)", fontWeight: 400,
-                      lineHeight: "normal",
-                      color: isOn ? "#ffffff" : "#71717b",
-                      transition: "color 0.18s ease",
-                    }}
-                  >
+                  <Icon aria-hidden className="relative z-10 shrink-0" style={{ width: "15px", height: "15px", color: isOn ? tabAccent.icon : "#71717b", transition: "color 0.18s ease" }} />
+                  <span className="relative z-10 whitespace-nowrap text-[19.812px]" style={{ fontFamily: "var(--sans)", fontWeight: 400, lineHeight: "normal", color: isOn ? "#ffffff" : "#71717b", transition: "color 0.18s ease" }}>
                     {tab.label}
                   </span>
                 </button>
               );
             })}
           </div>
-        </div>
         </FadeInSection>
 
         {/* ── Card — Figma 295:3040 ─────────────────────────────────────────── */}
-        {/*
-          Unified dark surface (rgba(255,255,255,0.02)), borderRadius 16.48px.
-          Desktop: image absolute left-7px top-9px (528.5×372.55px).
-                   Copy absolute left-535.5px top-8.74px (521.51×372.65px).
-          Mobile: stacked flex column.
-        */}
         <FadeInSection delay={0.2} className="w-full flex justify-center">
         <AnimatePresence mode="wait">
           <motion.div
@@ -213,43 +206,49 @@ export default function CutsheetPlatform() {
             style={{ background: "rgba(255,255,255,0.02)", borderRadius: "16.48px" }}
           >
 
-            {/* ── Mobile/Tablet layout (< lg): image left, text right ─────────── */}
-            <div className="flex lg:hidden" style={{ borderRadius: "16.48px", overflow: "hidden", minHeight: "200px" }}>
-              <div className="relative w-[45%] overflow-hidden sm:w-1/2" style={{ borderRadius: "16.48px 0 0 16.48px" }}>
+            {/* ── Mobile layout (< lg): Figma 393:2548 — compact 297×109px card ── */}
+            <div className="flex lg:hidden" style={{ borderRadius: "16.48px", overflow: "hidden", height: "108.9px", maxWidth: "297px", margin: "0 auto" }}>
+              {/* Left: image fills ~49% */}
+              <div className="relative overflow-hidden" style={{ width: "49.4%", borderRadius: "16.48px 0 0 16.48px" }}>
                 <img
                   src={TAB_IMAGES[active]}
                   alt=""
                   className="absolute inset-0 size-full object-cover pointer-events-none"
+                  style={{ height: "151.77%", left: "-38.91%", top: "-30.48%", width: "142.65%", maxWidth: "none" }}
                   decoding="async"
                 />
               </div>
+              {/* Right: copy — Figma 393:2548 right panel */}
               <div
                 className="flex flex-1 flex-col items-start justify-center"
-                style={{ gap: "12px", padding: "16px 14px", minWidth: 0 }}
+                style={{ gap: "7.808px", padding: "2.51% 0 2.38% 8.366px", minWidth: 0 }}
               >
                 {/* Badge */}
                 <div
                   className="inline-flex items-center"
                   style={{
-                    gap: "4px", height: "20px",
-                    paddingLeft: "12px", paddingRight: "12px",
-                    paddingTop: "6px", paddingBottom: "6px",
-                    backgroundColor: accent.bg, border: `0.5px solid ${accent.border}`,
-                    borderRadius: "249.765px", boxShadow: "0px 0.999px 0.5px rgba(0,0,0,0.1)",
+                    gap: "3.145px",
+                    height: "6.414px",
+                    paddingLeft: "5.996px", paddingRight: "6.135px",
+                    paddingTop: "2.37px", paddingBottom: "2.37px",
+                    backgroundColor: accent.bg,
+                    border: `0.139px solid ${accent.border}`,
+                    borderRadius: "249.765px",
+                    boxShadow: "0px 0.279px 0.139px rgba(0,0,0,0.1)",
                     flexShrink: 0,
                   }}
                 >
-                  <ActiveIcon aria-hidden style={{ width: "11px", height: "11px", flexShrink: 0, color: accent.icon }} />
-                  <span style={{ fontFamily: "var(--sans)", fontWeight: 400, fontSize: "10px", lineHeight: "normal", color: "white", whiteSpace: "nowrap" }}>
+                  <ActiveIcon aria-hidden style={{ width: "3.645px", height: "4.049px", flexShrink: 0, color: accent.icon }} />
+                  <span style={{ fontFamily: "var(--sans)", fontWeight: 400, fontSize: "3.45px", lineHeight: "normal", color: "white", whiteSpace: "nowrap" }}>
                     {copy.badge}
                   </span>
                 </div>
                 {/* Title + body */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "6px", minWidth: 0 }}>
-                  <h3 style={{ fontFamily: "var(--sans)", fontWeight: 700, fontSize: "13px", lineHeight: 1.1, letterSpacing: "-0.2px", color: "white" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "3.068px", minWidth: 0 }}>
+                  <h3 style={{ fontFamily: "var(--sans)", fontWeight: 700, fontSize: "8.78px", lineHeight: 1.1, letterSpacing: "-0.132px", color: "white", margin: 0 }}>
                     {copy.title}
                   </h3>
-                  <p style={{ fontFamily: "var(--sans)", fontWeight: 500, fontSize: "10px", lineHeight: 1.4, color: "#b6b6b6" }}>
+                  <p style={{ fontFamily: "var(--sans)", fontWeight: 500, fontSize: "4.72px", lineHeight: 1.25, letterSpacing: "-0.024px", color: "#b6b6b6", margin: 0, maxWidth: "114.617px" }}>
                     {copy.body}
                   </p>
                 </div>
