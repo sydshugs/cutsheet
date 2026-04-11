@@ -2,13 +2,23 @@
 // Uses fal.queue.submit() to start the job and returns request_id immediately.
 // Client polls api/visualize-video-status.ts for completion.
 // DO NOT touch api/visualize.ts or api/visualize-v2.ts.
+//
+// CREDIT FLOW:
+// 1. verifyAuth() → get user + tier
+// 2. checkRateLimit() → per-user throttle
+// 3. Verify isPro → 403 if free tier
+// 4. Deduct 1 credit (atomic) → 429 if no credits
+// 5. Submit Kling job via fal.queue.submit()
+// 6. If submit fails → refund credit
+// 7. Return requestId for polling
 
 export const maxDuration = 15; // submit is fast (~2-3s)
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { fal } from "@fal-ai/client";
 import { verifyAuth, handlePreflight, isProOrTeam, checkRateLimit } from "./_lib/auth";
-import { checkFeatureCredit } from "./_lib/creditCheck";
+import { checkFeatureCredit, refundCredit } from "./_lib/creditCheck";
+import { apiError } from "./_lib/apiError.js";
 
 const KLING_ENDPOINT = "fal-ai/kling-video/v2.1/standard/image-to-video";
 const DEFAULT_DURATION = "5";
@@ -73,7 +83,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const falKey = process.env.FAL_KEY;
     if (!falKey) {
       console.error("[visualize-video] FAL_KEY is not set");
-      return res.status(500).json({ error: "Server configuration error" });
+      return apiError(res, 'INTERNAL_ERROR', 500, "FAL_KEY is not set");
     }
 
     fal.config({ credentials: falKey });
@@ -81,15 +91,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // ── Submit to queue (returns immediately) ─────────────────────────────
     console.info("[visualize-video] Submitting Kling job: aspect=%s", safeAspectRatio);
 
-    const { request_id } = await fal.queue.submit(KLING_ENDPOINT, {
-      input: {
-        prompt: KLING_PROMPT,
-        image_url: imageUrl,
-        duration: DEFAULT_DURATION,
-        aspect_ratio: safeAspectRatio,
-        negative_prompt: KLING_NEGATIVE,
-      },
-    });
+    let request_id: string;
+    try {
+      const result = await fal.queue.submit(KLING_ENDPOINT, {
+        input: {
+          prompt: KLING_PROMPT,
+          image_url: imageUrl,
+          duration: DEFAULT_DURATION,
+          aspect_ratio: safeAspectRatio,
+          negative_prompt: KLING_NEGATIVE,
+        },
+      });
+      request_id = result.request_id;
+    } catch (submitErr) {
+      // Refund credit — Kling submit failed, user shouldn't lose a credit
+      await refundCredit(user.id, user.tier, "visualize_video");
+      console.info("[visualize-video] Credit refunded — submit failure");
+      return apiError(res, 'GENERATION_FAILED', 500,
+        `[visualize-video] submit: ${submitErr instanceof Error ? submitErr.message : String(submitErr)}`);
+    }
 
     // ── Spend logging ─────────────────────────────────────────────────────
     console.info("KLING_JOB_SUBMITTED", {
@@ -102,8 +122,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(200).json({ requestId: request_id });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Unknown error";
-    console.error("[visualize-video] Error:", msg);
-    return res.status(500).json({ error: "Failed to start video generation", detail: msg });
+    return apiError(res, 'GENERATION_FAILED', 500,
+      `[visualize-video] ${err instanceof Error ? err.message : String(err)}`);
   }
 }

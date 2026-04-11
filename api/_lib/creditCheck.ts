@@ -110,3 +110,28 @@ export async function checkFeatureCredit(
     limit,
   };
 }
+
+/**
+ * Refund one credit after a deduction that was followed by a failed AI call.
+ * Safe to call even if the counter is already at 0 (won't go negative due to max(0)).
+ */
+export async function refundCredit(
+  userId: string,
+  tier: SubscriptionTier,
+  feature: string,
+): Promise<void> {
+  if (process.env.NODE_ENV === "development" || process.env.VERCEL_ENV === undefined) {
+    return;
+  }
+  const limit = getFeatureLimit(tier, feature);
+  if (limit === Infinity || limit === 0) return;
+
+  const redis = Redis.fromEnv();
+  const month = getYearMonth();
+  const key = `credit:${tier}:${userId}:${feature}:${month}`;
+  const current = await redis.decr(key);
+  // Guard against going negative (shouldn't happen, but be safe)
+  if (current < 0) {
+    await redis.set(key, 0);
+  }
+}
