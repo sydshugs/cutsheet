@@ -21,6 +21,7 @@ import { analyzeVideo, generateBrief } from "../../services/analyzerService";
 import { analyzeSuiteCohesion, generateCTARewrites, type SuiteCohesionResult } from "../../services/claudeService";
 import { getUserContext, formatUserContextBlock } from "../../services/userContextService";
 import { VisualizePanel } from "../../components/VisualizePanel";
+import { AnimateToHtml5Takeover } from "../../components/AnimateToHtml5Takeover";
 import { visualizeAd } from "../../lib/visualizeService";
 import { uploadImageToStorage, removeFromStorage } from "../../lib/storageService";
 import type { VisualizeResult, VisualizeStatus, VisualizeCreditData } from "../../types/visualize";
@@ -154,6 +155,9 @@ export default function DisplayAnalyzer() {
   const [ctaRewrites, setCtaRewrites] = useState<string[] | null>(null);
   const [ctaLoading, setCtaLoading] = useState(false);
 
+  // ── Animate to HTML5 state
+  const [showAnimateTakeover, setShowAnimateTakeover] = useState(false);
+
   // ── Visualize It state (single mode only)
   const [visualizeOpen, setVisualizeOpen] = useState(false);
   const [visualizeStatus, setVisualizeStatus] = useState<VisualizeStatus>("idle");
@@ -178,6 +182,7 @@ export default function DisplayAnalyzer() {
     setPrediction(null);
     setEngineBudget(null);
     setBriefMarkdown(null); setBriefLoading(false); setBriefError(null);
+    setShowAnimateTakeover(false);
     setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); setVisualizeCreditData(null);
   }, []);
 
@@ -1014,10 +1019,10 @@ Return JSON only — no prose:
                       <span style={{ fontSize: 13, fontWeight: 500, color: "#e4e4e7" }}>Policy Check</span>
                     </button>
 
-                    {/* Animate (Visualize) */}
+                    {/* Animate to HTML5 */}
                     <button
                       type="button"
-                      onClick={handleVisualize}
+                      onClick={() => setShowAnimateTakeover(true)}
                       className="flex flex-col items-center justify-center gap-3 py-5 rounded-2xl border cursor-pointer"
                       style={{ background: "#18181b", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "inset 0px 1px 0px rgba(255,255,255,0.05)", transition: "border-color 150ms" }}
                       onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.14)"; }}
@@ -1141,6 +1146,18 @@ Return JSON only — no prose:
                   onUpgrade={onUpgradeRequired}
                 />
               </div>
+            )}
+
+            {/* Animate to HTML5 Takeover */}
+            {showAnimateTakeover && file && detectedFormat && (
+              <AnimateToHtml5Takeover
+                onClose={() => setShowAnimateTakeover(false)}
+                imageSrc={previewUrl}
+                imageFile={file}
+                format={detectedFormat.key}
+                formatLabel={detectedFormat.name}
+                fileName={file.name}
+              />
             )}
 
             {/* Start Over confirmation */}
