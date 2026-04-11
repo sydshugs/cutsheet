@@ -11,7 +11,8 @@
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
-    "eval:scoring": "npx tsx scripts/eval-scoring.ts"
+    "eval:scoring": "npx tsx scripts/eval-scoring.ts",
+    "verify:rls": "npx tsx scripts/verify-rls.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
