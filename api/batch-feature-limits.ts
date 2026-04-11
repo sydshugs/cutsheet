@@ -10,6 +10,7 @@ import { Ratelimit } from "@upstash/ratelimit";
 import {
   verifyAuth,
   handlePreflight,
+  checkRateLimit,
   isProOrTeam,
   type SubscriptionTier,
 } from "./_lib/auth";
@@ -79,6 +80,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Single auth check for the entire batch
   const user = await verifyAuth(req);
   if (!user) return res.status(401).json({ error: "Unauthorized" });
+
+  const rl = await checkRateLimit("batch-feature-limits", user.id, user.tier, { freeLimit: 60, proLimit: 60, windowSeconds: 60 });
+  if (!rl.allowed) return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
 
   const { features, increment = false } = req.body ?? {};
   if (!Array.isArray(features) || features.length === 0) {
