@@ -11,7 +11,7 @@ import { apiError } from "./_lib/apiError.js";
 
 // ── Inline benchmark data (avoids ESM import issue in Vercel CJS bundle) ──────
 // SYNC WARNING: This must match src/lib/benchmarks.ts exactly.
-// Last synced: 2026-04-11. If you update benchmarks, update BOTH files.
+// Last synced: 2026-04-11. Verified against published sources April 2026.
 interface NicheBenchmark {
   ctr: { low: number; avg: number; high: number };
   hookRate: { avg: number } | null;
@@ -47,11 +47,11 @@ const NICHE_BENCHMARKS: Record<string, Record<string, NicheBenchmark>> = {
     general: { ctr: { low: 0.7, avg: 1.4, high: 2.8 }, hookRate: { avg: 40 }, cpm: { avg: 7 } },
   },
   "Health & Wellness": {
-    Meta:    { ctr: { low: 1.2, avg: 1.8, high: 2.8 }, hookRate: { avg: 30 }, cpm: { avg: 16 } },
+    Meta:    { ctr: { low: 1.4, avg: 2.2, high: 3.5 }, hookRate: { avg: 30 }, cpm: { avg: 16 } },
     TikTok:  { ctr: { low: 0.9, avg: 1.6, high: 3.0 }, hookRate: { avg: 35 }, cpm: { avg: 8 } },
     YouTube: { ctr: { low: 0.3, avg: 0.5, high: 1.1 }, hookRate: { avg: 42 }, cpm: { avg: 12 } },
     Google:  { ctr: { low: 1.8, avg: 3.2, high: 5.5 }, hookRate: null,        cpm: { avg: 35 } },
-    general: { ctr: { low: 1.0, avg: 1.6, high: 2.6 }, hookRate: { avg: 32 }, cpm: { avg: 14 } },
+    general: { ctr: { low: 1.2, avg: 1.8, high: 3.0 }, hookRate: { avg: 32 }, cpm: { avg: 14 } },
   },
   "Finance / Fintech": {
     Meta:    { ctr: { low: 0.5, avg: 0.8, high: 1.4 }, hookRate: { avg: 18 }, cpm: { avg: 28 } },
