@@ -7,7 +7,6 @@ import {
   ScanSearch,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
 // UsageIndicator removed from sidebar — plan badge shown inline
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
@@ -236,13 +235,11 @@ function NavItemRow({ item, collapsed }: { item: NavItem; collapsed: boolean }) 
 // ─── DESKTOP SIDEBAR ──────────────────────────────────────────────────────────
 
 function DesktopSidebar({
-  userEmail, isPro, isTeam, usageCount, FREE_LIMIT, onShowShortcuts,
+  userEmail: _userEmail, isPro, isTeam: _isTeam, usageCount, FREE_LIMIT, onShowShortcuts: _onShowShortcuts,
 }: { userEmail: string; isPro: boolean; isTeam?: boolean; usageCount: number; FREE_LIMIT: number; onShowShortcuts?: () => void }) {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const initial = (user?.email ?? userEmail).charAt(0).toUpperCase() || "U";
-  const width = collapsed ? 64 : 220;
+  const width = collapsed ? 64 : 240;
 
   return (
     <nav
@@ -277,11 +274,6 @@ function DesktopSidebar({
             alt="Cutsheet"
             style={{ width: 32, height: 32, borderRadius: 8, flexShrink: 0 }}
           />
-          {!collapsed && (
-            <span style={{ fontFamily: "var(--mono)", fontSize: 15, fontWeight: 600, color: "#f4f4f5", letterSpacing: "-0.02em" }}>
-              cutsheet
-            </span>
-          )}
         </button>
         {!collapsed && (
           <button
@@ -331,65 +323,98 @@ function DesktopSidebar({
       </div>
 
       {/* Bottom */}
-      <div className="mt-auto shrink-0 flex flex-col pt-4 pb-4 px-[12px] border-t border-white/[0.04]">
-        {/* User Profile Row */}
-        {!collapsed && (
-          <div className="flex items-center h-[36px] gap-2.5 px-[12px] mb-4 rounded-[8px] hover:bg-white/[0.04] transition-colors cursor-pointer">
-            <div className="w-[28px] h-[28px] rounded-full bg-[rgba(99,102,241,0.2)] flex items-center justify-center shrink-0">
-              <span className="text-[11px] font-medium text-indigo-300">{initial}</span>
-            </div>
-            <span className="text-[12px] text-zinc-500 truncate font-medium">
-              {userEmail.length > 20 ? userEmail.slice(0, 18) + '...' : userEmail}
-            </span>
-          </div>
-        )}
-
-        {/* Usage Indicator (free users only) */}
+      <div className="mt-auto shrink-0 flex flex-col pt-4 pb-4 border-t border-white/[0.04]">
+        {/* Usage bar — free tier only */}
         {!isPro && !collapsed && (
-          <div className="flex flex-col mb-4 px-[12px]">
-            <span className="text-[12px] text-zinc-500 font-medium mb-[6px]">
+          <div className="flex flex-col mb-3 px-[25px]">
+            <span
+              className="mb-[6px]"
+              style={{ fontSize: 13, fontWeight: 500, color: "#71717b" }}
+            >
               {usageCount} of {FREE_LIMIT} analyses used
             </span>
-            <div className="h-[3px] w-full bg-zinc-800 rounded-full overflow-hidden">
+            <div className="h-[3px] w-full rounded-full overflow-hidden" style={{ background: "#27272a" }}>
               <div
-                className="h-full bg-[#6366f1] rounded-full transition-all"
-                style={{ width: `${Math.min((usageCount / FREE_LIMIT) * 100, 100)}%` }}
+                className="h-full rounded-full transition-all"
+                style={{
+                  width: `${Math.min((usageCount / FREE_LIMIT) * 100, 100)}%`,
+                  background: "#6366f1",
+                }}
               />
             </div>
           </div>
         )}
 
-        {/* Help + Settings row */}
-        <div className="flex items-center gap-[4px]">
-          <a
-            href="mailto:hello@cutsheet.xyz"
-            className="w-[32px] h-[36px] rounded-[8px] text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.04] transition-colors flex shrink-0 items-center justify-center"
-            title="Help & Support"
-          >
-            <CircleHelp size={16} strokeWidth={2} />
-          </a>
-          {!collapsed ? (
-            <div className="flex-1 min-w-0">
-              <button
-                type="button"
-                onClick={() => navigate("/settings")}
-                className="flex items-center w-full h-[36px] px-3 gap-2.5 rounded-[8px] text-[13px] font-medium text-zinc-400 hover:bg-white/[0.04] hover:text-zinc-300 transition-colors bg-transparent border-none cursor-pointer"
-              >
-                <Settings size={16} strokeWidth={2} className="text-zinc-500" />
-                Settings
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => navigate("/settings")}
-              className="w-[32px] h-[36px] rounded-[8px] text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.04] transition-colors flex shrink-0 items-center justify-center bg-transparent border-none cursor-pointer"
-              aria-label="Settings"
-            >
-              <Settings size={16} strokeWidth={2} />
-            </button>
+        {/* Help & Support */}
+        <a
+          href="mailto:hello@cutsheet.xyz"
+          className="group relative flex items-center h-[36px] rounded-[8px] hover:bg-white/[0.04] transition-colors"
+          style={{ textDecoration: "none", margin: "1px 12px", padding: "0 12px", gap: 10 }}
+          title={collapsed ? "Help & Support" : undefined}
+          aria-label="Help & Support"
+        >
+          <CircleHelp
+            size={16}
+            strokeWidth={2}
+            className="shrink-0"
+            style={{ color: "#71717a" }}
+          />
+          {!collapsed && (
+            <span style={{ fontSize: 13, fontWeight: 500, color: "#e4e4e7", whiteSpace: "nowrap" }}>
+              Help &amp; Support
+            </span>
           )}
-        </div>
+          {/* Collapsed tooltip */}
+          {collapsed && (
+            <span
+              className="absolute opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150"
+              style={{
+                left: "calc(100% + 8px)", top: "50%", transform: "translateY(-50%)",
+                background: "#18181b", border: "1px solid rgba(255,255,255,0.08)",
+                color: "#f4f4f5", fontSize: 12, borderRadius: 8, padding: "4px 8px",
+                whiteSpace: "nowrap", zIndex: 50, position: "absolute",
+              }}
+            >
+              Help &amp; Support
+            </span>
+          )}
+        </a>
+
+        {/* Settings */}
+        <button
+          type="button"
+          onClick={() => navigate("/settings")}
+          className="group relative flex items-center h-[36px] rounded-[8px] hover:bg-white/[0.04] transition-colors bg-transparent border-none cursor-pointer w-full text-left"
+          style={{ margin: "1px 12px", padding: "0 12px", gap: 10, width: "calc(100% - 24px)" }}
+          aria-label="Settings"
+          title={collapsed ? "Settings" : undefined}
+        >
+          <Settings
+            size={16}
+            strokeWidth={2}
+            className="shrink-0"
+            style={{ color: "#71717a" }}
+          />
+          {!collapsed && (
+            <span style={{ fontSize: 13, fontWeight: 500, color: "#e4e4e7", whiteSpace: "nowrap" }}>
+              Settings
+            </span>
+          )}
+          {/* Collapsed tooltip */}
+          {collapsed && (
+            <span
+              className="absolute opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150"
+              style={{
+                left: "calc(100% + 8px)", top: "50%", transform: "translateY(-50%)",
+                background: "#18181b", border: "1px solid rgba(255,255,255,0.08)",
+                color: "#f4f4f5", fontSize: 12, borderRadius: 8, padding: "4px 8px",
+                whiteSpace: "nowrap", zIndex: 50, position: "absolute",
+              }}
+            >
+              Settings
+            </span>
+          )}
+        </button>
       </div>
     </nav>
   );

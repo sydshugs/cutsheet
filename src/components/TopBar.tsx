@@ -3,8 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Menu, Settings, CreditCard, BarChart3, HelpCircle, LogOut } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { UserAvatar } from "./UserAvatar";
-import { cn } from "../lib/utils";
 
 const ROUTE_TITLES: Record<string, string> = {
   "/app/paid": "Paid Ad Analyzer",
@@ -68,7 +66,6 @@ export function TopBar({
     location.pathname.startsWith("/app/batch/scorecard")
       ? "Rank Creatives"
       : ROUTE_TITLES[location.pathname] ?? "Analyzer";
-  const isAdBreakdown = location.pathname === "/app/deconstructor";
 
   return (
     <div className="relative z-20 flex h-[48px] shrink-0 items-center justify-between border-b border-white/[0.06] bg-[color:var(--bg)] px-6">
@@ -83,15 +80,15 @@ export function TopBar({
         <h2 className="text-[14px] font-medium text-white hidden md:block">{pageTitle}</h2>
       </div>
 
-      <div className="flex items-center gap-4">
-        {/* Plan badge — Figma violet on Ad Breakdown; brand indigo elsewhere */}
+      <div className="flex items-center gap-[17px]">
+        {/* Plan pill — same indigo style for all tiers and all pages */}
         <div
-          className={cn(
-            "flex items-center gap-[6px] rounded-full border py-[4px] px-3 text-[12px] font-medium",
-            isAdBreakdown
-              ? "border-[color:var(--decon-topbar-plan-border)] bg-[color:var(--decon-topbar-plan-bg)] text-[color:var(--decon-accent-light)]"
-              : "border-[color:var(--accent-border)] bg-[color:var(--accent-soft)] text-[color:var(--accent-light)]",
-          )}
+          className="flex items-center gap-[6px] rounded-full border py-[5px] px-[13px] text-[13px] font-medium"
+          style={{
+            background: "rgba(99,102,241,0.1)",
+            borderColor: "rgba(99,102,241,0.2)",
+            color: "#818cf8",
+          }}
         >
           <span aria-hidden>●</span>
           <span>{planLabel}</span>
@@ -103,16 +100,26 @@ export function TopBar({
           <button
             type="button"
             onClick={() => setPopoverOpen((p) => !p)}
-            className={cn(
-              "flex items-center rounded-full p-1 transition-[background-color,box-shadow] duration-200 hover:bg-white/[0.04]",
-              isAdBreakdown &&
-                "ring-1 ring-[color:var(--decon-topbar-avatar-ring)] ring-offset-0",
-            )}
-            style={{ background: "transparent", border: "none", cursor: "pointer" }}
+            className="flex items-center justify-center transition-opacity hover:opacity-80"
+            style={{
+              width: 26, height: 26, borderRadius: "50%", flexShrink: 0,
+              background: "rgba(99,102,241,0.2)",
+              border: "1px solid rgba(99,102,241,0.3)",
+              color: "#a3b3ff", fontSize: 11, fontWeight: 500,
+              cursor: "pointer",
+            }}
             aria-label="Profile menu"
             aria-expanded={popoverOpen}
           >
-            <UserAvatar size="sm" avatarUrl={avatarUrl} name={displayName} email={userEmail} />
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={displayName}
+                style={{ width: 26, height: 26, borderRadius: "50%", objectFit: "cover" }}
+              />
+            ) : (
+              <span>{displayName.charAt(0).toUpperCase()}</span>
+            )}
           </button>
 
           {popoverOpen && (
@@ -123,7 +130,13 @@ export function TopBar({
               boxShadow: "0 8px 32px rgba(0,0,0,0.4)", zIndex: 100, overflow: "hidden",
             }}>
               <div style={{ padding: "14px 16px", display: "flex", alignItems: "center", gap: 10 }}>
-                <UserAvatar size="md" avatarUrl={avatarUrl} name={displayName} email={userEmail} />
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt={displayName} style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+                ) : (
+                  <div style={{ width: 32, height: 32, borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(99,102,241,0.2)", border: "1px solid rgba(99,102,241,0.3)", color: "#a3b3ff", fontSize: 13, fontWeight: 500 }}>
+                    {displayName.charAt(0).toUpperCase()}
+                  </div>
+                )}
                 <div style={{ minWidth: 0 }}>
                   <p style={{ fontSize: 13, fontWeight: 500, color: "#f4f4f5", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{displayName}</p>
                   <p style={{ fontSize: 11, color: "#71717a", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{userEmail}</p>
