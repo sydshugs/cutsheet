@@ -476,7 +476,7 @@ export default function CutsheetWhy() {
               ]}
             />
           </FadeInSection>
-          <div className="flex justify-center overflow-hidden md:justify-end" style={{ maxHeight: 220 }}>
+          <div className="flex max-h-[220px] overflow-hidden justify-center md:max-h-none md:overflow-visible md:justify-end">
             <div className="scale-[0.45] origin-top md:scale-100" style={{ minWidth: 320 }}>
               <ScorecardMock />
             </div>
@@ -485,7 +485,7 @@ export default function CutsheetWhy() {
 
         {/* Creative strategists — mock left, text right */}
         <div className="grid w-full items-center gap-3 grid-cols-2 sm:gap-10 md:gap-12 lg:gap-16">
-          <div className="flex justify-center overflow-hidden md:justify-start" style={{ maxHeight: 220 }}>
+          <div className="flex max-h-[220px] overflow-hidden justify-center md:max-h-none md:overflow-visible md:justify-start">
             <div className="scale-[0.45] origin-top md:scale-100" style={{ minWidth: 320 }}>
               <BriefMock />
             </div>
@@ -570,7 +570,7 @@ export default function CutsheetWhy() {
               ]}
             />
           </FadeInSection>
-          <div className="flex justify-center overflow-hidden md:justify-end" style={{ maxHeight: 220 }}>
+          <div className="flex max-h-[220px] overflow-hidden justify-center md:max-h-none md:overflow-visible md:justify-end">
             <div className="scale-[0.45] origin-top md:scale-100" style={{ minWidth: 320 }}>
               <LeaderboardMock />
             </div>
