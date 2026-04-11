@@ -6,7 +6,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
 import { safePlatform, safeAdType, safeNiche } from "./_lib/validateInput";
-import { sanitizeSessionMemory } from "./_lib/sanitizeMemory";
+import { sanitizeSessionMemory, sanitizeAnalysisText } from "./_lib/sanitizeMemory";
+import { apiError } from "./_lib/apiError.js";
 
 export const maxDuration = 60;
 
@@ -51,12 +52,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Profile fetch failure is non-fatal — proceed without brand voice
   }
 
-  const { analysisMarkdown, platform: rawPlatform, niche: rawNiche, intent: rawIntent, adType: rawAdType, scores, ctaFree } = req.body ?? {};
+  const { analysisMarkdown: rawAnalysis, platform: rawPlatform, niche: rawNiche, intent: rawIntent, adType: rawAdType, scores, ctaFree } = req.body ?? {};
   const isCTAFree = ctaFree === true;
 
-  if (!analysisMarkdown) {
+  if (!rawAnalysis) {
     return res.status(400).json({ error: "Missing analysisMarkdown" });
   }
+
+  const analysisMarkdown = sanitizeAnalysisText(rawAnalysis);
 
   // Sanitize user-supplied fields before prompt injection
   const platform = safePlatform(rawPlatform) === "general" ? "paid social" : safePlatform(rawPlatform);
@@ -164,7 +167,7 @@ Return ONLY valid JSON, no markdown fencing.`;
       });
     }
   } catch (err) {
-    console.error("fix-it error:", err);
-    return res.status(500).json({ error: "Fix-it rewrite failed" });
+    return apiError(res, 'GENERATION_FAILED', 500,
+      `[fix-it] ${err instanceof Error ? err.message : String(err)}`);
   }
 }

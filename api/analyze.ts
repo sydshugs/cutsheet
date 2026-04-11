@@ -4,7 +4,9 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
-import { sanitizeSessionMemory } from "./_lib/sanitizeMemory";
+import { sanitizeSessionMemory, sanitizeUserInput } from "./_lib/sanitizeMemory";
+import { safeNiche, safePlatform } from "./_lib/validateInput";
+import { apiError } from "./_lib/apiError.js";
 // Dynamic import — benchmarks.ts is ESM, Vercel bundles API routes as CJS
 type BenchmarkModule = typeof import("../src/lib/benchmarks");
 
@@ -121,7 +123,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const geminiKey = process.env.GEMINI_API_KEY;
     if (!geminiKey) {
       console.error("[analyze] GEMINI_API_KEY is not set");
-      return res.status(500).json({ error: "Server configuration error" });
+      return apiError(res, 'INTERNAL_ERROR', 500, "GEMINI_API_KEY is not set");
     }
 
     const genAI = new GoogleGenerativeAI(geminiKey);
@@ -139,9 +141,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Build niche context block when niche is known from onboarding
     let nicheContext = "";
     if (niche) {
+      const safeNicheVal = safeNiche(niche);
+      const safePlatformVal = platform ? safePlatform(platform) : undefined;
       const { getNicheBenchmark, getNicheShortLabel } = await import("../src/lib/benchmarks.js") as BenchmarkModule;
-      const nicheBench = getNicheBenchmark(niche, platform);
-      const nicheLabel = getNicheShortLabel(niche) ?? niche;
+      const nicheBench = getNicheBenchmark(safeNicheVal, safePlatformVal);
+      const nicheLabel = getNicheShortLabel(safeNicheVal) ?? safeNicheVal;
       if (nicheBench) {
         nicheContext = `\n\nNICHE CONTEXT: This ad is in the ${nicheLabel} niche${platform ? ` on ${platform}` : ""}. Industry benchmarks — CTR: ${nicheBench.ctr.low}–${nicheBench.ctr.high}% (avg ${nicheBench.ctr.avg}%)${nicheBench.hookRate ? `, Hook retention: ${nicheBench.hookRate.avg}%` : ""}, CPM: $${nicheBench.cpm.avg}. Score relative to these benchmarks.\n`;
       }
@@ -159,15 +163,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const text = result.response.text();
 
     if (!text || text.trim().length === 0) {
-      return res.status(500).json({ error: "Gemini returned an empty response" });
+      return apiError(res, 'ANALYSIS_FAILED', 500, "Gemini returned an empty response");
     }
 
     return res.status(200).json({ text });
   } catch (err: unknown) {
-    console.error("[analyze] Error:", err instanceof Error ? err.message : err);
-    const message = err instanceof Error ? err.message : "Analysis failed";
-    // Only return 429 for actual rate limit errors — not any error containing "rate"
-    const status = message.includes("429") || message.includes("RATE_LIMITED") || message.includes("resource exhausted") || message.includes("quota") ? 429 : 500;
-    return res.status(status).json({ error: message });
+    const msg = err instanceof Error ? err.message : String(err);
+    const isRateLimited = /429|RATE_LIMITED|resource exhausted|quota/i.test(msg);
+    if (isRateLimited) {
+      return apiError(res, 'RATE_LIMITED', 429, `[analyze] ${msg}`);
+    }
+    return apiError(res, 'ANALYSIS_FAILED', 500, `[analyze] ${msg}`);
   }
 }
