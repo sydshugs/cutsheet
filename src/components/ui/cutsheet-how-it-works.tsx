@@ -2,12 +2,12 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { FadeInSection } from "./fade-in";
 
-// Figma asset URLs — refreshed 2026-04-11
-const UPLOAD_ICON_IMG = "https://www.figma.com/api/mcp/asset/ec1f19e2-f1d9-4211-bb65-3c0599df04f2";
-const UPLOAD_PTR_IMG  = "https://www.figma.com/api/mcp/asset/a663f9f3-023d-4521-84a2-05a688c56eb9";
-const UPLOAD_JPG_IMG  = "https://www.figma.com/api/mcp/asset/ffa14b50-13b5-40c6-8b35-e98ed7f9fa9f";
-const SCORE_MOCK_IMG  = "https://www.figma.com/api/mcp/asset/42f6389c-4f5f-4637-84cf-0188f757d19e";
-const FIX_MOCK_IMG    = "https://www.figma.com/api/mcp/asset/a9f760b4-98f8-46ee-870a-f32205d8ad15";
+// Local assets — downloaded from Figma MCP 2026-04-11
+const UPLOAD_ICON_IMG = "/landing/how-upload-icon.png";
+const UPLOAD_PTR_IMG  = "/landing/how-upload-pointer.png";
+const UPLOAD_JPG_IMG  = "/landing/how-upload-jpg.png";
+const SCORE_MOCK_IMG  = "/landing/how-score-mock.png";
+const FIX_MOCK_IMG    = "/landing/how-fix-mock.png";
 
 // Figma 295:3219 — exact bento sizing
 const ACTIVE_W = 516.8;

@@ -20,7 +20,7 @@ export default function CutsheetCTA() {
           </h2>
 
           <p className="mt-4 text-sm text-zinc-400 sm:mt-5 sm:text-lg">
-            Private beta — enter your access code to get started.
+            Private beta — limited spots available.
           </p>
         </FadeIn>
 
@@ -29,7 +29,7 @@ export default function CutsheetCTA() {
             to="/access"
             className="flex w-full items-center justify-center gap-2 rounded-full bg-[var(--accent)] px-7 py-3 text-sm font-semibold text-white transition-transform transition-opacity duration-150 hover:bg-[var(--accent-hover)] hover:scale-[1.02] hover:shadow-[0_0_24px_rgba(99,102,241,0.35)] active:scale-[0.97] sm:inline-flex sm:w-auto"
           >
-            Enter Access Code
+            Get Early Access
             <ArrowRight className="h-4 w-4" />
           </Link>
         </FadeIn>

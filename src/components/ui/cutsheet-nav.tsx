@@ -89,7 +89,7 @@ export default function CutsheetNav() {
       {/* Nav links — hidden on mobile */}
       {!isMobile && (
         <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <NavLink onClick={() => scrollTo("#how-it-works")}>Features</NavLink>
+          <NavLink onClick={() => scrollTo("#how-it-works")}>How It Works</NavLink>
           <NavLink onClick={() => scrollTo("#pricing")}>Pricing</NavLink>
         </div>
       )}
