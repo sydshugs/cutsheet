@@ -23,6 +23,31 @@ export default function LandingPage() {
         <meta property="og:image" content="https://cutsheet.xyz/og-image.png" />
         <meta name="twitter:card" content="summary_large_image" />
         <link rel="canonical" href="https://cutsheet.xyz" />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          "name": "Cutsheet",
+          "description": "AI-powered ad creative analyzer. Score paid ads and organic content in 30 seconds with actionable feedback.",
+          "url": "https://cutsheet.xyz",
+          "applicationCategory": "BusinessApplication",
+          "operatingSystem": "Web",
+          "offers": [
+            { "@type": "Offer", "price": "0", "priceCurrency": "USD", "name": "Free" },
+            { "@type": "Offer", "price": "29", "priceCurrency": "USD", "name": "Pro", "billingIncrement": "P1M" }
+          ]
+        })}</script>
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          "name": "Cutsheet",
+          "url": "https://cutsheet.xyz",
+          "logo": "https://cutsheet.xyz/cutsheet-logo-clear.png",
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "email": "hello@cutsheet.xyz",
+            "contactType": "customer support"
+          }
+        })}</script>
       </Helmet>
       <CutsheetNav />
       <CutsheetHero />
