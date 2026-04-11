@@ -12,7 +12,8 @@
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "eval:scoring": "npx tsx scripts/eval-scoring.ts",
-    "verify:rls": "npx tsx scripts/verify-rls.ts"
+    "verify:rls": "npx tsx scripts/verify-rls.ts",
+    "test:edge-cases": "npx vitest run e2e/edge-cases.spec.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

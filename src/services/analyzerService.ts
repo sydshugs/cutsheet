@@ -52,6 +52,7 @@ async function callGeminiProxy(params: {
     const ct = response.headers.get("content-type") ?? "";
     // #region agent log
     fetch('http://127.0.0.1:7433/ingest/b4d619d4-9480-408b-8b9b-7d7bd826fed3',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'42d35e'},body:JSON.stringify({sessionId:'42d35e',location:'analyzerService.ts:51',message:'callGeminiProxy error response',data:{status:response.status,contentType:ct},runId:'run1',hypothesisId:'A-D',timestamp:Date.now()})}).catch(()=>{});
+    try{const l=JSON.parse(localStorage.getItem('_dbg42d35e')||'[]');l.push({t:Date.now(),loc:'analyzerService:51',msg:'callGeminiProxy error response',d:{status:response.status,ct}});localStorage.setItem('_dbg42d35e',JSON.stringify(l));}catch(_){}
     // #endregion
     if (response.status === 404 || ct.includes("text/html")) {
       throw new Error(
@@ -493,7 +494,7 @@ async function cleanupStorage(storagePath: string): Promise<void> {
 }
 
 /** Multi-pattern score extractor — tries 3 regex patterns per label for resilience. */
-function extractScore(text: string, ...labels: string[]): number {
+export function extractScore(text: string, ...labels: string[]): number {
   for (const label of labels) {
     // Pattern 1: "Label: X/10" or "Label: X / 10"
     const p1 = new RegExp(`${label}[:\\s]+([\\d.]+)\\s*(?:\\/\\s*10)?`, 'i');
@@ -513,7 +514,7 @@ function extractScore(text: string, ...labels: string[]): number {
   return 0;
 }
 
-function parseScores(markdown: string): AnalysisResult["scores"] {
+export function parseScores(markdown: string): AnalysisResult["scores"] {
   try {
     const hook = extractScore(markdown, 'Hook Strength', 'Hook', 'Thumb-Stop');
     const clarity = extractScore(markdown, 'Message Clarity', 'Message', 'Sound-Off', 'Retention', 'Audio & Captions');
@@ -803,11 +804,13 @@ export async function analyzeVideo(
     emit("uploading", "Uploading file...");
     // #region agent log
     fetch('http://127.0.0.1:7433/ingest/b4d619d4-9480-408b-8b9b-7d7bd826fed3',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'42d35e'},body:JSON.stringify({sessionId:'42d35e',location:'analyzerService.ts:800',message:'analyzeVideo start',data:{fileName:file.name,fileType:file.type,fileSizeMB:+(file.size/1024/1024).toFixed(2)},runId:'run1',hypothesisId:'A-B-C-D-E',timestamp:Date.now()})}).catch(()=>{});
+    try{const l=JSON.parse(localStorage.getItem('_dbg42d35e')||'[]');l.push({t:Date.now(),loc:'analyzerService:800',msg:'analyzeVideo start',d:{name:file.name,type:file.type,sizeMB:+(file.size/1024/1024).toFixed(2)}});localStorage.setItem('_dbg42d35e',JSON.stringify(l));}catch(_){}
     // #endregion
     const uploaded = await uploadToStorage(file);
     storagePath = uploaded.storagePath;
     // #region agent log
     fetch('http://127.0.0.1:7433/ingest/b4d619d4-9480-408b-8b9b-7d7bd826fed3',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'42d35e'},body:JSON.stringify({sessionId:'42d35e',location:'analyzerService.ts:806',message:'storage upload success',data:{storagePath:uploaded.storagePath,fileUrlPrefix:uploaded.fileUrl.slice(0,80)},runId:'run1',hypothesisId:'A-B',timestamp:Date.now()})}).catch(()=>{});
+    try{const l=JSON.parse(localStorage.getItem('_dbg42d35e')||'[]');l.push({t:Date.now(),loc:'analyzerService:806',msg:'storage upload success',d:{storagePath:uploaded.storagePath,urlPrefix:uploaded.fileUrl.slice(0,80)}});localStorage.setItem('_dbg42d35e',JSON.stringify(l));}catch(_){}
     // #endregion
 
     const resolvedMime = inferUploadMimeType(file);
@@ -827,6 +830,7 @@ export async function analyzeVideo(
     const prompt = parts.join('\n\n');
     // #region agent log
     fetch('http://127.0.0.1:7433/ingest/b4d619d4-9480-408b-8b9b-7d7bd826fed3',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'42d35e'},body:JSON.stringify({sessionId:'42d35e',location:'analyzerService.ts:820',message:'prompt built',data:{mimeType:resolvedMime,promptLength:prompt.length,hasContextPrefix:!!contextPrefix,contextPrefixLen:contextPrefix?.length??0},runId:'run1',hypothesisId:'C-E',timestamp:Date.now()})}).catch(()=>{});
+    try{const l=JSON.parse(localStorage.getItem('_dbg42d35e')||'[]');l.push({t:Date.now(),loc:'analyzerService:820',msg:'prompt built',d:{mime:resolvedMime,promptLen:prompt.length,prefixLen:contextPrefix?.length??0}});localStorage.setItem('_dbg42d35e',JSON.stringify(l));}catch(_){}
     // #endregion
 
     // 3. Call server-side Gemini proxy with file URL (not base64)
@@ -903,6 +907,7 @@ export async function analyzeVideo(
     emit("error");
     // #region agent log
     fetch('http://127.0.0.1:7433/ingest/b4d619d4-9480-408b-8b9b-7d7bd826fed3',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'42d35e'},body:JSON.stringify({sessionId:'42d35e',location:'analyzerService.ts:895',message:'analyzeVideo catch',data:{errMsg:err instanceof Error?err.message:String(err)},runId:'run1',hypothesisId:'A-B-C-D-E',timestamp:Date.now()})}).catch(()=>{});
+    try{const l=JSON.parse(localStorage.getItem('_dbg42d35e')||'[]');l.push({t:Date.now(),loc:'analyzerService:895',msg:'analyzeVideo catch',d:{err:err instanceof Error?err.message:String(err)}});localStorage.setItem('_dbg42d35e',JSON.stringify(l));}catch(_){}
     // #endregion
     if (err instanceof Error) {
       throw new Error(`Analysis failed: ${err.message}`);
