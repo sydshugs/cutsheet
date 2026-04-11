@@ -1,6 +1,6 @@
 // CreativeVerdictAndSecondEye — matches Figma node 229:2054
 // Combined "Creative verdict & second eye" panel for video ads.
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, forwardRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Eye, TrendingDown, TrendingUp, CheckCircle,
@@ -153,26 +153,40 @@ function Shimmer({ height = 72 }: { height?: number }) {
 
 type Flag = SecondEyeResult["flags"][number];
 
-function FlagCard({ flag, index, defaultExpanded = false }: {
+const FlagCard = forwardRef<HTMLDivElement, {
   flag: Flag;
   index: number;
   defaultExpanded?: boolean;
-}) {
-  const [expanded, setExpanded] = useState(defaultExpanded);
+  isActive?: boolean;
+  onSelect?: () => void;
+}>(function FlagCard({ flag, index, defaultExpanded = false, isActive = false, onSelect }, ref) {
+  const [localExpanded, setLocalExpanded] = useState(defaultExpanded);
+  const expanded = isActive || localExpanded;
   const cfg = getCatCfg(flag.category);
 
   return (
     <motion.div
+      ref={ref}
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.22, delay: index * 0.05 }}
       className="rounded-3xl border overflow-hidden"
       style={{
         background: "rgba(255,255,255,0.02)",
-        borderColor: "rgba(255,255,255,0.06)",
+        borderColor: isActive ? cfg.border : "rgba(255,255,255,0.06)",
+        boxShadow: isActive ? `0 0 0 1px ${cfg.border}` : undefined,
+        transition: "border-color 200ms ease, box-shadow 200ms ease",
       }}
     >
-      <div className="flex flex-col gap-2 pl-[17px] pr-px py-[13px]">
+      {/* Clicking the header row selects this card */}
+      <div
+        className="flex flex-col gap-2 pl-[17px] pr-px py-[13px] cursor-pointer"
+        onClick={onSelect}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => e.key === "Enter" && onSelect?.()}
+        aria-label={`Select ${cfg.label} flag at ${flag.timestamp}`}
+      >
         {/* Header row */}
         <div className="flex items-center justify-between pr-1">
           <div
@@ -194,7 +208,7 @@ function FlagCard({ flag, index, defaultExpanded = false }: {
               {flag.timestamp}
             </span>
             <button
-              onClick={() => setExpanded((e) => !e)}
+              onClick={(e) => { e.stopPropagation(); setLocalExpanded((v) => !v); }}
               className="flex items-center justify-center w-[14px] h-[14px] transition-opacity hover:opacity-70"
               style={{ color: "#52525c" }}
               aria-label={expanded ? "Collapse" : "Expand"}
@@ -207,9 +221,7 @@ function FlagCard({ flag, index, defaultExpanded = false }: {
         {/* Body */}
         <div>
           <p
-            className={cn(
-              "text-[9px] font-semibold uppercase tracking-[0.45px] mb-1",
-            )}
+            className="text-[9px] font-semibold uppercase tracking-[0.45px] mb-1"
             style={{ color: "#52525c" }}
           >
             Fix
@@ -239,11 +251,19 @@ function FlagCard({ flag, index, defaultExpanded = false }: {
       </div>
     </motion.div>
   );
-}
+});
 
 // ─── TIMELINE ─────────────────────────────────────────────────────────────────
 
-function Timeline({ flags }: { flags: Flag[] }) {
+function Timeline({
+  flags,
+  activeIndex,
+  onSelect,
+}: {
+  flags: Flag[];
+  activeIndex: number | null;
+  onSelect: (i: number) => void;
+}) {
   const presentCategories = useMemo(() => {
     const seen = new Set<string>();
     const order: string[] = [];
@@ -316,23 +336,50 @@ function Timeline({ flags }: { flags: Flag[] }) {
           </div>
         </div>
 
-        {/* Flag markers */}
+        {/* Flag markers — interactive buttons */}
         {flags.map((flag, i) => {
           const secs = parseTs(flag.timestamp);
           const pct = maxSecs > 0 ? (secs / maxSecs) * 100 : 0;
           const cfg = getCatCfg(flag.category);
+          const isActive = activeIndex === i;
+
           return (
-            <div
+            <button
               key={i}
-              className="absolute w-[8px] h-[8px] rounded-full flex-shrink-0"
+              type="button"
+              aria-label={`${cfg.label} at ${fmtSecs(secs)} — jump to fix`}
+              aria-pressed={isActive}
+              onClick={() => onSelect(i)}
+              title={`${cfg.label} @ ${fmtSecs(secs)}`}
+              className="absolute focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 rounded-full"
               style={{
                 left: `${pct}%`,
                 top: "50%",
-                transform: "translate(-50%, -50%)",
+                transform: `translate(-50%, -50%) scale(${isActive ? 1.5 : 1})`,
+                width: isActive ? 10 : 8,
+                height: isActive ? 10 : 8,
                 background: cfg.markerColor,
-                title: `${cfg.label} @ ${flag.timestamp}`,
+                boxShadow: isActive
+                  ? `0 0 0 2.5px rgba(255,255,255,0.4), 0 0 6px ${cfg.markerColor}`
+                  : undefined,
+                cursor: "pointer",
+                border: "none",
+                padding: 0,
+                transition: "transform 150ms ease, box-shadow 150ms ease, width 150ms ease, height 150ms ease",
+                zIndex: isActive ? 2 : 1,
               }}
-              title={`${cfg.label} @ ${fmtSecs(secs)}`}
+              onMouseEnter={(e) => {
+                if (!isActive) {
+                  (e.currentTarget as HTMLButtonElement).style.transform =
+                    "translate(-50%, -50%) scale(1.25)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isActive) {
+                  (e.currentTarget as HTMLButtonElement).style.transform =
+                    "translate(-50%, -50%) scale(1)";
+                }
+              }}
             />
           );
         })}
@@ -372,6 +419,15 @@ export function CreativeVerdictAndSecondEye({
   );
 
   const hasFlags = (secondEyeResult?.flags?.length ?? 0) > 0;
+
+  // ── Interactive timeline state ──────────────────────────────────────────────
+  const [activeFlag, setActiveFlag] = useState<number | null>(0);
+  const flagRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  function selectFlag(i: number) {
+    setActiveFlag(i);
+    flagRefs.current[i]?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
 
   return (
     <div
@@ -611,7 +667,7 @@ export function CreativeVerdictAndSecondEye({
 
             {/* Timeline */}
             <div className="my-1">
-              <Timeline flags={secondEyeResult.flags} />
+              <Timeline flags={secondEyeResult.flags} activeIndex={activeFlag} onSelect={selectFlag} />
             </div>
 
             {/* Fix cards */}
@@ -619,9 +675,12 @@ export function CreativeVerdictAndSecondEye({
               {secondEyeResult.flags.map((flag, i) => (
                 <FlagCard
                   key={`${flag.category}-${flag.timestamp}-${i}`}
+                  ref={(el) => { flagRefs.current[i] = el; }}
                   flag={flag}
                   index={i}
                   defaultExpanded={i === 0}
+                  isActive={activeFlag === i}
+                  onSelect={() => selectFlag(i)}
                 />
               ))}
             </div>
