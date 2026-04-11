@@ -9,6 +9,8 @@ import { sanitizeAnalysisText } from "./_lib/sanitizeMemory";
 import { validatePrediction, validateConfidence } from "../src/utils/scoreGuardrails.js";
 
 // ── Inline benchmark data (avoids ESM import issue in Vercel CJS bundle) ──────
+// SYNC WARNING: This must match src/lib/benchmarks.ts exactly.
+// Last synced: 2026-04-11. If you update benchmarks, update BOTH files.
 interface NicheBenchmark {
   ctr: { low: number; avg: number; high: number };
   hookRate: { avg: number } | null;
@@ -43,6 +45,34 @@ const NICHE_BENCHMARKS: Record<string, Record<string, NicheBenchmark>> = {
     YouTube: { ctr: { low: 0.4, avg: 0.9, high: 2.0 }, hookRate: { avg: 55 }, cpm: { avg: 7 } },
     general: { ctr: { low: 0.7, avg: 1.4, high: 2.8 }, hookRate: { avg: 40 }, cpm: { avg: 7 } },
   },
+  "Health & Wellness": {
+    Meta:    { ctr: { low: 1.2, avg: 1.8, high: 2.8 }, hookRate: { avg: 30 }, cpm: { avg: 16 } },
+    TikTok:  { ctr: { low: 0.9, avg: 1.6, high: 3.0 }, hookRate: { avg: 35 }, cpm: { avg: 8 } },
+    YouTube: { ctr: { low: 0.3, avg: 0.5, high: 1.1 }, hookRate: { avg: 42 }, cpm: { avg: 12 } },
+    Google:  { ctr: { low: 1.8, avg: 3.2, high: 5.5 }, hookRate: null,        cpm: { avg: 35 } },
+    general: { ctr: { low: 1.0, avg: 1.6, high: 2.6 }, hookRate: { avg: 32 }, cpm: { avg: 14 } },
+  },
+  "Finance / Fintech": {
+    Meta:    { ctr: { low: 0.5, avg: 0.8, high: 1.4 }, hookRate: { avg: 18 }, cpm: { avg: 28 } },
+    TikTok:  { ctr: { low: 0.3, avg: 0.6, high: 1.2 }, hookRate: { avg: 16 }, cpm: { avg: 14 } },
+    YouTube: { ctr: { low: 0.15, avg: 0.35, high: 0.7 }, hookRate: { avg: 30 }, cpm: { avg: 22 } },
+    Google:  { ctr: { low: 2.0, avg: 3.6, high: 6.0 }, hookRate: null,        cpm: { avg: 65 } },
+    general: { ctr: { low: 0.5, avg: 0.8, high: 1.3 }, hookRate: { avg: 18 }, cpm: { avg: 30 } },
+  },
+  "Food & Beverage": {
+    Meta:    { ctr: { low: 1.0, avg: 1.6, high: 2.5 }, hookRate: { avg: 33 }, cpm: { avg: 11 } },
+    TikTok:  { ctr: { low: 1.2, avg: 2.2, high: 4.0 }, hookRate: { avg: 40 }, cpm: { avg: 7 } },
+    YouTube: { ctr: { low: 0.3, avg: 0.7, high: 1.5 }, hookRate: { avg: 48 }, cpm: { avg: 9 } },
+    Google:  { ctr: { low: 1.5, avg: 2.8, high: 4.5 }, hookRate: null,        cpm: { avg: 30 } },
+    general: { ctr: { low: 1.0, avg: 1.8, high: 3.2 }, hookRate: { avg: 36 }, cpm: { avg: 11 } },
+  },
+  "Real Estate": {
+    Meta:    { ctr: { low: 0.7, avg: 1.1, high: 1.9 }, hookRate: { avg: 22 }, cpm: { avg: 20 } },
+    TikTok:  { ctr: { low: 0.5, avg: 0.9, high: 1.8 }, hookRate: { avg: 25 }, cpm: { avg: 11 } },
+    YouTube: { ctr: { low: 0.2, avg: 0.45, high: 0.9 }, hookRate: { avg: 38 }, cpm: { avg: 15 } },
+    Google:  { ctr: { low: 2.5, avg: 4.5, high: 8.0 }, hookRate: null,        cpm: { avg: 45 } },
+    general: { ctr: { low: 0.7, avg: 1.2, high: 2.0 }, hookRate: { avg: 24 }, cpm: { avg: 20 } },
+  },
 };
 
 const NICHE_ALIASES: Record<string, string> = {
@@ -53,6 +83,14 @@ const NICHE_ALIASES: Record<string, string> = {
   "agency": "Agency",
   "creator / content": "Creator / Content", "creator": "Creator / Content",
   "content": "Creator / Content", "content creator": "Creator / Content",
+  "health": "Health & Wellness", "health & wellness": "Health & Wellness",
+  "wellness": "Health & Wellness", "fitness": "Health & Wellness", "supplements": "Health & Wellness",
+  "finance": "Finance / Fintech", "finance / fintech": "Finance / Fintech",
+  "fintech": "Finance / Fintech", "banking": "Finance / Fintech", "insurance": "Finance / Fintech",
+  "food": "Food & Beverage", "food & beverage": "Food & Beverage",
+  "beverage": "Food & Beverage", "restaurant": "Food & Beverage", "cpg": "Food & Beverage",
+  "real estate": "Real Estate", "realestate": "Real Estate",
+  "property": "Real Estate", "housing": "Real Estate",
 };
 
 const PLATFORM_ALIASES: Record<string, string> = {

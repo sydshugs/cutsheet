@@ -174,6 +174,18 @@ A 7/10 means the same thing every time.
 - Production Quality: X/10
 - Overall Ad Strength: X/10
 
+Scoring anchors — use these as calibration reference:
+- Hook 2/10: Static product shot with no text, no motion, no pattern interrupt. Generic thumbnail.
+- Hook 5/10: Has movement or text overlay but hook is predictable. "Check this out" type opener.
+- Hook 8/10: Immediate pattern interrupt — unexpected visual, bold claim, or strong curiosity gap in first frame.
+- CTA 2/10: No call to action present, or a generic "Learn More" with no urgency.
+- CTA 5/10: CTA exists but is weak — small text, buried, or generic ("Shop Now" with no incentive).
+- CTA 8/10: Clear, urgent, specific CTA with a reason to act now ("Get 30% off — ends tonight").
+- Message 3/10: Unclear what the product is or does. No value proposition visible.
+- Message 7/10: Clear value prop but generic — could apply to any competitor in the space.
+- Production 3/10: Poor lighting, low resolution, awkward framing, amateur look.
+- Production 8/10: Professional grade — clean lighting, intentional composition, platform-native style.
+
 ---
 
 ## 🪝 HOOK DETAIL
@@ -316,6 +328,18 @@ A 7/10 means the same thing every time.
 - CTA Effectiveness: X/10
 - Production Quality: X/10 (design polish, typography, layout)
 - Overall Ad Strength: X/10
+
+Scoring anchors — use these as calibration reference:
+- Hook 2/10: Static product shot with no text, no motion, no pattern interrupt. Generic thumbnail.
+- Hook 5/10: Has movement or text overlay but hook is predictable. "Check this out" type opener.
+- Hook 8/10: Immediate pattern interrupt — unexpected visual, bold claim, or strong curiosity gap in first frame.
+- CTA 2/10: No call to action present, or a generic "Learn More" with no urgency.
+- CTA 5/10: CTA exists but is weak — small text, buried, or generic ("Shop Now" with no incentive).
+- CTA 8/10: Clear, urgent, specific CTA with a reason to act now ("Get 30% off — ends tonight").
+- Message 3/10: Unclear what the product is or does. No value proposition visible.
+- Message 7/10: Clear value prop but generic — could apply to any competitor in the space.
+- Production 3/10: Poor lighting, low resolution, awkward framing, amateur look.
+- Production 8/10: Professional grade — clean lighting, intentional composition, platform-native style.
 
 ---
 
@@ -465,31 +489,46 @@ async function cleanupStorage(storagePath: string): Promise<void> {
   } catch { /* best-effort cleanup */ }
 }
 
+/** Multi-pattern score extractor — tries 3 regex patterns per label for resilience. */
+function extractScore(text: string, ...labels: string[]): number {
+  for (const label of labels) {
+    // Pattern 1: "Label: X/10" or "Label: X / 10"
+    const p1 = new RegExp(`${label}[:\\s]+([\\d.]+)\\s*(?:\\/\\s*10)?`, 'i');
+    const m1 = text.match(p1);
+    if (m1) return parseFloat(m1[1]);
+
+    // Pattern 2: "Label — X/10" or "Label – X"
+    const p2 = new RegExp(`${label}\\s*[—–-]+\\s*([\\d.]+)`, 'i');
+    const m2 = text.match(p2);
+    if (m2) return parseFloat(m2[1]);
+
+    // Pattern 3: "X/10" on the same line as the label
+    const p3 = new RegExp(`${label}[^\\n]*?(\\d+(?:\\.\\d)?)\\s*\\/\\s*10`, 'i');
+    const m3 = text.match(p3);
+    if (m3) return parseFloat(m3[1]);
+  }
+  return 0;
+}
+
 function parseScores(markdown: string): AnalysisResult["scores"] {
   try {
-    const hookMatch = markdown.match(/Hook Strength:\s*(\d+(?:\.\d+)?)\/10/);
-    const clarityMatch = markdown.match(/Message Clarity:\s*(\d+(?:\.\d+)?)\/10/);
-    // IMPORTANT: This regex must match ALL platform variants of this dimension.
-    // Paid uses "CTA Effectiveness", organic static uses "Shareability & Save-Worthiness",
-    // organic video uses "Shareability & Rewatch".
-    // Any new platform-specific dimension label added to a prompt MUST be added here too
-    // or the parser will return null and show "Something went wrong reading the results".
-    const ctaMatch = markdown.match(/(?:CTA Effectiveness|Shareability\s*&\s*(?:Save[- ]?Worthiness|Rewatch)):\s*(\d+(?:\.\d+)?)\/10/);
-    const productionMatch = markdown.match(/Production Quality:\s*(\d+(?:\.\d+)?)\/10/);
-    const overallMatch = markdown.match(/Overall (?:Ad |Content )?Strength:\s*(\d+(?:\.\d+)?)\/10/);
+    const hook = extractScore(markdown, 'Hook Strength', 'Hook', 'Thumb-Stop');
+    const clarity = extractScore(markdown, 'Message Clarity', 'Message', 'Sound-Off', 'Retention', 'Audio & Captions');
+    const cta = extractScore(markdown, 'CTA Effectiveness', 'CTA', 'Call to Action', 'Shareability & Save-Worthiness', 'Shareability & Rewatch', 'Shareability');
+    const production = extractScore(markdown, 'Production Quality', 'Production', 'Visual', 'Brand');
+    const overall = extractScore(markdown, 'Overall Ad Strength', 'Overall Ad', 'Overall Content Strength', 'Overall', 'Total Score');
 
-    if (!hookMatch || !clarityMatch || !ctaMatch || !productionMatch || !overallMatch) {
-      console.warn("[parseScores] Missing dimension — hook:%s clarity:%s cta/share:%s production:%s overall:%s",
-        !!hookMatch, !!clarityMatch, !!ctaMatch, !!productionMatch, !!overallMatch);
+    if (!hook && !clarity && !cta && !production && !overall) {
+      console.warn("[parseScores] No dimensions found in response");
       return null;
     }
 
     return {
-      hook: Math.round(parseFloat(hookMatch[1])),
-      clarity: Math.round(parseFloat(clarityMatch[1])),
-      cta: Math.round(parseFloat(ctaMatch[1])),
-      production: Math.round(parseFloat(productionMatch[1])),
-      overall: Math.round(parseFloat(overallMatch[1])),
+      hook: Math.round(hook),
+      clarity: Math.round(clarity),
+      cta: Math.round(cta),
+      production: Math.round(production),
+      overall: Math.round(overall),
     };
   } catch {
     return null;
@@ -723,31 +762,21 @@ export function parseScenes(markdown: string): Scene[] | undefined {
   }
 }
 
-// Recalculate overall score when Gemini returns zero values
-// If overall is 0 or any metric is 0, recompute overall as the
-// average of only the non-zero component scores.
+// Recalculate overall score — delegates to validateScores as single source of truth.
+// validateScores clamps all values to 1.0-10.0 and recalculates overall as dimension average.
 export function recalculateOverallScore(
   scores: AnalysisResult["scores"]
 ): AnalysisResult["scores"] {
   if (!scores) return scores;
 
-  const { hook, clarity, cta, production, overall } = scores;
-  const metrics = [hook, clarity, cta, production];
-  const hasZeroMetric = metrics.some((v) => v === 0);
-
-  if (overall === 0 || hasZeroMetric) {
-    const nonZero = metrics.filter((v) => v > 0);
-    if (nonZero.length > 0) {
-      const avg = nonZero.reduce((sum, v) => sum + v, 0) / nonZero.length;
-      const rounded = Math.round(avg);
-      return {
-        ...scores,
-        overall: rounded,
-      };
-    }
-  }
-
-  return scores;
+  const validated = validateScores(scores as Record<string, number>);
+  return {
+    hook: validated.hook,
+    clarity: validated.clarity,
+    cta: validated.cta,
+    production: validated.production,
+    overall: validated.overall,
+  } as AnalysisResult["scores"];
 }
 
 // ─── MAIN ANALYZER ────────────────────────────────────────────────────────────
@@ -805,8 +834,7 @@ export async function analyzeVideo(
     if (!parsedScores) {
       throw new Error("Could not parse scores from the AI response. The output format may have changed — try again.");
     }
-    const recalculated = recalculateOverallScore(parsedScores);
-    const scores = recalculated ? validateScores(recalculated as Record<string, number>) as typeof recalculated : recalculated;
+    const scores = recalculateOverallScore(parsedScores);
 
     // 6. Parse improvements from markdown
     let improvements = parseImprovements(markdown);
