@@ -1,5 +1,5 @@
 /**
- * Golden scoring fixtures — 8 test cases covering edge cases for guardrail validation.
+ * Golden scoring fixtures -- 8 test cases covering edge cases for guardrail validation.
  * Each fixture simulates a parsed analysis output with known scores, a mock prediction,
  * and expected validated outputs after guardrails run.
  */
@@ -28,13 +28,16 @@ export interface GoldenFixture {
     fatigueDaysHighMax?: number;
     hookRetentionHighMax?: number;
     cvrHighMax?: number;
+    allScoresMin?: number;
+    allScoresMax?: number;
   };
 }
 
 export const fixtures: GoldenFixture[] = [
+  // 1. perfect-static-meta -- all high, should sail through
   {
     name: "perfect-static-meta",
-    scores: { hook: 9, clarity: 9, cta: 10, production: 9, overall: 10 },
+    scores: { hook: 9, clarity: 9, cta: 9, production: 9, overall: 10 },
     platform: "Meta",
     niche: "Ecommerce / DTC",
     format: "static",
@@ -50,14 +53,17 @@ export const fixtures: GoldenFixture[] = [
     },
     mockVerdict: "ready",
     expected: {
+      // overall recalculated: (9+9+9+9)/4 = 9.0
       verdict: "ready",
       confidence: "High",
       ctrVsAvg: "above",
     },
   },
+
+  // 2. terrible-tiktok-video -- all low, LLM hallucinated good predictions
   {
     name: "terrible-tiktok-video",
-    scores: { hook: 2, clarity: 3, cta: 2, production: 2, overall: 8 },
+    scores: { hook: 2, clarity: 2, cta: 2, production: 3, overall: 8 },
     platform: "TikTok",
     niche: "Creator / Content",
     format: "video",
@@ -73,6 +79,7 @@ export const fixtures: GoldenFixture[] = [
     },
     mockVerdict: "ready",
     expected: {
+      // overall recalculated: (2+2+2+3)/4 = 2.3
       verdict: "not_ready",
       confidence: "High",
       ctrVsAvg: "below",
@@ -81,6 +88,8 @@ export const fixtures: GoldenFixture[] = [
       cvrHighMax: 1.5,
     },
   },
+
+  // 3. mixed-signals -- great hook, terrible CTA, wide spread
   {
     name: "mixed-signals",
     scores: { hook: 9, clarity: 7, cta: 2, production: 5, overall: 7 },
@@ -99,15 +108,19 @@ export const fixtures: GoldenFixture[] = [
     },
     mockVerdict: "needs_work",
     expected: {
+      // overall recalculated: (9+7+2+5)/4 = 5.8
+      // spread = 9-2 = 7 > 4 => Medium confidence
       verdict: "needs_work",
       confidence: "Medium",
     },
   },
+
+  // 4. mid-range-youtube -- boring middle, everything average
   {
     name: "mid-range-youtube",
     scores: { hook: 5, clarity: 6, cta: 5, production: 6, overall: 6 },
     platform: "YouTube",
-    niche: "SaaS",
+    niche: "Agency",
     format: "video",
     mockPrediction: {
       ctr: { low: 0.3, high: 0.7, benchmark: 0.4, vsAvg: "at" },
@@ -121,10 +134,14 @@ export const fixtures: GoldenFixture[] = [
     },
     mockVerdict: "needs_work",
     expected: {
+      // overall recalculated: (5+6+5+6)/4 = 5.5
+      // overall > 3 and < 8 => Medium
       verdict: "needs_work",
       confidence: "Medium",
     },
   },
+
+  // 5. great-hook-bad-cta -- high spread, overall > 3 so fatigue NOT capped
   {
     name: "great-hook-bad-cta",
     scores: { hook: 9, clarity: 7, cta: 1, production: 7, overall: 7 },
@@ -143,74 +160,98 @@ export const fixtures: GoldenFixture[] = [
     },
     mockVerdict: "needs_work",
     expected: {
+      // overall recalculated: (9+7+1+7)/4 = 6.0
+      // spread = 9-1 = 8 > 4 => Medium
+      // overall 6.0 > 3, so fatigueDays NOT capped (no fatigueDaysHighMax assertion)
       verdict: "needs_work",
       confidence: "Medium",
     },
   },
+
+  // 6. all-zeros -- guardrails must clamp everything to 1.0 minimum
   {
-    name: "platform-cta-video",
-    scores: { hook: 7, clarity: 8, cta: 7, production: 8, overall: 8 },
+    name: "all-zeros",
+    scores: { hook: 0, clarity: 0, cta: 0, production: 0, overall: 0 },
     platform: "Meta",
-    niche: "Ecommerce / DTC",
-    format: "video",
-    mockPrediction: {
-      ctr: { low: 1.8, high: 3.0, benchmark: 2.1, vsAvg: "above" },
-      cvr: { low: 1.2, high: 2.5 },
-      hookRetention: { low: 35, high: 50 },
-      fatigueDays: { low: 10, high: 21 },
-      confidence: "High",
-      confidenceReason: "Strong signals across all dimensions with good benchmark data.",
-      positiveSignals: ["Clear value proposition", "Platform-native CTA flow"],
-      negativeSignals: ["Hook could be more distinctive"],
-    },
-    mockVerdict: "ready",
-    expected: {
-      verdict: "needs_work",
-      confidence: "Medium",
-    },
-  },
-  {
-    name: "display-banner-300x250",
-    scores: { hook: 6, clarity: 7, cta: 8, production: 7, overall: 7 },
-    platform: "Google",
     niche: "Ecommerce / DTC",
     format: "static",
     mockPrediction: {
-      ctr: { low: 2.5, high: 5.0, benchmark: 3.5, vsAvg: "at" },
-      cvr: { low: 1.0, high: 2.0 },
+      ctr: { low: 0.1, high: 0.3, benchmark: 0.5, vsAvg: "below" },
+      cvr: { low: 0.0, high: 0.2 },
       hookRetention: null,
-      fatigueDays: { low: 10, high: 20 },
-      confidence: "Medium",
-      confidenceReason: "Good data for DTC display ads on Google.",
-      positiveSignals: ["Strong CTA", "Clean layout"],
-      negativeSignals: ["Average hook for display"],
+      fatigueDays: { low: 1, high: 3 },
+      confidence: "Low",
+      confidenceReason: "Invalid scores.",
+      positiveSignals: [],
+      negativeSignals: ["All scores are zero"],
     },
-    mockVerdict: "needs_work",
+    mockVerdict: "not_ready",
     expected: {
-      verdict: "needs_work",
-      confidence: "Medium",
+      // all clamped to 1.0, overall = (1+1+1+1)/4 = 1.0
+      verdict: "not_ready",
+      confidence: "High",
+      allScoresMin: 1.0,
     },
   },
+
+  // 7. overflow-scores -- guardrails must clamp everything to 10.0 maximum
   {
-    name: "unknown-niche",
-    scores: { hook: 6, clarity: 6, cta: 5, production: 7, overall: 6 },
+    name: "overflow-scores",
+    scores: { hook: 12, clarity: 15, cta: 11, production: 13, overall: 15 },
     platform: "Meta",
-    niche: "Pet Supplies",
+    niche: "Ecommerce / DTC",
+    format: "static",
+    mockPrediction: {
+      ctr: { low: 4.0, high: 6.0, benchmark: 3.0, vsAvg: "above" },
+      cvr: { low: 3.0, high: 5.0 },
+      hookRetention: null,
+      fatigueDays: { low: 30, high: 60 },
+      confidence: "High",
+      confidenceReason: "Impossible scores.",
+      positiveSignals: ["Everything maxed"],
+      negativeSignals: [],
+    },
+    mockVerdict: "ready",
+    expected: {
+      // all clamped to 10.0, overall = (10+10+10+10)/4 = 10.0
+      verdict: "ready",
+      confidence: "High",
+      allScoresMax: 10.0,
+    },
+  },
+
+  // 8. low-score-high-confidence -- LLM hallucinated optimistic predictions on a bad ad
+  {
+    name: "low-score-high-confidence",
+    scores: { hook: 2, clarity: 2, cta: 1, production: 2, overall: 5 },
+    platform: "Meta",
+    niche: "Supplements",
     format: "video",
     mockPrediction: {
-      ctr: { low: 1.0, high: 2.0, benchmark: 1.5, vsAvg: "at" },
-      cvr: { low: 0.5, high: 1.5 },
-      hookRetention: { low: 25, high: 40 },
-      fatigueDays: { low: 8, high: 16 },
-      confidence: "Low",
-      confidenceReason: "No specific benchmark data for this niche.",
-      positiveSignals: ["Decent production value"],
-      negativeSignals: ["Generic hook", "Weak CTA"],
+      ctr: { low: 2.0, high: 4.0, benchmark: 2.5, vsAvg: "above" },
+      cvr: { low: 1.0, high: 3.0 },
+      hookRetention: { low: 20, high: 50 },
+      fatigueDays: { low: 10, high: 20 },
+      confidence: "High",
+      confidenceReason: "Strong data for supplements on Meta.",
+      positiveSignals: ["Niche-specific targeting"],
+      negativeSignals: ["Weak hook", "No CTA"],
     },
-    mockVerdict: "needs_work",
+    mockVerdict: "ready",
     expected: {
-      verdict: "needs_work",
-      confidence: "Medium",
+      // overall recalculated: (2+2+1+2)/4 = 1.75 => 1.8
+      // overall 1.8 <= 3 => not_ready
+      // CTR vsAvg "above" corrected to "below" (overall <= 3)
+      // fatigueDays.high 20 capped to 7 (overall <= 3)
+      // hookRetention.high 50 capped to 30 (hook 2 <= 3)
+      // cvr.high 3.0 capped to 1.5 (overall <= 3)
+      // confidence: overall 1.8 <= 3, spread = 2-1 = 1 <= 3 => "High"
+      verdict: "not_ready",
+      confidence: "High",
+      ctrVsAvg: "below",
+      fatigueDaysHighMax: 7,
+      hookRetentionHighMax: 30,
+      cvrHighMax: 1.5,
     },
   },
 ];

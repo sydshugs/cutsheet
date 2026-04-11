@@ -1,5 +1,5 @@
 /**
- * Golden scoring evaluation — verifies guardrails produce correct outputs.
+ * Golden scoring evaluation -- verifies guardrails produce correct outputs.
  * Run: npm run eval:scoring (or npx tsx scripts/eval-scoring.ts)
  */
 
@@ -63,6 +63,26 @@ for (const fix of fixtures) {
       v >= 1.0 && v <= 10.0,
       `${fix.name}: ${k} = ${v} out of range [1.0, 10.0]`
     );
+  }
+
+  // Check: all scores at or above minimum (for all-zeros fixture)
+  if (fix.expected.allScoresMin !== undefined) {
+    for (const [k, v] of Object.entries(validatedScores)) {
+      assert(
+        v >= fix.expected.allScoresMin,
+        `${fix.name}: ${k} = ${v} below minimum ${fix.expected.allScoresMin}`
+      );
+    }
+  }
+
+  // Check: all scores at or below maximum (for overflow-scores fixture)
+  if (fix.expected.allScoresMax !== undefined) {
+    for (const [k, v] of Object.entries(validatedScores)) {
+      assert(
+        v <= fix.expected.allScoresMax,
+        `${fix.name}: ${k} = ${v} above maximum ${fix.expected.allScoresMax}`
+      );
+    }
   }
 
   // Check: expected CTR direction override
