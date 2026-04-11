@@ -39,7 +39,7 @@ export default function CutsheetHero() {
               className="text-xs font-medium leading-4 tracking-[0.3px]"
               style={{ color: "#a3b3ff", fontFamily: "var(--sans)" }}
             >
-              AI-Powered Creative Intelligence
+              Score any ad in 30 seconds
             </span>
           </div>
 

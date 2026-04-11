@@ -7,7 +7,9 @@ import { FadeInSection } from "./fade-in";
 const FREE_FEATURES = [
   "Single video or static analysis",
   "11-metric scorecard",
-  "Improvement suggestions",
+  "Priority fix list",
+  "Platform benchmarks",
+  "Hook analysis",
   "3 analyses per month",
 ] as const;
 
@@ -15,9 +17,9 @@ const PRO_FEATURES = [
   "Everything in Free",
   "Unlimited analyses",
   "Competitor analysis",
-  "Batch ranking (up to 10 files)",
-  "A/B testing",
-  "Generate creative brief",
+  "Rank Creatives (up to 10)",
+  "A/B Test — compare before spending",
+  "Creative Brief",
   "PDF export & share links",
   "Saved Ads library",
 ] as const;
