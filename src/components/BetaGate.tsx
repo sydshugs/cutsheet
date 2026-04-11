@@ -42,7 +42,7 @@ export function BetaGate() {
       const data = await res.json() as { success?: boolean; error?: string };
 
       if (!res.ok) {
-        setError(data.error ?? "Something went wrong. Please try again.");
+        setError(data.message ?? data.error ?? "Something went wrong. Please try again.");
         return;
       }
 

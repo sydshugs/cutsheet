@@ -7,6 +7,7 @@ import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
 import { safePlatform, safeAdType, safeNiche } from "./_lib/validateInput";
 import { sanitizeAnalysisText } from "./_lib/sanitizeMemory";
 import { validatePrediction, validateConfidence } from "../src/utils/scoreGuardrails.js";
+import { apiError } from "./_lib/apiError.js";
 
 // ── Inline benchmark data (avoids ESM import issue in Vercel CJS bundle) ──────
 // SYNC WARNING: This must match src/lib/benchmarks.ts exactly.
@@ -256,7 +257,7 @@ Return ONLY valid JSON, no markdown fencing. Be calibrated — a hook score of 3
       });
     }
   } catch (err) {
-    console.error("predict-performance error:", err);
-    return res.status(500).json({ error: "Performance prediction failed" });
+    return apiError(res, 'ANALYSIS_FAILED', 500,
+      `[predict-performance] ${err instanceof Error ? err.message : String(err)}`);
   }
 }

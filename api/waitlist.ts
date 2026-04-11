@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { setCorsHeaders } from "./_lib/auth";
+import { apiError } from "./_lib/apiError.js";
 
 // 5 signups per IP per hour
 const ratelimit = new Ratelimit({
@@ -48,7 +49,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const data = await response.json();
   const alreadyExists = data?.message?.includes("already");
   if (!response.ok && !alreadyExists) {
-    return res.status(500).json({ error: "Could not process signup" });
+    return apiError(res, 'INTERNAL_ERROR', 500, `Loops API error: ${JSON.stringify(data)}`);
   }
 
   try {

@@ -11,6 +11,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { verifyAuth, handlePreflight, checkRateLimit } from "./_lib/auth";
+import { apiError } from "./_lib/apiError.js";
 
 // ─── Storage cleanup helper ────────────────────────────────────────────────────
 // Lists all files under a storage prefix and removes them in one call.
@@ -60,7 +61,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (!supabaseUrl || !serviceRoleKey) {
       console.error("[delete-account] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
-      return res.status(500).json({ error: "Server configuration error" });
+      return apiError(res, 'INTERNAL_ERROR', 500, "Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
     }
 
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
@@ -101,13 +102,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { error: authErr } = await supabaseAdmin.auth.admin.deleteUser(uid);
     if (authErr) {
       console.error("[delete-account] Failed to delete auth user:", authErr.message);
-      return res.status(500).json({ error: "Failed to delete account. Please contact support." });
+      return apiError(res, 'INTERNAL_ERROR', 500, `auth.admin.deleteUser failed: ${authErr.message}`);
     }
 
     console.info("[delete-account] Successfully deleted user %s", uid);
     return res.status(200).json({ success: true });
   } catch (err) {
-    console.error("[delete-account] Unhandled error:", err instanceof Error ? err.message : err);
-    return res.status(500).json({ error: "Failed to delete account" });
+    return apiError(res, 'INTERNAL_ERROR', 500,
+      `[delete-account] ${err instanceof Error ? err.message : String(err)}`);
   }
 }

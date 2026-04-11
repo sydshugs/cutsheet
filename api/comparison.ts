@@ -4,6 +4,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Anthropic from "@anthropic-ai/sdk";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
 import { sanitizeSessionMemory, sanitizeUserInput } from "./_lib/sanitizeMemory";
+import { apiError } from "./_lib/apiError.js";
 
 export const maxDuration = 60;
 
@@ -82,13 +83,13 @@ Return JSON only:
 
   const text = response.content.filter((b) => b.type === "text").map((b) => b.text).join("");
   const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) return res.status(500).json({ error: "Could not parse Claude response" });
+  if (!jsonMatch) return apiError(res, 'ANALYSIS_FAILED', 500, "Could not extract JSON from Claude response");
 
   let parsed;
   try {
     parsed = JSON.parse(jsonMatch[0]);
   } catch {
-    return res.status(500).json({ error: "Failed to parse AI response — please try again" });
+    return apiError(res, 'ANALYSIS_FAILED', 500, "JSON.parse failed on Claude response");
   }
   return res.status(200).json({
     scoreChange: Number(parsed.scoreChange) || 0,

@@ -76,7 +76,7 @@ export async function animateImage(payload: AnimateImageRequest): Promise<Animat
     }
 
     if (data.status === "failed") {
-      throw new Error(data.error ?? "Video generation failed");
+      throw new Error(data.message ?? data.error ?? "Video generation failed");
     }
   }
 

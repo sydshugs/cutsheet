@@ -50,13 +50,16 @@ async function callGeminiProxy(params: {
 
   if (!response.ok) {
     const ct = response.headers.get("content-type") ?? "";
+    // #region agent log
+    fetch('http://127.0.0.1:7433/ingest/b4d619d4-9480-408b-8b9b-7d7bd826fed3',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'42d35e'},body:JSON.stringify({sessionId:'42d35e',location:'analyzerService.ts:51',message:'callGeminiProxy error response',data:{status:response.status,contentType:ct},runId:'run1',hypothesisId:'A-D',timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     if (response.status === 404 || ct.includes("text/html")) {
       throw new Error(
         "Analyze API is not reachable (404). Plain Vite does not run /api routes. Add DEV_API_PROXY_TARGET to .env or .env.local (e.g. https://cutsheet.xyz — same Supabase as VITE_SUPABASE_URL), restart dev, or run pnpm run dev:vercel from the repo root. Vite does not load .env.example.",
       );
     }
     const data = await response.json().catch(() => ({}));
-    throw new Error((data as { error?: string }).error ?? `API error ${response.status}`);
+    throw new Error((data as { message?: string; error?: string }).message ?? (data as { error?: string }).error ?? `API error ${response.status}`);
   }
 
   const result = await response.json() as { text: string };
@@ -798,8 +801,14 @@ export async function analyzeVideo(
   try {
     // 1. Upload file to Supabase Storage (bypasses Vercel 4.5MB body limit)
     emit("uploading", "Uploading file...");
+    // #region agent log
+    fetch('http://127.0.0.1:7433/ingest/b4d619d4-9480-408b-8b9b-7d7bd826fed3',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'42d35e'},body:JSON.stringify({sessionId:'42d35e',location:'analyzerService.ts:800',message:'analyzeVideo start',data:{fileName:file.name,fileType:file.type,fileSizeMB:+(file.size/1024/1024).toFixed(2)},runId:'run1',hypothesisId:'A-B-C-D-E',timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     const uploaded = await uploadToStorage(file);
     storagePath = uploaded.storagePath;
+    // #region agent log
+    fetch('http://127.0.0.1:7433/ingest/b4d619d4-9480-408b-8b9b-7d7bd826fed3',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'42d35e'},body:JSON.stringify({sessionId:'42d35e',location:'analyzerService.ts:806',message:'storage upload success',data:{storagePath:uploaded.storagePath,fileUrlPrefix:uploaded.fileUrl.slice(0,80)},runId:'run1',hypothesisId:'A-B',timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
 
     const resolvedMime = inferUploadMimeType(file);
     if (resolvedMime === "application/octet-stream") {
@@ -816,6 +825,9 @@ export async function analyzeVideo(
     if (userContext) parts.push(userContext);
     parts.push(basePrompt);
     const prompt = parts.join('\n\n');
+    // #region agent log
+    fetch('http://127.0.0.1:7433/ingest/b4d619d4-9480-408b-8b9b-7d7bd826fed3',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'42d35e'},body:JSON.stringify({sessionId:'42d35e',location:'analyzerService.ts:820',message:'prompt built',data:{mimeType:resolvedMime,promptLength:prompt.length,hasContextPrefix:!!contextPrefix,contextPrefixLen:contextPrefix?.length??0},runId:'run1',hypothesisId:'C-E',timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
 
     // 3. Call server-side Gemini proxy with file URL (not base64)
     const markdown = await callGeminiProxy({
@@ -889,6 +901,9 @@ export async function analyzeVideo(
     // Clean up on failure too
     if (storagePath) cleanupStorage(storagePath);
     emit("error");
+    // #region agent log
+    fetch('http://127.0.0.1:7433/ingest/b4d619d4-9480-408b-8b9b-7d7bd826fed3',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'42d35e'},body:JSON.stringify({sessionId:'42d35e',location:'analyzerService.ts:895',message:'analyzeVideo catch',data:{errMsg:err instanceof Error?err.message:String(err)},runId:'run1',hypothesisId:'A-B-C-D-E',timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     if (err instanceof Error) {
       throw new Error(`Analysis failed: ${err.message}`);
     }

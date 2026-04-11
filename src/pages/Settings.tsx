@@ -220,7 +220,7 @@ export function Settings() {
       });
       if (!resp.ok) {
         const data = await resp.json().catch(() => ({}));
-        setDeleteError(data.error ?? "Failed to delete account");
+        setDeleteError(data.message ?? data.error ?? "Failed to delete account");
         setDeleteLoading(false);
         return;
       }

@@ -265,7 +265,7 @@ export function SafeZoneModal({ open, onClose, thumbnailSrc, mode = "paid" }: Sa
       });
       const data = await res.json() as AIResult & { error?: string };
       if (!res.ok) {
-        setAiError(data.error ?? "Analysis failed");
+        setAiError(data.message ?? data.error ?? "Analysis failed");
       } else {
         setAiResult(data);
       }
