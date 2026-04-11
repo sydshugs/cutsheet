@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "eval:scoring": "npx tsx scripts/eval-scoring.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
