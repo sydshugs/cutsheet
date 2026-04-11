@@ -434,32 +434,163 @@ export default function CutsheetWhy() {
           />
         </FadeInSection>
 
-        {/* Media buyers — text left, mock right */}
-        <div className="grid w-full items-center gap-3 grid-cols-2 sm:gap-10 md:gap-12 lg:gap-16">
-          <FadeInSection delay={0.1} className="flex flex-col gap-2 sm:gap-6 sm:max-w-xl">
+        {/* ── MEDIA BUYERS ─────────────────────────────────────── */}
+
+        {/* Mobile compact — Figma 393:2557 */}
+        <div
+          className="flex w-full items-center md:hidden"
+          style={{ gap: "17.95px", padding: "0 16px", minHeight: "156px" }}
+        >
+          {/* Text */}
+          <div className="flex flex-col" style={{ flex: 1 }}>
             <div
-              className="inline-flex h-[20px] sm:h-[25px] w-fit items-center rounded-full border px-2 sm:px-3"
+              className="inline-flex items-center"
+              style={{
+                height: "7.012px",
+                width: "fit-content",
+                backgroundColor: "rgba(var(--decon-accent-rgb), 0.08)",
+                border: "0.28px solid rgba(var(--decon-accent-rgb), 0.2)",
+                borderRadius: "9999px",
+                paddingLeft: "3.37px",
+                paddingRight: "3.37px",
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: "var(--sans)",
+                  fontSize: "2.805px",
+                  fontWeight: 600,
+                  letterSpacing: "0.14px",
+                  textTransform: "uppercase",
+                  color: "var(--decon-accent-label)",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Media Buyers
+              </span>
+            </div>
+            <h3
+              style={{
+                fontFamily: "var(--sans)",
+                fontSize: "7.853px",
+                fontWeight: 700,
+                lineHeight: "9.816px",
+                color: "#f4f4f5",
+                marginTop: "4.5px",
+                marginBottom: 0,
+              }}
+            >
+              Running creatives every week? Stop finding out what didn&apos;t
+              work after you&apos;ve already spent.
+            </h3>
+            <p
+              style={{
+                fontFamily: "var(--sans)",
+                fontSize: "4.488px",
+                fontWeight: 400,
+                lineHeight: "7.292px",
+                color: "#71717b",
+                marginTop: "4.5px",
+                marginBottom: 0,
+                maxWidth: "104px",
+              }}
+            >
+              Cutsheet scores every creative before it goes live. Platform
+              benchmarks, dimension breakdown, and a ranked priority fix list.
+              Know before you spend.
+            </p>
+            <div
+              className="flex flex-col"
+              style={{ marginTop: "6.73px", gap: "2.244px" }}
+            >
+              {[
+                "Score any platform — Meta, TikTok, YouTube, Display",
+                "Benchmark vs. real platform averages",
+                "Priority fix list ranked by impact",
+              ].map((item) => (
+                <div
+                  key={item}
+                  className="flex items-center"
+                  style={{ gap: "2.244px" }}
+                >
+                  <Check
+                    style={{
+                      width: "3.927px",
+                      height: "3.927px",
+                      flexShrink: 0,
+                      color: "var(--decon-accent-light)",
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontFamily: "var(--sans)",
+                      fontSize: "3.927px",
+                      fontWeight: 400,
+                      lineHeight: "5.609px",
+                      color: "#9f9fa9",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {item}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* Mockup */}
+          <div
+            className="relative shrink-0 overflow-hidden"
+            style={{
+              width: "134.625px",
+              height: "120.461px",
+              borderRadius: "4.488px",
+              backgroundColor: "#111113",
+              border: "0.28px solid rgba(255,255,255,0.06)",
+              flexShrink: 0,
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "480px",
+                transform: "scale(0.28)",
+                transformOrigin: "top left",
+                pointerEvents: "none",
+              }}
+            >
+              <ScorecardMock />
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop grid */}
+        <div className="hidden md:grid w-full items-center md:gap-12 lg:gap-16" style={{ gridTemplateColumns: "1fr 1fr" }}>
+          <FadeInSection delay={0.1} className="flex flex-col gap-6 max-w-xl">
+            <div
+              className="inline-flex h-[25px] w-fit items-center rounded-full border px-3"
               style={{
                 backgroundColor: "rgba(var(--decon-accent-rgb), 0.08)",
                 borderColor: "rgba(var(--decon-accent-rgb), 0.2)",
               }}
             >
               <span
-                className="text-[8px] sm:text-[10px] font-semibold uppercase tracking-[0.5px] text-[color:var(--decon-accent-label)]"
+                className="text-[10px] font-semibold uppercase tracking-[0.5px] text-[color:var(--decon-accent-label)]"
                 style={{ fontFamily: "var(--sans)" }}
               >
                 Media Buyers
               </span>
             </div>
             <h3
-              className="text-[12px] font-bold leading-[1.2] text-[color:var(--ink)] sm:text-[22px] sm:leading-[1.2] lg:text-[28px] lg:leading-[35px]"
+              className="text-[22px] font-bold leading-[1.2] text-[color:var(--ink)] lg:text-[28px] lg:leading-[35px]"
               style={{ fontFamily: "var(--sans)" }}
             >
-              Running creatives every week? Stop finding out what didn&apos;t work
-              after you&apos;ve already spent.
+              Running creatives every week? Stop finding out what didn&apos;t
+              work after you&apos;ve already spent.
             </h3>
             <p
-              className="hidden sm:block text-base leading-[26px] text-[color:var(--landing-difference-sub)]"
+              className="text-base leading-[26px] text-[color:var(--landing-difference-sub)]"
               style={{ fontFamily: "var(--sans)" }}
             >
               Cutsheet scores every creative before it goes live. Platform
@@ -468,7 +599,7 @@ export default function CutsheetWhy() {
             </p>
             <CheckList
               iconColor="var(--decon-accent-light)"
-              className="hidden sm:flex"
+              className="flex"
               items={[
                 "Score any platform — Meta, TikTok, YouTube, Display",
                 "Benchmark vs. real platform averages",
@@ -476,43 +607,168 @@ export default function CutsheetWhy() {
               ]}
             />
           </FadeInSection>
-          <div className="flex max-h-[220px] overflow-hidden justify-center md:max-h-none md:overflow-visible md:justify-end">
-            <div className="scale-[0.45] origin-top md:scale-100" style={{ minWidth: 320 }}>
-              <ScorecardMock />
+          <div className="flex justify-end">
+            <ScorecardMock />
+          </div>
+        </div>
+
+        {/* ── CREATIVE STRATEGISTS ─────────────────────────────── */}
+
+        {/* Mobile compact — Figma */}
+        <div
+          className="flex w-full items-center md:hidden"
+          style={{ gap: "17.95px", padding: "0 16px", minHeight: "156px" }}
+        >
+          {/* Mockup LEFT */}
+          <div
+            className="relative shrink-0 overflow-hidden"
+            style={{
+              width: "134.625px",
+              height: "120.461px",
+              borderRadius: "4.488px",
+              backgroundColor: "#111113",
+              border: "0.28px solid rgba(255,255,255,0.06)",
+              flexShrink: 0,
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "480px",
+                transform: "scale(0.28)",
+                transformOrigin: "top left",
+                pointerEvents: "none",
+              }}
+            >
+              <BriefMock />
+            </div>
+          </div>
+          {/* Text RIGHT */}
+          <div className="flex flex-col" style={{ flex: 1 }}>
+            <div
+              className="inline-flex items-center"
+              style={{
+                height: "7.012px",
+                width: "fit-content",
+                backgroundColor: "var(--landing-strategist-badge-bg)",
+                border: "0.28px solid var(--landing-strategist-badge-border)",
+                borderRadius: "9999px",
+                paddingLeft: "3.37px",
+                paddingRight: "3.37px",
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: "var(--sans)",
+                  fontSize: "2.805px",
+                  fontWeight: 600,
+                  letterSpacing: "0.14px",
+                  textTransform: "uppercase",
+                  color: "var(--landing-score-amber)",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Creative Strategists
+              </span>
+            </div>
+            <h3
+              style={{
+                fontFamily: "var(--sans)",
+                fontSize: "7.853px",
+                fontWeight: 700,
+                lineHeight: "9.816px",
+                color: "#f4f4f5",
+                marginTop: "4.5px",
+                marginBottom: 0,
+              }}
+            >
+              Brief better. Know what actually works before the shoot.
+            </h3>
+            <p
+              style={{
+                fontFamily: "var(--sans)",
+                fontSize: "4.488px",
+                fontWeight: 400,
+                lineHeight: "7.292px",
+                color: "#71717b",
+                marginTop: "4.5px",
+                marginBottom: 0,
+                maxWidth: "104px",
+              }}
+            >
+              Stop briefing on gut feel. Cutsheet tells you which format your
+              audience responds to — before a single frame is shot.
+            </p>
+            <div
+              className="flex flex-col"
+              style={{ marginTop: "6.73px", gap: "2.244px" }}
+            >
+              {[
+                "AI-generated creative brief from your scorecard",
+                "Hook direction, key message, CTA recommendations",
+                "Platform and niche-specific guidance",
+              ].map((item) => (
+                <div
+                  key={item}
+                  className="flex items-center"
+                  style={{ gap: "2.244px" }}
+                >
+                  <Check
+                    style={{
+                      width: "3.927px",
+                      height: "3.927px",
+                      flexShrink: 0,
+                      color: "var(--warn)",
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontFamily: "var(--sans)",
+                      fontSize: "3.927px",
+                      fontWeight: 400,
+                      lineHeight: "5.609px",
+                      color: "#9f9fa9",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {item}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* Creative strategists — mock left, text right */}
-        <div className="grid w-full items-center gap-3 grid-cols-2 sm:gap-10 md:gap-12 lg:gap-16">
-          <div className="flex max-h-[220px] overflow-hidden justify-center md:max-h-none md:overflow-visible md:justify-start">
-            <div className="scale-[0.45] origin-top md:scale-100" style={{ minWidth: 320 }}>
-              <BriefMock />
-            </div>
+        {/* Desktop grid */}
+        <div className="hidden md:grid w-full items-center md:gap-12 lg:gap-16" style={{ gridTemplateColumns: "1fr 1fr" }}>
+          <div className="flex justify-start">
+            <BriefMock />
           </div>
-          <FadeInSection delay={0.1} className="flex flex-col gap-2 sm:gap-6 sm:max-w-xl">
+          <FadeInSection delay={0.1} className="flex flex-col gap-6 max-w-xl">
             <div
-              className="inline-flex h-[20px] sm:h-[25px] w-fit items-center rounded-full border px-2 sm:px-3"
+              className="inline-flex h-[25px] w-fit items-center rounded-full border px-3"
               style={{
                 backgroundColor: "var(--landing-strategist-badge-bg)",
                 borderColor: "var(--landing-strategist-badge-border)",
               }}
             >
               <span
-                className="text-[8px] sm:text-[10px] font-semibold uppercase tracking-[0.5px] text-[color:var(--landing-score-amber)]"
+                className="text-[10px] font-semibold uppercase tracking-[0.5px] text-[color:var(--landing-score-amber)]"
                 style={{ fontFamily: "var(--sans)" }}
               >
                 Creative Strategists
               </span>
             </div>
             <h3
-              className="text-[12px] font-bold leading-[1.2] text-[color:var(--ink)] sm:text-[22px] sm:leading-[1.2] lg:text-[28px] lg:leading-[35px]"
+              className="text-[22px] font-bold leading-[1.2] text-[color:var(--ink)] lg:text-[28px] lg:leading-[35px]"
               style={{ fontFamily: "var(--sans)" }}
             >
               Brief better. Know what actually works before the shoot.
             </h3>
             <p
-              className="hidden sm:block text-base leading-[26px] text-[color:var(--landing-difference-sub)]"
+              className="text-base leading-[26px] text-[color:var(--landing-difference-sub)]"
               style={{ fontFamily: "var(--sans)" }}
             >
               Stop briefing on gut feel. Cutsheet tells you which format your
@@ -520,7 +776,7 @@ export default function CutsheetWhy() {
             </p>
             <CheckList
               iconColor="var(--warn)"
-              className="hidden sm:flex"
+              className="flex"
               items={[
                 "AI-generated creative brief from your scorecard",
                 "Hook direction, key message, CTA recommendations",
@@ -530,39 +786,168 @@ export default function CutsheetWhy() {
           </FadeInSection>
         </div>
 
-        {/* DTC founders — text left, mock right */}
-        <div className="grid w-full items-center gap-3 grid-cols-2 sm:gap-10 md:gap-12 lg:gap-16">
-          <FadeInSection delay={0.1} className="flex flex-col gap-2 sm:gap-6 sm:max-w-xl">
+        {/* ── DTC FOUNDERS ─────────────────────────────────────── */}
+
+        {/* Mobile compact — Figma */}
+        <div
+          className="flex w-full items-center md:hidden"
+          style={{ gap: "17.95px", padding: "0 16px", minHeight: "156px" }}
+        >
+          {/* Text LEFT */}
+          <div className="flex flex-col" style={{ flex: 1 }}>
             <div
-              className="inline-flex h-[20px] sm:h-[25px] w-fit items-center rounded-full border px-2 sm:px-3"
+              className="inline-flex items-center"
+              style={{
+                height: "7.012px",
+                width: "fit-content",
+                backgroundColor: "var(--landing-dtc-badge-bg)",
+                border: "0.28px solid var(--landing-dtc-badge-border)",
+                borderRadius: "9999px",
+                paddingLeft: "3.37px",
+                paddingRight: "3.37px",
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: "var(--sans)",
+                  fontSize: "2.805px",
+                  fontWeight: 600,
+                  letterSpacing: "0.14px",
+                  textTransform: "uppercase",
+                  color: "var(--organic-pill-text)",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                DTC Founders
+              </span>
+            </div>
+            <h3
+              style={{
+                fontFamily: "var(--sans)",
+                fontSize: "7.853px",
+                fontWeight: 700,
+                lineHeight: "9.816px",
+                color: "#f4f4f5",
+                marginTop: "4.5px",
+                marginBottom: 0,
+              }}
+            >
+              Your budget is too small to test 10 variations. Rank them first.
+            </h3>
+            <p
+              style={{
+                fontFamily: "var(--sans)",
+                fontSize: "4.488px",
+                fontWeight: 400,
+                lineHeight: "7.292px",
+                color: "#71717b",
+                marginTop: "4.5px",
+                marginBottom: 0,
+                maxWidth: "104px",
+              }}
+            >
+              Upload 3–10 variations. Cutsheet ranks them by predicted
+              performance — before you burn budget finding out the hard way.
+            </p>
+            <div
+              className="flex flex-col"
+              style={{ marginTop: "6.73px", gap: "2.244px" }}
+            >
+              {[
+                "Score all variations simultaneously",
+                "Ranked leaderboard — test the top 2–3 only",
+                "Know which creative to scale before you spend",
+              ].map((item) => (
+                <div
+                  key={item}
+                  className="flex items-center"
+                  style={{ gap: "2.244px" }}
+                >
+                  <Check
+                    style={{
+                      width: "3.927px",
+                      height: "3.927px",
+                      flexShrink: 0,
+                      color: "var(--organic-pill-text)",
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontFamily: "var(--sans)",
+                      fontSize: "3.927px",
+                      fontWeight: 400,
+                      lineHeight: "5.609px",
+                      color: "#9f9fa9",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {item}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* Mockup RIGHT */}
+          <div
+            className="relative shrink-0 overflow-hidden"
+            style={{
+              width: "134.625px",
+              height: "120.461px",
+              borderRadius: "4.488px",
+              backgroundColor: "#111113",
+              border: "0.28px solid rgba(255,255,255,0.06)",
+              flexShrink: 0,
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "480px",
+                transform: "scale(0.28)",
+                transformOrigin: "top left",
+                pointerEvents: "none",
+              }}
+            >
+              <LeaderboardMock />
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop grid */}
+        <div className="hidden md:grid w-full items-center md:gap-12 lg:gap-16" style={{ gridTemplateColumns: "1fr 1fr" }}>
+          <FadeInSection delay={0.1} className="flex flex-col gap-6 max-w-xl">
+            <div
+              className="inline-flex h-[25px] w-fit items-center rounded-full border px-3"
               style={{
                 backgroundColor: "var(--landing-dtc-badge-bg)",
                 borderColor: "var(--landing-dtc-badge-border)",
               }}
             >
               <span
-                className="text-[8px] sm:text-[10px] font-semibold uppercase tracking-[0.5px] text-[color:var(--organic-pill-text)]"
+                className="text-[10px] font-semibold uppercase tracking-[0.5px] text-[color:var(--organic-pill-text)]"
                 style={{ fontFamily: "var(--sans)" }}
               >
                 DTC Founders
               </span>
             </div>
             <h3
-              className="text-[12px] font-bold leading-[1.2] text-[color:var(--ink)] sm:text-[22px] sm:leading-[1.2] lg:text-[28px] lg:leading-[35px]"
+              className="text-[22px] font-bold leading-[1.2] text-[color:var(--ink)] lg:text-[28px] lg:leading-[35px]"
               style={{ fontFamily: "var(--sans)" }}
             >
               Your budget is too small to test 10 variations. Rank them first.
             </h3>
             <p
-              className="hidden sm:block text-base leading-[26px] text-[color:var(--landing-difference-sub)]"
+              className="text-base leading-[26px] text-[color:var(--landing-difference-sub)]"
               style={{ fontFamily: "var(--sans)" }}
             >
-              Upload 3–10 variations. Cutsheet ranks them by predicted performance
-              — before you burn budget finding out the hard way.
+              Upload 3–10 variations. Cutsheet ranks them by predicted
+              performance — before you burn budget finding out the hard way.
             </p>
             <CheckList
               iconColor="var(--organic-pill-text)"
-              className="hidden sm:flex"
+              className="flex"
               items={[
                 "Score all variations simultaneously",
                 "Ranked leaderboard — test the top 2–3 only",
@@ -570,10 +955,8 @@ export default function CutsheetWhy() {
               ]}
             />
           </FadeInSection>
-          <div className="flex max-h-[220px] overflow-hidden justify-center md:max-h-none md:overflow-visible md:justify-end">
-            <div className="scale-[0.45] origin-top md:scale-100" style={{ minWidth: 320 }}>
-              <LeaderboardMock />
-            </div>
+          <div className="flex justify-end">
+            <LeaderboardMock />
           </div>
         </div>
       </div>
