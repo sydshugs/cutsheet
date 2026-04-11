@@ -98,7 +98,7 @@ export default function CutsheetPlatform() {
         <header className="flex w-full flex-col items-center gap-3 text-center">
           <p style={{
             fontFamily: "var(--sans)", fontWeight: 600, fontSize: "12.1px",
-            lineHeight: "18.15px", letterSpacing: "2.42px", color: "#52525c",
+            lineHeight: "18.15px", letterSpacing: "2.42px", color: "var(--landing-eyebrow)",
             textTransform: "uppercase",
           }}>
             THE PLATFORM
@@ -110,7 +110,7 @@ export default function CutsheetPlatform() {
           </h2>
           <p style={{
             fontFamily: "var(--sans)", fontWeight: 400, fontSize: "16px",
-            lineHeight: "24px", color: "#71717b", textAlign: "center",
+            lineHeight: "24px", color: "#a1a1aa", textAlign: "center",
           }}>
             Score it. Fix it. Rank it. Compare it. All before you spend.
           </p>
@@ -212,7 +212,7 @@ export default function CutsheetPlatform() {
               <div className="relative overflow-hidden" style={{ width: "49.4%", borderRadius: "16.48px 0 0 16.48px" }}>
                 <img
                   src={TAB_IMAGES[active]}
-                  alt=""
+                  alt={`${copy.badge} feature preview`}
                   className="absolute inset-0 size-full object-cover pointer-events-none"
                   style={{ height: "151.77%", left: "-38.91%", top: "-30.48%", width: "142.65%", maxWidth: "none" }}
                   decoding="async"
@@ -265,7 +265,7 @@ export default function CutsheetPlatform() {
               >
                 <img
                   src={TAB_IMAGES[active]}
-                  alt=""
+                  alt={`${copy.badge} feature preview`}
                   style={TAB_IMAGE_STYLE[active]}
                   decoding="async"
                   loading="eager"

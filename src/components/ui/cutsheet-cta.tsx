@@ -27,7 +27,7 @@ export default function CutsheetCTA() {
         <FadeIn delay={0.15} className="mt-8 flex justify-center px-4 sm:px-0">
           <Link
             to="/access"
-            className="flex w-full items-center justify-center gap-2 rounded-full bg-[var(--accent)] px-7 py-3 text-sm font-semibold text-white transition-transform transition-opacity duration-150 hover:bg-[var(--accent-hover)] hover:scale-[1.02] hover:shadow-[0_0_24px_rgba(99,102,241,0.35)] active:scale-[0.97] sm:inline-flex sm:w-auto"
+            className="flex w-full items-center justify-center gap-2 rounded-full bg-[var(--accent)] px-7 py-3 text-sm font-semibold text-white transition-transform transition-opacity duration-150 hover:bg-[var(--accent-hover)] hover:scale-[1.02] hover:shadow-[0_0_24px_rgba(99,102,241,0.35)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6366f1] focus-visible:ring-offset-2 focus-visible:ring-offset-[#09090b] sm:inline-flex sm:w-auto"
           >
             Get Early Access
             <ArrowRight className="h-4 w-4" />

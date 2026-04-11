@@ -68,8 +68,7 @@ export default function CutsheetNav() {
       >
         <img
           src="/cutsheet-logo-clear.png"
-          alt=""
-          aria-hidden="true"
+          alt="Cutsheet"
           style={{ height: 20, width: "auto", display: "block" }}
         />
         <span
@@ -97,6 +96,7 @@ export default function CutsheetNav() {
       {/* CTA */}
       <a
         href="mailto:hello@cutsheet.xyz"
+        className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6366f1] focus-visible:ring-offset-2 focus-visible:ring-offset-[#09090b]"
         style={{
           display: "inline-flex",
           alignItems: "center",
@@ -168,7 +168,9 @@ function NavLink({
         backgroundColor: hovered ? "rgba(255,255,255,0.04)" : "transparent",
         transition: "color 0.2s ease, background-color 0.2s ease",
         lineHeight: 1,
+        outline: "none",
       }}
+      className="focus-visible:ring-2 focus-visible:ring-[#6366f1] focus-visible:ring-offset-2 focus-visible:ring-offset-[#09090b]"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >

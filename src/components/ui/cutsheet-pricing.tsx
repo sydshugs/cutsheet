@@ -82,6 +82,7 @@ export default function CutsheetPricing() {
   return (
     <section
       id="pricing"
+      aria-labelledby="pricing-heading"
       className="relative w-full overflow-hidden border-t"
       style={{
         backgroundColor: "var(--bg)",
@@ -95,18 +96,19 @@ export default function CutsheetPricing() {
         <FadeInSection>
         <div className="flex flex-col items-center gap-3 text-center">
           <p
-            className="text-[12.1px] font-semibold uppercase text-[#52525c]"
+            className="text-[12.1px] font-semibold uppercase text-[color:var(--landing-eyebrow)]"
             style={{ letterSpacing: "2.42px", lineHeight: "18.15px" }}
           >
             PRICING
           </p>
           <h2
+            id="pricing-heading"
             className="text-[24px] font-bold leading-[1.2] text-[#f4f4f5] sm:text-[30px] lg:text-[36px] lg:leading-[54px]"
           >
             Simple pricing. No surprises.
           </h2>
           <p
-            className="text-[16px] font-normal text-[#71717b]"
+            className="text-[16px] font-normal text-[#a1a1aa]"
             style={{ lineHeight: "24px" }}
           >
             Early access pricing — locked in for life when you join now.
@@ -120,6 +122,8 @@ export default function CutsheetPricing() {
           {/* Free */}
           <FadeInSection delay={0.1} className="flex-1">
           <div
+            role="group"
+            aria-label="Free plan"
             className="w-full rounded-xl sm:rounded-[16px] border p-2.5 sm:p-6"
             style={{
               backgroundColor: "rgba(255,255,255,0.02)",
@@ -164,6 +168,8 @@ export default function CutsheetPricing() {
           {/* Pro — featured, taller */}
           <FadeInSection delay={0.2} className="flex-1">
           <div
+            role="group"
+            aria-label="Pro plan"
             className="relative w-full overflow-hidden rounded-xl sm:rounded-[16px] border"
             style={{
               backgroundColor: "rgba(97,95,255,0.06)",
@@ -232,6 +238,8 @@ export default function CutsheetPricing() {
           {/* Team */}
           <FadeInSection delay={0.3} className="flex-1">
           <div
+            role="group"
+            aria-label="Team plan"
             className="w-full rounded-xl sm:rounded-[16px] border p-2.5 sm:p-6"
             style={{
               backgroundColor: "rgba(255,255,255,0.02)",
