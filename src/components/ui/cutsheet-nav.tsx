@@ -101,7 +101,7 @@ export default function CutsheetNav() {
           display: "inline-flex",
           alignItems: "center",
           gap: isMobile ? 4 : 8,
-          padding: isMobile ? "6px 12px" : "8px 20px",
+          padding: isMobile ? "10px 16px" : "8px 20px",
           borderRadius: 9999,
           backgroundColor: "#6366f1",
           color: "#fff",

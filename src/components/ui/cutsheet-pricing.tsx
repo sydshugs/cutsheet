@@ -61,7 +61,7 @@ function GhostButton({
   return (
     <button
       onClick={onClick}
-      className="w-full rounded-full border py-1.5 sm:py-[13px] text-[9px] sm:text-[14px] font-medium leading-5 text-[#d4d4d8] transition-colors hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+      className="w-full rounded-full border py-2.5 sm:py-[13px] text-[9px] sm:text-[14px] font-medium leading-5 text-[#d4d4d8] transition-colors hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6366f1] focus-visible:ring-offset-2 focus-visible:ring-offset-[#09090b]"
       style={{
         backgroundColor: "rgba(255,255,255,0.02)",
         borderColor: "rgba(255,255,255,0.1)",
@@ -219,7 +219,7 @@ export default function CutsheetPricing() {
               </p>
               <button
                 onClick={scrollToWaitlist}
-                className="mt-3 sm:mt-6 w-full rounded-full py-1.5 sm:py-3 text-[9px] sm:text-[14px] font-semibold leading-5 text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                className="mt-3 sm:mt-6 w-full rounded-full py-2.5 sm:py-3 text-[9px] sm:text-[14px] font-semibold leading-5 text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6366f1] focus-visible:ring-offset-2 focus-visible:ring-offset-[#09090b]"
                 style={{
                   backgroundColor: "#615fff",
                   boxShadow: "0px 0px 20px 0px rgba(99,102,241,0.4)",
