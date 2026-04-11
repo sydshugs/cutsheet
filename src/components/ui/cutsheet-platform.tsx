@@ -104,7 +104,7 @@ export default function CutsheetPlatform() {
             THE PLATFORM
           </p>
           <h2 className="text-balance text-center text-[24px] font-bold leading-[1.2] sm:text-[30px] lg:text-[36px] lg:leading-[54px]" style={{
-            fontFamily: "var(--sans)", color: "#f4f4f5",
+            fontFamily: "var(--display)", color: "#f4f4f5",
           }}>
             Everything you need to ship better ads
           </h2>
@@ -245,7 +245,7 @@ export default function CutsheetPlatform() {
                 </div>
                 {/* Title + body */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "3.068px", minWidth: 0 }}>
-                  <h3 style={{ fontFamily: "var(--sans)", fontWeight: 700, fontSize: "8.78px", lineHeight: 1.1, letterSpacing: "-0.132px", color: "white", margin: 0 }}>
+                  <h3 style={{ fontFamily: "var(--display)", fontWeight: 700, fontSize: "8.78px", lineHeight: 1.1, letterSpacing: "-0.132px", color: "white", margin: 0 }}>
                     {copy.title}
                   </h3>
                   <p style={{ fontFamily: "var(--sans)", fontWeight: 500, fontSize: "4.72px", lineHeight: 1.25, letterSpacing: "-0.024px", color: "#b6b6b6", margin: 0, maxWidth: "114.617px" }}>
@@ -410,7 +410,7 @@ export default function CutsheetPlatform() {
                 {/* Text block — Figma 295:946 */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "10.99px" }}>
                   <h3 style={{
-                    fontFamily: "var(--sans)", fontWeight: 700, fontSize: "31.46px",
+                    fontFamily: "var(--display)", fontWeight: 700, fontSize: "31.46px",
                     lineHeight: 1.1, letterSpacing: "-0.4719px", color: "white",
                   }}>
                     {copy.title}

@@ -93,7 +93,7 @@ export default function CutsheetFAQ() {
             <MessageCircle className="h-3 w-3" />
             FAQ
           </span>
-          <h2 className="mt-5 text-2xl font-bold tracking-tight text-white sm:text-3xl">
+          <h2 className="mt-5 text-2xl font-bold tracking-tight text-white sm:text-3xl" style={{ fontFamily: "var(--display)" }}>
             Everything you need to know.
           </h2>
         </FadeIn>

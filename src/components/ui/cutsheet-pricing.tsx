@@ -106,6 +106,7 @@ export default function CutsheetPricing() {
           <h2
             id="pricing-heading"
             className="text-[24px] font-bold leading-[1.2] text-[#f4f4f5] sm:text-[30px] lg:text-[36px] lg:leading-[54px]"
+            style={{ fontFamily: "var(--display)" }}
           >
             Simple pricing. No surprises.
           </h2>

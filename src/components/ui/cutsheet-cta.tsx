@@ -13,7 +13,7 @@ export default function CutsheetCTA() {
 
       <FadeInSection className="relative z-10 mx-auto max-w-2xl px-4 text-center sm:px-6">
         <FadeIn>
-          <h2 className="text-[28px] font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
+          <h2 className="text-[28px] font-bold tracking-tight text-white sm:text-4xl lg:text-5xl" style={{ fontFamily: "var(--display)" }}>
             Stop guessing.
             <br />
             Start scaling the right creative.

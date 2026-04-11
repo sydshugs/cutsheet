@@ -3,9 +3,9 @@ import { motion } from "framer-motion";
 import { FadeInSection } from "./fade-in";
 
 // Local assets — downloaded from Figma MCP 2026-04-11
-const UPLOAD_ICON_IMG = "/landing/how-upload-icon.png";
-const UPLOAD_PTR_IMG  = "/landing/how-upload-pointer.png";
-const UPLOAD_JPG_IMG  = "/landing/how-upload-jpg.png";
+const UPLOAD_ICON_IMG = "/landing/how-upload-icon.svg";
+const UPLOAD_PTR_IMG  = "/landing/how-upload-pointer.svg";
+const UPLOAD_JPG_IMG  = "/landing/how-upload-jpg.svg";
 const SCORE_MOCK_IMG  = "/landing/how-score-mock.png";
 const FIX_MOCK_IMG    = "/landing/how-fix-mock.png";
 
@@ -202,7 +202,7 @@ export default function CutsheetHowItWorks() {
         </FadeInSection>
 
         {/* ── Mobile stacked layout — hidden on md+ ── */}
-        <FadeInSection delay={0.1} className="flex w-full flex-col items-center gap-[22px] md:hidden">
+        <FadeInSection delay={0.1} className="flex w-full flex-col items-center gap-[22px] lg:hidden">
           {/* Card 01 — Upload */}
           <div
             className="relative w-full overflow-hidden rounded-[7.62px] border shadow-[0px_1.847px_1.847px_0px_rgba(0,0,0,0.1)]"
@@ -328,7 +328,7 @@ export default function CutsheetHowItWorks() {
         </FadeInSection>
 
         {/* ── Desktop bento — hidden below lg ── */}
-        <FadeInSection delay={0.15} className="hidden w-full max-w-[1064px] md:block">
+        <FadeInSection delay={0.15} className="hidden w-full max-w-[1064px] lg:block">
           {/* Outer container clips mockup overflow when cards are narrow */}
           <div
             className="overflow-hidden"

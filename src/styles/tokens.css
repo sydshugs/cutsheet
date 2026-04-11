@@ -66,6 +66,7 @@
   /* ── Fonts (brand guide) ── */
   --mono:       'Geist Mono', ui-monospace, monospace;
   --sans:       'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --display:    'Outfit', 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
   
   /* ── Border radius (brand guide) ── */
   --radius-sm:  6px;
