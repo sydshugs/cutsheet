@@ -2,12 +2,12 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { FadeInSection } from "./fade-in";
 
-// Figma asset URLs — refreshed 2026-04-10
-const UPLOAD_ICON_IMG = "https://www.figma.com/api/mcp/asset/1448d814-2e4a-49ac-95cf-774705718907";
-const UPLOAD_PTR_IMG  = "https://www.figma.com/api/mcp/asset/3607f84f-b9e1-4c18-a968-d7fb435d7bd0";
-const UPLOAD_JPG_IMG  = "https://www.figma.com/api/mcp/asset/3d7a2905-1c12-4ab6-8fbc-f9bf484fe147";
-const SCORE_MOCK_IMG  = "https://www.figma.com/api/mcp/asset/b11bb6c3-68c2-4b85-bc2b-bfc98ea3e1e2";
-const FIX_MOCK_IMG    = "https://www.figma.com/api/mcp/asset/66d03963-4afc-4698-bd48-020f1b066d49";
+// Figma asset URLs — refreshed 2026-04-11
+const UPLOAD_ICON_IMG = "https://www.figma.com/api/mcp/asset/ec1f19e2-f1d9-4211-bb65-3c0599df04f2";
+const UPLOAD_PTR_IMG  = "https://www.figma.com/api/mcp/asset/a663f9f3-023d-4521-84a2-05a688c56eb9";
+const UPLOAD_JPG_IMG  = "https://www.figma.com/api/mcp/asset/ffa14b50-13b5-40c6-8b35-e98ed7f9fa9f";
+const SCORE_MOCK_IMG  = "https://www.figma.com/api/mcp/asset/42f6389c-4f5f-4637-84cf-0188f757d19e";
+const FIX_MOCK_IMG    = "https://www.figma.com/api/mcp/asset/a9f760b4-98f8-46ee-870a-f32205d8ad15";
 
 // Figma 295:3219 — exact bento sizing
 const ACTIVE_W = 516.8;
@@ -202,64 +202,129 @@ export default function CutsheetHowItWorks() {
         </FadeInSection>
 
         {/* ── Mobile stacked layout — hidden on md+ ── */}
-        <FadeInSection delay={0.1} className="flex w-full flex-col gap-4 md:hidden">
-          {STEPS.map((step) => (
-            <div
-              key={step.number}
-              className="overflow-hidden rounded-[15px] border"
-              style={{
-                backgroundColor: "rgba(255,255,255,0.03)",
-                borderColor: "rgba(255,255,255,0.05)",
-                height: 174,
-              }}
-            >
-              <div className="flex h-full items-stretch overflow-hidden" style={{ paddingLeft: 16, paddingRight: 8 }}>
-                {/* Left: step number + title + desc */}
+        <FadeInSection delay={0.1} className="flex w-full flex-col items-center gap-[22px] md:hidden">
+          {/* Card 01 — Upload */}
+          <div
+            className="relative w-full overflow-hidden rounded-[7.62px] border shadow-[0px_1.847px_1.847px_0px_rgba(0,0,0,0.1)]"
+            style={{
+              maxWidth: 258,
+              height: 172,
+              backgroundColor: "rgba(255,255,255,0.03)",
+              borderColor: "rgba(255,255,255,0.05)",
+            }}
+          >
+            <div className="flex h-full" style={{ gap: 3.7, paddingTop: 10.2, paddingBottom: 11.5, paddingLeft: 5.5, paddingRight: 12.5 }}>
+              {/* Left */}
+              <div className="flex shrink-0 flex-col justify-between" style={{ width: 105.4 }}>
                 <div
-                  className="flex shrink-0 flex-col justify-between"
-                  style={{ width: 118, paddingTop: 16, paddingBottom: 16 }}
+                  className="inline-flex items-center justify-center font-bold uppercase"
+                  style={{ backgroundColor: "rgba(99,102,241,0.15)", color: "#6366f1", height: 12.3, width: 16.8, borderRadius: 2.2, fontSize: 10.8, lineHeight: 1, fontFamily: "var(--sans)", letterSpacing: "0.324px" }}
                 >
-                  {/* Number badge — top */}
-                  <div
-                    className="inline-flex items-center justify-center rounded-[4px] font-bold uppercase"
-                    style={{
-                      backgroundColor: step.badgeBg,
-                      color: step.badgeColor,
-                      height: 22,
-                      width: 32,
-                      fontSize: 16,
-                      lineHeight: 1,
-                    }}
-                  >
-                    {step.number}
-                  </div>
-                  {/* Title + desc — bottom */}
-                  <div className="flex flex-col gap-1.5">
-                    <h3
-                      className="font-bold text-white"
-                      style={{ fontFamily: "var(--sans)", fontSize: 15, lineHeight: 1.2, letterSpacing: "-0.2px" }}
-                    >
-                      {step.title}
-                    </h3>
-                    <p
-                      style={{ fontFamily: "var(--sans)", fontSize: 10, lineHeight: 1.4, color: "#b6b6b6" }}
-                    >
-                      {step.desc}
-                    </p>
-                  </div>
+                  01
                 </div>
-                {/* Right: mockup — scaled to fit */}
-                <div className="relative flex-1 overflow-hidden">
+                <div className="flex flex-col" style={{ gap: 10.6 }}>
+                  <h3 style={{ fontFamily: "var(--sans)", fontSize: 13.2, fontWeight: 700, lineHeight: 1.1, letterSpacing: "-0.198px", color: "white", margin: 0 }}>
+                    Upload any creative
+                  </h3>
+                  <p style={{ fontFamily: "var(--sans)", fontSize: 7.1, fontWeight: 500, lineHeight: 1.25, letterSpacing: "-0.036px", color: "#b6b6b6", margin: 0 }}>
+                    Video, static, or GIF. TikTok, Meta, YouTube, Display. Drop it in — Cutsheet auto-detects the format.
+                  </p>
+                </div>
+              </div>
+              {/* Right: upload UI at 0.5× scale */}
+              <div className="relative overflow-hidden" style={{ width: 131 }}>
+                <div
+                  className="pointer-events-none absolute select-none"
+                  style={{ top: 0, left: 0, transform: "scale(0.5)", transformOrigin: "top left" }}
+                >
+                  <UploadMock />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 02 — Scorecard */}
+          <div
+            className="relative w-full overflow-hidden rounded-[7.62px] border shadow-[0px_1.847px_1.847px_0px_rgba(0,0,0,0.1)]"
+            style={{
+              maxWidth: 258,
+              height: 172,
+              backgroundColor: "rgba(255,255,255,0.03)",
+              borderColor: "rgba(255,255,255,0.05)",
+            }}
+          >
+            <div className="flex h-full" style={{ gap: 22.2, paddingTop: 10.2, paddingBottom: 11.5, paddingLeft: 5.5, paddingRight: 0 }}>
+              {/* Left */}
+              <div className="flex shrink-0 flex-col justify-between" style={{ width: 105.4 }}>
+                <div
+                  className="inline-flex items-center justify-center font-bold uppercase"
+                  style={{ backgroundColor: "rgba(0,212,146,0.15)", color: "#00d492", height: 12.3, width: 16.8, borderRadius: 2.2, fontSize: 10.8, lineHeight: 1, fontFamily: "var(--sans)", letterSpacing: "0.324px" }}
+                >
+                  02
+                </div>
+                <div className="flex flex-col" style={{ gap: 10.6 }}>
+                  <h3 style={{ fontFamily: "var(--sans)", fontSize: 13.2, fontWeight: 700, lineHeight: 1.1, letterSpacing: "-0.198px", color: "white", margin: 0 }}>
+                    See how you stack up
+                  </h3>
+                  <p style={{ fontFamily: "var(--sans)", fontSize: 7.1, fontWeight: 500, lineHeight: 1.25, letterSpacing: "-0.036px", color: "#b6b6b6", margin: 0 }}>
+                    Overall score, dimension breakdown, and how you stack up against platform averages. No guessing.
+                  </p>
+                </div>
+              </div>
+              {/* Right: scorecard screenshot */}
+              <div className="relative overflow-hidden" style={{ width: 113, borderRadius: "0 7px 7px 0" }}>
+                <div className="absolute inset-0 rounded-[7.1px]" style={{ backgroundColor: "#09090b" }} />
+                <img
+                  src={SCORE_MOCK_IMG}
+                  alt=""
+                  aria-hidden
+                  draggable={false}
+                  className="absolute inset-0 size-full select-none object-cover object-top pointer-events-none"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Card 03 — Fix list (image behind card) */}
+          <div className="relative" style={{ width: "100%", maxWidth: 258, height: 172 }}>
+            {/* Screenshot image positioned behind, revealed on right */}
+            <div
+              className="absolute rounded-[7.1px] overflow-hidden"
+              style={{ left: 117.6, top: 11.3, width: 136, height: 148, backgroundColor: "#09090b" }}
+            >
+              <img
+                src={FIX_MOCK_IMG}
+                alt=""
+                aria-hidden
+                draggable={false}
+                className="absolute inset-0 size-full select-none object-cover object-top pointer-events-none"
+              />
+            </div>
+            {/* Card on top */}
+            <div
+              className="absolute inset-0 overflow-hidden rounded-[7.62px] border shadow-[0px_1.847px_1.847px_0px_rgba(0,0,0,0.1)]"
+              style={{ backgroundColor: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.05)" }}
+            >
+              <div className="flex h-full" style={{ paddingTop: 10.2, paddingBottom: 11.5, paddingLeft: 5.5, paddingRight: 12.5 }}>
+                <div className="flex shrink-0 flex-col justify-between" style={{ width: 105.4 }}>
                   <div
-                    className="pointer-events-none absolute select-none"
-                    style={{ top: 8, left: 0, transform: "scale(0.5)", transformOrigin: "top left" }}
+                    className="inline-flex items-center justify-center font-bold uppercase"
+                    style={{ backgroundColor: "rgba(14,165,233,0.15)", color: "#0ea5e9", height: 12.3, width: 16.8, borderRadius: 2.2, fontSize: 10.8, lineHeight: 1, fontFamily: "var(--sans)", letterSpacing: "0.324px" }}
                   >
-                    {step.mockup}
+                    03
+                  </div>
+                  <div className="flex flex-col" style={{ gap: 10.6 }}>
+                    <h3 style={{ fontFamily: "var(--sans)", fontSize: 13.2, fontWeight: 700, lineHeight: 1.1, letterSpacing: "-0.198px", color: "white", margin: 0 }}>
+                      Know exactly what to fix
+                    </h3>
+                    <p style={{ fontFamily: "var(--sans)", fontSize: 7.1, fontWeight: 500, lineHeight: 1.25, letterSpacing: "-0.036px", color: "#b6b6b6", margin: 0 }}>
+                      Priority fix, AI rewrite, and a full creative brief. Ranked by impact so you know what to tackle first.
+                    </p>
                   </div>
                 </div>
               </div>
             </div>
-          ))}
+          </div>
         </FadeInSection>
 
         {/* ── Desktop bento — hidden below lg ── */}
