@@ -1,4 +1,10 @@
 {
+  "exclude": [
+    "node_modules",
+    "cutsheet-Design",
+    "e2e",
+    "plugins"
+  ],
   "compilerOptions": {
     "target": "ES2022",
     "experimentalDecorators": true,

@@ -303,7 +303,7 @@ export default function PolicyCheck() {
                       }}
                     >
                       {previewUrl && file.type.startsWith("image/") && (
-                        <img src={previewUrl} alt="" style={{ width: 44, height: 30, objectFit: "contain", borderRadius: 4, background: "#09090b" }} />
+                        <img src={previewUrl} alt="" style={{ width: 44, height: 30, objectFit: "contain", borderRadius: 4, background: "var(--bg)" }} />
                       )}
                       {file.type.startsWith("video/") && (
                         <div style={{ width: 44, height: 30, borderRadius: 4, background: "#18181b", display: "flex", alignItems: "center", justifyContent: "center" }}>

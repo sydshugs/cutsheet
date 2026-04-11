@@ -3,6 +3,9 @@
 ## Overview
 Cutsheet is a video analysis SaaS built with React 19 + Vite 6 + TypeScript + Tailwind CSS v4. Dark-first design system with light mode support.
 
+### Canonical clone (local development)
+Use **`/Users/atlas/cutsheet`** as the only working copy for `git`, `pnpm dev`, and Cursor. A second folder (`cutsheet-2`, etc.) drifts from `main` and causes “fixed in one place, broken in another.” Retire extra clones after merging, or delete them.
+
 ## Tech Stack
 - **Framework:** React 19 (SPA, no SSR)
 - **Build:** Vite 6 with `@tailwindcss/vite` plugin

@@ -102,7 +102,7 @@ export default function Upgrade() {
   return (
     <div
       className="min-h-screen px-4 py-16 relative overflow-hidden"
-      style={{ background: "#09090b" }}
+      style={{ background: "var(--bg)" }}
     >
       <Helmet>
         <title>Upgrade Cutsheet — Free · Pro · Team</title>

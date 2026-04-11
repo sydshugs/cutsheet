@@ -892,7 +892,7 @@ export function Settings() {
       <div className="flex items-center justify-between pt-4" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
         <div className="flex items-center gap-4">
           <a
-            href="mailto:support@cutsheet.app"
+            href="mailto:support@cutsheet.xyz"
             className="text-xs transition-colors"
             style={{ color: "#71717a", textDecoration: "none" }}
             onMouseEnter={(e) => { e.currentTarget.style.color = "#a1a1aa"; }}
@@ -1146,7 +1146,7 @@ export function Settings() {
           <button
             type="button"
             onClick={() => {
-              window.location.href = "mailto:support@cutsheet.app?subject=Downgrade%20Request&body=Hi%2C%20I%27d%20like%20to%20downgrade%20my%20subscription%20to%20Free.%20My%20email%20is%20" + encodeURIComponent(user?.email ?? "");
+              window.location.href = "mailto:support@cutsheet.xyz?subject=Downgrade%20Request&body=Hi%2C%20I%27d%20like%20to%20downgrade%20my%20subscription%20to%20Free.%20My%20email%20is%20" + encodeURIComponent(user?.email ?? "");
             }}
             className="px-6 h-10 rounded-lg text-sm font-medium transition-all"
             style={{ 
@@ -1210,7 +1210,7 @@ export function Settings() {
   );
 
   return (
-    <div className="min-h-screen relative overflow-x-hidden" style={{ background: "#09090b" }}>
+    <div className="min-h-screen relative overflow-x-hidden" style={{ background: "var(--bg)" }}>
       <Helmet>
         <title>Settings — Cutsheet</title>
         <meta name="robots" content="noindex" />

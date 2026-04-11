@@ -95,7 +95,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return (
       <div style={{
         minHeight: '100vh',
-        background: '#09090b',
+        background: 'var(--bg)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center'

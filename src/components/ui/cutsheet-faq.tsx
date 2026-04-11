@@ -83,7 +83,7 @@ export default function CutsheetFAQ() {
   const [openIdx, setOpenIdx] = useState<number | null>(null);
 
   return (
-    <section className="border-t border-white/5 bg-zinc-950 py-20 sm:py-24">
+    <section className="border-t border-white/5 bg-[var(--bg)] py-20 sm:py-24">
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <FadeIn className="mb-14 text-center">
@@ -113,10 +113,10 @@ export default function CutsheetFAQ() {
         <p className="mt-10 text-center text-sm text-zinc-500">
           Still have questions? Email us at{" "}
           <a
-            href="mailto:hello@cutsheet.ai"
+            href="mailto:hello@cutsheet.xyz"
             className="text-indigo-400 transition-colors hover:text-indigo-300"
           >
-            hello@cutsheet.ai
+            hello@cutsheet.xyz
           </a>
         </p>
       </div>

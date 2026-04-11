@@ -1,5 +1,19 @@
 import { cn } from "@/src/lib/utils";
-import { Wand2, Copy, Sparkles, MessageSquare, Layers, Check, Lightbulb, ArrowRight, ThumbsUp, ThumbsDown } from "lucide-react";
+import {
+  Wand2,
+  Copy,
+  Sparkles,
+  MessageSquare,
+  MessageCircle,
+  Layers,
+  Check,
+  Lightbulb,
+  ArrowRight,
+  ThumbsUp,
+  ThumbsDown,
+  ChevronLeft,
+  AlertCircle,
+} from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import DOMPurify from "dompurify";
@@ -19,6 +33,12 @@ export interface FixItResult {
 interface FixItPanelProps {
   result: FixItResult;
   onCopyAll?: () => void;
+  /** Return to scores / close embedded panel (e.g. right rail) */
+  onClose?: () => void;
+  /** Show amber priority-fix banner above the header */
+  fromPriorityFix?: boolean;
+  /** Body copy for the priority-fix banner */
+  priorityFixText?: string;
   /** "static" hides text overlays section, "video" shows timestamps */
   mediaType?: "static" | "video";
   /** UUID of the saved analysis row in Supabase — used as FK in suggestion_feedback */
@@ -27,15 +47,25 @@ interface FixItPanelProps {
   niche?: string;
 }
 
-// ─── BRAND COLORS ───────────────────────────────────────────────────────────
-
-const COLORS = {
-  hook: { main: "#7c86ff", bg: "rgba(124,134,255,0.06)", border: "rgba(124,134,255,0.12)" },
-  body: { main: "#7c86ff", bg: "rgba(124,134,255,0.06)", border: "rgba(124,134,255,0.12)" },
-  cta: { main: "#ffb900", bg: "rgba(254,154,0,0.04)", border: "rgba(254,154,0,0.2)" },
-  overlay: { main: "#8b5cf6", bg: "rgba(139,92,246,0.08)", border: "rgba(139,92,246,0.15)" },
-  improvement: { main: "#71717b", bg: "rgba(255,255,255,0.02)", border: "rgba(255,255,255,0.06)" },
-};
+/** Section label + icon color pairs — match Figma node 228:589 / AIRewritePanel */
+const SECTION = {
+  accent: {
+    icon: "text-[var(--accent-light)]",
+    label: "text-[var(--accent-light)]",
+  },
+  amber: {
+    icon: "text-[var(--warn)]",
+    label: "text-[var(--warn)]",
+  },
+  muted: {
+    icon: "text-zinc-500",
+    label: "text-zinc-500",
+  },
+  overlay: {
+    icon: "text-[var(--accent-light)]",
+    label: "text-[var(--accent-light)]",
+  },
+} as const;
 
 // ─── HELPERS ────────────────────────────────────────────────────────────────
 
@@ -85,56 +115,49 @@ function buildPlainText(result: FixItResult): string {
   return lines.join("\n");
 }
 
-// ─── CARD WRAPPER ───────────────────────────────────────────────────────────
+// ─── CARD WRAPPER (Figma: rounded-2xl neutral shell; CTA = amber border) ─────
 
-function Card({ 
-  children, 
-  className, 
-  style,
-  accentColor,
-}: { 
-  children: React.ReactNode; 
-  className?: string; 
-  style?: React.CSSProperties;
-  accentColor?: { main: string; bg: string; border: string };
+function Card({
+  children,
+  className,
+  variant = "default",
+}: {
+  children: React.ReactNode;
+  className?: string;
+  variant?: "default" | "cta";
 }) {
   return (
     <div
-      style={{
-        background: accentColor?.bg || "rgba(255,255,255,0.02)",
-        border: `1px solid ${accentColor?.border || "rgba(255,255,255,0.06)"}`,
-        borderRadius: 17.5,
-        ...style,
-      }}
-      className={cn("p-4", className)}
+      className={cn(
+        "rounded-2xl p-4",
+        variant === "cta"
+          ? "border border-amber-500/20 bg-amber-500/[0.04]"
+          : "border border-white/[0.06] bg-white/[0.02]",
+        className
+      )}
     >
       {children}
     </div>
   );
 }
 
-// ─── SECTION HEADER ─────────────────────────────────────────────────────────
+// ─── SECTION HEADER (Figma: icon + uppercase label, no tile) ───────────────
 
-function SectionHeader({ 
-  icon: Icon, 
-  label, 
-  color 
-}: { 
-  icon: React.ElementType; 
-  label: string; 
-  color: string;
+function SectionHeader({
+  icon: Icon,
+  label,
+  iconClassName,
+  labelClassName,
+}: {
+  icon: React.ElementType;
+  label: string;
+  iconClassName: string;
+  labelClassName: string;
 }) {
   return (
-    <div className="flex items-center gap-2.5 mb-3">
-      <div 
-        className="w-7 h-7 rounded-lg flex items-center justify-center"
-        style={{ background: `${color}15` }}
-      >
-        <Icon size={14} color={color} />
-      </div>
-      <span className="text-sm font-semibold" style={{ color }}>
-        {label}
-      </span>
+    <div className="mb-3 flex items-center gap-1.5">
+      <Icon size={14} className={cn("shrink-0", iconClassName)} aria-hidden />
+      <h3 className={cn("text-[10px] font-semibold uppercase tracking-wider", labelClassName)}>{label}</h3>
     </div>
   );
 }
@@ -169,32 +192,41 @@ function FeedbackRow({ analysisId, suggestionType, suggestionIndex = 0, suggesti
   };
 
   return (
-    <div className={cn(
-      "flex items-center justify-end gap-2 mt-3 transition-opacity duration-200",
-      vote == null ? "opacity-30 hover:opacity-100" : "opacity-100"
-    )}>
+    <div
+      className={cn(
+        "mt-2 flex items-center gap-2 transition-opacity duration-200",
+        vote == null ? "opacity-40 hover:opacity-100" : "opacity-100"
+      )}
+    >
       {vote == null ? (
         <>
-          <span className="text-[10px] text-zinc-600 mr-1">Helpful?</span>
           <button
             type="button"
             onClick={() => handleVote(true)}
-            className="w-6 h-6 flex items-center justify-center rounded hover:bg-white/[0.06] transition-colors cursor-pointer"
+            className={cn(
+              "cursor-pointer rounded-lg border p-1.5 transition-colors",
+              "border-white/[0.06] bg-transparent hover:bg-white/[0.04]",
+              "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+            )}
             aria-label="Mark helpful"
           >
-            <ThumbsUp size={12} className="text-zinc-500 hover:text-emerald-400" />
+            <ThumbsUp size={12} className="text-zinc-500 hover:text-[var(--success)]" />
           </button>
           <button
             type="button"
             onClick={() => handleVote(false)}
-            className="w-6 h-6 flex items-center justify-center rounded hover:bg-white/[0.06] transition-colors cursor-pointer"
+            className={cn(
+              "cursor-pointer rounded-lg border p-1.5 transition-colors",
+              "border-white/[0.06] bg-transparent hover:bg-white/[0.04]",
+              "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+            )}
             aria-label="Mark not helpful"
           >
-            <ThumbsDown size={12} className="text-zinc-500 hover:text-red-400" />
+            <ThumbsDown size={12} className="text-zinc-500 hover:text-[var(--error)]" />
           </button>
         </>
       ) : (
-        <span className="text-[10px] text-zinc-500">Thanks for the feedback</span>
+        <span className="text-[10px] text-zinc-600">Thanks</span>
       )}
     </div>
   );
@@ -202,7 +234,17 @@ function FeedbackRow({ analysisId, suggestionType, suggestionIndex = 0, suggesti
 
 // ─── MAIN COMPONENT ─────────────────────────────────────────────────────────
 
-export default function FixItPanel({ result, onCopyAll, mediaType = "video", analysisId, platform, niche }: FixItPanelProps) {
+export default function FixItPanel({
+  result,
+  onCopyAll,
+  onClose,
+  fromPriorityFix = false,
+  priorityFixText,
+  mediaType = "video",
+  analysisId,
+  platform,
+  niche,
+}: FixItPanelProps) {
   const [copied, setCopied] = useState(false);
   const isVideo = mediaType === "video";
   const showOverlays = isVideo && result.textOverlays.length > 0;
@@ -222,52 +264,74 @@ export default function FixItPanel({ result, onCopyAll, mediaType = "video", ana
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 12 }}
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-        className="flex flex-col gap-4"
+        className="flex w-full min-w-0 flex-col gap-3 font-[family-name:var(--sans)]"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-3">
-            <div 
-              className="w-11 h-11 rounded-xl flex items-center justify-center"
-              style={{ background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.15)" }}
-            >
-              <Wand2 size={20} className="text-indigo-400" />
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="group flex w-fit cursor-pointer items-center gap-1.5 rounded text-zinc-500 transition-colors hover:text-zinc-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+          >
+            <ChevronLeft size={12} className="transition-transform group-hover:-translate-x-0.5" aria-hidden />
+            <span className="text-xs font-medium">Back to Scores</span>
+          </button>
+        )}
+
+        {fromPriorityFix && (
+          <div className="flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/[0.04] px-4 py-3">
+            <AlertCircle size={14} className="mt-0.5 shrink-0 text-[var(--warn)]" aria-hidden />
+            <div className="min-w-0">
+              <p className="mb-1 text-[10px] font-semibold tracking-wider text-[var(--warn)]">
+                FIXING PRIORITY ISSUE
+              </p>
+              {priorityFixText ? (
+                <p className="text-xs leading-relaxed text-zinc-400">{priorityFixText}</p>
+              ) : null}
             </div>
-            <div>
-              <h2 className="text-base font-semibold text-zinc-100">
-                Your Rewrite
-              </h2>
-              <p className="text-xs text-zinc-500 mt-0.5">
-                {isVideo ? "Video ad" : "Static ad"} • AI-optimized copy
+          </div>
+        )}
+
+        {/* Header — Figma 228:589 */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[var(--accent-border)] bg-[var(--accent-soft)]">
+              <Wand2 size={16} className="text-[var(--accent)]" aria-hidden />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-sm font-semibold leading-tight text-zinc-100">Your Rewrite</h2>
+              <p className="mt-0.5 text-xs text-zinc-500">
+                {isVideo ? "Video ad" : "Static ad"} · AI-optimized copy
               </p>
             </div>
           </div>
           <button
+            type="button"
             onClick={handleCopyAll}
-            className="flex items-center gap-2 h-9 px-4 rounded-lg text-xs font-medium transition-all cursor-pointer border"
-            style={{
-              background: copied ? "rgba(16,185,129,0.1)" : "rgba(255,255,255,0.04)",
-              borderColor: copied ? "rgba(16,185,129,0.2)" : "rgba(255,255,255,0.08)",
-              color: copied ? "#10b981" : "#a1a1aa",
-            }}
+            className={cn(
+              "inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors",
+              "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]",
+              copied
+                ? "border-[var(--success)]/20 bg-[var(--success)]/10 text-[var(--success)]"
+                : "border-white/[0.06] bg-white/[0.02] text-zinc-400 hover:bg-white/[0.04] hover:text-zinc-300"
+            )}
           >
-            {copied ? <Check size={14} /> : <Copy size={14} />}
+            {copied ? <Check size={12} aria-hidden /> : <Copy size={12} aria-hidden />}
             {copied ? "Copied!" : "Copy All"}
           </button>
         </div>
 
         {/* ── Rewritten Hook ─────────────────────────────────────── */}
-        <Card accentColor={COLORS.hook}>
-          <SectionHeader icon={Lightbulb} label="Rewritten Hook" color={COLORS.hook.main} />
-          <p className="text-[15px] leading-relaxed font-medium text-zinc-100 mb-3">
-            {result.rewrittenHook.copy}
-          </p>
-          <div
-            className="px-3 py-2.5 rounded-lg text-xs leading-relaxed"
-            style={{ background: "rgba(255,255,255,0.03)", color: "#a1a1aa" }}
-          >
-            <span className="font-medium text-zinc-400">Why: </span>
-            {result.rewrittenHook.reasoning}
+        <Card>
+          <SectionHeader
+            icon={Lightbulb}
+            label="Rewritten Hook"
+            iconClassName={SECTION.accent.icon}
+            labelClassName={SECTION.accent.label}
+          />
+          <p className="text-sm font-semibold leading-relaxed text-zinc-100">{result.rewrittenHook.copy}</p>
+          <div className="mt-3 rounded-[12px] border border-white/[0.04] bg-white/[0.03] px-3 py-2.5 text-xs leading-relaxed">
+            <span className="mr-1.5 font-medium text-zinc-500">Why:</span>
+            <span className="text-zinc-400">{result.rewrittenHook.reasoning}</span>
           </div>
           <FeedbackRow
             analysisId={analysisId}
@@ -279,11 +343,16 @@ export default function FixItPanel({ result, onCopyAll, mediaType = "video", ana
         </Card>
 
         {/* ── Revised Body ───────────────────────────────────────── */}
-        <Card accentColor={COLORS.body}>
-          <SectionHeader icon={MessageSquare} label="Revised Body" color={COLORS.body.main} />
+        <Card>
+          <SectionHeader
+            icon={MessageSquare}
+            label="Revised Body"
+            iconClassName={SECTION.accent.icon}
+            labelClassName={SECTION.accent.label}
+          />
           {/* Content sourced from our Claude API response, not user input */}
           <div
-            className="text-[13px] leading-[1.7] whitespace-pre-wrap text-zinc-300"
+            className="text-sm leading-relaxed whitespace-pre-wrap text-zinc-200"
             dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(renderBold(result.revisedBody)) }}
           />
           <FeedbackRow
@@ -296,15 +365,18 @@ export default function FixItPanel({ result, onCopyAll, mediaType = "video", ana
         </Card>
 
         {/* ── New CTA ────────────────────────────────────────────── */}
-        <Card accentColor={COLORS.cta}>
-          <SectionHeader icon={ArrowRight} label="New CTA" color={COLORS.cta.main} />
-          <p className="text-[17px] font-semibold text-[#f4f4f5] mb-2 tracking-[-0.3px] leading-snug">
-            {result.newCTA.copy}
-          </p>
-          <p className="text-[13px] leading-[1.6]">
-            <span className="font-medium text-[#71717b]">Placement: </span>
-            <span className="text-[#9f9fa9]">{result.newCTA.placement}</span>
-          </p>
+        <Card variant="cta">
+          <SectionHeader
+            icon={ArrowRight}
+            label="New CTA"
+            iconClassName={SECTION.amber.icon}
+            labelClassName={SECTION.amber.label}
+          />
+          <p className="mb-2 text-base font-semibold text-zinc-100">{result.newCTA.copy}</p>
+          <div className="text-xs">
+            <span className="mr-1.5 font-medium text-zinc-500">Placement:</span>
+            <span className="text-zinc-400">{result.newCTA.placement}</span>
+          </div>
           <FeedbackRow
             analysisId={analysisId}
             suggestionType="cta"
@@ -316,8 +388,13 @@ export default function FixItPanel({ result, onCopyAll, mediaType = "video", ana
 
         {/* ── Text Overlays (VIDEO ONLY) ────────────────────────── */}
         {showOverlays && (
-          <Card accentColor={COLORS.overlay}>
-            <SectionHeader icon={Layers} label="Text Overlays" color={COLORS.overlay.main} />
+          <Card>
+            <SectionHeader
+              icon={Layers}
+              label="Text Overlays"
+              iconClassName={SECTION.overlay.icon}
+              labelClassName={SECTION.overlay.label}
+            />
             <div className="flex flex-col gap-2">
               {result.textOverlays.map((overlay, i) => (
                 <div 
@@ -349,32 +426,28 @@ export default function FixItPanel({ result, onCopyAll, mediaType = "video", ana
 
         {/* ── Predicted Improvements ─────────────────────────────── */}
         {result.predictedImprovements.length > 0 && (
-          <Card accentColor={COLORS.improvement}>
-            <SectionHeader icon={Sparkles} label="Predicted Improvements" color={COLORS.improvement.main} />
-            <div className="flex flex-col gap-2.5">
+          <Card>
+            <SectionHeader
+              icon={Sparkles}
+              label="Predicted Improvements"
+              iconClassName={SECTION.accent.icon}
+              labelClassName={SECTION.muted.label}
+            />
+            <div className="flex flex-col gap-2">
               {result.predictedImprovements.map((imp, i) => (
                 <div
                   key={i}
-                  className="p-3.5 rounded-lg"
-                  style={{ background: "rgba(255,255,255,0.025)" }}
+                  className="rounded-[12px] border border-white/[0.04] bg-white/[0.02] p-3"
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[13px] font-medium text-zinc-200">
-                      {imp.dimension}
-                    </span>
-                    <div className="flex items-center gap-[6px]">
-                      <span className="text-[13px] font-normal" style={{ color: "#52525c" }}>
-                        {imp.oldScore}
-                      </span>
-                      <ArrowRight size={11} className="text-zinc-600" />
-                      <span className="text-[13px] font-semibold" style={{ color: "#00d492" }}>
-                        {imp.newScore}
-                      </span>
+                  <div className="mb-1 flex items-center justify-between">
+                    <span className="text-xs font-medium text-zinc-300">{imp.dimension}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs text-zinc-600">{imp.oldScore}</span>
+                      <ArrowRight size={10} className="text-zinc-600" aria-hidden />
+                      <span className="text-xs font-semibold text-[var(--success)]">{imp.newScore}</span>
                     </div>
                   </div>
-                  <p className="text-xs leading-relaxed m-0 text-zinc-500">
-                    {imp.reason}
-                  </p>
+                  <p className="m-0 mt-1 text-xs leading-relaxed text-zinc-500">{imp.reason}</p>
                 </div>
               ))}
             </div>
@@ -383,30 +456,22 @@ export default function FixItPanel({ result, onCopyAll, mediaType = "video", ana
 
         {/* ── Editor Notes ───────────────────────────────────────── */}
         {result.editorNotes.length > 0 && (
-          <div 
-            className="p-4 rounded-xl"
-            style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <div 
-                className="w-6 h-6 rounded-md flex items-center justify-center"
-                style={{ background: "rgba(255,255,255,0.05)" }}
-              >
-                <MessageSquare size={12} className="text-zinc-500" />
-              </div>
-              <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">
-                Editor Notes
-              </span>
-            </div>
-            <ul className="flex flex-col gap-2 pl-1">
+          <Card>
+            <SectionHeader
+              icon={MessageCircle}
+              label="Editor Notes"
+              iconClassName={SECTION.muted.icon}
+              labelClassName={SECTION.muted.label}
+            />
+            <div className="flex flex-col gap-2">
               {result.editorNotes.map((note, i) => (
-                <li key={i} className="text-[13px] flex items-start gap-2.5 text-zinc-400">
-                  <span className="text-zinc-600 mt-1.5 text-[8px]">●</span>
-                  {note}
-                </li>
+                <div key={i} className="flex items-start gap-2">
+                  <div className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-zinc-600" aria-hidden />
+                  <p className="text-xs leading-relaxed text-zinc-400">{note}</p>
+                </div>
               ))}
-            </ul>
-          </div>
+            </div>
+          </Card>
         )}
       </motion.div>
     </AnimatePresence>

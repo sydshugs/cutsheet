@@ -61,7 +61,7 @@ export class ChunkErrorBoundary extends Component<Props, State> {
         <div
           style={{
             minHeight: "100vh",
-            background: "#09090b",
+            background: "var(--bg)",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",

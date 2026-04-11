@@ -2,7 +2,7 @@
 import { Helmet } from 'react-helmet-async';
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useOutletContext, useNavigate, Link } from "react-router-dom";
-import { RotateCcw, Upload, Sparkles, Lock, Zap, Copy, FileDown, Share2 } from "lucide-react";
+import { RotateCcw, Upload, Sparkles, Lock, Zap } from "lucide-react";
 import { Toast } from "../../components/Toast";
 import { AnalyzerView } from "../../components/AnalyzerView";
 import { BriefResultView, type BriefSection } from "../../components/BriefResultView";
@@ -42,16 +42,16 @@ import { StaticSecondEyePanel } from "../../components/StaticSecondEyePanel";
 import { PolicyCheckPanel } from "../../components/PolicyCheckPanel";
 import { runPolicyCheck, type PolicyCheckResult } from "../../lib/policyCheckService";
 import { SafeZoneModal } from "../../components/SafeZoneModal";
+import { getImageDimensions, getImageDimensionsFromSrc } from "../../utils/getImageDimensions";
 import { BeforeAfterComparison } from "../../components/BeforeAfterComparison";
 import { generateComparison, type ComparisonResult } from "../../services/claudeService";
-import { createShare } from "../../services/shareService";
 import { saveAnalysis } from "../../services/historyService";
 import type { AnalysisRecord } from "../../services/historyService";
-import { checkShareLimit, incrementShareCount } from "../../utils/rateLimiter";
 import { getUserContext, formatUserContextBlock } from "../../services/userContextService";
 import { getSessionMemory } from "@/src/lib/userMemoryService";
 import { generateBudgetRecommendation, type EngineBudgetRecommendation } from "../../services/budgetService";
 import type { AppSharedContext } from "../../components/AppLayout";
+import { cn } from "../../lib/utils";
 
 const API_KEY = ""; // Gemini calls are now server-side via /api/analyze
 
@@ -77,31 +77,60 @@ function PaidEmptyState({
 }) {
   const PILLS = ["Score any format", "Platform benchmarks", "Priority fix list"];
   return (
-    <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px", minHeight: "calc(100vh - 120px)" }}>
-      {/* Section icon */}
-      <div style={{ width: 73, height: 73, borderRadius: 15, background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <Zap size={28} color="#6366f1" />
-      </div>
+    <div
+      className={cn(
+        "relative flex flex-1 flex-col items-center justify-center overflow-hidden px-6 py-8",
+        "min-h-[min(100%,calc(100vh-120px))]"
+      )}
+      style={{ backgroundColor: "var(--bg)" }}
+    >
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{ backgroundImage: "var(--analyzer-idle-ambient-paid)" }}
+        aria-hidden
+      />
+      <div className="relative z-[1] flex w-full max-w-[731px] flex-col items-center">
+        {/* Icon tile — Figma 216:137 */}
+        <div
+          className={cn(
+            "flex size-[73px] shrink-0 items-center justify-center rounded-[15px] border border-[color:var(--accent-border)]",
+            "bg-[var(--accent-subtle)]"
+          )}
+        >
+          <Zap className="size-[27px] text-[color:var(--accent)]" strokeWidth={1.75} aria-hidden />
+        </div>
 
-      <h1 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>
-        Score your paid ad
-      </h1>
-      <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)", textAlign: "center", maxWidth: 320, marginTop: 10, lineHeight: 1.6 }}>
-        Upload a video or static creative. Get a full AI breakdown in 30 seconds.
-      </p>
+        <h1 className="mt-[23px] mb-0 text-center text-[19px] font-semibold leading-tight text-[color:var(--ink)]">
+          Score your paid ad
+        </h1>
+        <p className="mt-2.5 mb-0 max-w-[276px] text-center text-[13.5px] leading-[1.6] text-[color:var(--ink-muted)]">
+          Upload a video or static creative. Get a full AI breakdown in 30 seconds.
+        </p>
 
-      {/* Feature pills */}
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 20 }}>
-        {PILLS.map((pill) => (
-          <span key={pill} style={{ fontSize: 12, color: "#818cf8", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)", borderRadius: 9999, padding: "4px 12px" }}>
-            {pill}
-          </span>
-        ))}
-      </div>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+          {PILLS.map((pill) => (
+            <span
+              key={pill}
+              className={cn(
+                "rounded-full border border-[color:var(--accent-border)] bg-[var(--accent-subtle)]",
+                "px-3 py-1 text-[11.5px] font-normal leading-[15px] text-[color:var(--accent-light)]"
+              )}
+            >
+              {pill}
+            </span>
+          ))}
+        </div>
 
-      {/* Dropzone */}
-      <div style={{ width: "100%", maxWidth: 520, marginTop: 32 }}>
-        <VideoDropzone onFileSelect={onFileSelect} file={null} onUrlSubmit={onUrlSubmit} acceptImages />
+        <div className="mt-8 w-full max-w-[731px]">
+          <VideoDropzone
+            onFileSelect={onFileSelect}
+            file={null}
+            onUrlSubmit={onUrlSubmit}
+            acceptImages
+            layoutVariant="hero"
+            wrapperClassName="max-w-none"
+          />
+        </div>
       </div>
     </div>
   );
@@ -161,7 +190,6 @@ export default function PaidAdAnalyzer() {
 
   // ── Local analyzer state ───────────────────────────────────────────────────
   const [file, setFile] = useState<File | null>(null);
-  const [copied, setCopied] = useState(false);
   const [urlInput, setUrlInput] = useState("");
   const [urlError, setUrlError] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
@@ -177,9 +205,7 @@ export default function PaidAdAnalyzer() {
   const [policyResult, setPolicyResult] = useState<PolicyCheckResult | null>(null);
   const [policyLoading, setPolicyLoading] = useState(false);
   const [policyError, setPolicyError] = useState<string | null>(null);
-  const [shareToast, setShareToast] = useState(false);
   const [infoToast, setInfoToast] = useState<string | null>(null);
-  const [shareLoading, setShareLoading] = useState(false);
   const [rateLimitError, setRateLimitError] = useState<string | null>(null);
   const [analysisCompletedAt, setAnalysisCompletedAt] = useState<Date | null>(null);
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
@@ -202,6 +228,7 @@ export default function PaidAdAnalyzer() {
 
   // ── Safe Zone state ───────────────────────────────────────────────────────
   const [safeZoneOpen, setSafeZoneOpen] = useState(false);
+  const [staticImageDims, setStaticImageDims] = useState<{ width: number; height: number } | null>(null);
 
   // ── Predicted Performance state ──────────────────────────────────────────
   const [prediction, setPrediction] = useState<PredictionResult | null>(null);
@@ -254,6 +281,7 @@ export default function PaidAdAnalyzer() {
     setFixItLoading(false);
     setPrediction(null);
     setPredictionLoading(false);
+    setStaticImageDims(null);
   }, [reset]);
 
   // Re-analyze handler: upload improved version, score, compare
@@ -605,6 +633,49 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
       }
     : liveResult;
 
+  useEffect(() => {
+    if (format !== "static") {
+      setStaticImageDims(null);
+      return;
+    }
+    if (file && file.type.startsWith("image/")) {
+      let cancelled = false;
+      getImageDimensions(file)
+        .then((d) => {
+          if (!cancelled) setStaticImageDims(d);
+        })
+        .catch(() => {
+          if (!cancelled) setStaticImageDims(null);
+        });
+      return () => {
+        cancelled = true;
+      };
+    }
+    const thumb = activeResult?.thumbnailDataUrl ?? thumbnailDataUrl;
+    if (thumb) {
+      let cancelled = false;
+      getImageDimensionsFromSrc(thumb)
+        .then((d) => {
+          if (!cancelled) setStaticImageDims(d);
+        })
+        .catch(() => {
+          if (!cancelled) setStaticImageDims(null);
+        });
+      return () => {
+        cancelled = true;
+      };
+    }
+    setStaticImageDims(null);
+    return undefined;
+  }, [format, file, activeResult?.thumbnailDataUrl, thumbnailDataUrl]);
+
+  const showSafeZone = useMemo(
+    () =>
+      format === "video" ||
+      (format === "static" && staticImageDims?.width === 1080 && staticImageDims?.height === 1920),
+    [format, staticImageDims],
+  );
+
   const effectiveStatus = (loadedEntry || loadedFromHistory) ? ("complete" as const) : status;
   const showRightPanel = effectiveStatus === "complete" && activeResult !== null;
 
@@ -649,8 +720,6 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
   const handleCopy = async () => {
     if (activeResult) await copyToClipboard(activeResult.markdown);
     else await copy();
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
 
   const handleDownload = () => {
@@ -658,11 +727,6 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
     else download();
   };
   void handleDownload;
-
-  const handleExportPdf = async () => {
-    setInfoToast("PDF export coming soon — we're working on it.");
-    setTimeout(() => setInfoToast(null), 3000);
-  };
 
   const handleGenerateBrief = async () => {
     if (!activeResult || briefLoading) return;
@@ -977,32 +1041,6 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
     setTimeout(() => setInfoToast(null), 2500);
   };
 
-  const handleShareLink = async () => {
-    if (!activeResult || shareLoading) return;
-    const { allowed, resetAt } = checkShareLimit();
-    if (!allowed) {
-      setRateLimitError(`Share limit reached (10/hour). Resets at ${resetAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`);
-      setTimeout(() => setRateLimitError(null), 5000);
-      return;
-    }
-    setShareLoading(true);
-    setRateLimitError(null);
-    try {
-      const slug = await createShare({
-        file_name: activeResult.fileName,
-        scores: activeResult.scores,
-        markdown: activeResult.markdown,
-      });
-      await navigator.clipboard.writeText(`${window.location.origin}/s/${slug}`);
-      incrementShareCount();
-      setShareToast(true);
-      setTimeout(() => setShareToast(false), 3000);
-    } catch (err) {
-      setRateLimitError(err instanceof Error ? err.message : "Failed to create share link");
-      setTimeout(() => setRateLimitError(null), 5000);
-    } finally { setShareLoading(false); }
-  };
-
   const importFromUrl = async (rawUrl: string) => {
     const trimmed = rawUrl.trim();
     if (!trimmed || isAnalyzing || isImporting) return;
@@ -1116,13 +1154,8 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                         onUrlSubmit={async (u) => { setUrlInput(u); await importFromUrl(u); }}
                         onAnalyze={handleAnalyze}
                         onReset={handleReset}
-                        onCopy={handleCopy}
-                        onExportPdf={handleExportPdf}
-                        onShare={handleShareLink}
                         onGenerateBrief={handleGenerateBrief}
                         onAddToSwipeFile={handleAddToSwipeFile}
-                        copied={copied}
-                        shareLoading={shareLoading}
                         historyEntries={historyEntries}
                         onHistoryEntryClick={(entry) => setLoadedEntry(entry)}
                         platform={platform !== "all" ? platform : (rawUserContext?.platform ?? undefined)}
@@ -1135,7 +1168,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                         motionLoading={motionLoading}
                         motionError={motionError}
                         onCheckPolicies={handleCheckPolicies}
-                        onSafeZone={() => setSafeZoneOpen(true)}
+                        onSafeZone={showSafeZone ? () => setSafeZoneOpen(true) : undefined}
                         onCompare={() => navigate('/app/competitor')}
                         fixItLoading={fixItLoading}
                         fixItResult={fixItResult}
@@ -1168,9 +1201,9 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
 
       {/* Right panel — ScoreCard */}
       <div
-        className={`shrink-0 bg-[#111113] border-l border-white/[0.06] overflow-y-auto overflow-x-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-white/[0.06] relative ${showRightPanel ? "w-[350px] max-lg:w-full opacity-100" : "w-0 max-lg:w-0 opacity-0"}`}
+        className={`shrink-0 min-w-0 bg-[#111113] border-l border-white/[0.06] overflow-y-auto overflow-x-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-white/[0.06] relative ${showRightPanel ? "w-[350px] max-lg:w-full opacity-100" : "w-0 max-lg:w-0 opacity-0"}`}
       >
-        <div className="p-[24px] pb-[72px] flex flex-col gap-[16px]">
+        <div className="flex min-w-0 flex-col gap-[16px] p-[24px]">
         <AnimatePresence mode="wait">
         {showRightPanel && activeResult?.scores && rightTab === "analysis" && !(reanalyzeMode && !comparisonResult) && (
           <motion.div
@@ -1365,19 +1398,12 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -16 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="flex flex-col h-full"
+            className="flex min-w-0 flex-col h-full"
           >
-            <div className="p-4 border-b border-white/5 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setRightTab("analysis")}
-                className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer flex items-center gap-1.5 bg-transparent border-none"
-              >
-                ← Back to Scores
-              </button>
-              <span className="text-xs text-zinc-600 font-mono">Claude Sonnet</span>
+            <div className="flex min-w-0 items-center justify-end gap-2 border-b border-white/5 px-3 py-2 sm:px-4">
+              <span className="shrink-0 text-xs font-mono text-zinc-600">Claude Sonnet</span>
             </div>
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-3 py-3 sm:px-4">
               {policyLoading && !policyResult && (
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 0", gap: 12 }}>
                   <div style={{ width: 20, height: 20, border: "2px solid rgba(245,158,11,0.3)", borderTopColor: "#f59e0b", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
@@ -1391,7 +1417,11 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                 </div>
               )}
               {policyResult && !policyLoading && (
-                <PolicyCheckPanel result={policyResult} onClose={() => setRightTab("analysis")} />
+                <PolicyCheckPanel
+                  embedded
+                  result={policyResult}
+                  onClose={() => setRightTab("analysis")}
+                />
               )}
             </div>
           </motion.div>
@@ -1407,15 +1437,6 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
             transition={{ duration: 0.2, ease: 'easeOut' }}
             className="flex flex-col h-full"
           >
-            <div className="px-4 py-2.5 border-b border-white/5 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setRightTab("analysis")}
-                className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer flex items-center gap-1.5 bg-transparent border-none"
-              >
-                ← Back to Scores
-              </button>
-            </div>
             <div className="flex-1 overflow-y-auto p-4">
               {fixItLoading && !fixItResult && (
                 <div className="flex flex-col items-center justify-center py-10 gap-3">
@@ -1426,6 +1447,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
               {fixItResult && !fixItLoading && (
                 <FixItPanel
                   result={fixItResult}
+                  onClose={() => setRightTab("analysis")}
                   mediaType={format as "static" | "video"}
                   analysisId={savedAnalysisId ?? undefined}
                   platform={platform !== "all" ? platform : (rawUserContext?.platform ?? undefined)}
@@ -1504,33 +1526,6 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
 
         </AnimatePresence>
         </div>
-
-        {/* Bottom bar — Copy, PDF, Share */}
-        {showRightPanel && (
-          <div className="sticky bottom-0 w-full h-[48px] bg-[#111113] border-t border-white/[0.06] flex items-center justify-end px-6 gap-[12px]">
-            <button
-              onClick={handleCopy}
-              className="h-8 px-[12px] rounded-lg border border-white/[0.06] bg-transparent text-zinc-400 flex items-center gap-1.5 text-[13px] font-medium hover:text-zinc-300 hover:bg-white/[0.02] transition-colors"
-            >
-              <Copy size={14} />
-              Copy
-            </button>
-            <button
-              onClick={() => {}}
-              className="h-8 px-[12px] rounded-lg border border-white/[0.06] bg-transparent text-zinc-400 flex items-center gap-1.5 text-[13px] font-medium hover:text-zinc-300 hover:bg-white/[0.02] transition-colors"
-            >
-              <FileDown size={14} />
-              PDF
-            </button>
-            <button
-              onClick={handleShareLink}
-              className="h-8 px-[12px] rounded-lg bg-[#6366f1] text-white flex items-center gap-1.5 text-[13px] font-medium hover:bg-[#4f46e5] transition-colors"
-            >
-              <Share2 size={14} />
-              Share
-            </button>
-          </div>
-        )}
       </div>
 
       {/* History drawer */}
@@ -1545,15 +1540,6 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
       />
 
       {/* Toasts */}
-      {shareToast && (
-        <div
-          role="status"
-          aria-live="polite"
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-3 bg-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-xl text-xs font-mono text-zinc-300 shadow-lg z-[100]"
-        >
-          Link copied to clipboard
-        </div>
-      )}
       {rateLimitError && (
         <div
           role="alert"

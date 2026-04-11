@@ -9,11 +9,11 @@ export default function ABTestPage() {
   return (
     <>
       <Helmet>
-        <title>Pre-Flight A/B Test — Cutsheet</title>
-        <meta name="description" content="Test two ad variants before spending. Get a scored comparison and recommendation." />
+        <title>A/B Test — Cutsheet</title>
+        <meta name="description" content="Upload two variants. AI compares hooks, CTAs, and pacing to predict the winner." />
         <link rel="canonical" href="https://cutsheet.xyz/app/ab-test" />
       </Helmet>
-      <h1 className="sr-only">Pre-Flight A/B Test</h1>
+      <h1 className="sr-only">A/B Test</h1>
       <PreFlightView apiKey={API_KEY} />
     </>
   );

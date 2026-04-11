@@ -46,9 +46,9 @@
   border-width: 0;
 }
 
-/* Scorecard container styles */
+/* Scorecard container styles — transparent so parent panel (e.g. #111113) shows through */
 .scorecard {
-  background: var(--bg);
+  background: unset;
   min-height: 100%;
 }
 

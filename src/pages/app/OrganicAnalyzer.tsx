@@ -25,17 +25,17 @@ import {
 } from "../../services/claudeService";
 import { SecondEyePanel } from "../../components/SecondEyePanel";
 import { SafeZoneModal } from "../../components/SafeZoneModal";
+import { getImageDimensions, getImageDimensionsFromSrc } from "../../utils/getImageDimensions";
 
 import { PlatformSwitcher, ORGANIC_PLATFORMS, ORGANIC_STATIC_PLATFORMS, VIDEO_ONLY_PLATFORMS } from "../../components/PlatformSwitcher";
 import { generateFixIt, type FixItResult } from "../../services/fixItService";
 import { generatePrediction, type PredictionResult } from "../../services/predictionService";
-import { createShare } from "../../services/shareService";
 import { saveAnalysis } from "../../services/historyService";
 import type { AnalysisRecord } from "../../services/historyService";
-import { checkShareLimit, incrementShareCount } from "../../utils/rateLimiter";
 import { getUserContext, formatUserContextBlock } from "../../services/userContextService";
 import { getSessionMemory } from "@/src/lib/userMemoryService";
 import type { AppSharedContext } from "../../components/AppLayout";
+import { cn } from "../../lib/utils";
 
 const API_KEY = ""; // Gemini calls are now server-side via /api/analyze
 
@@ -68,29 +68,61 @@ function OrganicEmptyState({
 }) {
   const PILLS = ["Platform optimization", "Hashtag suggestions", "Algorithm scoring"];
   return (
-    <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px", minHeight: "calc(100vh - 120px)" }}>
-      <div style={{ width: 76, height: 76, borderRadius: 16, background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <TrendingUp size={28} color="#10b981" />
-      </div>
-      <h1 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginTop: 20, marginBottom: 0 }}>
-        Score your organic content
-      </h1>
-      <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)", textAlign: "center", maxWidth: 320, marginTop: 10, lineHeight: 1.6 }}>
-        Upload a video or static creative. Get a full AI breakdown in 30 seconds.
-      </p>
+    <div
+      className={cn(
+        "relative flex flex-1 flex-col items-center justify-center overflow-hidden px-6 py-8",
+        "min-h-[min(100%,calc(100vh-120px))]"
+      )}
+      style={{ backgroundColor: "var(--bg)" }}
+    >
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{ backgroundImage: "var(--analyzer-idle-ambient-organic)" }}
+        aria-hidden
+      />
+      <div className="relative z-[1] flex w-full max-w-[731px] flex-col items-center">
+        <div
+          className={cn(
+            "flex size-[73px] shrink-0 items-center justify-center rounded-[15px] border border-[color:var(--organic-border)]",
+            "bg-[var(--organic-tile-bg)]"
+          )}
+        >
+          <TrendingUp className="size-[27px] text-[color:var(--organic-accent)]" strokeWidth={1.75} aria-hidden />
+        </div>
 
-      {/* Feature pills — green styled like paid page purple */}
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 20 }}>
-        {PILLS.map((pill) => (
-          <span key={pill} style={{ fontSize: 12, color: "#10b981", background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.15)", borderRadius: 9999, padding: "4px 12px" }}>
-            {pill}
-          </span>
-        ))}
-      </div>
+        <h1 className="mt-[23px] mb-0 text-center text-[19px] font-semibold leading-tight text-[color:var(--ink)]">
+          Score your organic content
+        </h1>
+        <p className="mt-2.5 mb-0 max-w-[276px] text-center text-[13.5px] leading-[1.6] text-[color:var(--ink-muted)]">
+          Upload a video or static creative. Get a full AI breakdown in 30 seconds.
+        </p>
 
-      {/* Dropzone */}
-      <div style={{ width: "100%", maxWidth: 520, marginTop: 32 }}>
-        <VideoDropzone onFileSelect={onFileSelect} file={null} onUrlSubmit={onUrlSubmit} acceptImages heading="Drop your content here" />
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+          {PILLS.map((pill) => (
+            <span
+              key={pill}
+              className={cn(
+                "rounded-full border border-[color:var(--organic-border)] bg-[var(--organic-pill-bg)]",
+                "px-3 py-1 text-[11.5px] font-normal leading-[15px] text-[color:var(--organic-pill-text)]"
+              )}
+            >
+              {pill}
+            </span>
+          ))}
+        </div>
+
+        <div className="mt-8 w-full max-w-[731px]">
+          <VideoDropzone
+            onFileSelect={onFileSelect}
+            file={null}
+            onUrlSubmit={onUrlSubmit}
+            acceptImages
+            heading="Drop your content here"
+            layoutVariant="hero"
+            heroAccent="organic"
+            wrapperClassName="max-w-none"
+          />
+        </div>
       </div>
     </div>
   );
@@ -126,7 +158,6 @@ export default function OrganicAnalyzer() {
   const [designReviewLoading, setDesignReviewLoading] = useState(false);
 
   const [file, setFile] = useState<File | null>(null);
-  const [copied, setCopied] = useState(false);
   const [urlInput, setUrlInput] = useState("");
   const [urlError, setUrlError] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
@@ -139,9 +170,7 @@ export default function OrganicAnalyzer() {
   const [briefCopied, setBriefCopied] = useState(false);
   const [ctaRewrites, setCtaRewrites] = useState<string[] | null>(null);
   const [ctaLoading, setCtaLoading] = useState(false);
-  const [shareToast, setShareToast] = useState(false);
   const [infoToast, setInfoToast] = useState<string | null>(null);
-  const [shareLoading, setShareLoading] = useState(false);
   const [rateLimitError, setRateLimitError] = useState<string | null>(null);
   const [platformScores, setPlatformScores] = useState<PlatformScore[]>([]);
   const [platformScoresLoading, setPlatformScoresLoading] = useState(false);
@@ -151,6 +180,7 @@ export default function OrganicAnalyzer() {
   const [fixItResult, setFixItResult] = useState<FixItResult | null>(null);
   const [fixItLoading, setFixItLoading] = useState(false);
   const [safeZoneOpen, setSafeZoneOpen] = useState(false);
+  const [staticImageDims, setStaticImageDims] = useState<{ width: number; height: number } | null>(null);
   const [prediction, setPrediction] = useState<PredictionResult | null>(null);
   const [predictionLoading, setPredictionLoading] = useState(false);
   const [confirmStartOver, setConfirmStartOver] = useState(false);
@@ -224,6 +254,7 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
     setFixItResult(null);
     setFixItLoading(false);
     setPrediction(null);
+    setStaticImageDims(null);
   }, [reset]);
 
   // ── Auto-reset platform when format switches to static ──
@@ -416,6 +447,49 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
       }
     : liveResult;
 
+  useEffect(() => {
+    if (organicFormat !== "static") {
+      setStaticImageDims(null);
+      return;
+    }
+    if (file && file.type.startsWith("image/")) {
+      let cancelled = false;
+      getImageDimensions(file)
+        .then((d) => {
+          if (!cancelled) setStaticImageDims(d);
+        })
+        .catch(() => {
+          if (!cancelled) setStaticImageDims(null);
+        });
+      return () => {
+        cancelled = true;
+      };
+    }
+    const thumb = activeResult?.thumbnailDataUrl ?? thumbnailDataUrl;
+    if (thumb) {
+      let cancelled = false;
+      getImageDimensionsFromSrc(thumb)
+        .then((d) => {
+          if (!cancelled) setStaticImageDims(d);
+        })
+        .catch(() => {
+          if (!cancelled) setStaticImageDims(null);
+        });
+      return () => {
+        cancelled = true;
+      };
+    }
+    setStaticImageDims(null);
+    return undefined;
+  }, [organicFormat, file, activeResult?.thumbnailDataUrl, thumbnailDataUrl]);
+
+  const showSafeZone = useMemo(
+    () =>
+      organicFormat === "video" ||
+      (organicFormat === "static" && staticImageDims?.width === 1080 && staticImageDims?.height === 1920),
+    [organicFormat, staticImageDims],
+  );
+
   const effectiveStatus = (loadedEntry || loadedFromHistory) ? "complete" : status;
   const showRightPanel = effectiveStatus === "complete" && activeResult !== null;
 
@@ -429,19 +503,12 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
 
   const handleCopy = async () => {
     if (loadedEntry) await copyToClipboard(loadedEntry.markdown); else await copy();
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
 
   const handleDownload = () => {
     if (activeResult) downloadMarkdown(activeResult); else download();
   };
   void handleDownload;
-
-  const handleExportPdf = async () => {
-    setInfoToast("PDF export coming soon — we're working on it.");
-    setTimeout(() => setInfoToast(null), 3000);
-  };
 
   const handleGenerateBrief = async () => {
     if (!activeResult || briefLoading) return;
@@ -506,19 +573,6 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
 
   // Prediction is now fired in the consolidated post-analysis useEffect above
 
-  const handleShareLink = async () => {
-    if (!activeResult || shareLoading) return;
-    const { allowed, resetAt } = checkShareLimit();
-    if (!allowed) { setRateLimitError(`Share limit reached. Resets at ${resetAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`); setTimeout(() => setRateLimitError(null), 5000); return; }
-    setShareLoading(true); setRateLimitError(null);
-    try {
-      const slug = await createShare({ file_name: activeResult.fileName, scores: activeResult.scores, markdown: activeResult.markdown });
-      await navigator.clipboard.writeText(`${window.location.origin}/s/${slug}`);
-      incrementShareCount(); setShareToast(true); setTimeout(() => setShareToast(false), 3000);
-    } catch (err) { setRateLimitError(err instanceof Error ? err.message : "Failed to create share link"); setTimeout(() => setRateLimitError(null), 5000); }
-    finally { setShareLoading(false); }
-  };
-
   const importFromUrl = async (rawUrl: string) => {
     const trimmed = rawUrl.trim();
     if (!trimmed || isAnalyzing || isImporting) return;
@@ -581,13 +635,8 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
                   onUrlSubmit={async (u) => { setUrlInput(u); await importFromUrl(u); }}
                   onAnalyze={handleAnalyze}
                   onReset={handleReset}
-                  onCopy={handleCopy}
-                  onExportPdf={handleExportPdf}
-                  onShare={handleShareLink}
                   onGenerateBrief={handleGenerateBrief}
                   onAddToSwipeFile={handleAddToSwipeFile}
-                  copied={copied}
-                  shareLoading={shareLoading}
                   historyEntries={historyEntries}
                   onHistoryEntryClick={(entry) => setLoadedEntry(entry)}
                   icon={TrendingUp}
@@ -607,7 +656,7 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
                   secondEyeLoading={secondEyeLoading}
                   platformScores={platformScores}
                   platformScoresLoading={platformScoresLoading}
-                  onSafeZone={organicFormat === 'video' ? () => setSafeZoneOpen(true) : undefined}
+                  onSafeZone={showSafeZone ? () => setSafeZoneOpen(true) : undefined}
                 />
               </div>
             </div>
@@ -761,11 +810,6 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
 
       <HistoryDrawer open={historyOpen} entries={historyEntries} onClose={() => setHistoryOpen(false)} onSelect={(entry) => setLoadedEntry(entry)} onDelete={deleteHistoryEntry} onClearAll={clearAllHistory} isDark={true} />
 
-      {shareToast && (
-        <div role="status" aria-live="polite" className="fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-3 bg-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-xl text-xs font-mono text-zinc-300 shadow-lg z-[100]">
-          Link copied to clipboard
-        </div>
-      )}
       {rateLimitError && (
         <div role="alert" aria-live="assertive" className="fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-3 bg-red-500/15 border border-red-500/30 rounded-xl text-xs font-mono text-red-400 shadow-lg z-[100]">
           {rateLimitError}

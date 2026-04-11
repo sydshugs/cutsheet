@@ -109,33 +109,98 @@ export async function deconstructAd(
 
 // ─── MARKDOWN PARSING ─────────────────────────────────────────────────────────
 
-/** Split teardown markdown into named sections keyed by ## heading */
+/** H2, or lone H1 (some models use `# Section` instead of `##`). Never `###`. */
+function parseSectionHeadingLine(line: string): string | null {
+  if (/^###\s/.test(line) || /^####/.test(line)) return null;
+  const m = line.match(/^#{1,2}\s+(.+)$/);
+  return m ? m[1].trim() : null;
+}
+
+/** Remove leading ``` / ```markdown … ``` wrapper if the model fenced the report */
+function stripOuterCodeFence(text: string): string {
+  let t = text.trim();
+  if (!t.startsWith("```")) return text.trim();
+  const firstNl = t.indexOf("\n");
+  if (firstNl === -1) return text.trim();
+  t = t.slice(firstNl + 1);
+  const close = t.lastIndexOf("```");
+  if (close !== -1) t = t.slice(0, close);
+  return t.trim();
+}
+
+/** True if this ## title is the executive-summary block */
+export function isWhyThisAdWorksTitle(title: string): boolean {
+  const t = title.trim().toLowerCase().replace(/\s+/g, " ");
+  return t === "why this ad works" || t.startsWith("why this ad works:");
+}
+
+/** True if this ## title is the creative-brief block (case/spacing tolerant) */
+export function matchesBriefHeading(
+  title: string,
+  canonical: ReadonlySet<string>,
+): boolean {
+  const n = title.trim().toLowerCase().replace(/\s+/g, " ");
+  for (const c of canonical) {
+    if (c.toLowerCase().replace(/\s+/g, " ") === n) return true;
+  }
+  return (
+    n === "your brief" ||
+    (n.includes("steal") && n.includes("brief"))
+  );
+}
+
+/**
+ * Split teardown markdown into ## sections.
+ * Tolerates ## without a single space, preamble before the first ##, and ``` fences.
+ * If no H2 headings are found, returns one section so the UI never renders empty.
+ */
 export function parseTeardownSections(markdown: string): TeardownSection[] {
+  const md = stripOuterCodeFence(markdown);
+  if (!md) return [];
+
+  const lines = md.split("\n");
   const sections: TeardownSection[] = [];
-  const lines = markdown.split("\n");
   let currentTitle = "";
   let currentLines: string[] = [];
+  const orphan: string[] = [];
+  let isFirstClosedSection = true;
 
   for (const line of lines) {
-    if (line.startsWith("## ")) {
+    const headingTitle = parseSectionHeadingLine(line);
+    if (headingTitle !== null) {
       if (currentTitle) {
-        sections.push({
-          title: currentTitle,
-          content: currentLines.join("\n").trim(),
-        });
+        let content = currentLines.join("\n").trim();
+        if (isFirstClosedSection && orphan.length) {
+          const pre = orphan.join("\n").trim();
+          orphan.length = 0;
+          if (pre) content = pre + (content ? `\n\n${content}` : "");
+        }
+        if (isFirstClosedSection) isFirstClosedSection = false;
+        sections.push({ title: currentTitle, content });
+        currentLines = [];
       }
-      currentTitle = line.replace(/^## /, "").trim();
-      currentLines = [];
+      currentTitle = headingTitle;
+    } else if (!currentTitle) {
+      orphan.push(line);
     } else {
       currentLines.push(line);
     }
   }
 
   if (currentTitle) {
-    sections.push({
-      title: currentTitle,
-      content: currentLines.join("\n").trim(),
-    });
+    let content = currentLines.join("\n").trim();
+    if (isFirstClosedSection && orphan.length) {
+      const pre = orphan.join("\n").trim();
+      if (pre) content = pre + (content ? `\n\n${content}` : "");
+    }
+    sections.push({ title: currentTitle, content });
+  } else if (orphan.length) {
+    const body = orphan.join("\n").trim();
+    if (body) sections.push({ title: "Full report", content: body });
+  }
+
+  if (sections.length === 0) {
+    return [{ title: "Full report", content: md }];
   }
 
   return sections;

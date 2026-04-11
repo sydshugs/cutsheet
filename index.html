@@ -29,6 +29,22 @@
     </script>
   </head>
   <body>
+    <!-- Dev: Vite appends <vite-error-overlay> last; move before #root to match preview DOM order (a11y / focus). -->
+    <script>
+      (function () {
+        function moveViteErrorOverlayBeforeRoot() {
+          var overlay = document.querySelector("vite-error-overlay");
+          var root = document.getElementById("root");
+          if (!overlay || !root || overlay.parentNode !== document.body) return;
+          if (root.previousElementSibling === overlay) return;
+          document.body.insertBefore(overlay, root);
+        }
+        moveViteErrorOverlayBeforeRoot();
+        new MutationObserver(moveViteErrorOverlayBeforeRoot).observe(document.body, {
+          childList: true,
+        });
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

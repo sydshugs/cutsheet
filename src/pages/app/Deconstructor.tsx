@@ -1,26 +1,46 @@
 // src/pages/app/Deconstructor.tsx — Winning Ad Deconstructor
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import {
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
+  useMemo,
+  type CSSProperties,
+} from "react";
 import { Helmet } from "react-helmet-async";
 import { useOutletContext } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
 import {
-  ScanSearch, Link2, ChevronDown, Copy, Check, RotateCcw, Bookmark,
-  ExternalLink, AlertCircle, Upload,
+  ScanSearch,
+  Link2,
+  ChevronDown,
+  Copy,
+  Check,
+  RotateCcw,
+  Bookmark,
+  AlertCircle,
+  Upload,
+  CheckCircle,
+  Circle,
+  Play,
+  FileText,
 } from "lucide-react";
 import {
   detectSourceType,
   deconstructAd,
   parseTeardownSections,
   getSourceLabel,
+  isWhyThisAdWorksTitle,
+  matchesBriefHeading,
   type SourceType,
   type DeconstructResult,
   type TeardownSection,
 } from "../../lib/deconstructorService";
+import { cn } from "../../lib/utils";
 import { InlineError } from "../../components/InlineError";
-import { ProgressCard } from "../../components/ProgressCard";
 import type { AppSharedContext } from "../../components/AppLayout";
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
@@ -31,19 +51,219 @@ const SOURCE_COLORS: Record<SourceType, string> = {
   youtube: "#FF0000",
 };
 
-// The "Your Brief" section gets distinct dark styling
+/** API teardown heading for the brief block */
 const BRIEF_TITLE = "Your Brief";
+/** Figma (263-124 / 263-535) label */
+const BRIEF_DISPLAY_TITLE = "Your Steal-This Brief";
+
+const BRIEF_SECTION_TITLES = new Set<string>([BRIEF_TITLE, BRIEF_DISPLAY_TITLE]);
+
+const SOURCE_PLATFORMS: { type: SourceType; label: string }[] = [
+  { type: "meta", label: "Meta Ad Library" },
+  { type: "tiktok", label: "TikTok Creative Center" },
+  { type: "youtube", label: "YouTube" },
+];
+
+function sourcePillStyle(source: SourceType): CSSProperties {
+  const c = SOURCE_COLORS[source];
+  return {
+    background: `${c}14`,
+    borderColor: `${c}33`,
+    color: c,
+  };
+}
+
+/** Figma 263-525 — left-rail platform pill (TikTok mint, Meta/YouTube tuned) */
+function resultsRailSourcePillStyle(source: SourceType): CSSProperties {
+  switch (source) {
+    case "tiktok":
+      return {
+        background: "rgba(0, 187, 167, 0.1)",
+        borderColor: "rgba(0, 187, 167, 0.2)",
+        color: "#5eead4",
+      };
+    case "meta":
+      return {
+        background: "rgba(24, 119, 242, 0.1)",
+        borderColor: "rgba(24, 119, 242, 0.2)",
+        color: "#60a5fa",
+      };
+    case "youtube":
+      return {
+        background: "rgba(239, 68, 68, 0.1)",
+        borderColor: "rgba(239, 68, 68, 0.2)",
+        color: "#f87171",
+      };
+    default:
+      return sourcePillStyle(source);
+  }
+}
+
+function parseMmSsToSeconds(token: string): number | null {
+  const t = token.trim();
+  const m = t.match(/^(\d+):(\d{2})$/);
+  if (!m) return null;
+  return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+}
+
+function formatSecondsAsMmSs(sec: number): string {
+  const s = Math.max(0, Math.round(sec));
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return `${m}:${r.toString().padStart(2, "0")}`;
+}
+
+/** Parse e.g. "The Hook (0:00 - 0:03)" → start/end seconds */
+function parseHookRangeFromTitle(title: string): {
+  startSec: number;
+  endSec: number;
+  labelStart: string;
+  labelEnd: string;
+} | null {
+  const match = title.match(/hook\s*\(([^)]+)\)/i);
+  if (!match) return null;
+  const inner = match[1];
+  const parts = inner.split(/\s*[-–—]\s*/).map((p) => p.trim());
+  if (parts.length < 2) return null;
+  const startSec = parseMmSsToSeconds(parts[0]);
+  const endSec = parseMmSsToSeconds(parts[1]);
+  if (startSec == null || endSec == null) return null;
+  return {
+    startSec,
+    endSec,
+    labelStart: parts[0],
+    labelEnd: parts[1],
+  };
+}
+
+function parseTotalDurationSeconds(raw: string): number | null {
+  const t = raw.trim();
+  if (!t || t === "—") return null;
+  const colon = parseMmSsToSeconds(t);
+  if (colon != null) return colon;
+  const sec = t.match(/^(\d+(?:\.\d+)?)\s*s(?:ec(?:onds?)?)?$/i);
+  if (sec) return Math.round(parseFloat(sec[1]));
+  return null;
+}
+
+/** Figma results — left rail footer (placement · aspect · duration) */
+function creativeFooterMeta(result: DeconstructResult): {
+  placement: string;
+  aspect: string;
+  duration: string;
+} {
+  const placement =
+    result.sourceType === "meta"
+      ? "Feed / Reels"
+      : result.sourceType === "tiktok"
+        ? "TikTok"
+        : "YouTube";
+  const aspect = result.sourceType === "youtube" ? "16:9 Video" : "9:16 Video";
+  const g = result.gemini;
+  const duration =
+    typeof g?.duration === "string"
+      ? (g.duration as string)
+      : typeof g?.videoLength === "string"
+        ? (g.videoLength as string)
+        : "—";
+  return { placement, aspect, duration };
+}
+
+// ─── FIGMA 263-538 — right-rail section helpers ──────────────────────────────
+
+function isPacingSectionTitle(title: string): boolean {
+  const t = title.toLowerCase();
+  return (
+    (t.includes("pacing") || t.includes("composition")) && !t.includes("hook")
+  );
+}
+
+function parsePacingMetricsFromMarkdown(md: string): {
+  avgDisplay: string | null;
+  momentum: string | null;
+} {
+  const text = md.replace(/\*\*/g, "");
+  let avgDisplay: string | null = null;
+  const patterns = [
+    /(\d+(?:\.\d+)?)\s*s(?:ec(?:onds?)?)?\s+(?:avg|average)\s+scene/i,
+    /(?:avg|average)\s+scene\s+(?:length\s*)?[:(]?\s*(\d+(?:\.\d+)?)\s*s\b/i,
+  ];
+  for (const p of patterns) {
+    const m = text.match(p);
+    if (m) {
+      avgDisplay = `${m[1]}s`;
+      break;
+    }
+  }
+  const mom = text.match(/\bmomentum\s*[:\s]+\s*(high|medium|low)\b/i);
+  const momentum = mom
+    ? `${mom[1].charAt(0).toUpperCase()}${mom[1].slice(1).toLowerCase()}`
+    : null;
+  return { avgDisplay, momentum };
+}
+
+function stripPacingMetricLines(md: string): string {
+  return md
+    .split("\n")
+    .filter((line) => {
+      const t = line.replace(/\*\*/g, "");
+      if (/\bmomentum\s*[:\s]+\s*(high|medium|low)\b/i.test(t)) return false;
+      if (
+        /(\d+(?:\.\d+)?)\s*s\b.*(avg|average)\s+scene/i.test(t) ||
+        /(avg|average)\s+scene.*(\d+(?:\.\d+)?)\s*s/i.test(t)
+      )
+        return false;
+      return true;
+    })
+    .join("\n")
+    .trim();
+}
+
+function isMessagingSectionTitle(title: string): boolean {
+  const t = title.toLowerCase();
+  return (
+    t.includes("messaging") ||
+    t.includes("copywriting") ||
+    (t.includes("copy") && !t.includes("copyright"))
+  );
+}
+
+function splitMessagingCoreClaim(md: string): {
+  callout: { quote: string } | null;
+  rest: string;
+} {
+  const lines = md.split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    const plain = lines[i].replace(/\*\*/g, "").trim();
+    const m =
+      plain.match(/^[-*•]\s*core claim\s*:?\s*(.+)$/i) ||
+      plain.match(/^core claim\s*:?\s*(.+)$/i);
+    if (m) {
+      const quote = m[1].replace(/^["'""'']|["'""'']$/g, "").trim();
+      const rest = [...lines.slice(0, i), ...lines.slice(i + 1)]
+        .join("\n")
+        .trim();
+      return { callout: quote ? { quote } : null, rest };
+    }
+  }
+  return { callout: null, rest: md };
+}
 
 // ─── URL INPUT ────────────────────────────────────────────────────────────────
 
 function UrlInput({
+  url,
+  onUrlChange,
   onSubmit,
   loading,
+  autoFocus = true,
 }: {
+  url: string;
+  onUrlChange: (v: string) => void;
   onSubmit: (url: string, sourceType: SourceType) => void;
   loading: boolean;
+  autoFocus?: boolean;
 }) {
-  const [url, setUrl] = useState("");
   const [urlError, setUrlError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -69,55 +289,49 @@ function UrlInput({
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
+    <div className="mx-auto w-full max-w-2xl">
       <div
-        className="flex gap-2 p-1.5 rounded-2xl border border-white/10 bg-white/[0.03]"
-        style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}
+        className={cn(
+          "flex h-[52px] w-full shrink-0 items-center gap-3 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-el)] px-4 transition-[border-color,box-shadow] duration-200",
+          "focus-within:border-[color:var(--border-hover)] focus-within:shadow-[var(--shadow-sm)]",
+        )}
       >
-        <div className="flex items-center pl-3 shrink-0 text-zinc-500">
-          <Link2 size={16} />
+        <div className="flex shrink-0 items-center text-[color:var(--ink-muted)]">
+          <Link2 size={14} strokeWidth={1.75} aria-hidden />
         </div>
         <input
           ref={inputRef}
           type="url"
           value={url}
           onChange={(e) => {
-            setUrl(e.target.value);
+            onUrlChange(e.target.value);
             if (urlError) setUrlError(null);
           }}
           onKeyDown={handleKeyDown}
           placeholder="Paste a Meta Ad Library, TikTok Creative Center, or YouTube URL"
-          className="flex-1 bg-transparent text-sm text-white placeholder:text-zinc-500 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 py-2.5 min-w-0"
+          className="min-w-0 flex-1 border-none bg-transparent py-2 text-[13px] text-[color:var(--ink)] outline-none placeholder:text-zinc-600 focus-visible:ring-0 disabled:opacity-50"
           disabled={loading}
-          autoFocus
+          autoFocus={autoFocus}
         />
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={loading || !url.trim()}
-          className="shrink-0 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          style={{ background: "#6366f1" }}
-          onMouseEnter={(e) => {
-            if (!loading && url.trim())
-              e.currentTarget.style.background = "#5254cc";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "#6366f1";
-          }}
-        >
-          {loading ? (
-            <span className="flex items-center gap-2">
-              <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              Analyzing...
-            </span>
-          ) : (
-            "Deconstruct"
-          )}
-        </button>
+        {!loading && (
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={!url.trim()}
+            className={cn(
+              "flex h-9 shrink-0 items-center justify-center gap-2 rounded-lg px-4 text-[13px] font-medium text-white transition-[transform,opacity,background-color] duration-200",
+              "bg-[color:var(--accent)] hover:bg-[color:var(--accent-hover)] active:scale-[0.98]",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg)]",
+              "disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100",
+            )}
+          >
+            Deconstruct
+          </button>
+        )}
       </div>
 
       {urlError && (
-        <p className="text-xs text-red-400 mt-2 pl-1 flex items-center gap-1.5">
+        <p className="mt-2 flex items-center gap-1.5 pl-1 text-xs text-red-400">
           <AlertCircle size={12} />
           {urlError}
         </p>
@@ -193,89 +407,224 @@ function TikTokFallback({
   );
 }
 
+// ─── FIGMA 263-124 — LOADING ─────────────────────────────────────────────────
+
+function LoadingStepRow({
+  label,
+  status,
+}: {
+  label: string;
+  status: "pending" | "active" | "done";
+}) {
+  return (
+    <div className="flex items-center gap-3 py-2">
+      <div className="flex h-4 w-4 shrink-0 items-center justify-center">
+        {status === "done" && (
+          <CheckCircle className="h-4 w-4 text-[color:var(--success)]" aria-hidden />
+        )}
+        {status === "active" && (
+          <div
+            className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/10 border-t-[color:var(--accent)]"
+            aria-hidden
+          />
+        )}
+        {status === "pending" && <Circle className="h-4 w-4 text-zinc-700" aria-hidden />}
+      </div>
+      <span
+        className={cn(
+          "text-sm transition-colors duration-300",
+          status === "done" && "text-zinc-500",
+          status === "active" && "font-medium text-[color:var(--ink)]",
+          status === "pending" && "text-zinc-700",
+        )}
+      >
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function DeconstructLoadingPanel({
+  url,
+  source,
+  onCancel,
+}: {
+  url: string;
+  source: SourceType;
+  onCancel: () => void;
+}) {
+  const [step, setStep] = useState(1);
+
+  useEffect(() => {
+    setStep(1);
+    const timers = [
+      window.setTimeout(() => setStep(2), 1500),
+      window.setTimeout(() => setStep(3), 3500),
+      window.setTimeout(() => setStep(4), 5500),
+    ];
+    return () => timers.forEach(clearTimeout);
+  }, [url, source]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+      className="mt-6 w-full max-w-2xl"
+    >
+      <div className="mb-3 flex flex-col gap-1.5">
+        <span className="text-[9px] tracking-wide text-zinc-700">
+          Source detected from your URL
+        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          {SOURCE_PLATFORMS.map(({ type, label }) => (
+            <span
+              key={type}
+              className="rounded border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider"
+              style={sourcePillStyle(type)}
+            >
+              {label}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] p-6">
+        <div className="mb-8 flex items-center gap-3 border-b border-white/[0.04] pb-4">
+          <span
+            className="rounded border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider"
+            style={sourcePillStyle(source)}
+          >
+            {getSourceLabel(source)}
+          </span>
+          <span className="flex-1 truncate font-mono text-xs text-zinc-600">{url}</span>
+        </div>
+
+        <div className="mb-8 flex flex-col gap-1">
+          <LoadingStepRow
+            label="Fetching ad creative..."
+            status={step > 1 ? "done" : step === 1 ? "active" : "pending"}
+          />
+          <LoadingStepRow
+            label="Reading the hook and structure..."
+            status={step > 2 ? "done" : step === 2 ? "active" : "pending"}
+          />
+          <LoadingStepRow
+            label="Analyzing what makes it work..."
+            status={step > 3 ? "done" : step === 3 ? "active" : "pending"}
+          />
+          <LoadingStepRow
+            label="Building your steal-this brief..."
+            status={step > 4 ? "done" : step === 4 ? "active" : "pending"}
+          />
+        </div>
+
+        <div className="mb-3 h-[3px] w-full overflow-hidden rounded-full bg-white/[0.04]">
+          <motion.div
+            className="h-full rounded-full bg-[color:var(--accent)]"
+            initial={{ width: "0%" }}
+            animate={{ width: `${(step / 4) * 100}%` }}
+            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+          />
+        </div>
+
+        <p className="text-center text-xs italic text-zinc-600">
+          Studying the ad from a first-time viewer&apos;s perspective...
+        </p>
+
+        <div className="mt-6 flex flex-col items-center gap-2 border-t border-white/[0.04] pt-5">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex cursor-pointer items-center gap-1.5 border-none bg-transparent p-0 text-[13px] text-[color:var(--ink-muted)] transition-colors hover:text-[color:var(--ink-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg)]"
+          >
+            Cancel analysis
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 // ─── TEARDOWN SECTION ─────────────────────────────────────────────────────────
 
+/** Figma 263-538 — standard teardown accordion (not the brief block) */
 function TeardownSectionCard({
   section,
   defaultOpen = false,
+  totalDurationStr,
 }: {
   section: TeardownSection;
   defaultOpen?: boolean;
+  /** Total ad length for Hook timeline (e.g. from API meta) */
+  totalDurationStr?: string;
 }) {
   const [open, setOpen] = useState(defaultOpen);
-  const isBrief = section.title === BRIEF_TITLE;
-  const [copied, setCopied] = useState(false);
+  const hookRange = parseHookRangeFromTitle(section.title);
+  const totalSec =
+    totalDurationStr != null ? parseTotalDurationSeconds(totalDurationStr) : null;
+  const hookBarPct =
+    hookRange && totalSec && totalSec > 0
+      ? Math.min(100, Math.max(0, (hookRange.endSec / totalSec) * 100))
+      : null;
 
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(section.content);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  const pacingMetrics = useMemo(
+    () =>
+      isPacingSectionTitle(section.title)
+        ? parsePacingMetricsFromMarkdown(section.content)
+        : { avgDisplay: null, momentum: null },
+    [section.title, section.content],
+  );
+
+  const messagingSplit = useMemo(
+    () =>
+      isMessagingSectionTitle(section.title)
+        ? splitMessagingCoreClaim(section.content)
+        : { callout: null as { quote: string } | null, rest: section.content },
+    [section.title, section.content],
+  );
+
+  const markdownBody = useMemo(() => {
+    if (isMessagingSectionTitle(section.title)) return messagingSplit.rest;
+    if (
+      isPacingSectionTitle(section.title) &&
+      (pacingMetrics.avgDisplay || pacingMetrics.momentum)
+    ) {
+      return stripPacingMetricLines(section.content);
+    }
+    return section.content;
+  }, [
+    section.title,
+    section.content,
+    messagingSplit.rest,
+    pacingMetrics.avgDisplay,
+    pacingMetrics.momentum,
+  ]);
+
+  const showPacingRow =
+    isPacingSectionTitle(section.title) &&
+    (pacingMetrics.avgDisplay != null || pacingMetrics.momentum != null);
 
   return (
-    <div
-      className="rounded-xl overflow-hidden"
-      style={{
-        background: isBrief
-          ? "rgba(99,102,241,0.06)"
-          : "rgba(255,255,255,0.02)",
-        border: isBrief
-          ? "1px solid rgba(99,102,241,0.2)"
-          : "1px solid rgba(255,255,255,0.06)",
-      }}
-    >
-      {/* Header */}
+    <div className="overflow-hidden rounded-[15px] border border-[color:var(--border)] bg-[color:var(--surface)]">
       <button
         type="button"
         onClick={() => setOpen((p) => !p)}
-        className="w-full flex items-center justify-between px-5 py-4 text-left"
+        className="flex min-h-[50px] w-full items-center justify-between px-[19px] py-0 text-left transition-colors hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg)]"
       >
-        <div className="flex items-center gap-3">
-          {isBrief && (
-            <div
-              className="w-1.5 h-1.5 rounded-full"
-              style={{ background: "#6366f1" }}
-            />
+        <span className="pr-3 text-[13px] font-semibold leading-snug text-[color:var(--ink)]">
+          {section.title}
+        </span>
+        <ChevronDown
+          size={14}
+          className={cn(
+            "shrink-0 text-[color:var(--ink-muted)] transition-transform duration-200",
+            open && "rotate-180",
           )}
-          <span
-            className="text-sm font-semibold"
-            style={{ color: isBrief ? "#818cf8" : "#f4f4f5" }}
-          >
-            {section.title}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          {isBrief && open && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleCopy();
-              }}
-              className="flex items-center gap-1.5 text-xs font-mono text-zinc-500 hover:text-zinc-300 transition-colors px-2 py-1 rounded-md hover:bg-white/5"
-            >
-              {copied ? (
-                <>
-                  <Check size={11} />
-                  Copied
-                </>
-              ) : (
-                <>
-                  <Copy size={11} />
-                  Copy
-                </>
-              )}
-            </button>
-          )}
-          <ChevronDown
-            size={15}
-            className="text-zinc-500 transition-transform duration-200"
-            style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
-          />
-        </div>
+          aria-hidden
+        />
       </button>
 
-      {/* Content */}
       <AnimatePresence initial={false}>
         {open && (
           <motion.div
@@ -286,23 +635,107 @@ function TeardownSectionCard({
             style={{ overflow: "hidden" }}
           >
             <div
-              className="px-5 pb-5 text-sm text-zinc-400 leading-relaxed teardown-content"
-              style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}
+              className="px-[19px] pb-5 text-[13px] leading-[22px] teardown-content-figma"
+              style={{ borderTop: "1px solid var(--border)" }}
             >
               <style>{`
-                .teardown-content p { margin: 8px 0; color: rgba(255,255,255,0.7); }
-                .teardown-content strong { color: rgba(255,255,255,0.9); font-weight: 600; }
-                .teardown-content ul, .teardown-content ol { padding-left: 18px; margin: 8px 0; }
-                .teardown-content li { margin: 4px 0; color: rgba(255,255,255,0.65); }
-                .teardown-content h3, .teardown-content h4 {
+                .teardown-content-figma p { margin: 8px 0; line-height: 22px; }
+                .teardown-content-figma p, .teardown-content-figma li { color: var(--decon-markdown-muted); }
+                .teardown-content-figma strong { color: var(--ink); font-weight: 600; }
+                .teardown-content-figma ul, .teardown-content-figma ol { padding-left: 18px; margin: 8px 0; }
+                .teardown-content-figma li { margin: 4px 0; }
+                .teardown-content-figma h3, .teardown-content-figma h4 {
                   font-size: 11px; font-weight: 600; text-transform: uppercase;
-                  letter-spacing: 0.08em; color: rgba(255,255,255,0.4);
+                  letter-spacing: 0.08em; color: var(--ink-muted);
                   margin: 14px 0 6px;
                 }
-                .teardown-content hr { border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 12px 0; }
+                .teardown-content-figma hr { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+                .teardown-content-figma blockquote {
+                  margin: 12px 0;
+                  padding: 12px 16px 12px 19px;
+                  border-left: 3px solid var(--decon-accent);
+                  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+                  background: var(--decon-accent-soft);
+                }
+                .teardown-content-figma blockquote p { margin: 4px 0; color: var(--ink); }
               `}</style>
               <div className="pt-4">
-                <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{section.content}</ReactMarkdown>
+                {hookRange && totalSec != null && hookBarPct != null && (
+                  <div className="mb-5 flex items-center gap-2">
+                    <div
+                      className="h-[5px] min-w-0 flex-1 overflow-hidden rounded-full bg-white/[0.06]"
+                      role="presentation"
+                    >
+                      <div
+                        className="h-full rounded-full bg-[color:var(--decon-accent)] transition-[width] duration-300"
+                        style={{ width: `${hookBarPct}%` }}
+                      />
+                    </div>
+                    <div className="flex shrink-0 items-baseline gap-1.5 font-mono text-[9.5px] tabular-nums leading-[15px]">
+                      <span className="font-bold text-[color:var(--decon-accent-light)]">
+                        {hookRange.labelStart} — {hookRange.labelEnd}
+                      </span>
+                      <span className="text-[color:var(--decon-url-pill-mono)]">
+                        / {formatSecondsAsMmSs(totalSec)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {showPacingRow && (
+                  <div
+                    className={cn(
+                      "mb-4 flex min-h-[67px] items-center rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2",
+                      pacingMetrics.avgDisplay ? "justify-between" : "justify-end",
+                    )}
+                  >
+                    {pacingMetrics.avgDisplay && (
+                      <div className="flex flex-col gap-1">
+                        <p className="text-[23px] font-bold leading-none tracking-tight text-[color:var(--ink)]">
+                          {pacingMetrics.avgDisplay}
+                        </p>
+                        <p className="text-[11.5px] text-[color:var(--ink-muted)]">
+                          avg scene length
+                        </p>
+                      </div>
+                    )}
+                    {pacingMetrics.momentum && (
+                      <span
+                        className="rounded-full border px-2.5 py-1 text-[11.5px] font-medium"
+                        style={{
+                          background: "var(--decon-momentum-bg)",
+                          color: "var(--decon-momentum-text)",
+                          borderColor: "var(--decon-momentum-border)",
+                        }}
+                      >
+                        Momentum: {pacingMetrics.momentum}
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {messagingSplit.callout && (
+                  <div
+                    className="mb-4 flex flex-col gap-1.5 rounded-3xl py-3 pl-5 pr-4"
+                    style={{
+                      background: "var(--decon-accent-soft)",
+                      border: "1px solid var(--decon-core-claim-ring)",
+                      borderLeftWidth: 3,
+                      borderLeftColor: "var(--decon-accent)",
+                    }}
+                  >
+                    <span className="text-[8.5px] font-semibold uppercase tracking-[0.043em] text-[color:var(--decon-accent-light)]">
+                      Core claim
+                    </span>
+                    <p className="text-[13px] font-semibold leading-snug text-[color:var(--ink)]">
+                      {messagingSplit.callout.quote}
+                    </p>
+                  </div>
+                )}
+
+                <ReactMarkdown rehypePlugins={[rehypeSanitize]}>
+                  {markdownBody}
+                </ReactMarkdown>
               </div>
             </div>
           </motion.div>
@@ -317,146 +750,314 @@ function TeardownSectionCard({
 function WhyItWorksCard({ content }: { content: string }) {
   return (
     <div
-      className="rounded-xl p-5"
+      className="flex shrink-0 flex-col gap-[11px] rounded-[15px] border px-5 pb-5 pt-5"
       style={{
-        background: "rgba(99,102,241,0.08)",
-        border: "1px solid rgba(99,102,241,0.25)",
+        background: "var(--decon-accent-soft)",
+        borderColor: "var(--decon-accent-border)",
       }}
     >
-      <div className="flex items-center gap-2 mb-3">
+      <div className="flex items-center gap-2">
         <div
-          className="w-1.5 h-1.5 rounded-full"
-          style={{ background: "#818cf8" }}
+          className="size-[5.75px] shrink-0 rounded-full bg-[color:var(--decon-accent)]"
+          aria-hidden
         />
-        <span
-          className="text-xs font-mono font-semibold uppercase tracking-widest"
-          style={{ color: "#818cf8" }}
-        >
-          Why It Works
+        <span className="text-[9.5px] font-semibold uppercase tracking-[0.12em] text-[color:var(--decon-accent-light)]">
+          Why it works
         </span>
       </div>
-      <div className="text-sm text-zinc-300 leading-relaxed">
+      <div className="why-works-md text-[13px] leading-[22px] text-[color:var(--decon-body-muted)]">
+        <style>{`
+          .why-works-md p { margin: 0; }
+          .why-works-md p + p { margin-top: 10px; }
+          .why-works-md strong { color: var(--ink); font-weight: 600; }
+        `}</style>
         <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{content}</ReactMarkdown>
       </div>
     </div>
   );
 }
 
-// ─── AD META HEADER ───────────────────────────────────────────────────────────
+/** Figma 263-535 — dedicated brief card below teardown sections */
+function StealThisBriefCard({ content }: { content: string }) {
+  const [open, setOpen] = useState(true);
+  const [copied, setCopied] = useState(false);
 
-function AdMetaHeader({
-  result,
-  onReset,
-}: {
-  result: DeconstructResult;
-  onReset: () => void;
-}) {
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
-    <div className="flex items-start gap-4 mb-6">
-      {result.thumbnailUrl && (
-        <img
-          src={result.thumbnailUrl}
-          alt="Ad creative thumbnail"
-          className="w-16 h-16 rounded-xl object-cover shrink-0"
-          style={{ border: "1px solid rgba(255,255,255,0.08)" }}
-        />
-      )}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <span
-            className="text-[11px] font-mono px-2 py-0.5 rounded-full"
-            style={{
-              background: SOURCE_COLORS[result.sourceType] + "15",
-              color: SOURCE_COLORS[result.sourceType],
-              border: `1px solid ${SOURCE_COLORS[result.sourceType]}30`,
-            }}
-          >
-            {getSourceLabel(result.sourceType)}
-          </span>
-        </div>
-        <p className="text-sm font-medium text-zinc-200 truncate">
-          {result.adTitle}
-        </p>
-      </div>
+    <div
+      className="mb-6 shrink-0 overflow-hidden rounded-[15px] border"
+      style={{
+        background: "var(--decon-accent-softer)",
+        borderColor: "var(--decon-accent-border-strong)",
+      }}
+    >
       <button
         type="button"
-        onClick={onReset}
-        className="shrink-0 flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-400 transition-colors"
-        title="Analyze another ad"
+        onClick={() => setOpen((o) => !o)}
+        className="flex min-h-[50px] w-full items-center justify-between px-5 py-0 text-left transition-colors hover:bg-white/[0.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg)]"
       >
-        <RotateCcw size={13} />
-        <span className="hidden sm:inline">New</span>
+        <div className="flex items-center gap-2">
+          <div
+            className="size-[5.75px] shrink-0 rounded-full bg-[color:var(--decon-accent)]"
+            aria-hidden
+          />
+          <span className="text-[13px] font-semibold text-[color:var(--decon-accent-label)]">
+            {BRIEF_DISPLAY_TITLE}
+          </span>
+        </div>
+        <ChevronDown
+          size={14}
+          className={cn(
+            "text-[color:var(--decon-accent-light)]/50 transition-transform duration-200",
+            open && "rotate-180",
+          )}
+          aria-hidden
+        />
       </button>
+
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="overflow-hidden"
+          >
+            <div
+              className="border-t px-5 pb-5 pt-4"
+              style={{ borderColor: "var(--decon-accent-border-muted)" }}
+            >
+              <div
+                className="mb-4 flex items-center justify-between border-b pb-3"
+                style={{ borderColor: "var(--decon-accent-border-muted)" }}
+              >
+                <div className="flex items-center gap-2">
+                  <FileText className="h-3.5 w-3.5 text-[color:var(--decon-accent-light)]" aria-hidden />
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[color:var(--decon-accent-light)]">
+                    Steal-this brief
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    void handleCopy();
+                  }}
+                  className="flex items-center gap-1.5 rounded-[6px] bg-[color:var(--decon-copy-btn-bg)] px-2.5 py-1 text-[11.5px] text-[color:var(--decon-accent-light)] transition-[background-color,opacity] duration-200 hover:bg-[color:var(--decon-copy-btn-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg)]"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="h-3.5 w-3.5" aria-hidden />
+                      Copied
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3.5 w-3.5" aria-hidden />
+                      Copy
+                    </>
+                  )}
+                </button>
+              </div>
+              <div
+                className="brief-body-markdown font-mono text-[11.5px] leading-[1.7]"
+                style={{ color: "var(--decon-brief-mono)" }}
+              >
+                <style>{`
+                  .brief-body-markdown p { margin: 0.5em 0; line-height: 1.7; }
+                  .brief-body-markdown ul, .brief-body-markdown ol { padding-left: 1.1em; margin: 0.5em 0; }
+                  .brief-body-markdown strong { font-weight: 600; color: var(--decon-accent-light); }
+                `}</style>
+                <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{content}</ReactMarkdown>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-// ─── RESULTS PANEL ────────────────────────────────────────────────────────────
+// ─── FIGMA 263-535 — TWO-COLUMN RESULTS ───────────────────────────────────────
 
-function ResultsPanel({
+function ResultsSplit({
   result,
+  submittedUrl,
   onReset,
   onSaveToSwipeFile,
 }: {
   result: DeconstructResult;
+  submittedUrl: string;
   onReset: () => void;
   onSaveToSwipeFile: () => void;
 }) {
   const sections = parseTeardownSections(result.teardown);
-  const whySection = sections.find((s) => s.title === "Why This Ad Works");
-  const otherSections = sections.filter((s) => s.title !== "Why This Ad Works");
+  const whySection = sections.find((s) => isWhyThisAdWorksTitle(s.title));
+  const withoutWhy = sections.filter((s) => !isWhyThisAdWorksTitle(s.title));
+  const briefSection = withoutWhy.find((s) =>
+    matchesBriefHeading(s.title, BRIEF_SECTION_TITLES),
+  );
+  const middleSections = withoutWhy.filter(
+    (s) => !matchesBriefHeading(s.title, BRIEF_SECTION_TITLES),
+  );
+  const footerMeta = creativeFooterMeta(result);
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-      className="w-full max-w-2xl mx-auto"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
+      className="flex min-h-0 w-full max-h-[calc(100dvh-48px-68px)] flex-1 flex-col overflow-hidden md:max-h-[calc(100dvh-48px)] lg:min-h-[calc(100dvh-48px)] lg:flex-row"
+      data-ad-breakdown-results="figma-263-416"
     >
-      <AdMetaHeader result={result} onReset={onReset} />
-
-      {/* Why It Works — always open, prominent */}
-      {whySection && (
-        <div className="mb-4">
-          <WhyItWorksCard content={whySection.content} />
+      {/* Left — creative + meta (Figma 263:660) */}
+      <div className="flex w-full shrink-0 flex-col overflow-y-auto border-b border-white/[0.04] bg-[color:var(--bg)] lg:w-[min(22.8125rem,100%)] lg:max-w-[380px] lg:border-b-0 lg:border-r lg:border-white/[0.04]">
+        <div className="border-b border-[color:var(--border)] px-4 pb-3 pt-4">
+          <h1 className="mb-3 text-[13px] font-medium leading-tight text-[color:var(--ink)] md:hidden">
+            Ad Breakdown
+          </h1>
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+              <span
+                className="w-fit rounded-full border px-2.5 py-0.5 text-[9.5px] font-semibold uppercase leading-tight tracking-wide"
+                style={resultsRailSourcePillStyle(result.sourceType)}
+              >
+                {getSourceLabel(result.sourceType)}
+              </span>
+              <h3 className="line-clamp-3 text-[13px] font-medium leading-snug text-[color:var(--ink)]">
+                {result.adTitle}
+              </h3>
+            </div>
+            <button
+              type="button"
+              onClick={onReset}
+              className="flex shrink-0 items-center gap-1 pt-0.5 text-[11.5px] text-[color:var(--ink-muted)] transition-colors hover:text-[color:var(--ink-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg)]"
+            >
+              <RotateCcw className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              <span>Analyze another</span>
+            </button>
+          </div>
+          {submittedUrl ? (
+            <p
+              className="mt-2 truncate font-mono text-[11px] leading-snug text-[color:var(--decon-url-pill-mono)]"
+              title={submittedUrl}
+            >
+              {submittedUrl}
+            </p>
+          ) : null}
         </div>
-      )}
 
-      {/* Remaining sections — collapsible */}
-      <div className="flex flex-col gap-2">
-        {otherSections.map((section, i) => (
-          <TeardownSectionCard
-            key={section.title}
-            section={section}
-            defaultOpen={i === 0}
-          />
-        ))}
-      </div>
+        <div className="group relative mx-4 mt-4 flex flex-col overflow-hidden rounded-[15px] border border-[color:var(--border)] bg-[color:var(--card)]">
+          <div className="relative flex aspect-[9/16] w-full items-center justify-center overflow-hidden bg-black">
+            {result.thumbnailUrl ? (
+              <>
+                <img
+                  src={result.thumbnailUrl}
+                  alt={result.adTitle}
+                  className="h-full w-full object-cover opacity-80 transition-opacity duration-200 group-hover:opacity-60"
+                />
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                  <div
+                    className="flex h-12 w-12 items-center justify-center rounded-full border backdrop-blur-md transition-[border-color,background-color] duration-200"
+                    style={{
+                      borderColor: "var(--border-strong)",
+                      background: "rgba(255,255,255,0.06)",
+                    }}
+                  >
+                    <Play className="ml-0.5 h-5 w-5 text-[color:var(--ink)]" fill="currentColor" aria-hidden />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-xs text-[color:var(--ink-muted)]">
+                No preview
+              </div>
+            )}
+          </div>
+          <div className="flex items-center justify-between gap-2 border-t border-[color:var(--border)] bg-black/40 px-3 py-2">
+            <div className="flex min-w-0 items-center gap-1.5">
+              <span className="truncate text-[10.5px] font-medium text-[color:var(--ink-secondary)]">
+                {footerMeta.placement}
+              </span>
+              <span
+                className="size-1 shrink-0 rounded-full"
+                style={{ background: "var(--elevated)" }}
+              />
+              <span className="shrink-0 text-[10.5px] text-[color:var(--ink-muted)]">
+                {footerMeta.aspect}
+              </span>
+            </div>
+            <div className="flex shrink-0 items-center gap-1.5">
+              <span className="font-mono text-[10.5px] text-[color:var(--ink-muted)] tabular-nums">
+                {footerMeta.duration}
+              </span>
+              <ChevronDown
+                className="size-3 shrink-0 text-[color:var(--ink-faint)] opacity-70"
+                aria-hidden
+              />
+            </div>
+          </div>
+        </div>
 
-      {/* Actions */}
-      <div className="flex gap-2 mt-6">
         <button
           type="button"
           onClick={onSaveToSwipeFile}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-zinc-300 border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/20 transition-colors"
+          className="mx-4 mb-6 mt-3 flex h-10 items-center justify-center gap-2 rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] text-[13px] text-[color:var(--ink-secondary)] transition-[transform,opacity,background-color,border-color] duration-200 hover:bg-[color:var(--surface-el)] hover:text-[color:var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg)] active:scale-[0.99]"
         >
-          <Bookmark size={14} />
-          Save to Library
-        </button>
-        <button
-          type="button"
-          onClick={onReset}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-zinc-500 border border-white/[0.06] bg-transparent hover:bg-white/[0.03] hover:text-zinc-300 transition-colors"
-        >
-          <RotateCcw size={14} />
-          Analyze Another
+          <Bookmark className="h-4 w-4 shrink-0 opacity-90" aria-hidden />
+          <span>Save to Library</span>
         </button>
       </div>
 
-      {/* Powered by */}
-      <p className="text-center text-[11px] text-zinc-700 font-mono mt-8 mb-4">
-        Powered by Gemini + Claude Sonnet
-      </p>
+      {/* Right — URL + why + sections + brief (Figma 263-538) */}
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto bg-[color:var(--bg)] px-5 py-5 lg:px-6">
+        <div className="mx-auto flex w-full max-w-[51rem] flex-col gap-5">
+        <div className="flex min-h-9 items-center justify-between gap-2 rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-1">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <Link2 className="h-3.5 w-3.5 shrink-0 text-[color:var(--ink-muted)]" aria-hidden />
+            <span className="truncate font-mono text-[11.5px] text-[color:var(--decon-url-pill-mono)]">
+              {submittedUrl}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={onReset}
+            className="flex shrink-0 items-center gap-1 text-[11.5px] text-[color:var(--ink-muted)] transition-colors hover:text-[color:var(--ink-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg)]"
+          >
+            <RotateCcw className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            <span>New</span>
+          </button>
+        </div>
+
+        {whySection && (
+          <div className="shrink-0">
+            <WhyItWorksCard content={whySection.content} />
+          </div>
+        )}
+
+        <div className="flex shrink-0 flex-col gap-[7.69px]">
+          {middleSections.map((section, i) => (
+            <TeardownSectionCard
+              key={section.title}
+              section={section}
+              defaultOpen={i === 0}
+              totalDurationStr={footerMeta.duration}
+            />
+          ))}
+        </div>
+
+        {briefSection && <StealThisBriefCard content={briefSection.content} />}
+
+        <p className="mt-auto pb-4 pt-8 text-center font-mono text-[10.5px] leading-[15.9px] text-[color:var(--decon-footer-attribution)]">
+          Powered by Gemini + Claude
+        </p>
+        </div>
+      </div>
     </motion.div>
   );
 }
@@ -467,7 +1068,14 @@ export default function Deconstructor() {
   const { addSwipeItem, onUpgradeRequired, isPro } =
     useOutletContext<AppSharedContext>();
 
+  const deconstructRunId = useRef(0);
+  const [urlInput, setUrlInput] = useState("");
+  const [lastSubmittedUrl, setLastSubmittedUrl] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loadingJob, setLoadingJob] = useState<{
+    url: string;
+    source: SourceType;
+  } | null>(null);
   const [result, setResult] = useState<DeconstructResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pendingUrl, setPendingUrl] = useState<string | null>(null);
@@ -492,18 +1100,23 @@ export default function Deconstructor() {
         return;
       }
 
+      const runId = ++deconstructRunId.current;
       setLoading(true);
+      setLoadingJob({ url, source: sourceType });
       try {
         const data = await deconstructAd(
           url,
           sourceType,
           mediaUrl ?? tiktokMediaUrl ?? undefined
         );
+        if (runId !== deconstructRunId.current) return;
+        setLastSubmittedUrl(url);
         setResult(data);
         setPendingUrl(null);
         setPendingSource(null);
         setTikTokMediaUrl(null);
       } catch (err) {
+        if (runId !== deconstructRunId.current) return;
         const msg = err instanceof Error ? err.message : "Something went wrong.";
         if (msg.startsWith("RATE_LIMITED:")) {
           const wait = msg.replace("RATE_LIMITED:", "");
@@ -517,11 +1130,20 @@ export default function Deconstructor() {
           setError(msg);
         }
       } finally {
-        setLoading(false);
+        if (runId === deconstructRunId.current) {
+          setLoading(false);
+          setLoadingJob(null);
+        }
       }
     },
     [tiktokMediaUrl, isPro, onUpgradeRequired]
   );
+
+  const handleCancelDeconstruct = useCallback(() => {
+    deconstructRunId.current += 1;
+    setLoading(false);
+    setLoadingJob(null);
+  }, []);
 
   const handleTikTokMediaUrl = (url: string) => {
     setTikTokMediaUrl(url);
@@ -536,6 +1158,8 @@ export default function Deconstructor() {
     setPendingUrl(null);
     setPendingSource(null);
     setTikTokMediaUrl(null);
+    setUrlInput("");
+    setLastSubmittedUrl("");
   };
 
   const handleSaveToSwipeFile = () => {
@@ -557,8 +1181,17 @@ export default function Deconstructor() {
 
   return (
     <div
-      className="flex-1 flex flex-col overflow-auto"
-      style={{ minHeight: "calc(100vh - 120px)" }}
+      className={cn(
+        "relative flex min-h-0 flex-1 flex-col bg-[color:var(--bg)]",
+        !(result && !loading) && "overflow-auto",
+      )}
+      style={
+        !(result && !loading)
+          ? { minHeight: "calc(100vh - 120px)" }
+          : undefined
+      }
+      data-cutsheet-page="ad-breakdown"
+      data-deconstructor-build="figma-263-416"
     >
       <Helmet>
         <title>Ad Breakdown — Cutsheet</title>
@@ -572,94 +1205,111 @@ export default function Deconstructor() {
         />
       </Helmet>
 
-      <div className="relative flex-1 flex flex-col items-center justify-center" style={{ padding: "32px 24px" }}>
+      {!result && (
+        <div
+          className="pointer-events-none absolute inset-0 z-0"
+          style={{
+            background:
+              "radial-gradient(ellipse 60% 50% at 50% 40%, rgba(245, 158, 11, 0.08) 0%, transparent 70%)",
+          }}
+          aria-hidden
+        />
+      )}
 
-        {/* Header — visible until result */}
-        {!result && (
-          <div className="text-center mb-8">
-            <div style={{ width: 76, height: 76, borderRadius: 14, background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
-              <ScanSearch size={28} color="#f59e0b" />
-            </div>
-            <h1 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5", marginBottom: 0 }}>
-              Ad Breakdown
-            </h1>
-            <p className="text-sm mx-auto" style={{ marginTop: 10, lineHeight: 1.6, color: "rgba(255,255,255,0.5)", maxWidth: 320 }}>
-              Paste any ad URL. Get a full AI breakdown in 30 seconds.
-            </p>
-
-            {/* Feature pills — amber styled */}
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 20 }}>
-              {["Hook analysis", "Psychological triggers", "Creative brief"].map((p) => (
-                <span key={p} style={{ fontSize: 12, color: "#f59e0b", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.15)", borderRadius: 9999, padding: "4px 12px" }}>{p}</span>
-              ))}
-            </div>
-          </div>
+      <div
+        className={cn(
+          "relative z-10 flex min-h-0 flex-1 flex-col",
+          result && !loading && "min-h-0 overflow-hidden",
         )}
-
-        {/* URL input — always show unless loading or result */}
-        {!result && (
-          <UrlInput
-            onSubmit={(url, sourceType) => handleSubmit(url, sourceType)}
-            loading={loading}
+      >
+        {result && !loading ? (
+          <ResultsSplit
+            result={result}
+            submittedUrl={lastSubmittedUrl}
+            onReset={handleReset}
+            onSaveToSwipeFile={handleSaveToSwipeFile}
           />
-        )}
+        ) : (
+          <div className="mx-auto flex w-full max-w-[720px] flex-1 flex-col items-center justify-center px-6 py-12">
+            {/* Figma 263-124 — hero only on idle */}
+            {!result && !loading && (
+              <div className="mb-8 shrink-0 text-center">
+                <div
+                  className="mx-auto mb-6 flex h-[76px] w-[76px] items-center justify-center rounded-2xl border"
+                  style={{
+                    background: "rgba(245, 158, 11, 0.12)",
+                    borderColor: "rgba(245, 158, 11, 0.2)",
+                  }}
+                >
+                  <ScanSearch size={40} color="#f59e0b" strokeWidth={1.5} aria-hidden />
+                </div>
+                <h1 className="mb-2.5 text-2xl font-bold leading-tight tracking-[-0.025em] text-[color:var(--ink)]">
+                  Ad Breakdown
+                </h1>
+                <p className="mx-auto mb-4 max-w-[380px] text-sm leading-relaxed text-[color:var(--ink-muted)]">
+                  Paste any ad URL. Get a full AI breakdown in 30 seconds.
+                </p>
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  {SOURCE_PLATFORMS.map(({ type, label }) => (
+                    <span
+                      key={type}
+                      className="rounded-full border px-3 py-1 text-xs"
+                      style={{
+                        color: "var(--warn)",
+                        background: "rgba(245, 158, 11, 0.08)",
+                        borderColor: "rgba(245, 158, 11, 0.2)",
+                      }}
+                    >
+                      {label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
 
-        {/* TikTok fallback prompt */}
-        {!loading && !result && pendingSource === "tiktok" && (
-          <TikTokFallback onMediaUrl={handleTikTokMediaUrl} />
-        )}
+            {!result && (
+              <>
+                <UrlInput
+                  url={urlInput}
+                  onUrlChange={setUrlInput}
+                  onSubmit={(u, st) => handleSubmit(u, st)}
+                  loading={loading}
+                />
+                {!loading && pendingSource === "tiktok" && (
+                  <TikTokFallback onMediaUrl={handleTikTokMediaUrl} />
+                )}
+              </>
+            )}
 
-        {/* Loading — unified ProgressCard */}
-        {loading && (
-          <div className="flex-1 flex flex-col">
-            <ProgressCard
-              status="processing"
-              statusMessage="Deconstructing ad..."
-              onCancel={() => window.location.reload()}
-              icon={ScanSearch}
-              title="Analyzing your ad"
-            />
-          </div>
-        )}
+            {loading && loadingJob && (
+              <DeconstructLoadingPanel
+                url={loadingJob.url}
+                source={loadingJob.source}
+                onCancel={handleCancelDeconstruct}
+              />
+            )}
 
-        {/* Error */}
-        {error && !loading && (
-          <div className="w-full max-w-2xl mx-auto mt-6">
-            <InlineError
-              severity="red"
-              message={error}
-              dismissible
-              onDismiss={() => setError(null)}
-              primaryAction={
-                error.includes("3 free") || error.includes("Rate limit")
-                  ? undefined
-                  : { label: "Try again", onClick: handleReset }
-              }
-            />
-          </div>
-        )}
+            {loading && (
+              <p className="mt-8 pb-8 text-center font-mono text-[11px] text-[color:var(--decon-footer-attribution)]">
+                Powered by Gemini + Claude Sonnet
+              </p>
+            )}
 
-        {/* Results */}
-        {result && !loading && (
-          <div className="w-full">
-            <ResultsPanel
-              result={result}
-              onReset={handleReset}
-              onSaveToSwipeFile={handleSaveToSwipeFile}
-            />
-          </div>
-        )}
-
-        {/* Result: show URL input below for new analysis */}
-        {result && !loading && (
-          <div className="w-full max-w-2xl mx-auto mt-8 pt-8 border-t border-white/[0.04]">
-            <p className="text-xs text-zinc-500 text-center mb-4">
-              Deconstruct another ad
-            </p>
-            <UrlInput
-              onSubmit={(url, sourceType) => handleSubmit(url, sourceType)}
-              loading={false}
-            />
+            {error && !loading && (
+              <div className="mx-auto mt-6 w-full max-w-2xl">
+                <InlineError
+                  severity="red"
+                  message={error}
+                  dismissible
+                  onDismiss={() => setError(null)}
+                  primaryAction={
+                    error.includes("3 free") || error.includes("Rate limit")
+                      ? undefined
+                      : { label: "Try again", onClick: handleReset }
+                  }
+                />
+              </div>
+            )}
           </div>
         )}
       </div>

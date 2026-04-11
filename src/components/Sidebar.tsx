@@ -3,19 +3,24 @@ import { useState, useRef } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   Zap, TrendingUp, Monitor, GitBranch, Swords, Trophy,
-  Bookmark, Settings, ChevronLeft, ChevronRight, MoreHorizontal, X, HelpCircle,
-  ScanSearch, ShieldCheck,
+  Bookmark, Settings, ChevronLeft, ChevronRight, MoreHorizontal, X, CircleHelp,
+  ScanSearch,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 // UsageIndicator removed from sidebar — plan badge shown inline
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
+type NavAccent = "indigo" | "emerald" | "cyan" | "amber" | "rose" | "sky" | "violet" | "slate";
+
 interface NavItem {
   label: string;
   sublabel: string;
   path: string;
-  icon: React.ComponentType<{ size?: number; className?: string; color?: string }>;
+  icon: LucideIcon;
+  /** Active row treatment — matches cutsheet-Design AppLayout NavItem */
+  accent: NavAccent;
   comingSoon?: boolean;
 }
 
@@ -33,20 +38,20 @@ interface SidebarProps {
 // ─── NAV CONFIG ───────────────────────────────────────────────────────────────
 
 const ANALYZE: NavItem[] = [
-  { label: "Paid Ad",       sublabel: "Meta, TikTok, Google",  path: "/app/paid",          icon: Zap },
-  { label: "Organic",       sublabel: "TikTok, Reels, Shorts", path: "/app/organic",       icon: TrendingUp },
-  { label: "Display",       sublabel: "Google, affiliate",     path: "/app/display",       icon: Monitor },
-  { label: "Ad Breakdown",   sublabel: "Teardown any ad URL",   path: "/app/deconstructor", icon: ScanSearch },
+  { label: "Paid Ad", sublabel: "Meta, TikTok, Google", path: "/app/paid", icon: Zap, accent: "indigo" },
+  { label: "Organic", sublabel: "TikTok, Reels, Shorts", path: "/app/organic", icon: TrendingUp, accent: "emerald" },
+  { label: "Display", sublabel: "Google, affiliate", path: "/app/display", icon: Monitor, accent: "cyan" },
+  { label: "Ad Breakdown", sublabel: "Teardown any ad URL", path: "/app/deconstructor", icon: ScanSearch, accent: "amber" },
 ];
 
 const COMPARE: NavItem[] = [
-  { label: "A/B Test",   sublabel: "Quick compare 2–5 variants",      path: "/app/ab-test",    icon: GitBranch },
-  { label: "Competitor", sublabel: "Your ad vs theirs",  path: "/app/competitor", icon: Swords },
-  { label: "Rank Creatives", sublabel: "Score & rank up to 10",  path: "/app/batch",      icon: Trophy },
+  { label: "A/B Test", sublabel: "Quick compare 2–5 variants", path: "/app/ab-test", icon: GitBranch, accent: "rose" },
+  { label: "Competitor", sublabel: "Your ad vs theirs", path: "/app/competitor", icon: Swords, accent: "sky" },
+  { label: "Rank Creatives", sublabel: "Score & rank up to 10", path: "/app/batch", icon: Trophy, accent: "violet" },
 ];
 
 const LIBRARY: NavItem[] = [
-  { label: "Saved Ads", sublabel: "Your reference library", path: "/app/swipe-file", icon: Bookmark },
+  { label: "Saved Ads", sublabel: "Your reference library", path: "/app/swipe-file", icon: Bookmark, accent: "slate" },
 ];
 
 // Mobile "More" drawer: Ad Breakdown (ANALYZE[3]) + Competitor + Rank Creatives + Saved Ads
@@ -61,6 +66,49 @@ function SectionLabel({ label }: { label: string }) {
       {label}
     </div>
   );
+}
+
+/** Active nav row — parity with cutsheet-Design/src/app/components/AppLayout.tsx NavItem */
+function activeNavClass(accent: NavAccent): string {
+  switch (accent) {
+    case "emerald":
+      return "bg-emerald-500/[0.08] border-l-[2px] border-l-[#10b981] border-y-0 border-r-0 text-emerald-300 rounded-l-[4px]";
+    case "cyan":
+      return "bg-cyan-500/[0.08] border-l-[2px] border-l-[#06b6d4] border-y-0 border-r-0 text-cyan-300 rounded-l-[4px]";
+    case "amber":
+      return "bg-amber-500/[0.08] border-l-[2px] border-l-[#f59e0b] border-y-0 border-r-0 text-amber-300 rounded-l-[4px]";
+    case "rose":
+      return "bg-rose-500/[0.08] border-l-[2px] border-l-[#f43f5e] border-y-0 border-r-0 text-rose-300 rounded-l-[4px]";
+    case "sky":
+      return "bg-sky-500/[0.08] border-l-[2px] border-l-[#0ea5e9] border-y-0 border-r-0 text-sky-300 rounded-l-[4px]";
+    case "violet":
+      return "bg-violet-500/[0.08] border-l-[2px] border-l-[#8b5cf6] border-y-0 border-r-0 text-violet-300 rounded-l-[4px]";
+    case "slate":
+      return "bg-slate-500/[0.08] border-l-[2px] border-l-[#94a3b8] border-y-0 border-r-0 text-slate-300 rounded-l-[4px]";
+    default:
+      return "bg-[rgba(99,102,241,0.08)] border-l-[2px] border-l-[#6366f1] border-y-0 border-r-0 text-indigo-300 rounded-l-[4px]";
+  }
+}
+
+function activeNavIconClass(accent: NavAccent): string {
+  switch (accent) {
+    case "emerald":
+      return "text-emerald-400";
+    case "cyan":
+      return "text-cyan-400";
+    case "amber":
+      return "text-amber-400";
+    case "rose":
+      return "text-rose-400";
+    case "sky":
+      return "text-sky-400";
+    case "violet":
+      return "text-violet-400";
+    case "slate":
+      return "text-slate-400";
+    default:
+      return "text-indigo-400";
+  }
 }
 
 // ─── NAV ITEM ROW ─────────────────────────────────────────────────────────────
@@ -78,19 +126,14 @@ function NavItemRow({ item, collapsed }: { item: NavItem; collapsed: boolean }) 
 
   const inner = (isActive: boolean) => (
     <>
-      {/* Active left bar */}
-      {isActive && !collapsed && (
-        <div style={{ position: "absolute", left: 0, top: 6, bottom: 6, width: 2, background: "#6366f1", borderRadius: "0 2px 2px 0" }} />
-      )}
-
       {/* Icon */}
       <Icon
         size={16}
         strokeWidth={2}
         className={
           isActive
-            ? "text-[#818cf8]"
-            : "text-[#71717a] group-hover:text-[#a1a1aa] transition-colors"
+            ? activeNavIconClass(item.accent)
+            : "text-zinc-500 group-hover:text-zinc-300 transition-colors"
         }
       />
 
@@ -99,7 +142,7 @@ function NavItemRow({ item, collapsed }: { item: NavItem; collapsed: boolean }) 
         <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
           <span
             style={{ fontSize: 13, fontWeight: 500, lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
-            className={isActive ? "text-[#f4f4f5]" : "text-[#a1a1aa] group-hover:text-[#f4f4f5] transition-colors"}
+            className={isActive ? "text-inherit" : "text-zinc-400 group-hover:text-zinc-300 transition-colors"}
           >
             {item.label}
           </span>
@@ -169,21 +212,20 @@ function NavItemRow({ item, collapsed }: { item: NavItem; collapsed: boolean }) 
       to={item.path}
       title={collapsed ? item.label : undefined}
       className={({ isActive }) =>
-        `group relative flex items-center transition-colors ${
+        `group relative flex items-center transition-all duration-200 ${
           collapsed
-            ? "justify-center rounded-[10px]"
+            ? `justify-center rounded-[8px]${isActive ? " bg-white/[0.06]" : ""}`
             : isActive
-            ? "rounded-[0_10px_10px_0]"
-            : "rounded-[10px] hover:bg-[rgba(255,255,255,0.04)]"
+            ? activeNavClass(item.accent)
+            : "rounded-[8px] border-l-[2px] border-transparent text-zinc-400 hover:bg-white/[0.04] hover:text-zinc-300"
         }`
       }
-      style={({ isActive }) => ({
+      style={() => ({
         ...baseStyle,
-        margin: collapsed ? "2px auto" : isActive ? "2px 8px 2px 0" : "2px 8px",
+        margin: collapsed ? "2px auto" : "2px 8px",
         width: collapsed ? 40 : "auto",
-        padding: collapsed ? 0 : "0 10px",
+        padding: collapsed ? 0 : "0 12px",
         justifyContent: collapsed ? "center" : "flex-start",
-        background: isActive ? "rgba(99,102,241,0.1)" : undefined,
       })}
     >
       {({ isActive }) => inner(isActive)}
@@ -216,11 +258,12 @@ function DesktopSidebar({
     >
       {/* Logo + collapse toggle row */}
       <div
+        className={collapsed ? "pt-4 px-2 pb-0" : "p-[20px] pb-0"}
         style={{
-          padding: collapsed ? "16px 8px 0" : "16px 16px 0",
-          display: "flex", alignItems: "center",
+          display: "flex",
+          alignItems: "center",
           justifyContent: collapsed ? "center" : "space-between",
-          marginBottom: 8,
+          marginBottom: collapsed ? 4 : 0,
         }}
       >
         <button
@@ -245,7 +288,7 @@ function DesktopSidebar({
             type="button"
             onClick={() => setCollapsed((c) => !c)}
             aria-label="Collapse sidebar"
-            className="flex items-center justify-center text-[#52525b] hover:text-[#a1a1aa] hover:bg-[rgba(255,255,255,0.04)] transition-colors rounded-md"
+            className="flex items-center justify-center text-zinc-600 hover:text-zinc-400 hover:bg-white/[0.04] transition-colors rounded-md"
             style={{ width: 24, height: 24, background: "transparent", border: "none", cursor: "pointer", flexShrink: 0 }}
           >
             <ChevronLeft size={14} />
@@ -259,12 +302,15 @@ function DesktopSidebar({
           type="button"
           onClick={() => setCollapsed((c) => !c)}
           aria-label="Expand sidebar"
-          className="flex items-center justify-center text-[#52525b] hover:text-[#a1a1aa] hover:bg-[rgba(255,255,255,0.04)] transition-colors rounded-md mx-auto"
-          style={{ width: 28, height: 28, background: "transparent", border: "none", cursor: "pointer", marginBottom: 4 }}
+          className="flex items-center justify-center text-zinc-600 hover:text-zinc-400 hover:bg-white/[0.04] transition-colors rounded-md mx-auto mb-1"
+          style={{ width: 28, height: 28, background: "transparent", border: "none", cursor: "pointer" }}
         >
           <ChevronRight size={14} />
         </button>
       )}
+
+      {/* cutsheet-Design: divider under header */}
+      <div className="h-px w-full bg-white/[0.06] shrink-0" aria-hidden="true" />
 
       {/* Nav items */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden px-[12px] pb-[24px] gap-[16px] flex flex-col pt-[8px]">
@@ -320,7 +366,7 @@ function DesktopSidebar({
             className="w-[32px] h-[36px] rounded-[8px] text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.04] transition-colors flex shrink-0 items-center justify-center"
             title="Help & Support"
           >
-            <HelpCircle size={16} strokeWidth={2} />
+            <CircleHelp size={16} strokeWidth={2} />
           </a>
           {!collapsed ? (
             <div className="flex-1 min-w-0">

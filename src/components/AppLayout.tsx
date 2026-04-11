@@ -112,7 +112,7 @@ export default function AppLayout() {
     <Helmet>
       <meta name="robots" content="noindex, nofollow" />
     </Helmet>
-    <div className="flex h-screen overflow-hidden" style={{ background: "#09090b" }}>
+    <div className="flex h-screen overflow-hidden" style={{ background: "var(--bg)" }}>
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-indigo-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:text-sm focus:font-medium"
@@ -130,7 +130,7 @@ export default function AppLayout() {
         onShowShortcuts={() => setShowShortcuts(true)}
       />
 
-      <div className="flex flex-col flex-1 min-w-0">
+      <div className="flex flex-col flex-1 min-w-0 bg-[color:var(--bg)]">
         <OfflineBanner />
         <TopBar
           onNewAnalysis={() => onNewAnalysisRef.current()}
@@ -144,7 +144,10 @@ export default function AppLayout() {
           hasResult={hasAnalysisResult}
           onLogout={async () => { await supabase.auth.signOut(); navigate("/login"); }}
         />
-        <main id="main-content" className="flex-1 flex flex-col overflow-auto pb-[68px] md:pb-0">
+        <main
+          id="main-content"
+          className="flex min-h-0 flex-1 flex-col overflow-auto pb-[68px] md:pb-0"
+        >
           <Outlet context={ctx} />
         </main>
       </div>

@@ -19,6 +19,8 @@ interface ProgressCardProps {
   title?: string;
   /** Blob URL already owned by the parent. If provided, ProgressCard uses it directly and will NOT revoke it. */
   sharedFileObjectUrl?: string | null;
+  /** Single-column card (no creative preview) — e.g. Ad Breakdown URL flow */
+  compact?: boolean;
 }
 
 const DIMENSIONS = ["Hook Strength", "Message Clarity", "CTA Effectiveness", "Production Quality"];
@@ -41,7 +43,16 @@ const STATIC_SUBTITLES = [
 
 const STEP_DELAYS = [3000, 2500, 3500, 2500, 2000];
 
-export function ProgressCard({ file, status, onCancel, onComplete, format = "video", title: titleProp, sharedFileObjectUrl }: ProgressCardProps) {
+export function ProgressCard({
+  file,
+  status,
+  onCancel,
+  onComplete,
+  format = "video",
+  title: titleProp,
+  sharedFileObjectUrl,
+  compact = false,
+}: ProgressCardProps) {
   const title = titleProp ?? "Analyzing your ad";
   const SUBTITLES = format === "static" ? STATIC_SUBTITLES : VIDEO_SUBTITLES;
 
@@ -91,7 +102,6 @@ export function ProgressCard({ file, status, onCancel, onComplete, format = "vid
     return "pending";
   };
 
-  const displayUrl = thumbnailDataUrl || previewUrl;
   const subtitle = SUBTITLES[Math.min(currentStep, SUBTITLES.length - 1)];
   const truncatedName = (() => {
     if (!file) return "";
@@ -100,17 +110,17 @@ export function ProgressCard({ file, status, onCancel, onComplete, format = "vid
   })();
 
   return (
-    <div className="flex-1 flex items-center justify-center p-6">
-      <div className={cn(
-        "w-full max-w-[768px]",
-        "bg-[#18181b] border border-white/[0.06]",
-        "rounded-2xl overflow-hidden",
-        "flex",
-        "min-h-[360px] md:min-h-[474px]",
-      )}>
+    <div className={cn("flex flex-1 items-center justify-center p-6", compact && "pt-2")}>
+      <div
+        className={cn(
+          "w-full overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)]",
+          compact ? "max-w-[440px] flex-col" : "flex max-w-[768px] min-h-[360px] md:min-h-[474px]",
+        )}
+      >
 
         {/* ── Left — creative preview ── */}
-        <div className="relative bg-[#09090b] rounded-xl m-[6px] overflow-hidden flex-1 min-h-[280px]">
+        {!compact && (
+        <div className="relative m-[6px] min-h-[280px] flex-1 overflow-hidden rounded-xl bg-[color:var(--bg)]">
           {thumbnailDataUrl ? (
             <motion.img
               src={thumbnailDataUrl}
@@ -164,7 +174,7 @@ export function ProgressCard({ file, status, onCancel, onComplete, format = "vid
 
           {/* Bottom gradient fade */}
           <div className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none"
-            style={{ background: "linear-gradient(to top, #09090b 0%, rgba(9,9,11,0.6) 50%, transparent 100%)" }}
+            style={{ background: "linear-gradient(to top, var(--bg) 0%, rgba(9,9,11,0.6) 50%, transparent 100%)" }}
           />
 
           {/* Filename */}
@@ -176,13 +186,19 @@ export function ProgressCard({ file, status, onCancel, onComplete, format = "vid
             </div>
           )}
         </div>
+        )}
 
-        {/* ── Right — progress ── */}
-        <div className="flex flex-col p-8 w-[300px] flex-shrink-0">
+        {/* ── Right — progress (full width when compact) ── */}
+        <div
+          className={cn(
+            "flex flex-shrink-0 flex-col",
+            compact ? "w-full p-6" : "w-[300px] p-8",
+          )}
+        >
 
           {/* Header */}
-          <div className="flex flex-col items-center gap-1.5 mb-8">
-            <p className="text-[18px] font-semibold text-white text-center tracking-[-0.45px] m-0">{title}</p>
+          <div className={cn("mb-8 flex flex-col items-center gap-1.5", compact && "mb-6")}>
+            <p className="m-0 text-center text-[18px] font-semibold tracking-[-0.45px] text-[color:var(--ink)]">{title}</p>
             <div className="min-h-[20px] flex items-center justify-center">
               <AnimatePresence mode="wait">
                 <motion.p
@@ -191,7 +207,7 @@ export function ProgressCard({ file, status, onCancel, onComplete, format = "vid
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -2 }}
                   transition={{ duration: 0.2 }}
-                  className="text-[13px] text-zinc-500 text-center m-0"
+                  className="m-0 text-center text-[13px] text-[color:var(--ink-muted)]"
                 >
                   {subtitle}
                 </motion.p>
@@ -200,37 +216,50 @@ export function ProgressCard({ file, status, onCancel, onComplete, format = "vid
           </div>
 
           {/* Divider */}
-          <div className="h-px bg-white/[0.06] mb-8" />
+          <div className="mb-8 h-px bg-[color:var(--border)]" />
 
           {/* Dimension bars */}
-          <div className="flex flex-col gap-5 flex-1">
+          <div className="flex flex-1 flex-col gap-5">
             {DIMENSIONS.map((label, i) => {
               const dimState = getDimensionState(i);
               return (
                 <div key={label} className="flex flex-col gap-2.5">
                   <div className="flex items-center gap-2">
-                    <span className={cn(
-                      "text-[14px] font-medium transition-colors duration-300",
-                      dimState === "complete" ? "text-zinc-500"
-                      : dimState === "progress"  ? "text-white"
-                      :                           "text-zinc-700"
-                    )}>
+                    <span
+                      className={cn(
+                        "text-[14px] font-medium transition-colors duration-300",
+                        dimState === "complete"
+                          ? "text-[color:var(--success)]"
+                          : dimState === "progress"
+                            ? "text-[color:var(--ink)]"
+                            : "text-zinc-700",
+                      )}
+                    >
                       {label}
                     </span>
-                    <div className={cn(
-                      "transition-all duration-500 flex items-center",
-                      dimState === "complete" ? "opacity-100 scale-100" : "opacity-0 scale-50"
-                    )}>
-                      <CheckCircle2 size={14} className="text-[#10b981]" />
+                    <div
+                      className={cn(
+                        "flex items-center transition-all duration-500",
+                        dimState === "complete" ? "scale-100 opacity-100" : "scale-50 opacity-0",
+                      )}
+                    >
+                      <CheckCircle2 size={14} className="text-[color:var(--success)]" />
                     </div>
                   </div>
-                  <div className="h-1 w-full bg-white/[0.04] rounded-full overflow-hidden">
-                    <div className={cn(
-                      "h-full rounded-full transition-all ease-out",
-                      dimState === "complete" ? "bg-[#10b981] duration-[600ms] w-full"
-                      : dimState === "progress"  ? "bg-[#6366f1] duration-[2000ms] w-[65%]"
-                      :                           "bg-[#6366f1] duration-0 w-0"
-                    )} />
+                  <div className="h-1 w-full overflow-hidden rounded-full bg-white/[0.04]">
+                    <div
+                      className={cn(
+                        "h-full rounded-full transition-[width] ease-out",
+                        dimState === "complete" && "w-full bg-[color:var(--success)] duration-[600ms]",
+                        dimState === "progress" && "w-[40%] duration-[2000ms]",
+                        dimState === "pending" && "w-0 duration-0",
+                      )}
+                      style={
+                        dimState === "progress"
+                          ? { background: "var(--grad)" }
+                          : undefined
+                      }
+                    />
                   </div>
                 </div>
               );
@@ -238,13 +267,14 @@ export function ProgressCard({ file, status, onCancel, onComplete, format = "vid
           </div>
 
           {/* Footer */}
-          <div className="flex flex-col items-center gap-3 mt-8">
-            <p className="text-[13px] text-zinc-500 m-0">This usually takes 20–30 seconds</p>
+          <div className="mt-8 flex flex-col items-center gap-3">
+            <p className="m-0 text-[13px] text-[color:var(--ink-muted)]">This usually takes 20–30 seconds</p>
             <button
+              type="button"
               onClick={onCancel}
-              className="flex items-center gap-1.5 text-[13px] text-zinc-500 hover:text-zinc-400 transition-colors bg-transparent border-none cursor-pointer p-0"
+              className="flex cursor-pointer items-center gap-1.5 border-none bg-transparent p-0 text-[13px] text-[color:var(--ink-muted)] transition-colors hover:text-[color:var(--ink-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--card)]"
             >
-              <X size={11} />
+              <X size={11} aria-hidden />
               Cancel analysis
             </button>
           </div>
