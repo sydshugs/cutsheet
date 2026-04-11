@@ -7,6 +7,7 @@ import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
 import { sanitizeSessionMemory, sanitizeUserInput } from "./_lib/sanitizeMemory";
 import { safeNiche, safePlatform } from "./_lib/validateInput";
 import { apiError } from "./_lib/apiError.js";
+import { logApiUsage } from "./_lib/logUsage";
 // Dynamic import — benchmarks.ts is ESM, Vercel bundles API routes as CJS
 type BenchmarkModule = typeof import("../src/lib/benchmarks");
 
@@ -47,6 +48,8 @@ interface AnalyzeRequest {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handlePreflight(req, res)) return;
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
+  const start = Date.now();
 
   try {
     const user = await verifyAuth(req);
@@ -166,10 +169,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return apiError(res, 'ANALYSIS_FAILED', 500, "Gemini returned an empty response");
     }
 
+    logApiUsage({ userId: user.id, endpoint: "analyze", statusCode: 200, responseTimeMs: Date.now() - start, platform, niche });
     return res.status(200).json({ text });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     const isRateLimited = /429|RATE_LIMITED|resource exhausted|quota/i.test(msg);
+    const code = isRateLimited ? 429 : 500;
+    logApiUsage({ userId: "unknown", endpoint: "analyze", statusCode: code, responseTimeMs: Date.now() - start, errorCode: isRateLimited ? "RATE_LIMITED" : "ANALYSIS_FAILED" });
     if (isRateLimited) {
       return apiError(res, 'RATE_LIMITED', 429, `[analyze] ${msg}`);
     }

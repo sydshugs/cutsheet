@@ -8,6 +8,7 @@ import { safePlatform, safeAdType, safeNiche } from "./_lib/validateInput";
 import { sanitizeAnalysisText } from "./_lib/sanitizeMemory";
 import { validatePrediction, validateConfidence } from "../src/utils/scoreGuardrails.js";
 import { apiError } from "./_lib/apiError.js";
+import { logApiUsage } from "./_lib/logUsage";
 
 // ── Inline benchmark data (avoids ESM import issue in Vercel CJS bundle) ──────
 // SYNC WARNING: This must match src/lib/benchmarks.ts exactly.
@@ -122,6 +123,8 @@ function getClient() {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handlePreflight(req, res)) return;
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
+  const start = Date.now();
 
   const user = await verifyAuth(req);
   if (!user) return res.status(401).json({ error: "Unauthorized" });
@@ -243,8 +246,10 @@ Return ONLY valid JSON, no markdown fencing. Be calibrated — a hook score of 3
       const parsed = JSON.parse(cleaned);
       const validatedPrediction = validatePrediction(parsed, scores);
       validatedPrediction.confidence = validateConfidence(parsed.confidence, scores);
+      logApiUsage({ userId: user.id, endpoint: "predict-performance", statusCode: 200, responseTimeMs: Date.now() - start, platform: platformLabel, niche: nicheLabel, format: adTypeLabel });
       return res.status(200).json(validatedPrediction);
     } catch {
+      logApiUsage({ userId: user.id, endpoint: "predict-performance", statusCode: 200, responseTimeMs: Date.now() - start, platform: platformLabel, niche: nicheLabel, format: adTypeLabel, errorCode: "PARSE_FALLBACK" });
       return res.status(200).json({
         ctr: { low: 0, high: 0, benchmark: 0, vsAvg: "at" },
         cvr: { low: 0, high: 0 },
@@ -257,6 +262,7 @@ Return ONLY valid JSON, no markdown fencing. Be calibrated — a hook score of 3
       });
     }
   } catch (err) {
+    logApiUsage({ userId: user.id, endpoint: "predict-performance", statusCode: 500, responseTimeMs: Date.now() - start, errorCode: "ANALYSIS_FAILED" });
     return apiError(res, 'ANALYSIS_FAILED', 500,
       `[predict-performance] ${err instanceof Error ? err.message : String(err)}`);
   }

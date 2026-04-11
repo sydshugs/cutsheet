@@ -19,6 +19,7 @@ import { verifyAuth, handlePreflight, isProOrTeam, checkRateLimit } from "./_lib
 import { checkFeatureCredit, refundCredit } from "./_lib/creditCheck";
 import { safePlatform, safeAdType, safeNiche, validateBase64Size } from "./_lib/validateInput";
 import { apiError } from "./_lib/apiError.js";
+import { logApiUsage } from "./_lib/logUsage";
 
 const GEMINI_IMAGE_MODEL = "gemini-2.5-flash-image";
 
@@ -154,6 +155,8 @@ Produce the improved ad now. Output only the image — no explanation, no descri
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handlePreflight(req, res)) return;
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
+  const start = Date.now();
 
   try {
 
@@ -332,6 +335,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.info("[visualize] Credit refunded — Gemini failure");
   }
 
+  logApiUsage({ userId: user.id, endpoint: "visualize", statusCode: 200, responseTimeMs: Date.now() - start, platform: cleanPlatform, niche: cleanNiche, format: cleanAdType });
   return res.status(200).json({
     generatedImageUrl,
     visualBrief,
@@ -340,6 +344,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   });
 
   } catch (err: unknown) {
+    logApiUsage({ userId: "unknown", endpoint: "visualize", statusCode: 500, responseTimeMs: Date.now() - start, errorCode: "GENERATION_FAILED" });
     return apiError(res, 'GENERATION_FAILED', 500,
       err instanceof Error ? err.message : String(err));
   }

@@ -8,6 +8,7 @@ import { validateFetchUrl } from "./_lib/validateUrl";
 import { safePlatform, safeAdType, safeNiche, validateBase64Size } from "./_lib/validateInput";
 import { sanitizeUserInput, sanitizeAnalysisText } from "./_lib/sanitizeMemory";
 import { apiError } from "./_lib/apiError.js";
+import { logApiUsage } from "./_lib/logUsage";
 
 export const maxDuration = 60;
 
@@ -56,6 +57,8 @@ export interface PolicyCheckResult {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handlePreflight(req, res)) return;
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
+  const start = Date.now();
 
   try {
 
@@ -379,13 +382,16 @@ Return only the complete JSON. No preamble, no explanation outside the JSON.`;
     if (platform === "meta") result.tiktokCategories = [];
     if (platform === "tiktok") result.metaCategories = [];
 
+    logApiUsage({ userId: user.id, endpoint: "policy-check", statusCode: 200, responseTimeMs: Date.now() - start, platform, niche, format: adType });
     return res.status(200).json(result);
   } catch (err) {
+    logApiUsage({ userId: user.id, endpoint: "policy-check", statusCode: 500, responseTimeMs: Date.now() - start, platform, niche, format: adType, errorCode: "ANALYSIS_FAILED" });
     return apiError(res, 'ANALYSIS_FAILED', 500,
       `[policy-check] inner: ${err instanceof Error ? err.message : String(err)}`);
   }
 
   } catch (err: unknown) {
+    logApiUsage({ userId: "unknown", endpoint: "policy-check", statusCode: 500, responseTimeMs: Date.now() - start, errorCode: "INTERNAL_ERROR" });
     return apiError(res, 'INTERNAL_ERROR', 500,
       `[policy-check] outer: ${err instanceof Error ? err.message : String(err)}`);
   }

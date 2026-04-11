@@ -8,6 +8,7 @@ import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
 import { safePlatform, safeAdType, safeNiche } from "./_lib/validateInput";
 import { sanitizeSessionMemory, sanitizeAnalysisText } from "./_lib/sanitizeMemory";
 import { apiError } from "./_lib/apiError.js";
+import { logApiUsage } from "./_lib/logUsage";
 
 export const maxDuration = 60;
 
@@ -21,6 +22,8 @@ function getClient() {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handlePreflight(req, res)) return;
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
+  const start = Date.now();
 
   const user = await verifyAuth(req);
   if (!user) return res.status(401).json({ error: "Unauthorized" });
@@ -155,8 +158,10 @@ Return ONLY valid JSON, no markdown fencing.`;
 
     try {
       const parsed = JSON.parse(cleaned);
+      logApiUsage({ userId: user.id, endpoint: "fix-it", statusCode: 200, responseTimeMs: Date.now() - start, platform, niche, format: adType });
       return res.status(200).json(parsed);
     } catch {
+      logApiUsage({ userId: user.id, endpoint: "fix-it", statusCode: 200, responseTimeMs: Date.now() - start, platform, niche, format: adType, errorCode: "PARSE_FALLBACK" });
       return res.status(200).json({
         rewrittenHook: { copy: "", reasoning: "" },
         revisedBody: "",
@@ -167,6 +172,7 @@ Return ONLY valid JSON, no markdown fencing.`;
       });
     }
   } catch (err) {
+    logApiUsage({ userId: user.id, endpoint: "fix-it", statusCode: 500, responseTimeMs: Date.now() - start, platform, niche, format: adType, errorCode: "GENERATION_FAILED" });
     return apiError(res, 'GENERATION_FAILED', 500,
       `[fix-it] ${err instanceof Error ? err.message : String(err)}`);
   }
