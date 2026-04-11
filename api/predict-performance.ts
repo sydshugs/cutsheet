@@ -163,7 +163,12 @@ Predict:
 2. CVR Potential — if this ad drives to a typical ${nicheLabel} landing page on ${platformLabel}.
 3. Hook Retention (video only) — estimated % who watch past 3 seconds on ${platformLabel}. ${platformLabel === "TikTok" ? "TikTok users decide in 0.5-1s." : platformLabel === "YouTube" ? "YouTube users can skip at 5s." : "Meta feed users decide in 1-2s."}
 4. Fatigue Timeline — at moderate spend ($300-500/day on ${platformLabel}), estimated days before fatigue for ${nicheLabel}.
-5. Confidence Level and reason — cite specific scores and creative signals.
+5. Confidence Level — how reliable is this prediction?
+Rules:
+- 'High' = scores are clear-cut (very high 8+ or very low 3-), large sample of benchmark data for this platform+niche, strong signal in the creative.
+- 'Medium' = scores are mid-range (4-7), mixed signals, some dimensions strong and others weak, or limited benchmark data for this niche.
+- 'Low' = unusual creative format, niche with sparse benchmark data, or contradictory signals (e.g. great hook but no CTA).
+Confidence reflects prediction RELIABILITY, not ad quality.
 6. Top 2 signals boosting performance — be specific to what you saw in the analysis.
 7. Top 2 signals limiting performance — reference the weakest scores.
 

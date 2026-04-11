@@ -120,7 +120,10 @@ export default function PredictedPerformanceCard({ prediction, platform, niche: 
         <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
           PREDICTED PERFORMANCE
         </span>
-        <span className={`text-[10px] font-medium rounded-full px-3 py-1 whitespace-nowrap ${badge.className}`}>
+        <span
+          className={`text-[10px] font-medium rounded-full px-3 py-1 whitespace-nowrap ${badge.className}`}
+          title="Prediction reliability based on benchmark data and signal clarity — not a quality rating"
+        >
           {badge.label}
         </span>
       </div>
