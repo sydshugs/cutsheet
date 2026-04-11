@@ -36,7 +36,8 @@ export default function CutsheetNav() {
         zIndex: 50,
         display: "flex",
         alignItems: "center",
-        gap: isMobile ? 4 : 8,
+        justifyContent: "space-between",
+        gap: isMobile ? 0 : 8,
         padding: isMobile ? "6px 8px" : "8px 12px",
         borderRadius: 9999,
         border: "1px solid rgba(255,255,255,0.06)",
@@ -48,6 +49,8 @@ export default function CutsheetNav() {
           : "rgba(255,255,255,0.03)",
         transition: "background-color 0.25s ease",
         whiteSpace: "nowrap",
+        width: isMobile ? "calc(100% - 32px)" : "auto",
+        maxWidth: isMobile ? 480 : "none",
       }}
     >
       {/* Logo */}

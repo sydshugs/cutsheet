@@ -76,7 +76,7 @@ export default function CutsheetHero() {
 
           {/* CTA */}
           <motion.div
-            className="mt-8 flex justify-center sm:mt-10 md:justify-start xl:mt-12"
+            className="mt-6 flex justify-center sm:mt-10 md:justify-start xl:mt-12"
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
@@ -84,9 +84,9 @@ export default function CutsheetHero() {
             <Link
               to="/access"
               className={cn(
-                "inline-flex h-[47px] w-auto items-center justify-center gap-2.5 rounded-full px-5 text-white",
-                "sm:min-w-[242px]",
-                "border-[2.334px] border-solid",
+                "inline-flex h-[38px] w-auto items-center justify-center gap-2 rounded-full px-4 text-[14px] font-semibold text-white",
+                "sm:h-[47px] sm:gap-2.5 sm:px-5 sm:min-w-[242px] sm:text-[18.38px]",
+                "border-[2px] border-solid sm:border-[2.334px]",
                 "transition-opacity transition-transform duration-150 ease-out",
                 "hover:opacity-95 active:scale-[0.99]",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]",
@@ -95,13 +95,11 @@ export default function CutsheetHero() {
                 backgroundColor: "rgba(255,255,255,0.05)",
                 borderColor: "var(--accent)",
                 fontFamily: "var(--sans)",
-                fontSize: "18.38px",
-                fontWeight: 600,
               }}
             >
               Get Early Access
               <ArrowRight
-                className="size-[21px] shrink-0"
+                className="size-[16px] shrink-0 sm:size-[21px]"
                 strokeWidth={2.25}
                 aria-hidden
               />
