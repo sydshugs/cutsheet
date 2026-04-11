@@ -53,7 +53,7 @@ export async function generateFixIt(
 
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
-    throw new Error((data as { error?: string }).error ?? `API error ${response.status}`);
+    throw new Error((data as { message?: string; error?: string }).message ?? (data as { error?: string }).error ?? `API error ${response.status}`);
   }
 
   return response.json() as Promise<FixItResult>;

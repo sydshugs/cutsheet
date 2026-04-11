@@ -1,14 +1,25 @@
 // api/visualize.ts — Visualize It: generate an improved ad image from scorecard
 // Scorecard-driven prompt → Gemini image gen (with original image for reference)
 // Fallback: visual brief text if image generation fails
+//
+// CREDIT FLOW:
+// 1. verifyAuth() → get user + tier
+// 2. checkRateLimit() → per-user throttle
+// 3. Verify isPro → 403 if free tier
+// 4. Deduct 1 credit (atomic) → 429 if no credits
+// 5. Run Gemini image generation
+// 6. If Gemini fails → refund credit
+// 7. Return result
 
 export const maxDuration = 60; // seconds — image gen takes 15-20s
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { GoogleGenAI, Modality } from "@google/genai";
 import { verifyAuth, handlePreflight, isProOrTeam, checkRateLimit } from "./_lib/auth";
-import { checkFeatureCredit } from "./_lib/creditCheck";
+import { checkFeatureCredit, refundCredit } from "./_lib/creditCheck";
 import { safePlatform, safeAdType, safeNiche, validateBase64Size } from "./_lib/validateInput";
+import { apiError } from "./_lib/apiError.js";
+import { logApiUsage } from "./_lib/logUsage";
 
 const GEMINI_IMAGE_MODEL = "gemini-2.5-flash-image";
 
@@ -144,6 +155,8 @@ Produce the improved ad now. Output only the image — no explanation, no descri
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handlePreflight(req, res)) return;
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
+  const start = Date.now();
 
   try {
 
@@ -310,12 +323,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // If no image was returned, fall through to visual brief fallback
     if (!generatedImageUrl) {
       visualBrief = imageGenPrompt;
+      // Refund credit — user gets text brief, not the image they paid for
+      await refundCredit(user.id, user.tier, "visualize");
+      console.info("[visualize] Credit refunded — visual brief fallback only");
     }
   } catch (err) {
     console.error("[visualize] Gemini image gen failed — falling back to visual brief:", err);
     visualBrief = imageGenPrompt;
+    // Refund credit — AI call failed, user shouldn't lose a credit
+    await refundCredit(user.id, user.tier, "visualize");
+    console.info("[visualize] Credit refunded — Gemini failure");
   }
 
+  logApiUsage({ userId: user.id, endpoint: "visualize", statusCode: 200, responseTimeMs: Date.now() - start, platform: cleanPlatform, niche: cleanNiche, format: cleanAdType });
   return res.status(200).json({
     generatedImageUrl,
     visualBrief,
@@ -324,10 +344,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   });
 
   } catch (err: unknown) {
-    console.error('[visualize] Unhandled error:', err instanceof Error ? err.message : err, err instanceof Error ? err.stack : '');
-    return res.status(500).json({
-      error: 'Internal server error',
-      message: err instanceof Error ? err.message : 'Unknown error',
-    });
+    logApiUsage({ userId: "unknown", endpoint: "visualize", statusCode: 500, responseTimeMs: Date.now() - start, errorCode: "GENERATION_FAILED" });
+    return apiError(res, 'GENERATION_FAILED', 500,
+      err instanceof Error ? err.message : String(err));
   }
 }

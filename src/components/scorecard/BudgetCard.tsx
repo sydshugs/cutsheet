@@ -24,13 +24,13 @@ export function BudgetCard({ engineBudget, budget, onNavigateSettings }: BudgetC
     const weeklyMax = engineBudget.dailyBudget ? engineBudget.dailyBudget.max * 7 : null;
 
     return (
-      <div className="w-full bg-[#18181b] border border-white/[0.06] rounded-[16px] p-6 flex flex-col gap-6 font-['Geist',sans-serif] text-[#f4f4f5]">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-500">
+      <div className="w-full bg-[#18181b] border border-white/[0.06] rounded-[16px] p-5 flex flex-col font-['Geist',sans-serif] text-[#f4f4f5]">
+        {/* Header — stacked, no collision */}
+        <div className="mb-3">
+          <span className="block text-[10px] font-semibold uppercase tracking-wider text-zinc-500 mb-1">
             BUDGET
           </span>
-          <span className="text-[12px] font-medium text-zinc-400">
+          <span className="block text-[12px] text-zinc-400">
             Est. CPM {engineBudget.platformCPM} · {engineBudget.platform === 'all' ? 'All platforms' : engineBudget.platform}
           </span>
         </div>
@@ -38,36 +38,41 @@ export function BudgetCard({ engineBudget, budget, onNavigateSettings }: BudgetC
         {/* Hero */}
         {engineBudget.action !== 'hold' && weeklyMin !== null && weeklyMax !== null ? (
           <>
-            <div className="flex items-center gap-3 flex-nowrap">
-              <div className="text-[28px] font-bold tracking-tight text-[#f4f4f5] leading-none whitespace-nowrap shrink-0">
-                ${weeklyMin} <span className="text-zinc-600 font-medium text-[28px] mx-1">–</span> ${weeklyMax}
-              </div>
-              <div className={`px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider shrink-0 whitespace-nowrap ${badge.style}`}>
+            {/* Dollar range + badge */}
+            <div className="flex items-center flex-wrap gap-x-1 mb-4">
+              <span className="text-[28px] font-bold tracking-tight text-white leading-none whitespace-nowrap">
+                ${weeklyMin}
+              </span>
+              <span className="text-[28px] font-medium text-zinc-500 leading-none mx-2 whitespace-nowrap">—</span>
+              <span className="text-[28px] font-bold tracking-tight text-white leading-none whitespace-nowrap">
+                ${weeklyMax}
+              </span>
+              <span className={`ml-2 inline-block text-[9px] font-bold uppercase tracking-wider rounded px-2 py-0.5 whitespace-nowrap ${badge.style}`}>
                 {badge.label}
-              </div>
+              </span>
             </div>
 
-            {/* Split Grid */}
-            <div className="grid grid-cols-3 gap-3">
-              <div className="flex flex-col justify-center gap-1 p-3 h-[60px] rounded-[10px] bg-white/[0.02] border border-white/[0.04]">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 whitespace-nowrap">Ad Sets</span>
-                <span className="text-sm font-semibold text-zinc-100 whitespace-nowrap">3</span>
+            {/* Three-column grid */}
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              <div className="flex flex-col gap-1 rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
+                <span className="text-[9px] font-semibold uppercase tracking-wider text-zinc-500 mb-1">Ad Sets</span>
+                <span className="text-[12px] font-semibold text-white">3</span>
               </div>
-              <div className="flex flex-col justify-center gap-1 p-3 h-[60px] rounded-[10px] bg-white/[0.02] border border-white/[0.04]">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 whitespace-nowrap">Per Set</span>
-                <span className="text-sm font-semibold text-zinc-100 whitespace-nowrap">
+              <div className="flex flex-col gap-1 rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
+                <span className="text-[9px] font-semibold uppercase tracking-wider text-zinc-500 mb-1">Per Set</span>
+                <span className="text-[12px] font-semibold text-white">
                   ${engineBudget.dailyBudget!.min}–{engineBudget.dailyBudget!.max}/day
                 </span>
               </div>
-              <div className="flex flex-col justify-center gap-1 p-3 h-[60px] rounded-[10px] bg-white/[0.02] border border-white/[0.04]">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 whitespace-nowrap">Window</span>
-                <span className="text-sm font-semibold text-zinc-100 whitespace-nowrap">{engineBudget.testDuration}</span>
+              <div className="flex flex-col gap-1 rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
+                <span className="text-[9px] font-semibold uppercase tracking-wider text-zinc-500 mb-1">Window</span>
+                <span className="text-[12px] font-semibold text-white">{engineBudget.testDuration}</span>
               </div>
             </div>
           </>
         ) : (
           /* Hold state */
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 mb-4">
             <div className={`px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${badge.style}`}>
               {badge.label}
             </div>
@@ -75,10 +80,10 @@ export function BudgetCard({ engineBudget, budget, onNavigateSettings }: BudgetC
           </div>
         )}
 
-        {/* Insight */}
-        <div className="flex gap-3 items-start p-4 rounded-[12px] bg-white/[0.02] border border-white/[0.04]">
-          <Info className="w-4 h-4 text-zinc-400 shrink-0 mt-0.5" />
-          <p className="text-[14px] text-zinc-400 leading-[1.6]">
+        {/* Insight note */}
+        <div className="flex items-start gap-2.5 rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+          <Info className="shrink-0 mt-0.5 text-zinc-500" size={14} />
+          <p className="text-[12px] text-zinc-400 leading-[1.6]">
             {engineBudget.scaleSignal ?? engineBudget.advice}
           </p>
         </div>
@@ -87,7 +92,7 @@ export function BudgetCard({ engineBudget, budget, onNavigateSettings }: BudgetC
           <button
             type="button"
             onClick={onNavigateSettings}
-            className="text-[11px] text-indigo-400 hover:text-indigo-300 bg-transparent border-none cursor-pointer p-0 transition-colors -mt-4"
+            className="mt-3 text-[11px] text-indigo-400 hover:text-indigo-300 bg-transparent border-none cursor-pointer p-0 transition-colors"
           >
             Set niche for personalized budgets →
           </button>

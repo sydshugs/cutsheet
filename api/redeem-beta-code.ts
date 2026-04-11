@@ -5,6 +5,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient } from "@supabase/supabase-js";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
+import { apiError } from "./_lib/apiError.js";
 
 export const maxDuration = 10;
 
@@ -62,7 +63,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (markError) {
       console.error("[redeem-beta-code] failed to mark code used:", markError.message);
-      return res.status(500).json({ error: "Redemption failed. Please try again." });
+      return apiError(res, 'INTERNAL_ERROR', 500, `failed to mark code used: ${markError.message}`);
     }
 
     // Grant beta_access on the user's profile
@@ -81,7 +82,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(200).json({ success: true });
   } catch (err) {
-    console.error("[redeem-beta-code] error:", err instanceof Error ? err.message : err);
-    return res.status(500).json({ error: "Redemption failed. Please try again." });
+    return apiError(res, 'INTERNAL_ERROR', 500,
+      `[redeem-beta-code] ${err instanceof Error ? err.message : String(err)}`);
   }
 }

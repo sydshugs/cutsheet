@@ -1,13 +1,22 @@
 // api/visualize-v2.ts — Visualize It v2: True image editing via Gemini 2.0 Flash
 // Sends the original creative + edit prompt to Gemini for surgical pixel-level changes.
 // Falls back to v1 visual brief on error. Does NOT touch api/visualize.ts.
+//
+// CREDIT FLOW:
+// 1. verifyAuth() → get user + tier
+// 2. checkRateLimit() → per-user throttle
+// 3. Verify isPro → 403 if free tier
+// 4. Deduct 1 credit (atomic) → 429 if no credits
+// 5. Run Gemini image editing
+// 6. If Gemini fails (no image generated) → refund credit
+// 7. Return result
 
 export const maxDuration = 30; // seconds — spec requires 30s timeout for image editing
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { GoogleGenAI, Modality } from "@google/genai";
 import { verifyAuth, handlePreflight, isProOrTeam, checkRateLimit } from "./_lib/auth";
-import { checkFeatureCredit } from "./_lib/creditCheck";
+import { checkFeatureCredit, refundCredit } from "./_lib/creditCheck";
 import { safePlatform, safeAdType, safeNiche, validateBase64Size } from "./_lib/validateInput";
 
 // Use the same model as v1 — gemini-2.5-flash-image supports image editing via generateContent
@@ -221,8 +230,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(403).json({ error: "PRO_REQUIRED", feature: "visualize" });
     }
 
-    // ── Monthly credit check (CHECK ONLY — don't deduct yet) ─────────────
-    const credit = await checkFeatureCredit(user.id, user.tier, "visualize", false);
+    // ── Monthly credit check (atomic deduct — refund on failure) ───────────
+    const credit = await checkFeatureCredit(user.id, user.tier, "visualize", true);
     if (!credit.allowed) {
       const now = new Date();
       const resetDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
@@ -411,13 +420,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       visualBrief = editPrompt;
     }
 
-    // ── Deduct 1 visualize credit ONLY when an image was actually generated ──
-    if (generatedImageUrl) {
-      const deductResult = await checkFeatureCredit(user.id, user.tier, "visualize", true);
-      console.info("[visualize-v2] Credit deducted (image generated): used=%d, limit=%d, remaining=%d",
-        deductResult.used, deductResult.limit, deductResult.remaining);
+    // ── Refund credit if no image was generated (user only gets text brief) ──
+    if (!generatedImageUrl) {
+      await refundCredit(user.id, user.tier, "visualize");
+      console.info("[visualize-v2] Credit refunded — visual brief fallback only");
     } else {
-      console.info("[visualize-v2] No credit deducted — visual brief fallback only");
+      console.info("[visualize-v2] Credit consumed (image generated): used=%d, limit=%d", credit.used, credit.limit);
     }
 
     return res.status(200).json({
@@ -435,7 +443,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     );
     return res.status(500).json({
       error: "Internal server error",
-      message: err instanceof Error ? err.message : "Unknown error",
+      message: "Something went wrong generating the visualization. Please try again.",
     });
   }
 }

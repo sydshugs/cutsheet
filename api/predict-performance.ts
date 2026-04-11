@@ -6,8 +6,13 @@ import Anthropic from "@anthropic-ai/sdk";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
 import { safePlatform, safeAdType, safeNiche } from "./_lib/validateInput";
 import { sanitizeAnalysisText } from "./_lib/sanitizeMemory";
+import { validatePrediction, validateConfidence } from "../src/utils/scoreGuardrails.js";
+import { apiError } from "./_lib/apiError.js";
+import { logApiUsage } from "./_lib/logUsage";
 
 // ── Inline benchmark data (avoids ESM import issue in Vercel CJS bundle) ──────
+// SYNC WARNING: This must match src/lib/benchmarks.ts exactly.
+// Last synced: 2026-04-11. Verified against published sources April 2026.
 interface NicheBenchmark {
   ctr: { low: number; avg: number; high: number };
   hookRate: { avg: number } | null;
@@ -42,6 +47,34 @@ const NICHE_BENCHMARKS: Record<string, Record<string, NicheBenchmark>> = {
     YouTube: { ctr: { low: 0.4, avg: 0.9, high: 2.0 }, hookRate: { avg: 55 }, cpm: { avg: 7 } },
     general: { ctr: { low: 0.7, avg: 1.4, high: 2.8 }, hookRate: { avg: 40 }, cpm: { avg: 7 } },
   },
+  "Health & Wellness": {
+    Meta:    { ctr: { low: 1.4, avg: 2.2, high: 3.5 }, hookRate: { avg: 30 }, cpm: { avg: 16 } },
+    TikTok:  { ctr: { low: 0.9, avg: 1.6, high: 3.0 }, hookRate: { avg: 35 }, cpm: { avg: 8 } },
+    YouTube: { ctr: { low: 0.3, avg: 0.5, high: 1.1 }, hookRate: { avg: 42 }, cpm: { avg: 12 } },
+    Google:  { ctr: { low: 1.8, avg: 3.2, high: 5.5 }, hookRate: null,        cpm: { avg: 35 } },
+    general: { ctr: { low: 1.2, avg: 1.8, high: 3.0 }, hookRate: { avg: 32 }, cpm: { avg: 14 } },
+  },
+  "Finance / Fintech": {
+    Meta:    { ctr: { low: 0.5, avg: 0.8, high: 1.4 }, hookRate: { avg: 18 }, cpm: { avg: 28 } },
+    TikTok:  { ctr: { low: 0.3, avg: 0.6, high: 1.2 }, hookRate: { avg: 16 }, cpm: { avg: 14 } },
+    YouTube: { ctr: { low: 0.15, avg: 0.35, high: 0.7 }, hookRate: { avg: 30 }, cpm: { avg: 22 } },
+    Google:  { ctr: { low: 2.0, avg: 3.6, high: 6.0 }, hookRate: null,        cpm: { avg: 65 } },
+    general: { ctr: { low: 0.5, avg: 0.8, high: 1.3 }, hookRate: { avg: 18 }, cpm: { avg: 30 } },
+  },
+  "Food & Beverage": {
+    Meta:    { ctr: { low: 1.0, avg: 1.6, high: 2.5 }, hookRate: { avg: 33 }, cpm: { avg: 11 } },
+    TikTok:  { ctr: { low: 1.2, avg: 2.2, high: 4.0 }, hookRate: { avg: 40 }, cpm: { avg: 7 } },
+    YouTube: { ctr: { low: 0.3, avg: 0.7, high: 1.5 }, hookRate: { avg: 48 }, cpm: { avg: 9 } },
+    Google:  { ctr: { low: 1.5, avg: 2.8, high: 4.5 }, hookRate: null,        cpm: { avg: 30 } },
+    general: { ctr: { low: 1.0, avg: 1.8, high: 3.2 }, hookRate: { avg: 36 }, cpm: { avg: 11 } },
+  },
+  "Real Estate": {
+    Meta:    { ctr: { low: 0.7, avg: 1.1, high: 1.9 }, hookRate: { avg: 22 }, cpm: { avg: 20 } },
+    TikTok:  { ctr: { low: 0.5, avg: 0.9, high: 1.8 }, hookRate: { avg: 25 }, cpm: { avg: 11 } },
+    YouTube: { ctr: { low: 0.2, avg: 0.45, high: 0.9 }, hookRate: { avg: 38 }, cpm: { avg: 15 } },
+    Google:  { ctr: { low: 2.5, avg: 4.5, high: 8.0 }, hookRate: null,        cpm: { avg: 45 } },
+    general: { ctr: { low: 0.7, avg: 1.2, high: 2.0 }, hookRate: { avg: 24 }, cpm: { avg: 20 } },
+  },
 };
 
 const NICHE_ALIASES: Record<string, string> = {
@@ -52,6 +85,14 @@ const NICHE_ALIASES: Record<string, string> = {
   "agency": "Agency",
   "creator / content": "Creator / Content", "creator": "Creator / Content",
   "content": "Creator / Content", "content creator": "Creator / Content",
+  "health": "Health & Wellness", "health & wellness": "Health & Wellness",
+  "wellness": "Health & Wellness", "fitness": "Health & Wellness", "supplements": "Health & Wellness",
+  "finance": "Finance / Fintech", "finance / fintech": "Finance / Fintech",
+  "fintech": "Finance / Fintech", "banking": "Finance / Fintech", "insurance": "Finance / Fintech",
+  "food": "Food & Beverage", "food & beverage": "Food & Beverage",
+  "beverage": "Food & Beverage", "restaurant": "Food & Beverage", "cpg": "Food & Beverage",
+  "real estate": "Real Estate", "realestate": "Real Estate",
+  "property": "Real Estate", "housing": "Real Estate",
 };
 
 const PLATFORM_ALIASES: Record<string, string> = {
@@ -82,6 +123,8 @@ function getClient() {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handlePreflight(req, res)) return;
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
+  const start = Date.now();
 
   const user = await verifyAuth(req);
   if (!user) return res.status(401).json({ error: "Unauthorized" });
@@ -163,7 +206,12 @@ Predict:
 2. CVR Potential — if this ad drives to a typical ${nicheLabel} landing page on ${platformLabel}.
 3. Hook Retention (video only) — estimated % who watch past 3 seconds on ${platformLabel}. ${platformLabel === "TikTok" ? "TikTok users decide in 0.5-1s." : platformLabel === "YouTube" ? "YouTube users can skip at 5s." : "Meta feed users decide in 1-2s."}
 4. Fatigue Timeline — at moderate spend ($300-500/day on ${platformLabel}), estimated days before fatigue for ${nicheLabel}.
-5. Confidence Level and reason — cite specific scores and creative signals.
+5. Confidence Level — how reliable is this prediction?
+Rules:
+- 'High' = scores are clear-cut (very high 8+ or very low 3-), large sample of benchmark data for this platform+niche, strong signal in the creative.
+- 'Medium' = scores are mid-range (4-7), mixed signals, some dimensions strong and others weak, or limited benchmark data for this niche.
+- 'Low' = unusual creative format, niche with sparse benchmark data, or contradictory signals (e.g. great hook but no CTA).
+Confidence reflects prediction RELIABILITY, not ad quality.
 6. Top 2 signals boosting performance — be specific to what you saw in the analysis.
 7. Top 2 signals limiting performance — reference the weakest scores.
 
@@ -186,6 +234,7 @@ Return ONLY valid JSON, no markdown fencing. Be calibrated — a hook score of 3
     const message = await client.messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 1024,
+      temperature: 0,
       system: systemPrompt,
       messages: [{ role: "user", content: prompt }],
     });
@@ -195,8 +244,12 @@ Return ONLY valid JSON, no markdown fencing. Be calibrated — a hook score of 3
 
     try {
       const parsed = JSON.parse(cleaned);
-      return res.status(200).json(parsed);
+      const validatedPrediction = validatePrediction(parsed, scores);
+      validatedPrediction.confidence = validateConfidence(parsed.confidence, scores);
+      logApiUsage({ userId: user.id, endpoint: "predict-performance", statusCode: 200, responseTimeMs: Date.now() - start, platform: platformLabel, niche: nicheLabel, format: adTypeLabel });
+      return res.status(200).json(validatedPrediction);
     } catch {
+      logApiUsage({ userId: user.id, endpoint: "predict-performance", statusCode: 200, responseTimeMs: Date.now() - start, platform: platformLabel, niche: nicheLabel, format: adTypeLabel, errorCode: "PARSE_FALLBACK" });
       return res.status(200).json({
         ctr: { low: 0, high: 0, benchmark: 0, vsAvg: "at" },
         cvr: { low: 0, high: 0 },
@@ -209,7 +262,8 @@ Return ONLY valid JSON, no markdown fencing. Be calibrated — a hook score of 3
       });
     }
   } catch (err) {
-    console.error("predict-performance error:", err);
-    return res.status(500).json({ error: "Performance prediction failed" });
+    logApiUsage({ userId: user.id, endpoint: "predict-performance", statusCode: 500, responseTimeMs: Date.now() - start, errorCode: "ANALYSIS_FAILED" });
+    return apiError(res, 'ANALYSIS_FAILED', 500,
+      `[predict-performance] ${err instanceof Error ? err.message : String(err)}`);
   }
 }

@@ -5,6 +5,7 @@ import { generateImprovements as claudeImprovements } from "./claudeService";
 import { supabase } from "../lib/supabase";
 import { incrementAnalysisCount } from "./usageService";
 import { inferUploadMimeType } from "../utils/uploadFileValidation";
+import { validateScores } from "../utils/scoreGuardrails";
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 
@@ -49,13 +50,17 @@ async function callGeminiProxy(params: {
 
   if (!response.ok) {
     const ct = response.headers.get("content-type") ?? "";
+    // #region agent log
+    fetch('http://127.0.0.1:7433/ingest/b4d619d4-9480-408b-8b9b-7d7bd826fed3',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'42d35e'},body:JSON.stringify({sessionId:'42d35e',location:'analyzerService.ts:51',message:'callGeminiProxy error response',data:{status:response.status,contentType:ct},runId:'run1',hypothesisId:'A-D',timestamp:Date.now()})}).catch(()=>{});
+    try{const l=JSON.parse(localStorage.getItem('_dbg42d35e')||'[]');l.push({t:Date.now(),loc:'analyzerService:51',msg:'callGeminiProxy error response',d:{status:response.status,ct}});localStorage.setItem('_dbg42d35e',JSON.stringify(l));}catch(_){}
+    // #endregion
     if (response.status === 404 || ct.includes("text/html")) {
       throw new Error(
         "Analyze API is not reachable (404). Plain Vite does not run /api routes. Add DEV_API_PROXY_TARGET to .env or .env.local (e.g. https://cutsheet.xyz — same Supabase as VITE_SUPABASE_URL), restart dev, or run pnpm run dev:vercel from the repo root. Vite does not load .env.example.",
       );
     }
     const data = await response.json().catch(() => ({}));
-    throw new Error((data as { error?: string }).error ?? `API error ${response.status}`);
+    throw new Error((data as { message?: string; error?: string }).message ?? (data as { error?: string }).error ?? `API error ${response.status}`);
   }
 
   const result = await response.json() as { text: string };
@@ -172,6 +177,18 @@ A 7/10 means the same thing every time.
 - CTA Effectiveness: X/10 (if the creative relies on a platform-native CTA button instead of an in-creative CTA, score the end-frame's ability to drive action INTO that button — visual direction, timing, and clarity of the final moment — not the presence of CTA text in the video itself)
 - Production Quality: X/10
 - Overall Ad Strength: X/10
+
+Scoring anchors — use these as calibration reference:
+- Hook 2/10: Static product shot with no text, no motion, no pattern interrupt. Generic thumbnail.
+- Hook 5/10: Has movement or text overlay but hook is predictable. "Check this out" type opener.
+- Hook 8/10: Immediate pattern interrupt — unexpected visual, bold claim, or strong curiosity gap in first frame.
+- CTA 2/10: No call to action present, or a generic "Learn More" with no urgency.
+- CTA 5/10: CTA exists but is weak — small text, buried, or generic ("Shop Now" with no incentive).
+- CTA 8/10: Clear, urgent, specific CTA with a reason to act now ("Get 30% off — ends tonight").
+- Message 3/10: Unclear what the product is or does. No value proposition visible.
+- Message 7/10: Clear value prop but generic — could apply to any competitor in the space.
+- Production 3/10: Poor lighting, low resolution, awkward framing, amateur look.
+- Production 8/10: Professional grade — clean lighting, intentional composition, platform-native style.
 
 ---
 
@@ -315,6 +332,18 @@ A 7/10 means the same thing every time.
 - CTA Effectiveness: X/10
 - Production Quality: X/10 (design polish, typography, layout)
 - Overall Ad Strength: X/10
+
+Scoring anchors — use these as calibration reference:
+- Hook 2/10: Static product shot with no text, no motion, no pattern interrupt. Generic thumbnail.
+- Hook 5/10: Has movement or text overlay but hook is predictable. "Check this out" type opener.
+- Hook 8/10: Immediate pattern interrupt — unexpected visual, bold claim, or strong curiosity gap in first frame.
+- CTA 2/10: No call to action present, or a generic "Learn More" with no urgency.
+- CTA 5/10: CTA exists but is weak — small text, buried, or generic ("Shop Now" with no incentive).
+- CTA 8/10: Clear, urgent, specific CTA with a reason to act now ("Get 30% off — ends tonight").
+- Message 3/10: Unclear what the product is or does. No value proposition visible.
+- Message 7/10: Clear value prop but generic — could apply to any competitor in the space.
+- Production 3/10: Poor lighting, low resolution, awkward framing, amateur look.
+- Production 8/10: Professional grade — clean lighting, intentional composition, platform-native style.
 
 ---
 
@@ -464,31 +493,46 @@ async function cleanupStorage(storagePath: string): Promise<void> {
   } catch { /* best-effort cleanup */ }
 }
 
-function parseScores(markdown: string): AnalysisResult["scores"] {
-  try {
-    const hookMatch = markdown.match(/Hook Strength:\s*(\d+(?:\.\d+)?)\/10/);
-    const clarityMatch = markdown.match(/Message Clarity:\s*(\d+(?:\.\d+)?)\/10/);
-    // IMPORTANT: This regex must match ALL platform variants of this dimension.
-    // Paid uses "CTA Effectiveness", organic static uses "Shareability & Save-Worthiness",
-    // organic video uses "Shareability & Rewatch".
-    // Any new platform-specific dimension label added to a prompt MUST be added here too
-    // or the parser will return null and show "Something went wrong reading the results".
-    const ctaMatch = markdown.match(/(?:CTA Effectiveness|Shareability\s*&\s*(?:Save[- ]?Worthiness|Rewatch)):\s*(\d+(?:\.\d+)?)\/10/);
-    const productionMatch = markdown.match(/Production Quality:\s*(\d+(?:\.\d+)?)\/10/);
-    const overallMatch = markdown.match(/Overall (?:Ad |Content )?Strength:\s*(\d+(?:\.\d+)?)\/10/);
+/** Multi-pattern score extractor — tries 3 regex patterns per label for resilience. */
+export function extractScore(text: string, ...labels: string[]): number {
+  for (const label of labels) {
+    // Pattern 1: "Label: X/10" or "Label: X / 10"
+    const p1 = new RegExp(`${label}[:\\s]+([\\d.]+)\\s*(?:\\/\\s*10)?`, 'i');
+    const m1 = text.match(p1);
+    if (m1) return parseFloat(m1[1]);
 
-    if (!hookMatch || !clarityMatch || !ctaMatch || !productionMatch || !overallMatch) {
-      console.warn("[parseScores] Missing dimension — hook:%s clarity:%s cta/share:%s production:%s overall:%s",
-        !!hookMatch, !!clarityMatch, !!ctaMatch, !!productionMatch, !!overallMatch);
+    // Pattern 2: "Label — X/10" or "Label – X"
+    const p2 = new RegExp(`${label}\\s*[—–-]+\\s*([\\d.]+)`, 'i');
+    const m2 = text.match(p2);
+    if (m2) return parseFloat(m2[1]);
+
+    // Pattern 3: "X/10" on the same line as the label
+    const p3 = new RegExp(`${label}[^\\n]*?(\\d+(?:\\.\\d)?)\\s*\\/\\s*10`, 'i');
+    const m3 = text.match(p3);
+    if (m3) return parseFloat(m3[1]);
+  }
+  return 0;
+}
+
+export function parseScores(markdown: string): AnalysisResult["scores"] {
+  try {
+    const hook = extractScore(markdown, 'Hook Strength', 'Hook', 'Thumb-Stop');
+    const clarity = extractScore(markdown, 'Message Clarity', 'Message', 'Sound-Off', 'Retention', 'Audio & Captions');
+    const cta = extractScore(markdown, 'CTA Effectiveness', 'CTA', 'Call to Action', 'Shareability & Save-Worthiness', 'Shareability & Rewatch', 'Shareability');
+    const production = extractScore(markdown, 'Production Quality', 'Production', 'Visual', 'Brand');
+    const overall = extractScore(markdown, 'Overall Ad Strength', 'Overall Ad', 'Overall Content Strength', 'Overall', 'Total Score');
+
+    if (!hook && !clarity && !cta && !production && !overall) {
+      console.warn("[parseScores] No dimensions found in response");
       return null;
     }
 
     return {
-      hook: Math.round(parseFloat(hookMatch[1])),
-      clarity: Math.round(parseFloat(clarityMatch[1])),
-      cta: Math.round(parseFloat(ctaMatch[1])),
-      production: Math.round(parseFloat(productionMatch[1])),
-      overall: Math.round(parseFloat(overallMatch[1])),
+      hook: Math.round(hook),
+      clarity: Math.round(clarity),
+      cta: Math.round(cta),
+      production: Math.round(production),
+      overall: Math.round(overall),
     };
   } catch {
     return null;
@@ -722,31 +766,21 @@ export function parseScenes(markdown: string): Scene[] | undefined {
   }
 }
 
-// Recalculate overall score when Gemini returns zero values
-// If overall is 0 or any metric is 0, recompute overall as the
-// average of only the non-zero component scores.
+// Recalculate overall score — delegates to validateScores as single source of truth.
+// validateScores clamps all values to 1.0-10.0 and recalculates overall as dimension average.
 export function recalculateOverallScore(
   scores: AnalysisResult["scores"]
 ): AnalysisResult["scores"] {
   if (!scores) return scores;
 
-  const { hook, clarity, cta, production, overall } = scores;
-  const metrics = [hook, clarity, cta, production];
-  const hasZeroMetric = metrics.some((v) => v === 0);
-
-  if (overall === 0 || hasZeroMetric) {
-    const nonZero = metrics.filter((v) => v > 0);
-    if (nonZero.length > 0) {
-      const avg = nonZero.reduce((sum, v) => sum + v, 0) / nonZero.length;
-      const rounded = Math.round(avg);
-      return {
-        ...scores,
-        overall: rounded,
-      };
-    }
-  }
-
-  return scores;
+  const validated = validateScores(scores as Record<string, number>);
+  return {
+    hook: validated.hook,
+    clarity: validated.clarity,
+    cta: validated.cta,
+    production: validated.production,
+    overall: validated.overall,
+  } as AnalysisResult["scores"];
 }
 
 // ─── MAIN ANALYZER ────────────────────────────────────────────────────────────
@@ -768,8 +802,16 @@ export async function analyzeVideo(
   try {
     // 1. Upload file to Supabase Storage (bypasses Vercel 4.5MB body limit)
     emit("uploading", "Uploading file...");
+    // #region agent log
+    fetch('http://127.0.0.1:7433/ingest/b4d619d4-9480-408b-8b9b-7d7bd826fed3',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'42d35e'},body:JSON.stringify({sessionId:'42d35e',location:'analyzerService.ts:800',message:'analyzeVideo start',data:{fileName:file.name,fileType:file.type,fileSizeMB:+(file.size/1024/1024).toFixed(2)},runId:'run1',hypothesisId:'A-B-C-D-E',timestamp:Date.now()})}).catch(()=>{});
+    try{const l=JSON.parse(localStorage.getItem('_dbg42d35e')||'[]');l.push({t:Date.now(),loc:'analyzerService:800',msg:'analyzeVideo start',d:{name:file.name,type:file.type,sizeMB:+(file.size/1024/1024).toFixed(2)}});localStorage.setItem('_dbg42d35e',JSON.stringify(l));}catch(_){}
+    // #endregion
     const uploaded = await uploadToStorage(file);
     storagePath = uploaded.storagePath;
+    // #region agent log
+    fetch('http://127.0.0.1:7433/ingest/b4d619d4-9480-408b-8b9b-7d7bd826fed3',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'42d35e'},body:JSON.stringify({sessionId:'42d35e',location:'analyzerService.ts:806',message:'storage upload success',data:{storagePath:uploaded.storagePath,fileUrlPrefix:uploaded.fileUrl.slice(0,80)},runId:'run1',hypothesisId:'A-B',timestamp:Date.now()})}).catch(()=>{});
+    try{const l=JSON.parse(localStorage.getItem('_dbg42d35e')||'[]');l.push({t:Date.now(),loc:'analyzerService:806',msg:'storage upload success',d:{storagePath:uploaded.storagePath,urlPrefix:uploaded.fileUrl.slice(0,80)}});localStorage.setItem('_dbg42d35e',JSON.stringify(l));}catch(_){}
+    // #endregion
 
     const resolvedMime = inferUploadMimeType(file);
     if (resolvedMime === "application/octet-stream") {
@@ -786,6 +828,10 @@ export async function analyzeVideo(
     if (userContext) parts.push(userContext);
     parts.push(basePrompt);
     const prompt = parts.join('\n\n');
+    // #region agent log
+    fetch('http://127.0.0.1:7433/ingest/b4d619d4-9480-408b-8b9b-7d7bd826fed3',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'42d35e'},body:JSON.stringify({sessionId:'42d35e',location:'analyzerService.ts:820',message:'prompt built',data:{mimeType:resolvedMime,promptLength:prompt.length,hasContextPrefix:!!contextPrefix,contextPrefixLen:contextPrefix?.length??0},runId:'run1',hypothesisId:'C-E',timestamp:Date.now()})}).catch(()=>{});
+    try{const l=JSON.parse(localStorage.getItem('_dbg42d35e')||'[]');l.push({t:Date.now(),loc:'analyzerService:820',msg:'prompt built',d:{mime:resolvedMime,promptLen:prompt.length,prefixLen:contextPrefix?.length??0}});localStorage.setItem('_dbg42d35e',JSON.stringify(l));}catch(_){}
+    // #endregion
 
     // 3. Call server-side Gemini proxy with file URL (not base64)
     const markdown = await callGeminiProxy({
@@ -859,6 +905,10 @@ export async function analyzeVideo(
     // Clean up on failure too
     if (storagePath) cleanupStorage(storagePath);
     emit("error");
+    // #region agent log
+    fetch('http://127.0.0.1:7433/ingest/b4d619d4-9480-408b-8b9b-7d7bd826fed3',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'42d35e'},body:JSON.stringify({sessionId:'42d35e',location:'analyzerService.ts:895',message:'analyzeVideo catch',data:{errMsg:err instanceof Error?err.message:String(err)},runId:'run1',hypothesisId:'A-B-C-D-E',timestamp:Date.now()})}).catch(()=>{});
+    try{const l=JSON.parse(localStorage.getItem('_dbg42d35e')||'[]');l.push({t:Date.now(),loc:'analyzerService:895',msg:'analyzeVideo catch',d:{err:err instanceof Error?err.message:String(err)}});localStorage.setItem('_dbg42d35e',JSON.stringify(l));}catch(_){}
+    // #endregion
     if (err instanceof Error) {
       throw new Error(`Analysis failed: ${err.message}`);
     }

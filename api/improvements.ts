@@ -4,7 +4,8 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
-import { sanitizeSessionMemory } from "./_lib/sanitizeMemory";
+import { sanitizeSessionMemory, sanitizeUserInput, sanitizeAnalysisText } from "./_lib/sanitizeMemory";
+import { apiError } from "./_lib/apiError.js";
 
 export const maxDuration = 60;
 
@@ -52,9 +53,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { action, payload } = req.body ?? {};
 
   if (action === "improvements") {
-    const { analysisMarkdown, scores, userContext: rawContext, platform, sessionMemory: rawMemory } = payload ?? {};
+    const { analysisMarkdown: rawAnalysis, scores, userContext: rawContext, platform: rawPlatform, sessionMemory: rawMemory } = payload ?? {};
     const sessionMemory = sanitizeSessionMemory(rawMemory);
     const userContext = sanitizeSessionMemory(rawContext);
+    const analysisMarkdown = sanitizeAnalysisText(rawAnalysis);
+    const platform = sanitizeUserInput(rawPlatform);
     if (!scores) return res.status(200).json({ improvements: [] });
 
     const weakAreas = Object.entries(scores as Record<string, number>)
@@ -76,6 +79,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const message = await getClient().messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 1024,
+      temperature: 0,
       system: `You are a senior performance marketing creative strategist. You write short, specific, actionable improvement suggestions for ads. Each suggestion should be 1-2 sentences max. Focus on the weakest scoring areas. No fluff, no preamble.${contextBlock}${platformBlock}${memoryBlock}${brandVoiceContext}`,
       messages: [
         {
@@ -95,9 +99,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (action === "cta-rewrites") {
-    const { currentCTA, productContext, userContext: rawContext, sessionMemory: rawMemory } = payload ?? {};
+    const { currentCTA: rawCTA, productContext: rawProduct, userContext: rawContext, sessionMemory: rawMemory } = payload ?? {};
     const sessionMemory = sanitizeSessionMemory(rawMemory);
     const userContext = sanitizeSessionMemory(rawContext);
+    const currentCTA = sanitizeAnalysisText(rawCTA);
+    const productContext = sanitizeUserInput(rawProduct);
     if (!currentCTA) return res.status(200).json({ rewrites: [] });
 
     const contextBlock = userContext
@@ -110,6 +116,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const message = await getClient().messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 512,
+      temperature: 0,
       system: `You are a direct-response copywriter. You write short, punchy CTAs for paid social ads. Each CTA should be under 8 words. Focus on urgency, clarity, and conversion.${contextBlock}${memoryBlock}${brandVoiceContext}`,
       messages: [
         {
@@ -136,9 +143,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (action === "brief") {
-    const { analysisMarkdown, filename, userContext: rawContext, sessionMemory: rawMemory, adFormat, platform } = payload ?? {};
+    const { analysisMarkdown: rawAnalysis, filename: rawFilename, userContext: rawContext, sessionMemory: rawMemory, adFormat, platform: rawPlatform } = payload ?? {};
     const sessionMemory = sanitizeSessionMemory(rawMemory);
     const userContext = sanitizeSessionMemory(rawContext);
+    const analysisMarkdown = sanitizeAnalysisText(rawAnalysis);
+    const filename = sanitizeUserInput(rawFilename);
+    const platform = sanitizeUserInput(rawPlatform);
     if (!analysisMarkdown) return res.status(400).json({ error: "analysisMarkdown is required" });
 
     const formatLabel = adFormat === "static" ? "static" : "video";
@@ -157,6 +167,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const message = await getClient().messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 2048,
+      temperature: 0,
       system: `You are a senior creative strategist at a top performance marketing agency. You write tight, actionable creative briefs that creative teams can execute immediately. Your briefs are specific to the ad analyzed — not generic templates.${contextBlock}${memoryBlock}${platformBlock}${brandVoiceContext}`,
       messages: [
         {
@@ -200,7 +211,7 @@ ${analysisMarkdown}`,
     });
 
     const brief = message.content[0].type === "text" ? message.content[0].text : "";
-    if (!brief.trim()) return res.status(500).json({ error: "Claude returned empty brief" });
+    if (!brief.trim()) return apiError(res, 'GENERATION_FAILED', 500, "Claude returned empty brief");
     return res.status(200).json({ brief });
   }
 

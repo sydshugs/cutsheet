@@ -98,19 +98,19 @@ export default function CutsheetPlatform() {
         <header className="flex w-full flex-col items-center gap-3 text-center">
           <p style={{
             fontFamily: "var(--sans)", fontWeight: 600, fontSize: "12.1px",
-            lineHeight: "18.15px", letterSpacing: "2.42px", color: "#52525c",
+            lineHeight: "18.15px", letterSpacing: "2.42px", color: "var(--landing-eyebrow)",
             textTransform: "uppercase",
           }}>
             THE PLATFORM
           </p>
           <h2 className="text-balance text-center text-[24px] font-bold leading-[1.2] sm:text-[30px] lg:text-[36px] lg:leading-[54px]" style={{
-            fontFamily: "var(--sans)", color: "#f4f4f5",
+            fontFamily: "var(--display)", color: "#f4f4f5",
           }}>
             Everything you need to ship better ads
           </h2>
           <p style={{
             fontFamily: "var(--sans)", fontWeight: 400, fontSize: "16px",
-            lineHeight: "24px", color: "#71717b", textAlign: "center",
+            lineHeight: "24px", color: "#a1a1aa", textAlign: "center",
           }}>
             Score it. Fix it. Rank it. Compare it. All before you spend.
           </p>
@@ -212,7 +212,7 @@ export default function CutsheetPlatform() {
               <div className="relative overflow-hidden" style={{ width: "49.4%", borderRadius: "16.48px 0 0 16.48px" }}>
                 <img
                   src={TAB_IMAGES[active]}
-                  alt=""
+                  alt={`${copy.badge} feature preview`}
                   className="absolute inset-0 size-full object-cover pointer-events-none"
                   style={{ height: "151.77%", left: "-38.91%", top: "-30.48%", width: "142.65%", maxWidth: "none" }}
                   decoding="async"
@@ -245,7 +245,7 @@ export default function CutsheetPlatform() {
                 </div>
                 {/* Title + body */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "3.068px", minWidth: 0 }}>
-                  <h3 style={{ fontFamily: "var(--sans)", fontWeight: 700, fontSize: "8.78px", lineHeight: 1.1, letterSpacing: "-0.132px", color: "white", margin: 0 }}>
+                  <h3 style={{ fontFamily: "var(--display)", fontWeight: 700, fontSize: "8.78px", lineHeight: 1.1, letterSpacing: "-0.132px", color: "white", margin: 0 }}>
                     {copy.title}
                   </h3>
                   <p style={{ fontFamily: "var(--sans)", fontWeight: 500, fontSize: "4.72px", lineHeight: 1.25, letterSpacing: "-0.024px", color: "#b6b6b6", margin: 0, maxWidth: "114.617px" }}>
@@ -265,7 +265,7 @@ export default function CutsheetPlatform() {
               >
                 <img
                   src={TAB_IMAGES[active]}
-                  alt=""
+                  alt={`${copy.badge} feature preview`}
                   style={TAB_IMAGE_STYLE[active]}
                   decoding="async"
                   loading="eager"
@@ -410,7 +410,7 @@ export default function CutsheetPlatform() {
                 {/* Text block — Figma 295:946 */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "10.99px" }}>
                   <h3 style={{
-                    fontFamily: "var(--sans)", fontWeight: 700, fontSize: "31.46px",
+                    fontFamily: "var(--display)", fontWeight: 700, fontSize: "31.46px",
                     lineHeight: 1.1, letterSpacing: "-0.4719px", color: "white",
                   }}>
                     {copy.title}

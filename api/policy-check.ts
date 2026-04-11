@@ -6,6 +6,9 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
 import { validateFetchUrl } from "./_lib/validateUrl";
 import { safePlatform, safeAdType, safeNiche, validateBase64Size } from "./_lib/validateInput";
+import { sanitizeUserInput, sanitizeAnalysisText } from "./_lib/sanitizeMemory";
+import { apiError } from "./_lib/apiError.js";
+import { logApiUsage } from "./_lib/logUsage";
 
 export const maxDuration = 60;
 
@@ -54,6 +57,8 @@ export interface PolicyCheckResult {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handlePreflight(req, res)) return;
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
+  const start = Date.now();
 
   try {
 
@@ -211,14 +216,14 @@ Return findings as structured JSON:
       geminiFindings = "\n\n[Visual scan unavailable — analysis based on ad copy and metadata only]";
     }
   } else if (existingAnalysis) {
-    geminiFindings = `\n\nEXISTING VISUAL ANALYSIS (from prior Gemini analysis):\n${JSON.stringify(existingAnalysis, null, 2)}`;
+    geminiFindings = `\n\nEXISTING VISUAL ANALYSIS (from prior Gemini analysis):\n${sanitizeAnalysisText(JSON.stringify(existingAnalysis, null, 2))}`;
   }
 
   // ── Step 2: Claude policy evaluation
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     console.error("[policy-check] ANTHROPIC_API_KEY is not set");
-    return res.status(500).json({ error: "Server configuration error — please contact support." });
+    return apiError(res, 'INTERNAL_ERROR', 500, "ANTHROPIC_API_KEY is not set");
   }
   const client = new Anthropic({ apiKey });
 
@@ -233,8 +238,8 @@ Return findings as structured JSON:
     `Platform(s): ${platform === "both" ? "Meta and TikTok" : platform.charAt(0).toUpperCase() + platform.slice(1)}`,
     `Ad type: ${adType}`,
     `Niche: ${niche}`,
-    adCopy ? `\nAd copy / script:\n"${adCopy}"` : "",
-    geminiFindings,
+    adCopy ? `\nAd copy / script:\n"${sanitizeUserInput(adCopy)}"` : "",
+    sanitizeAnalysisText(geminiFindings),
   ]
     .filter(Boolean)
     .join("\n");
@@ -365,7 +370,7 @@ Return only the complete JSON. No preamble, no explanation outside the JSON.`;
 
     const jsonMatch = rawText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      return res.status(500).json({ error: "Failed to parse policy check response" });
+      return apiError(res, 'ANALYSIS_FAILED', 500, "Could not extract JSON from Claude response");
     }
 
     const result = JSON.parse(jsonMatch[0]) as PolicyCheckResult;
@@ -377,19 +382,17 @@ Return only the complete JSON. No preamble, no explanation outside the JSON.`;
     if (platform === "meta") result.tiktokCategories = [];
     if (platform === "tiktok") result.metaCategories = [];
 
+    logApiUsage({ userId: user.id, endpoint: "policy-check", statusCode: 200, responseTimeMs: Date.now() - start, platform, niche, format: adType });
     return res.status(200).json(result);
   } catch (err) {
-    console.error("[policy-check] Error:", err);
-    return res.status(500).json({
-      error: err instanceof Error ? err.message : "Policy check failed",
-    });
+    logApiUsage({ userId: user.id, endpoint: "policy-check", statusCode: 500, responseTimeMs: Date.now() - start, platform, niche, format: adType, errorCode: "ANALYSIS_FAILED" });
+    return apiError(res, 'ANALYSIS_FAILED', 500,
+      `[policy-check] inner: ${err instanceof Error ? err.message : String(err)}`);
   }
 
   } catch (err: unknown) {
-    console.error('[policy-check] Unhandled error:', err instanceof Error ? err.message : err, err instanceof Error ? err.stack : '');
-    return res.status(500).json({
-      error: 'Internal server error',
-      message: err instanceof Error ? err.message : 'Unknown error',
-    });
+    logApiUsage({ userId: "unknown", endpoint: "policy-check", statusCode: 500, responseTimeMs: Date.now() - start, errorCode: "INTERNAL_ERROR" });
+    return apiError(res, 'INTERNAL_ERROR', 500,
+      `[policy-check] outer: ${err instanceof Error ? err.message : String(err)}`);
   }
 }

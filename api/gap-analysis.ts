@@ -5,6 +5,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
 import { sanitizeSessionMemory, sanitizeUserInput } from "./_lib/sanitizeMemory";
+import { safePlatform } from "./_lib/validateInput";
+import { apiError } from "./_lib/apiError.js";
 
 export const maxDuration = 60;
 
@@ -49,10 +51,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     yourScores, competitorScores,
     yourImprovements, competitorImprovements,
     yourFileName, competitorFileName,
-    platform, format, userContext: rawContext, sessionMemory: rawMemory,
+    platform: rawPlatform, format: rawFormat, userContext: rawContext, sessionMemory: rawMemory,
   } = req.body ?? {};
   const sessionMemory = sanitizeSessionMemory(rawMemory);
   const userContext = sanitizeSessionMemory(rawContext);
+  const platform = safePlatform(rawPlatform);
+  const format = sanitizeUserInput(rawFormat);
   // Sanitize short user-supplied strings that get interpolated into the prompt
   const safeYourFileName = sanitizeUserInput(yourFileName ?? "Your Ad") || "Your Ad";
   const safeCompetitorFileName = sanitizeUserInput(competitorFileName ?? "Competitor Ad") || "Competitor Ad";
@@ -172,13 +176,13 @@ Rules:
 
   const text = response.content.filter((b) => b.type === "text").map((b) => b.text).join("");
   const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) return res.status(500).json({ error: "Could not parse Claude response" });
+  if (!jsonMatch) return apiError(res, 'ANALYSIS_FAILED', 500, "Could not extract JSON from Claude response");
 
   let parsed;
   try {
     parsed = JSON.parse(jsonMatch[0]);
   } catch {
-    return res.status(500).json({ error: "Failed to parse AI response — please try again" });
+    return apiError(res, 'ANALYSIS_FAILED', 500, "JSON.parse failed on Claude response");
   }
   return res.status(200).json({
     verdict: (["winning", "losing", "tied"].includes(parsed.verdict) ? parsed.verdict : "tied"),

@@ -7,6 +7,7 @@ export const maxDuration = 10;
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { Redis } from "@upstash/redis";
 import { verifyAuth, handlePreflight, checkRateLimit } from "./_lib/auth";
+import { apiError } from "./_lib/apiError.js";
 
 const FEATURES = ["visualize", "visualize_video", "fixIt", "policyCheck", "deconstruct", "brief", "script"];
 
@@ -57,7 +58,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       deleted,
     });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Unknown error";
-    return res.status(500).json({ error: msg });
+    return apiError(res, 'INTERNAL_ERROR', 500,
+      err instanceof Error ? err.message : String(err));
   }
 }

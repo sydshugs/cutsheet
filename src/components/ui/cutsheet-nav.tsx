@@ -68,8 +68,7 @@ export default function CutsheetNav() {
       >
         <img
           src="/cutsheet-logo-clear.png"
-          alt=""
-          aria-hidden="true"
+          alt="Cutsheet"
           style={{ height: 20, width: "auto", display: "block" }}
         />
         <span
@@ -89,7 +88,7 @@ export default function CutsheetNav() {
       {/* Nav links — hidden on mobile */}
       {!isMobile && (
         <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <NavLink onClick={() => scrollTo("#how-it-works")}>Features</NavLink>
+          <NavLink onClick={() => scrollTo("#how-it-works")}>How It Works</NavLink>
           <NavLink onClick={() => scrollTo("#pricing")}>Pricing</NavLink>
         </div>
       )}
@@ -97,11 +96,12 @@ export default function CutsheetNav() {
       {/* CTA */}
       <a
         href="mailto:hello@cutsheet.xyz"
+        className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6366f1] focus-visible:ring-offset-2 focus-visible:ring-offset-[#09090b]"
         style={{
           display: "inline-flex",
           alignItems: "center",
           gap: isMobile ? 4 : 8,
-          padding: isMobile ? "6px 12px" : "8px 20px",
+          padding: isMobile ? "10px 16px" : "8px 20px",
           borderRadius: 9999,
           backgroundColor: "#6366f1",
           color: "#fff",
@@ -168,7 +168,9 @@ function NavLink({
         backgroundColor: hovered ? "rgba(255,255,255,0.04)" : "transparent",
         transition: "color 0.2s ease, background-color 0.2s ease",
         lineHeight: 1,
+        outline: "none",
       }}
+      className="focus-visible:ring-2 focus-visible:ring-[#6366f1] focus-visible:ring-offset-2 focus-visible:ring-offset-[#09090b]"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >

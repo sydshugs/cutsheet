@@ -7,7 +7,9 @@ import { FadeInSection } from "./fade-in";
 const FREE_FEATURES = [
   "Single video or static analysis",
   "11-metric scorecard",
-  "Improvement suggestions",
+  "Priority fix list",
+  "Platform benchmarks",
+  "Hook analysis",
   "3 analyses per month",
 ] as const;
 
@@ -15,9 +17,9 @@ const PRO_FEATURES = [
   "Everything in Free",
   "Unlimited analyses",
   "Competitor analysis",
-  "Batch ranking (up to 10 files)",
-  "A/B testing",
-  "Generate creative brief",
+  "Rank Creatives (up to 10)",
+  "A/B Test — compare before spending",
+  "Creative Brief",
   "PDF export & share links",
   "Saved Ads library",
 ] as const;
@@ -59,7 +61,7 @@ function GhostButton({
   return (
     <button
       onClick={onClick}
-      className="w-full rounded-full border py-1.5 sm:py-[13px] text-[9px] sm:text-[14px] font-medium leading-5 text-[#d4d4d8] transition-colors hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+      className="w-full rounded-full border py-2.5 sm:py-[13px] text-[9px] sm:text-[14px] font-medium leading-5 text-[#d4d4d8] transition-colors hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6366f1] focus-visible:ring-offset-2 focus-visible:ring-offset-[#09090b]"
       style={{
         backgroundColor: "rgba(255,255,255,0.02)",
         borderColor: "rgba(255,255,255,0.1)",
@@ -82,6 +84,7 @@ export default function CutsheetPricing() {
   return (
     <section
       id="pricing"
+      aria-labelledby="pricing-heading"
       className="relative w-full overflow-hidden border-t"
       style={{
         backgroundColor: "var(--bg)",
@@ -95,18 +98,20 @@ export default function CutsheetPricing() {
         <FadeInSection>
         <div className="flex flex-col items-center gap-3 text-center">
           <p
-            className="text-[12.1px] font-semibold uppercase text-[#52525c]"
+            className="text-[12.1px] font-semibold uppercase text-[color:var(--landing-eyebrow)]"
             style={{ letterSpacing: "2.42px", lineHeight: "18.15px" }}
           >
             PRICING
           </p>
           <h2
+            id="pricing-heading"
             className="text-[24px] font-bold leading-[1.2] text-[#f4f4f5] sm:text-[30px] lg:text-[36px] lg:leading-[54px]"
+            style={{ fontFamily: "var(--display)" }}
           >
             Simple pricing. No surprises.
           </h2>
           <p
-            className="text-[16px] font-normal text-[#71717b]"
+            className="text-[16px] font-normal text-[#a1a1aa]"
             style={{ lineHeight: "24px" }}
           >
             Early access pricing — locked in for life when you join now.
@@ -120,6 +125,8 @@ export default function CutsheetPricing() {
           {/* Free */}
           <FadeInSection delay={0.1} className="flex-1">
           <div
+            role="group"
+            aria-label="Free plan"
             className="w-full rounded-xl sm:rounded-[16px] border p-2.5 sm:p-6"
             style={{
               backgroundColor: "rgba(255,255,255,0.02)",
@@ -164,6 +171,8 @@ export default function CutsheetPricing() {
           {/* Pro — featured, taller */}
           <FadeInSection delay={0.2} className="flex-1">
           <div
+            role="group"
+            aria-label="Pro plan"
             className="relative w-full overflow-hidden rounded-xl sm:rounded-[16px] border"
             style={{
               backgroundColor: "rgba(97,95,255,0.06)",
@@ -211,7 +220,7 @@ export default function CutsheetPricing() {
               </p>
               <button
                 onClick={scrollToWaitlist}
-                className="mt-3 sm:mt-6 w-full rounded-full py-1.5 sm:py-3 text-[9px] sm:text-[14px] font-semibold leading-5 text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                className="mt-3 sm:mt-6 w-full rounded-full py-2.5 sm:py-3 text-[9px] sm:text-[14px] font-semibold leading-5 text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6366f1] focus-visible:ring-offset-2 focus-visible:ring-offset-[#09090b]"
                 style={{
                   backgroundColor: "#615fff",
                   boxShadow: "0px 0px 20px 0px rgba(99,102,241,0.4)",
@@ -232,6 +241,8 @@ export default function CutsheetPricing() {
           {/* Team */}
           <FadeInSection delay={0.3} className="flex-1">
           <div
+            role="group"
+            aria-label="Team plan"
             className="w-full rounded-xl sm:rounded-[16px] border p-2.5 sm:p-6"
             style={{
               backgroundColor: "rgba(255,255,255,0.02)",

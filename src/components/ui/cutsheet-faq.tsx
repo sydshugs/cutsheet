@@ -52,7 +52,9 @@ function AccordionItem({
     <div className="border-b border-white/[0.08]">
       <button
         onClick={onToggle}
-        className="flex w-full items-center justify-between gap-4 py-5 text-left transition-colors"
+        aria-expanded={open}
+        aria-label={`${open ? "Collapse" : "Expand"} ${q}`}
+        className="flex w-full items-center justify-between gap-4 py-5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6366f1] focus-visible:ring-offset-2 focus-visible:ring-offset-[#09090b]"
       >
         <span
           className={`text-base font-medium transition-colors duration-200 ${
@@ -91,7 +93,7 @@ export default function CutsheetFAQ() {
             <MessageCircle className="h-3 w-3" />
             FAQ
           </span>
-          <h2 className="mt-5 text-2xl font-bold tracking-tight text-white sm:text-3xl">
+          <h2 className="mt-5 text-2xl font-bold tracking-tight text-white sm:text-3xl" style={{ fontFamily: "var(--display)" }}>
             Everything you need to know.
           </h2>
         </FadeIn>

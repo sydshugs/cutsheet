@@ -3,7 +3,8 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Anthropic from "@anthropic-ai/sdk";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
-import { sanitizeSessionMemory } from "./_lib/sanitizeMemory";
+import { sanitizeSessionMemory, sanitizeUserInput, sanitizeAnalysisText } from "./_lib/sanitizeMemory";
+import { apiError } from "./_lib/apiError.js";
 
 export const maxDuration = 60;
 
@@ -22,15 +23,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
   }
 
-  const { analysisMarkdown, fileName, scores, improvements, userContext: rawContext, sessionMemory: rawMemory } = req.body ?? {};
+  const { analysisMarkdown: rawAnalysis, fileName: rawFileName, scores, improvements: rawImprovements, userContext: rawContext, sessionMemory: rawMemory } = req.body ?? {};
   const sessionMemory = sanitizeSessionMemory(rawMemory);
   const userContext = sanitizeSessionMemory(rawContext);
-  if (!analysisMarkdown) return res.status(400).json({ error: "analysisMarkdown is required" });
+  if (!rawAnalysis) return res.status(400).json({ error: "analysisMarkdown is required" });
+
+  const analysisMarkdown = sanitizeAnalysisText(rawAnalysis);
+  const fileName = sanitizeUserInput(rawFileName);
 
   const overallScore = scores?.overall ?? "N/A";
   const hookScore = scores?.hook ?? "N/A";
-  const improvementsList = Array.isArray(improvements) && improvements.length
-    ? improvements.join("; ")
+  const improvementsList = Array.isArray(rawImprovements) && rawImprovements.length
+    ? rawImprovements.map((imp: unknown) => sanitizeUserInput(String(imp ?? ""))).filter(Boolean).join("; ")
     : "none provided";
 
   const contextBlock = userContext
@@ -112,16 +116,16 @@ Return JSON only — no prose, no preamble:
   });
 
   const text = message.content[0].type === "text" ? message.content[0].text : "";
-  if (!text.trim()) return res.status(500).json({ error: "Empty response from Claude" });
+  if (!text.trim()) return apiError(res, 'ANALYSIS_FAILED', 500, "Empty response from Claude");
 
   const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) return res.status(500).json({ error: "Could not parse Claude response" });
+  if (!jsonMatch) return apiError(res, 'ANALYSIS_FAILED', 500, "Could not extract JSON from Claude response");
 
   let parsed;
   try {
     parsed = JSON.parse(jsonMatch[0]);
   } catch {
-    return res.status(500).json({ error: "Failed to parse AI response — please try again" });
+    return apiError(res, 'ANALYSIS_FAILED', 500, "JSON.parse failed on Claude response");
   }
   const result = {
     scrollMoment: parsed.scrollMoment ?? null,

@@ -7,7 +7,8 @@ import { createClient } from "@supabase/supabase-js";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
 import { validateFetchUrl } from "./_lib/validateUrl";
 import { safeNiche } from "./_lib/validateInput";
-import { sanitizeSessionMemory } from "./_lib/sanitizeMemory";
+import { sanitizeSessionMemory, sanitizeUserInput, sanitizeAnalysisText } from "./_lib/sanitizeMemory";
+import { apiError } from "./_lib/apiError.js";
 
 export const maxDuration = 60; // seconds — Claude + Gemini can take 15-30s
 
@@ -130,7 +131,7 @@ async function runGeminiAnalysis(
     const geminiKey = process.env.GEMINI_API_KEY;
     if (!geminiKey) return {};
     const genAI = new GoogleGenerativeAI(geminiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", generationConfig: { temperature: 0 } });
 
     const result = await model.generateContent([
       { inlineData: { mimeType: imageData.mimeType, data: imageData.data } },
@@ -312,15 +313,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const geminiContext =
     Object.keys(geminiParsed).length > 0
-      ? `Visual Analysis (Gemini):\n${JSON.stringify(geminiParsed, null, 2)}`
+      ? `Visual Analysis (Gemini):\n${sanitizeAnalysisText(JSON.stringify(geminiParsed, null, 2))}`
       : sourceType === "tiktok" && !resolvedMediaUrl
       ? "Note: No visual media provided for TikTok ad — analyze based on available context."
       : "Note: Visual analysis unavailable — analyzing from metadata only.";
 
+  const safeAdTitle = sanitizeUserInput(adTitle);
+  const safeAdBody = sanitizeUserInput(adBody);
+  const safeUrl = sanitizeUserInput(url);
+
   const adContext = [
-    adTitle && `Ad title: ${adTitle}`,
-    adBody && `Ad copy: ${adBody}`,
-    `Source: ${sourceType} (${url})`,
+    safeAdTitle && `Ad title: ${safeAdTitle}`,
+    safeAdBody && `Ad copy: ${safeAdBody}`,
+    `Source: ${sourceType} (${safeUrl})`,
   ]
     .filter(Boolean)
     .join("\n");
@@ -329,14 +334,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
-      console.error("[deconstruct] ANTHROPIC_API_KEY is not set");
-      return res.status(500).json({ error: "Server configuration error — please contact support." });
+      return apiError(res, 'INTERNAL_ERROR', 500, "ANTHROPIC_API_KEY is not set");
     }
 
     const client = new Anthropic({ apiKey });
     const message = await client.messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 3000,
+      temperature: 0,
       ...(brandVoiceContext ? { system: brandVoiceContext } : {}),
       messages: [
         {
@@ -349,9 +354,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const teardown =
       message.content[0].type === "text" ? message.content[0].text : "";
     if (!teardown.trim()) {
-      return res
-        .status(500)
-        .json({ error: "Analysis failed — please try again." });
+      return apiError(res, 'ANALYSIS_FAILED', 500, "Claude returned empty teardown");
     }
 
     return res.status(200).json({
@@ -362,17 +365,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       gemini: geminiParsed,
     });
   } catch (err) {
-    console.error("[deconstruct] Claude error:", err);
-    const message = err instanceof Error ? err.message : "Deconstruction failed";
-    const status = message.includes("RATE_LIMITED") || message.includes("429") || message.includes("resource exhausted") || message.includes("quota") ? 429 : 500;
-    return res.status(status).json({ error: message });
+    const msg = err instanceof Error ? err.message : String(err);
+    const isRateLimited = /rate.?limit|429|resource exhausted|quota/i.test(msg);
+    if (isRateLimited) {
+      return apiError(res, 'RATE_LIMITED', 429, `[deconstruct] Claude: ${msg}`);
+    }
+    return apiError(res, 'ANALYSIS_FAILED', 500, `[deconstruct] Claude: ${msg}`);
   }
 
   } catch (err: unknown) {
-    console.error('[deconstruct] Unhandled error:', err instanceof Error ? err.message : err, err instanceof Error ? err.stack : '');
-    return res.status(500).json({
-      error: 'Internal server error',
-      message: err instanceof Error ? err.message : 'Unknown error',
-    });
+    return apiError(res, 'INTERNAL_ERROR', 500,
+      `[deconstruct] outer: ${err instanceof Error ? err.message : String(err)}`);
   }
 }

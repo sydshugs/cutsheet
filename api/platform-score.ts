@@ -6,7 +6,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Anthropic from "@anthropic-ai/sdk";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
 import { safePlatform, safeAdType, safeNiche } from "./_lib/validateInput";
-import { sanitizeSessionMemory } from "./_lib/sanitizeMemory";
+import { sanitizeSessionMemory, sanitizeAnalysisText } from "./_lib/sanitizeMemory";
 
 export const maxDuration = 60;
 
@@ -42,11 +42,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
   }
 
-  const { analysisMarkdown, platform: rawPlatform, adType: rawAdType, userContext: rawUserContext, niche: rawNiche, scores } = req.body ?? {};
+  const { analysisMarkdown: rawAnalysis, platform: rawPlatform, adType: rawAdType, userContext: rawUserContext, niche: rawNiche, scores } = req.body ?? {};
 
-  if (!analysisMarkdown || !rawPlatform) {
+  if (!rawAnalysis || !rawPlatform) {
     return res.status(400).json({ error: "Missing analysisMarkdown or platform" });
   }
+
+  const analysisMarkdown = sanitizeAnalysisText(rawAnalysis);
 
   // Sanitize user-supplied fields before prompt injection
   const platform = safePlatform(rawPlatform);
@@ -123,6 +125,7 @@ Return ONLY valid JSON, no markdown fencing.`;
     const message = await client.messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 1024,
+      temperature: 0,
       system: systemPrompt,
       messages: [{ role: "user", content: prompt }],
     });

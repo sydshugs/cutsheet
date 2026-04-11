@@ -1,13 +1,12 @@
 // CreativeVerdictAndSecondEye — matches Figma node 229:2054
 // Combined "Creative verdict & second eye" panel for video ads.
 import { useState, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   Eye, TrendingDown, TrendingUp, CheckCircle,
-  ChevronDown, ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 import type { SecondEyeResult } from "../services/claudeService";
-import { cn } from "@/src/lib/utils";
 
 // ─── PROPS ────────────────────────────────────────────────────────────────────
 
@@ -60,6 +59,7 @@ const CATEGORY_CONFIG: Record<string, {
   markerColor: string;
   bg: string;
   border: string;
+  cardBg: string;
 }> = {
   scroll_trigger: {
     label: "Scroll risk",
@@ -67,6 +67,7 @@ const CATEGORY_CONFIG: Record<string, {
     markerColor: "#fb2c36",
     bg: "rgba(251,44,54,0.10)",
     border: "rgba(251,44,54,0.25)",
+    cardBg: "rgba(251,44,54,0.04)",
   },
   pacing: {
     label: "Pacing",
@@ -74,6 +75,7 @@ const CATEGORY_CONFIG: Record<string, {
     markerColor: "#ad46ff",
     bg: "rgba(173,70,255,0.10)",
     border: "rgba(173,70,255,0.25)",
+    cardBg: "rgba(173,70,255,0.04)",
   },
   sound_off: {
     label: "Sound-off",
@@ -81,6 +83,7 @@ const CATEGORY_CONFIG: Record<string, {
     markerColor: "#00bc7d",
     bg: "rgba(0,188,125,0.10)",
     border: "rgba(0,188,125,0.25)",
+    cardBg: "rgba(0,188,125,0.04)",
   },
   clarity: {
     label: "Clarity",
@@ -88,6 +91,7 @@ const CATEGORY_CONFIG: Record<string, {
     markerColor: "#2b7fff",
     bg: "rgba(43,127,255,0.08)",
     border: "rgba(43,127,255,0.30)",
+    cardBg: "rgba(43,127,255,0.04)",
   },
 };
 
@@ -102,6 +106,7 @@ function getCatCfg(category: string) {
       markerColor: "#71717a",
       bg: "rgba(255,255,255,0.06)",
       border: "rgba(255,255,255,0.12)",
+      cardBg: "rgba(255,255,255,0.02)",
     }
   );
 }
@@ -115,12 +120,6 @@ function parseTs(ts: string): number {
   if (parts.length === 2) return (parts[0] ?? 0) * 60 + (parts[1] ?? 0);
   if (parts.length === 3) return (parts[0] ?? 0) * 3600 + (parts[1] ?? 0) * 60 + (parts[2] ?? 0);
   return 0;
-}
-
-function fmtSecs(s: number): string {
-  const m = Math.floor(s / 60);
-  const sec = Math.floor(s % 60);
-  return `${m}:${sec.toString().padStart(2, "0")}`;
 }
 
 function extractScrollParts(scrollMoment: string | null): { time: string; text: string } | null {
@@ -153,12 +152,17 @@ function Shimmer({ height = 72 }: { height?: number }) {
 
 type Flag = SecondEyeResult["flags"][number];
 
-function FlagCard({ flag, index, defaultExpanded = false }: {
+function FlagCard({
+  flag,
+  index,
+  isExpanded,
+  onToggle,
+}: {
   flag: Flag;
   index: number;
-  defaultExpanded?: boolean;
+  isExpanded: boolean;
+  onToggle: () => void;
 }) {
-  const [expanded, setExpanded] = useState(defaultExpanded);
   const cfg = getCatCfg(flag.category);
 
   return (
@@ -166,75 +170,54 @@ function FlagCard({ flag, index, defaultExpanded = false }: {
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.22, delay: index * 0.05 }}
-      className="rounded-3xl border overflow-hidden"
+      className="rounded-xl border cursor-pointer"
       style={{
-        background: "rgba(255,255,255,0.02)",
-        borderColor: "rgba(255,255,255,0.06)",
+        backgroundColor: isExpanded ? cfg.cardBg : "rgba(255,255,255,0.02)",
+        borderColor: isExpanded ? cfg.border : "rgba(255,255,255,0.06)",
+        transition: "background-color 200ms ease, border-color 200ms ease",
       }}
+      onClick={onToggle}
     >
-      <div className="flex flex-col gap-2 pl-[17px] pr-px py-[13px]">
+      <div className="px-4 py-3 flex flex-col gap-2">
         {/* Header row */}
-        <div className="flex items-center justify-between pr-1">
+        <div className="flex items-center justify-between">
           <div
             className="h-[19px] flex items-center px-2 rounded"
             style={{ background: cfg.bg }}
           >
-            <span
-              className="text-[10px] font-semibold"
-              style={{ color: cfg.color }}
-            >
+            <span className="text-[10px] font-semibold" style={{ color: cfg.color }}>
               {cfg.label}
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <span
-              className="font-mono text-[10px]"
-              style={{ color: "#52525c" }}
-            >
+            <span className="font-mono text-[10px]" style={{ color: "#52525c" }}>
               {flag.timestamp}
             </span>
-            <button
-              onClick={() => setExpanded((e) => !e)}
-              className="flex items-center justify-center w-[14px] h-[14px] transition-opacity hover:opacity-70"
-              style={{ color: "#52525c" }}
-              aria-label={expanded ? "Collapse" : "Expand"}
-            >
-              {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-            </button>
+            <ChevronDown
+              size={14}
+              style={{
+                color: "#52525c",
+                transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)",
+                transition: "transform 200ms ease",
+              }}
+            />
           </div>
         </div>
 
         {/* Body */}
         <div>
           <p
-            className={cn(
-              "text-[9px] font-semibold uppercase tracking-[0.45px] mb-1",
-            )}
+            className="text-[9px] font-semibold uppercase tracking-[0.45px] mb-1"
             style={{ color: "#52525c" }}
           >
             Fix
           </p>
-          <AnimatePresence initial={false}>
-            {expanded ? (
-              <motion.p
-                key="expanded"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.15 }}
-                style={{ fontSize: 14, color: "#e4e4e7", margin: 0, lineHeight: 1.625 }}
-              >
-                {flag.fix}
-              </motion.p>
-            ) : (
-              <p
-                className="truncate"
-                style={{ fontSize: 14, color: "#e4e4e7", margin: 0, lineHeight: 1.625 }}
-              >
-                {flag.fix}
-              </p>
-            )}
-          </AnimatePresence>
+          <p
+            className={isExpanded ? "" : "truncate"}
+            style={{ fontSize: 14, color: "#e4e4e7", margin: 0, lineHeight: 1.625 }}
+          >
+            {flag.fix}
+          </p>
         </div>
       </div>
     </motion.div>
@@ -243,7 +226,15 @@ function FlagCard({ flag, index, defaultExpanded = false }: {
 
 // ─── TIMELINE ─────────────────────────────────────────────────────────────────
 
-function Timeline({ flags }: { flags: Flag[] }) {
+function Timeline({
+  flags,
+  expandedIdx,
+  onToggle,
+}: {
+  flags: Flag[];
+  expandedIdx: number | null;
+  onToggle: (i: number) => void;
+}) {
   const presentCategories = useMemo(() => {
     const seen = new Set<string>();
     const order: string[] = [];
@@ -287,53 +278,47 @@ function Timeline({ flags }: { flags: Flag[] }) {
         })}
       </div>
 
-      {/* Scrubber track */}
-      <div className="relative h-[5px] w-full rounded-full" style={{ background: "rgba(255,255,255,0.06)" }}>
-        {/* Playhead at 0:00 */}
-        <div
-          className="absolute"
-          style={{ left: 0, top: "50%", transform: "translate(-50%, -50%)" }}
-        >
-          <div
-            className="w-[10px] h-[10px] rounded-full border-[1.5px] border-white"
-            style={{
-              background: "#2b7fff",
-              boxShadow: "0px 0px 6px 0px #3b82f6",
-            }}
-          />
-          {/* Tooltip */}
-          <div
-            className="absolute bottom-full left-1/2 mb-2 px-[6px] py-[3px] rounded text-[10px] font-mono whitespace-nowrap"
-            style={{
-              transform: "translateX(-50%)",
-              background: "#18181b",
-              border: "1px solid rgba(255,255,255,0.10)",
-              color: "#d4d4d8",
-              boxShadow: "0px 4px 6px rgba(0,0,0,0.1)",
-            }}
-          >
-            0:00
-          </div>
-        </div>
-
-        {/* Flag markers */}
+      {/* Scrubber track — mt-7 reserves space for the tooltip above */}
+      <div className="relative h-[5px] w-full rounded-full mt-7" style={{ background: "rgba(255,255,255,0.06)" }}>
         {flags.map((flag, i) => {
           const secs = parseTs(flag.timestamp);
           const pct = maxSecs > 0 ? (secs / maxSecs) * 100 : 0;
           const cfg = getCatCfg(flag.category);
+          const isActive = expandedIdx === i;
+
           return (
             <div
               key={i}
-              className="absolute w-[8px] h-[8px] rounded-full flex-shrink-0"
+              className="absolute flex flex-col items-center cursor-pointer"
               style={{
                 left: `${pct}%`,
                 top: "50%",
                 transform: "translate(-50%, -50%)",
-                background: cfg.markerColor,
-                title: `${cfg.label} @ ${flag.timestamp}`,
               }}
-              title={`${cfg.label} @ ${fmtSecs(secs)}`}
-            />
+              onClick={() => onToggle(i)}
+            >
+              {/* Timestamp tooltip above when active */}
+              {isActive && (
+                <div
+                  className="absolute -top-8 bg-[#18181b] border border-white/[0.10] text-zinc-300 text-[10px] font-mono px-1.5 py-0.5 rounded shadow-lg whitespace-nowrap z-10"
+                  style={{ transform: "translateX(-50%)", left: "50%" }}
+                >
+                  {flag.timestamp}
+                </div>
+              )}
+              {/* Dot */}
+              <div
+                className={`rounded-full transition-all ${
+                  isActive
+                    ? "w-[10px] h-[10px] border-[1.5px] border-white"
+                    : "w-[8px] h-[8px] hover:scale-125"
+                }`}
+                style={{
+                  background: cfg.markerColor,
+                  ...(isActive ? { boxShadow: `0 0 6px ${cfg.markerColor}` } : {}),
+                }}
+              />
+            </div>
           );
         })}
       </div>
@@ -372,6 +357,13 @@ export function CreativeVerdictAndSecondEye({
   );
 
   const hasFlags = (secondEyeResult?.flags?.length ?? 0) > 0;
+
+  // ── Interactive timeline state ──────────────────────────────────────────────
+  const [expandedFlagIdx, setExpandedFlagIdx] = useState<number | null>(0);
+
+  function toggleFlag(i: number) {
+    setExpandedFlagIdx((prev) => (prev === i ? null : i));
+  }
 
   return (
     <div
@@ -611,7 +603,7 @@ export function CreativeVerdictAndSecondEye({
 
             {/* Timeline */}
             <div className="my-1">
-              <Timeline flags={secondEyeResult.flags} />
+              <Timeline flags={secondEyeResult.flags} expandedIdx={expandedFlagIdx} onToggle={toggleFlag} />
             </div>
 
             {/* Fix cards */}
@@ -621,7 +613,8 @@ export function CreativeVerdictAndSecondEye({
                   key={`${flag.category}-${flag.timestamp}-${i}`}
                   flag={flag}
                   index={i}
-                  defaultExpanded={i === 0}
+                  isExpanded={expandedFlagIdx === i}
+                  onToggle={() => toggleFlag(i)}
                 />
               ))}
             </div>
