@@ -712,7 +712,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="flex h-full" style={{ minHeight: "calc(100vh - 56px)" }}>
+    <div className="flex h-full min-h-0" style={{ minHeight: "calc(100vh - 56px)" }}>
       <Helmet>
         <title>Paid Ad Analyzer — Cutsheet</title>
         <meta name="description" content="Score Meta, TikTok, Google, and YouTube ads. Get hook strength, CTA score, and budget recommendations in 30 seconds." />

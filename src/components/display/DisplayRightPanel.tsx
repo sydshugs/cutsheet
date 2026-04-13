@@ -99,7 +99,7 @@ export function DisplayRightPanel({
 }: DisplayRightPanelProps) {
   return (
     <div
-      className={`shrink-0 bg-[#111113] border-l border-white/[0.06] overflow-y-auto overflow-x-hidden pb-12 transition-[width,opacity] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-white/[0.06] ${
+      className={`shrink-0 min-h-0 bg-[#111113] border-l border-white/[0.06] overflow-y-auto overflow-x-hidden pb-12 transition-[width,opacity] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-white/[0.06] max-h-[calc(100vh-56px)] ${
         show ? "w-[350px] max-lg:w-full opacity-100" : "w-0 max-lg:w-0 opacity-0"
       }`}
     >

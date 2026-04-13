@@ -605,7 +605,7 @@ Return JSON only — no prose:
   };
 
   return (
-    <div className="relative flex h-full" style={{ minHeight: "calc(100vh - 56px)" }}>
+    <div className="relative flex h-full min-h-0" style={{ minHeight: "calc(100vh - 56px)" }}>
       <Helmet>
         <title>Display Ad Analyzer — Cutsheet</title>
         <meta name="description" content="Score Google Display and affiliate banner ads. Auto-detect format, display-specific scoring, real-life placement mockup." />
