@@ -59,7 +59,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const platformKey = platform.toLowerCase().replace(/\s+/g, "");
   const guidance = PLATFORM_GUIDANCE[platformKey] ?? PLATFORM_GUIDANCE.meta;
 
-  // Niche-specific platform expectations
+  // Niche-specific platform expectations — all 8 niches
   const nichePlatformContext: Record<string, Record<string, string>> = {
     supplements: {
       meta: "Supplement ads on Meta: curiosity-gap hooks outperform direct claims. UGC testimonials convert 2-3x vs polished production. Text overlays must avoid health claims that trigger policy review. Sound-off is critical.",
@@ -71,16 +71,62 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       tiktok: "SaaS ads on TikTok: 'POV: you discover [tool]' format works. Must feel like a tip, not an ad. Screen recordings with casual narration. Avoid corporate language entirely.",
       youtube: "SaaS ads on YouTube: demo-first approach. Show the product working in first 5s. Skip button is the enemy — lead with the outcome, not the problem.",
     },
-    ecommerce: {
+    health: {
+      meta: "Health & wellness on Meta: transformation results (before/after) drive highest engagement. UGC testimonials from real users outperform clinical claims. Avoid medical language that triggers policy flags. Show the product in daily routine context.",
+      tiktok: "Health on TikTok: 'what I eat in a day' and routine formats dominate. Must feel like wellness content, not an ad. Creator-led with casual tone. Specific results ('in 2 weeks') outperform vague claims.",
+      youtube: "Health on YouTube: educational long-form works — explain the science, show the process. First 5s must show the result or transformation. Expert authority (doctor, nutritionist) adds credibility.",
+    },
+    finance: {
+      meta: "Finance/fintech on Meta: lead with the pain point (fees, complexity, waiting). Screen recordings of the app experience. Trust signals (FDIC, encryption) must be visible. Avoid hype — financial audiences are skeptical.",
+      tiktok: "Finance on TikTok: 'money hack' and 'I saved $X' formats. Must feel like financial advice from a friend. Avoid corporate jargon. Quick tips with specific numbers perform best.",
+      youtube: "Finance on YouTube: detailed explainers and comparisons. Show the dashboard/interface early. Transparency builds trust — show real numbers. End with clear CTA and offer.",
+    },
+    food: {
+      meta: "Food & beverage on Meta: close-up product shots with steam/pour/sizzle. Sound-off must still look appetizing. UGC taste reactions outperform polished brand content. Price and offer in first frame.",
+      tiktok: "Food on TikTok: ASMR preparation, taste test reactions, recipe integration. Must trigger craving in first frame. Trending audio + satisfying visuals. 'You NEED to try this' format.",
+      youtube: "Food on YouTube: recipe integration, honest reviews, mukbang-style. Longer consideration — show the full experience. End screen with discount code.",
+    },
+    realestate: {
+      meta: "Real estate on Meta: virtual tour snippets, neighborhood highlights, price-first hooks. Carousel format for multiple rooms. Lead generation CTA ('Book a tour') not 'Learn more'.",
+      tiktok: "Real estate on TikTok: 'Wait till you see the kitchen' reveal format. POV walkthroughs with trending audio. Price tag hooks ('$X gets you THIS in [city]'). Must feel like house hunting content.",
+      youtube: "Real estate on YouTube: full property tours, neighborhood guides, market updates. First 5s must show the hero shot (exterior or best room). Clear CTA for scheduling.",
+    },
+    agency: {
+      meta: "Agency creative on Meta: case study format — show the client result. Before/after metrics. Production quality should be high since you're selling creative services. Strong brand consistency.",
+      tiktok: "Agency on TikTok: behind-the-scenes of ad creation, 'we made this ad and it did $X' format. Show the process. Educational content about what makes ads work.",
+      youtube: "Agency on YouTube: portfolio showcases, detailed case studies, creative breakdowns. Position as thought leader. End with lead gen CTA.",
+    },
+    creator: {
+      meta: "Creator/content on Meta: personality-led content. Authentic behind-the-scenes. Build parasocial connection. Share the journey, not just the product. Sound-off readability critical for Reels.",
+      tiktok: "Creator on TikTok: this IS your native platform. Prioritize trend participation, duets, stitches. Raw authenticity over production value. First 0.5s hook is everything.",
+      youtube: "Creator on YouTube: longer-form value content. Vlogs, tutorials, day-in-the-life. Consistency matters more than individual video quality. End screen for subscribe.",
+    },
+    dtc: {
       meta: "DTC/ecommerce on Meta: thumb-stop visuals are everything. Product-in-use outperforms product-on-white. UGC unboxing and review format. Price/offer visible in first frame.",
       tiktok: "DTC on TikTok: 'TikTok made me buy it' format. Authentic creator reactions. Fast cuts, trending audio. Product reveal in first 2 seconds.",
       youtube: "DTC on YouTube: longer consideration cycle. Detailed product demos, comparison content. End screen CTA with clear offer.",
     },
   };
 
-  const nicheKey = nicheLabel.toLowerCase().replace(/[^a-z]/g, "");
-  const platformKey2 = platformKey.replace(/\s+/g, "");
-  const nicheContext = Object.entries(nichePlatformContext).find(([k]) => nicheKey.includes(k))?.[1]?.[platformKey2] || "";
+  const NICHE_ALIASES: Record<string, string> = {
+    "ecommerce": "dtc", "ecommerce / dtc": "dtc", "dtc": "dtc", "shopify": "dtc",
+    "saas": "saas", "software": "saas", "b2b": "saas",
+    "supplements": "supplements",
+    "health": "health", "health & wellness": "health", "wellness": "health", "fitness": "health",
+    "finance": "finance", "finance / fintech": "finance", "fintech": "finance",
+    "banking": "finance", "insurance": "finance",
+    "food": "food", "food & beverage": "food", "beverage": "food",
+    "restaurant": "food", "cpg": "food",
+    "real estate": "realestate", "realestate": "realestate", "property": "realestate",
+    "agency": "agency",
+    "creator": "creator", "creator / content": "creator", "content": "creator",
+    "influencer": "creator",
+  };
+
+  const nicheKey = NICHE_ALIASES[nicheLabel.toLowerCase().trim()]
+    ?? NICHE_ALIASES[nicheLabel.toLowerCase().replace(/[^a-z\s\/]/g, "").trim()]
+    ?? "";
+  const nicheContext = nicheKey ? (nichePlatformContext[nicheKey]?.[platformKey] ?? "") : "";
 
   // Include scores context if available
   const scoresContext = scores
