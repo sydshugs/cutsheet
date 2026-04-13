@@ -223,9 +223,9 @@ export function AnimateToHtml5Takeover({
       </div>
 
       {/* ── MAIN CONTENT ──────────────────────────────────────────────── */}
-      <div className="flex-1 flex gap-6 px-6 pt-6 overflow-hidden">
+      <div className="flex gap-6 px-6 pb-6 pt-4 w-full h-full overflow-hidden relative z-10">
         {/* LEFT COLUMN — Image previews */}
-        <div className="flex-1 overflow-y-auto scrollbar-hide">
+        <div className="flex-1 min-w-0 overflow-y-auto scrollbar-hide">
           <div className="flex flex-col items-center pb-12">
             <div className="w-full max-w-[500px] flex flex-col">
               {/* ── ORIGINAL ─────────────────────────────────────── */}
@@ -233,14 +233,11 @@ export function AnimateToHtml5Takeover({
                 ORIGINAL
               </p>
               <div className="rounded-2xl border border-white/[0.06] bg-[#18181b] overflow-hidden">
-                <div
-                  className="w-full bg-[var(--bg)] flex items-center justify-center p-4"
-                  style={{ aspectRatio: `${width}/${height}` }}
-                >
+                <div className="h-[280px] w-full relative overflow-hidden flex items-center justify-center bg-zinc-950">
                   <img
                     src={imageSrc}
                     alt="Original banner"
-                    className="max-w-full max-h-full object-contain"
+                    className="h-full w-full object-contain"
                   />
                 </div>
                 <div className="px-3 py-2 border-t border-white/[0.06] bg-[#18181b] flex justify-between items-center">
@@ -265,10 +262,7 @@ export function AnimateToHtml5Takeover({
                 )}
               >
                 {/* Preview area */}
-                <div
-                  className="w-full bg-[var(--bg)] relative flex items-center justify-center"
-                  style={{ aspectRatio: `${width}/${height}` }}
-                >
+                <div className="h-[280px] w-full relative overflow-hidden flex items-center justify-center bg-zinc-950">
                   {isGenerating ? (
                     <div className="flex flex-col items-center gap-3">
                       <Loader2 className="size-6 text-[#06b6d4] animate-spin" />
@@ -293,7 +287,7 @@ export function AnimateToHtml5Takeover({
                       <img
                         src={imageSrc}
                         alt="Preview placeholder"
-                        className="max-w-full max-h-full object-contain opacity-80"
+                        className="h-full w-full object-contain opacity-80"
                       />
                       <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
                         <div className="size-12 rounded-full bg-[rgba(0,184,219,0.2)] border border-[rgba(0,184,219,0.3)] flex items-center justify-center">
@@ -352,7 +346,7 @@ export function AnimateToHtml5Takeover({
 
         {/* RIGHT COLUMN — Settings Panel */}
         <div className="w-[380px] shrink-0 overflow-y-auto scrollbar-hide pb-6">
-          <div className="rounded-2xl border border-white/[0.06] bg-[#18181b] p-6">
+          <div className="rounded-2xl border border-white/[0.06] bg-[#18181b] p-6 flex flex-col">
             {/* ── ANIMATION STYLE ──────────────────────────────── */}
             <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-[#52525c] mb-3">
               ANIMATION STYLE
@@ -464,38 +458,39 @@ export function AnimateToHtml5Takeover({
             </div>
 
             {/* ── ACTION BUTTONS ────────────────────────────────── */}
+            <div className="mt-auto pt-5 flex flex-col gap-3">
+              {/* Generate HTML5 Animation */}
+              <button
+                onClick={handleGenerate}
+                disabled={isGenerating}
+                className={cn(
+                  "w-full rounded-[24px] h-[46px] flex items-center justify-center gap-2 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed border",
+                  isSmart
+                    ? "bg-[rgba(99,102,241,0.1)] border-[rgba(99,102,241,0.25)] hover:bg-[rgba(99,102,241,0.15)]"
+                    : "bg-[rgba(0,184,219,0.1)] border-[rgba(0,184,219,0.25)] hover:bg-[rgba(0,184,219,0.15)]"
+                )}
+              >
+                {isGenerating ? (
+                  <Loader2 className={cn("size-3.5 animate-spin", isSmart ? "text-[#818cf8]" : "text-[#53eafd]")} />
+                ) : (
+                  <Sparkles className={cn("size-3.5", isSmart ? "text-[#818cf8]" : "text-[#53eafd]")} />
+                )}
+                <span className={cn("text-sm font-medium", isSmart ? "text-[#a5b4fc]" : "text-[#53eafd]")}>
+                  {isGenerating
+                    ? (isSmart ? "Analyzing & Generating..." : "Generating...")
+                    : (isSmart ? "Smart Animate" : "Generate HTML5 Animation")}
+                </span>
+              </button>
 
-            {/* Generate HTML5 Animation */}
-            <button
-              onClick={handleGenerate}
-              disabled={isGenerating}
-              className={cn(
-                "w-full mt-5 rounded-[24px] h-[46px] flex items-center justify-center gap-2 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed border",
-                isSmart
-                  ? "bg-[rgba(99,102,241,0.1)] border-[rgba(99,102,241,0.25)] hover:bg-[rgba(99,102,241,0.15)]"
-                  : "bg-[rgba(0,184,219,0.1)] border-[rgba(0,184,219,0.25)] hover:bg-[rgba(0,184,219,0.15)]"
-              )}
-            >
-              {isGenerating ? (
-                <Loader2 className={cn("size-3.5 animate-spin", isSmart ? "text-[#818cf8]" : "text-[#53eafd]")} />
-              ) : (
-                <Sparkles className={cn("size-3.5", isSmart ? "text-[#818cf8]" : "text-[#53eafd]")} />
-              )}
-              <span className={cn("text-sm font-medium", isSmart ? "text-[#a5b4fc]" : "text-[#53eafd]")}>
-                {isGenerating
-                  ? (isSmart ? "Analyzing & Generating..." : "Generating...")
-                  : (isSmart ? "Smart Animate" : "Generate HTML5 Animation")}
-              </span>
-            </button>
-
-            {/* Analyze This Version — always visible */}
-            <button
-              onClick={onAnalyzeVersion ?? onClose}
-              className="w-full mt-3 rounded-[24px] bg-[#6366f1] hover:bg-[var(--accent-hover)] h-10 flex items-center justify-center gap-2 transition-opacity overflow-hidden"
-            >
-              <Sparkles className="size-3.5 text-white" />
-              <span className="text-sm font-medium text-white">Analyze This Version</span>
-            </button>
+              {/* Analyze This Version — always visible */}
+              <button
+                onClick={onAnalyzeVersion ?? onClose}
+                className="w-full rounded-[24px] bg-[#6366f1] hover:bg-[var(--accent-hover)] h-10 flex items-center justify-center gap-2 transition-opacity overflow-hidden"
+              >
+                <Sparkles className="size-3.5 text-white" />
+                <span className="text-sm font-medium text-white">Analyze This Version</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
