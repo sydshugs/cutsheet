@@ -417,6 +417,9 @@ export function VisualizePanel({
       <style>{`
         @keyframes shimmer { 0%{transform:translateX(-100%)} 100%{transform:translateX(200%)} }
         @keyframes spin    { to{transform:rotate(360deg)} }
+        @media (max-width: 639px) {
+          .visualize-direction-grid { grid-template-columns: 1fr !important; }
+        }
       `}</style>
 
       {/* ── Back button ─────────────────────────────────────── */}
@@ -557,18 +560,94 @@ export function VisualizePanel({
         {status === "complete" && result && (
           <motion.div key="complete" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             {/* Before / After comparison */}
-            <div style={{ 
-              display: "grid", 
-              gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", 
-              gap: 20, 
-              marginBottom: 24,
-            }}>
+            <div
+              className={result.briefOnly ? "visualize-direction-grid" : undefined}
+              style={{
+                display: "grid",
+                gridTemplateColumns: result.briefOnly
+                  ? "1fr 1.85fr"
+                  : "repeat(auto-fit, minmax(300px, 1fr))",
+                gap: 20,
+                marginBottom: 24,
+                alignItems: "start",
+              }}
+            >
               {originalImageUrl && (
-                <ImagePanel src={originalImageUrl} label={isVideo ? "Hook Frame" : "Before"} height={380} />
+                <ImagePanel src={originalImageUrl} label={isVideo ? "Hook Frame" : "Before"} height={result.briefOnly ? 280 : 380} />
               )}
 
               {result.generatedImageUrl ? (
                 <ImagePanel src={result.generatedImageUrl} label={isVideo ? "Improved Hook Frame" : "After"} height={380} />
+              ) : result.briefOnly && result.visualBrief ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: "var(--warn)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                      Creative Direction
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleCopyBrief}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 5,
+                        padding: "4px 10px", borderRadius: 6,
+                        background: "rgba(245,158,11,0.08)",
+                        border: "1px solid rgba(245,158,11,0.2)",
+                        color: "var(--warn)", fontSize: 11, fontWeight: 500,
+                        cursor: "pointer",
+                      }}
+                    >
+                      <Copy size={11} /> {briefCopied ? "Copied!" : "Copy Brief"}
+                    </button>
+                  </div>
+                  <div style={{
+                    borderRadius: 12,
+                    background: "rgba(245,158,11,0.05)",
+                    border: "1px solid rgba(245,158,11,0.15)",
+                    borderLeft: "3px solid var(--warn)",
+                    padding: "16px 20px",
+                    overflow: "auto",
+                    maxHeight: 540,
+                  }}>
+                    <p style={{
+                      fontSize: 13, color: "#d4d4d8", lineHeight: 1.7,
+                      whiteSpace: "pre-wrap",
+                      marginBottom: result.changesApplied?.length ? 20 : 0,
+                    }}>
+                      {result.visualBrief}
+                    </p>
+                    {result.changesApplied?.length > 0 && (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        <p style={{
+                          fontSize: 11, fontWeight: 600, color: "var(--warn)",
+                          marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.06em",
+                        }}>
+                          Changes to apply
+                        </p>
+                        {result.changesApplied.map((change, i) => (
+                          <div key={i} style={{
+                            display: "flex", alignItems: "flex-start", gap: 10,
+                            padding: "10px 12px",
+                            background: "rgba(245,158,11,0.04)",
+                            borderRadius: 8,
+                          }}>
+                            <div style={{
+                              width: 18, height: 18, borderRadius: 5,
+                              background: "rgba(245,158,11,0.15)",
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                              flexShrink: 0, marginTop: 1,
+                            }}>
+                              <Check size={11} color="var(--warn)" strokeWidth={2.5} />
+                            </div>
+                            <span style={{ fontSize: 13, color: "#e4e4e7", lineHeight: 1.6 }}>{change}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <p style={{ fontSize: 11, color: "#52525b", marginTop: 2 }}>
+                    Share with your designer or motion artist
+                  </p>
+                </div>
               ) : result.visualBrief ? (
                 visualizeMode === "text_overlay" ? (
                   <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
