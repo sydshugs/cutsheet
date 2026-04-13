@@ -588,9 +588,12 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
     const url = URL.createObjectURL(file);
     const video = document.createElement("video");
     video.preload = "auto";
-    video.onloadedmetadata = () => {
+    video.onloadeddata = () => {
+      console.log('[videoDims]', video.videoWidth, video.videoHeight);
       URL.revokeObjectURL(url);
-      if (!cancelled) setVideoDims({ width: video.videoWidth, height: video.videoHeight });
+      if (!cancelled && video.videoWidth > 0 && video.videoHeight > 0) {
+        setVideoDims({ width: video.videoWidth, height: video.videoHeight });
+      }
     };
     video.onerror = () => {
       URL.revokeObjectURL(url);
@@ -610,6 +613,10 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
     }
     return false;
   }, [format, staticImageDims, videoDims]);
+
+  useEffect(() => {
+    console.log('[showSafeZone]', showSafeZone, 'format:', format, 'videoDims:', videoDims);
+  }, [showSafeZone, format, videoDims]);
 
   const effectiveStatus = (loadedEntry || loadedFromHistory) ? ("complete" as const) : status;
   const showRightPanel = effectiveStatus === "complete" && activeResult !== null;

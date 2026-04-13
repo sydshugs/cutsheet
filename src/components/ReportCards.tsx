@@ -437,7 +437,7 @@ export const ReportCards = memo(function ReportCards({
             onClick: onFixIt,
             loading: fixItLoading
           },
-          {
+          ...(format === 'static' ? [{
             key: 'visualize',
             icon: Image,
             name: 'Visualize',
@@ -445,8 +445,7 @@ export const ReportCards = memo(function ReportCards({
             credit: '1 credit',
             iconColor: '#10b981',
             onClick: onVisualize,
-            disabled: format !== 'static'
-          },
+          }] : []),
           {
             key: 'policy',
             icon: ShieldCheck,
@@ -474,14 +473,12 @@ export const ReportCards = memo(function ReportCards({
             <div className={`grid ${colClass} gap-[12px]`}>
               {tools.map((t) => {
                 const Icon = t.icon;
-                const isDisabled = !!t.disabled;
                 const isLoading = !!t.loading;
                 return (
                   <button
                     key={t.key}
-                    onClick={() => !isDisabled && !isLoading && t.onClick?.()}
-                    disabled={isDisabled || isLoading}
-                    title={isDisabled ? 'Only available for static ads' : undefined}
+                    onClick={() => !isLoading && t.onClick?.()}
+                    disabled={isLoading}
                     className="group rounded-[17px] border border-white/[0.06] bg-[rgba(24,24,27,0.5)] py-[23px] px-1 flex flex-col items-center gap-[13px] hover:bg-[rgba(30,30,34,0.7)] hover:border-white/[0.12] transition-colors w-full active:scale-[0.98] disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer h-[125px]"
                   >
                     <div

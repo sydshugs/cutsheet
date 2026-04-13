@@ -138,6 +138,11 @@ export function ProgressCard({
               preload="auto"
               autoPlay
               loop
+              poster={thumbnailDataUrl ?? undefined}
+              onCanPlay={(e) => {
+                const v = e.currentTarget;
+                v.play().catch(() => {});
+              }}
               className="absolute inset-0 w-full h-full object-cover"
             />
           ) : isImage && previewUrl ? (
