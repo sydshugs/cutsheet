@@ -71,21 +71,21 @@ function SectionLabel({ label }: { label: string }) {
 function activeNavClass(accent: NavAccent): string {
   switch (accent) {
     case "emerald":
-      return "bg-emerald-500/[0.08] border-l-[2px] border-l-[#10b981] border-y-0 border-r-0 text-emerald-300 rounded-l-[4px]";
+      return "bg-emerald-500/[0.08] border-l-[2px] border-l-[#10b981] border-y-0 border-r-0 text-emerald-300 rounded-tl-[4px] rounded-bl-[4px] rounded-tr-[8px] rounded-br-[8px]";
     case "cyan":
-      return "bg-cyan-500/[0.08] border-l-[2px] border-l-[#06b6d4] border-y-0 border-r-0 text-cyan-300 rounded-l-[4px]";
+      return "bg-cyan-500/[0.08] border-l-[2px] border-l-[#06b6d4] border-y-0 border-r-0 text-cyan-300 rounded-tl-[4px] rounded-bl-[4px] rounded-tr-[8px] rounded-br-[8px]";
     case "amber":
-      return "bg-amber-500/[0.08] border-l-[2px] border-l-[#f59e0b] border-y-0 border-r-0 text-amber-300 rounded-l-[4px]";
+      return "bg-amber-500/[0.08] border-l-[2px] border-l-[#f59e0b] border-y-0 border-r-0 text-amber-300 rounded-tl-[4px] rounded-bl-[4px] rounded-tr-[8px] rounded-br-[8px]";
     case "rose":
-      return "bg-rose-500/[0.08] border-l-[2px] border-l-[#f43f5e] border-y-0 border-r-0 text-rose-300 rounded-l-[4px]";
+      return "bg-rose-500/[0.08] border-l-[2px] border-l-[#f43f5e] border-y-0 border-r-0 text-rose-300 rounded-tl-[4px] rounded-bl-[4px] rounded-tr-[8px] rounded-br-[8px]";
     case "sky":
-      return "bg-sky-500/[0.08] border-l-[2px] border-l-[#0ea5e9] border-y-0 border-r-0 text-sky-300 rounded-l-[4px]";
+      return "bg-sky-500/[0.08] border-l-[2px] border-l-[#0ea5e9] border-y-0 border-r-0 text-sky-300 rounded-tl-[4px] rounded-bl-[4px] rounded-tr-[8px] rounded-br-[8px]";
     case "violet":
-      return "bg-violet-500/[0.08] border-l-[2px] border-l-[#8b5cf6] border-y-0 border-r-0 text-violet-300 rounded-l-[4px]";
+      return "bg-violet-500/[0.08] border-l-[2px] border-l-[#8b5cf6] border-y-0 border-r-0 text-violet-300 rounded-tl-[4px] rounded-bl-[4px] rounded-tr-[8px] rounded-br-[8px]";
     case "slate":
-      return "bg-slate-500/[0.08] border-l-[2px] border-l-[#94a3b8] border-y-0 border-r-0 text-slate-300 rounded-l-[4px]";
+      return "bg-slate-500/[0.08] border-l-[2px] border-l-[#94a3b8] border-y-0 border-r-0 text-slate-300 rounded-tl-[4px] rounded-bl-[4px] rounded-tr-[8px] rounded-br-[8px]";
     default:
-      return "bg-[rgba(99,102,241,0.08)] border-l-[2px] border-l-[#6366f1] border-y-0 border-r-0 text-indigo-300 rounded-l-[4px]";
+      return "bg-[rgba(99,102,241,0.08)] border-l-[2px] border-l-[#6366f1] border-y-0 border-r-0 text-indigo-300 rounded-tl-[4px] rounded-bl-[4px] rounded-tr-[8px] rounded-br-[8px]";
   }
 }
 
@@ -132,7 +132,7 @@ function NavItemRow({ item, collapsed }: { item: NavItem; collapsed: boolean }) 
         className={
           isActive
             ? activeNavIconClass(item.accent)
-            : "text-zinc-500 group-hover:text-zinc-300 transition-colors"
+            : "text-zinc-400 group-hover:text-zinc-300 transition-colors"
         }
       />
 
@@ -188,7 +188,7 @@ function NavItemRow({ item, collapsed }: { item: NavItem; collapsed: boolean }) 
     display: "flex",
     alignItems: "center",
     gap: 10,
-    height: collapsed ? 40 : 36,
+    height: 40,
     opacity: item.comingSoon ? 0.4 : 1,
     textDecoration: "none",
   };
@@ -198,7 +198,7 @@ function NavItemRow({ item, collapsed }: { item: NavItem; collapsed: boolean }) 
       <div
         className="group"
         title={collapsed ? item.label : undefined}
-        style={{ ...baseStyle, margin: collapsed ? "2px auto" : "2px 8px", width: collapsed ? 40 : "auto", borderRadius: 10, padding: collapsed ? 0 : "0 10px", cursor: "default", justifyContent: collapsed ? "center" : "flex-start" }}
+        style={{ ...baseStyle, margin: collapsed ? "2px auto" : "2px 0", width: collapsed ? 40 : "auto", borderRadius: 10, padding: collapsed ? 0 : "0 12px", cursor: "default", justifyContent: collapsed ? "center" : "flex-start" }}
         onClick={handleCSClick}
       >
         {inner(false)}
@@ -210,22 +210,22 @@ function NavItemRow({ item, collapsed }: { item: NavItem; collapsed: boolean }) 
     <NavLink
       to={item.path}
       title={collapsed ? item.label : undefined}
-      className={({ isActive }) =>
-        `group relative flex items-center transition-all duration-200 ${
-          collapsed
-            ? `justify-center rounded-[8px]${isActive ? " bg-white/[0.06]" : ""}`
-            : isActive
-            ? activeNavClass(item.accent)
-            : "rounded-[8px] border-l-[2px] border-transparent text-zinc-400 hover:bg-white/[0.04] hover:text-zinc-300"
-        }`
-      }
-      style={() => ({
-        ...baseStyle,
-        margin: collapsed ? "2px auto" : "2px 8px",
-        width: collapsed ? 40 : "auto",
-        padding: collapsed ? 0 : "0 12px",
-        justifyContent: collapsed ? "center" : "flex-start",
-      })}
+        className={({ isActive }) =>
+          `group relative flex items-center transition-all duration-200 ${
+            collapsed
+              ? `justify-center rounded-[8px]${isActive ? " bg-white/[0.06]" : ""}`
+              : isActive
+              ? activeNavClass(item.accent)
+              : "rounded-tl-[4px] rounded-bl-[4px] rounded-tr-[8px] rounded-br-[8px] border-l-[2px] border-transparent text-zinc-400 hover:bg-white/[0.04] hover:text-zinc-300"
+          }`
+        }
+        style={() => ({
+          ...baseStyle,
+          margin: collapsed ? "2px auto" : "2px 0",
+          width: collapsed ? 40 : "auto",
+          padding: collapsed ? 0 : "0 12px",
+          justifyContent: collapsed ? "center" : "flex-start",
+        })}
     >
       {({ isActive }) => inner(isActive)}
     </NavLink>
@@ -255,12 +255,13 @@ function DesktopSidebar({
     >
       {/* Logo + collapse toggle row */}
       <div
-        className={collapsed ? "pt-4 px-2 pb-0" : "p-[20px] pb-0"}
+        className={collapsed ? "px-2" : "px-[20px]"}
         style={{
           display: "flex",
           alignItems: "center",
           justifyContent: collapsed ? "center" : "space-between",
-          marginBottom: collapsed ? 4 : 0,
+          height: 72,
+          flexShrink: 0,
         }}
       >
         <button
@@ -275,31 +276,16 @@ function DesktopSidebar({
             style={{ width: 32, height: 32, borderRadius: 8, flexShrink: 0 }}
           />
         </button>
-        {!collapsed && (
-          <button
-            type="button"
-            onClick={() => setCollapsed((c) => !c)}
-            aria-label="Collapse sidebar"
-            className="flex items-center justify-center text-zinc-600 hover:text-zinc-400 hover:bg-white/[0.04] transition-colors rounded-md"
-            style={{ width: 24, height: 24, background: "transparent", border: "none", cursor: "pointer", flexShrink: 0 }}
-          >
-            <ChevronLeft size={14} />
-          </button>
-        )}
-      </div>
-
-      {/* Expand button — visible only when collapsed, below logo */}
-      {collapsed && (
         <button
           type="button"
           onClick={() => setCollapsed((c) => !c)}
-          aria-label="Expand sidebar"
-          className="flex items-center justify-center text-zinc-600 hover:text-zinc-400 hover:bg-white/[0.04] transition-colors rounded-md mx-auto mb-1"
-          style={{ width: 28, height: 28, background: "transparent", border: "none", cursor: "pointer" }}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className="flex items-center justify-center text-zinc-600 hover:text-zinc-400 hover:bg-white/[0.04] transition-colors rounded-md"
+          style={{ width: 24, height: 24, background: "transparent", border: "none", cursor: "pointer", flexShrink: 0 }}
         >
-          <ChevronRight size={14} />
+          {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
         </button>
-      )}
+      </div>
 
       {/* cutsheet-Design: divider under header */}
       <div className="h-px w-full bg-white/[0.06] shrink-0" aria-hidden="true" />
@@ -323,7 +309,7 @@ function DesktopSidebar({
       </div>
 
       {/* Bottom */}
-      <div className="mt-auto shrink-0 flex flex-col pt-4 pb-4 border-t border-white/[0.04]">
+      <div className="mt-auto shrink-0 flex flex-col pt-5 pb-4 border-t border-white/[0.04]">
         {/* Usage bar — free tier only */}
         {!isPro && !collapsed && (
           <div className="flex flex-col mb-3 px-[25px]">
