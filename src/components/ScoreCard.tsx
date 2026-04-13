@@ -305,7 +305,7 @@ export function ScoreCard({
         {/* Deep dive rows — only render border-t when content exists */}
         {(() => {
           const hookSection = analysisSections?.find(s => /hook/i.test(s.title));
-          const hasHashtags = hashtags && (hashtags.tiktok?.length > 0 || hashtags.meta?.length > 0 || hashtags.instagram?.length > 0 || hashtags.pinterest?.length > 0 || hashtags.reels?.length > 0 || hashtags.youtube_shorts?.length > 0);
+          const hasHashtags = hashtags && (hashtags.tiktok?.length > 0 || hashtags.meta?.length > 0 || hashtags.instagram?.length > 0 || (hashtags.pinterest?.length ?? 0) > 0 || (hashtags.reels?.length ?? 0) > 0 || (hashtags.youtube_shorts?.length ?? 0) > 0);
           if (!hookSection && !hasHashtags) return null;
           return (
             <div className="flex flex-col border-t border-white/[0.04]">

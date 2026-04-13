@@ -35,7 +35,7 @@ function useElapsedSeconds(isActive: boolean) {
 }
 
 function getStagedMessage(elapsed: number): string {
-  let msg = STAGED_MESSAGES[0].text;
+  let msg: string = STAGED_MESSAGES[0].text;
   for (const stage of STAGED_MESSAGES) {
     if (elapsed >= stage.after) msg = stage.text;
   }

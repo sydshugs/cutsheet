@@ -69,7 +69,7 @@ export async function animateImage(payload: AnimateImageRequest): Promise<Animat
 
     if (!statusRes.ok) throw new Error(`Status check failed: ${statusRes.status}`);
 
-    const data = await statusRes.json() as { status: string; videoUrl?: string; duration?: number; error?: string };
+    const data = await statusRes.json() as { status: string; videoUrl?: string; duration?: number; error?: string; message?: string };
 
     if (data.status === "done" && data.videoUrl) {
       return { videoUrl: data.videoUrl, duration: data.duration ?? 5 };

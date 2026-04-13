@@ -2,7 +2,7 @@
 // Header: verdict pill + critical count | Verdict headline | Priority Fix (left-border accent)
 // Category filter pills | Fix rows with hover state
 
-import { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { CircleX, Type, Layers, Box, Activity, AlertCircle, ChevronRight, Wand2, X } from "lucide-react";
 
 interface DesignFlag {
@@ -28,7 +28,7 @@ const VERDICT_BADGE = {
 } as const;
 
 // Category → icon + Figma rgba colors
-type IconComp = (props: { size?: number; className?: string; style?: Record<string, string | number> }) => ReturnType<() => null>;
+type IconComp = React.ElementType<{ size?: number; className?: string; style?: React.CSSProperties }>;
 const CATEGORY_META: Record<string, { icon: IconComp; bg: string; color: string }> = {
   typography:  { icon: Type,       bg: 'rgba(245,158,11,0.1)',  color: '#f59e0b' },
   hierarchy:   { icon: Layers,     bg: 'rgba(99,102,241,0.1)',  color: '#6366f1' },

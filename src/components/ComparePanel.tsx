@@ -83,7 +83,7 @@ function MiniSpinner({ t }: { t: ThemeTokens }) {
 export function ComparePanel({ label, isDark, apiKey, isWinner, onResult }: ComparePanelProps) {
   const t = themes[isDark ? "dark" : "light"];
   const [file, setFile] = useState<File | null>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const { status, result, error, analyze, reset } = useVideoAnalyzer();
   const lastReportedRef = useRef<string | null>(null);
   const isAnalyzing = status === "uploading" || status === "processing";

@@ -497,7 +497,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
     try {
       const [imps, pScore] = await Promise.all([
         generateImprovements(result.markdown, result.scores, userContext || undefined, newPlatform, sessionMemoryRef.current),
-        generatePlatformScore(newPlatform, result, result.fileName, format as 'video' | 'static', userContext || undefined, rawUserContext?.niche),
+        generatePlatformScore(newPlatform, { markdown: result.markdown, scores: result.scores ?? { overall: 0 } }, result.fileName, format as 'video' | 'static', userContext || undefined, rawUserContext?.niche),
       ]);
       setPlatformImprovements(imps);
       setPlatformScoreResult(pScore);
@@ -1147,8 +1147,8 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                         result={activeResult}
                         error={error}
                         analysisError={analysisError}
-                        thumbnailDataUrl={activeResult?.thumbnailDataUrl ?? thumbnailDataUrl}
-                        fileObjectUrl={fileObjectUrl}
+                        thumbnailDataUrl={activeResult?.thumbnailDataUrl ?? thumbnailDataUrl ?? undefined}
+                        fileObjectUrl={fileObjectUrl ?? undefined}
                         format={format}
                         onFileSelect={(f) => handleFileWithFormatCheck(f)}
                         onUrlSubmit={async (u) => { setUrlInput(u); await importFromUrl(u); }}
@@ -1175,7 +1175,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                         policyLoading={policyLoading}
                         policyResult={policyResult}
                         visualizeLoading={visualizeStatus === 'loading'}
-                        visualizeResult={visualizeResult ? { url: visualizeResult.imageUrl ?? visualizeResult.videoUrl, type: visualizeResult.videoUrl ? 'video' : 'image' } : null}
+                        visualizeResult={visualizeResult ? { url: visualizeResult.generatedImageUrl, type: 'image' } : null}
                         designReviewData={staticSecondEyeResult ? {
                           flags: staticSecondEyeResult.flags ?? [],
                           topIssue: staticSecondEyeResult.topIssue,

@@ -63,7 +63,7 @@ function CellValue({ value }: { value: boolean | string }) {
 
 export function UpgradeModal({ onClose, featureKey }: UpgradeModalProps) {
   const navigate = useNavigate();
-  const msg = (featureKey && UPGRADE_MESSAGES[featureKey]) ?? DEFAULT_MESSAGE;
+  const msg = (featureKey ? UPGRADE_MESSAGES[featureKey] : undefined) ?? DEFAULT_MESSAGE;
   const trapRef = useFocusTrap(true);
 
   useEffect(() => {

@@ -48,18 +48,18 @@ export function HookDetailCard({ hookDetail }: HookDetailCardProps) {
       </div>
 
       {/* Hook Strength */}
-      {(hookDetail as Record<string, unknown>).hookStrength && (
+      {Boolean((hookDetail as unknown as Record<string, unknown>).hookStrength) && (
         <div className="mb-2">
           <span className="text-[10px] text-zinc-600 uppercase tracking-wider">Hook Strength</span>
-          <p className="text-xs text-zinc-300 font-medium mt-0.5">{(hookDetail as Record<string, unknown>).hookStrength as string}</p>
+          <p className="text-xs text-zinc-300 font-medium mt-0.5">{String((hookDetail as unknown as Record<string, unknown>).hookStrength)}</p>
         </div>
       )}
 
       {/* Scroll-Stop Factor */}
-      {(hookDetail as Record<string, unknown>).scrollStopFactor && (
+      {Boolean((hookDetail as unknown as Record<string, unknown>).scrollStopFactor) && (
         <div className="mb-2">
           <span className="text-[10px] text-zinc-600 uppercase tracking-wider">Scroll-Stop Factor</span>
-          <p className="text-xs text-zinc-400 leading-relaxed mt-0.5">{(hookDetail as Record<string, unknown>).scrollStopFactor as string}</p>
+          <p className="text-xs text-zinc-400 leading-relaxed mt-0.5">{String((hookDetail as unknown as Record<string, unknown>).scrollStopFactor)}</p>
         </div>
       )}
 

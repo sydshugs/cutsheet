@@ -12,6 +12,7 @@ import {
   Heart, Shield, type LucideIcon,
 } from "lucide-react";
 import type { Verdict, StructuredImprovement } from "../services/analyzerService";
+import type { SecondEyeResult, PlatformScore as OrganicPlatformScore } from "../services/claudeService";
 import { CreativeAnalysis } from "./CreativeAnalysis";
 import { CreativeVerdictAndSecondEye } from "./CreativeVerdictAndSecondEye";
 import { DesignReviewCard } from "./DesignReviewCard";
@@ -560,7 +561,7 @@ export function ReportCards({
               verdictState={vState}
               verdictOneLiner={oneLiner}
               verdictDetail={detail}
-              secondEyeResult={secondEyeData}
+              secondEyeResult={secondEyeData as SecondEyeResult | null | undefined}
               secondEyeLoading={secondEyeDataLoading}
             />
           );
@@ -614,7 +615,7 @@ export function ReportCards({
           transition={{ duration: 0.3, ease: 'easeOut', delay: 0.12 }}
         >
           <PlatformScoreCard
-            scores={platformScores ?? []}
+            scores={(platformScores ?? []) as OrganicPlatformScore[]}
             loading={platformScoresLoading ?? false}
             platform={platform ?? "all"}
           />

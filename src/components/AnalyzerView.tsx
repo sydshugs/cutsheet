@@ -165,7 +165,7 @@ export function AnalyzerView({
             structuredImprovements={result.structuredImprovements}
             improvements={result.improvements}
             scores={result.scores}
-            format={format}
+            format={format ?? 'static'}
             platform={platform}
             niche={niche}
             hashtags={result.hashtags}

@@ -470,7 +470,7 @@ export default function Welcome() {
                         sublabel={opt.sublabel}
                         icon={opt.icon}
                         selected={intent === opt.value}
-                        onClick={() => setIntent(opt.value)}
+                        onClick={() => setIntent(opt.value as Intent)}
                         index={i}
                       />
                     ))}
