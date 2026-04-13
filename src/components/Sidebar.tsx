@@ -265,7 +265,7 @@ function DesktopSidebar({
       >
         <button
           type="button"
-          onClick={() => navigate("/app")}
+          onClick={() => navigate("/app/paid")}
           style={{ display: "flex", alignItems: "center", gap: 10, background: "none", border: "none", cursor: "pointer", padding: 0 }}
           aria-label="Cutsheet — go to home"
         >
