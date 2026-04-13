@@ -113,13 +113,23 @@ function getCatCfg(category: string) {
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
-function parseTs(ts: string): number {
-  const first = ts.match(/^(\d+:\d+)/);
-  const clean = first ? first[1] : ts.trim();
-  const parts = clean.split(":").map(Number);
+function parseTsSeconds(timeStr: string): number {
+  const parts = timeStr.trim().split(":").map(Number);
   if (parts.length === 2) return (parts[0] ?? 0) * 60 + (parts[1] ?? 0);
   if (parts.length === 3) return (parts[0] ?? 0) * 3600 + (parts[1] ?? 0) * 60 + (parts[2] ?? 0);
   return 0;
+}
+
+/** Parse a timestamp or range like "0:03", "0:00-0:24", "0:05–0:12".
+ *  Returns the MIDPOINT of a range so dots spread across the timeline. */
+function parseTs(ts: string): number {
+  const rangeParts = ts.split(/[-–—]/);
+  if (rangeParts.length >= 2) {
+    const start = parseTsSeconds(rangeParts[0]);
+    const end = parseTsSeconds(rangeParts[1]);
+    return (start + end) / 2;
+  }
+  return parseTsSeconds(ts);
 }
 
 function extractScrollParts(scrollMoment: string | null): { time: string; text: string } | null {
@@ -251,8 +261,16 @@ function Timeline({
   }, [flags]);
 
   const maxSecs = useMemo(() => {
-    const vals = flags.map((f) => parseTs(f.timestamp));
-    return Math.max(...vals, 10);
+    let max = 10;
+    for (const f of flags) {
+      const rangeParts = f.timestamp.split(/[-–—]/);
+      if (rangeParts.length >= 2) {
+        max = Math.max(max, parseTsSeconds(rangeParts[1]));
+      } else {
+        max = Math.max(max, parseTsSeconds(f.timestamp));
+      }
+    }
+    return max;
   }, [flags]);
 
   return (
