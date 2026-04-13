@@ -7,20 +7,16 @@ import { ChevronLeft, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRankBatch, type RankPlatform } from "../../context/RankBatchContext";
 import { AnalyzerView } from "../../components/AnalyzerView";
-import { ScoreCard } from "../../components/ScoreCard";
 import type { AppSharedContext } from "../../components/AppLayout";
 import { useThumbnail } from "../../hooks/useThumbnail";
+import { useVisualize } from "../../hooks/useVisualize";
 import { getUserContext, formatUserContextBlock } from "../../services/userContextService";
 import { getSessionMemory } from "@/src/lib/userMemoryService";
 import { generatePrediction, type PredictionResult } from "../../services/predictionService";
 import { generateBudgetRecommendation, type EngineBudgetRecommendation } from "../../services/budgetService";
-import { PlatformSwitcher, PAID_AD_PLATFORMS, PAID_STATIC_PLATFORMS } from "../../components/PlatformSwitcher";
-import { YouTubeFormatSelector, type YouTubeFormat } from "../../components/YouTubeFormatSelector";
-import { extractRightPanelSections } from "../../components/ReportCards";
+import { type YouTubeFormat } from "../../components/YouTubeFormatSelector";
 import { generateFixIt, type FixItResult } from "../../services/fixItService";
 import { runPolicyCheck, type PolicyCheckResult } from "../../lib/policyCheckService";
-import { visualizeAd } from "../../lib/visualizeService";
-import { uploadImageToStorage, removeFromStorage } from "../../lib/storageService";
 import {
   generateSecondEyeReview,
   generateStaticSecondEye,
@@ -32,7 +28,7 @@ import {
 } from "../../services/claudeService";
 import { SafeZoneModal } from "../../components/SafeZoneModal";
 import { VisualizePanel } from "../../components/VisualizePanel";
-import type { VisualizeResult, VisualizeStatus } from "../../types/visualize";
+import { RankScorecardPanel } from "../../components/rank/RankScorecardPanel";
 import { cn } from "@/src/lib/utils";
 
 function rankPlatformToInitial(rp: RankPlatform): string {
@@ -84,20 +80,38 @@ export default function RankScorecardPage() {
   const [platformScoreResult, setPlatformScoreResult] = useState<PlatformScore | null>(null);
   const [isPlatformSwitching, setIsPlatformSwitching] = useState(false);
   const platformAbortRef = useRef<AbortController | null>(null);
-  const [visualizeOpen, setVisualizeOpen] = useState(false);
-  const [visualizeStatus, setVisualizeStatus] = useState<VisualizeStatus>("idle");
-  const [visualizeResult, setVisualizeResult] = useState<VisualizeResult | null>(null);
-  const [visualizeError, setVisualizeError] = useState<string | null>(null);
-  const [visualizeCreditData, setVisualizeCreditData] = useState<import("../../types/visualize").VisualizeCreditData | null>(null);
   const [safeZoneOpen, setSafeZoneOpen] = useState(false);
 
   const sessionMemoryRef = useRef("");
   const postFiredRef = useRef<string | null>(null);
   const leftPanelRef = useRef<HTMLDivElement | null>(null);
-  const scorecardColumnRef = useRef<HTMLDivElement | null>(null);
 
   const blobUrl = itemId ? previewUrls[itemId] : null;
   const thumbnailDataUrl = useThumbnail(file, blobUrl);
+
+  // ── useVisualize — replaces 5 useState + handleVisualize ─────────────────
+  const {
+    visualizeOpen,
+    setVisualizeOpen,
+    visualizeStatus,
+    setVisualizeStatus,
+    visualizeResult,
+    setVisualizeResult,
+    visualizeError,
+    setVisualizeError,
+    visualizeCreditData,
+    setVisualizeCreditData,
+    handleVisualize,
+    resetVisualize,
+  } = useVisualize({
+    file,
+    format,
+    platform,
+    thumbnailDataUrl,
+    activeResult: result ?? null,
+    userContext,
+    onUpgradeRequired,
+  });
 
   useEffect(() => {
     getUserContext().then((ctx) => {
@@ -269,67 +283,6 @@ export default function RankScorecardPage() {
     }
   };
 
-  const handleVisualize = async () => {
-    if (!result?.scores || !file) return;
-    setVisualizeOpen(true);
-    setVisualizeStatus("loading");
-    setVisualizeResult(null);
-    setVisualizeError(null);
-    try {
-      let imageFile: File = file;
-      if (format === "video") {
-        if (!thumbnailDataUrl) {
-          setVisualizeError("Could not extract a frame from this video.");
-          setVisualizeStatus("error");
-          return;
-        }
-        const blob = await fetch(thumbnailDataUrl).then((r) => r.blob());
-        imageFile = new File([blob], "hook-frame.jpg", { type: "image/jpeg" });
-      }
-      const { signedUrl: imageStorageUrl, storagePath } = await uploadImageToStorage(imageFile, 1200, 0.85);
-      const niche = userContext.match(/Niche:\s*(.+)/)?.[1]?.trim() || "general";
-      const isMetaStatic = platform === "Meta" && format === "static";
-      const cleanPlatform = platform === "all" ? "general" : platform;
-      const viz = await visualizeAd({
-        imageStorageUrl,
-        imageMediaType: "image/jpeg",
-        analysisResult: {
-          scores: result.scores as Record<string, number>,
-          improvements: result.improvements ?? [],
-          markdown: result.markdown,
-        },
-        platform: cleanPlatform,
-        niche,
-        adType: "static",
-        excludeCta: isMetaStatic,
-        visualizeContext: {
-          adType: "paid",
-          format,
-          platform: cleanPlatform,
-          excludeCta: isMetaStatic,
-        },
-      });
-      setVisualizeResult(viz);
-      setVisualizeStatus("complete");
-      removeFromStorage(storagePath);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Unknown error";
-      if (msg === "PRO_REQUIRED") {
-        setVisualizeOpen(false);
-        setVisualizeStatus("idle");
-        onUpgradeRequired("visualize");
-        return;
-      }
-      if (msg === "CREDIT_LIMIT_REACHED" && err && typeof err === "object" && "creditData" in err) {
-        setVisualizeCreditData((err as Error & { creditData: import("../../types/visualize").VisualizeCreditData }).creditData);
-        setVisualizeStatus("credit_limit");
-        return;
-      }
-      setVisualizeError(msg);
-      setVisualizeStatus("error");
-    }
-  };
-
   if (!itemId || !item || item.status !== "complete" || !result?.scores) {
     return <Navigate to="/app/batch" replace />;
   }
@@ -337,6 +290,9 @@ export default function RankScorecardPage() {
   const fn = result.fileName || file?.name || "";
   const testLabel =
     rankTestType === "hook" ? "Hook Battle" : rankTestType === "cta" ? "CTA Showdown" : "Full Creative";
+
+  // result.scores is confirmed non-null past the guard above
+  const safeResult = result as typeof result & { scores: NonNullable<typeof result.scores> };
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-[color:var(--bg)]" style={{ minHeight: "calc(100vh - 56px)" }}>
@@ -371,6 +327,7 @@ export default function RankScorecardPage() {
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
+        {/* Left panel — AnalyzerView or VisualizePanel */}
         <div ref={leftPanelRef} className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto">
           <div className="relative flex flex-1 flex-col px-4 py-6 md:px-8">
             <div className="pointer-events-none absolute right-0 top-0 size-[min(600px,80vw)] rounded-full bg-[color:var(--accent)]/10 blur-[120px]" aria-hidden />
@@ -390,20 +347,8 @@ export default function RankScorecardPage() {
                     error={visualizeError}
                     creditData={visualizeCreditData}
                     format={format}
-                    onBack={() => {
-                      setVisualizeOpen(false);
-                      setVisualizeStatus("idle");
-                      setVisualizeResult(null);
-                      setVisualizeError(null);
-                      setVisualizeCreditData(null);
-                    }}
-                    onClose={() => {
-                      setVisualizeOpen(false);
-                      setVisualizeStatus("idle");
-                      setVisualizeResult(null);
-                      setVisualizeError(null);
-                      setVisualizeCreditData(null);
-                    }}
+                    onBack={resetVisualize}
+                    onClose={resetVisualize}
                     onUpgrade={onUpgradeRequired}
                   />
                 </motion.div>
@@ -474,97 +419,33 @@ export default function RankScorecardPage() {
           </div>
         </div>
 
-        <div
-          className="flex h-auto min-h-0 w-full shrink-0 flex-col overflow-y-auto border-t border-[color:var(--border)] bg-[color:var(--surface)] lg:h-auto lg:w-[350px] lg:border-l lg:border-t-0"
-        >
-          <div className="flex min-w-0 flex-col gap-4 p-6">
-            <motion.div
-              initial={{ opacity: 0, x: 16 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className="flex flex-col gap-4"
-            >
-              <div ref={scorecardColumnRef}>
-                <ScoreCard
-                  scores={result.scores}
-                  hookDetail={result.hookDetail}
-                  improvements={platformImprovements ?? result.improvements}
-                  improvementsLoading={improvementsLoading}
-                  budget={result.budget}
-                  hashtags={result.hashtags}
-                  scenes={result.scenes}
-                  fileName={result.fileName}
-                  analysisTime={result.timestamp}
-                  scoreRange={{
-                    low: Math.max(0, Math.round((result.scores.overall - 0.65) * 10) / 10),
-                    high: Math.min(10, Math.round((result.scores.overall + 0.65) * 10) / 10),
-                  }}
-                  modelName="Gemini + Claude"
-                  isDark
-                  format={format}
-                  engineBudget={engineBudget}
-                  onNavigateSettings={() => navigate("/settings")}
-                  niche={rawUserContext?.niche}
-                  platform={platform !== "all" ? platform : rawUserContext?.platform}
-                  youtubeFormat={(platform === "YouTube" || platform === "Shorts") ? youtubeFormat : undefined}
-                  platformScore={platform !== "all" && platformScoreResult ? platformScoreResult.score : undefined}
-                  onFixIt={handleFixIt}
-                  fixItResult={fixItResult}
-                  fixItLoading={fixItLoading}
-                  prediction={prediction}
-                  predictionLoading={predictionLoading}
-                  onCompare={() => navigate("/app/competitor")}
-                  onVisualize={handleVisualize}
-                  visualizeLoading={visualizeStatus === "loading"}
-                  canVisualize
-                  isPro={isPro}
-                  verdict={result.verdict}
-                  platformCta={result.platformCta}
-                  analysisSections={extractRightPanelSections(result.markdown)}
-                  platformSwitcher={
-                    <>
-                      <PlatformSwitcher
-                        platforms={format === "static" ? PAID_STATIC_PLATFORMS : PAID_AD_PLATFORMS}
-                        selected={platform}
-                        onChange={(p) => void handlePlatformSwitch(p)}
-                        isSwitching={isPlatformSwitching}
-                        disabled={false}
-                      />
-                      {(platform === "YouTube" || platform === "Shorts") && format === "video" && (
-                        <div className="mt-1">
-                          <YouTubeFormatSelector selected={youtubeFormat} onChange={setYoutubeFormat} disabled={false} />
-                        </div>
-                      )}
-                      {platform === "Meta" && format === "video" && (
-                        <label className="mt-2 flex cursor-pointer select-none items-center gap-2 group">
-                          <input
-                            type="checkbox"
-                            checked={ctaFree}
-                            onChange={(e) => setCtaFree(e.target.checked)}
-                            className="cursor-pointer rounded border-[color:var(--border-strong)] accent-[color:var(--accent)]"
-                          />
-                          <span className="text-xs leading-tight text-[color:var(--ink-muted)] transition-opacity group-hover:text-[color:var(--ink)]">
-                            Uses Meta&apos;s native CTA button (no CTA in creative)
-                          </span>
-                        </label>
-                      )}
-                      {platformScoreResult && platform !== "all" && (
-                        <div
-                          className="mt-1.5 flex items-center gap-2 rounded-lg border border-[color:var(--accent-border)] px-3 py-1.5 text-xs"
-                          style={{ background: "var(--accent-subtle)" }}
-                        >
-                          <span className="font-mono font-bold text-[color:var(--accent-light)]">{platformScoreResult.score}/10</span>
-                          <span className="text-[color:var(--ink-muted)]">{platformScoreResult.verdict}</span>
-                        </div>
-                      )}
-                    </>
-                  }
-                  onUpgradeRequired={onUpgradeRequired}
-                />
-              </div>
-            </motion.div>
-          </div>
-        </div>
+        {/* Right panel — extracted ScoreCard column */}
+        <RankScorecardPanel
+          result={safeResult}
+          format={format}
+          platform={platform}
+          onPlatformSwitch={handlePlatformSwitch}
+          isPlatformSwitching={isPlatformSwitching}
+          platformScoreResult={platformScoreResult}
+          youtubeFormat={youtubeFormat}
+          onYoutubeFormatChange={setYoutubeFormat}
+          ctaFree={ctaFree}
+          onCtaFreeChange={setCtaFree}
+          engineBudget={engineBudget}
+          platformImprovements={platformImprovements}
+          improvementsLoading={improvementsLoading}
+          prediction={prediction}
+          predictionLoading={predictionLoading}
+          fixItResult={fixItResult}
+          fixItLoading={fixItLoading}
+          onFixIt={handleFixIt}
+          visualizeStatus={visualizeStatus}
+          onVisualize={handleVisualize}
+          rawUserContextNiche={rawUserContext?.niche}
+          rawUserContextPlatform={rawUserContext?.platform}
+          isPro={isPro}
+          onUpgradeRequired={onUpgradeRequired}
+        />
       </div>
 
       <SafeZoneModal
