@@ -4,7 +4,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Check, Download, Copy, Sparkles, AlertCircle } from "lucide-react";
-import type { VisualizeResult, VisualizeStatus, VisualizeCreditData } from "../types/visualize";
+import type { VisualizeResult, VisualizeStatus, VisualizeCreditData, VisualizeMode } from "../types/visualize";
 import { MotionPreviewPlayer } from "./MotionPreviewPlayer";
 
 // ─── LOADING STEPS ────────────────────────────────────────────────────────────
@@ -355,11 +355,12 @@ export interface VisualizePanelProps {
   onAnimate?: () => void;
   onAnimateOriginal?: () => void;
   format?: 'video' | 'static';
+  visualizeMode?: VisualizeMode | null;
 }
 
 export function VisualizePanel({
   status, result, originalImageUrl, error, creditData, onClose, onBack, onAnalyzeVersion, onUpgrade,
-  videoUrl, videoLoading, videoError, videoSource, onAnimate, onAnimateOriginal, format,
+  videoUrl, videoLoading, videoError, videoSource, onAnimate, onAnimateOriginal, format, visualizeMode,
 }: VisualizePanelProps) {
   const isVideo = format === 'video';
   const [briefCopied, setBriefCopied] = useState(false);
@@ -447,6 +448,15 @@ export function VisualizePanel({
             }}>
               {isVideo ? "MVP — Hook Frame" : "MVP — Static Ads"}
             </span>
+            {visualizeMode === "text_overlay" && (
+              <span style={{
+                fontSize: 10, fontWeight: 600, color: "#f59e0b",
+                background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)",
+                borderRadius: 4, padding: "2px 6px",
+              }}>
+                Direction Mode
+              </span>
+            )}
           </div>
           <p style={{ fontSize: 12, color: "#71717a", marginTop: 3 }}>
             AI-generated based on your scorecard
@@ -560,11 +570,54 @@ export function VisualizePanel({
               {result.generatedImageUrl ? (
                 <ImagePanel src={result.generatedImageUrl} label={isVideo ? "Improved Hook Frame" : "After"} height={380} />
               ) : result.visualBrief ? (
-                <VisualBriefPanel
-                  brief={result.visualBrief}
-                  onCopy={handleCopyBrief}
-                  copied={briefCopied}
-                />
+                visualizeMode === "text_overlay" ? (
+                  <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: "#f59e0b", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                        Creative Direction
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleCopyBrief}
+                        style={{
+                          display: "flex", alignItems: "center", gap: 5,
+                          background: "none", border: "1px solid rgba(255,255,255,0.1)",
+                          borderRadius: 6, padding: "3px 8px", cursor: "pointer",
+                          fontSize: 11, color: "#818cf8",
+                          transition: "all 150ms",
+                        }}
+                      >
+                        <Copy size={11} />
+                        {briefCopied ? "Copied!" : "Copy Brief"}
+                      </button>
+                    </div>
+                    <div style={{
+                      borderRadius: 12,
+                      background: "#18181b",
+                      border: "1px solid rgba(245,158,11,0.12)",
+                      borderLeft: "3px solid #f59e0b",
+                      padding: "16px 20px",
+                      overflow: "auto",
+                      maxHeight: 420,
+                    }}>
+                      <p style={{ fontSize: 11, fontWeight: 600, color: "#f59e0b", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                        Creative Direction — share with your designer
+                      </p>
+                      <p style={{ fontSize: 13, color: "#d4d4d8", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>
+                        {result.visualBrief}
+                      </p>
+                    </div>
+                    <p style={{ fontSize: 11, color: "#52525b", marginTop: 2 }}>
+                      High-production ad — AI suggests copy and layout changes only
+                    </p>
+                  </div>
+                ) : (
+                  <VisualBriefPanel
+                    brief={result.visualBrief}
+                    onCopy={handleCopyBrief}
+                    copied={briefCopied}
+                  />
+                )
               ) : null}
             </div>
 

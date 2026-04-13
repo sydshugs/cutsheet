@@ -12,6 +12,9 @@ export interface VisualizeContext {
   excludeCta?: boolean;
 }
 
+/** Determines how Visualize behaves based on production quality score. */
+export type VisualizeMode = "image_gen" | "text_overlay" | "brief";
+
 export interface VisualizeRequest {
   /** Preferred: Supabase signed URL (bypasses Vercel 4.5MB body limit). */
   imageStorageUrl?: string;
@@ -30,6 +33,8 @@ export interface VisualizeRequest {
   visualizeContext?: VisualizeContext;
   /** @deprecated Use visualizeContext.excludeCta instead. Kept for backward compat. */
   excludeCta?: boolean;
+  /** Score-gated mode: image_gen (default), text_overlay (production 8+), brief. */
+  visualizeMode?: VisualizeMode;
 }
 
 export interface VisualizeResult {
@@ -38,6 +43,7 @@ export interface VisualizeResult {
   visualBrief?: string;          // fallback: rich text description for designer
   improvementSummary: string;    // 2-3 sentence summary
   changesApplied: string[];      // bullet list of changes
+  briefOnly?: boolean;           // true when text_overlay mode — no credit deducted
 }
 
 export type VisualizeStatus = "idle" | "loading" | "complete" | "error" | "credit_limit";

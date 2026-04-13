@@ -14,8 +14,17 @@ import type {
   VisualizeResult,
   VisualizeStatus,
   VisualizeCreditData,
+  VisualizeMode,
 } from "../types/visualize";
 import type { AnalysisResult } from "../services/analyzerService";
+
+// ─── Score-gated mode ────────────────────────────────────────────────────────
+
+function getVisualizeMode(scores: { production?: number; overall?: number }): VisualizeMode {
+  const prod = scores.production != null ? scores.production : 5;
+  if (prod >= 8) return "text_overlay";   // high-production: don't touch the image
+  return "image_gen";                      // mid/low: attempt image gen
+}
 
 // ─── Params ───────────────────────────────────────────────────────────────────
 
@@ -51,6 +60,7 @@ export interface UseVisualizeReturn {
   setMotionError: React.Dispatch<React.SetStateAction<string | null>>;
   motionSource: "improved" | "original" | null;
   setMotionSource: React.Dispatch<React.SetStateAction<"improved" | "original" | null>>;
+  visualizeMode: VisualizeMode | null;
   // Handlers
   handleVisualize: () => Promise<void>;
   handleMotionPreview: () => Promise<void>;
@@ -93,6 +103,9 @@ export function useVisualize({
   const [visualizeError, setVisualizeError] = useState<string | null>(null);
   const [visualizeCreditData, setVisualizeCreditData] = useState<VisualizeCreditData | null>(null);
 
+  // ── Visualize mode (score-gated) ───────────────────────────────────────────
+  const [visualizeMode, setVisualizeMode] = useState<VisualizeMode | null>(null);
+
   // ── Motion Preview (Kling) state ──────────────────────────────────────────
   const [motionVideoUrl, setMotionVideoUrl] = useState<string | null>(null);
   const [motionLoading, setMotionLoading] = useState(false);
@@ -106,6 +119,7 @@ export function useVisualize({
     setVisualizeResult(null);
     setVisualizeError(null);
     setVisualizeCreditData(null);
+    setVisualizeMode(null);
     setMotionVideoUrl(null);
     setMotionLoading(false);
     setMotionError(null);
@@ -115,6 +129,8 @@ export function useVisualize({
   // ── handleVisualize ───────────────────────────────────────────────────────
   const handleVisualize = async () => {
     if (!activeResult?.scores || !file) return;
+    const mode = getVisualizeMode(activeResult.scores as { production?: number; overall?: number });
+    setVisualizeMode(mode);
     setVisualizeOpen(true);
     setVisualizeStatus("loading");
     setVisualizeResult(null);
@@ -156,6 +172,7 @@ export function useVisualize({
         niche,
         adType: "static",
         excludeCta: isMetaStatic,
+        visualizeMode: mode,
         visualizeContext: {
           adType: "paid",
           format: format as "static" | "video",
@@ -337,6 +354,7 @@ export function useVisualize({
     setMotionError,
     motionSource,
     setMotionSource,
+    visualizeMode,
     // Handlers
     handleVisualize,
     handleMotionPreview,

@@ -448,6 +448,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
     motionLoading, setMotionLoading,
     motionError, setMotionError,
     motionSource, setMotionSource,
+    visualizeMode,
     handleVisualize,
     handleMotionPreview,
     handleAnimateVisualized,
@@ -748,6 +749,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                       onAnalyzeVersion={handleReanalyze}
                       onUpgrade={onUpgradeRequired}
                       format={format}
+                      visualizeMode={visualizeMode}
                     />
                   </motion.div>
                 ) : (
