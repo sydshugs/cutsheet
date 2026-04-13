@@ -6,7 +6,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, CheckCircle, X, Layers, Zap, Users, Check } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { getUsageInfo, fetchCreditStatus, FeatureLimitResult } from "../services/usageService";
+import { getUsageInfo, type FeatureLimitResult } from "../services/usageService";
+import { useCredits } from "../hooks/useCredits";
 import { supabase } from "../lib/supabase";
 import { SegmentedControl } from "../components/ui/SegmentedControl";
 import { Switch } from "../components/ui/Switch";
@@ -149,7 +150,7 @@ export function Settings() {
 
   // Usage + billing state
   const [usage, setUsage] = useState<{ used: number; limit: number; isPro: boolean } | null>(null);
-  const [credits, setCredits] = useState<Record<string, FeatureLimitResult> | null>(null);
+  const { data: credits = null } = useCredits();
   const [totalAnalyses, setTotalAnalyses] = useState<number | null>(null);
 
   // Delete account state
@@ -164,7 +165,7 @@ export function Settings() {
 
   useEffect(() => {
     getUsageInfo().then(setUsage).catch(() => {});
-    fetchCreditStatus().then(setCredits).catch(() => {});
+    // Credits now fetched via useCredits() TanStack Query hook
     // Fetch total analyses count for this user
     supabase
       .from("analyses")

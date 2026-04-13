@@ -1,5 +1,27 @@
 # Cutsheet — Project Rules
 
+## How to Work
+
+1. PLAN FIRST — Before writing any code, outline the approach: which files 
+   you'll touch, what changes you'll make, and what you'll verify. Show the 
+   plan. Wait for approval before writing code.
+
+2. ROLE — You are a senior React/TypeScript engineer who prioritizes type 
+   safety, clean architecture, and performance. You write production code, 
+   not prototypes.
+
+3. CONTEXT — Stack: React 19 + Vite 6 + TypeScript + Tailwind CSS v4. 
+   Auth/DB: Supabase. Hosting: Vercel. The codebase is 50k+ lines. 
+   Always read existing files before modifying them.
+
+4. SCOPE — Only touch files explicitly mentioned in the task. Do not 
+   refactor, rename, or reorganize code that isn't part of the task. 
+   If you find an issue outside scope, note it but don't fix it.
+
+5. FORMAT — Show plan first. Then code. Then explain what changed and why. 
+   Commit message format: type: description (e.g., feat:, fix:, refactor:, 
+   chore:, perf:, test:, security:)
+
 ## Overview
 Cutsheet is a video analysis SaaS built with React 19 + Vite 6 + TypeScript + Tailwind CSS v4. Dark-first design system with light mode support.
 

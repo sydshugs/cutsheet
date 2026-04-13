@@ -3,24 +3,17 @@
 import { Helmet } from "react-helmet-async";
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useOutletContext } from "react-router-dom";
-import { Monitor, Eye, Download, X, Plus, CheckCircle, ShieldCheck, Sparkles, Upload } from "lucide-react";
+import { Monitor, Upload } from "lucide-react";
 import { VideoDropzone } from "../../components/VideoDropzone";
 import { ProgressCard } from "../../components/ProgressCard";
 import { sanitizeFileName } from "../../utils/sanitize";
-import { SuiteCohesionCard } from "../../components/SuiteCohesionCard";
-import { ScoreCard } from "../../components/ScoreCard";
 import type { DisplayResult } from "../../types/display";
-import { AlertDialog } from "../../components/ui/AlertDialog";
-import { PolicyCheckPanel } from "../../components/PolicyCheckPanel";
 import { runPolicyCheck, type PolicyCheckResult } from "../../lib/policyCheckService";
 import { getImageDimensions, detectDisplayFormat, getFormatGuidance, type DisplayFormat } from "../../utils/displayAdUtils";
 import { generateDisplayMockup, generateSuiteMockup } from "../../services/mockupService";
-import { DisplayAnalyzerMockup } from "../../components/DisplayAnalyzerMockup";
-import { DesignReviewCard } from "../../components/DesignReviewCard";
 import { analyzeVideo, generateBrief } from "../../services/analyzerService";
 import { analyzeSuiteCohesion, generateCTARewrites, type SuiteCohesionResult } from "../../services/claudeService";
 import { getUserContext, formatUserContextBlock } from "../../services/userContextService";
-import { VisualizePanel } from "../../components/VisualizePanel";
 import { AnimateToHtml5Takeover } from "../../components/AnimateToHtml5Takeover";
 import { visualizeAd } from "../../lib/visualizeService";
 import { uploadImageToStorage, removeFromStorage } from "../../lib/storageService";
@@ -30,17 +23,11 @@ import { generatePrediction, type PredictionResult } from "../../services/predic
 import { generateBudgetRecommendation, type EngineBudgetRecommendation } from "../../services/budgetService";
 import type { AppSharedContext } from "../../components/AppLayout";
 import { cn } from "../../lib/utils";
+import { DisplayRightPanel } from "../../components/display/DisplayRightPanel";
+import { DisplaySuiteView, type SuiteBanner } from "../../components/display/DisplaySuiteView";
+import { DisplaySingleResults } from "../../components/display/DisplaySingleResults";
 
 type Mode = "single" | "suite";
-
-interface SuiteBanner {
-  id: string;
-  file: File;
-  format: DisplayFormat | null;
-  dimensions: { width: number; height: number };
-  status: "pending" | "analyzing" | "complete" | "error";
-  result: DisplayResult | null;
-}
 
 const API_KEY = ""; // Gemini calls are now server-side via /api/analyze
 
@@ -319,6 +306,22 @@ Return JSON only:
     generateSuiteMockup(bannersWithResults)
       .then((url) => { setSuiteMockupUrl(url); setSuiteMockupLoading(false); })
       .catch(() => setSuiteMockupLoading(false));
+  };
+
+  const handleRetryCoheison = async () => {
+    setSuiteCohesionError(false);
+    try {
+      const bannerData = suiteBanners.filter((b) => b.result).map((b) => ({
+        format: b.format?.name ?? "Custom",
+        fileName: b.file.name,
+        overallScore: b.result!.overallScore,
+        improvements: b.result!.improvements.map((i) => i.fix),
+      }));
+      const cohesion = await analyzeSuiteCohesion(bannerData, userContext, sessionMemoryRef.current);
+      setSuiteCohesion(cohesion);
+    } catch {
+      setSuiteCohesionError(true);
+    }
   };
 
   // Format detection on file drop
@@ -628,204 +631,20 @@ Return JSON only — no prose:
         <div className="flex-1 flex flex-col overflow-auto">
           {/* ── SUITE MODE ──────────────────────────────────────────── */}
           {mode === "suite" && (
-            <div className="relative px-4 py-6 md:px-8 min-h-full flex flex-col">
-              <div className="relative flex flex-col flex-1" style={{ maxWidth: 900, margin: "0 auto", width: "100%" }}>
-
-                {suiteStatus === "idle" && (
-                  <>
-                    <h3 style={{ fontSize: 18, fontWeight: 600, color: "#f4f4f5", margin: "0 0 4px" }}>Ad Suite Analysis</h3>
-                    <p style={{ fontSize: 13, color: "#71717a", margin: "0 0 20px" }}>Upload 2-8 banners from the same campaign. Get individual scores + suite consistency analysis.</p>
-
-                    {/* Banner list */}
-                    {suiteBanners.length > 0 && (
-                      <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16 }}>
-                        {suiteBanners.map((b) => (
-                          <div key={b.id} style={{
-                            display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
-                            background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
-                            borderRadius: 10,
-                          }}>
-                            <div style={{ width: 60, height: 40, borderRadius: 6, overflow: "hidden", background: "var(--bg)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                              <img src={URL.createObjectURL(b.file)} alt="" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
-                            </div>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <span style={{ fontSize: 12, color: "#a1a1aa", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                {(() => { const n = sanitizeFileName(b.file.name); return n.length > 24 ? n.slice(0, 21) + "..." : n; })()}
-                              </span>
-                              <span style={{
-                                fontSize: 10,
-                                color: b.format ? "#06b6d4" : "#f59e0b",
-                                background: b.format ? "rgba(6,182,212,0.1)" : "rgba(245,158,11,0.1)",
-                                borderRadius: 9999, padding: "1px 6px",
-                              }}>
-                                {b.format ? `${b.format.key} ${b.format.name}` : `${b.dimensions.width}×${b.dimensions.height} Custom`}
-                              </span>
-                            </div>
-                            {b.status === "analyzing" && (
-                              <div style={{ width: 14, height: 14, border: "2px solid rgba(99,102,241,0.3)", borderTopColor: "#6366f1", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
-                            )}
-                            {b.status === "complete" && b.result && (
-                              <span style={{ fontSize: 13, fontWeight: 600, fontFamily: "var(--font-mono, monospace)", color: b.result.overallScore >= 7 ? "#10b981" : b.result.overallScore >= 5 ? "#f59e0b" : "#ef4444" }}>
-                                {b.result.overallScore}/10
-                              </span>
-                            )}
-                            <button type="button" onClick={() => removeSuiteBanner(b.id)}
-                              style={{ background: "none", border: "none", color: "#52525b", cursor: "pointer", padding: 2 }}>
-                              <X size={14} />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Add more / dropzone */}
-                    {suiteBanners.length >= 8 && (
-                      <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.15)", marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
-                        <span style={{ fontSize: 12, color: "#f59e0b" }}>Maximum 8 banners per suite. Remove one to add another.</span>
-                      </div>
-                    )}
-                    {suiteBanners.length < 8 && (
-                      <div
-                        style={{
-                          height: 100, border: "1px dashed rgba(255,255,255,0.08)", borderRadius: 12,
-                          background: "rgba(255,255,255,0.02)", display: "flex", alignItems: "center",
-                          justifyContent: "center", gap: 8, cursor: "pointer", transition: "transform,opacity 150ms", marginBottom: 16,
-                        }}
-                        onClick={() => {
-                          const input = document.createElement("input");
-                          input.type = "file"; input.accept = "image/*"; input.multiple = true;
-                          input.onchange = (e) => {
-                            const files = (e.target as HTMLInputElement).files;
-                            if (files) Array.from(files).forEach((f) => addSuiteBanner(f));
-                          };
-                          input.click();
-                        }}
-                        onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)"; }}
-                        onDragLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
-                        onDrop={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; Array.from(e.dataTransfer.files).forEach((f) => addSuiteBanner(f)); }}
-                      >
-                        <Plus size={16} color="#52525b" />
-                        <span style={{ fontSize: 13, color: "#71717a" }}>
-                          {suiteBanners.length === 0 ? "Drop banner ads or click to browse" : "Add more banners"}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Suite cohesion threshold hint */}
-                    {suiteBanners.filter((b) => b.status === "complete").length < 3 && suiteBanners.length > 0 && suiteStatus === "idle" && (
-                      <p style={{ fontSize: 12, color: "var(--ink-muted, #71717a)", margin: "0 0 12px", textAlign: "center" }}>
-                        Add {3 - suiteBanners.filter((b) => b.status === "complete").length} more banner{3 - suiteBanners.filter((b) => b.status === "complete").length === 1 ? "" : "s"} to unlock suite cohesion analysis.
-                      </p>
-                    )}
-
-                    {/* Analyze suite button */}
-                    <button type="button" onClick={handleSuiteAnalyze}
-                      disabled={suiteBanners.length < 2 || !canAnalyze}
-                      style={{
-                        width: "100%", height: 52, borderRadius: 9999, border: "none",
-                        background: suiteBanners.length >= 2 ? "#6366f1" : "rgba(99,102,241,0.3)",
-                        color: "white", fontSize: 15, fontWeight: 600,
-                        cursor: suiteBanners.length >= 2 ? "pointer" : "not-allowed",
-                        opacity: suiteBanners.length >= 2 ? 1 : 0.4,
-                        display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                      }}>
-                      <Monitor size={18} /> Analyze Suite ({suiteBanners.length} banners)
-                    </button>
-                  </>
-                )}
-
-                {/* Suite analyzing */}
-                {suiteStatus === "analyzing" && (
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 24px", gap: 16 }}>
-                    <div style={{ width: 24, height: 24, border: "2px solid rgba(99,102,241,0.3)", borderTopColor: "#6366f1", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
-                    <span style={{ fontSize: 13, color: "#71717a" }}>Analyzing {suiteBanners.length} banners...</span>
-                    {/* Per-banner status */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 8 }}>
-                      {suiteBanners.map((b) => (
-                        <div key={b.id} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                          {b.status === "analyzing" && <div style={{ width: 10, height: 10, border: "1.5px solid rgba(99,102,241,0.3)", borderTopColor: "#6366f1", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />}
-                          {b.status === "complete" && <CheckCircle size={10} color="#10b981" />}
-                          <span style={{ fontSize: 11, color: "#52525b" }}>{b.format?.name ?? "Custom"}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Suite results */}
-                {suiteStatus === "complete" && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-                    {/* Suite mockup — full width */}
-                    <div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-                        <Eye size={14} color="#71717a" />
-                        <span style={{ fontSize: 13, fontWeight: 600, color: "#f4f4f5" }}>Suite placement preview</span>
-                      </div>
-                      {suiteMockupLoading && (
-                        <div style={{ height: 240, borderRadius: 12, background: "linear-gradient(90deg, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.02) 75%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <span style={{ fontSize: 12, color: "#52525b" }}>Generating suite mockup...</span>
-                        </div>
-                      )}
-                      {!suiteMockupLoading && suiteMockupUrl && (
-                        <>
-                          <img src={suiteMockupUrl} alt="Suite mockup" style={{ width: "100%", borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)" }} />
-                          <button type="button"
-                            onClick={() => { const a = document.createElement("a"); a.href = suiteMockupUrl; a.download = "cutsheet-suite-mockup.png"; a.click(); }}
-                            style={{ marginTop: 8, width: "100%", height: 36, background: "transparent", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, color: "#71717a", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-                            <Download size={12} /> Download suite mockup
-                          </button>
-                        </>
-                      )}
-                      {/* Individual banner scores list */}
-                      <div style={{ marginTop: 16 }}>
-                        <p style={{ fontSize: 11, color: "#52525b", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Individual scores</p>
-                        {suiteBanners.filter((b) => b.result).map((b, i) => (
-                          <div key={b.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: i < suiteBanners.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
-                            <span style={{ fontSize: 11, color: "#818cf8", fontWeight: 600, width: 16 }}>{i + 1}</span>
-                            <span style={{ fontSize: 12, color: "#a1a1aa", flex: 1 }}>{b.format?.name ?? "Custom"}</span>
-                            <span style={{ fontSize: 13, fontWeight: 600, fontFamily: "var(--font-mono, monospace)", color: (b.result?.overallScore ?? 0) >= 7 ? "#10b981" : (b.result?.overallScore ?? 0) >= 5 ? "#f59e0b" : "#ef4444" }}>
-                              {b.result?.overallScore}/10
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Suite cohesion results */}
-                    <div>
-                      <SuiteCohesionCard result={suiteCohesion} loading={!suiteCohesion && !suiteCohesionError} />
-                      {suiteCohesionError && !suiteCohesion && (
-                        <div style={{ padding: "12px 16px", borderRadius: 10, background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)", marginTop: 12, display: "flex", alignItems: "center", gap: 8 }}>
-                          <span style={{ fontSize: 12, color: "#f59e0b" }}>Couldn't analyze suite consistency. This usually means the banners are too different in style. Try uploading banners from the same campaign.</span>
-                          <button type="button" onClick={async () => {
-                            setSuiteCohesionError(false);
-                            try {
-                              const bannerData = suiteBanners.filter(b => b.result).map(b => ({
-                                format: b.format?.name ?? "Custom",
-                                fileName: b.file.name,
-                                overallScore: b.result!.overallScore,
-                                improvements: b.result!.improvements.map(i => i.fix),
-                              }));
-                              const cohesion = await analyzeSuiteCohesion(bannerData, userContext, sessionMemoryRef.current);
-                              setSuiteCohesion(cohesion);
-                            } catch { setSuiteCohesionError(true); }
-                          }} style={{ fontSize: 11, color: "#6366f1", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
-                            Retry
-                          </button>
-                        </div>
-                      )}
-
-                      {suiteCohesion && (
-                        <button type="button" onClick={handleReset}
-                          style={{ width: "100%", height: 40, background: "transparent", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, color: "#71717a", fontSize: 12, cursor: "pointer", marginTop: 14 }}>
-                          Analyze another suite
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+            <DisplaySuiteView
+              suiteBanners={suiteBanners}
+              suiteStatus={suiteStatus}
+              suiteCohesion={suiteCohesion}
+              suiteCohesionError={suiteCohesionError}
+              suiteMockupUrl={suiteMockupUrl}
+              suiteMockupLoading={suiteMockupLoading}
+              canAnalyze={canAnalyze}
+              onAddBanners={(files) => files.forEach((f) => addSuiteBanner(f))}
+              onRemoveBanner={removeSuiteBanner}
+              onAnalyzeSuite={handleSuiteAnalyze}
+              onRetryCoheison={handleRetryCoheison}
+              onReset={handleReset}
+            />
           )}
 
           {/* ── SINGLE MODE ─────────────────────────────────────────── */}
@@ -937,102 +756,19 @@ Return JSON only — no prose:
 
               {/* ── RESULTS ─────────────────────────────────────────── */}
               {status === "complete" && result && dimensions && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 8 }}>
-
-                  {/* ── 1. Placement mockup (interactive) ── */}
-                  <DisplayAnalyzerMockup
-                    imageSrc={previewUrl ?? ""}
-                    detectedFormatKey={detectedFormat?.key}
-                    onSwitchToSuite={() => { setMode("suite" as Mode); handleReset(); }}
-                    onDownload={mockupUrl ? () => { const a = document.createElement("a"); a.href = mockupUrl; a.download = `cutsheet-mockup-${detectedFormat?.key ?? "display"}.png`; a.click(); } : undefined}
-                  />
-
-                  {/* ── 2. Tools ── */}
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
-                    {/* AI Rewrite */}
-                    <button
-                      type="button"
-                      onClick={handleCTARewrite}
-                      disabled={ctaLoading}
-                      className="flex flex-col items-center justify-center gap-3 py-5 rounded-2xl border cursor-pointer"
-                      style={{ background: "#18181b", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "inset 0px 1px 0px rgba(255,255,255,0.05)", opacity: ctaLoading ? 0.6 : 1, transition: "border-color 150ms" }}
-                      onMouseEnter={(e) => { if (!ctaLoading) e.currentTarget.style.borderColor = "rgba(255,255,255,0.14)"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
-                    >
-                      <div style={{ width: 38, height: 38, borderRadius: 12, background: "rgba(129,140,248,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        {ctaLoading
-                          ? <div style={{ width: 16, height: 16, border: "2px solid rgba(129,140,248,0.3)", borderTopColor: "#818cf8", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
-                          : <Sparkles size={16} color="#818cf8" />}
-                      </div>
-                      <span style={{ fontSize: 13, fontWeight: 500, color: "#e4e4e7" }}>AI Rewrite</span>
-                    </button>
-
-                    {/* Policy Check */}
-                    <button
-                      type="button"
-                      onClick={handleCheckPolicies}
-                      disabled={policyLoading}
-                      className="flex flex-col items-center justify-center gap-3 py-5 rounded-2xl border cursor-pointer"
-                      style={{ background: "#18181b", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "inset 0px 1px 0px rgba(255,255,255,0.05)", opacity: policyLoading ? 0.5 : 1, transition: "border-color 150ms" }}
-                      onMouseEnter={(e) => { if (!policyLoading) e.currentTarget.style.borderColor = "rgba(255,255,255,0.14)"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
-                    >
-                      <div style={{ width: 38, height: 38, borderRadius: 12, background: "rgba(245,158,11,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        {policyLoading
-                          ? <div style={{ width: 16, height: 16, border: "2px solid rgba(245,158,11,0.3)", borderTopColor: "#f59e0b", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
-                          : <ShieldCheck size={16} color="#f59e0b" />}
-                      </div>
-                      <span style={{ fontSize: 13, fontWeight: 500, color: "#e4e4e7" }}>Policy Check</span>
-                    </button>
-
-                    {/* Animate to HTML5 */}
-                    <button
-                      type="button"
-                      onClick={() => setShowAnimateTakeover(true)}
-                      className="flex flex-col items-center justify-center gap-3 py-5 rounded-2xl border cursor-pointer"
-                      style={{ background: "#18181b", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "inset 0px 1px 0px rgba(255,255,255,0.05)", transition: "border-color 150ms" }}
-                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.14)"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
-                    >
-                      <div style={{ width: 38, height: 38, borderRadius: 12, background: "rgba(6,182,212,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <Eye size={16} color="#06b6d4" />
-                      </div>
-                      <span style={{ fontSize: 13, fontWeight: 500, color: "#e4e4e7" }}>Animate</span>
-                    </button>
-                  </div>
-
-                  {/* ── 4. AI Rewrite results ── */}
-                  {ctaRewrites && ctaRewrites.length > 0 && (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: 16, borderRadius: 14, background: "rgba(129,140,248,0.06)", border: "1px solid rgba(129,140,248,0.12)" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <Sparkles size={14} color="#818cf8" />
-                        <span style={{ fontSize: 12, fontWeight: 600, color: "#818cf8" }}>AI Rewrites</span>
-                      </div>
-                      {ctaRewrites.map((rewrite, i) => (
-                        <div key={i} style={{ padding: "10px 12px", borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
-                          <p style={{ fontSize: 13, color: "#f4f4f5", margin: 0, lineHeight: 1.5 }}>{rewrite}</p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* ── 5. Design Review Card ── */}
-                  {result.verdict && result.improvements && (
-                    <DesignReviewCard
-                      verdictState={result.overallScore >= 8 ? 'ready' : result.overallScore >= 5 ? 'needs_work' : 'not_ready'}
-                      verdictHeadline={result.verdict}
-                      priorityFix={result.improvements[0]?.fix}
-                      flags={result.improvements.map(imp => ({
-                        category: imp.category,
-                        severity: imp.severity as 'critical' | 'warning' | 'info' | 'high' | 'medium' | 'low',
-                        issue: imp.fix,
-                        fix: imp.fix,
-                      }))}
-                      onFixWithAI={handleCTARewrite}
-                    />
-                  )}
-
-                </div>
+                <DisplaySingleResults
+                  result={result}
+                  previewUrl={previewUrl}
+                  mockupUrl={mockupUrl}
+                  detectedFormat={detectedFormat}
+                  ctaRewrites={ctaRewrites}
+                  ctaLoading={ctaLoading}
+                  policyLoading={policyLoading}
+                  onSwitchToSuite={() => { setMode("suite" as Mode); handleReset(); }}
+                  onCTARewrite={handleCTARewrite}
+                  onCheckPolicies={handleCheckPolicies}
+                  onAnimate={() => setShowAnimateTakeover(true)}
+                />
               )}
             </div>
           </div>
@@ -1040,95 +776,47 @@ Return JSON only — no prose:
         </div>
       </div>
 
-      {/* Right panel — scores sidebar (Single mode only, when complete) - matching Organic layout */}
-      <div className={`shrink-0 bg-[#111113] border-l border-white/[0.06] overflow-y-auto overflow-x-hidden pb-12 transition-[width,opacity] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-white/[0.06] ${mode === "single" && status === "complete" && result ? "w-[350px] max-lg:w-full opacity-100" : "w-0 max-lg:w-0 opacity-0"}`}>
-        {mode === "single" && status === "complete" && result && (
-          <>
-            <ScoreCard
-              scores={{ hook: 0, clarity: 0, cta: 0, production: 0, overall: result.overallScore }}
-              dimensionOverrides={[
-                { name: "Hook",    score: result.scores.hierarchy },
-                { name: "Message", score: result.scores.messageClarity },
-                { name: "Visual",  score: result.scores.visualContrast },
-                { name: "Brand",   score: result.scores.brandClarity },
-              ]}
-              verdict={{
-                state: result.overallScore >= 8 ? 'ready' : result.overallScore >= 4 ? 'needs_work' : 'not_ready',
-                headline: result.verdict,
-                sub: 'Google Display',
-              }}
-              improvements={result.improvements.map(i => i.fix)}
-              fileName={file?.name}
-              engineBudget={engineBudget}
-              briefLoading={briefLoading}
-              hasBrief={!!briefMarkdown}
-              onGenerateBrief={handleGenerateBrief}
-              prediction={prediction}
-              onReanalyze={handleReset}
-              onStartOver={() => setConfirmStartOverDisplay(true)}
-              format="static"
-              niche={userContext.match(/Niche:\s*(.+)/)?.[1]?.trim()}
-              platform="Google Display"
-              onCheckPolicies={handleCheckPolicies}
-              policyLoading={policyLoading}
-              onVisualize={handleVisualize}
-              visualizeLoading={visualizeStatus === "loading"}
-              canVisualize={true}
-              isPro={isPro}
-              onUpgradeRequired={onUpgradeRequired}
-              improvementsLoading={false}
-              isDark={true}
-            />
-
-            {/* Brief output — ScoreCard renders the button but not the content */}
-            {briefError && (
-              <div className="mx-4 mt-2 text-xs text-red-400 bg-red-500/[0.08] rounded-xl px-4 py-3 border border-red-500/20">{briefError}</div>
-            )}
-            {briefMarkdown && (
-              <div className="mx-4 mt-2 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 text-xs text-zinc-300 whitespace-pre-wrap leading-relaxed">{briefMarkdown}</div>
-            )}
-
-            {/* Policy results */}
-            {policyError && (
-              <div className="mx-4 mt-2 text-xs text-red-400 bg-red-500/[0.08] rounded-xl px-4 py-3 border border-red-500/20">{policyError}</div>
-            )}
-            {policyResult && (
-              <div className="px-4 mt-4">
-                <PolicyCheckPanel result={policyResult} onClose={() => setPolicyResult(null)} />
-              </div>
-            )}
-
-            {/* Visualize Panel */}
-            {(visualizeOpen || visualizeStatus !== "idle") && (
-              <div className="px-4 mt-4 pb-4">
-                <VisualizePanel
-                  status={visualizeStatus}
-                  result={visualizeResult}
-                  originalImageUrl={previewUrl}
-                  error={visualizeError}
-                  creditData={visualizeCreditData}
-                  onClose={() => { setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); setVisualizeCreditData(null); }}
-                  onUpgrade={onUpgradeRequired}
-                />
-              </div>
-            )}
-
-            {/* Start Over confirmation */}
-            <AlertDialog
-              open={confirmStartOverDisplay}
-              onClose={() => setConfirmStartOverDisplay(false)}
-              onConfirm={() => {
-                setConfirmStartOverDisplay(false);
-                handleReset();
-              }}
-              title="Start over?"
-              description="This will clear your current analysis. You can always re-analyze the same file."
-              confirmLabel="Start Over"
-              variant="destructive"
-            />
-          </>
-        )}
-      </div>
+      {/* Right panel — scores sidebar (Single mode only, when complete) */}
+      {mode === "single" && status === "complete" && result && (
+        <DisplayRightPanel
+          show={true}
+          result={result}
+          fileName={file?.name}
+          previewUrl={previewUrl}
+          niche={userContext.match(/Niche:\s*(.+)/)?.[1]?.trim()}
+          engineBudget={engineBudget}
+          prediction={prediction}
+          briefLoading={briefLoading}
+          briefMarkdown={briefMarkdown}
+          briefError={briefError}
+          policyResult={policyResult}
+          policyLoading={policyLoading}
+          policyError={policyError}
+          visualizeOpen={visualizeOpen}
+          visualizeStatus={visualizeStatus}
+          visualizeResult={visualizeResult}
+          visualizeError={visualizeError}
+          visualizeCreditData={visualizeCreditData}
+          confirmStartOver={confirmStartOverDisplay}
+          isPro={isPro}
+          onGenerateBrief={handleGenerateBrief}
+          onCheckPolicies={handleCheckPolicies}
+          onVisualize={handleVisualize}
+          onReanalyze={handleReset}
+          onStartOver={() => setConfirmStartOverDisplay(true)}
+          onConfirmStartOver={() => { setConfirmStartOverDisplay(false); handleReset(); }}
+          onCancelStartOver={() => setConfirmStartOverDisplay(false)}
+          onClosePolicyResult={() => setPolicyResult(null)}
+          onCloseVisualize={() => {
+            setVisualizeOpen(false);
+            setVisualizeStatus("idle");
+            setVisualizeResult(null);
+            setVisualizeError(null);
+            setVisualizeCreditData(null);
+          }}
+          onUpgradeRequired={onUpgradeRequired}
+        />
+      )}
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg) } }
