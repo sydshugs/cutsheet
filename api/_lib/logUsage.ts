@@ -20,34 +20,41 @@ function getClient() {
   if (_client) return _client;
   const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) return null;
+  if (!url || !key) {
+    console.warn("[logUsage] missing env vars, skipping");
+    return null;
+  }
   _client = createClient(url, key, { auth: { persistSession: false } });
   return _client;
 }
 
 export function logApiUsage(params: UsageParams): void {
-  // Fire and forget — intentionally not awaited
-  const client = getClient();
-  if (!client) return;
+  try {
+    // Fire and forget — intentionally not awaited
+    const client = getClient();
+    if (!client) return;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const insert = (client as any)
-    .from("api_usage_log")
-    .insert({
-      user_id: params.userId,
-      endpoint: params.endpoint,
-      status_code: params.statusCode,
-      response_time_ms: params.responseTimeMs,
-      error_code: params.errorCode ?? null,
-      platform: params.platform ?? null,
-      niche: params.niche ?? null,
-      format: params.format ?? null,
-    });
-  Promise.resolve(insert)
-    .then(({ error }: { error?: { message: string } | null }) => {
-      if (error) console.warn("[logUsage] insert failed:", error.message);
-    })
-    .catch(() => {
-      // Swallow — logging must never affect the endpoint
-    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const insert = (client as any)
+      .from("api_usage_log")
+      .insert({
+        user_id: params.userId,
+        endpoint: params.endpoint,
+        status_code: params.statusCode,
+        response_time_ms: params.responseTimeMs,
+        error_code: params.errorCode ?? null,
+        platform: params.platform ?? null,
+        niche: params.niche ?? null,
+        format: params.format ?? null,
+      });
+    Promise.resolve(insert)
+      .then(({ error }: { error?: { message: string } | null }) => {
+        if (error) console.warn("[logUsage] insert failed:", error.message);
+      })
+      .catch(() => {
+        // Swallow — logging must never affect the endpoint
+      });
+  } catch {
+    // Swallow — logging must never affect the endpoint
+  }
 }
