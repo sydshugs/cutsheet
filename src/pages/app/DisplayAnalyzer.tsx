@@ -602,12 +602,24 @@ Return JSON only — no prose:
   };
 
   return (
-    <div className="flex h-full" style={{ minHeight: "calc(100vh - 56px)" }}>
+    <div className="relative flex h-full" style={{ minHeight: "calc(100vh - 56px)" }}>
       <Helmet>
         <title>Display Ad Analyzer — Cutsheet</title>
         <meta name="description" content="Score Google Display and affiliate banner ads. Auto-detect format, display-specific scoring, real-life placement mockup." />
         <link rel="canonical" href="https://cutsheet.xyz/app/display" />
       </Helmet>
+
+      {/* Animate to HTML5 — full-page takeover */}
+      {showAnimateTakeover && file && detectedFormat && (
+        <AnimateToHtml5Takeover
+          onClose={() => setShowAnimateTakeover(false)}
+          imageSrc={previewUrl}
+          imageFile={file}
+          format={detectedFormat.key}
+          formatLabel={detectedFormat.name}
+          fileName={file.name}
+        />
+      )}
 
       {/* Main content */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
@@ -1146,18 +1158,6 @@ Return JSON only — no prose:
                   onUpgrade={onUpgradeRequired}
                 />
               </div>
-            )}
-
-            {/* Animate to HTML5 Takeover */}
-            {showAnimateTakeover && file && detectedFormat && (
-              <AnimateToHtml5Takeover
-                onClose={() => setShowAnimateTakeover(false)}
-                imageSrc={previewUrl}
-                imageFile={file}
-                format={detectedFormat.key}
-                formatLabel={detectedFormat.name}
-                fileName={file.name}
-              />
             )}
 
             {/* Start Over confirmation */}

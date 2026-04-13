@@ -1,4 +1,4 @@
-// src/components/AnimateToHtml5Takeover.tsx — Full-screen takeover for HTML5 animation generation
+// src/components/AnimateToHtml5Takeover.tsx — Full-page takeover for HTML5 animation generation
 
 import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { fileToBase64 } from "../lib/visualizeService";
+import { cn } from "../lib/utils";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -147,168 +148,204 @@ export function AnimateToHtml5Takeover({
   // ── Render ────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col w-full h-full font-[var(--sans)] z-20 relative bg-[var(--bg)]">
-      {/* TOP BAR */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] shrink-0 bg-[var(--bg)]">
+    <div className="absolute inset-0 z-20 flex flex-col bg-[var(--bg)]">
+      {/* ── TOP BAR ───────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between px-6 h-[57px] shrink-0 border-b border-white/[0.06] bg-[var(--bg)]">
+        {/* Back button */}
         <button
           onClick={onClose}
-          className="flex items-center gap-1.5 text-xs text-[var(--ink-muted)] hover:text-[var(--ink)] transition-colors"
+          className="flex items-center gap-1.5 text-xs text-[#71717b] hover:text-[var(--ink)] transition-opacity"
+          aria-label="Back to results"
         >
           <ChevronLeft className="w-3 h-3" />
           Back to results
         </button>
 
-        <div className="flex items-center absolute left-1/2 -translate-x-1/2">
-          <div className="w-8 h-8 rounded-xl bg-cyan-500/[0.12] flex items-center justify-center">
-            <Sparkles className="w-[14px] h-[14px] text-[#06b6d4]" />
+        {/* Center title */}
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2.5">
+          <div className="size-8 rounded-full bg-[rgba(0,184,219,0.12)] flex items-center justify-center">
+            <Sparkles className="size-3.5 text-[#06b6d4]" />
           </div>
-          <span className="text-sm font-semibold text-[var(--ink)] ml-2">Animate to HTML5</span>
-          <span className="rounded-full border border-[var(--border)] bg-[var(--surface)] text-[10px] text-[var(--ink-muted)] px-2.5 py-1 ml-3 whitespace-nowrap">
+          <span className="text-sm font-semibold text-[#f4f4f5]">Animate to HTML5</span>
+          <span className="rounded-full border border-white/[0.06] bg-white/[0.02] text-[10px] text-[#71717b] px-2.5 py-1 whitespace-nowrap">
             {format} · {formatLabel}
           </span>
         </div>
 
-        <button onClick={onClose} className="p-1 hover:bg-[var(--surface-el)] rounded-lg transition-colors">
-          <X className="w-4 h-4 text-[var(--ink-muted)]" />
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="size-6 rounded-full flex items-center justify-center hover:bg-white/[0.04] transition-opacity"
+          aria-label="Close"
+        >
+          <X className="size-4 text-[#71717b]" />
         </button>
       </div>
 
-      {/* MAIN CONTENT */}
-      <div className="flex gap-6 px-6 py-6 w-full h-full overflow-hidden relative z-10">
-        {/* LEFT COLUMN */}
-        <div className="flex-1 overflow-y-auto scrollbar-hide flex flex-col items-center pb-20">
-          <div className="w-full max-w-[500px] flex flex-col">
-            {/* ORIGINAL */}
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-[var(--ink-faint)] mb-2">
-              ORIGINAL
-            </div>
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] overflow-hidden flex flex-col">
-              <div
-                className="w-full bg-[var(--bg)] flex items-center justify-center p-4 relative"
-                style={{ aspectRatio: `${width}/${height}` }}
-              >
-                <img src={imageSrc} alt="Original Banner" className="w-full h-full object-contain" />
-              </div>
-              <div className="px-3 py-2 border-t border-[var(--border)] flex justify-between items-center bg-[var(--surface-el)]">
-                <span className="text-[11px] font-mono text-[var(--ink-faint)] truncate">{fileName}</span>
-                <span className="text-[11px] text-[var(--ink-faint)] whitespace-nowrap ml-4">Static · {format}</span>
-              </div>
-            </div>
-
-            <div className="my-3 flex justify-center text-[var(--ink-faint)]">
-              <ArrowDown className="w-4 h-4" />
-            </div>
-
-            {/* ANIMATED PREVIEW */}
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-cyan-600 mb-2">
-              ANIMATED PREVIEW
-            </div>
-            <div
-              className={`rounded-2xl border bg-[var(--surface)] overflow-hidden flex flex-col transition-colors ${
-                hasGenerated ? "border-cyan-500/20" : "border-[var(--border)]"
-              }`}
-            >
-              <div
-                className="w-full bg-[var(--bg)] relative flex flex-col items-center justify-center p-4"
-                style={{ aspectRatio: `${width}/${height}` }}
-              >
-                {isGenerating ? (
-                  <div className="flex flex-col items-center">
-                    <Loader2 className="w-6 h-6 text-[#06b6d4] animate-spin" />
-                    <span className="text-sm text-[var(--ink-muted)] mt-3">Generating animation...</span>
-                    <span className="text-xs text-[var(--ink-faint)] mt-1">This usually takes 15-30 seconds</span>
-                  </div>
-                ) : hasGenerated && generatedHtml ? (
-                  <iframe
-                    srcDoc={generatedHtml}
-                    width={Math.min(width, 460)}
-                    height={Math.min(height, Math.round(460 * (height / width)))}
-                    style={{ border: "none", borderRadius: 8 }}
-                    sandbox="allow-scripts"
-                    title="Animated preview"
+      {/* ── MAIN CONTENT ──────────────────────────────────────────────── */}
+      <div className="flex-1 flex gap-6 px-6 pt-6 overflow-hidden">
+        {/* LEFT COLUMN — Image previews */}
+        <div className="flex-1 overflow-y-auto scrollbar-hide">
+          <div className="flex flex-col items-center pb-12">
+            <div className="w-full max-w-[500px] flex flex-col">
+              {/* ── ORIGINAL ─────────────────────────────────────── */}
+              <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-[#52525c] mb-2">
+                ORIGINAL
+              </p>
+              <div className="rounded-2xl border border-white/[0.06] bg-[#18181b] overflow-hidden">
+                {/* Image area */}
+                <div
+                  className="w-full bg-[var(--bg)] flex items-center justify-center p-4"
+                  style={{ aspectRatio: `${width}/${height}` }}
+                >
+                  <img
+                    src={imageSrc}
+                    alt="Original banner"
+                    className="max-w-full max-h-full object-contain"
                   />
-                ) : (
-                  <div className="text-sm text-[var(--ink-faint)]">Click Generate to preview</div>
+                </div>
+                {/* Footer */}
+                <div className="px-3 py-2 border-t border-white/[0.06] bg-[#18181b] flex justify-between items-center">
+                  <span className="text-[11px] font-mono text-[#52525c] truncate">{fileName}</span>
+                  <span className="text-[11px] text-[#3f3f47] whitespace-nowrap ml-4">Static · {format}</span>
+                </div>
+              </div>
+
+              {/* Down arrow */}
+              <div className="my-3 flex justify-center">
+                <ArrowDown className="size-4 text-[#52525c]" />
+              </div>
+
+              {/* ── ANIMATED PREVIEW ─────────────────────────────── */}
+              <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-[#0092b8] mb-2">
+                ANIMATED PREVIEW
+              </p>
+              <div
+                className={cn(
+                  "rounded-2xl border bg-[#18181b] overflow-hidden",
+                  hasGenerated ? "border-[rgba(0,184,219,0.2)]" : "border-white/[0.06]"
+                )}
+              >
+                {/* Preview area */}
+                <div
+                  className="w-full bg-[var(--bg)] relative flex items-center justify-center"
+                  style={{ aspectRatio: `${width}/${height}` }}
+                >
+                  {isGenerating ? (
+                    <div className="flex flex-col items-center gap-3">
+                      <Loader2 className="size-6 text-[#06b6d4] animate-spin" />
+                      <span className="text-sm text-[var(--ink-muted)]">Generating animation...</span>
+                      <span className="text-xs text-[var(--ink-faint)]">This usually takes 15-30 seconds</span>
+                    </div>
+                  ) : hasGenerated && generatedHtml ? (
+                    <iframe
+                      srcDoc={generatedHtml}
+                      width={Math.min(width, 460)}
+                      height={Math.min(height, Math.round(460 * (height / width)))}
+                      style={{ border: "none", borderRadius: 8 }}
+                      sandbox="allow-scripts"
+                      title="Animated preview"
+                    />
+                  ) : (
+                    <>
+                      {/* Dimmed original as placeholder */}
+                      <img
+                        src={imageSrc}
+                        alt="Preview placeholder"
+                        className="max-w-full max-h-full object-contain opacity-80"
+                      />
+                      {/* Play button overlay */}
+                      <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                        <div className="size-12 rounded-full bg-[rgba(0,184,219,0.2)] border border-[rgba(0,184,219,0.3)] flex items-center justify-center">
+                          <Play className="size-5 text-[#06b6d4] ml-0.5" fill="currentColor" />
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+                {/* Footer — always visible once generated or generating */}
+                {(hasGenerated || isGenerating) && (
+                  <div className="px-3 py-2.5 border-t border-white/[0.06] bg-[#18181b] flex justify-between items-center">
+                    <span className="text-[11px] font-mono text-[#52525c]">
+                      HTML5 · {format}{fileSizeLabel ? ` · ${fileSizeLabel}` : ""}
+                    </span>
+                    <button
+                      onClick={handleDownload}
+                      disabled={isGenerating || !zipBase64}
+                      className="flex items-center gap-1.5 rounded-full border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] text-xs text-[#9f9fa9] px-3 py-1.5 transition-opacity disabled:opacity-40"
+                    >
+                      <Download className="size-3" />
+                      <span>Download .zip</span>
+                    </button>
+                  </div>
                 )}
               </div>
-              {(hasGenerated || isGenerating) && (
-                <div className="px-3 py-2 border-t border-[var(--border)] flex justify-between items-center bg-[var(--surface-el)]">
-                  <span className="text-[11px] font-mono text-[var(--ink-faint)]">
-                    HTML5 · {format}{fileSizeLabel ? ` · ${fileSizeLabel}` : ""}
-                  </span>
-                  <button
-                    onClick={handleDownload}
-                    disabled={isGenerating || !zipBase64}
-                    className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--surface-el)] text-xs text-[var(--ink-muted)] px-3 py-1.5 transition-colors disabled:opacity-50"
-                  >
-                    <Download className="w-3 h-3" />
-                    <span>Download .zip</span>
-                  </button>
+
+              {/* Error */}
+              {error && (
+                <div className="mt-3 rounded-xl bg-red-500/[0.06] border border-red-500/15 px-3 py-2.5 flex gap-2 items-start">
+                  <AlertTriangle className="size-3 text-red-400 shrink-0 mt-[1px]" />
+                  <span className="text-xs text-red-300 leading-tight">{error}</span>
                 </div>
               )}
             </div>
-
-            {/* Error */}
-            {error && (
-              <div className="mt-3 rounded-xl bg-red-500/[0.06] border border-red-500/15 px-3 py-2.5 flex gap-2 items-start">
-                <AlertTriangle className="w-3 h-3 text-red-400 shrink-0 mt-[1px]" />
-                <span className="text-xs text-red-300 leading-tight">{error}</span>
-              </div>
-            )}
           </div>
         </div>
 
         {/* RIGHT COLUMN — Settings Panel */}
-        <div className="w-[380px] shrink-0 bg-[var(--surface-el)] rounded-2xl border border-[var(--border)] flex flex-col h-fit p-6">
-          <div className="text-[10px] font-semibold uppercase tracking-wider text-[var(--ink-faint)] mb-2">
-            ANIMATION STYLE
-          </div>
+        <div className="w-[380px] shrink-0 h-fit">
+          <div className="rounded-2xl border border-white/[0.06] bg-[#18181b] p-6">
+            {/* ── ANIMATION STYLE ──────────────────────────────── */}
+            <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-[#52525c] mb-3">
+              ANIMATION STYLE
+            </p>
 
-          <div className="grid grid-cols-3 gap-2">
-            {STYLE_OPTIONS.map((opt) => {
-              const isActive = activeStyle === opt.id;
-              const Icon = opt.icon;
-              return (
-                <button
-                  key={opt.id}
-                  onClick={() => setActiveStyle(opt.id)}
-                  className={`rounded-xl border p-3 flex flex-col gap-1.5 items-center text-center transition-colors ${
-                    isActive
-                      ? "border-cyan-500/30 bg-cyan-500/[0.06]"
-                      : "border-[var(--border)] bg-[var(--surface)] hover:border-[var(--border-strong)]"
-                  }`}
-                >
-                  <Icon className={`w-4 h-4 ${isActive ? "text-[#06b6d4]" : "text-[var(--ink-muted)]"}`} />
-                  <span className={`text-xs font-medium ${isActive ? "text-[var(--ink)]" : "text-[var(--ink-muted)]"}`}>
-                    {opt.label}
-                  </span>
-                  <span className="text-[10px] text-[var(--ink-faint)] leading-tight">{opt.desc}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="mt-5">
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-[var(--ink-faint)] mb-3">
-              SETTINGS
+            <div className="grid grid-cols-3 gap-2">
+              {STYLE_OPTIONS.map((opt) => {
+                const isActive = activeStyle === opt.id;
+                const Icon = opt.icon;
+                return (
+                  <button
+                    key={opt.id}
+                    onClick={() => setActiveStyle(opt.id)}
+                    className={cn(
+                      "rounded-[24px] border p-3 flex flex-col gap-1.5 items-center text-center transition-colors",
+                      isActive
+                        ? "border-[rgba(97,95,255,0.3)] bg-[rgba(97,95,255,0.06)]"
+                        : "border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12]"
+                    )}
+                  >
+                    <Icon className={cn("size-4", isActive ? "text-[#e4e4e7]" : "text-[#9f9fa9]")} />
+                    <span className={cn("text-xs font-medium", isActive ? "text-[#e4e4e7]" : "text-[#9f9fa9]")}>
+                      {opt.label}
+                    </span>
+                    <span className="text-[10px] text-[#52525c] leading-tight">{opt.desc}</span>
+                  </button>
+                );
+              })}
             </div>
+
+            {/* ── SETTINGS ─────────────────────────────────────── */}
+            <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-[#52525c] mt-6 mb-3">
+              SETTINGS
+            </p>
 
             <div className="flex flex-col gap-4">
               {/* Duration slider */}
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-[var(--ink-muted)]">Duration</span>
-                  <span className="text-xs font-mono text-[var(--ink)]">{duration}s</span>
+                  <span className="text-xs text-[#9f9fa9]">Duration</span>
+                  <span className="text-xs font-mono text-[#d4d4d8]">{duration}s</span>
                 </div>
-                <div className="relative w-full h-[12px] flex items-center group">
-                  <div className="absolute w-full h-[3px] rounded-full bg-[var(--border)]" />
+                <div className="relative w-full h-3 flex items-center">
+                  <div className="absolute w-full h-[3px] rounded-full bg-white/[0.06]" />
                   <div
-                    className="absolute h-[3px] rounded-full bg-[#06b6d4]"
-                    style={{ width: `${(duration / 30) * 100}%` }}
+                    className="absolute h-[3px] rounded-full bg-[#6366f1]"
+                    style={{ width: `${((duration - 1) / 29) * 100}%` }}
                   />
                   <div
-                    className="absolute w-[10px] h-[10px] bg-white rounded-full shadow pointer-events-none"
-                    style={{ left: `calc(${(duration / 30) * 100}% - 5px)` }}
+                    className="absolute size-2.5 bg-white rounded-full shadow-[0_1px_3px_rgba(0,0,0,0.1),0_1px_2px_rgba(0,0,0,0.1)] pointer-events-none"
+                    style={{ left: `calc(${((duration - 1) / 29) * 100}% - 5px)` }}
                   />
                   <input
                     type="range"
@@ -317,65 +354,69 @@ export function AnimateToHtml5Takeover({
                     value={duration}
                     onChange={(e) => setDuration(Number(e.target.value))}
                     className="absolute w-full h-full opacity-0 cursor-pointer"
+                    aria-label="Animation duration"
                   />
                 </div>
               </div>
 
               {/* Loop toggle */}
               <div className="flex items-center justify-between">
-                <span className="text-xs text-[var(--ink-muted)]">Loop</span>
+                <span className="text-xs text-[#9f9fa9]">Loop</span>
                 <button
                   onClick={() => setIsLooping(!isLooping)}
-                  className={`w-[28px] h-[16px] rounded-full relative transition-colors ${
-                    isLooping ? "bg-[#06b6d4]" : "bg-[var(--border)]"
-                  }`}
+                  className={cn(
+                    "w-7 h-4 rounded-full relative transition-colors",
+                    isLooping ? "bg-[#6366f1]" : "bg-white/[0.06]"
+                  )}
+                  role="switch"
+                  aria-checked={isLooping}
+                  aria-label="Toggle loop"
                 >
                   <div
-                    className={`absolute top-[2px] w-[12px] h-[12px] bg-white rounded-full transition-all duration-200 ${
-                      isLooping ? "left-[14px]" : "left-[2px]"
-                    }`}
+                    className={cn(
+                      "absolute top-[2px] size-3 bg-white rounded-full transition-transform duration-200",
+                      isLooping ? "translate-x-[14px]" : "translate-x-[2px]"
+                    )}
                   />
                 </button>
               </div>
             </div>
 
             {/* GDN compliance warning */}
-            <div className="rounded-xl bg-amber-500/[0.04] border border-amber-500/15 px-3 py-2.5 mt-3 flex gap-2 items-start">
-              <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0 mt-[1px]" />
-              <span className="text-xs text-[var(--ink-muted)] leading-tight">
+            <div className="mt-4 rounded-[24px] bg-[rgba(254,154,0,0.04)] border border-[rgba(254,154,0,0.15)] px-3 py-2.5 flex gap-2 items-start">
+              <AlertTriangle className="size-3 text-amber-500 shrink-0 mt-[1px]" />
+              <span className="text-xs text-[#71717b] leading-tight">
                 GDN limits: 30s max, 3 loops, 150KB file size
               </span>
             </div>
-          </div>
 
-          {/* Generate button */}
-          <button
-            onClick={handleGenerate}
-            disabled={isGenerating}
-            className="w-full mt-5 rounded-xl bg-cyan-500/[0.10] border border-cyan-500/25 hover:bg-cyan-500/[0.15] py-3 flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isGenerating ? (
-              <Loader2 className="w-[14px] h-[14px] text-[#06b6d4] animate-spin" />
-            ) : (
-              <Sparkles className="w-[14px] h-[14px] text-[#06b6d4]" />
-            )}
-            <span className="text-sm font-medium text-cyan-300">
-              {isGenerating ? "Generating..." : "Generate HTML5 Animation"}
-            </span>
-          </button>
+            {/* ── ACTION BUTTONS ────────────────────────────────── */}
 
-          {/* Analyze This Version */}
-          {hasGenerated && onAnalyzeVersion && (
-            <motion.button
-              initial={{ opacity: 0, height: 0, marginTop: 0 }}
-              animate={{ opacity: 1, height: "auto", marginTop: 12 }}
-              onClick={onAnalyzeVersion}
-              className="w-full rounded-xl bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-sm font-medium py-2.5 flex items-center justify-center gap-2 transition-colors overflow-hidden"
+            {/* Generate HTML5 Animation */}
+            <button
+              onClick={handleGenerate}
+              disabled={isGenerating}
+              className="w-full mt-5 rounded-[24px] bg-[rgba(0,184,219,0.1)] border border-[rgba(0,184,219,0.25)] hover:bg-[rgba(0,184,219,0.15)] h-[46px] flex items-center justify-center gap-2 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Sparkles className="w-[14px] h-[14px]" />
-              Analyze This Version
-            </motion.button>
-          )}
+              {isGenerating ? (
+                <Loader2 className="size-3.5 text-[#53eafd] animate-spin" />
+              ) : (
+                <Sparkles className="size-3.5 text-[#53eafd]" />
+              )}
+              <span className="text-sm font-medium text-[#53eafd]">
+                {isGenerating ? "Generating..." : "Generate HTML5 Animation"}
+              </span>
+            </button>
+
+            {/* Analyze This Version — always visible */}
+            <button
+              onClick={onAnalyzeVersion ?? onClose}
+              className="w-full mt-3 rounded-[24px] bg-[#6366f1] hover:bg-[var(--accent-hover)] h-10 flex items-center justify-center gap-2 transition-opacity overflow-hidden"
+            >
+              <Sparkles className="size-3.5 text-white" />
+              <span className="text-sm font-medium text-white">Analyze This Version</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
