@@ -138,7 +138,15 @@ export function AnimateToHtml5Takeover({
         throw new Error(data.error || "Generation failed");
       }
 
-      setGeneratedHtml(data.html);
+      // Patch relative image path → embedded data URL for srcDoc preview
+      // (zip download still uses image.jpg as a relative filename)
+      const previewHtml = data.html
+        ? data.html.replace(
+            /src="image\.(jpg|jpeg|png|gif)"/gi,
+            `src="data:image/jpeg;base64,${imageBase64}"`
+          )
+        : data.html;
+      setGeneratedHtml(previewHtml);
       setZipBase64(data.zipBase64);
       setFileSize(data.fileSize);
       setHasGenerated(true);
