@@ -578,6 +578,16 @@ export function parsePlatformCta(markdown: string): string | null {
   return match[1].trim().replace(/^["']|["']$/g, '');
 }
 
+/** Auto-detect whether this ad relies on a platform CTA (no in-creative CTA) */
+export function detectCtaFree(markdown: string, platform: string, format: string): boolean {
+  if (platform !== 'Meta' || format !== 'video') return false;
+
+  const noCta = /no (?:in-creative |in creative |visible )?CTA|CTA[:\s]+(?:none|absent|missing|not present)/i.test(markdown);
+  const platformCta = parsePlatformCta(markdown) !== null;
+
+  return noCta || platformCta;
+}
+
 export function parseImprovements(markdown: string): string[] {
   try {
     // Find the IMPROVEMENTS section

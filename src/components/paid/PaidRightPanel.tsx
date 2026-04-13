@@ -122,7 +122,6 @@ export interface PaidRightPanelProps {
   onCompare: () => void;
   onPlatformSwitch: (p: string) => void;
   onSetYoutubeFormat: (f: YouTubeFormat) => void;
-  onSetCtaFree: (v: boolean) => void;
   onSetReanalyzeMode: (v: boolean) => void;
   onSetComparisonResult: (r: ComparisonResult | null) => void;
   onReanalyze: (file: File) => void;
@@ -181,7 +180,6 @@ const PaidRightPanel = forwardRef<PaidRightPanelHandle, PaidRightPanelProps>(
       onCompare,
       onPlatformSwitch,
       onSetYoutubeFormat,
-      onSetCtaFree,
       onSetReanalyzeMode,
       onSetComparisonResult,
       onReanalyze,
@@ -281,20 +279,6 @@ const PaidRightPanel = forwardRef<PaidRightPanelHandle, PaidRightPanelProps>(
                               disabled={false}
                             />
                           </div>
-                        )}
-                        {platform === "Meta" && format === "video" && (
-                          <label className="flex items-center gap-2 mt-2 cursor-pointer select-none group">
-                            <input
-                              type="checkbox"
-                              id="cta-free"
-                              checked={ctaFree}
-                              onChange={(e) => onSetCtaFree(e.target.checked)}
-                              className="rounded border-zinc-600 accent-indigo-500 cursor-pointer"
-                            />
-                            <span className="text-xs text-zinc-400 group-hover:text-zinc-300 transition-opacity leading-tight">
-                              Uses Meta's native CTA button (no CTA in creative)
-                            </span>
-                          </label>
                         )}
                         {platformScoreResult && platform !== "all" && (
                           <div className="mt-1.5 flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs"

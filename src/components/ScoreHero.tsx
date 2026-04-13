@@ -309,6 +309,14 @@ export function ScoreHero({
                     {dim.score.toFixed(1)}
                   </span>
                 </div>
+                {dim.name === 'CTA' && platformCta && (
+                  <div className="flex items-center gap-1.5 mt-1 pl-0">
+                    <Info size={11} style={{ color: '#71717a' }} />
+                    <span className="text-[10px] text-zinc-500">
+                      Scored for end-frame effectiveness — Meta's native button handles the CTA
+                    </span>
+                  </div>
+                )}
                 <div className="relative h-[4px] w-full bg-[#27272a] rounded-full overflow-hidden">
                   {hasRange && (
                     <div

@@ -17,6 +17,7 @@ import { useThumbnail } from "../../hooks/useThumbnail";
 import {
   downloadMarkdown, copyToClipboard,
   parseImprovements, parseBudget, parseHashtags,
+  detectCtaFree,
   type AnalysisResult,
 } from "../../services/analyzerService";
 import { VIDEO_ONLY_PLATFORMS } from "../../components/PlatformSwitcher";
@@ -140,7 +141,6 @@ export default function PaidAdAnalyzer() {
   const [platform, setPlatform] = useState<Platform>("all");
   const [format, setFormat] = useState<Format>("video");
   const [youtubeFormat, setYoutubeFormat] = useState<YouTubeFormat>("skippable");
-  const [ctaFree, setCtaFree] = useState(false);
   // ── Before/After re-analysis state
   const [reanalyzeMode, setReanalyzeMode] = useState(false);
   const [comparisonResult, setComparisonResult] = useState<ComparisonResult | null>(null);
@@ -213,6 +213,12 @@ export default function PaidAdAnalyzer() {
         timestamp: new Date(loadedEntry.timestamp),
       }
     : liveResult;
+
+  // Auto-detect platform CTA from AI analysis (replaces manual checkbox)
+  const ctaFree = useMemo(() => {
+    if (!activeResult?.markdown) return false;
+    return detectCtaFree(activeResult.markdown, platform, format);
+  }, [activeResult?.markdown, platform, format]);
 
   // Re-analyze handler: upload improved version, score, compare
   const handleReanalyze = async (improvedFile: File) => {
@@ -307,12 +313,7 @@ Score "Message Clarity" as a sound-off readability signal — a great Meta video
 5-7: Partial captions or text overlays. Message partially survives mute.
 1-4: Audio-dependent. Muted viewer would miss the core message.`;
 
-      const ctaFreeContext = ctaFree ? `\n\nCTA-FREE AD: The advertiser has confirmed this Meta video ad intentionally has no in-creative CTA — it relies on Meta's native CTA button displayed below the ad in Ads Manager.
-Do NOT penalize the absence of in-creative CTA text, button, or verbal call-to-action.
-For "CTA Effectiveness" scoring: score the creative's ability to communicate the offer clearly and generate desire for action — NOT the presence of CTA copy inside the frame. An ad that makes the viewer instinctively want to click IS effective, even without saying "Shop Now."
-Do NOT include any suggestion to "add a CTA," "include a call-to-action," or "add a Shop Now button" in the IMPROVEMENTS section.` : "";
-
-      return base + soundOff + ctaFreeContext;
+      return base + soundOff;
     }
 
     // Sound-off + audio strategy for TikTok
@@ -397,8 +398,6 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
   // Platform switch: update platform state then delegate secondary calls to hook
   const handlePlatformSwitch = useCallback(async (newPlatform: string) => {
     setPlatform(newPlatform as Platform);
-    // Reset ctaFree when switching away from Meta
-    if (newPlatform !== "Meta") setCtaFree(false);
     await handlePlatformSwitchInternal(newPlatform);
   }, [handlePlatformSwitchInternal]);
 
@@ -909,7 +908,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
         onCompare={() => navigate('/app/competitor')}
         onPlatformSwitch={handlePlatformSwitch}
         onSetYoutubeFormat={setYoutubeFormat}
-        onSetCtaFree={setCtaFree}
+
         onSetReanalyzeMode={setReanalyzeMode}
         onSetComparisonResult={setComparisonResult}
         onReanalyze={handleReanalyze}
