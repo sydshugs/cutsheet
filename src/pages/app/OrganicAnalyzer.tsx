@@ -328,6 +328,7 @@ export default function OrganicAnalyzer() {
       }
     : liveResult;
 
+  // ── Read static image dimensions from file (stable deps — won't cancel on thumbnail changes) ──
   useEffect(() => {
     if (organicFormat !== "static") {
       setStaticImageDims(null);
@@ -340,6 +341,12 @@ export default function OrganicAnalyzer() {
         .catch(() => { if (!cancelled) setStaticImageDims(null); });
       return () => { cancelled = true; };
     }
+    // No file — dims will be set by the thumbnail fallback effect below
+  }, [organicFormat, file]);
+
+  // ── Fallback: read dims from thumbnail when loading from history (no file) ──
+  useEffect(() => {
+    if (organicFormat !== "static" || (file && file.type.startsWith("image/"))) return;
     const thumb = activeResult?.thumbnailDataUrl ?? thumbnailDataUrl;
     if (thumb) {
       let cancelled = false;
@@ -494,7 +501,7 @@ export default function OrganicAnalyzer() {
   void designReviewResult; void designReviewLoading;
 
   return (
-    <div className="flex h-full min-h-0" style={{ minHeight: "calc(100vh - 56px)" }}>
+    <div className="flex h-full min-h-0">
       <Helmet>
         <title>Organic Content Analyzer — Cutsheet</title>
         <meta name="description" content="Score TikTok, Instagram Reels, and YouTube Shorts for retention, shareability, and algorithm signals." />

@@ -535,6 +535,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
     reset();
   }, [format, handleReset, reset]);
 
+  // ── Read static image dimensions from file (stable deps — won't cancel on thumbnail changes) ──
   useEffect(() => {
     if (format !== "static") {
       setStaticImageDims(null);
@@ -553,6 +554,12 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
         cancelled = true;
       };
     }
+    // No file — dims will be set by the thumbnail fallback effect below
+  }, [format, file]);
+
+  // ── Fallback: read dims from thumbnail when loading from history (no file) ──
+  useEffect(() => {
+    if (format !== "static" || (file && file.type.startsWith("image/"))) return;
     const thumb = activeResult?.thumbnailDataUrl ?? thumbnailDataUrl;
     if (thumb) {
       let cancelled = false;
@@ -712,7 +719,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="flex h-full min-h-0" style={{ minHeight: "calc(100vh - 56px)" }}>
+    <div className="flex h-full min-h-0">
       <Helmet>
         <title>Paid Ad Analyzer — Cutsheet</title>
         <meta name="description" content="Score Meta, TikTok, Google, and YouTube ads. Get hook strength, CTA score, and budget recommendations in 30 seconds." />
