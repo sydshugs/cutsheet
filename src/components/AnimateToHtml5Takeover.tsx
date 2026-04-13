@@ -1,7 +1,7 @@
 // src/components/AnimateToHtml5Takeover.tsx — Full-page takeover for HTML5 animation generation
+// 8 CSS presets (instant, no API for generation) + 1 AI Smart Animate (Gemini Vision)
 
 import { useState, useCallback } from "react";
-import { motion } from "framer-motion";
 import {
   ChevronLeft,
   Sparkles,
@@ -14,6 +14,11 @@ import {
   Play,
   Download,
   Loader2,
+  Maximize2,
+  ArrowRight,
+  ChevronUp,
+  Sun,
+  Type,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { fileToBase64 } from "../lib/visualizeService";
@@ -21,7 +26,7 @@ import { cn } from "../lib/utils";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
-type AnimationStyle = "entrance" | "pulse" | "reveal";
+type AnimationStyle = "entrance" | "pulse" | "reveal" | "kenburns" | "slidein" | "bounce" | "glow" | "wipe" | "smart";
 
 export interface AnimateToHtml5TakeoverProps {
   onClose: () => void;
@@ -40,10 +45,17 @@ const STYLE_OPTIONS: {
   label: string;
   desc: string;
   icon: typeof Zap;
+  badge?: string;
 }[] = [
-  { id: "entrance", label: "Entrance", desc: "Fade + slide in", icon: Zap },
-  { id: "pulse", label: "Pulse", desc: "CTA highlight", icon: Activity },
-  { id: "reveal", label: "Reveal", desc: "Logo + offer appear", icon: Eye },
+  { id: "entrance",  label: "Entrance",  desc: "Fade + slide in",       icon: Zap },
+  { id: "pulse",     label: "Pulse",     desc: "CTA highlight",         icon: Activity },
+  { id: "reveal",    label: "Reveal",    desc: "Logo + offer appear",   icon: Eye },
+  { id: "kenburns",  label: "Ken Burns", desc: "Cinematic zoom + pan",  icon: Maximize2 },
+  { id: "slidein",   label: "Slide In",  desc: "Enter from the left",   icon: ArrowRight },
+  { id: "bounce",    label: "Bounce",    desc: "Attention bounce",      icon: ChevronUp },
+  { id: "glow",      label: "Glow",      desc: "Subtle brightness",     icon: Sun },
+  { id: "wipe",      label: "Wipe",      desc: "Left to right reveal",  icon: Type },
+  { id: "smart",     label: "Smart",     desc: "AI multi-element",      icon: Sparkles, badge: "AI" },
 ];
 
 // ── Component ───────────────────────────────────────────────────────────────
@@ -66,9 +78,13 @@ export function AnimateToHtml5Takeover({
   const [zipBase64, setZipBase64] = useState<string | null>(null);
   const [fileSize, setFileSize] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [smartMode, setSmartMode] = useState<"smart" | "fallback" | null>(null);
+  const [detectedElements, setDetectedElements] = useState(0);
 
   const width = parseInt(format.split("x")[0]) || 300;
   const height = parseInt(format.split("x")[1]) || 250;
+
+  const isSmart = activeStyle === "smart";
 
   // ── Generate ────────────────────────────────────────────────────────────
 
@@ -76,6 +92,8 @@ export function AnimateToHtml5Takeover({
     setIsGenerating(true);
     setHasGenerated(false);
     setError(null);
+    setSmartMode(null);
+    setDetectedElements(0);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -83,21 +101,29 @@ export function AnimateToHtml5Takeover({
 
       const imageBase64 = await fileToBase64(imageFile, 2000, 0.9);
 
-      const response = await fetch("/api/animate-html5", {
+      const endpoint = isSmart ? "/api/animate-html5-smart" : "/api/animate-html5";
+
+      const body: Record<string, unknown> = {
+        imageBase64,
+        duration,
+        loop: isLooping,
+        width,
+        height,
+        mimeType: "image/jpeg",
+      };
+
+      // CSS presets send style; smart does not
+      if (!isSmart) {
+        body.style = activeStyle;
+      }
+
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({
-          imageBase64,
-          style: activeStyle,
-          duration,
-          loop: isLooping,
-          width,
-          height,
-          mimeType: "image/jpeg",
-        }),
+        body: JSON.stringify(body),
       });
 
       const data = await response.json();
@@ -116,12 +142,18 @@ export function AnimateToHtml5Takeover({
       setZipBase64(data.zipBase64);
       setFileSize(data.fileSize);
       setHasGenerated(true);
+
+      // Smart-specific metadata
+      if (isSmart) {
+        setSmartMode(data.mode ?? "fallback");
+        setDetectedElements(data.detectedElements ?? 0);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setIsGenerating(false);
     }
-  }, [imageFile, activeStyle, duration, isLooping, width, height]);
+  }, [imageFile, activeStyle, duration, isLooping, width, height, isSmart]);
 
   // ── Download ────────────────────────────────────────────────────────────
 
@@ -193,7 +225,6 @@ export function AnimateToHtml5Takeover({
                 ORIGINAL
               </p>
               <div className="rounded-2xl border border-white/[0.06] bg-[#18181b] overflow-hidden">
-                {/* Image area */}
                 <div
                   className="w-full bg-[var(--bg)] flex items-center justify-center p-4"
                   style={{ aspectRatio: `${width}/${height}` }}
@@ -204,7 +235,6 @@ export function AnimateToHtml5Takeover({
                     className="max-w-full max-h-full object-contain"
                   />
                 </div>
-                {/* Footer */}
                 <div className="px-3 py-2 border-t border-white/[0.06] bg-[#18181b] flex justify-between items-center">
                   <span className="text-[11px] font-mono text-[#52525c] truncate">{fileName}</span>
                   <span className="text-[11px] text-[#3f3f47] whitespace-nowrap ml-4">Static · {format}</span>
@@ -234,8 +264,12 @@ export function AnimateToHtml5Takeover({
                   {isGenerating ? (
                     <div className="flex flex-col items-center gap-3">
                       <Loader2 className="size-6 text-[#06b6d4] animate-spin" />
-                      <span className="text-sm text-[var(--ink-muted)]">Generating animation...</span>
-                      <span className="text-xs text-[var(--ink-faint)]">This usually takes 15-30 seconds</span>
+                      <span className="text-sm text-[var(--ink-muted)]">
+                        {isSmart ? "Detecting elements & generating..." : "Generating animation..."}
+                      </span>
+                      <span className="text-xs text-[var(--ink-faint)]">
+                        {isSmart ? "AI is analyzing your banner" : "This usually takes a few seconds"}
+                      </span>
                     </div>
                   ) : hasGenerated && generatedHtml ? (
                     <iframe
@@ -248,13 +282,11 @@ export function AnimateToHtml5Takeover({
                     />
                   ) : (
                     <>
-                      {/* Dimmed original as placeholder */}
                       <img
                         src={imageSrc}
                         alt="Preview placeholder"
                         className="max-w-full max-h-full object-contain opacity-80"
                       />
-                      {/* Play button overlay */}
                       <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
                         <div className="size-12 rounded-full bg-[rgba(0,184,219,0.2)] border border-[rgba(0,184,219,0.3)] flex items-center justify-center">
                           <Play className="size-5 text-[#06b6d4] ml-0.5" fill="currentColor" />
@@ -263,7 +295,7 @@ export function AnimateToHtml5Takeover({
                     </>
                   )}
                 </div>
-                {/* Footer — always visible once generated or generating */}
+                {/* Footer */}
                 {(hasGenerated || isGenerating) && (
                   <div className="px-3 py-2.5 border-t border-white/[0.06] bg-[#18181b] flex justify-between items-center">
                     <span className="text-[11px] font-mono text-[#52525c]">
@@ -281,6 +313,24 @@ export function AnimateToHtml5Takeover({
                 )}
               </div>
 
+              {/* Smart Animate status badges */}
+              {hasGenerated && smartMode === "smart" && detectedElements > 0 && (
+                <div className="mt-3 rounded-xl bg-[rgba(99,102,241,0.06)] border border-[rgba(99,102,241,0.15)] px-3 py-2.5 flex gap-2 items-center">
+                  <Sparkles className="size-3 text-[#818cf8] shrink-0" />
+                  <span className="text-xs text-[#a5b4fc] leading-tight">
+                    Detected {detectedElements} element{detectedElements !== 1 ? "s" : ""} — each animated with staggered timing
+                  </span>
+                </div>
+              )}
+              {hasGenerated && smartMode === "fallback" && (
+                <div className="mt-3 rounded-xl bg-amber-500/[0.04] border border-amber-500/15 px-3 py-2.5 flex gap-2 items-start">
+                  <AlertTriangle className="size-3 text-amber-500 shrink-0 mt-[1px]" />
+                  <span className="text-xs text-[#71717b] leading-tight">
+                    Could not detect individual elements — applied entrance animation instead
+                  </span>
+                </div>
+              )}
+
               {/* Error */}
               {error && (
                 <div className="mt-3 rounded-xl bg-red-500/[0.06] border border-red-500/15 px-3 py-2.5 flex gap-2 items-start">
@@ -293,7 +343,7 @@ export function AnimateToHtml5Takeover({
         </div>
 
         {/* RIGHT COLUMN — Settings Panel */}
-        <div className="w-[380px] shrink-0 h-fit">
+        <div className="w-[380px] shrink-0 overflow-y-auto scrollbar-hide pb-6">
           <div className="rounded-2xl border border-white/[0.06] bg-[#18181b] p-6">
             {/* ── ANIMATION STYLE ──────────────────────────────── */}
             <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-[#52525c] mb-3">
@@ -304,19 +354,34 @@ export function AnimateToHtml5Takeover({
               {STYLE_OPTIONS.map((opt) => {
                 const isActive = activeStyle === opt.id;
                 const Icon = opt.icon;
+                const isSmartOpt = opt.id === "smart";
                 return (
                   <button
                     key={opt.id}
                     onClick={() => setActiveStyle(opt.id)}
                     className={cn(
-                      "rounded-[24px] border p-3 flex flex-col gap-1.5 items-center text-center transition-colors",
-                      isActive
-                        ? "border-[rgba(97,95,255,0.3)] bg-[rgba(97,95,255,0.06)]"
-                        : "border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12]"
+                      "rounded-[24px] border p-3 flex flex-col gap-1.5 items-center text-center transition-colors relative",
+                      isActive && isSmartOpt
+                        ? "border-[rgba(99,102,241,0.4)] bg-[rgba(99,102,241,0.08)]"
+                        : isActive
+                          ? "border-[rgba(97,95,255,0.3)] bg-[rgba(97,95,255,0.06)]"
+                          : "border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12]"
                     )}
                   >
-                    <Icon className={cn("size-4", isActive ? "text-[#e4e4e7]" : "text-[#9f9fa9]")} />
-                    <span className={cn("text-xs font-medium", isActive ? "text-[#e4e4e7]" : "text-[#9f9fa9]")}>
+                    {/* AI badge */}
+                    {opt.badge && (
+                      <span className="absolute top-1.5 right-1.5 text-[8px] font-semibold uppercase tracking-wider bg-[rgba(99,102,241,0.15)] text-[#818cf8] px-1.5 py-0.5 rounded-full">
+                        {opt.badge}
+                      </span>
+                    )}
+                    <Icon className={cn(
+                      "size-4",
+                      isActive && isSmartOpt ? "text-[#818cf8]" : isActive ? "text-[#e4e4e7]" : "text-[#9f9fa9]"
+                    )} />
+                    <span className={cn(
+                      "text-xs font-medium",
+                      isActive && isSmartOpt ? "text-[#a5b4fc]" : isActive ? "text-[#e4e4e7]" : "text-[#9f9fa9]"
+                    )}>
                       {opt.label}
                     </span>
                     <span className="text-[10px] text-[#52525c] leading-tight">{opt.desc}</span>
@@ -396,15 +461,22 @@ export function AnimateToHtml5Takeover({
             <button
               onClick={handleGenerate}
               disabled={isGenerating}
-              className="w-full mt-5 rounded-[24px] bg-[rgba(0,184,219,0.1)] border border-[rgba(0,184,219,0.25)] hover:bg-[rgba(0,184,219,0.15)] h-[46px] flex items-center justify-center gap-2 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+              className={cn(
+                "w-full mt-5 rounded-[24px] h-[46px] flex items-center justify-center gap-2 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed border",
+                isSmart
+                  ? "bg-[rgba(99,102,241,0.1)] border-[rgba(99,102,241,0.25)] hover:bg-[rgba(99,102,241,0.15)]"
+                  : "bg-[rgba(0,184,219,0.1)] border-[rgba(0,184,219,0.25)] hover:bg-[rgba(0,184,219,0.15)]"
+              )}
             >
               {isGenerating ? (
-                <Loader2 className="size-3.5 text-[#53eafd] animate-spin" />
+                <Loader2 className={cn("size-3.5 animate-spin", isSmart ? "text-[#818cf8]" : "text-[#53eafd]")} />
               ) : (
-                <Sparkles className="size-3.5 text-[#53eafd]" />
+                <Sparkles className={cn("size-3.5", isSmart ? "text-[#818cf8]" : "text-[#53eafd]")} />
               )}
-              <span className="text-sm font-medium text-[#53eafd]">
-                {isGenerating ? "Generating..." : "Generate HTML5 Animation"}
+              <span className={cn("text-sm font-medium", isSmart ? "text-[#a5b4fc]" : "text-[#53eafd]")}>
+                {isGenerating
+                  ? (isSmart ? "Analyzing & Generating..." : "Generating...")
+                  : (isSmart ? "Smart Animate" : "Generate HTML5 Animation")}
               </span>
             </button>
 

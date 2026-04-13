@@ -19,7 +19,7 @@ import { checkFeatureCredit, refundCredit } from "./_lib/creditCheck";
 import { apiError } from "./_lib/apiError.js";
 import { logApiUsage } from "./_lib/logUsage";
 
-type AnimationStyle = "entrance" | "pulse" | "reveal";
+type AnimationStyle = "entrance" | "pulse" | "reveal" | "kenburns" | "slidein" | "bounce" | "glow" | "wipe";
 
 const RATE = { freeLimit: 0, proLimit: 20, windowSeconds: 86400 };
 
@@ -40,9 +40,35 @@ const ANIMATION_CSS: Record<AnimationStyle, string> = {
   50% { clip-path: inset(0 0 0 0); }
   100% { clip-path: inset(0 0 0 0); }
 }`,
+  kenburns: `@keyframes kenburns {
+  0% { transform: scale(1) translate(0, 0); }
+  50% { transform: scale(1.08) translate(-2%, -1%); }
+  100% { transform: scale(1) translate(0, 0); }
+}`,
+  slidein: `@keyframes slidein {
+  0% { transform: translateX(-100%); opacity: 0; }
+  20% { transform: translateX(0); opacity: 1; }
+  100% { transform: translateX(0); opacity: 1; }
+}`,
+  bounce: `@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  15% { transform: translateY(-8px); }
+  30% { transform: translateY(0); }
+  45% { transform: translateY(-4px); }
+  60% { transform: translateY(0); }
+}`,
+  glow: `@keyframes glow {
+  0%, 100% { filter: brightness(1) drop-shadow(0 0 0 transparent); }
+  50% { filter: brightness(1.1) drop-shadow(0 0 15px rgba(255,255,255,0.3)); }
+}`,
+  wipe: `@keyframes wipe {
+  0% { clip-path: inset(0 100% 0 0); }
+  40% { clip-path: inset(0 0 0 0); }
+  100% { clip-path: inset(0 0 0 0); }
+}`,
 };
 
-const VALID_STYLES = new Set<string>(["entrance", "pulse", "reveal"]);
+const VALID_STYLES = new Set<string>(["entrance", "pulse", "reveal", "kenburns", "slidein", "bounce", "glow", "wipe"]);
 
 // ── HTML5 Ad Generator ──────────────────────────────────────────────────────
 
@@ -166,7 +192,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: "imageBase64 is required" });
     }
     if (!VALID_STYLES.has(style)) {
-      return res.status(400).json({ error: "style must be entrance, pulse, or reveal" });
+      return res.status(400).json({ error: "Invalid animation style" });
     }
     const safeDuration = Math.max(1, Math.min(30, Number(duration) || 15));
     const safeLoop = typeof loop === "boolean" ? loop : true;
