@@ -1,5 +1,5 @@
 // PredictedPerformanceCard — pixel-matched to Figma node 217:1893
-import { useState } from 'react'
+import { memo, useState } from 'react'
 import { ChevronDown, Activity } from 'lucide-react'
 import { motion } from 'framer-motion'
 
@@ -68,7 +68,7 @@ function RangeBar({ low, high, avg }: { low: number; high: number; avg: number }
   )
 }
 
-export default function PredictedPerformanceCard({ prediction, platform, niche: _niche, isOrganic, loading }: PredictedPerformanceCardProps) {
+const PredictedPerformanceCard = memo(function PredictedPerformanceCard({ prediction, platform, niche: _niche, isOrganic, loading }: PredictedPerformanceCardProps) {
   const [driversOpen, setDriversOpen] = useState(false)
 
   // Loading skeleton
@@ -209,4 +209,6 @@ export default function PredictedPerformanceCard({ prediction, platform, niche: 
       )}
     </div>
   )
-}
+});
+
+export default PredictedPerformanceCard;

@@ -1,6 +1,6 @@
 // src/components/PolicyCheckPanel.tsx — Figma node 228:1098 / cutsheet-Design PolicyCheckPanel parity
 
-import { useState } from "react";
+import { memo, useState } from "react";
 import {
   ShieldCheck,
   ShieldAlert,
@@ -187,7 +187,7 @@ interface PolicyCheckPanelProps {
 
 // ─── Main ────────────────────────────────────────────────────────────────────
 
-export function PolicyCheckPanel({ result, onClose, embedded = false }: PolicyCheckPanelProps) {
+export const PolicyCheckPanel = memo(function PolicyCheckPanel({ result, onClose, embedded = false }: PolicyCheckPanelProps) {
   const [activeTab, setActiveTab] = useState<"meta" | "tiktok">(
     result.platform === "tiktok" ? "tiktok" : "meta"
   );
@@ -403,4 +403,4 @@ export function PolicyCheckPanel({ result, onClose, embedded = false }: PolicyCh
       )}
     </div>
   );
-}
+});

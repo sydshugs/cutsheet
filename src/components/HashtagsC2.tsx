@@ -2,7 +2,7 @@
 // Collapsible row with pills only — no platform tabs, no footer
 
 import type { MouseEvent } from "react";
-import { useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { Hash, ChevronDown } from "lucide-react";
 import type { Hashtags } from "../services/analyzerService";
 
@@ -11,12 +11,12 @@ interface HashtagsC2Props {
   format?: 'video' | 'static';
 }
 
-export function HashtagsC2({ hashtags }: HashtagsC2Props) {
+export const HashtagsC2 = memo(function HashtagsC2({ hashtags }: HashtagsC2Props) {
   const [isOpen, setIsOpen] = useState(true);
   const [copied, setCopied] = useState(false);
 
   // Pick the first platform that has tags
-  const tags = (() => {
+  const tags = useMemo(() => {
     if (hashtags.meta?.length) return hashtags.meta;
     if (hashtags.instagram?.length) return hashtags.instagram;
     if (hashtags.tiktok?.length) return hashtags.tiktok;
@@ -24,7 +24,7 @@ export function HashtagsC2({ hashtags }: HashtagsC2Props) {
     if (hashtags.reels?.length) return hashtags.reels;
     if (hashtags.pinterest?.length) return hashtags.pinterest;
     return [];
-  })();
+  }, [hashtags]);
 
   const handleCopy = (e: MouseEvent) => {
     e.stopPropagation();
@@ -87,4 +87,4 @@ export function HashtagsC2({ hashtags }: HashtagsC2Props) {
       )}
     </div>
   );
-}
+});

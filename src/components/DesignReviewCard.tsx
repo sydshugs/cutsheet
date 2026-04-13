@@ -2,7 +2,7 @@
 // Header: verdict pill + critical count | Verdict headline | Priority Fix (left-border accent)
 // Category filter pills | Fix rows with hover state
 
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { memo, useState, useRef, useEffect, useMemo } from "react";
 import { CircleX, Type, Layers, Box, Activity, AlertCircle, ChevronRight, Wand2, X } from "lucide-react";
 
 interface DesignFlag {
@@ -44,7 +44,7 @@ function getCategoryMeta(category: string) {
 
 const ALL_FILTER_IDS = ['All', 'Hierarchy', 'Typography', 'Layout', 'Contrast'];
 
-export function DesignReviewCard({ verdictState, verdictHeadline, priorityFix, flags, onFixWithAI }: DesignReviewCardProps) {
+export const DesignReviewCard = memo(function DesignReviewCard({ verdictState, verdictHeadline, priorityFix, flags, onFixWithAI }: DesignReviewCardProps) {
   const [activeFilter, setActiveFilter] = useState('All');
   const [priorityDismissed, setPriorityDismissed] = useState(false);
   const [popoverOpen, setPopoverOpen] = useState(false);
@@ -228,4 +228,4 @@ export function DesignReviewCard({ verdictState, verdictHeadline, priorityFix, f
       </div>
     </div>
   );
-}
+});

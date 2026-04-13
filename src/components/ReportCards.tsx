@@ -1,5 +1,5 @@
 import type React from "react";
-import { useMemo, useEffect, useRef, useState } from "react";
+import { memo, useMemo, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
@@ -246,7 +246,7 @@ export function extractRightPanelSections(markdown: string): { title: string; co
     .map(s => ({ title: toSentenceCase(s.title!), content: s.content }));
 }
 
-export function ReportCards({
+export const ReportCards = memo(function ReportCards({
   file, markdown, thumbnailDataUrl,
   onReset, onFileSelect,
   verdict, structuredImprovements, improvements, scores, format,
@@ -774,4 +774,4 @@ export function ReportCards({
       </motion.div>
     </div>
   );
-}
+});
