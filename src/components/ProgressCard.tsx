@@ -121,16 +121,8 @@ export function ProgressCard({
         {/* ── Left — creative preview ── */}
         {!compact && (
         <div className="relative m-[6px] min-h-[280px] flex-1 overflow-hidden rounded-xl bg-[color:var(--bg)]">
-          {thumbnailDataUrl ? (
-            <motion.img
-              src={thumbnailDataUrl}
-              alt={file ? sanitizeFileName(file.name) : "Ad creative"}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.4 }}
-              className={`absolute inset-0 w-full h-full object-cover`}
-            />
-          ) : !isImage && previewUrl ? (
+          {/* Video files: always render <video> — use thumbnail as poster only */}
+          {!isImage && previewUrl ? (
             <video
               src={previewUrl}
               muted
@@ -145,9 +137,9 @@ export function ProgressCard({
               }}
               className="absolute inset-0 w-full h-full object-cover"
             />
-          ) : isImage && previewUrl ? (
+          ) : (isImage || thumbnailDataUrl) && (previewUrl || thumbnailDataUrl) ? (
             <motion.img
-              src={previewUrl}
+              src={previewUrl ?? thumbnailDataUrl!}
               alt={file ? sanitizeFileName(file.name) : "Ad creative"}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
