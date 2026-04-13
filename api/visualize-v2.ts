@@ -249,7 +249,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const {
       imageStorageUrl, imageBase64, imageMediaType,
       analysisResult, platform, niche, adType,
-      visualizeContext, excludeCta,
+      visualizeContext, excludeCta, visualizeMode,
     } = req.body ?? {};
 
     if (!imageStorageUrl && !imageBase64) {
@@ -330,6 +330,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ? `This ad scored ${overallScore}/10 overall. The weakest areas were ${filteredWeaknesses.map((d) => `${d.name} (${d.score}/10)`).join(" and ")}. The improved version surgically edits these while preserving everything that was already working.`
       : `This ad scored ${overallScore}/10 overall. The improved version refines the creative with targeted edits from the analysis.`;
     const changesApplied = filteredImprovements.slice(0, 6);
+
+    // ── text_overlay mode: skip Gemini, return brief only, no credit ────
+    if (visualizeMode === "text_overlay") {
+      // Refund the credit that was deducted above
+      await refundCredit(user.id, user.tier, "visualize");
+      console.info("[visualize-v2] text_overlay mode — returning brief only, credit refunded");
+
+      return res.status(200).json({
+        generatedImageUrl: null,
+        visualBrief: improvementSummary || changesApplied.join("\n"),
+        improvementSummary,
+        changesApplied,
+        briefOnly: true,
+        version: "v2-direction",
+      });
+    }
 
     // ── Resolve image to base64 ──────────────────────────────────────────
     let resolvedBase64: string;

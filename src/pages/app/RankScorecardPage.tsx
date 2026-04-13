@@ -101,6 +101,7 @@ export default function RankScorecardPage() {
     setVisualizeError,
     visualizeCreditData,
     setVisualizeCreditData,
+    visualizeMode,
     handleVisualize,
     resetVisualize,
   } = useVisualize({
@@ -350,6 +351,7 @@ export default function RankScorecardPage() {
                     onBack={resetVisualize}
                     onClose={resetVisualize}
                     onUpgrade={onUpgradeRequired}
+                    visualizeMode={visualizeMode}
                   />
                 </motion.div>
               ) : (

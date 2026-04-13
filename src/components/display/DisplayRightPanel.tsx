@@ -7,7 +7,7 @@ import { VisualizePanel } from "../VisualizePanel";
 import { AlertDialog } from "../ui/AlertDialog";
 import type { DisplayResult } from "../../types/display";
 import type { PolicyCheckResult } from "../../lib/policyCheckService";
-import type { VisualizeResult, VisualizeStatus, VisualizeCreditData } from "../../types/visualize";
+import type { VisualizeResult, VisualizeStatus, VisualizeCreditData, VisualizeMode } from "../../types/visualize";
 import type { EngineBudgetRecommendation } from "../../services/budgetService";
 import type { PredictionResult } from "../../services/predictionService";
 
@@ -41,6 +41,7 @@ export interface DisplayRightPanelProps {
   visualizeResult: VisualizeResult | null;
   visualizeError: string | null;
   visualizeCreditData: VisualizeCreditData | null;
+  visualizeMode?: VisualizeMode | null;
 
   // ── Confirm dialog ───────────────────────────────────────────────────────────
   confirmStartOver: boolean;
@@ -82,6 +83,7 @@ export function DisplayRightPanel({
   visualizeResult,
   visualizeError,
   visualizeCreditData,
+  visualizeMode,
   confirmStartOver,
   isPro,
   onGenerateBrief,
@@ -174,6 +176,7 @@ export function DisplayRightPanel({
                 creditData={visualizeCreditData}
                 onClose={onCloseVisualize}
                 onUpgrade={onUpgradeRequired}
+                visualizeMode={visualizeMode}
               />
             </div>
           )}
