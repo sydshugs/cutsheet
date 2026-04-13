@@ -136,20 +136,9 @@ export function ProgressCard({
               muted
               playsInline
               preload="auto"
-              autoPlay={false}
+              autoPlay
+              loop
               className="absolute inset-0 w-full h-full object-cover"
-              onLoadedData={(e) => {
-                const v = e.currentTarget;
-                if (v.readyState >= 2) {
-                  v.currentTime = Math.min(1.0, (v.duration || 10) * 0.1);
-                }
-              }}
-              onSeeked={(e) => {
-                // Force repaint to avoid black frame artifact on some browsers
-                const v = e.currentTarget;
-                v.style.opacity = '0.99';
-                requestAnimationFrame(() => { v.style.opacity = ''; });
-              }}
             />
           ) : isImage && previewUrl ? (
             <motion.img

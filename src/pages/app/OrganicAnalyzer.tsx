@@ -368,7 +368,7 @@ export default function OrganicAnalyzer() {
     let cancelled = false;
     const url = URL.createObjectURL(file);
     const video = document.createElement("video");
-    video.preload = "metadata";
+    video.preload = "auto";
     video.onloadedmetadata = () => {
       URL.revokeObjectURL(url);
       if (!cancelled) setVideoDims({ width: video.videoWidth, height: video.videoHeight });
