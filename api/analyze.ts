@@ -8,8 +8,7 @@ import { sanitizeSessionMemory, sanitizeUserInput } from "./_lib/sanitizeMemory"
 import { safeNiche, safePlatform } from "./_lib/validateInput";
 import { apiError } from "./_lib/apiError.js";
 import { logApiUsage } from "./_lib/logUsage";
-// Dynamic import — benchmarks.ts is ESM, Vercel bundles API routes as CJS
-type BenchmarkModule = typeof import("../src/lib/benchmarks");
+import { getNicheBenchmark, getNicheShortLabel } from "./_lib/benchmarks";
 
 export const maxDuration = 120; // video analysis can take 30-60s
 
@@ -146,7 +145,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (niche) {
       const safeNicheVal = safeNiche(niche);
       const safePlatformVal = platform ? safePlatform(platform) : undefined;
-      const { getNicheBenchmark, getNicheShortLabel } = await import("../src/lib/benchmarks.js") as BenchmarkModule;
       const nicheBench = getNicheBenchmark(safeNicheVal, safePlatformVal);
       const nicheLabel = getNicheShortLabel(safeNicheVal) ?? safeNicheVal;
       if (nicheBench) {
