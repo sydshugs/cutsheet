@@ -1,6 +1,6 @@
 // ProgressCard.tsx — Concept B: Split panel — image left, progress right
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, CheckCircle2, type LucideIcon } from "lucide-react";
 import { cn } from "../lib/utils";
@@ -73,6 +73,22 @@ export function ProgressCard({
 
   const previewUrl = sharedFileObjectUrl ?? ownPreviewUrl;
 
+  // Ref-based video loading — avoids race conditions with JSX src prop
+  const videoRef = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    if (isImage || !file || !file.type.startsWith("video/")) return;
+    const el = videoRef.current;
+    if (!el) return;
+    const url = URL.createObjectURL(file);
+    el.src = url;
+    el.load();
+    el.addEventListener("loadeddata", () => {
+      el.currentTime = 0.001; // nudge to first frame
+    }, { once: true });
+    el.play().catch(() => {});
+    return () => URL.revokeObjectURL(url);
+  }, [file, isImage]);
+
   // Step sequencer — setTimeout chain matching Figma animation timing
   useEffect(() => {
     if (status !== "processing" && status !== "analyzing") { setCurrentStep(0); return; }
@@ -122,19 +138,15 @@ export function ProgressCard({
         {!compact && (
         <div className="relative m-[6px] min-h-[280px] flex-1 overflow-hidden rounded-xl bg-[color:var(--bg)]">
           {/* Video files: always render <video> — use thumbnail as poster only */}
-          {!isImage && previewUrl ? (
+          {!isImage && file?.type.startsWith("video/") ? (
             <video
-              src={previewUrl}
+              ref={videoRef}
               muted
               playsInline
               preload="auto"
               autoPlay
               loop
               poster={thumbnailDataUrl ?? undefined}
-              onCanPlay={(e) => {
-                const v = e.currentTarget;
-                v.play().catch(() => {});
-              }}
               className="absolute inset-0 w-full h-full object-cover"
             />
           ) : (isImage || thumbnailDataUrl) && (previewUrl || thumbnailDataUrl) ? (
