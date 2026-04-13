@@ -4,6 +4,7 @@ import CutsheetHero from "../components/ui/cutsheet-hero";
 import CutsheetTheDifference from "../components/ui/cutsheet-the-difference";
 import CutsheetHowItWorks from "../components/ui/cutsheet-how-it-works";
 import CutsheetPlatform from "../components/ui/cutsheet-platform";
+import CutsheetWhy from "../components/ui/cutsheet-why";
 import CutsheetPricing from "../components/ui/cutsheet-pricing";
 import CutsheetCTA from "../components/ui/cutsheet-cta";
 import CutsheetFooter from "../components/ui/cutsheet-footer";
@@ -54,6 +55,7 @@ export default function LandingPage() {
       <CutsheetTheDifference />
       <CutsheetHowItWorks />
       <CutsheetPlatform />
+      <CutsheetWhy />
       <CutsheetPricing />
       <CutsheetCTA />
       <CutsheetFooter />
