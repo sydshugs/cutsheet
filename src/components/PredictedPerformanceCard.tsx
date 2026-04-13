@@ -37,20 +37,20 @@ const CONFIDENCE_BADGE: Record<string, { className: string; label: string }> = {
 }
 
 function RangeBar({ low, high, avg }: { low: number; high: number; avg: number }) {
-  const MAX = 3.0
-  const fillLeft = `${(low / MAX) * 100}%`
-  const fillWidth = `${((high - low) / MAX) * 100}%`
-  const avgLeft = `${(avg / MAX) * 100}%`
+  const MAX = Math.max(3.0, high * 1.2, avg * 1.2)
+  const fillLeft = `${Math.min((low / MAX) * 100, 100)}%`
+  const fillWidth = `${Math.min(((high - low) / MAX) * 100, 100 - (low / MAX) * 100)}%`
+  const avgLeft = `${Math.min((avg / MAX) * 100, 98)}%`
 
   return (
     <div className="w-full mt-1 mb-4">
       {/* Scale labels */}
       <div className="flex justify-between mb-1">
         <span className="text-[10px] text-zinc-600">0%</span>
-        <span className="text-[10px] text-zinc-600">3%+</span>
+        <span className="text-[10px] text-zinc-600">{MAX > 3 ? `${Math.ceil(MAX)}%+` : '3%+'}</span>
       </div>
       {/* Track */}
-      <div className="relative h-[4px] w-full bg-zinc-800 rounded-full">
+      <div className="relative h-[4px] w-full bg-zinc-800 rounded-full overflow-hidden">
         {/* Avg marker */}
         <div
           className="absolute w-[2px] h-[12px] bg-zinc-400 top-[-4px]"
