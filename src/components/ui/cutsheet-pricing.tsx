@@ -1,4 +1,5 @@
 import React, { memo, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { CircleCheck } from "lucide-react";
 import { FadeInSection } from "./fade-in";
 
@@ -76,9 +77,14 @@ function GhostButton({
 // ─── Main export ─────────────────────────────────────────────────────────────
 
 const CutsheetPricing = memo(function CutsheetPricing() {
-  const scrollToWaitlist = useCallback((e: React.MouseEvent) => {
+  const navigate = useNavigate();
+  const goToAccess = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    document.getElementById("waitlist")?.scrollIntoView({ behavior: "smooth" });
+    navigate("/access");
+  }, [navigate]);
+  const goToTeamMail = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    window.location.href = "mailto:hello@cutsheet.xyz";
   }, []);
 
   return (
@@ -158,7 +164,7 @@ const CutsheetPricing = memo(function CutsheetPricing() {
               Try Cutsheet risk-free. No card, no commitment.
             </p>
             <div className="mt-3 sm:mt-6">
-              <GhostButton onClick={scrollToWaitlist}>Get Early Access</GhostButton>
+              <GhostButton onClick={goToAccess}>Get Early Access</GhostButton>
             </div>
             <div className="mt-3 sm:mt-6 flex flex-col gap-1.5 sm:gap-4">
               {FREE_FEATURES.map((f) => (
@@ -219,7 +225,7 @@ const CutsheetPricing = memo(function CutsheetPricing() {
                 For performance marketers and creative teams shipping weekly.
               </p>
               <button
-                onClick={scrollToWaitlist}
+                onClick={goToAccess}
                 className="mt-3 sm:mt-6 w-full rounded-full py-2.5 sm:py-3 text-[9px] sm:text-[14px] font-semibold leading-5 text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6366f1] focus-visible:ring-offset-2 focus-visible:ring-offset-[#09090b]"
                 style={{
                   backgroundColor: "#615fff",
@@ -274,7 +280,7 @@ const CutsheetPricing = memo(function CutsheetPricing() {
               For agencies and in-house teams reviewing high-volume campaigns.
             </p>
             <div className="mt-3 sm:mt-6">
-              <GhostButton onClick={scrollToWaitlist}>Get Early Access</GhostButton>
+              <GhostButton onClick={goToTeamMail}>Get Early Access</GhostButton>
             </div>
             <div className="mt-3 sm:mt-6 flex flex-col gap-1.5 sm:gap-4">
               {TEAM_FEATURES.map((f) => (
