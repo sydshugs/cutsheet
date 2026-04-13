@@ -57,8 +57,11 @@ export function ProgressCard({
   const SUBTITLES = format === "static" ? STATIC_SUBTITLES : VIDEO_SUBTITLES;
 
   const [currentStep, setCurrentStep] = useState(0);
-  const thumbnailDataUrl = useThumbnail(file ?? null);
   const isImage = file?.type.startsWith("image/") ?? false;
+  // Only use useThumbnail for images — for videos, the ref-based <video> handles preview.
+  // Calling useThumbnail on video files creates a competing detached decoder that starves
+  // the in-DOM video element (especially on Safari with one hardware decoder).
+  const thumbnailDataUrl = useThumbnail(isImage ? (file ?? null) : null);
 
   // If parent passed a shared blob URL, use it directly (parent owns the lifecycle).
   // Otherwise create and revoke our own.
@@ -84,8 +87,8 @@ export function ProgressCard({
     el.load();
     el.addEventListener("loadeddata", () => {
       el.currentTime = 0.001; // nudge to first frame
+      el.play().catch(() => {}); // play AFTER data is available, not before
     }, { once: true });
-    el.play().catch(() => {});
     return () => URL.revokeObjectURL(url);
   }, [file, isImage]);
 
