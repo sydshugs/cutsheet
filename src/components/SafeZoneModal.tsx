@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { X, Shield, AlertTriangle, CheckCircle2, Loader2, Sparkles, XCircle } from "lucide-react";
-import { supabase } from "../lib/supabase";
 import { cn } from "../lib/utils";
+import { analyzeSafeZone } from "../services/safeZoneService";
 import { SafeZonePlatformChrome } from "./SafeZonePlatformChrome";
 
 const PLATFORMS = [
@@ -233,12 +233,6 @@ export function SafeZoneModal({ open, onClose, thumbnailSrc, mode = "paid" }: Sa
     setAiResult(null);
     setAiError(null);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        setAiError("Not authenticated — please sign in");
-        return;
-      }
-
       const fetchedBlob = await fetch(thumbnailSrc).then((r) => r.blob());
       const base64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
@@ -250,28 +244,16 @@ export function SafeZoneModal({ open, onClose, thumbnailSrc, mode = "paid" }: Sa
         reader.readAsDataURL(fetchedBlob);
       });
 
-      const res = await fetch("/api/safe-zone", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          imageData: base64,
-          mimeType: fetchedBlob.type || "image/jpeg",
-          platform: API_PLATFORM_MAP[activePlatform],
-          mode: activeMode,
-        }),
-      });
-      const data = await res.json() as AIResult & { error?: string; message?: string };
-      if (!res.ok) {
-        setAiError(data.message ?? data.error ?? "Analysis failed");
-      } else {
-        setAiResult(data);
-      }
+      const data = await analyzeSafeZone<AIResult>(
+        base64,
+        fetchedBlob.type || "image/jpeg",
+        API_PLATFORM_MAP[activePlatform],
+        activeMode,
+      );
+      setAiResult(data);
     } catch (err) {
       console.error("[safe-zone] client error:", err);
-      setAiError("Network error — please try again");
+      setAiError(err instanceof Error ? err.message : "Network error — please try again");
     } finally {
       setAiLoading(false);
     }

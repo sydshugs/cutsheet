@@ -7,6 +7,7 @@ import { useState, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Shield, Loader2, ArrowRight } from "lucide-react";
+import { validateBetaCode } from "../services/betaService";
 
 export const BETA_CODE_KEY = "pending_beta_code";
 
@@ -26,24 +27,13 @@ export default function AccessPage() {
       setError(null);
 
       try {
-        const res = await fetch("/api/validate-beta-code", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code: trimmed }),
-        });
-
-        const data = await res.json() as { valid?: boolean; error?: string };
-
-        if (!res.ok || !data.valid) {
-          setError("Invalid or already used code. Try another.");
-          return;
-        }
+        await validateBetaCode(trimmed);
 
         // Code is valid — store it and send user to sign up
         localStorage.setItem(BETA_CODE_KEY, trimmed);
         navigate("/signup");
-      } catch {
-        setError("Network error — check your connection and try again.");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Network error — check your connection and try again.");
       } finally {
         setLoading(false);
       }

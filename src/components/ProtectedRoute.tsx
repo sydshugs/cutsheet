@@ -3,6 +3,7 @@ import { Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import { BetaGate } from './BetaGate'
+import { redeemBetaCode } from '../services/betaService'
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading, betaAccess, refreshUserProfile } = useAuth()
@@ -65,22 +66,9 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
     void (async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session?.access_token) return
-
-        const res = await fetch('/api/redeem-beta-code', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({ code: pendingCode }),
-        })
-
-        if (res.ok) {
-          localStorage.removeItem('pending_beta_code')
-          await refreshUserProfile()
-        }
+        await redeemBetaCode(pendingCode)
+        localStorage.removeItem('pending_beta_code')
+        await refreshUserProfile()
       } catch (err) {
         console.error('[ProtectedRoute] auto-redeem error:', err)
       }

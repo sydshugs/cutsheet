@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ArrowRight, Check, Loader2 } from "lucide-react";
 import confetti from "canvas-confetti";
+import { submitWaitlist } from "../../services/waitlistService";
 
 type Status = "idle" | "loading" | "success" | "error";
 
@@ -62,14 +63,7 @@ export default function EarlyAccessForm({
 
     setStatus("loading");
     try {
-      const res = await fetch("/api/waitlist", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email: trimmed }),
-      });
-      if (!res.ok) throw new Error("non-200");
+      await submitWaitlist(trimmed);
       localStorage.setItem(LS_KEY, trimmed);
       setStatus("success");
       fireConfetti();

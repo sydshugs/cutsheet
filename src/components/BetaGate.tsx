@@ -4,9 +4,9 @@
 
 import { useState, useCallback } from "react";
 import { Shield, Loader2, CheckCircle2 } from "lucide-react";
-import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 import { cn } from "../lib/utils";
+import { redeemBetaCode } from "../services/betaService";
 
 export function BetaGate() {
   const { refreshUserProfile } = useAuth();
@@ -24,34 +24,14 @@ export function BetaGate() {
     setError(null);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        setError("Session expired — please refresh the page.");
-        return;
-      }
-
-      const res = await fetch("/api/redeem-beta-code", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ code: trimmed }),
-      });
-
-      const data = await res.json() as { success?: boolean; error?: string; message?: string };
-
-      if (!res.ok) {
-        setError(data.message ?? data.error ?? "Something went wrong. Please try again.");
-        return;
-      }
+      await redeemBetaCode(trimmed);
 
       // Show success flash, then pull fresh profile so ProtectedRoute
       // sees betaAccess = true and renders the app route
       setSuccess(true);
       setTimeout(() => refreshUserProfile(), 800);
-    } catch {
-      setError("Network error — please check your connection and try again.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Network error — please check your connection and try again.");
     } finally {
       setLoading(false);
     }

@@ -12,6 +12,7 @@ import { supabase } from "../lib/supabase";
 import { SegmentedControl } from "../components/ui/SegmentedControl";
 import { Switch } from "../components/ui/Switch";
 import { clearUserContextCache, type AdIntent } from "../services/userContextService";
+import { deleteAccount } from "../services/accountService";
 
 // ─── SHARED STYLES ────────────────────────────────────────────────────────────
 const CARD_STYLE: React.CSSProperties = {
@@ -206,30 +207,12 @@ export function Settings() {
     setDeleteLoading(true);
     setDeleteError(null);
     try {
-      const session = (await supabase.auth.getSession()).data.session;
-      if (!session?.access_token) {
-        setDeleteError("Not authenticated. Please sign in again.");
-        setDeleteLoading(false);
-        return;
-      }
-      const resp = await fetch("/api/delete-account", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
-      if (!resp.ok) {
-        const data = await resp.json().catch(() => ({}));
-        setDeleteError(data.message ?? data.error ?? "Failed to delete account");
-        setDeleteLoading(false);
-        return;
-      }
+      await deleteAccount();
       // Sign out and redirect to landing
       await signOut();
       navigate("/");
-    } catch {
-      setDeleteError("Something went wrong. Please try again or contact support.");
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : "Something went wrong. Please try again or contact support.");
       setDeleteLoading(false);
     }
   };
