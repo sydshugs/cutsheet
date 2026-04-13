@@ -107,13 +107,32 @@ export async function runComparison(
     throw new Error((data as { message?: string; error?: string }).message ?? (data as { error?: string }).error ?? `API error ${response.status}`);
   }
 
-  const result = await response.json() as { text: string };
-  const text = result.text;
+  const result = await response.json() as unknown;
+  if (!result || typeof result !== 'object') {
+    throw new Error('Invalid comparison API response: expected object');
+  }
+  const resultObj = result as Record<string, unknown>;
+  if (typeof resultObj.text !== 'string') {
+    throw new Error('Invalid comparison API response: missing or non-string "text" field');
+  }
+  const text = resultObj.text;
 
+  let parsed: unknown;
   try {
     const cleaned = text.replace(/```json|```/g, "").trim();
-    return JSON.parse(cleaned) as ComparisonResult;
+    parsed = JSON.parse(cleaned);
   } catch {
     throw new Error("Comparison parse failed: " + text.slice(0, 200));
   }
+  if (!parsed || typeof parsed !== 'object') {
+    throw new Error('Comparison AI response was not a valid object');
+  }
+  const p = parsed as Record<string, unknown>;
+  if (!p.winner || typeof p.winner !== 'object') {
+    throw new Error('Comparison AI response missing required field "winner"');
+  }
+  if (!Array.isArray(p.rankings)) {
+    throw new Error('Comparison AI response missing required field "rankings"');
+  }
+  return parsed as ComparisonResult;
 }

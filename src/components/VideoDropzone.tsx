@@ -7,7 +7,7 @@ interface VideoDropzoneProps {
   onFileSelect: (file: File | null) => void;
   file: File | null;
   disabled?: boolean;
-  videoRef?: RefObject<HTMLVideoElement>;
+  videoRef?: RefObject<HTMLVideoElement | null>;
   isDark?: boolean;  // Preserved for out-of-scope views. Always renders dark.
   acceptImages?: boolean;
   onUrlSubmit?: (url: string) => void;

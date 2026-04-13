@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
@@ -12,7 +13,7 @@ const HERO_IMG = "/Hero_2.png";
  * Right: product mock screenshot.
  * Mobile: single column stack, full-width CTA and image.
  */
-export default function CutsheetHero() {
+const CutsheetHero = memo(function CutsheetHero() {
   return (
     <section
       className="relative w-full overflow-hidden font-sans text-white"
@@ -132,4 +133,6 @@ export default function CutsheetHero() {
       </div>
     </section>
   );
-}
+});
+
+export default CutsheetHero;

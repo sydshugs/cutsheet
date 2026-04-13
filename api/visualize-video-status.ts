@@ -65,7 +65,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({ status: "pending" });
     }
 
-    return res.status(200).json({ status: "failed", error: `Unexpected status: ${status.status}` });
+    const unknownStatus = (status as { status?: string }).status;
+    return res.status(200).json({ status: "failed", error: `Unexpected status: ${unknownStatus}` });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error";
     console.error("[visualize-video-status] Error:", msg);

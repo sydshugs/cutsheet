@@ -53,5 +53,19 @@ export async function generatePrediction(
     throw new Error((data as { message?: string; error?: string }).message ?? (data as { error?: string }).error ?? `API error ${response.status}`);
   }
 
-  return response.json() as Promise<PredictionResult>;
+  const data = await response.json() as unknown;
+  if (!data || typeof data !== 'object') {
+    throw new Error('Invalid prediction API response: expected object');
+  }
+  const d = data as Record<string, unknown>;
+  if (!d.ctr || typeof d.ctr !== 'object') {
+    throw new Error('Invalid prediction API response: missing required field "ctr"');
+  }
+  if (!d.fatigueDays || typeof d.fatigueDays !== 'object') {
+    throw new Error('Invalid prediction API response: missing required field "fatigueDays"');
+  }
+  if (typeof d.confidence !== 'string') {
+    throw new Error('Invalid prediction API response: missing required field "confidence"');
+  }
+  return data as PredictionResult;
 }

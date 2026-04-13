@@ -27,6 +27,7 @@ export default function SwipeFilePage() {
       </Helmet>
       <h1 className="sr-only">Saved Ads</h1>
       <SwipeFileView
+        isDark={true}
         items={items}
         deleteItem={deleteItem}
         clearAll={clearAll}

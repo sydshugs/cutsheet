@@ -3,7 +3,7 @@
 // Swipe-to-dismiss on mobile via drag="y"
 
 import { motion, AnimatePresence } from "framer-motion";
-import type { PanInfo } from "framer-motion";
+import type { PanInfo, Variants } from "framer-motion";
 
 interface SlideSheetProps {
   open: boolean;
@@ -12,7 +12,7 @@ interface SlideSheetProps {
   children: React.ReactNode;
 }
 
-const sheetVariants = {
+const sheetVariants: Variants = {
   hidden: { y: "100%" },
   visible: {
     y: 0,
@@ -20,7 +20,8 @@ const sheetVariants = {
   },
   exit: {
     y: "100%",
-    transition: { duration: 0.2, ease: [0.16, 1, 0.3, 1] },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    transition: { duration: 0.2, ease: [0.16, 1, 0.3, 1] as any },
   },
 };
 

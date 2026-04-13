@@ -2,7 +2,7 @@
 // Refactored from monolith into focused sub-components. Glass card wrapper with ambient glow.
 // Pass 1: Consolidated layout — removed Deep Dive, tabs, Compare link. Reordered sections.
 
-import { useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import { HookAnalysisExpanded } from "./HookAnalysisExpanded";
 import { HashtagsC2 } from "./HashtagsC2";
 import { Copy, CheckCircle, Loader2, RotateCcw, Activity } from "lucide-react";
@@ -114,7 +114,7 @@ function formatRelativeTime(date: Date): string {
   return `${Math.floor(diffHour / 24)}d ago`;
 }
 
-export function ScoreCard({
+export const ScoreCard = memo(function ScoreCard({
   scores,
   improvements,
   budget,
@@ -186,7 +186,7 @@ export function ScoreCard({
 
   const [copied, setCopied] = useState(false);
 
-  const handleCopy = async () => {
+  const handleCopy = useCallback(async () => {
     const lines: string[] = [];
     lines.push(`--- CUTSHEET ANALYSIS \u2014 ${fileName || "Ad Creative"} ---`);
     lines.push(`Overall Score: ${scores.overall}/10`);
@@ -244,7 +244,7 @@ export function ScoreCard({
 
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  };
+  }, [scores, improvements, ctaRewrites, engineBudget, budget, fileName, dimensionOverrides]);
 
   return (
     <div className="scorecard flex flex-col gap-4">
@@ -305,7 +305,7 @@ export function ScoreCard({
         {/* Deep dive rows — only render border-t when content exists */}
         {(() => {
           const hookSection = analysisSections?.find(s => /hook/i.test(s.title));
-          const hasHashtags = hashtags && (hashtags.tiktok?.length > 0 || hashtags.meta?.length > 0 || hashtags.instagram?.length > 0 || hashtags.pinterest?.length > 0 || hashtags.reels?.length > 0 || hashtags.youtube_shorts?.length > 0);
+          const hasHashtags = hashtags && (hashtags.tiktok?.length > 0 || hashtags.meta?.length > 0 || hashtags.instagram?.length > 0 || (hashtags.pinterest?.length ?? 0) > 0 || (hashtags.reels?.length ?? 0) > 0 || (hashtags.youtube_shorts?.length ?? 0) > 0);
           if (!hookSection && !hasHashtags) return null;
           return (
             <div className="flex flex-col border-t border-white/[0.04]">
@@ -392,4 +392,4 @@ export function ScoreCard({
       />
     </div>
   );
-}
+});

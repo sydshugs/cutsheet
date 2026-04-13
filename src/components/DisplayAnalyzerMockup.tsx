@@ -6,11 +6,6 @@
 import React, { useState } from 'react';
 import { Monitor, Download, Plus, Signal, Wifi, BatteryMedium } from 'lucide-react';
 
-interface DisplayAnalyzerMockupProps {
-  imageSrc: string;
-  onDownload?: () => void;
-}
-
 const FORMATS = [
   "300×250 Rectangle",
   "728×90 Leaderboard",
@@ -20,6 +15,21 @@ const FORMATS = [
 ] as const;
 
 type AdFormat = typeof FORMATS[number];
+
+const FORMAT_KEY_MAP: Record<string, AdFormat> = {
+  "300x250": "300×250 Rectangle",
+  "728x90":  "728×90 Leaderboard",
+  "160x600": "160×600 Skyscraper",
+  "300x600": "300×600 Half Page",
+  "320x50":  "320×50 Mobile",
+};
+
+interface DisplayAnalyzerMockupProps {
+  imageSrc: string;
+  onDownload?: () => void;
+  detectedFormatKey?: string;
+  onSwitchToSuite?: () => void;
+}
 
 // Per-format metadata
 const FORMAT_META: Record<AdFormat, {
@@ -72,8 +82,10 @@ const FORMAT_META: Record<AdFormat, {
   },
 };
 
-export const DisplayAnalyzerMockup: React.FC<DisplayAnalyzerMockupProps> = ({ imageSrc, onDownload }) => {
-  const [activeFormat, setActiveFormat] = useState<AdFormat>("300×250 Rectangle");
+export const DisplayAnalyzerMockup: React.FC<DisplayAnalyzerMockupProps> = ({ imageSrc, onDownload, detectedFormatKey, onSwitchToSuite }) => {
+  const [activeFormat, setActiveFormat] = useState<AdFormat>(
+    (detectedFormatKey && FORMAT_KEY_MAP[detectedFormatKey]) || "300×250 Rectangle"
+  );
   const [viewMode, setViewMode] = useState<"single" | "suite">("single");
   const meta = FORMAT_META[activeFormat];
 
@@ -110,7 +122,13 @@ export const DisplayAnalyzerMockup: React.FC<DisplayAnalyzerMockupProps> = ({ im
           {(["single", "suite"] as const).map((m) => (
             <button
               key={m}
-              onClick={() => setViewMode(m)}
+              onClick={() => {
+                if (m === "suite" && onSwitchToSuite) {
+                  onSwitchToSuite();
+                } else {
+                  setViewMode(m);
+                }
+              }}
               className="rounded-full px-3 py-1 text-xs transition-colors"
               style={viewMode === m ? {
                 background: "rgba(255,255,255,0.06)",

@@ -2,7 +2,7 @@
 // Enhanced visual hierarchy with clear fix identification and actionable suggestions
 // Design improvements: severity indicators, priority ordering, category badges, better spacing
 
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { AlertCircle, ChevronRight, Zap, Type, Layout, Contrast, Layers, CheckCircle2, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -124,7 +124,7 @@ export function CreativeAnalysis({
   }, [fixes]);
 
   const categories = useMemo(() => {
-    const cats = [{ key: 'all', label: `All ${fixes.length}`, icon: null }];
+    const cats: { key: string; label: string; icon: typeof Layout | null }[] = [{ key: 'all', label: `All ${fixes.length}`, icon: null }];
     for (const cat of ['hierarchy', 'typography', 'layout', 'contrast']) {
       if (categoryCounts[cat]) {
         const style = CATEGORY_STYLES[cat];
@@ -253,14 +253,17 @@ export function CreativeAnalysis({
                       : '#71717a',
                   }}
                 >
-                  {CatIcon && (
-                    <CatIcon 
-                      size={12} 
-                      style={{ 
-                        color: isActive ? (catStyle?.color ?? '#f4f4f5') : '#52525b',
-                      }} 
-                    />
-                  )}
+                  {CatIcon && (() => {
+                    const Icon = CatIcon as React.ElementType<{ size?: number; style?: React.CSSProperties }>;
+                    return (
+                      <Icon
+                        size={12}
+                        style={{
+                          color: isActive ? (catStyle?.color ?? '#f4f4f5') : '#52525b',
+                        }}
+                      />
+                    );
+                  })()}
                   <span>{cat.key === 'all' ? 'All' : cat.label}</span>
                   <span 
                     className="text-[10px] font-medium ml-0.5 px-1.5 py-0.5 rounded"

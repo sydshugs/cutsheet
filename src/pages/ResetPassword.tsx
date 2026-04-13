@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import type { Variants } from "framer-motion";
 import { Lock, Eye, EyeOff, Loader2, CheckCircle, ArrowRight } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
@@ -57,12 +58,12 @@ function CutsheetLogo() {
   );
 }
 
-const fieldVariants = {
+const fieldVariants: Variants = {
   hidden: { opacity: 0, x: -8 },
   visible: (i: number) => ({
     opacity: 1,
     x: 0,
-    transition: { delay: i * 0.1, duration: 0.4, ease: "easeOut" },
+    transition: { delay: i * 0.1, duration: 0.4, ease: "easeOut" as never },
   }),
 };
 

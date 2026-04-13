@@ -3,9 +3,9 @@ import { Helmet } from 'react-helmet-async';
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useOutletContext, useNavigate, Link } from "react-router-dom";
 import { RotateCcw, Upload, Sparkles, Lock, Zap } from "lucide-react";
+import PaidRightPanel, { type PaidRightPanelHandle } from "../../components/paid/PaidRightPanel";
 import { Toast } from "../../components/Toast";
 import { AnalyzerView } from "../../components/AnalyzerView";
-import { BriefResultView, type BriefSection } from "../../components/BriefResultView";
 import { ScoreCard } from "../../components/ScoreCard";
 import { VideoDropzone } from "../../components/VideoDropzone";
 import { HistoryDrawer } from "../../components/HistoryDrawer";
@@ -15,43 +15,23 @@ import { useVideoAnalyzer } from "../../hooks/useVideoAnalyzer";
 import { type HistoryEntry } from "../../hooks/useHistory";
 import { useThumbnail } from "../../hooks/useThumbnail";
 import {
-  downloadMarkdown, copyToClipboard, generateBrief,
+  downloadMarkdown, copyToClipboard,
   parseImprovements, parseBudget, parseHashtags,
   type AnalysisResult,
 } from "../../services/analyzerService";
-import {
-  generateBriefWithClaude, generateCTARewrites, generateSecondEyeReview,
-  generateStaticSecondEye, generateImprovements, generatePlatformScore,
-  type SecondEyeResult,
-  type StaticSecondEyeResult,
-  type PlatformScore,
-} from "../../services/claudeService";
-import { PlatformSwitcher, PAID_AD_PLATFORMS, PAID_STATIC_PLATFORMS, VIDEO_ONLY_PLATFORMS } from "../../components/PlatformSwitcher";
-import { extractRightPanelSections } from "../../components/ReportCards";
-import { YouTubeFormatSelector, type YouTubeFormat } from "../../components/YouTubeFormatSelector";
-import { generateFixIt, type FixItResult } from "../../services/fixItService";
-import FixItPanel from "../../components/FixItPanel";
-import { generatePrediction, type PredictionResult } from "../../services/predictionService";
-import { SecondEyePanel } from "../../components/SecondEyePanel";
+import { VIDEO_ONLY_PLATFORMS } from "../../components/PlatformSwitcher";
+import { type YouTubeFormat } from "../../components/YouTubeFormatSelector";
 import { VisualizePanel } from "../../components/VisualizePanel";
-import { visualizeAd } from "../../lib/visualizeService";
-import { animateImage } from "../../lib/visualizeVideoService";
-import { uploadImageToStorage, uploadDataUriToStorage, removeFromStorage } from "../../lib/storageService";
-import type { VisualizeResult, VisualizeStatus } from "../../types/visualize";
-import { StaticSecondEyePanel } from "../../components/StaticSecondEyePanel";
-import { PolicyCheckPanel } from "../../components/PolicyCheckPanel";
-import { runPolicyCheck, type PolicyCheckResult } from "../../lib/policyCheckService";
+import { useVisualize } from "../../hooks/useVisualize";
 import { SafeZoneModal } from "../../components/SafeZoneModal";
 import { getImageDimensions, getImageDimensionsFromSrc } from "../../utils/getImageDimensions";
-import { BeforeAfterComparison } from "../../components/BeforeAfterComparison";
 import { generateComparison, type ComparisonResult } from "../../services/claudeService";
-import { saveAnalysis } from "../../services/historyService";
 import type { AnalysisRecord } from "../../services/historyService";
 import { getUserContext, formatUserContextBlock } from "../../services/userContextService";
 import { getSessionMemory } from "@/src/lib/userMemoryService";
-import { generateBudgetRecommendation, type EngineBudgetRecommendation } from "../../services/budgetService";
 import type { AppSharedContext } from "../../components/AppLayout";
 import { cn } from "../../lib/utils";
+import { usePostAnalysis } from "../../hooks/usePostAnalysis";
 
 const API_KEY = ""; // Gemini calls are now server-side via /api/analyze
 
@@ -161,33 +141,12 @@ export default function PaidAdAnalyzer() {
   const [format, setFormat] = useState<Format>("video");
   const [youtubeFormat, setYoutubeFormat] = useState<YouTubeFormat>("skippable");
   const [ctaFree, setCtaFree] = useState(false);
-  // Second Eye + Design Review always on — no toggles
-  const secondEye = true;
-  const staticSecondEye = true;
-  const [secondEyeOutput, setSecondEyeOutput] = useState<SecondEyeResult | null>(null);
-  const [secondEyeLoading, setSecondEyeLoading] = useState(false);
-  const [staticSecondEyeResult, setStaticSecondEyeResult] = useState<StaticSecondEyeResult | null>(null);
-  const [staticSecondEyeLoading, setStaticSecondEyeLoading] = useState(false);
-  const [engineBudget, setEngineBudget] = useState<EngineBudgetRecommendation | null>(null);
   // ── Before/After re-analysis state
   const [reanalyzeMode, setReanalyzeMode] = useState(false);
   const [comparisonResult, setComparisonResult] = useState<ComparisonResult | null>(null);
   const [comparisonLoading, setComparisonLoading] = useState(false);
   const [originalScoresSnapshot, setOriginalScoresSnapshot] = useState<{ overall: number; hook: number; cta: number; clarity: number; production: number } | null>(null);
   const [originalImprovementsSnapshot, setOriginalImprovementsSnapshot] = useState<string[]>([]);
-  // ── Visualize It state
-  const [visualizeOpen, setVisualizeOpen] = useState(false);
-  const [visualizeStatus, setVisualizeStatus] = useState<VisualizeStatus>("idle");
-  const [visualizeResult, setVisualizeResult] = useState<VisualizeResult | null>(null);
-  const [visualizeError, setVisualizeError] = useState<string | null>(null);
-  const [visualizeCreditData, setVisualizeCreditData] = useState<import("../../types/visualize").VisualizeCreditData | null>(null);
-
-  // ── Motion Preview (Kling animation) state
-  const [motionVideoUrl, setMotionVideoUrl] = useState<string | null>(null);
-  const [motionLoading, setMotionLoading] = useState(false);
-  const [motionError, setMotionError] = useState<string | null>(null);
-  const [motionSource, setMotionSource] = useState<"improved" | "original" | null>(null);
-
   // ── Local analyzer state ───────────────────────────────────────────────────
   const [file, setFile] = useState<File | null>(null);
   const [urlInput, setUrlInput] = useState("");
@@ -195,44 +154,20 @@ export default function PaidAdAnalyzer() {
   const [isImporting, setIsImporting] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [loadedEntry, setLoadedEntry] = useState<HistoryEntry | null>(null);
-  const [rightTab, setRightTab] = useState<"analysis" | "brief" | "policy" | "ai_rewrite">("analysis");
-  const [brief, setBrief] = useState<string | null>(null);
-  const [briefLoading, setBriefLoading] = useState(false);
-  const [briefError, setBriefError] = useState<string | null>(null);
+  // rightTab state lives inside PaidRightPanel — use ref to drive it from outside
+  const rightPanelRef = useRef<PaidRightPanelHandle | null>(null);
   const [briefCopied, setBriefCopied] = useState(false);
-  const [ctaRewrites, setCtaRewrites] = useState<string[] | null>(null);
-  const [ctaLoading, setCtaLoading] = useState(false);
-  const [policyResult, setPolicyResult] = useState<PolicyCheckResult | null>(null);
-  const [policyLoading, setPolicyLoading] = useState(false);
-  const [policyError, setPolicyError] = useState<string | null>(null);
-  const [infoToast, setInfoToast] = useState<string | null>(null);
-  const [rateLimitError, setRateLimitError] = useState<string | null>(null);
-  const [analysisCompletedAt, setAnalysisCompletedAt] = useState<Date | null>(null);
+  const [rateLimitError] = useState<string | null>(null);
+  const [localInfoToast, setLocalInfoToast] = useState<string | null>(null);
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
   const [loadedFromHistory, setLoadedFromHistory] = useState<AnalysisRecord | null>(null);
   const [confirmStartOver, setConfirmStartOver] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
 
-  const [improvementsLoading, setImprovementsLoading] = useState(false);
-  const [platformImprovements, setPlatformImprovements] = useState<string[] | null>(null);
-  const [platformScoreResult, setPlatformScoreResult] = useState<PlatformScore | null>(null);
-  const [isPlatformSwitching, setIsPlatformSwitching] = useState(false);
-  const platformAbortRef = useRef<AbortController | null>(null);
-
-  // ── Saved analysis ID — for suggestion_feedback FK ───────────────────────
-  const [savedAnalysisId, setSavedAnalysisId] = useState<string | null>(null);
-
-  // ── Fix It For Me state ──────────────────────────────────────────────────
-  const [fixItResult, setFixItResult] = useState<FixItResult | null>(null);
-  const [fixItLoading, setFixItLoading] = useState(false);
-
   // ── Safe Zone state ───────────────────────────────────────────────────────
   const [safeZoneOpen, setSafeZoneOpen] = useState(false);
   const [staticImageDims, setStaticImageDims] = useState<{ width: number; height: number } | null>(null);
 
-  // ── Predicted Performance state ──────────────────────────────────────────
-  const [prediction, setPrediction] = useState<PredictionResult | null>(null);
-  const [predictionLoading, setPredictionLoading] = useState(false);
   const scorecardRef = useRef<HTMLDivElement | null>(null);
   const leftPanelRef = useRef<HTMLDivElement | null>(null);
   const lastSavedRef = useRef<string | null>(null);
@@ -248,41 +183,35 @@ export default function PaidAdAnalyzer() {
 
   const isAnalyzing = status === "uploading" || status === "processing";
 
-  // ── Register TopBar callbacks ──────────────────────────────────────────────
-  const handleReset = useCallback(() => {
-    setFile(null);
-    setLoadedEntry(null);
-    setLoadedFromHistory(null);
-    reset();
-    setBrief(null);
-    setBriefError(null);
-    setBriefLoading(false);
-    setCtaRewrites(null);
-    setCtaLoading(false);
-    setRightTab("analysis");
-    setSecondEyeOutput(null);
-    setSecondEyeLoading(false);
-    setStaticSecondEyeResult(null);
-    setStaticSecondEyeLoading(false);
-    setEngineBudget(null);
-    setReanalyzeMode(false);
-    setComparisonResult(null);
-    setComparisonLoading(false);
-    setOriginalScoresSnapshot(null);
-    setOriginalImprovementsSnapshot([]);
-    setPolicyResult(null);
-    setPolicyLoading(false);
-    setPolicyError(null);
-    setVisualizeOpen(false);
-    setVisualizeStatus("idle");
-    setVisualizeResult(null);
-    setVisualizeError(null);
-    setFixItResult(null);
-    setFixItLoading(false);
-    setPrediction(null);
-    setPredictionLoading(false);
-    setStaticImageDims(null);
-  }, [reset]);
+  // ── Derived: liveResult + activeResult (needed before hook calls) ─────────
+  const liveResult: AnalysisResult | null = result
+    ? { ...result, thumbnailDataUrl: thumbnailDataUrl ?? result.thumbnailDataUrl }
+    : result;
+
+  const activeResult: AnalysisResult | null = loadedFromHistory
+    ? {
+        markdown: '',
+        scores: loadedFromHistory.scores as AnalysisResult['scores'],
+        improvements: loadedFromHistory.improvements ?? [],
+        budget: loadedFromHistory.budget_recommendation
+          ? { verdict: loadedFromHistory.budget_recommendation as import('../../services/analyzerService').BudgetRecommendation['verdict'], platform: '', daily: '', duration: '', reason: '' }
+          : null,
+        hashtags: undefined,
+        fileName: loadedFromHistory.file_name,
+        timestamp: loadedFromHistory.created_at ? new Date(loadedFromHistory.created_at) : new Date(),
+      }
+    : loadedEntry
+    ? {
+        markdown: loadedEntry.markdown,
+        scores: loadedEntry.scores,
+        improvements: parseImprovements(loadedEntry.markdown),
+        budget: parseBudget(loadedEntry.markdown),
+        hashtags: parseHashtags(loadedEntry.markdown),
+        thumbnailDataUrl: loadedEntry.thumbnailDataUrl,
+        fileName: loadedEntry.fileName,
+        timestamp: new Date(loadedEntry.timestamp),
+      }
+    : liveResult;
 
   // Re-analyze handler: upload improved version, score, compare
   const handleReanalyze = async (improvedFile: File) => {
@@ -400,10 +329,60 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
     return base;
   })();
 
+  // ── Post-analysis hook — all secondary calls after primary analysis ──────────
+  const {
+    secondEyeOutput,
+    secondEyeLoading,
+    staticSecondEyeResult,
+    staticSecondEyeLoading,
+    engineBudget,
+    prediction,
+    predictionLoading,
+    brief,
+    briefLoading,
+    briefError,
+    setBrief,
+    setBriefError,
+    ctaRewrites,
+    ctaLoading,
+    policyResult,
+    policyLoading,
+    policyError,
+    fixItResult,
+    fixItLoading,
+    savedAnalysisId,
+    platformImprovements,
+    improvementsLoading,
+    platformScoreResult,
+    isPlatformSwitching,
+    analysisCompletedAt,
+    infoToast: postAnalysisInfoToast,
+    handleGenerateBrief,
+    handleCTARewrite,
+    handleCheckPolicies,
+    handleFixIt,
+    handlePlatformSwitch: handlePlatformSwitchInternal,
+    resetPostAnalysis,
+  } = usePostAnalysis({
+    status,
+    result,
+    activeResult,
+    format,
+    platform,
+    userContext,
+    rawUserContext,
+    sessionMemoryRef,
+    thumbnailDataUrl,
+    ctaFree,
+    addHistoryEntry,
+    increment,
+    isPro,
+    FREE_LIMIT,
+    onUpgradeRequired,
+    rightPanelRef,
+  });
+
   // ── Effects ───────────────────────────────────────────────────────────────
-  useEffect(() => {
-    if (status === "complete") setAnalysisCompletedAt(new Date());
-  }, [status]);
 
   // Mobile: scroll to ScoreCard when analysis completes
   useEffect(() => {
@@ -414,111 +393,18 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
     }
   }, [status]);
 
-  // ── Consolidated post-analysis: fires ALL secondary calls in parallel ──
-  const postAnalysisFiredRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (status !== "complete" || !result) return;
-    const key = `${result.fileName}-${result.timestamp.toISOString()}`;
-    if (postAnalysisFiredRef.current === key) return;
-    postAnalysisFiredRef.current = key;
-
-    // Synchronous: budget recommendation + history
-    if (result.scores) {
-      const niche = userContext.match(/Niche:\s*(.+)/)?.[1]?.trim() || 'Other';
-      setEngineBudget(generateBudgetRecommendation(result.scores.overall, platform, niche, format));
-    }
-    addHistoryEntry({
-      fileName: result.fileName, timestamp: result.timestamp.toISOString(),
-      scores: result.scores, markdown: result.markdown, thumbnailDataUrl: thumbnailDataUrl ?? undefined,
-    });
-    const newCount = increment();
-    if (newCount >= FREE_LIMIT && !isPro) onUpgradeRequired("analyze");
-    saveAnalysis({
-      file_name: result.fileName, file_type: format === 'video' ? 'video' : 'static',
-      mode: 'paid', platform: platform || 'all', overall_score: result.scores?.overall ?? 0,
-      scores: { hook: result.scores?.hook ?? 0, clarity: result.scores?.clarity ?? 0, cta: result.scores?.cta ?? 0, production: result.scores?.production ?? 0 },
-      improvements: result.improvements ?? [],
-      cta_rewrite: Array.isArray(ctaRewrites) && ctaRewrites.length > 0 ? ctaRewrites[0] : undefined,
-      budget_recommendation: result.budget?.verdict ?? undefined,
-    }).then(id => { if (id) setSavedAnalysisId(id); });
-    setHistoryRefreshKey(k => k + 1);
-
-    // Async parallel: Second Eye (video) + Static Design Review + Prediction
-    if (secondEye && format === "video") {
-      setSecondEyeLoading(true);
-      setSecondEyeOutput(null);
-      generateSecondEyeReview(
-        result.markdown, result.fileName,
-        result.scores ? { hook: result.scores.hook, overall: result.scores.overall } : undefined,
-        result.improvements, userContext || undefined, sessionMemoryRef.current
-      ).then(setSecondEyeOutput).catch(() => setSecondEyeOutput(null)).finally(() => setSecondEyeLoading(false));
-    }
-
-    if (staticSecondEye && format === "static") {
-      setStaticSecondEyeLoading(true);
-      setStaticSecondEyeResult(null);
-      generateStaticSecondEye(
-        result.markdown, result.fileName,
-        result.scores ? { overall: result.scores.overall, cta: result.scores.cta } : undefined,
-        result.improvements, userContext || undefined, sessionMemoryRef.current
-      ).then(setStaticSecondEyeResult).catch(() => setStaticSecondEyeResult(null)).finally(() => setStaticSecondEyeLoading(false));
-    }
-
-    if (result.scores) {
-      setPredictionLoading(true);
-      generatePrediction(
-        result.markdown, result.scores,
-        platform === "all" ? rawUserContext?.platform : platform,
-        format as 'video' | 'static', rawUserContext?.niche,
-      ).then(r => { setPrediction(r); setPredictionLoading(false); })
-       .catch((err) => { console.error('Prediction failed (silent):', err); setPredictionLoading(false); });
-    }
-  }, [status, result]); // eslint-disable-line
-
-  // Platform switch: re-generate improvements + platform score when platform changes
+  // Platform switch: update platform state then delegate secondary calls to hook
   const handlePlatformSwitch = useCallback(async (newPlatform: string) => {
     setPlatform(newPlatform as Platform);
     // Reset ctaFree when switching away from Meta
     if (newPlatform !== "Meta") setCtaFree(false);
-    if (status !== "complete" || !result?.markdown || !result?.scores) return;
-    if (newPlatform === "all") {
-      setPlatformScoreResult(null);
-      setPlatformImprovements(null);
-      return;
-    }
-
-    // Cancel any in-flight platform score request
-    platformAbortRef.current?.abort();
-    platformAbortRef.current = new AbortController();
-
-    setIsPlatformSwitching(true);
-    setImprovementsLoading(true);
-
-    try {
-      const [imps, pScore] = await Promise.all([
-        generateImprovements(result.markdown, result.scores, userContext || undefined, newPlatform, sessionMemoryRef.current),
-        generatePlatformScore(newPlatform, result, result.fileName, format as 'video' | 'static', userContext || undefined, rawUserContext?.niche),
-      ]);
-      setPlatformImprovements(imps);
-      setPlatformScoreResult(pScore);
-    } catch {
-      setPlatformImprovements(null);
-      // Keep existing platform score on error
-    } finally {
-      setIsPlatformSwitching(false);
-      setImprovementsLoading(false);
-    }
-  }, [status, result, userContext, format]); // eslint-disable-line
+    await handlePlatformSwitchInternal(newPlatform);
+  }, [handlePlatformSwitchInternal]);
 
   useEffect(() => {
     if (status === "uploading") {
       setLoadedEntry(null);
-      setPlatformImprovements(null);
-      setBrief(null);
-      setBriefError(null);
-      setRightTab("analysis");
-      setSecondEyeOutput(null);
-      setStaticSecondEyeResult(null);
+      rightPanelRef.current?.setTab("analysis");
     }
   }, [status]);
 
@@ -526,13 +412,73 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
   useEffect(() => {
     if (format === "static" && VIDEO_ONLY_PLATFORMS.has(platform)) {
       setPlatform("Meta" as Platform);
-      setInfoToast("TikTok and YouTube don't support static ads — switched to Meta");
-      setTimeout(() => setInfoToast(null), 3000);
+      setLocalInfoToast("TikTok and YouTube don't support static ads — switched to Meta");
+      setTimeout(() => setLocalInfoToast(null), 3000);
     }
     if (format === "static" && platform === "all") {
       setPlatform("Meta" as Platform);
     }
   }, [format]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Handlers ──────────────────────────────────────────────────────────────
+  const handleAnalyze = useCallback(async () => {
+    if (!file || isAnalyzing || !canAnalyze) return;
+    let sessionMemory = '';
+    try {
+      ({ text: sessionMemory } = await getSessionMemory());
+    } catch { /* non-critical — proceed without memory */ }
+    sessionMemoryRef.current = sessionMemory;
+    await analyze(file, API_KEY, contextPrefix, userContext || undefined, sessionMemory);
+  }, [file, isAnalyzing, canAnalyze, analyze, contextPrefix]);
+
+  useEffect(() => {
+    if (file && status === "idle" && canAnalyze) {
+      handleAnalyze();
+    }
+  }, [file]); // eslint-disable-line
+
+  // ── Visualize It + Motion Preview — delegated to useVisualize ─────────────
+  const {
+    visualizeOpen, setVisualizeOpen,
+    visualizeStatus, setVisualizeStatus,
+    visualizeResult, setVisualizeResult,
+    visualizeError, setVisualizeError,
+    visualizeCreditData, setVisualizeCreditData,
+    motionVideoUrl, setMotionVideoUrl,
+    motionLoading, setMotionLoading,
+    motionError, setMotionError,
+    motionSource, setMotionSource,
+    handleVisualize,
+    handleMotionPreview,
+    handleAnimateVisualized,
+    handleAnimateOriginalFromPanel,
+    resetVisualize,
+  } = useVisualize({
+    file,
+    format,
+    platform,
+    thumbnailDataUrl,
+    activeResult,
+    userContext,
+    onUpgradeRequired,
+  });
+
+  // ── Register TopBar callbacks — declared here so resetPostAnalysis + resetVisualize are in scope ──
+  const handleReset = useCallback(() => {
+    setFile(null);
+    setLoadedEntry(null);
+    setLoadedFromHistory(null);
+    reset();
+    resetPostAnalysis();
+    rightPanelRef.current?.setTab("analysis");
+    setReanalyzeMode(false);
+    setComparisonResult(null);
+    setComparisonLoading(false);
+    setOriginalScoresSnapshot(null);
+    setOriginalImprovementsSnapshot([]);
+    resetVisualize();
+    setStaticImageDims(null);
+  }, [reset, resetPostAnalysis, resetVisualize]);
 
   // ── Auto-detect format on file drop (no modal) ──────────────────────────
   const handleFileWithFormatCheck = useCallback((f: File | null) => {
@@ -574,64 +520,17 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
     // Auto-switch format silently + show toast
     if (fileIsImage && format !== "static") {
       setFormat("static" as Format);
-      setInfoToast("Detected static image — analyzing as Static");
-      setTimeout(() => setInfoToast(null), 3000);
+      setLocalInfoToast("Detected static image — analyzing as Static");
+      setTimeout(() => setLocalInfoToast(null), 3000);
     } else if (fileIsVideo && format !== "video") {
       setFormat("video" as Format);
-      setInfoToast("Detected video — analyzing as Video");
-      setTimeout(() => setInfoToast(null), 3000);
+      setLocalInfoToast("Detected video — analyzing as Video");
+      setTimeout(() => setLocalInfoToast(null), 3000);
     }
 
     setFile(f);
     reset();
   }, [format, handleReset, reset]);
-
-  // ── Handlers ──────────────────────────────────────────────────────────────
-  const handleAnalyze = useCallback(async () => {
-    if (!file || isAnalyzing || !canAnalyze) return;
-    let sessionMemory = '';
-    try {
-      ({ text: sessionMemory } = await getSessionMemory());
-    } catch { /* non-critical — proceed without memory */ }
-    sessionMemoryRef.current = sessionMemory;
-    await analyze(file, API_KEY, contextPrefix, userContext || undefined, sessionMemory);
-  }, [file, isAnalyzing, canAnalyze, analyze, contextPrefix]);
-
-  useEffect(() => {
-    if (file && status === "idle" && canAnalyze) {
-      handleAnalyze();
-    }
-  }, [file]); // eslint-disable-line
-
-  // ── Derived ───────────────────────────────────────────────────────────────
-  const liveResult: AnalysisResult | null = result
-    ? { ...result, thumbnailDataUrl: thumbnailDataUrl ?? result.thumbnailDataUrl }
-    : result;
-
-  const activeResult: AnalysisResult | null = loadedFromHistory
-    ? {
-        markdown: '',
-        scores: loadedFromHistory.scores as AnalysisResult['scores'],
-        improvements: loadedFromHistory.improvements ?? [],
-        budget: loadedFromHistory.budget_recommendation
-          ? { verdict: loadedFromHistory.budget_recommendation as import('../../services/analyzerService').BudgetRecommendation['verdict'], platform: '', daily: '', duration: '', reason: '' }
-          : null,
-        hashtags: undefined,
-        fileName: loadedFromHistory.file_name,
-        timestamp: loadedFromHistory.created_at ? new Date(loadedFromHistory.created_at) : new Date(),
-      }
-    : loadedEntry
-    ? {
-        markdown: loadedEntry.markdown,
-        scores: loadedEntry.scores,
-        improvements: parseImprovements(loadedEntry.markdown),
-        budget: parseBudget(loadedEntry.markdown),
-        hashtags: parseHashtags(loadedEntry.markdown),
-        thumbnailDataUrl: loadedEntry.thumbnailDataUrl,
-        fileName: loadedEntry.fileName,
-        timestamp: new Date(loadedEntry.timestamp),
-      }
-    : liveResult;
 
   useEffect(() => {
     if (format !== "static") {
@@ -728,297 +627,10 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
   };
   void handleDownload;
 
-  const handleGenerateBrief = async () => {
-    if (!activeResult || briefLoading) return;
-    setBriefLoading(true);
-    setBriefError(null);
-    try {
-      const r = await generateBriefWithClaude(activeResult.markdown, activeResult.fileName, userContext || undefined, sessionMemoryRef.current, format, platform);
-      setBrief(r);
-      setRightTab("brief");
-    } catch {
-      try {
-        const r = await generateBrief(activeResult.markdown, API_KEY);
-        setBrief(r);
-        setRightTab("brief");
-      } catch (err) {
-        setBriefError(err instanceof Error ? err.message : "Failed to generate brief.");
-      }
-    } finally { setBriefLoading(false); }
-  };
-
-  const handleCTARewrite = async () => {
-    if (!activeResult || ctaLoading) return;
-    setCtaLoading(true);
-    try {
-      const ctaSection = activeResult.markdown.match(/CTA[\s\S]*?(?=\n##|\n---)/i)?.[0] ?? "";
-      const rewrites = await generateCTARewrites(ctaSection, activeResult.fileName, userContext || undefined, sessionMemoryRef.current);
-      setCtaRewrites(rewrites);
-    } catch { /* silent */ }
-    finally { setCtaLoading(false); }
-  };
-
-  const handleCheckPolicies = async () => {
-    if (!activeResult || policyLoading) return;
-    setPolicyLoading(true);
-    setPolicyError(null);
-    setRightTab("policy");
-    try {
-      // Determine policy platform from current platform selection
-      const policyPlatform =
-        platform === "Meta" ? "meta"
-        : platform === "TikTok" ? "tiktok"
-        : "both";
-
-      const r = await runPolicyCheck({
-        platform: policyPlatform,
-        adType: format,
-        niche: userContext ? "from user context" : "unknown",
-        adCopy: activeResult.markdown,
-        existingAnalysis: activeResult.scores as unknown as object,
-      });
-      setPolicyResult(r);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Policy check failed";
-      if (msg.startsWith("RATE_LIMITED")) {
-        const time = msg.split(":")[1] ?? "24h";
-        setPolicyError(`Daily limit reached. Resets in ${time}. Upgrade to Pro for unlimited checks.`);
-      } else {
-        setPolicyError(msg);
-      }
-    } finally {
-      setPolicyLoading(false);
-    }
-  };
-
-  // ── Fix It For Me handler ──────────────────────────────────────────────────
-  const handleFixIt = async () => {
-    if (!activeResult?.markdown || !activeResult?.scores || fixItLoading) return;
-    setFixItLoading(true);
-    setRightTab("ai_rewrite");
-    try {
-      const result = await generateFixIt(
-        activeResult.markdown,
-        activeResult.scores,
-        platform === "all" ? rawUserContext?.platform : platform,
-        rawUserContext?.niche,
-        undefined, // intent
-        format as 'video' | 'static',
-        undefined, // isOrganic
-        ctaFree,
-      );
-      setFixItResult(result);
-    } catch (err) {
-      console.error('Fix It failed:', err);
-      const msg = err instanceof Error ? err.message : '';
-      if (msg.startsWith('RATE_LIMITED')) {
-        setInfoToast('Fix It limit reached. Try again later.');
-        setTimeout(() => setInfoToast(null), 3000);
-      }
-    } finally {
-      setFixItLoading(false);
-    }
-  };
-
-  // ── Predicted Performance — auto-fire on analysis complete ────────────────
-  // Prediction is now fired in the consolidated post-analysis useEffect above
-
-  const handleVisualize = async () => {
-    if (!activeResult?.scores || !file) return;
-    setVisualizeOpen(true);
-    setVisualizeStatus("loading");
-    // Scroll left panel to top so VisualizePanel is visible immediately
+  // Thin wrapper: scroll left panel to top before delegating to the hook handler
+  const handleVisualizeWithScroll = async () => {
     setTimeout(() => leftPanelRef.current?.scrollTo({ top: 0, behavior: "smooth" }), 100);
-    setVisualizeResult(null);
-    setVisualizeError(null);
-    try {
-      // For video: use thumbnail (hook frame) as the creative input
-      let imageFile: File = file;
-      if (format === "video") {
-        if (!thumbnailDataUrl) {
-          setVisualizeError("Could not extract a frame from this video.");
-          setVisualizeStatus("error");
-          return;
-        }
-        const blob = await fetch(thumbnailDataUrl).then(r => r.blob());
-        imageFile = new File([blob], "hook-frame.jpg", { type: "image/jpeg" });
-      }
-      const { signedUrl: imageStorageUrl, storagePath } = await uploadImageToStorage(imageFile, 1200, 0.85);
-      const niche = userContext.match(/Niche:\s*(.+)/)?.[1]?.trim() || "general";
-      // Meta static ads use platform-native CTA — exclude CTA from generated creative
-      const isMetaStatic = platform === "Meta" && format === "static";
-      const cleanPlatform = platform === "all" ? "general" : platform;
-      const result = await visualizeAd({
-        imageStorageUrl,
-        imageMediaType: "image/jpeg",
-        analysisResult: {
-          scores: activeResult.scores as Record<string, number>,
-          improvements: activeResult.improvements ?? [],
-          markdown: activeResult.markdown,
-        },
-        platform: cleanPlatform,
-        niche,
-        adType: "static",
-        excludeCta: isMetaStatic,
-        visualizeContext: {
-          adType: "paid",
-          format: format as "static" | "video",
-          platform: cleanPlatform,
-          excludeCta: isMetaStatic,
-        },
-      });
-      setVisualizeResult(result);
-      setVisualizeStatus("complete");
-      removeFromStorage(storagePath);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Unknown error";
-      if (msg === "PRO_REQUIRED") {
-        setVisualizeOpen(false);
-        setVisualizeStatus("idle");
-        onUpgradeRequired("visualize");
-        return;
-      }
-      if (msg === "CREDIT_LIMIT_REACHED" && err && typeof err === "object" && "creditData" in err) {
-        const creditErr = err as Error & { creditData: import("../../types/visualize").VisualizeCreditData };
-        setVisualizeCreditData(creditErr.creditData);
-        setVisualizeStatus("credit_limit");
-        return;
-      }
-      setVisualizeError(msg.includes("RATE_LIMITED") ? "RATE_LIMITED" : msg);
-      setVisualizeStatus("error");
-    }
-  };
-
-  // Motion Preview: animates the ORIGINAL uploaded image (no Gemini edit)
-  const handleMotionPreview = async () => {
-    if (!file || motionLoading) return; // guard against double-clicks
-    setMotionLoading(true);
-    setMotionError(null);
-    setMotionVideoUrl(null);
-
-    try {
-      // Upload original image to get a URL for Kling
-      const { signedUrl } = await uploadImageToStorage(file, 1024, 0.85);
-
-      let aspectRatio: "9:16" | "4:5" | "16:9" = "9:16";
-      const img = new Image();
-      const ratio = await new Promise<number>((resolve) => {
-        img.onload = () => resolve(img.width / img.height);
-        img.onerror = () => resolve(1);
-        img.src = URL.createObjectURL(file);
-      });
-      if (ratio > 1.2) aspectRatio = "16:9";
-      else if (ratio > 0.9) aspectRatio = "4:5";
-
-      const result = await animateImage({ imageUrl: signedUrl, aspectRatio });
-      setMotionVideoUrl(result.videoUrl);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Unknown error";
-      if (msg === "PRO_REQUIRED") { onUpgradeRequired("visualize_video"); return; }
-      if (msg === "CREDIT_LIMIT_REACHED" && err && typeof err === "object" && "creditData" in err) {
-        const creditErr = err as Error & { creditData: import("../../types/visualize").VisualizeCreditData };
-        setVisualizeCreditData(creditErr.creditData);
-        setVisualizeStatus("credit_limit");
-        setVisualizeOpen(true);
-        return;
-      }
-      setMotionError(msg);
-    } finally {
-      setMotionLoading(false);
-    }
-  };
-
-  // Animate Visualized: uses Gemini-improved image from Visualize v2
-  const handleAnimateVisualized = async () => {
-    if (motionLoading) return; // guard against double-clicks
-    const seedDataUri = visualizeResult?.generatedImageUrl;
-    if (!seedDataUri) return;
-
-    setMotionLoading(true);
-    setMotionError(null);
-    setMotionVideoUrl(null);
-    setMotionSource("improved");
-
-    let tempStoragePath: string | undefined;
-    try {
-      // Gemini returns a data: URI — Kling needs a public URL.
-      // Upload to Supabase temp storage first.
-      const { signedUrl, storagePath } = await uploadDataUriToStorage(seedDataUri);
-      tempStoragePath = storagePath;
-
-      // Detect aspect ratio from the original file dimensions (default 9:16 for vertical)
-      let aspectRatio: "9:16" | "4:5" | "16:9" = "9:16";
-      if (file) {
-        const img = new Image();
-        const ratio = await new Promise<number>((resolve) => {
-          img.onload = () => resolve(img.width / img.height);
-          img.onerror = () => resolve(1);
-          img.src = URL.createObjectURL(file);
-        });
-        if (ratio > 1.2) aspectRatio = "16:9";
-        else if (ratio > 0.9) aspectRatio = "4:5";
-      }
-
-      const result = await animateImage({ imageUrl: signedUrl, aspectRatio });
-      setMotionVideoUrl(result.videoUrl);
-
-      // Cleanup temp image from Supabase
-      if (tempStoragePath) removeFromStorage(tempStoragePath);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Unknown error";
-      if (msg === "PRO_REQUIRED") {
-        onUpgradeRequired("visualize_video");
-        return;
-      }
-      if (msg === "CREDIT_LIMIT_REACHED" && err && typeof err === "object" && "creditData" in err) {
-        const creditErr = err as Error & { creditData: import("../../types/visualize").VisualizeCreditData };
-        setVisualizeCreditData(creditErr.creditData);
-        setVisualizeStatus("credit_limit");
-        return;
-      }
-      setMotionError(msg);
-    } finally {
-      setMotionLoading(false);
-      // Cleanup on error too
-      if (tempStoragePath) removeFromStorage(tempStoragePath);
-    }
-  };
-
-  // Animate Original from Visualize panel: uses original uploaded image
-  const handleAnimateOriginalFromPanel = async () => {
-    if (!file || motionLoading) return; // guard against double-clicks
-    setMotionLoading(true);
-    setMotionError(null);
-    setMotionVideoUrl(null);
-    setMotionSource("original");
-
-    try {
-      const { signedUrl } = await uploadImageToStorage(file, 1024, 0.85);
-      let aspectRatio: "9:16" | "4:5" | "16:9" = "9:16";
-      const img = new Image();
-      const ratio = await new Promise<number>((resolve) => {
-        img.onload = () => resolve(img.width / img.height);
-        img.onerror = () => resolve(1);
-        img.src = URL.createObjectURL(file);
-      });
-      if (ratio > 1.2) aspectRatio = "16:9";
-      else if (ratio > 0.9) aspectRatio = "4:5";
-
-      const result = await animateImage({ imageUrl: signedUrl, aspectRatio });
-      setMotionVideoUrl(result.videoUrl);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Unknown error";
-      if (msg === "PRO_REQUIRED") { onUpgradeRequired("visualize_video"); return; }
-      if (msg === "CREDIT_LIMIT_REACHED" && err && typeof err === "object" && "creditData" in err) {
-        const creditErr = err as Error & { creditData: import("../../types/visualize").VisualizeCreditData };
-        setVisualizeCreditData(creditErr.creditData);
-        setVisualizeStatus("credit_limit");
-        return;
-      }
-      setMotionError(msg);
-    } finally {
-      setMotionLoading(false);
-    }
+    await handleVisualize();
   };
 
   const handleBriefCopy = async () => {
@@ -1037,8 +649,8 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
       markdown: activeResult.markdown,
       brand: "", format: "", niche: "", platform: "", tags: [], notes: "",
     });
-    setInfoToast("Saved to your library");
-    setTimeout(() => setInfoToast(null), 2500);
+    setLocalInfoToast("Saved to your library");
+    setTimeout(() => setLocalInfoToast(null), 2500);
   };
 
   const importFromUrl = async (rawUrl: string) => {
@@ -1125,8 +737,8 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                       originalImageUrl={thumbnailDataUrl ?? null}
                       error={visualizeError}
                       creditData={visualizeCreditData}
-                      onBack={() => { setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); setVisualizeCreditData(null); setMotionVideoUrl(null); setMotionLoading(false); setMotionError(null); setMotionSource(null); }}
-                      onClose={() => { setVisualizeOpen(false); setVisualizeStatus("idle"); setVisualizeResult(null); setVisualizeError(null); setVisualizeCreditData(null); setMotionVideoUrl(null); setMotionLoading(false); setMotionError(null); setMotionSource(null); }}
+                      onBack={resetVisualize}
+                      onClose={resetVisualize}
                       videoUrl={motionVideoUrl}
                       videoLoading={motionLoading}
                       videoError={motionError}
@@ -1147,8 +759,8 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                         result={activeResult}
                         error={error}
                         analysisError={analysisError}
-                        thumbnailDataUrl={activeResult?.thumbnailDataUrl ?? thumbnailDataUrl}
-                        fileObjectUrl={fileObjectUrl}
+                        thumbnailDataUrl={activeResult?.thumbnailDataUrl ?? thumbnailDataUrl ?? undefined}
+                        fileObjectUrl={fileObjectUrl ?? undefined}
                         format={format}
                         onFileSelect={(f) => handleFileWithFormatCheck(f)}
                         onUrlSubmit={async (u) => { setUrlInput(u); await importFromUrl(u); }}
@@ -1162,7 +774,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                         icon={Zap}
                         niche={rawUserContext?.niche}
                         onFixIt={handleFixIt}
-                        onVisualize={handleVisualize}
+                        onVisualize={handleVisualizeWithScroll}
                         onMotionPreview={handleMotionPreview}
                         motionVideoUrl={motionVideoUrl}
                         motionLoading={motionLoading}
@@ -1175,7 +787,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                         policyLoading={policyLoading}
                         policyResult={policyResult}
                         visualizeLoading={visualizeStatus === 'loading'}
-                        visualizeResult={visualizeResult ? { url: visualizeResult.imageUrl ?? visualizeResult.videoUrl, type: visualizeResult.videoUrl ? 'video' : 'image' } : null}
+                        visualizeResult={visualizeResult ? { url: visualizeResult.generatedImageUrl, type: 'image' } : null}
                         designReviewData={staticSecondEyeResult ? {
                           flags: staticSecondEyeResult.flags ?? [],
                           topIssue: staticSecondEyeResult.topIssue,
@@ -1184,7 +796,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                         secondEyeResult={secondEyeOutput}
                         secondEyeLoading={secondEyeLoading}
                         secondEyeSlot={
-                          status === "complete" && format === "video" && secondEye ? (
+                          status === "complete" && format === "video" ? (
                             <div className="mt-3">
                               {/* SecondEyePanel now rendered inside CreativeVerdictAndSecondEye */}
                             </div>
@@ -1199,334 +811,62 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
         </div>
       </div>
 
-      {/* Right panel — ScoreCard */}
-      <div
-        className={`shrink-0 min-w-0 bg-[#111113] border-l border-white/[0.06] overflow-y-auto overflow-x-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-white/[0.06] relative ${showRightPanel ? "w-[350px] max-lg:w-full opacity-100" : "w-0 max-lg:w-0 opacity-0"}`}
-      >
-        <div className="flex min-w-0 flex-col gap-[16px] p-[24px]">
-        <AnimatePresence mode="wait">
-        {showRightPanel && activeResult?.scores && rightTab === "analysis" && !(reanalyzeMode && !comparisonResult) && (
-          <motion.div
-            key="analysis"
-            initial={{ opacity: 0, x: 16 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -16 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="flex flex-col gap-[16px]"
-          >
-            {/* Platform Switcher + YouTube format moved inside ScoreCard */}
-            <div ref={scorecardRef}>
-              <ScoreCard
-                scores={activeResult.scores}
-                hookDetail={activeResult.hookDetail}
-                improvements={platformScoreResult?.improvements ?? platformImprovements ?? activeResult.improvements}
-                improvementsLoading={improvementsLoading}
-                budget={activeResult.budget}
-                hashtags={activeResult.hashtags}
-                scenes={activeResult.scenes}
-                fileName={activeResult.fileName}
-                analysisTime={analysisCompletedAt ?? undefined}
-                scoreRange={activeResult.scores ? {
-                  low:  Math.max(0,  Math.round((activeResult.scores.overall - 0.65) * 10) / 10),
-                  high: Math.min(10, Math.round((activeResult.scores.overall + 0.65) * 10) / 10),
-                } : undefined}
-                overallDelta={scoreDelta?.overall}
-                overallDeltaLabel={scoreDelta?.label}
-                dimensionDeltas={scoreDelta?.dims}
-                modelName="Gemini + Claude"
-                onGenerateBrief={handleGenerateBrief}
-                onAddToSwipeFile={handleAddToSwipeFile}
-                onCTARewrite={handleCTARewrite}
-                ctaRewrites={ctaRewrites}
-                ctaLoading={ctaLoading}
-                onShare={handleCopy}
-                isDark={true}
-                format={format}
-                engineBudget={engineBudget}
-                onNavigateSettings={() => navigate('/settings')}
-                onReanalyze={() => { setComparisonResult(null); setRightTab("analysis"); setReanalyzeMode(true); }}
-                onStartOver={() => setConfirmStartOver(true)}
-                onCheckPolicies={handleCheckPolicies}
-                policyLoading={policyLoading}
-                niche={rawUserContext?.niche}
-                platform={platform !== "all" ? platform : rawUserContext?.platform}
-                youtubeFormat={(platform === "YouTube" || platform === "Shorts") ? youtubeFormat : undefined}
-                platformScore={platform !== "all" && platformScoreResult ? platformScoreResult.score : undefined}
-                onFixIt={handleFixIt}
-                fixItResult={fixItResult}
-                fixItLoading={fixItLoading}
-                prediction={prediction}
-                predictionLoading={predictionLoading}
-                onCompare={() => navigate('/app/competitor')}
-                onVisualize={handleVisualize}
-                visualizeLoading={visualizeStatus === "loading"}
-                canVisualize={true}
-                isPro={isPro}
-                briefLoading={briefLoading}
-                hasBrief={!!brief}
-                verdict={activeResult.verdict}
-                platformCta={activeResult.platformCta}
-                analysisSections={extractRightPanelSections(activeResult.markdown)}
-                platformSwitcher={
-                  <>
-                    <PlatformSwitcher
-                      platforms={format === "static" ? PAID_STATIC_PLATFORMS : PAID_AD_PLATFORMS}
-                      selected={platform}
-                      onChange={handlePlatformSwitch}
-                      isSwitching={isPlatformSwitching}
-                      disabled={status !== "complete"}
-                    />
-                    {(platform === "YouTube" || platform === "Shorts") && format === "video" && (
-                      <div className="mt-1">
-                        <YouTubeFormatSelector
-                          selected={youtubeFormat}
-                          onChange={setYoutubeFormat}
-                          disabled={status !== "complete"}
-                        />
-                      </div>
-                    )}
-                    {platform === "Meta" && format === "video" && (
-                      <label className="flex items-center gap-2 mt-2 cursor-pointer select-none group">
-                        <input
-                          type="checkbox"
-                          id="cta-free"
-                          checked={ctaFree}
-                          onChange={(e) => setCtaFree(e.target.checked)}
-                          className="rounded border-zinc-600 accent-indigo-500 cursor-pointer"
-                        />
-                        <span className="text-xs text-zinc-400 group-hover:text-zinc-300 transition-opacity leading-tight">
-                          Uses Meta's native CTA button (no CTA in creative)
-                        </span>
-                      </label>
-                    )}
-                    {platformScoreResult && platform !== "all" && (
-                      <div className="mt-1.5 flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs"
-                        style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)" }}
-                      >
-                        <span className="font-mono font-bold text-indigo-400">{platformScoreResult.score}/10</span>
-                        <span className="text-zinc-400">{platformScoreResult.verdict}</span>
-                      </div>
-                    )}
-                  </>
-                }
-                onUpgradeRequired={onUpgradeRequired}
-              />
-            </div>
-            {/* Design Review + Second Eye moved to center column */}
-            {/* Visualize It moved to left panel (below creative) */}
-          </motion.div>
-
-        )}
-
-        {showRightPanel && rightTab === "brief" && (
-          <motion.div
-            key="brief"
-            initial={{ opacity: 0, x: 16 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -16 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="flex flex-col h-full"
-          >
-            <div className="p-5 border-b border-white/5 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setRightTab("analysis")}
-                className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer flex items-center gap-1"
-              >
-                ← Back to Scores
-              </button>
-              <span className="text-xs text-zinc-500 font-mono">Claude Sonnet</span>
-            </div>
-            {briefLoading && !brief && (
-              <div className="flex-1 flex flex-col items-center justify-center gap-3 px-5">
-                <div className="w-5 h-5 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
-                <span className="text-xs text-zinc-500">Generating creative brief...</span>
-              </div>
-            )}
-            {briefError && (
-              <div className="px-5 py-4">
-                <p className="text-xs text-red-400">{briefError}</p>
-              </div>
-            )}
-            {brief && (
-              <>
-                {(() => {
-                  // Parse brief into BriefSection format for new component
-                  const sections: BriefSection[] = [];
-                  let current: BriefSection | null = null;
-                  for (const line of brief.split("\n")) {
-                    const t = line.trim();
-                    if (!t || t === "---" || t.startsWith("## ")) continue;
-                    const boldMatch = t.match(/^\*\*(.+?)\*\*:?\s*(.*)/);
-                    if (boldMatch) {
-                      if (current) sections.push(current);
-                      const content = boldMatch[2];
-                      current = { 
-                        label: boldMatch[1].replace(/:$/, ''), 
-                        content: content || undefined,
-                        items: content ? undefined : []
-                      };
-                    } else if (current) {
-                      const cleanLine = t.replace(/^[-*]\s*/, '');
-                      if (!current.items) {
-                        current.items = [];
-                      }
-                      current.items.push(cleanLine);
-                    }
-                  }
-                  if (current) sections.push(current);
-
-                  return (
-                    <BriefResultView 
-                      sections={sections}
-                      platform={platform !== "all" ? platform : "Meta"}
-                      adFormat={format === "static" ? "Static" : "Video"}
-                      onBack={() => setRightTab("analysis")}
-                    />
-                  );
-                })()}
-              </>
-            )}
-          </motion.div>
-        )}
-
-        {/* Policy Check panel */}
-        {showRightPanel && rightTab === "policy" && (
-          <motion.div
-            key="policy"
-            initial={{ opacity: 0, x: 16 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -16 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="flex min-w-0 flex-col h-full"
-          >
-            <div className="flex min-w-0 items-center justify-end gap-2 border-b border-white/5 px-3 py-2 sm:px-4">
-              <span className="shrink-0 text-xs font-mono text-zinc-600">Claude Sonnet</span>
-            </div>
-            <div className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-3 py-3 sm:px-4">
-              {policyLoading && !policyResult && (
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 0", gap: 12 }}>
-                  <div style={{ width: 20, height: 20, border: "2px solid rgba(245,158,11,0.3)", borderTopColor: "#f59e0b", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
-                  <span style={{ fontSize: 13, color: "#71717a" }}>Checking policies...</span>
-                  <span style={{ fontSize: 11, color: "#52525b" }}>Evaluating Meta & TikTok compliance</span>
-                </div>
-              )}
-              {policyError && (
-                <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", fontSize: 13, color: "#ef4444" }}>
-                  {policyError}
-                </div>
-              )}
-              {policyResult && !policyLoading && (
-                <PolicyCheckPanel
-                  embedded
-                  result={policyResult}
-                  onClose={() => setRightTab("analysis")}
-                />
-              )}
-            </div>
-          </motion.div>
-        )}
-
-        {/* AI Rewrite panel — uses FixItPanel component */}
-        {showRightPanel && rightTab === "ai_rewrite" && (
-          <motion.div
-            key="ai_rewrite"
-            initial={{ opacity: 0, x: 16 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -16 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="flex flex-col h-full"
-          >
-            <div className="flex-1 overflow-y-auto p-4">
-              {fixItLoading && !fixItResult && (
-                <div className="flex flex-col items-center justify-center py-10 gap-3">
-                  <div className="w-5 h-5 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
-                  <span className="text-[13px] text-zinc-400">Rewriting your ad...</span>
-                </div>
-              )}
-              {fixItResult && !fixItLoading && (
-                <FixItPanel
-                  result={fixItResult}
-                  onClose={() => setRightTab("analysis")}
-                  mediaType={format as "static" | "video"}
-                  analysisId={savedAnalysisId ?? undefined}
-                  platform={platform !== "all" ? platform : (rawUserContext?.platform ?? undefined)}
-                  niche={rawUserContext?.niche}
-                />
-              )}
-            </div>
-          </motion.div>
-        )}
-
-        {/* Re-analyze upload — replaces entire right panel */}
-        {showRightPanel && reanalyzeMode && !comparisonResult && (
-          <motion.div
-            key="reanalyze-upload"
-            initial={{ opacity: 0, x: 16 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -16 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="flex flex-col h-full"
-          >
-            <div className="p-5 border-b border-white/5">
-              <button
-                type="button"
-                onClick={() => setReanalyzeMode(false)}
-                className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer flex items-center gap-1"
-              >
-                ← Back to Scores
-              </button>
-            </div>
-            <div className="flex-1 flex flex-col items-center justify-center gap-4 px-6">
-              {comparisonLoading ? (
-                <>
-                  <div className="w-6 h-6 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
-                  <span className="text-sm text-zinc-500">Analyzing improved version...</span>
-                </>
-              ) : (
-                <>
-                  <p className="text-sm font-semibold text-zinc-100">Upload your improved version</p>
-                  <p className="text-xs text-zinc-500 -mt-2">We'll score it and compare against your original.</p>
-                  <div
-                    className="w-full max-w-[320px] h-[140px] border-2 border-dashed border-indigo-500/25 hover:border-indigo-500/50 rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer transition-all"
-                    onClick={() => {
-                      const input = document.createElement("input");
-                      input.type = "file"; input.accept = "video/*,image/*";
-                      input.onchange = (e) => { const f = (e.target as HTMLInputElement).files?.[0]; if (f) handleReanalyze(f); };
-                      input.click();
-                    }}
-                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("border-indigo-500/50", "bg-indigo-500/5"); }}
-                    onDragLeave={(e) => { e.currentTarget.classList.remove("border-indigo-500/50", "bg-indigo-500/5"); }}
-                    onDrop={(e) => { e.preventDefault(); e.currentTarget.classList.remove("border-indigo-500/50", "bg-indigo-500/5"); const f = e.dataTransfer.files[0]; if (f) handleReanalyze(f); }}
-                  >
-                    <Upload size={20} className="text-indigo-400" />
-                    <span className="text-xs text-indigo-400 font-medium">Drop improved version here</span>
-                    <span className="text-[11px] text-zinc-600">or click to browse</span>
-                  </div>
-                  <span className="text-[11px] text-zinc-600">PNG, JPG, MP4 supported</span>
-                </>
-              )}
-            </div>
-          </motion.div>
-        )}
-
-        {/* Before/After comparison result */}
-        {showRightPanel && comparisonResult && originalScoresSnapshot && activeResult?.scores && (
-          <div style={{ padding: "0 16px 12px" }}>
-            <BeforeAfterComparison
-              originalScores={originalScoresSnapshot}
-              improvedScores={activeResult.scores}
-              comparison={comparisonResult}
-              fileName={activeResult.fileName}
-              onReanalyzeAgain={() => { setComparisonResult(null); setReanalyzeMode(true); }}
-              onStartFresh={handleReset}
-            />
-          </div>
-        )}
-
-        </AnimatePresence>
-        </div>
-      </div>
+      {/* Right panel — extracted to PaidRightPanel */}
+      <PaidRightPanel
+        ref={rightPanelRef}
+        showRightPanel={showRightPanel}
+        activeResult={activeResult}
+        analysisCompletedAt={analysisCompletedAt}
+        platform={platform}
+        format={format}
+        youtubeFormat={youtubeFormat}
+        ctaFree={ctaFree}
+        isPro={isPro}
+        scoreDelta={scoreDelta}
+        platformScoreResult={platformScoreResult}
+        platformImprovements={platformImprovements}
+        improvementsLoading={improvementsLoading}
+        isPlatformSwitching={isPlatformSwitching}
+        brief={brief}
+        briefLoading={briefLoading}
+        briefError={briefError}
+        ctaRewrites={ctaRewrites}
+        ctaLoading={ctaLoading}
+        policyResult={policyResult}
+        policyLoading={policyLoading}
+        policyError={policyError}
+        fixItResult={fixItResult}
+        fixItLoading={fixItLoading}
+        prediction={prediction}
+        predictionLoading={predictionLoading}
+        engineBudget={engineBudget}
+        reanalyzeMode={reanalyzeMode}
+        comparisonResult={comparisonResult}
+        comparisonLoading={comparisonLoading}
+        originalScoresSnapshot={originalScoresSnapshot}
+        savedAnalysisId={savedAnalysisId}
+        rawUserContext={rawUserContext}
+        visualizeLoading={visualizeStatus === "loading"}
+        onGenerateBrief={handleGenerateBrief}
+        onAddToSwipeFile={handleAddToSwipeFile}
+        onCTARewrite={handleCTARewrite}
+        onShare={handleCopy}
+        onCheckPolicies={handleCheckPolicies}
+        onFixIt={handleFixIt}
+        onVisualize={handleVisualizeWithScroll}
+        onNavigateSettings={() => navigate('/settings')}
+        onReanalyzeAgain={() => { setComparisonResult(null); setReanalyzeMode(true); }}
+        onStartFresh={handleReset}
+        onStartOver={() => setConfirmStartOver(true)}
+        onCompare={() => navigate('/app/competitor')}
+        onPlatformSwitch={handlePlatformSwitch}
+        onSetYoutubeFormat={setYoutubeFormat}
+        onSetCtaFree={setCtaFree}
+        onSetReanalyzeMode={setReanalyzeMode}
+        onSetComparisonResult={setComparisonResult}
+        onReanalyze={handleReanalyze}
+        onUpgradeRequired={onUpgradeRequired}
+      />
 
       {/* History drawer */}
       <HistoryDrawer
@@ -1549,9 +889,9 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
           {rateLimitError}
         </div>
       )}
-      {infoToast && (
+      {(localInfoToast || postAnalysisInfoToast) && (
         <div role="status" aria-live="polite" className="fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-3 bg-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-xl text-xs font-mono text-zinc-300 shadow-lg z-[100]">
-          {infoToast}
+          {localInfoToast ?? postAnalysisInfoToast}
         </div>
       )}
 

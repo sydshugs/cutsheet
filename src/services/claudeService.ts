@@ -42,12 +42,14 @@ async function callApi<T>(endpoint: string, body: unknown): Promise<T> {
 export interface PlatformScore {
   platform: string;
   score: number;
-  platformFit: number;
-  strengths: string[];
-  weaknesses: string[];
-  improvements: string[];
-  tips: string[];
+  platformFit?: number;
+  strengths?: string[];
+  weaknesses?: string[];
+  improvements?: string[];
+  tips?: string[];
   verdict: string;
+  /** Organic scoring signals (pass/fail checklist) */
+  signals?: { label: string; pass: boolean }[];
 }
 
 export async function generatePlatformScore(
@@ -238,14 +240,8 @@ export interface ComparisonResult {
 }
 
 // ─── PLATFORM SCORING (Organic Analyzer) ─────────────────────────────────────
-
-export interface PlatformScore {
-  platform: 'tiktok' | 'reels' | 'shorts';
-  score: number;
-  signals?: { label: string; pass: boolean }[];
-  verdict: string;
-  improvements?: string[];
-}
+// Note: PlatformScore is already declared above (lines 42-51).
+// The organic analyzer uses a compatible subset — the first declaration covers both.
 
 
 export async function generateComparison(

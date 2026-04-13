@@ -60,13 +60,14 @@ export function BenchmarkBadge({ delta, format, platform }: BenchmarkBadgeProps)
       fontWeight: 500, lineHeight: 1.4,
     }}>
       {label}
-      <Info
-        size={11}
-        title={`Source: ${source}`}
-        style={{ color: 'var(--ink-faint)', flexShrink: 0, cursor: 'help' }}
-        onMouseEnter={e => (e.currentTarget.style.color = 'var(--ink-muted)')}
-        onMouseLeave={e => (e.currentTarget.style.color = 'var(--ink-faint)')}
-      />
+      <span title={`Source: ${source}`} style={{ display: 'inline-flex', flexShrink: 0 }}>
+        <Info
+          size={11}
+          style={{ color: 'var(--ink-faint)', cursor: 'help' }}
+          onMouseEnter={e => { e.currentTarget.style.color = 'var(--ink-muted)'; }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'var(--ink-faint)'; }}
+        />
+      </span>
     </span>
   )
 }

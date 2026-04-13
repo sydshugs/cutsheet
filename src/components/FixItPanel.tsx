@@ -15,7 +15,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useState } from "react";
+import { memo, useState } from "react";
 import DOMPurify from "dompurify";
 import { supabase } from "../lib/supabase";
 
@@ -234,7 +234,7 @@ function FeedbackRow({ analysisId, suggestionType, suggestionIndex = 0, suggesti
 
 // ─── MAIN COMPONENT ─────────────────────────────────────────────────────────
 
-export default function FixItPanel({
+const FixItPanel = memo(function FixItPanel({
   result,
   onCopyAll,
   onClose,
@@ -476,4 +476,6 @@ export default function FixItPanel({
       </motion.div>
     </AnimatePresence>
   );
-}
+});
+
+export default FixItPanel;

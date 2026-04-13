@@ -211,7 +211,7 @@ export default function RankScorecardPage() {
       try {
         const [imps, pScore] = await Promise.all([
           generateImprovements(result.markdown, result.scores, userContext || undefined, newPlatform, sessionMemoryRef.current),
-          generatePlatformScore(newPlatform, result, result.fileName, format, userContext || undefined, rawUserContext?.niche),
+          generatePlatformScore(newPlatform, { markdown: result.markdown, scores: result.scores ?? { overall: 0 } }, result.fileName, format, userContext || undefined, rawUserContext?.niche),
         ]);
         setPlatformImprovements(imps);
         setPlatformScoreResult(pScore);
@@ -334,7 +334,7 @@ export default function RankScorecardPage() {
     return <Navigate to="/app/batch" replace />;
   }
 
-  const fn = result.fileName || file.name;
+  const fn = result.fileName || file?.name || "";
   const testLabel =
     rankTestType === "hook" ? "Hook Battle" : rankTestType === "cta" ? "CTA Showdown" : "Full Creative";
 

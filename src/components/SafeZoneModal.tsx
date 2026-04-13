@@ -263,7 +263,7 @@ export function SafeZoneModal({ open, onClose, thumbnailSrc, mode = "paid" }: Sa
           mode: activeMode,
         }),
       });
-      const data = await res.json() as AIResult & { error?: string };
+      const data = await res.json() as AIResult & { error?: string; message?: string };
       if (!res.ok) {
         setAiError(data.message ?? data.error ?? "Analysis failed");
       } else {

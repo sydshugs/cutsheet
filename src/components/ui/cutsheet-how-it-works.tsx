@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { memo, useState } from "react";
 import { motion } from "framer-motion";
 import { FadeInSection } from "./fade-in";
 
@@ -166,7 +166,7 @@ const STEPS = [
  * Desktop: active card expands from 255.36 → 516.8px (framer-motion).
  * Mobile: all cards stacked vertically, mockups always visible.
  */
-export default function CutsheetHowItWorks() {
+const CutsheetHowItWorks = memo(function CutsheetHowItWorks() {
   const [activeStep, setActiveStep] = useState(0);
 
   return (
@@ -464,4 +464,6 @@ export default function CutsheetHowItWorks() {
       </div>
     </section>
   );
-}
+});
+
+export default CutsheetHowItWorks;

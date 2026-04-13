@@ -56,5 +56,19 @@ export async function generateFixIt(
     throw new Error((data as { message?: string; error?: string }).message ?? (data as { error?: string }).error ?? `API error ${response.status}`);
   }
 
-  return response.json() as Promise<FixItResult>;
+  const data = await response.json() as unknown;
+  if (!data || typeof data !== 'object') {
+    throw new Error('Invalid fix-it API response: expected object');
+  }
+  const d = data as Record<string, unknown>;
+  if (!d.rewrittenHook || typeof d.rewrittenHook !== 'object') {
+    throw new Error('Invalid fix-it API response: missing required field "rewrittenHook"');
+  }
+  if (typeof d.revisedBody !== 'string') {
+    throw new Error('Invalid fix-it API response: missing required field "revisedBody"');
+  }
+  if (!d.newCTA || typeof d.newCTA !== 'object') {
+    throw new Error('Invalid fix-it API response: missing required field "newCTA"');
+  }
+  return data as FixItResult;
 }

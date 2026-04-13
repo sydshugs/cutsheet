@@ -1,5 +1,5 @@
 import type React from "react";
-import { useMemo, useEffect, useRef, useState } from "react";
+import { memo, useMemo, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
@@ -12,6 +12,7 @@ import {
   Heart, Shield, type LucideIcon,
 } from "lucide-react";
 import type { Verdict, StructuredImprovement } from "../services/analyzerService";
+import type { SecondEyeResult, PlatformScore as OrganicPlatformScore } from "../services/claudeService";
 import { CreativeAnalysis } from "./CreativeAnalysis";
 import { CreativeVerdictAndSecondEye } from "./CreativeVerdictAndSecondEye";
 import { DesignReviewCard } from "./DesignReviewCard";
@@ -245,7 +246,7 @@ export function extractRightPanelSections(markdown: string): { title: string; co
     .map(s => ({ title: toSentenceCase(s.title!), content: s.content }));
 }
 
-export function ReportCards({
+export const ReportCards = memo(function ReportCards({
   file, markdown, thumbnailDataUrl,
   onReset, onFileSelect,
   verdict, structuredImprovements, improvements, scores, format,
@@ -560,7 +561,7 @@ export function ReportCards({
               verdictState={vState}
               verdictOneLiner={oneLiner}
               verdictDetail={detail}
-              secondEyeResult={secondEyeData}
+              secondEyeResult={secondEyeData as SecondEyeResult | null | undefined}
               secondEyeLoading={secondEyeDataLoading}
             />
           );
@@ -614,7 +615,7 @@ export function ReportCards({
           transition={{ duration: 0.3, ease: 'easeOut', delay: 0.12 }}
         >
           <PlatformScoreCard
-            scores={platformScores ?? []}
+            scores={(platformScores ?? []) as OrganicPlatformScore[]}
             loading={platformScoresLoading ?? false}
             platform={platform ?? "all"}
           />
@@ -773,4 +774,4 @@ export function ReportCards({
       </motion.div>
     </div>
   );
-}
+});

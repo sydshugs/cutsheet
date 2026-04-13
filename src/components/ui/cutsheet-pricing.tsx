@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo, useCallback } from "react";
 import { CircleCheck } from "lucide-react";
 import { FadeInSection } from "./fade-in";
 
@@ -75,11 +75,11 @@ function GhostButton({
 
 // ─── Main export ─────────────────────────────────────────────────────────────
 
-export default function CutsheetPricing() {
-  function scrollToWaitlist(e: React.MouseEvent) {
+const CutsheetPricing = memo(function CutsheetPricing() {
+  const scrollToWaitlist = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     document.getElementById("waitlist")?.scrollIntoView({ behavior: "smooth" });
-  }
+  }, []);
 
   return (
     <section
@@ -288,4 +288,6 @@ export default function CutsheetPricing() {
       </div>
     </section>
   );
-}
+});
+
+export default CutsheetPricing;

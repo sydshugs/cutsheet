@@ -30,7 +30,8 @@ export function logApiUsage(params: UsageParams): void {
   const client = getClient();
   if (!client) return;
 
-  client
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const insert = (client as any)
     .from("api_usage_log")
     .insert({
       user_id: params.userId,
@@ -41,8 +42,9 @@ export function logApiUsage(params: UsageParams): void {
       platform: params.platform ?? null,
       niche: params.niche ?? null,
       format: params.format ?? null,
-    })
-    .then(({ error }) => {
+    });
+  Promise.resolve(insert)
+    .then(({ error }: { error?: { message: string } | null }) => {
       if (error) console.warn("[logUsage] insert failed:", error.message);
     })
     .catch(() => {

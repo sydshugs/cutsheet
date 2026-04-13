@@ -2,14 +2,10 @@
 import { Helmet } from 'react-helmet-async';
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useOutletContext, useNavigate } from "react-router-dom";
-import { TrendingUp, RotateCcw } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 import { AnalyzerView } from "../../components/AnalyzerView";
-import { BriefResultView, type BriefSection } from "../../components/BriefResultView";
-import { ScoreCard } from "../../components/ScoreCard";
-import { extractRightPanelSections } from "../../components/ReportCards";
-import { AlertDialog } from "../../components/ui/AlertDialog";
-import { VideoDropzone } from "../../components/VideoDropzone";
 import { HistoryDrawer } from "../../components/HistoryDrawer";
+import { OrganicEmptyState } from "../../components/organic/OrganicEmptyState";
 import { useVideoAnalyzer } from "../../hooks/useVideoAnalyzer";
 import { type HistoryEntry } from "../../hooks/useHistory";
 import { useThumbnail } from "../../hooks/useThumbnail";
@@ -23,11 +19,9 @@ import {
   generatePlatformScore, generateStaticSecondEye,
   type PlatformScore, type SecondEyeResult, type StaticSecondEyeResult,
 } from "../../services/claudeService";
-import { SecondEyePanel } from "../../components/SecondEyePanel";
 import { SafeZoneModal } from "../../components/SafeZoneModal";
 import { getImageDimensions, getImageDimensionsFromSrc } from "../../utils/getImageDimensions";
-
-import { PlatformSwitcher, ORGANIC_PLATFORMS, ORGANIC_STATIC_PLATFORMS, VIDEO_ONLY_PLATFORMS } from "../../components/PlatformSwitcher";
+import { VIDEO_ONLY_PLATFORMS } from "../../components/PlatformSwitcher";
 import { generateFixIt, type FixItResult } from "../../services/fixItService";
 import { generatePrediction, type PredictionResult } from "../../services/predictionService";
 import { saveAnalysis } from "../../services/historyService";
@@ -35,7 +29,8 @@ import type { AnalysisRecord } from "../../services/historyService";
 import { getUserContext, formatUserContextBlock } from "../../services/userContextService";
 import { getSessionMemory } from "@/src/lib/userMemoryService";
 import type { AppSharedContext } from "../../components/AppLayout";
-import { cn } from "../../lib/utils";
+import { OrganicRightPanel, type OrganicRightPanelHandle } from "../../components/organic/OrganicRightPanel";
+import { getOrganicContextPrefix } from "../../components/organic/organicContextPrefix";
 
 const API_KEY = ""; // Gemini calls are now server-side via /api/analyze
 
@@ -56,78 +51,6 @@ const STATUS_COPY = {
   idle: "",
 };
 
-// IntentHeader removed — platform defaults to "all", auto-detected post-analysis
-
-// ─── EMPTY STATE ──────────────────────────────────────────────────────────────
-
-function OrganicEmptyState({
-  onFileSelect, onUrlSubmit,
-}: {
-  onFileSelect: (f: File | null) => void;
-  onUrlSubmit?: (url: string) => void;
-}) {
-  const PILLS = ["Platform optimization", "Hashtag suggestions", "Algorithm scoring"];
-  return (
-    <div
-      className={cn(
-        "relative flex flex-1 flex-col items-center justify-center overflow-hidden px-6 py-8",
-        "min-h-[min(100%,calc(100vh-120px))]"
-      )}
-      style={{ backgroundColor: "var(--bg)" }}
-    >
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{ backgroundImage: "var(--analyzer-idle-ambient-organic)" }}
-        aria-hidden
-      />
-      <div className="relative z-[1] flex w-full max-w-[731px] flex-col items-center">
-        <div
-          className={cn(
-            "flex size-[73px] shrink-0 items-center justify-center rounded-[15px] border border-[color:var(--organic-border)]",
-            "bg-[var(--organic-tile-bg)]"
-          )}
-        >
-          <TrendingUp className="size-[27px] text-[color:var(--organic-accent)]" strokeWidth={1.75} aria-hidden />
-        </div>
-
-        <h1 className="mt-[23px] mb-0 text-center text-[19px] font-semibold leading-tight text-[color:var(--ink)]">
-          Score your organic content
-        </h1>
-        <p className="mt-2.5 mb-0 max-w-[276px] text-center text-[13.5px] leading-[1.6] text-[color:var(--ink-muted)]">
-          Upload a video or static creative. Get a full AI breakdown in 30 seconds.
-        </p>
-
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-          {PILLS.map((pill) => (
-            <span
-              key={pill}
-              className={cn(
-                "rounded-full border border-[color:var(--organic-border)] bg-[var(--organic-pill-bg)]",
-                "px-3 py-1 text-[11.5px] font-normal leading-[15px] text-[color:var(--organic-pill-text)]"
-              )}
-            >
-              {pill}
-            </span>
-          ))}
-        </div>
-
-        <div className="mt-8 w-full max-w-[731px]">
-          <VideoDropzone
-            onFileSelect={onFileSelect}
-            file={null}
-            onUrlSubmit={onUrlSubmit}
-            acceptImages
-            heading="Drop your content here"
-            layoutVariant="hero"
-            heroAccent="organic"
-            wrapperClassName="max-w-none"
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 
 export default function OrganicAnalyzer() {
@@ -137,11 +60,12 @@ export default function OrganicAnalyzer() {
     onUpgradeRequired, registerCallbacks,
   } = useOutletContext<AppSharedContext>();
   const navigate = useNavigate();
+  void navigate; // used inside OrganicRightPanel via its own hook
 
   const [organicFormat, setOrganicFormat] = useState<"video" | "static">("video");
   const [imageMismatch, setImageMismatch] = useState(false);
 
-  // ── User context for personalized AI ──────────────────────────────────────
+  // ── User context ─────────────────────────────────────────────────────────────
   const [userContext, setUserContext] = useState<string>('')
   const [rawUserContext, setRawUserContext] = useState<{ niche: string; platform: string } | null>(null)
   useEffect(() => {
@@ -163,7 +87,6 @@ export default function OrganicAnalyzer() {
   const [isImporting, setIsImporting] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [loadedEntry, setLoadedEntry] = useState<HistoryEntry | null>(null);
-  const [rightTab, setRightTab] = useState<"analysis" | "brief">("analysis");
   const [brief, setBrief] = useState<string | null>(null);
   const [briefLoading, setBriefLoading] = useState(false);
   const [briefError, setBriefError] = useState<string | null>(null);
@@ -175,7 +98,6 @@ export default function OrganicAnalyzer() {
   const [platformScores, setPlatformScores] = useState<PlatformScore[]>([]);
   const [platformScoresLoading, setPlatformScoresLoading] = useState(false);
   const [analysisCompletedAt, setAnalysisCompletedAt] = useState<Date | null>(null);
-  const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
   const [loadedFromHistory, setLoadedFromHistory] = useState<AnalysisRecord | null>(null);
   const [fixItResult, setFixItResult] = useState<FixItResult | null>(null);
   const [fixItLoading, setFixItLoading] = useState(false);
@@ -183,9 +105,8 @@ export default function OrganicAnalyzer() {
   const [staticImageDims, setStaticImageDims] = useState<{ width: number; height: number } | null>(null);
   const [prediction, setPrediction] = useState<PredictionResult | null>(null);
   const [predictionLoading, setPredictionLoading] = useState(false);
-  const [confirmStartOver, setConfirmStartOver] = useState(false);
 
-  const scorecardRef = useRef<HTMLDivElement | null>(null);
+  const rightPanelRef = useRef<OrganicRightPanelHandle>(null);
   const lastSavedRef = useRef<string | null>(null);
   const sessionMemoryRef = useRef<string>('');
 
@@ -197,41 +118,9 @@ export default function OrganicAnalyzer() {
   const thumbnailDataUrl = useThumbnail(file, fileObjectUrl);
   const isAnalyzing = status === "uploading" || status === "processing";
 
-  // ── Organic context prefix (always prepended) ─────────────────────────────
+  // ── Organic context prefix ────────────────────────────────────────────────────
   const platformLabel = platform === "all" ? "all platforms" : platform;
-  const contextPrefix = organicFormat === "static"
-    ? `This is ORGANIC content, not a paid ad.
-Do NOT score for: CTA, conversion, purchase friction, offer clarity, ad spend efficiency, or any paid advertising metrics.
-Score for: entertainment value, native platform feel, save-worthiness, shareability (DM potential), caption hook effectiveness, visual stopping power in a feed scroll, and platform-native feel for ${platformLabel}.
-A high-scoring organic post feels like real creator content — not an ad.
-
-REPLACE the "CTA Effectiveness" dimension with "Shareability & Save-Worthiness" in the QUICK SCORES section.
-Score "Shareability & Save-Worthiness" on: Would someone DM this to a friend? Would they save it for later? Does it trigger the share impulse?
-
-There is no retention curve or scene breakdown for static content.
-Do NOT include a budget recommendation. This is organic content — there is no ad spend.
-Do NOT include any CTA-related improvements. Replace CTA suggestions with shareability or caption improvements.
-
-CRITICAL: In the HASHTAGS section, use EXACTLY these three platform labels and format. Do NOT use TikTok. Do NOT omit Pinterest:
-META: #tag1 #tag2 #tag3
-INSTAGRAM: #tag1 #tag2 #tag3 #tag4 #tag5
-PINTEREST: #tag1 #tag2 #tag3 #tag4 #tag5 #tag6 #tag7 #tag8`
-    : `This is ORGANIC content, not a paid ad.
-Do NOT score for: CTA, conversion, purchase friction, offer clarity, ad spend efficiency, or any paid advertising metrics.
-Score for: entertainment value, native feel, completion probability, rewatch potential, shareability (DM potential), algorithm signals for ${platformLabel}, and caption discoverability.
-A high-scoring organic post feels like real creator content — not an ad.
-Score as if a viewer found this organically on their feed.
-
-REPLACE the "CTA Effectiveness" dimension with "Shareability & Rewatch" in the QUICK SCORES section.
-Score "Shareability & Rewatch" on: Does this make someone share, save, or watch again? Does it trigger the algorithm's engagement signals?
-
-Do NOT include a budget recommendation. This is organic content — there is no ad spend.
-Do NOT include any CTA-related improvements. Replace CTA suggestions with engagement, retention, or caption improvements.
-
-CRITICAL: In the HASHTAGS section, use EXACTLY these three platform labels and format. Do NOT use META or INSTAGRAM (without Reels). Do NOT omit YouTube Shorts:
-TIKTOK: #tag1 #tag2 #tag3 #tag4 #tag5 #tag6 #tag7 #tag8 #tag9 #tag10 #tag11 #tag12
-INSTAGRAM REELS: #tag1 #tag2 #tag3 #tag4 #tag5 #tag6 #tag7 #tag8
-YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
+  const contextPrefix = getOrganicContextPrefix(organicFormat, platformLabel);
 
   const handleReset = useCallback(() => {
     setFile(null);
@@ -243,7 +132,6 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
     setBriefLoading(false);
     setCtaRewrites(null);
     setCtaLoading(false);
-    setRightTab("analysis");
     setSecondEyeOutput(null);
     setSecondEyeLoading(false);
     setDesignReviewResult(null);
@@ -270,7 +158,6 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
     const isImage = f.type.startsWith("image/") || [".jpg", ".jpeg", ".png", ".webp"].some(e => f.name.toLowerCase().endsWith(e));
     const isVideo = f.type.startsWith("video/") || [".mp4", ".mov", ".webm"].some(e => f.name.toLowerCase().endsWith(e));
 
-    // Auto-switch format silently + show toast (same as Paid Ad)
     if (isImage && organicFormat !== "static") {
       setOrganicFormat("static");
       setInfoToast("Detected static image — analyzing as Static");
@@ -288,15 +175,14 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
     if (status === "complete") setAnalysisCompletedAt(new Date());
   }, [status]);
 
-  // Consolidated post-analysis: fires ALL secondary API calls in parallel
+  // ── Consolidated post-analysis: fires ALL secondary API calls in parallel ──
   const postAnalysisFiredRef = useRef<string | null>(null);
   useEffect(() => {
     if (status !== "complete" || !result) return;
     const key = `${result.fileName}-${result.timestamp.toISOString()}`;
-    if (postAnalysisFiredRef.current === key) return; // guard: fire once per analysis
+    if (postAnalysisFiredRef.current === key) return;
     postAnalysisFiredRef.current = key;
 
-    // Video-only: Second Eye Review
     if (organicFormat === "video") {
       setSecondEyeLoading(true);
       setSecondEyeOutput(null);
@@ -307,7 +193,6 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
       ).then(setSecondEyeOutput).catch(() => setSecondEyeOutput(null)).finally(() => setSecondEyeLoading(false));
     }
 
-    // Static-only: Design Review
     if (organicFormat === "static") {
       setDesignReviewLoading(true);
       setDesignReviewResult(null);
@@ -318,7 +203,6 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
       ).then(setDesignReviewResult).catch(() => setDesignReviewResult(null)).finally(() => setDesignReviewLoading(false));
     }
 
-    // Platform scoring — parallel with above, 55s timeout guard (under Vercel's 60s limit)
     setPlatformScoresLoading(true);
     setPlatformScores([]);
     (async () => {
@@ -331,7 +215,7 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
           const staticPlatforms = ['meta', 'instagram', 'pinterest'];
           const plats = organicFormat === 'static' ? staticPlatforms : videoPlatforms;
           const results = await Promise.race([
-            Promise.all(plats.map(p => generatePlatformScore(p, result, result.fileName, organicFormat, userContext || undefined, rawUserContext?.niche))),
+            Promise.all(plats.map(p => generatePlatformScore(p, { markdown: result.markdown, scores: result.scores ?? { overall: 0 } }, result.fileName, organicFormat, userContext || undefined, rawUserContext?.niche))),
             timeout,
           ]);
           setPlatformScores(results);
@@ -339,7 +223,7 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
           const k = PLATFORM_SERVICE_MAP[platform as keyof typeof PLATFORM_SERVICE_MAP];
           if (k) {
             const score = await Promise.race([
-              generatePlatformScore(k, result, result.fileName, organicFormat, userContext || undefined, rawUserContext?.niche),
+              generatePlatformScore(k, { markdown: result.markdown, scores: result.scores ?? { overall: 0 } }, result.fileName, organicFormat, userContext || undefined, rawUserContext?.niche),
               timeout,
             ]);
             setPlatformScores([score]);
@@ -349,7 +233,6 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
       finally { setPlatformScoresLoading(false); }
     })();
 
-    // Predicted Performance — parallel with above
     if (result.scores) {
       setPredictionLoading(true);
       generatePrediction(
@@ -369,7 +252,6 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
         addHistoryEntry({ fileName: result.fileName, timestamp: result.timestamp.toISOString(), scores: result.scores, markdown: result.markdown, thumbnailDataUrl: thumbnailDataUrl ?? undefined });
         const newCount = increment();
         if (newCount >= FREE_LIMIT && !isPro) onUpgradeRequired("analyze");
-        // Fire and forget — do not await, do not block UI
         saveAnalysis({
           file_name: result.fileName,
           file_type: organicFormat === 'static' ? 'static' : 'video',
@@ -385,7 +267,6 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
           improvements: result.improvements ?? [],
           budget_recommendation: result.budget?.verdict ?? undefined,
         }).catch(console.error);
-        setHistoryRefreshKey(k => k + 1);
       }
     }
   }, [status, result, addHistoryEntry, increment, isPro, FREE_LIMIT, onUpgradeRequired, thumbnailDataUrl]); // eslint-disable-line
@@ -395,20 +276,18 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
       setLoadedEntry(null);
       setBrief(null);
       setBriefError(null);
-      setRightTab("analysis");
       setSecondEyeOutput(null);
       setPlatformScores([]);
       setPlatformScoresLoading(false);
     }
   }, [status]);
 
-  // NOTE: handleAnalyze declared before the auto-analyze useEffect
   const handleAnalyze = useCallback(async () => {
     if (!file || isAnalyzing || !canAnalyze) return;
     let sessionMemory = '';
     try {
       ({ text: sessionMemory } = await getSessionMemory());
-    } catch { /* non-critical — proceed without memory */ }
+    } catch { /* non-critical */ }
     sessionMemoryRef.current = sessionMemory;
     await analyze(file, API_KEY, contextPrefix, userContext || undefined, sessionMemory);
   }, [file, isAnalyzing, canAnalyze, analyze, contextPrefix]);
@@ -417,7 +296,7 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
     if (file && status === "idle" && canAnalyze) handleAnalyze();
   }, [file]); // eslint-disable-line
 
-  // Build activeResult
+  // ── Build activeResult ────────────────────────────────────────────────────────
   const liveResult: AnalysisResult | null = result
     ? { ...result, thumbnailDataUrl: thumbnailDataUrl ?? result.thumbnailDataUrl }
     : null;
@@ -455,29 +334,17 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
     if (file && file.type.startsWith("image/")) {
       let cancelled = false;
       getImageDimensions(file)
-        .then((d) => {
-          if (!cancelled) setStaticImageDims(d);
-        })
-        .catch(() => {
-          if (!cancelled) setStaticImageDims(null);
-        });
-      return () => {
-        cancelled = true;
-      };
+        .then((d) => { if (!cancelled) setStaticImageDims(d); })
+        .catch(() => { if (!cancelled) setStaticImageDims(null); });
+      return () => { cancelled = true; };
     }
     const thumb = activeResult?.thumbnailDataUrl ?? thumbnailDataUrl;
     if (thumb) {
       let cancelled = false;
       getImageDimensionsFromSrc(thumb)
-        .then((d) => {
-          if (!cancelled) setStaticImageDims(d);
-        })
-        .catch(() => {
-          if (!cancelled) setStaticImageDims(null);
-        });
-      return () => {
-        cancelled = true;
-      };
+        .then((d) => { if (!cancelled) setStaticImageDims(d); })
+        .catch(() => { if (!cancelled) setStaticImageDims(null); });
+      return () => { cancelled = true; };
     }
     setStaticImageDims(null);
     return undefined;
@@ -515,10 +382,17 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
     setBriefLoading(true); setBriefError(null);
     try {
       const r = await generateBriefWithClaude(activeResult.markdown, activeResult.fileName, userContext || undefined, sessionMemoryRef.current, organicFormat, platform);
-      setBrief(r); setRightTab("brief");
+      setBrief(r);
+      rightPanelRef.current?.setTab("brief");
     } catch {
-      try { const r = await generateBrief(activeResult.markdown, API_KEY); setBrief(r); setRightTab("brief"); }
-      catch (err) { setBriefError(err instanceof Error ? err.message : "Failed to generate brief."); }
+      try {
+        const r = await generateBrief(activeResult.markdown, API_KEY);
+        setBrief(r);
+        rightPanelRef.current?.setTab("brief");
+      } catch (err) {
+        setBriefError(err instanceof Error ? err.message : "Failed to generate brief.");
+        rightPanelRef.current?.setTab("brief");
+      }
     } finally { setBriefLoading(false); }
   };
 
@@ -540,6 +414,7 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
     await copyToClipboard(brief); setBriefCopied(true);
     setTimeout(() => setBriefCopied(false), 2000);
   };
+  void handleBriefCopy; void briefCopied;
 
   const handleAddToSwipeFile = () => {
     if (!activeResult) return;
@@ -552,33 +427,24 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
     if (!activeResult?.markdown || !activeResult?.scores || fixItLoading) return;
     setFixItLoading(true);
     try {
-      const result = await generateFixIt(
-        activeResult.markdown,
-        activeResult.scores,
+      const r = await generateFixIt(
+        activeResult.markdown, activeResult.scores,
         platform === "all" ? rawUserContext?.platform : platform,
-        rawUserContext?.niche,
-        undefined,
-        organicFormat,
-        true, // isOrganic
+        rawUserContext?.niche, undefined, organicFormat, true,
       );
-      setFixItResult(result);
+      setFixItResult(r);
     } catch (err) {
       console.error("Fix It failed:", err);
       setRateLimitError(err instanceof Error ? err.message : "Fix It failed. Please try again.");
       setTimeout(() => setRateLimitError(null), 5000);
-    } finally {
-      setFixItLoading(false);
-    }
+    } finally { setFixItLoading(false); }
   };
-
-  // Prediction is now fired in the consolidated post-analysis useEffect above
 
   const importFromUrl = async (rawUrl: string) => {
     const trimmed = rawUrl.trim();
     if (!trimmed || isAnalyzing || isImporting) return;
     let parsed: URL;
     try { parsed = new URL(trimmed); } catch { setUrlError("Enter a valid URL."); return; }
-    // SSRF protection: only allow https and block private/internal IPs
     if (parsed.protocol !== "https:") { setUrlError("Only HTTPS URLs are allowed."); return; }
     const host = parsed.hostname.toLowerCase();
     if (
@@ -599,7 +465,9 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
     } catch { setUrlError("Could not fetch video from this URL."); }
     finally { setIsImporting(false); }
   };
-  void urlInput; void urlError; void isImporting;
+  void urlInput; void urlError; void isImporting; void predictionLoading;
+  void imageMismatch; void secondEyeOutput; void secondEyeLoading;
+  void designReviewResult; void designReviewLoading;
 
   return (
     <div className="flex h-full" style={{ minHeight: "calc(100vh - 56px)" }}>
@@ -608,9 +476,9 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
         <meta name="description" content="Score TikTok, Instagram Reels, and YouTube Shorts for retention, shareability, and algorithm signals." />
         <link rel="canonical" href="https://cutsheet.xyz/app/organic" />
       </Helmet>
+
       {/* Main */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        {/* IntentHeader removed — platform defaults to "all" */}
         <div className="flex-1 flex flex-col overflow-auto">
           {status === "idle" && !loadedEntry ? (
             <OrganicEmptyState
@@ -629,8 +497,8 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
                   result={activeResult}
                   error={error}
                   analysisError={analysisError}
-                  thumbnailDataUrl={activeResult?.thumbnailDataUrl ?? thumbnailDataUrl}
-                  fileObjectUrl={fileObjectUrl}
+                  thumbnailDataUrl={activeResult?.thumbnailDataUrl ?? thumbnailDataUrl ?? undefined}
+                  fileObjectUrl={fileObjectUrl ?? undefined}
                   onFileSelect={(f) => handleFileWithCheck(f)}
                   onUrlSubmit={async (u) => { setUrlInput(u); await importFromUrl(u); }}
                   onAnalyze={handleAnalyze}
@@ -665,150 +533,44 @@ YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5`;
       </div>
 
       {/* Right panel */}
-      <div className={`shrink-0 bg-[#111113] border-l border-white/[0.06] overflow-y-auto overflow-x-hidden pb-12 transition-[width,opacity] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:border-l-0 max-lg:border-t max-lg:border-white/[0.06] ${showRightPanel ? "w-[350px] max-lg:w-full opacity-100" : "w-0 max-lg:w-0 opacity-0"}`}>
-        {showRightPanel && activeResult?.scores && rightTab === "analysis" && (
-          <>
-            <div ref={scorecardRef}>
-              <ScoreCard
-                scores={activeResult.scores}
-                hookDetail={activeResult.hookDetail}
-                improvements={activeResult.improvements}
-                hashtags={activeResult.hashtags}
-                scenes={activeResult.scenes}
-                fileName={activeResult.fileName}
-                analysisTime={analysisCompletedAt ?? undefined}
-                modelName="Gemini + Claude"
-                onGenerateBrief={handleGenerateBrief}
-                onAddToSwipeFile={handleAddToSwipeFile}
-                onCTARewrite={handleCTARewrite}
-                ctaRewrites={ctaRewrites}
-                ctaLoading={ctaLoading}
-                onShare={handleCopy}
-                isDark={true}
-                format={organicFormat}
-                isOrganic={true}
-                niche={rawUserContext?.niche}
-                platform={platform !== "all" ? platform : rawUserContext?.platform}
-                onFixIt={handleFixIt}
-                fixItResult={fixItResult}
-                fixItLoading={fixItLoading}
-                prediction={prediction}
-                onReanalyze={handleReset}
-                canVisualize={false}
-                verdict={(() => {
-                  const s = activeResult.scores.overall;
-                  return {
-                    state: (s >= 8 ? 'ready' : s >= 5 ? 'needs_work' : 'not_ready') as 'ready' | 'needs_work' | 'not_ready',
-                    headline: s >= 8 ? 'Ready to post' : s >= 5 ? 'Needs refinement' : 'Not ready',
-                    sub: 'Organic content',
-                  };
-                })()}
-                analysisSections={activeResult.markdown ? extractRightPanelSections(activeResult.markdown) : undefined}
-                briefLoading={briefLoading}
-                hasBrief={!!brief}
-                improvementsLoading={false}
-                onStartOver={() => setConfirmStartOver(true)}
-                onNavigateSettings={() => navigate('/settings')}
-                isPro={isPro}
-                onUpgradeRequired={onUpgradeRequired}
-                platformScore={platform !== "all" && platformScores.length > 0
-                  ? platformScores.find(ps => ps.platform === PLATFORM_SERVICE_MAP[platform as keyof typeof PLATFORM_SERVICE_MAP])?.score
-                  : undefined}
-                platformSwitcher={
-                  <PlatformSwitcher
-                    platforms={organicFormat === "static" ? ORGANIC_STATIC_PLATFORMS : ORGANIC_PLATFORMS}
-                    selected={platform}
-                    onChange={(p) => setPlatform(p as Platform)}
-                    disabled={false}
-                    isSwitching={platformScoresLoading}
-                  />
-                }
-              />
-            </div>
-            {/* Second Eye is now rendered inside CreativeVerdictAndSecondEye via AnalyzerView → ReportCards */}
-            <AlertDialog
-              open={confirmStartOver}
-              onClose={() => setConfirmStartOver(false)}
-              onConfirm={() => {
-                setConfirmStartOver(false);
-                handleReset();
-              }}
-              title="Start over?"
-              description="This will clear your current analysis. You can always re-analyze the same file."
-              confirmLabel="Start Over"
-              variant="destructive"
-            />
-          </>
-        )}
+      <OrganicRightPanel
+        ref={rightPanelRef}
+        showRightPanel={showRightPanel}
+        activeResult={activeResult}
+        analysisCompletedAt={analysisCompletedAt}
+        platform={platform}
+        organicFormat={organicFormat}
+        isPro={isPro}
+        platformScores={platformScores}
+        platformScoresLoading={platformScoresLoading}
+        onPlatformChange={(p) => setPlatform(p)}
+        brief={brief}
+        briefLoading={briefLoading}
+        briefError={briefError}
+        ctaRewrites={ctaRewrites}
+        ctaLoading={ctaLoading}
+        fixItResult={fixItResult}
+        fixItLoading={fixItLoading}
+        prediction={prediction}
+        rawUserContext={rawUserContext}
+        onGenerateBrief={handleGenerateBrief}
+        onAddToSwipeFile={handleAddToSwipeFile}
+        onCTARewrite={handleCTARewrite}
+        onShare={handleCopy}
+        onFixIt={handleFixIt}
+        onReset={handleReset}
+        onUpgradeRequired={onUpgradeRequired}
+      />
 
-        {showRightPanel && rightTab === "brief" && (
-          <>
-            {briefLoading && !brief && (
-              <div className="flex flex-col h-full">
-                <div className="p-5 border-b border-white/5 flex items-center justify-between">
-                  <button type="button" onClick={() => setRightTab("analysis")} className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer">← Back to Scores</button>
-                  <span className="text-xs text-zinc-600 font-mono">Claude Sonnet</span>
-                </div>
-                <div className="flex-1 flex flex-col items-center justify-center gap-3 px-5">
-                  <div className="w-5 h-5 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
-                  <span className="text-xs text-zinc-500">Generating creative brief...</span>
-                </div>
-              </div>
-            )}
-            {briefError && (
-              <div className="flex flex-col h-full">
-                <div className="p-5 border-b border-white/5 flex items-center justify-between">
-                  <button type="button" onClick={() => setRightTab("analysis")} className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer">← Back to Scores</button>
-                </div>
-                <div className="px-5 py-4"><p className="text-xs text-red-400">{briefError}</p></div>
-              </div>
-            )}
-            {brief && (
-              <>
-                {(() => {
-                // Parse brief into BriefSection format for new component
-                const sections: BriefSection[] = [];
-                let current: BriefSection | null = null;
-                for (const line of brief.split("\n")) {
-                  const t = line.trim();
-                  if (!t || t === "---" || t.startsWith("## ")) continue;
-                  const boldMatch = t.match(/^\*\*(.+?)\*\*:?\s*(.*)/);
-                  if (boldMatch) {
-                    if (current) sections.push(current);
-                    const content = boldMatch[2];
-                    current = { 
-                      label: boldMatch[1].replace(/:$/, ''), 
-                      content: content || undefined,
-                      items: content ? undefined : []
-                    };
-                  } else if (current) {
-                    const cleanLine = t.replace(/^[-*]\s*/, '');
-                    if (!current.items) {
-                      current.items = [];
-                    }
-                    current.items.push(cleanLine);
-                  }
-                }
-                if (current) sections.push(current);
-
-                return (
-                  <BriefResultView 
-                    sections={sections}
-                    platform={platform !== "all" ? platform : "TikTok"}
-                    adFormat={organicFormat === "static" ? "Static" : "Video"}
-                    onBack={() => setRightTab("analysis")}
-                  />
-                );
-              })()}
-              </>
-            )}
-          </>
-        )}
-
-
-      </div>
-
-      <HistoryDrawer open={historyOpen} entries={historyEntries} onClose={() => setHistoryOpen(false)} onSelect={(entry) => setLoadedEntry(entry)} onDelete={deleteHistoryEntry} onClearAll={clearAllHistory} isDark={true} />
+      <HistoryDrawer
+        open={historyOpen}
+        entries={historyEntries}
+        onClose={() => setHistoryOpen(false)}
+        onSelect={(entry) => setLoadedEntry(entry)}
+        onDelete={deleteHistoryEntry}
+        onClearAll={clearAllHistory}
+        isDark={true}
+      />
 
       {rateLimitError && (
         <div role="alert" aria-live="assertive" className="fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-3 bg-red-500/15 border border-red-500/30 rounded-xl text-xs font-mono text-red-400 shadow-lg z-[100]">

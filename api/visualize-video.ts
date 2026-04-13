@@ -93,6 +93,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     let request_id: string;
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result = await fal.queue.submit(KLING_ENDPOINT, {
         input: {
           prompt: KLING_PROMPT,
@@ -100,7 +101,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           duration: DEFAULT_DURATION,
           aspect_ratio: safeAspectRatio,
           negative_prompt: KLING_NEGATIVE,
-        },
+        } as any,
       });
       request_id = result.request_id;
     } catch (submitErr) {

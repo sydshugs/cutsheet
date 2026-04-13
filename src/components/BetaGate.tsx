@@ -39,7 +39,7 @@ export function BetaGate() {
         body: JSON.stringify({ code: trimmed }),
       });
 
-      const data = await res.json() as { success?: boolean; error?: string };
+      const data = await res.json() as { success?: boolean; error?: string; message?: string };
 
       if (!res.ok) {
         setError(data.message ?? data.error ?? "Something went wrong. Please try again.");

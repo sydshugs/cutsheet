@@ -38,7 +38,7 @@ export async function getUserContext(): Promise<UserContext> {
       niche: data?.niche || DEFAULTS.niche,
       platform: data?.platform || DEFAULTS.platform,
       role: data?.role || DEFAULTS.role,
-      intent: (['awareness', 'consideration', 'conversion'].includes(data?.intent) ? data.intent : DEFAULTS.intent) as AdIntent,
+      intent: (['awareness', 'consideration', 'conversion'].includes(data?.intent) ? data?.intent : DEFAULTS.intent) as AdIntent,
     }
     return cached
   } catch {
