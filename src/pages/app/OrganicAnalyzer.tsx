@@ -381,12 +381,16 @@ export default function OrganicAnalyzer() {
     return () => { cancelled = true; };
   }, [organicFormat, file]);
 
-  const showSafeZone = useMemo(
-    () =>
-      (organicFormat === "static" && staticImageDims?.width === 1080 && staticImageDims?.height === 1920) ||
-      (organicFormat === "video" && videoDims != null && Math.abs((videoDims.width / videoDims.height) - (9 / 16)) < 0.05),
-    [organicFormat, staticImageDims, videoDims],
-  );
+  const showSafeZone = useMemo(() => {
+    const isPortrait = (w: number, h: number) => Math.abs((w / h) - (9 / 16)) < 0.05;
+    if (organicFormat === "static" && staticImageDims) {
+      return isPortrait(staticImageDims.width, staticImageDims.height);
+    }
+    if (organicFormat === "video" && videoDims) {
+      return isPortrait(videoDims.width, videoDims.height);
+    }
+    return false;
+  }, [organicFormat, staticImageDims, videoDims]);
 
   const effectiveStatus = (loadedEntry || loadedFromHistory) ? "complete" : status;
   const showRightPanel = effectiveStatus === "complete" && activeResult !== null;

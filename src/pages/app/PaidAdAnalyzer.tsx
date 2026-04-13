@@ -600,12 +600,16 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
     return () => { cancelled = true; };
   }, [format, file]);
 
-  const showSafeZone = useMemo(
-    () =>
-      (format === "static" && staticImageDims?.width === 1080 && staticImageDims?.height === 1920) ||
-      (format === "video" && videoDims != null && Math.abs((videoDims.width / videoDims.height) - (9 / 16)) < 0.05),
-    [format, staticImageDims, videoDims],
-  );
+  const showSafeZone = useMemo(() => {
+    const isPortrait = (w: number, h: number) => Math.abs((w / h) - (9 / 16)) < 0.05;
+    if (format === "static" && staticImageDims) {
+      return isPortrait(staticImageDims.width, staticImageDims.height);
+    }
+    if (format === "video" && videoDims) {
+      return isPortrait(videoDims.width, videoDims.height);
+    }
+    return false;
+  }, [format, staticImageDims, videoDims]);
 
   const effectiveStatus = (loadedEntry || loadedFromHistory) ? ("complete" as const) : status;
   const showRightPanel = effectiveStatus === "complete" && activeResult !== null;
