@@ -6,7 +6,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
 import { safePlatform, safeAdType, safeNiche } from "./_lib/validateInput";
 import { sanitizeAnalysisText } from "./_lib/sanitizeMemory";
-import { validatePrediction, validateConfidence } from "../src/utils/scoreGuardrails.js";
+
 import { apiError } from "./_lib/apiError.js";
 import { logApiUsage } from "./_lib/logUsage";
 
@@ -244,6 +244,7 @@ Return ONLY valid JSON, no markdown fencing. Be calibrated — a hook score of 3
 
     try {
       const parsed = JSON.parse(cleaned);
+      const { validatePrediction, validateConfidence } = await import("../src/utils/scoreGuardrails.js");
       const validatedPrediction = validatePrediction(parsed, scores);
       validatedPrediction.confidence = validateConfidence(parsed.confidence, scores);
       logApiUsage({ userId: user.id, endpoint: "predict-performance", statusCode: 200, responseTimeMs: Date.now() - start, platform: platformLabel, niche: nicheLabel, format: adTypeLabel });
