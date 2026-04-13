@@ -19,6 +19,8 @@ import type { PlatformScore } from "../../services/claudeService";
 import type { ComparisonResult } from "../../services/claudeService";
 import type { EngineBudgetRecommendation } from "../../services/budgetService";
 import type { PredictionResult } from "../../services/predictionService";
+import type { SoundOffResult } from "../../services/soundOffService";
+import { SoundOffChecklist } from "./SoundOffChecklist";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -87,6 +89,9 @@ export interface PaidRightPanelProps {
 
   prediction: PredictionResult | null;
   predictionLoading: boolean;
+
+  soundOffResult: SoundOffResult | null;
+  soundOffLoading: boolean;
 
   engineBudget: EngineBudgetRecommendation | null;
 
@@ -158,6 +163,8 @@ const PaidRightPanel = forwardRef<PaidRightPanelHandle, PaidRightPanelProps>(
       fixItLoading,
       prediction,
       predictionLoading,
+      soundOffResult,
+      soundOffLoading,
       engineBudget,
       reanalyzeMode,
       comparisonResult,
@@ -293,6 +300,9 @@ const PaidRightPanel = forwardRef<PaidRightPanelHandle, PaidRightPanelProps>(
                     onUpgradeRequired={onUpgradeRequired}
                   />
                 </div>
+                {format === "video" && (
+                  <SoundOffChecklist isLoading={soundOffLoading} data={soundOffResult} />
+                )}
               </motion.div>
             )}
 

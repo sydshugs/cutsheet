@@ -18,6 +18,7 @@ import { generatePrediction, type PredictionResult } from "../services/predictio
 import { runPolicyCheck, type PolicyCheckResult } from "../lib/policyCheckService";
 import { generateBudgetRecommendation, type EngineBudgetRecommendation } from "../services/budgetService";
 import { saveAnalysis } from "../services/historyService";
+import { generateSoundOffCheck, type SoundOffResult } from "../services/soundOffService";
 import type { HistoryEntry } from "../hooks/useHistory";
 import type { PaidRightPanelHandle } from "../components/paid/PaidRightPanel";
 
@@ -58,6 +59,8 @@ export interface UsePostAnalysisReturn {
   engineBudget: EngineBudgetRecommendation | null;
   prediction: PredictionResult | null;
   predictionLoading: boolean;
+  soundOffResult: SoundOffResult | null;
+  soundOffLoading: boolean;
   brief: string | null;
   briefLoading: boolean;
   briefError: string | null;
@@ -117,6 +120,8 @@ export function usePostAnalysis(params: UsePostAnalysisParams): UsePostAnalysisR
   const [engineBudget, setEngineBudget] = useState<EngineBudgetRecommendation | null>(null);
   const [prediction, setPrediction] = useState<PredictionResult | null>(null);
   const [predictionLoading, setPredictionLoading] = useState(false);
+  const [soundOffResult, setSoundOffResult] = useState<SoundOffResult | null>(null);
+  const [soundOffLoading, setSoundOffLoading] = useState(false);
   const [brief, setBrief] = useState<string | null>(null);
   const [briefLoading, setBriefLoading] = useState(false);
   const [briefError, setBriefError] = useState<string | null>(null);
@@ -235,6 +240,19 @@ export function usePostAnalysis(params: UsePostAnalysisParams): UsePostAnalysisR
           console.error("Prediction failed (silent):", err);
           setPredictionLoading(false);
         });
+    }
+
+    // Sound-Off Readability — video only, 0 credits, silent fail
+    if (format === "video") {
+      setSoundOffLoading(true);
+      setSoundOffResult(null);
+      generateSoundOffCheck(
+        result.markdown,
+        platform === "all" ? (rawUserContext?.platform || "all") : platform,
+      )
+        .then(setSoundOffResult)
+        .catch(() => setSoundOffResult(null))
+        .finally(() => setSoundOffLoading(false));
     }
   }, [status, result]); // eslint-disable-line
 
@@ -403,6 +421,8 @@ export function usePostAnalysis(params: UsePostAnalysisParams): UsePostAnalysisR
     setEngineBudget(null);
     setPrediction(null);
     setPredictionLoading(false);
+    setSoundOffResult(null);
+    setSoundOffLoading(false);
     setBrief(null);
     setBriefError(null);
     setBriefLoading(false);
@@ -431,6 +451,8 @@ export function usePostAnalysis(params: UsePostAnalysisParams): UsePostAnalysisR
     engineBudget,
     prediction,
     predictionLoading,
+    soundOffResult,
+    soundOffLoading,
     brief,
     briefLoading,
     briefError,

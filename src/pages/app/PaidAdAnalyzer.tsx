@@ -340,6 +340,8 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
     engineBudget,
     prediction,
     predictionLoading,
+    soundOffResult,
+    soundOffLoading,
     brief,
     briefLoading,
     briefError,
@@ -886,6 +888,8 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
         fixItLoading={fixItLoading}
         prediction={prediction}
         predictionLoading={predictionLoading}
+        soundOffResult={soundOffResult}
+        soundOffLoading={soundOffLoading}
         engineBudget={engineBudget}
         reanalyzeMode={reanalyzeMode}
         comparisonResult={comparisonResult}
