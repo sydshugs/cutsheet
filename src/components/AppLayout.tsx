@@ -146,7 +146,7 @@ export default function AppLayout() {
         />
         <main
           id="main-content"
-          className="flex min-h-0 flex-1 flex-col overflow-auto pb-[68px] md:pb-0"
+          className="flex min-h-0 flex-1 flex-col overflow-hidden pb-[68px] md:pb-0"
         >
           <Outlet context={ctx} />
         </main>
