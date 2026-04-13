@@ -470,7 +470,7 @@ export default function OrganicAnalyzer() {
   void designReviewResult; void designReviewLoading;
 
   return (
-    <div className="flex h-full" style={{ minHeight: "calc(100vh - 56px)" }}>
+    <div className="flex h-full min-h-0" style={{ minHeight: "calc(100vh - 56px)" }}>
       <Helmet>
         <title>Organic Content Analyzer — Cutsheet</title>
         <meta name="description" content="Score TikTok, Instagram Reels, and YouTube Shorts for retention, shareability, and algorithm signals." />
