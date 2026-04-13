@@ -59,7 +59,8 @@ function CompetitorPreviewCard({
       )}
     >
       <div
-        className="relative mx-2 mt-2 min-h-[220px] flex-1 overflow-hidden rounded-[11px] border-2 border-[color:var(--decon-accent-border-strong)] md:min-h-[260px]"
+        className="relative mx-2 mt-2 min-h-[220px] flex-1 overflow-hidden rounded-[11px] border-2 md:min-h-[260px]"
+        style={{ animation: "competitor-border-pulse 2s ease-in-out infinite", borderColor: "rgba(99,102,241,0.3)" }}
       >
         <div className="absolute inset-0 bg-[color:var(--card)]">
           {displayUrl ? (
@@ -86,7 +87,8 @@ function CompetitorPreviewCard({
           aria-hidden
         >
           <div
-            className="size-11 shrink-0 rounded-full border-2 border-[color:var(--decon-accent-border)] border-t-[color:var(--decon-accent-light)] animate-spin"
+            className="size-11 shrink-0 rounded-full border-2 animate-spin"
+            style={{ borderColor: "rgba(99,102,241,0.25)", borderTopColor: "#818cf8" }}
             role="presentation"
           />
         </div>
@@ -98,7 +100,8 @@ function CompetitorPreviewCard({
           {footerLabel}
         </span>
         <span
-          className="text-[10px] font-medium text-[color:var(--decon-accent-light)]"
+          className="text-[10px] font-medium"
+          style={{ color: "#818cf8" }}
         >
           Analyzing…
         </span>
@@ -119,6 +122,13 @@ export function CompetitorLoadingView({
   const { primary, secondary } = headlinesForStatus(statusMessage);
 
   return (
+    <>
+    <style>{`
+      @keyframes competitor-border-pulse {
+        0%, 100% { border-color: rgba(99,102,241,0.3); box-shadow: none; }
+        50% { border-color: rgba(99,102,241,0.7); box-shadow: 0 0 14px rgba(99,102,241,0.12); }
+      }
+    `}</style>
     <div
         className="flex flex-1 flex-col items-center justify-center px-6 py-10"
         role="status"
@@ -176,5 +186,6 @@ export function CompetitorLoadingView({
           ) : null}
         </div>
     </div>
+    </>
   );
 }

@@ -216,7 +216,8 @@ interface CompetitorUploadStepProps {
   onCompetitorFileSelect: (f: File) => void;
   onYourFileRemove: () => void;
   onCompetitorFileRemove: () => void;
-  onNext: () => void;
+  error?: string | null;
+  onRetry?: () => void;
 }
 
 export function CompetitorUploadStep({
@@ -226,7 +227,8 @@ export function CompetitorUploadStep({
   onCompetitorFileSelect,
   onYourFileRemove,
   onCompetitorFileRemove,
-  onNext,
+  error,
+  onRetry,
 }: CompetitorUploadStepProps) {
   return (
     <motion.div
@@ -307,22 +309,23 @@ export function CompetitorUploadStep({
         </div>
 
         <div className="mt-8 flex w-full max-w-[724px] flex-col gap-4">
-          <div className="flex justify-center">
-            <button
-              type="button"
-              onClick={onNext}
-              disabled={!yourFile || !competitorFile}
-              className={cn(
-                "flex h-[44px] min-w-[121px] items-center justify-center rounded-full px-8 text-[12.5px] font-medium transition-[background-color,border-color,color,transform,opacity] duration-150",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] active:scale-[0.99]",
-                yourFile && competitorFile
-                  ? "bg-[color:var(--accent)] text-white hover:bg-[color:var(--accent-hover)]"
-                  : "cursor-not-allowed border border-[color:var(--ab-run-disabled-border)] bg-[color:var(--ab-run-disabled-bg)] text-[color:var(--decon-url-pill-mono)]",
+          {error && (
+            <div className="flex items-center justify-between gap-3 rounded-[10px] border border-[color:var(--error)]/20 bg-[color:var(--error)]/[0.06] px-4 py-3">
+              <div className="flex items-center gap-2">
+                <AlertCircle size={14} className="shrink-0 text-[color:var(--error)]" />
+                <span className="text-[13px] text-[color:var(--error)]">{error}</span>
+              </div>
+              {onRetry && (
+                <button
+                  type="button"
+                  onClick={onRetry}
+                  className="shrink-0 text-[12px] font-medium text-[color:var(--error)] underline underline-offset-2 hover:opacity-80 focus-visible:outline-none"
+                >
+                  Try again
+                </button>
               )}
-            >
-              Analyze Gap
-            </button>
-          </div>
+            </div>
+          )}
 
           <div
             role="button"

@@ -1,5 +1,5 @@
 // src/pages/app/CompetitorAnalyzer.tsx — Step-based competitor analysis
-// Thin orchestrator — UI extracted to CompetitorUploadStep + CompetitorConfigStep
+// Thin orchestrator — UI extracted to CompetitorUploadStep
 
 import { Helmet } from "react-helmet-async";
 import { useState, useEffect, useCallback } from "react";
@@ -8,7 +8,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { CompetitorResultPanel } from "../../components/CompetitorResult";
 import { CompetitorLoadingView } from "../../components/CompetitorLoadingView";
 import { CompetitorUploadStep } from "../../components/competitor/CompetitorUploadStep";
-import { CompetitorConfigStep } from "../../components/competitor/CompetitorConfigStep";
 import { analyzeCompetitor, type CompetitorResult } from "../../services/competitorService";
 import type { AppSharedContext } from "../../components/AppLayout";
 import { cn } from "@/src/lib/utils";
@@ -19,8 +18,8 @@ const SLIDE = { initial: { opacity: 0, x: 40 }, animate: { opacity: 1, x: 0 }, e
 
 type Platform = "all" | "Meta" | "TikTok" | "Google" | "YouTube";
 type Format = "video" | "static";
-/** 0 = dual upload, 2 = configure + run, 3 = results */
-type Step = 0 | 2 | 3;
+/** 0 = dual upload, 3 = results */
+type Step = 0 | 3;
 
 // ─── MAIN ────────────────────────────────────────────────────────────────────
 
@@ -29,14 +28,17 @@ export default function CompetitorAnalyzer() {
     useOutletContext<AppSharedContext>();
 
   const [step, setStep] = useState<Step>(0);
-  const [platform, setPlatform] = useState<Platform>("all");
-  const [format, setFormat] = useState<Format>("video");
+  const [platform] = useState<Platform>("all");
   const [yourFile, setYourFile] = useState<File | null>(null);
   const [competitorFile, setCompetitorFile] = useState<File | null>(null);
   const [status, setStatus] = useState<"idle" | "analyzing" | "complete" | "error">("idle");
   const [statusMsg, setStatusMsg] = useState("");
   const [result, setResult] = useState<CompetitorResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Derive format from files — if either is video, treat as video comparison
+  const format: Format = (yourFile?.type.startsWith('video/') || competitorFile?.type.startsWith('video/')) ? 'video' : 'static';
+
   const handleReset = useCallback(() => {
     setStep(0); setYourFile(null); setCompetitorFile(null);
     setStatus("idle"); setStatusMsg(""); setResult(null); setError(null);
@@ -46,9 +48,9 @@ export default function CompetitorAnalyzer() {
     registerCallbacks({ onNewAnalysis: handleReset, onHistoryOpen: () => {}, hasResult: step === 3 });
   }, [registerCallbacks, handleReset, step]);
 
-  const handleAnalyze = async () => {
+  const handleAnalyze = useCallback(async () => {
     if (!yourFile || !competitorFile || !canAnalyze) return;
-    setStatus("analyzing"); setError(null); setResult(null); setStep(2);
+    setStatus("analyzing"); setError(null); setResult(null);
     try {
       const r = await analyzeCompetitor(yourFile, competitorFile, API_KEY, platform, format, (m) => setStatusMsg(m));
       setResult(r); setStatus("complete"); setStep(3);
@@ -57,12 +59,15 @@ export default function CompetitorAnalyzer() {
       setStatus("error");
       setError("Something went wrong. Please try again.");
     }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [yourFile, competitorFile, canAnalyze, platform, format]);
 
-  const handleRetry = () => {
-    setStatus("idle"); setError(null); setResult(null);
-    handleAnalyze();
-  };
+  // Auto-trigger analysis when both files are set
+  useEffect(() => {
+    if (yourFile && competitorFile && status === 'idle' && !result) {
+      handleAnalyze();
+    }
+  }, [yourFile, competitorFile, status, result, handleAnalyze]);
 
   const isAnalyzing = status === "analyzing" && !!yourFile && !!competitorFile;
 
@@ -106,7 +111,7 @@ export default function CompetitorAnalyzer() {
         <div
           className={cn(
             "flex w-full flex-col",
-            step === 0
+            step !== 3
               ? "min-h-[min(100%,calc(100vh-120px))] flex-1 items-center justify-center px-6 py-8"
               : "mx-auto max-w-[760px] px-5 py-8 sm:px-6 sm:py-10",
           )}
@@ -122,27 +127,8 @@ export default function CompetitorAnalyzer() {
                 onCompetitorFileSelect={(f) => setCompetitorFile(f)}
                 onYourFileRemove={() => setYourFile(null)}
                 onCompetitorFileRemove={() => setCompetitorFile(null)}
-                onNext={() => setStep(2)}
-              />
-            )}
-
-            {/* ── STEP 2: CONFIGURE + COMPARE ────────────────────── */}
-            {step === 2 && status !== "analyzing" && status !== "complete" && (
-              <CompetitorConfigStep
-                yourFile={yourFile}
-                competitorFile={competitorFile}
-                platform={platform}
-                format={format}
                 error={error}
-                canAnalyze={canAnalyze}
-                onPlatformChange={setPlatform}
-                onFormatChange={setFormat}
-                onYourFileRemove={() => { setYourFile(null); setStep(0); }}
-                onCompetitorFileRemove={() => { setCompetitorFile(null); setStep(0); }}
-                onBack={() => setStep(0)}
-                onAnalyze={handleAnalyze}
-                onRetry={handleRetry}
-                onReset={handleReset}
+                onRetry={handleAnalyze}
               />
             )}
 
@@ -156,12 +142,7 @@ export default function CompetitorAnalyzer() {
                   yourFile={yourFile ?? undefined}
                   competitorFile={competitorFile ?? undefined}
                   onStartOver={handleReset}
-                  onReanalyze={() => {
-                    setResult(null);
-                    setStatus("idle");
-                    setError(null);
-                    setStep(2);
-                  }}
+                  onReanalyze={handleAnalyze}
                 />
               </motion.div>
             )}
