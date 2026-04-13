@@ -8,7 +8,7 @@ export default function CheckoutCancel() {
   return (
     <div
       className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden"
-      style={{ background: "var(--bg)" }}
+      style={{ background: "#09090b" }}
     >
       {/* Ambient glows */}
       <div
@@ -17,7 +17,7 @@ export default function CheckoutCancel() {
       />
       <div
         className="absolute bottom-0 right-1/4 w-[400px] h-[400px] rounded-full blur-[100px] pointer-events-none"
-        style={{ background: "rgba(139,92,246,0.08)" }}
+        style={{ background: "rgba(99,102,241,0.06)" }}
       />
 
       <motion.div

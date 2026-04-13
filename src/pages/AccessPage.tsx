@@ -55,7 +55,7 @@ export default function AccessPage() {
     <div
       style={{
         minHeight: "100vh",
-        background: "var(--bg)",
+        background: "#09090b",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -71,11 +71,11 @@ export default function AccessPage() {
         style={{
           width: "100%",
           maxWidth: "420px",
-          background: "var(--surface)",
-          border: "1px solid var(--border)",
-          borderRadius: "var(--radius-lg)",
+          background: "#18181b",
+          border: "1px solid rgba(255,255,255,0.06)",
+          borderRadius: "20px",
           padding: "2rem",
-          boxShadow: "var(--shadow-lg)",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.3), 0 4px 8px rgba(0,0,0,0.2)",
         }}
       >
         {/* Logo */}
@@ -88,8 +88,8 @@ export default function AccessPage() {
           style={{
             width: 48,
             height: 48,
-            borderRadius: "var(--radius)",
-            background: "rgba(99,102,241,0.12)",
+          borderRadius: "12px",
+          background: "rgba(99,102,241,0.12)",
             border: "1px solid rgba(99,102,241,0.2)",
             display: "flex",
             alignItems: "center",
@@ -97,7 +97,7 @@ export default function AccessPage() {
             marginBottom: "1.25rem",
           }}
         >
-          <Shield size={22} style={{ color: "var(--accent)" }} />
+          <Shield size={22} style={{ color: "#6366f1" }} />
         </div>
 
         {/* Heading */}
@@ -106,7 +106,7 @@ export default function AccessPage() {
             margin: "0 0 0.375rem",
             fontSize: "1.25rem",
             fontWeight: 700,
-            color: "var(--ink)",
+            color: "#f4f4f5",
             lineHeight: 1.2,
           }}
         >
@@ -116,7 +116,7 @@ export default function AccessPage() {
           style={{
             margin: "0 0 1.75rem",
             fontSize: "0.8125rem",
-            color: "var(--ink-muted)",
+            color: "#71717a",
             lineHeight: 1.55,
           }}
         >
@@ -131,7 +131,7 @@ export default function AccessPage() {
               display: "block",
               fontSize: "0.75rem",
               fontWeight: 500,
-              color: "var(--ink-muted)",
+              color: "#71717a",
               marginBottom: "0.5rem",
               textTransform: "uppercase",
               letterSpacing: "0.04em",
@@ -160,19 +160,19 @@ export default function AccessPage() {
               padding: "0.625rem 0.875rem",
               fontSize: "0.9375rem",
               fontFamily: "var(--mono)",
-              color: "var(--ink)",
-              background: "var(--surface-el)",
-              border: `1px solid ${error ? "var(--error)" : "var(--border)"}`,
-              borderRadius: "var(--radius-sm)",
+              color: "#f4f4f5",
+              background: "rgba(255,255,255,0.06)",
+              border: `1px solid ${error ? "#ef4444" : "rgba(255,255,255,0.06)"}`,
+              borderRadius: "8px",
               outline: "none",
               letterSpacing: "0.06em",
               marginBottom: "0.5rem",
             }}
             onFocus={(e) => {
-              if (!error) e.currentTarget.style.borderColor = "var(--accent)";
+              if (!error) e.currentTarget.style.borderColor = "#6366f1";
             }}
             onBlur={(e) => {
-              if (!error) e.currentTarget.style.borderColor = "var(--border)";
+              if (!error) e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
             }}
           />
 
@@ -182,7 +182,7 @@ export default function AccessPage() {
               style={{
                 margin: "0 0 0.875rem",
                 fontSize: "0.75rem",
-                color: "var(--error)",
+                color: "#ef4444",
                 lineHeight: 1.4,
               }}
             >
@@ -205,19 +205,19 @@ export default function AccessPage() {
               fontSize: "0.875rem",
               fontWeight: 500,
               color: "#fff",
-              background: "var(--accent)",
+              background: "#6366f1",
               border: "none",
-              borderRadius: "var(--radius-sm)",
+              borderRadius: "8px",
               cursor: loading || !code.trim() ? "not-allowed" : "pointer",
               opacity: loading || !code.trim() ? 0.5 : 1,
               transition: "opacity 0.15s",
             }}
             onMouseEnter={(e) => {
               if (!loading && code.trim())
-                e.currentTarget.style.background = "var(--accent-hover)";
+                e.currentTarget.style.background = "#4f46e5";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = "var(--accent)";
+              e.currentTarget.style.background = "#6366f1";
             }}
           >
             {loading ? (
@@ -239,7 +239,7 @@ export default function AccessPage() {
           style={{
             margin: "1.5rem 0 0",
             fontSize: "0.6875rem",
-            color: "var(--ink-faint)",
+            color: "rgba(255,255,255,0.5)",
             textAlign: "center",
             lineHeight: 1.5,
           }}
@@ -247,7 +247,7 @@ export default function AccessPage() {
           Already have an account?{" "}
           <Link
             to="/login"
-            style={{ color: "var(--ink-muted)", textDecoration: "underline" }}
+            style={{ color: "#71717a", textDecoration: "underline" }}
           >
             Sign in
           </Link>
@@ -255,7 +255,7 @@ export default function AccessPage() {
           Don't have a code?{" "}
           <a
             href="mailto:hello@cutsheet.xyz"
-            style={{ color: "var(--ink-muted)", textDecoration: "underline" }}
+            style={{ color: "#71717a", textDecoration: "underline" }}
           >
             Request access
           </a>

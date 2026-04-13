@@ -42,7 +42,7 @@ export function SharePage() {
       <div
         style={{
           minHeight: "100vh",
-          background: "#0A0A0A",
+          background: "#09090b",
           color: "#fff",
           fontFamily: "var(--sans)",
           display: "flex",
@@ -54,7 +54,7 @@ export function SharePage() {
           style={{
             fontFamily: "var(--mono)",
             fontSize: "13px",
-            color: "rgba(255,255,255,0.5)",
+            color: "#71717a",
           }}
         >
           Loading analysis...
@@ -68,7 +68,7 @@ export function SharePage() {
       <div
         style={{
           minHeight: "100vh",
-          background: "#0A0A0A",
+          background: "#09090b",
           color: "#fff",
           fontFamily: "var(--sans)",
           display: "flex",
@@ -111,11 +111,11 @@ export function SharePage() {
   return (
     <div
       style={{
-        minHeight: "100vh",
-        background: "#0A0A0A",
-        color: "#fff",
-        fontFamily: "var(--sans)",
-      }}
+          minHeight: "100vh",
+          background: "#09090b",
+          color: "#fff",
+          fontFamily: "var(--sans)",
+        }}
     >
       {/* Header */}
       <nav
@@ -231,7 +231,7 @@ export function SharePage() {
                 color: #6366F1;
                 margin: 28px 0 12px;
                 padding-bottom: 8px;
-                border-bottom: 1px solid rgba(239,68,68,0.2);
+                border-bottom: 1px solid rgba(99,102,241,0.2);
               }
               .share-analysis h3, .share-analysis h4 {
                 font-family: var(--mono);
@@ -311,18 +311,18 @@ export function SharePage() {
               gap: "8px",
               textDecoration: "none",
               padding: "8px 16px",
-              background: "rgba(239,68,68,0.1)",
-              border: "1px solid rgba(239,68,68,0.2)",
+              background: "rgba(99,102,241,0.08)",
+              border: "1px solid rgba(99,102,241,0.15)",
               borderRadius: "6px",
               transition: "all 0.2s ease",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(239,68,68,0.15)";
-              e.currentTarget.style.borderColor = "rgba(239,68,68,0.3)";
+              e.currentTarget.style.background = "rgba(99,102,241,0.12)";
+              e.currentTarget.style.borderColor = "rgba(99,102,241,0.25)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(239,68,68,0.1)";
-              e.currentTarget.style.borderColor = "rgba(239,68,68,0.2)";
+              e.currentTarget.style.background = "rgba(99,102,241,0.08)";
+              e.currentTarget.style.borderColor = "rgba(99,102,241,0.15)";
             }}
           >
             <div

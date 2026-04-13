@@ -1,7 +1,7 @@
 // UpgradeModal.tsx — Feature-specific upgrade prompt overlay
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { X, Sparkles } from "lucide-react";
+import { X, Sparkles, Check } from "lucide-react";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 
 interface UpgradeModalProps {
@@ -13,31 +13,43 @@ interface UpgradeModalProps {
 const UPGRADE_MESSAGES: Record<string, { headline: string; body: string }> = {
   visualize: {
     headline: "Your AI Art Director awaits",
-    body: "See exactly what your improved ad looks like \u2014 before you spend a day redesigning. Upgrade to Pro for 10 Visualize credits/month.",
+    body: "See exactly what your improved ad looks like before you redesign. Upgrade to Pro for Visualize credits every month.",
+  },
+  animate: {
+    headline: "Bring your display ads to life",
+    body: "Convert static banners to production-ready HTML5 animations. Upgrade to Pro for Animate credits every month.",
+  },
+  motionPreview: {
+    headline: "Preview motion concepts",
+    body: "See AI-generated motion concepts for your static creatives before committing to video production. Upgrade to Pro for Motion Preview credits every month.",
   },
   analyze: {
-    headline: "You've hit today's analysis limit",
-    body: "Upgrade to Pro for unlimited analyses \u2014 score as many creatives as you need, any time.",
-  },
-  script: {
-    headline: "Write your next winning ad",
-    body: "Generate platform-optimized scripts and score them before you film. Upgrade to Pro for 10 scripts/month.",
+    headline: "You've used your free analyses",
+    body: "Upgrade to Pro for unlimited analyses — score as many creatives as you need, any time.",
   },
   fixIt: {
     headline: "Fix it before you spend",
-    body: "Let AI rewrite your ad to directly address every weakness in the scorecard. Upgrade to Pro for 20 Fix It credits/month.",
+    body: "Let AI rewrite your ad to directly address every weakness in the scorecard. Included with Pro.",
   },
   deconstruct: {
     headline: "Tear down any winning ad",
-    body: "Paste any URL from Meta Ad Library, TikTok Creative Center, or YouTube and get a full teardown. Upgrade to Pro for 20/month.",
+    body: "Paste any URL from Meta Ad Library, TikTok Creative Center, or YouTube and get a full teardown. Included with Pro.",
   },
   policyCheck: {
     headline: "Check before you launch",
-    body: "Scan your creative against Meta and TikTok policies before you submit. Upgrade to Pro for 30 policy checks/month.",
+    body: "Scan your creative against platform ad policies before you submit. Included with Pro.",
   },
   brief: {
     headline: "Brief your next creative",
-    body: "Reverse-engineer a production-ready brief from any high-scoring ad. Upgrade to Pro for 20 briefs/month.",
+    body: "Reverse-engineer a production-ready brief from any high-scoring ad. Included with Pro.",
+  },
+  script: {
+    headline: "Write your next winning ad",
+    body: "Generate platform-optimized scripts and score them before you film. Included with Pro.",
+  },
+  safeZone: {
+    headline: "Check your safe zones",
+    body: "Verify your creative fits within platform-safe areas for text and UI overlays. Included with Pro.",
   },
 };
 
@@ -48,16 +60,16 @@ const DEFAULT_MESSAGE = {
 };
 
 const MINI_COMPARISON = [
-  { label: "Unlimited analyses", free: false as boolean | string, pro: true as boolean | string },
-  { label: "AI Art Director (Visualize)", free: false, pro: true },
-  { label: "Script Generator", free: false, pro: true },
-  { label: "Fix It For Me", free: "1/day", pro: "20/month" },
-  { label: "Policy Checker", free: "1/day", pro: "30/month" },
+  { label: "Analyses", free: "3/month" as boolean | string, pro: "Unlimited" as boolean | string },
+  { label: "AI Rewrite", free: false as boolean | string, pro: true as boolean | string },
+  { label: "Visualize", free: false, pro: "Credits" },
+  { label: "Animate to HTML5", free: false, pro: "Credits" },
+  { label: "Policy Check", free: false, pro: true },
 ];
 
 function CellValue({ value }: { value: boolean | string }) {
   if (value === false) return <span style={{ color: "#3f3f46" }}>—</span>;
-  if (value === true) return <span style={{ color: "#10b981" }}>✓</span>;
+  if (value === true) return <Check size={14} style={{ color: "#10b981" }} />;
   return <span>{value}</span>;
 }
 

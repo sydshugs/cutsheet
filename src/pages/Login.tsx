@@ -141,13 +141,13 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden" style={{ background: "var(--bg)" }}>
+    <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden" style={{ background: "#09090b" }}>
       <Helmet>
         <title>Sign In — Cutsheet</title>
         <link rel="canonical" href="https://cutsheet.xyz/login" />
       </Helmet>
       {/* Ambient glows */}
-      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full blur-[120px] pointer-events-none" style={{ background: "rgba(var(--accent-rgb),0.12)" }} />
+      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full blur-[120px] pointer-events-none" style={{ background: "rgba(99,102,241,0.12)" }} />
       <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] rounded-full blur-[100px] pointer-events-none" style={{ background: "rgba(139,92,246,0.08)" }} />
 
       <motion.div
@@ -160,8 +160,8 @@ export default function Login() {
           className="relative rounded-3xl backdrop-blur-xl p-8"
           style={{
             background: "rgba(24,24,32,0.95)",
-            boxShadow: "0 0 100px rgba(var(--accent-rgb),0.12), 0 8px 40px rgba(0,0,0,0.5)",
-            border: "1px solid var(--border)",
+            boxShadow: "0 0 100px rgba(99,102,241,0.12), 0 8px 40px rgba(0,0,0,0.5)",
+            border: "1px solid rgba(255,255,255,0.06)",
           }}
         >
           <TravelingBeams />
@@ -178,14 +178,14 @@ export default function Login() {
               initial="hidden"
               animate="visible"
             >
-              <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--ink)" }}>Welcome back</h1>
-              <p style={{ fontSize: 13, color: "var(--ink-muted)", marginTop: 4 }}>Sign in to your account</p>
+              <h1 style={{ fontSize: 20, fontWeight: 600, color: "#f4f4f5" }}>Welcome back</h1>
+              <p style={{ fontSize: 13, color: "#71717a", marginTop: 4 }}>Sign in to your account</p>
             </motion.div>
 
             {/* Email */}
             <motion.div custom={1} variants={fieldVariants} initial="hidden" animate="visible">
               <div className="relative">
-                <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "var(--ink-muted)" }} />
+                <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "#71717a" }} />
                 <label htmlFor="login-email" className="sr-only">Email address</label>
                 <input
                   id="login-email"
@@ -198,17 +198,17 @@ export default function Login() {
                   required
                   className="w-full h-[44px] rounded-[10px] pl-10 pr-4 text-sm outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 transition-all"
                   style={{
-                    background: "var(--surface-dim)",
-                    border: "1px solid var(--border)",
-                    color: "var(--ink)",
+                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgba(255,255,255,0.06)",
+                    color: "#f4f4f5",
                   }}
                   onFocus={(e) => {
-                    e.target.style.borderColor = "var(--border-accent)";
-                    e.target.style.background = "var(--accent-subtle)";
+                    e.target.style.borderColor = "rgba(99,102,241,0.5)";
+                    e.target.style.background = "rgba(99,102,241,0.06)";
                   }}
                   onBlur={(e) => {
-                    e.target.style.borderColor = "var(--border)";
-                    e.target.style.background = "var(--surface-dim)";
+                    e.target.style.borderColor = "rgba(255,255,255,0.06)";
+                    e.target.style.background = "rgba(255,255,255,0.04)";
                   }}
                 />
               </div>
@@ -217,7 +217,7 @@ export default function Login() {
             {/* Password */}
             <motion.div custom={2} variants={fieldVariants} initial="hidden" animate="visible">
               <div className="relative">
-                <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "var(--ink-muted)" }} />
+                <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "#71717a" }} />
                 <label htmlFor="login-password" className="sr-only">Password</label>
                 <input
                   id="login-password"
@@ -231,17 +231,17 @@ export default function Login() {
                   required
                   className="w-full h-[44px] rounded-[10px] pl-10 pr-11 text-sm outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 transition-all"
                   style={{
-                    background: "var(--surface-dim)",
-                    border: "1px solid var(--border)",
-                    color: "var(--ink)",
+                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgba(255,255,255,0.06)",
+                    color: "#f4f4f5",
                   }}
                   onFocus={(e) => {
-                    e.target.style.borderColor = "var(--border-accent)";
-                    e.target.style.background = "var(--accent-subtle)";
+                    e.target.style.borderColor = "rgba(99,102,241,0.5)";
+                    e.target.style.background = "rgba(99,102,241,0.06)";
                   }}
                   onBlur={(e) => {
-                    e.target.style.borderColor = "var(--border)";
-                    e.target.style.background = "var(--surface-dim)";
+                    e.target.style.borderColor = "rgba(255,255,255,0.06)";
+                    e.target.style.background = "rgba(255,255,255,0.04)";
                   }}
                 />
                 <button
@@ -250,7 +250,7 @@ export default function Login() {
                   aria-label={showPassword ? "Hide password" : "Show password"}
                   aria-pressed={showPassword}
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 transition-colors hover:text-white"
-                  style={{ color: "var(--ink-muted)" }}
+                  style={{ color: "#71717a" }}
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -271,17 +271,17 @@ export default function Login() {
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
                   className="w-4 h-4 rounded border cursor-pointer"
-                  style={{ accentColor: "var(--accent)" }}
+                  style={{ accentColor: "#6366f1" }}
                 />
-                <span className="text-xs" style={{ color: "var(--ink-muted)" }}>Remember me</span>
+                <span className="text-xs" style={{ color: "#71717a" }}>Remember me</span>
               </label>
-              <Link to="/forgot-password" className="text-xs transition-colors hover:text-[--ink]" style={{ color: "var(--ink-muted)" }}>
+              <Link to="/forgot-password" className="text-xs transition-colors hover:text-[#f4f4f5]" style={{ color: "#71717a" }}>
                 Forgot password?
               </Link>
             </motion.div>
 
             {/* Error message */}
-            <p id="login-error" aria-live="assertive" role="alert" style={{ fontSize: 13, color: "var(--error)", textAlign: "center", minHeight: 20 }}>
+            <p id="login-error" aria-live="assertive" role="alert" style={{ fontSize: 13, color: "#ef4444", textAlign: "center", minHeight: 20 }}>
               {error || ""}
             </p>
 
@@ -294,14 +294,14 @@ export default function Login() {
                 whileTap={{ scale: 0.97 }}
                 className="w-full h-[44px] rounded-full text-white font-semibold text-[15px] flex items-center justify-center gap-2 transition-all disabled:opacity-70"
                 style={{
-                  background: "var(--accent)",
+                  background: "#6366f1",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "var(--accent-hover)";
-                  e.currentTarget.style.boxShadow = "0 0 24px rgba(var(--accent-rgb),0.3)";
+                  e.currentTarget.style.background = "#4f46e5";
+                  e.currentTarget.style.boxShadow = "0 0 24px rgba(99,102,241,0.3)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "var(--accent)";
+                  e.currentTarget.style.background = "#6366f1";
                   e.currentTarget.style.boxShadow = "none";
                 }}
               >
@@ -321,9 +321,9 @@ export default function Login() {
 
             {/* Divider */}
             <motion.div custom={5} variants={fieldVariants} initial="hidden" animate="visible" className="flex items-center gap-3">
-              <div className="flex-1 h-px" style={{ background: "var(--surface-el)" }} />
-              <span className="text-xs" style={{ color: "var(--ink-faint)" }}>or</span>
-              <div className="flex-1 h-px" style={{ background: "var(--surface-el)" }} />
+              <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.06)" }} />
+              <span className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>or</span>
+              <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.06)" }} />
             </motion.div>
 
             {/* Google button */}
@@ -336,9 +336,9 @@ export default function Login() {
                 className="w-full h-[44px] rounded-full text-white font-medium text-sm flex items-center justify-center gap-2.5 transition-all"
                 style={{
                   background: "transparent",
-                  border: "1px solid var(--border)",
+                  border: "1px solid rgba(255,255,255,0.06)",
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-el)"; }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24">
@@ -358,10 +358,10 @@ export default function Login() {
               initial="hidden"
               animate="visible"
               className="text-center text-sm"
-              style={{ color: "var(--ink-muted)" }}
+              style={{ color: "#71717a" }}
             >
               Don't have an account?{" "}
-              <Link to="/signup" className="font-medium transition-colors hover:underline" style={{ color: "var(--accent)" }}>
+              <Link to="/signup" className="font-medium transition-colors hover:underline" style={{ color: "#6366f1" }}>
                 Sign up
               </Link>
             </motion.p>

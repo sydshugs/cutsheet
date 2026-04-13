@@ -8,7 +8,7 @@ const PRIMARY_ORB_VERTICAL_OFFSET = 20;
 
 export default function NotFoundPage() {
   return (
-    <div className="w-full relative flex min-h-screen items-center justify-center overflow-hidden bg-zinc-950 text-white">
+    <div className="w-full relative flex min-h-screen items-center justify-center overflow-hidden" style={{ background: "#09090b", color: "#fff" }}>
       <Helmet>
         <title>Page Not Found — Cutsheet</title>
         <link rel="canonical" href="https://cutsheet.xyz/404" />
@@ -21,7 +21,8 @@ export default function NotFoundPage() {
             y: [0, PRIMARY_ORB_VERTICAL_OFFSET, -PRIMARY_ORB_VERTICAL_OFFSET, 0],
             rotate: [0, 10, -10, 0],
           }}
-          className="absolute top-1/2 left-1/3 h-64 w-64 rounded-full bg-gradient-to-tr from-indigo-500/20 to-violet-500/20 blur-3xl"
+          className="absolute top-1/2 left-1/3 h-64 w-64 rounded-full blur-3xl"
+          style={{ background: "rgba(99,102,241,0.2)" }}
           transition={{
             repeat: Number.POSITIVE_INFINITY,
             duration: 5,
@@ -33,26 +34,18 @@ export default function NotFoundPage() {
             x: [0, -PRIMARY_ORB_HORIZONTAL_OFFSET, PRIMARY_ORB_HORIZONTAL_OFFSET, 0],
             y: [0, -PRIMARY_ORB_VERTICAL_OFFSET, PRIMARY_ORB_VERTICAL_OFFSET, 0],
           }}
-          className="absolute right-1/4 bottom-1/3 h-72 w-72 rounded-full bg-gradient-to-br from-indigo-400/10 to-violet-400/10 blur-3xl"
+          className="absolute right-1/4 bottom-1/3 h-72 w-72 rounded-full blur-3xl"
+          style={{ background: "rgba(99,102,241,0.1)" }}
           transition={{
             repeat: Number.POSITIVE_INFINITY,
             duration: 5,
             ease: "easeInOut",
           }}
         />
-        {/* Subtle grid */}
-        <div
-          className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)",
-            backgroundSize: "60px 60px",
-          }}
-        />
       </div>
 
       <div className="relative z-10 flex flex-col items-center justify-center gap-6 p-6 text-center">
-        <h1 className="text-8xl sm:text-9xl font-extrabold tracking-tighter bg-gradient-to-br from-white via-indigo-100 to-indigo-400 bg-clip-text text-transparent">
+        <h1 className="text-8xl sm:text-9xl font-extrabold tracking-tighter" style={{ color: "#f4f4f5" }}>
           404
         </h1>
         <p className="text-zinc-400 text-base sm:text-lg max-w-md leading-relaxed">
@@ -62,14 +55,23 @@ export default function NotFoundPage() {
         <div className="flex gap-3 mt-2">
           <Link
             to="/"
-            className="inline-flex items-center justify-center gap-2 rounded-full bg-indigo-600 px-6 py-3 text-sm font-semibold text-white transition-all hover:scale-[1.02] hover:bg-indigo-500 active:scale-[0.98] shadow-lg shadow-indigo-600/25"
+            className="inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-white transition-opacity"
+            style={{ background: "#6366f1" }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#4f46e5"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "#6366f1"; }}
           >
             <Home className="h-4 w-4" />
             Go Home
           </Link>
           <Link
             to="/app"
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/10 hover:border-white/20"
+            className="inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-white transition-colors"
+            style={{
+              background: "rgba(255,255,255,0.05)",
+              border: "1px solid rgba(255,255,255,0.1)",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}
           >
             <Compass className="h-4 w-4" />
             Open App

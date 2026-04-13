@@ -9,16 +9,16 @@ type PollState = "polling" | "confirmed" | "timeout";
 
 const PRO_PILLS = [
   "Unlimited analyses",
-  "🎨 Visualize — AI Art Director",
-  "✍️ Script Generator",
-  "🛠️ Fix It For Me",
+  "Visualize — AI Art Director",
+  "AI Rewrite",
+  "Policy Check",
 ];
 
 const TEAM_PILLS = [
   "3 shared seats",
-  "🎨 Visualize — 25/month shared",
-  "✍️ Scripts — 25/month shared",
-  "🛠️ Fix Its — 50/month shared",
+  "Visualize — shared credits",
+  "AI Rewrite — unlimited",
+  "Policy Check — unlimited",
 ];
 
 const POLL_INTERVAL_MS = 2500;
@@ -86,7 +86,7 @@ export default function CheckoutSuccess() {
   return (
     <div
       className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden"
-      style={{ background: "var(--bg)" }}
+      style={{ background: "#09090b" }}
     >
       {/* Ambient glows */}
       <div
@@ -95,7 +95,7 @@ export default function CheckoutSuccess() {
       />
       <div
         className="absolute bottom-0 right-1/4 w-[400px] h-[400px] rounded-full blur-[100px] pointer-events-none"
-        style={{ background: "rgba(139,92,246,0.08)" }}
+        style={{ background: "rgba(99,102,241,0.06)" }}
       />
 
       <motion.div
