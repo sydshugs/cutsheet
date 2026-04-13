@@ -40,14 +40,14 @@ export function BudgetCard({ engineBudget, budget, onNavigateSettings }: BudgetC
           <>
             {/* Dollar range + badge */}
             <div className="flex items-center flex-wrap gap-x-1 mb-4">
-              <span className="text-[28px] font-bold tracking-tight text-white leading-none whitespace-nowrap">
+              <span className="text-[22px] font-bold tracking-tight text-white leading-none">
                 ${weeklyMin}
               </span>
-              <span className="text-[28px] font-medium text-zinc-500 leading-none mx-2 whitespace-nowrap">—</span>
-              <span className="text-[28px] font-bold tracking-tight text-white leading-none whitespace-nowrap">
+              <span className="text-[22px] font-medium text-zinc-500 leading-none mx-2">—</span>
+              <span className="text-[22px] font-bold tracking-tight text-white leading-none">
                 ${weeklyMax}
               </span>
-              <span className={`ml-2 inline-block text-[9px] font-bold uppercase tracking-wider rounded px-2 py-0.5 whitespace-nowrap ${badge.style}`}>
+              <span className={`ml-2 inline-block text-[9px] font-bold uppercase tracking-wider rounded px-2 py-0.5 ${badge.style}`}>
                 {badge.label}
               </span>
             </div>
