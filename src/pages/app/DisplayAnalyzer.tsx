@@ -613,7 +613,7 @@ Return JSON only — no prose:
       {showAnimateTakeover && file && detectedFormat && (
         <AnimateToHtml5Takeover
           onClose={() => setShowAnimateTakeover(false)}
-          imageSrc={previewUrl}
+          imageSrc={previewUrl ?? ""}
           imageFile={file}
           format={detectedFormat.key}
           formatLabel={detectedFormat.name}
@@ -833,46 +833,8 @@ Return JSON only — no prose:
 
           {mode === "single" && (file || status !== "idle") && (
           /* Upload + preview area — only when file is loaded or analysis in progress */
-          <div className={`relative flex flex-col ${(status === "uploading" || status === "processing") ? "h-full" : "px-4 py-6 md:px-8 min-h-full"}`}>
+          <div className={`relative flex flex-col ${"px-4 py-6 md:px-8 min-h-full"}`}>
 
-            {/* ── Format pills header — visible only when results are ready ── */}
-            {status === "complete" && result && (
-              <div className="flex items-center gap-2 -mx-4 md:-mx-8 px-4 md:px-8 py-2.5 mb-4 border-b border-white/[0.04] overflow-x-auto flex-shrink-0">
-                <div className="flex items-center gap-2 min-w-0">
-                  {detectedFormat ? (
-                    <span className="inline-flex items-center gap-1.5 px-3 h-7 rounded-full text-[11px] font-medium whitespace-nowrap"
-                      style={{ background: 'rgba(6,182,212,0.12)', border: '1px solid rgba(6,182,212,0.25)', color: '#00d3f3' }}>
-                      <Monitor size={11} />
-                      {detectedFormat.key} · {detectedFormat.name}
-                    </span>
-                  ) : dimensions && (
-                    <span className="inline-flex items-center gap-1.5 px-3 h-7 rounded-full text-[11px] font-medium whitespace-nowrap"
-                      style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', color: '#f59e0b' }}>
-                      <Monitor size={11} />
-                      {dimensions.width}×{dimensions.height} · Custom
-                    </span>
-                  )}
-                  {detectedFormat?.placement && (
-                    <span className="text-[11px] text-zinc-600 whitespace-nowrap hidden md:inline">{detectedFormat.placement}</span>
-                  )}
-                </div>
-                <div className="flex-1" />
-                {/* Single / Suite toggle */}
-                <div className="flex items-center shrink-0 rounded-full p-0.5" style={{ border: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
-                  <button type="button"
-                    className="px-3 h-6 rounded-full text-[11px] font-medium transition-[background,color] duration-150"
-                    style={{ background: 'rgba(255,255,255,0.08)', color: '#f4f4f5' }}>
-                    Single Ad
-                  </button>
-                  <button type="button"
-                    onClick={() => { setMode("suite" as Mode); handleReset(); }}
-                    className="px-3 h-6 rounded-full text-[11px] font-medium transition-[background,color] duration-150 hover:text-zinc-300"
-                    style={{ color: '#52525c', background: 'transparent' }}>
-                    Suite View
-                  </button>
-                </div>
-              </div>
-            )}
 
             <div className={`relative flex flex-col flex-1 ${status === "analyzing" ? "justify-center" : ""}`} style={{ maxWidth: 800, margin: "0 auto", width: "100%" }}>
               {/* Dropzone or preview */}
@@ -980,20 +942,12 @@ Return JSON only — no prose:
                   {/* ── 1. Placement mockup (interactive) ── */}
                   <DisplayAnalyzerMockup
                     imageSrc={previewUrl ?? ""}
+                    detectedFormatKey={detectedFormat?.key}
+                    onSwitchToSuite={() => { setMode("suite" as Mode); handleReset(); }}
                     onDownload={mockupUrl ? () => { const a = document.createElement("a"); a.href = mockupUrl; a.download = `cutsheet-mockup-${detectedFormat?.key ?? "display"}.png`; a.click(); } : undefined}
                   />
 
-                  {/* ── 2. Analyze another ── */}
-                  <button
-                    type="button"
-                    onClick={handleReset}
-                    className="flex items-center justify-center gap-2 h-12 rounded-xl border border-dashed border-white/[0.08] hover:border-indigo-500/30 hover:bg-indigo-500/[0.03] transition-[border-color,background-color] duration-150 cursor-pointer w-full bg-transparent"
-                  >
-                    <Upload size={14} className="text-indigo-400" />
-                    <span className="text-xs text-zinc-400">Analyze another creative</span>
-                  </button>
-
-                  {/* ── 3. Tools ── */}
+                  {/* ── 2. Tools ── */}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
                     {/* AI Rewrite */}
                     <button
@@ -1070,7 +1024,7 @@ Return JSON only — no prose:
                       priorityFix={result.improvements[0]?.fix}
                       flags={result.improvements.map(imp => ({
                         category: imp.category,
-                        severity: imp.severity,
+                        severity: imp.severity as 'critical' | 'warning' | 'info' | 'high' | 'medium' | 'low',
                         issue: imp.fix,
                         fix: imp.fix,
                       }))}
@@ -1093,11 +1047,10 @@ Return JSON only — no prose:
             <ScoreCard
               scores={{ hook: 0, clarity: 0, cta: 0, production: 0, overall: result.overallScore }}
               dimensionOverrides={[
-                { name: "Hierarchy", score: result.scores.hierarchy },
-                { name: "CTA",       score: result.scores.ctaVisibility },
-                { name: "Brand",     score: result.scores.brandClarity },
-                { name: "Message",   score: result.scores.messageClarity },
-                { name: "Contrast",  score: result.scores.visualContrast },
+                { name: "Hook",    score: result.scores.hierarchy },
+                { name: "Message", score: result.scores.messageClarity },
+                { name: "Visual",  score: result.scores.visualContrast },
+                { name: "Brand",   score: result.scores.brandClarity },
               ]}
               verdict={{
                 state: result.overallScore >= 8 ? 'ready' : result.overallScore >= 4 ? 'needs_work' : 'not_ready',
