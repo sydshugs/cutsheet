@@ -240,7 +240,10 @@ Return ONLY valid JSON, no markdown fencing. Be calibrated — a hook score of 3
     });
 
     const text = message.content[0].type === "text" ? message.content[0].text : "";
-    const cleaned = text.replace(/```json\n?|\n?```/g, "").trim();
+    const cleaned = text
+      .replace(/^```(?:json)?\s*/i, "")
+      .replace(/\s*```\s*$/i, "")
+      .trim();
 
     try {
       const parsed = JSON.parse(cleaned);
@@ -249,7 +252,10 @@ Return ONLY valid JSON, no markdown fencing. Be calibrated — a hook score of 3
       validatedPrediction.confidence = validateConfidence(parsed.confidence, scores);
       logApiUsage({ userId: user.id, endpoint: "predict-performance", statusCode: 200, responseTimeMs: Date.now() - start, platform: platformLabel, niche: nicheLabel, format: adTypeLabel });
       return res.status(200).json(validatedPrediction);
-    } catch {
+    } catch (parseErr) {
+      console.error("[predict-performance] JSON parse failed. Raw text:", text);
+      console.error("[predict-performance] Cleaned:", cleaned);
+      console.error("[predict-performance] Parse error:", parseErr instanceof Error ? parseErr.message : String(parseErr));
       logApiUsage({ userId: user.id, endpoint: "predict-performance", statusCode: 200, responseTimeMs: Date.now() - start, platform: platformLabel, niche: nicheLabel, format: adTypeLabel, errorCode: "PARSE_FALLBACK" });
       return res.status(200).json({
         ctr: { low: 0, high: 0, benchmark: 0, vsAvg: "at" },
