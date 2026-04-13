@@ -59,8 +59,15 @@ async function callGeminiProxy(params: {
     throw new Error((data as { message?: string; error?: string }).message ?? (data as { error?: string }).error ?? `API error ${response.status}`);
   }
 
-  const result = await response.json() as { text: string };
-  return result.text;
+  const result = await response.json() as unknown;
+  if (!result || typeof result !== 'object') {
+    throw new Error('Invalid API response: expected object from /api/analyze');
+  }
+  const resultObj = result as Record<string, unknown>;
+  if (typeof resultObj.text !== 'string') {
+    throw new Error('Invalid API response: missing or non-string "text" field from /api/analyze');
+  }
+  return resultObj.text;
 }
 
 // ─── SYSTEM PROMPT ────────────────────────────────────────────────────────────
@@ -753,8 +760,15 @@ export function parseScenes(markdown: string): Scene[] | undefined {
     // Look for a fenced ```json block containing a "scenes" array
     const jsonBlockMatch = markdown.match(/```json\s*([\s\S]*?)```/i);
     if (!jsonBlockMatch) return undefined;
-    const parsed = JSON.parse(jsonBlockMatch[1].trim());
-    const scenes = parsed?.scenes;
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(jsonBlockMatch[1].trim());
+    } catch {
+      console.warn('[parseScenes] Failed to parse scene JSON block:', jsonBlockMatch[1].slice(0, 200));
+      return undefined;
+    }
+    if (!parsed || typeof parsed !== 'object') return undefined;
+    const scenes = (parsed as Record<string, unknown>).scenes;
     if (!Array.isArray(scenes) || scenes.length === 0) return undefined;
     return scenes as Scene[];
   } catch {
