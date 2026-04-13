@@ -103,6 +103,7 @@ export default function OrganicAnalyzer() {
   const [fixItLoading, setFixItLoading] = useState(false);
   const [safeZoneOpen, setSafeZoneOpen] = useState(false);
   const [staticImageDims, setStaticImageDims] = useState<{ width: number; height: number } | null>(null);
+  const [videoDims, setVideoDims] = useState<{ width: number; height: number } | null>(null);
   const [prediction, setPrediction] = useState<PredictionResult | null>(null);
   const [predictionLoading, setPredictionLoading] = useState(false);
 
@@ -143,6 +144,7 @@ export default function OrganicAnalyzer() {
     setFixItLoading(false);
     setPrediction(null);
     setStaticImageDims(null);
+    setVideoDims(null);
   }, [reset]);
 
   // ── Auto-reset platform when format switches to static ──
@@ -350,11 +352,33 @@ export default function OrganicAnalyzer() {
     return undefined;
   }, [organicFormat, file, activeResult?.thumbnailDataUrl, thumbnailDataUrl]);
 
+  // ── Read video dimensions on file select ──────────────────────────────────
+  useEffect(() => {
+    if (organicFormat !== "video" || !file || !file.type.startsWith("video/")) {
+      setVideoDims(null);
+      return;
+    }
+    let cancelled = false;
+    const url = URL.createObjectURL(file);
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    video.onloadedmetadata = () => {
+      URL.revokeObjectURL(url);
+      if (!cancelled) setVideoDims({ width: video.videoWidth, height: video.videoHeight });
+    };
+    video.onerror = () => {
+      URL.revokeObjectURL(url);
+      if (!cancelled) setVideoDims(null);
+    };
+    video.src = url;
+    return () => { cancelled = true; };
+  }, [organicFormat, file]);
+
   const showSafeZone = useMemo(
     () =>
-      organicFormat === "video" ||
-      (organicFormat === "static" && staticImageDims?.width === 1080 && staticImageDims?.height === 1920),
-    [organicFormat, staticImageDims],
+      (organicFormat === "static" && staticImageDims?.width === 1080 && staticImageDims?.height === 1920) ||
+      (organicFormat === "video" && videoDims != null && Math.abs((videoDims.width / videoDims.height) - (9 / 16)) < 0.05),
+    [organicFormat, staticImageDims, videoDims],
   );
 
   const effectiveStatus = (loadedEntry || loadedFromHistory) ? "complete" : status;

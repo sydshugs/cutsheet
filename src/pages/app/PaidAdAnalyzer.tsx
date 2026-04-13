@@ -167,6 +167,7 @@ export default function PaidAdAnalyzer() {
   // ── Safe Zone state ───────────────────────────────────────────────────────
   const [safeZoneOpen, setSafeZoneOpen] = useState(false);
   const [staticImageDims, setStaticImageDims] = useState<{ width: number; height: number } | null>(null);
+  const [videoDims, setVideoDims] = useState<{ width: number; height: number } | null>(null);
 
   const scorecardRef = useRef<HTMLDivElement | null>(null);
   const leftPanelRef = useRef<HTMLDivElement | null>(null);
@@ -479,6 +480,7 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
     setOriginalImprovementsSnapshot([]);
     resetVisualize();
     setStaticImageDims(null);
+    setVideoDims(null);
   }, [reset, resetPostAnalysis, resetVisualize]);
 
   // ── Auto-detect format on file drop (no modal) ──────────────────────────
@@ -569,11 +571,33 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
     return undefined;
   }, [format, file, activeResult?.thumbnailDataUrl, thumbnailDataUrl]);
 
+  // ── Read video dimensions on file select ──────────────────────────────────
+  useEffect(() => {
+    if (format !== "video" || !file || !file.type.startsWith("video/")) {
+      setVideoDims(null);
+      return;
+    }
+    let cancelled = false;
+    const url = URL.createObjectURL(file);
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    video.onloadedmetadata = () => {
+      URL.revokeObjectURL(url);
+      if (!cancelled) setVideoDims({ width: video.videoWidth, height: video.videoHeight });
+    };
+    video.onerror = () => {
+      URL.revokeObjectURL(url);
+      if (!cancelled) setVideoDims(null);
+    };
+    video.src = url;
+    return () => { cancelled = true; };
+  }, [format, file]);
+
   const showSafeZone = useMemo(
     () =>
-      format === "video" ||
-      (format === "static" && staticImageDims?.width === 1080 && staticImageDims?.height === 1920),
-    [format, staticImageDims],
+      (format === "static" && staticImageDims?.width === 1080 && staticImageDims?.height === 1920) ||
+      (format === "video" && videoDims != null && Math.abs((videoDims.width / videoDims.height) - (9 / 16)) < 0.05),
+    [format, staticImageDims, videoDims],
   );
 
   const effectiveStatus = (loadedEntry || loadedFromHistory) ? ("complete" as const) : status;
