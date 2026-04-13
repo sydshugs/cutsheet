@@ -34,7 +34,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
   }
 
-  const { analysisMarkdown, scores, platform, adType, niche, intent } = req.body ?? {};
+  const { analysisMarkdown, scores, platform, adType, niche, intent } = req.body != null ? req.body : {};
   // Sanitize analysis text — AI-generated but returned through client req.body (untrusted)
   const safeAnalysis = sanitizeAnalysisText(analysisMarkdown);
 
@@ -50,7 +50,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     tiktok: "TikTok", youtube: "YouTube", google: "Google",
     linkedin: "LinkedIn", twitter: "X/Twitter", x: "X/Twitter",
   };
-  const platformLabel = platformKey === "general" ? "Meta" : (PLATFORM_DISPLAY_NAMES[platformKey] ?? platformKey);
+  const _plat = PLATFORM_DISPLAY_NAMES[platformKey];
+  const platformLabel = platformKey === "general" ? "Meta" : (_plat !== undefined && _plat !== null ? _plat : platformKey);
   const nicheLabel = safeNiche(niche);
   const adTypeLabel = safeAdType(adType);
   const intentLabel = (typeof intent === "string" && ["conversion", "awareness", "consideration"].includes(intent)) ? intent : "conversion";
@@ -79,7 +80,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const systemPrompt = `You are a performance marketing analyst specializing in ${nicheLabel} ${adTypeLabel} advertising on ${platformLabel}. You have studied over 100,000 ${platformLabel} ad campaigns in the ${nicheLabel} category.
 
-This ad scored ${scores?.overall ?? "?"}/10 overall. Weakest areas: ${weakDims.join(", ") || "not identified"}. Hook: ${scores?.hook ?? "?"}/10, CTA: ${scores?.cta ?? "?"}/10.
+This ad scored ${scores?.overall != null ? scores.overall : "?"}/10 overall. Weakest areas: ${weakDims.join(", ") || "not identified"}. Hook: ${scores?.hook != null ? scores.hook : "?"}/10, CTA: ${scores?.cta != null ? scores.cta : "?"}/10.
 
 CALIBRATION RULES:
 - A hook score of 3/10 → predict retention below 20%. A hook of 8/10 → predict retention above 55%.
@@ -95,7 +96,7 @@ Scorecard & Analysis:
 ${safeAnalysis}
 </analysis>
 
-Scores: Hook ${scores.hook ?? 0}/10, Clarity ${scores.clarity ?? 0}/10, CTA ${scores.cta ?? 0}/10, Production ${scores.production ?? 0}/10, Overall ${scores.overall ?? 0}/10
+Scores: Hook ${scores.hook != null ? scores.hook : 0}/10, Clarity ${scores.clarity != null ? scores.clarity : 0}/10, CTA ${scores.cta != null ? scores.cta : 0}/10, Production ${scores.production != null ? scores.production : 0}/10, Overall ${scores.overall != null ? scores.overall : 0}/10
 Platform: ${platformLabel} | Format: ${adTypeLabel} | Niche: ${nicheLabel} | Intent: ${intentLabel}
 ${benchmarkBlock}
 
@@ -152,24 +153,24 @@ Return ONLY valid JSON, no markdown fencing. Be calibrated — a hook score of 3
         ...parsed,
         ctr: {
           ...parsed.ctr,
-          low: Math.max(0, Math.min(100, parsed.ctr?.low ?? 0)),
-          high: Math.max(0, Math.min(100, parsed.ctr?.high ?? 0)),
+          low: Math.max(0, Math.min(100, parsed.ctr?.low != null ? parsed.ctr.low : 0)),
+          high: Math.max(0, Math.min(100, parsed.ctr?.high != null ? parsed.ctr.high : 0)),
         },
         cvr: {
-          low: Math.max(0, Math.min(100, parsed.cvr?.low ?? 0)),
-          high: Math.max(0, Math.min(100, parsed.cvr?.high ?? 0)),
+          low: Math.max(0, Math.min(100, parsed.cvr?.low != null ? parsed.cvr.low : 0)),
+          high: Math.max(0, Math.min(100, parsed.cvr?.high != null ? parsed.cvr.high : 0)),
         },
         fatigueDays: {
-          low: Math.max(0, parsed.fatigueDays?.low ?? 0),
-          high: Math.max(0, parsed.fatigueDays?.high ?? 0),
+          low: Math.max(0, parsed.fatigueDays?.low != null ? parsed.fatigueDays.low : 0),
+          high: Math.max(0, parsed.fatigueDays?.high != null ? parsed.fatigueDays.high : 0),
         },
       };
-      const overallScore = (scores?.overall ?? 5);
+      const overallScore = (scores?.overall != null ? scores.overall : 5);
       validatedPrediction.confidence = parsed.confidence === "High" && overallScore < 5
         ? "Medium"
         : parsed.confidence === "Medium" && overallScore < 3
         ? "Low"
-        : (parsed.confidence ?? "Low");
+        : (parsed.confidence != null ? parsed.confidence : "Low");
       logApiUsage({ userId: user.id, endpoint: "predict-performance", statusCode: 200, responseTimeMs: Date.now() - start, platform: platformLabel, niche: nicheLabel, format: adTypeLabel });
       return res.status(200).json(validatedPrediction);
     } catch (parseErr) {

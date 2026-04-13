@@ -103,12 +103,14 @@ const SHORT_LABELS: Record<string, string> = {
 
 function resolveNicheKey(niche: string): string | null {
   if (NICHE_BENCHMARKS[niche]) return niche;
-  return NICHE_ALIASES[niche.toLowerCase().trim()] ?? null;
+  const alias = NICHE_ALIASES[niche.toLowerCase().trim()];
+  return alias !== undefined && alias !== null ? alias : null;
 }
 
 function resolvePlatformKey(platform: string): string {
   const lower = platform.toLowerCase().trim();
-  return PLATFORM_ALIASES[lower] ?? platform || "general";
+  const mapped = PLATFORM_ALIASES[lower];
+  return (mapped !== undefined && mapped !== null) ? mapped : (platform || "general");
 }
 
 export function getNicheBenchmark(
@@ -119,13 +121,17 @@ export function getNicheBenchmark(
   const nicheKey = resolveNicheKey(niche);
   if (!nicheKey) return null;
   const nicheData = NICHE_BENCHMARKS[nicheKey];
-  const platKey = resolvePlatformKey(platform ?? "");
-  return nicheData[platKey] ?? nicheData["general"] ?? null;
+  const platKey = resolvePlatformKey(platform != null ? platform : "");
+  const platData = nicheData[platKey];
+  if (platData !== undefined && platData !== null) return platData;
+  const generalData = nicheData["general"];
+  return generalData !== undefined && generalData !== null ? generalData : null;
 }
 
 export function getNicheShortLabel(niche: string | null | undefined): string | null {
   if (!niche) return null;
   const nicheKey = resolveNicheKey(niche);
   if (!nicheKey) return null;
-  return SHORT_LABELS[nicheKey] ?? null;
+  const label = SHORT_LABELS[nicheKey];
+  return label !== undefined && label !== null ? label : null;
 }
