@@ -585,22 +585,26 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
       return;
     }
     let cancelled = false;
+    let dimsSet = false;
+    let urlRevoked = false;
     const url = URL.createObjectURL(file);
     const video = document.createElement("video");
     video.preload = "auto";
-    video.onloadeddata = () => {
-      console.log('[videoDims]', video.videoWidth, video.videoHeight);
-      URL.revokeObjectURL(url);
-      if (!cancelled && video.videoWidth > 0 && video.videoHeight > 0) {
+    const revokeOnce = () => { if (!urlRevoked) { urlRevoked = true; URL.revokeObjectURL(url); } };
+    const trySetDims = (event: string) => {
+      console.log(`[videoDims ${event}]`, video.videoWidth, video.videoHeight);
+      if (!cancelled && !dimsSet && video.videoWidth > 0 && video.videoHeight > 0) {
+        dimsSet = true;
+        revokeOnce();
         setVideoDims({ width: video.videoWidth, height: video.videoHeight });
       }
     };
-    video.onerror = () => {
-      URL.revokeObjectURL(url);
-      if (!cancelled) setVideoDims(null);
-    };
+    video.onloadedmetadata = () => trySetDims("loadedmetadata");
+    video.onloadeddata = () => { trySetDims("loadeddata"); revokeOnce(); };
+    video.onerror = () => { revokeOnce(); if (!cancelled) setVideoDims(null); };
     video.src = url;
-    return () => { cancelled = true; };
+    video.load();
+    return () => { cancelled = true; revokeOnce(); };
   }, [format, file]);
 
   const showSafeZone = useMemo(() => {
