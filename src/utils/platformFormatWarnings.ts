@@ -208,11 +208,10 @@ export function getFormatWarnings(input: DimensionInput): FormatWarning[] {
   const platform = input.platform.toLowerCase();
 
   if (platform === 'all') {
-    // Collect from Meta + TikTok + Google (exclude YouTube for 'all')
+    // Collect from Meta + TikTok only — Google requires explicit selection
     const all = [
       ...getMetaWarnings(ar, input.format),
       ...getTikTokWarnings(ar, input.format),
-      ...getGoogleWarnings(ar, input.format),
     ];
     // Deduplicate by id
     const seen = new Set<string>();
