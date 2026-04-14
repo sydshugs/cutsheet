@@ -376,6 +376,8 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
     isPlatformSwitching,
     analysisCompletedAt,
     infoToast: postAnalysisInfoToast,
+    abHypothesis,
+    abHypothesisLoading,
     handleGenerateBrief,
     handleCTARewrite,
     handleCheckPolicies,
@@ -909,6 +911,8 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
         soundOffResult={soundOffResult}
         soundOffLoading={soundOffLoading}
         engineBudget={engineBudget}
+        abHypothesis={abHypothesis}
+        abHypothesisLoading={abHypothesisLoading}
         reanalyzeMode={reanalyzeMode}
         comparisonResult={comparisonResult}
         comparisonLoading={comparisonLoading}
