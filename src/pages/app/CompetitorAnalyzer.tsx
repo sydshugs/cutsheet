@@ -123,7 +123,7 @@ export default function CompetitorAnalyzer() {
             "flex w-full flex-col",
             step !== 3
               ? "min-h-[min(100%,calc(100vh-120px))] flex-1 items-center justify-center px-6 py-8"
-              : "mx-auto max-w-[760px] px-5 py-8 sm:px-6 sm:py-10",
+              : "w-full px-5 py-8 sm:px-6 sm:py-10",
           )}
         >
           <AnimatePresence mode="wait">
