@@ -640,11 +640,11 @@ function CreativePreviewCard({
   return (
     <div
       className={cn(
-        "relative flex min-h-[260px] flex-col overflow-hidden md:min-h-[300px] lg:max-h-[384px]",
+        "relative flex flex-col overflow-hidden",
         targetFrame &&
-          "rounded-[15px] border border-white/[0.1] opacity-70 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.25)]",
+          "min-h-[260px] md:min-h-[300px] lg:h-[346px] rounded-[15px] border border-white/[0.1] opacity-70 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.25)]",
         winnerFrame &&
-          "rounded-[15px] border border-[color:var(--competitor-losing-competitor-card-border)] shadow-[var(--competitor-losing-competitor-card-shadow)] opacity-100",
+          "min-h-[280px] md:min-h-[320px] lg:h-[385px] rounded-[15px] border border-[color:var(--competitor-losing-competitor-card-border)] shadow-[var(--competitor-losing-competitor-card-shadow)] opacity-100",
       )}
     >
       {src ? (
@@ -679,7 +679,7 @@ function CreativePreviewCard({
             "font-mono font-bold leading-none",
             isLosingComp || isWinningYour
               ? "text-[clamp(1.85rem,5.5vw,2.9rem)]"
-              : "text-[clamp(1.75rem,5.5vw,2.75rem)]",
+              : "text-[clamp(1.1rem,3vw,2.2rem)]",
           )}
           style={{ color: scoreColorVar }}
         >
@@ -778,8 +778,8 @@ function CompetitorLosingHero({
         {center}
         <div className="grid grid-cols-2 gap-3">{yourCard}{competitorCard}</div>
       </div>
-      <div className="hidden gap-6 lg:grid lg:grid-cols-[minmax(0,260px)_1fr_minmax(0,260px)] lg:items-stretch lg:gap-10">
-        <div className="min-w-0">{yourCard}</div>
+      <div className="hidden lg:grid lg:grid-cols-[minmax(0,260px)_1fr_minmax(0,260px)] lg:items-start lg:gap-6">
+        <div className="min-w-0 lg:pt-6">{yourCard}</div>
         <div className="flex min-w-0 items-center justify-center py-4">{center}</div>
         <div className="min-w-0">{competitorCard}</div>
       </div>
@@ -878,10 +878,10 @@ function CompetitorWinningHero({
           {competitorCard}
         </div>
       </div>
-      <div className="hidden gap-6 lg:grid lg:grid-cols-[minmax(0,260px)_1fr_minmax(0,260px)] lg:items-stretch lg:gap-10">
+      <div className="hidden lg:grid lg:grid-cols-[minmax(0,260px)_1fr_minmax(0,260px)] lg:items-start lg:gap-6">
         <div className="min-w-0">{yourCard}</div>
         <div className="flex min-w-0 items-center justify-center py-4">{center}</div>
-        <div className="min-w-0">{competitorCard}</div>
+        <div className="min-w-0 lg:pt-6">{competitorCard}</div>
       </div>
     </section>
   );
