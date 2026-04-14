@@ -15,8 +15,9 @@ import { extractRightPanelSections } from "../ReportCards";
 import type { AnalysisResult } from "../../services/analyzerService";
 import type { FixItResult } from "../FixItPanel";
 import type { PolicyCheckResult } from "../../lib/policyCheckService";
-import type { PlatformScore } from "../../services/claudeService";
+import type { PlatformScore, ABHypothesisResult } from "../../services/claudeService";
 import type { ComparisonResult } from "../../services/claudeService";
+import { ABHypothesisCard } from "./ABHypothesisCard";
 import type { EngineBudgetRecommendation } from "../../services/budgetService";
 import type { PredictionResult } from "../../services/predictionService";
 import type { SoundOffResult } from "../../services/soundOffService";
@@ -93,6 +94,9 @@ export interface PaidRightPanelProps {
   soundOffResult: SoundOffResult | null;
   soundOffLoading: boolean;
 
+  abHypothesis: ABHypothesisResult | null;
+  abHypothesisLoading: boolean;
+
   engineBudget: EngineBudgetRecommendation | null;
 
   // ── Before/After comparison ──────────────────────────────────────────────────
@@ -165,6 +169,8 @@ const PaidRightPanel = forwardRef<PaidRightPanelHandle, PaidRightPanelProps>(
       predictionLoading,
       soundOffResult,
       soundOffLoading,
+      abHypothesis,
+      abHypothesisLoading,
       engineBudget,
       reanalyzeMode,
       comparisonResult,
@@ -300,6 +306,12 @@ const PaidRightPanel = forwardRef<PaidRightPanelHandle, PaidRightPanelProps>(
                     onUpgradeRequired={onUpgradeRequired}
                   />
                 </div>
+                {/* A/B Hypothesis — format-agnostic, always visible */}
+                <ABHypothesisCard
+                  isLoading={abHypothesisLoading}
+                  data={abHypothesis}
+                />
+
                 {format === "video" && (
                   <SoundOffChecklist isLoading={soundOffLoading} data={soundOffResult} />
                 )}

@@ -8,9 +8,11 @@ import type React from "react";
 import {
   generateBriefWithClaude, generateCTARewrites, generateSecondEyeReview,
   generateStaticSecondEye, generateImprovements, generatePlatformScore,
+  generateABHypothesis,
   type SecondEyeResult,
   type StaticSecondEyeResult,
   type PlatformScore,
+  type ABHypothesisResult,
 } from "../services/claudeService";
 import { generateBrief, type AnalysisResult } from "../services/analyzerService";
 import { generateFixIt, type FixItResult } from "../services/fixItService";
@@ -23,7 +25,7 @@ import type { HistoryEntry } from "../hooks/useHistory";
 import type { PaidRightPanelHandle } from "../components/paid/PaidRightPanel";
 
 // Re-export so callers can reference via the hook module if needed
-export type { SecondEyeResult, StaticSecondEyeResult, PlatformScore };
+export type { SecondEyeResult, StaticSecondEyeResult, PlatformScore, ABHypothesisResult };
 
 type AnalysisStatus = "idle" | "uploading" | "processing" | "complete" | "error";
 
@@ -78,6 +80,8 @@ export interface UsePostAnalysisReturn {
   isPlatformSwitching: boolean;
   analysisCompletedAt: Date | null;
   infoToast: string | null;
+  abHypothesis: ABHypothesisResult | null;
+  abHypothesisLoading: boolean;
 
   // Setters exposed for callers that need direct access
   setBrief: React.Dispatch<React.SetStateAction<string | null>>;
@@ -139,6 +143,8 @@ export function usePostAnalysis(params: UsePostAnalysisParams): UsePostAnalysisR
   const [isPlatformSwitching, setIsPlatformSwitching] = useState(false);
   const [analysisCompletedAt, setAnalysisCompletedAt] = useState<Date | null>(null);
   const [infoToast, setInfoToast] = useState<string | null>(null);
+  const [abHypothesis, setAbHypothesis] = useState<ABHypothesisResult | null>(null);
+  const [abHypothesisLoading, setAbHypothesisLoading] = useState(false);
 
   const platformAbortRef = useRef<AbortController | null>(null);
   const postAnalysisFiredRef = useRef<string | null>(null);
@@ -253,6 +259,24 @@ export function usePostAnalysis(params: UsePostAnalysisParams): UsePostAnalysisR
         .then(setSoundOffResult)
         .catch(() => setSoundOffResult(null))
         .finally(() => setSoundOffLoading(false));
+    }
+
+    // A/B Hypothesis — format-agnostic, fires for both video and static
+    if (result.scores) {
+      setAbHypothesisLoading(true);
+      setAbHypothesis(null);
+      const hypNiche = userContext.match(/Niche:\s*(.+)/)?.[1]?.trim() || "Other";
+      generateABHypothesis(
+        result.scores as unknown as Record<string, number>,
+        result.scores.overall,
+        platform === "all" ? (rawUserContext?.platform || "Meta") : platform,
+        format as "video" | "static",
+        hypNiche,
+        result.markdown,
+      )
+        .then(setAbHypothesis)
+        .catch(() => setAbHypothesis(null))
+        .finally(() => setAbHypothesisLoading(false));
     }
   }, [status, result]); // eslint-disable-line
 
@@ -439,6 +463,8 @@ export function usePostAnalysis(params: UsePostAnalysisParams): UsePostAnalysisR
     setPlatformScoreResult(null);
     setIsPlatformSwitching(false);
     setAnalysisCompletedAt(null);
+    setAbHypothesis(null);
+    setAbHypothesisLoading(false);
     postAnalysisFiredRef.current = null;
   }, []);
 
@@ -470,6 +496,8 @@ export function usePostAnalysis(params: UsePostAnalysisParams): UsePostAnalysisR
     isPlatformSwitching,
     analysisCompletedAt,
     infoToast,
+    abHypothesis,
+    abHypothesisLoading,
 
     // Setters
     setBrief,

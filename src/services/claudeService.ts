@@ -188,6 +188,38 @@ export async function generateStaticSecondEye(
   });
 }
 
+// ─── A/B HYPOTHESIS ─────────────────────────────────────────────────────────
+
+export interface ABHypothesisResult {
+  weakestDimension: string;
+  weakestScore: number;
+  control: string;
+  variant: string;
+  metric: string;
+  liftMin: number;
+  liftMax: number;
+  rationale: string;
+  hypothesis: string;
+}
+
+export async function generateABHypothesis(
+  scores: Record<string, number>,
+  overallScore: number,
+  platform: string,
+  format: "video" | "static",
+  niche: string,
+  geminiAnalysis: string,
+): Promise<ABHypothesisResult> {
+  return callApi<ABHypothesisResult>("/api/ab-hypothesis", {
+    scores,
+    overallScore,
+    platform,
+    format,
+    niche,
+    geminiAnalysis,
+  });
+}
+
 // ─── DISPLAY AD SUITE COHESION ──────────────────────────────────────────────
 
 export interface SuiteIssue {
