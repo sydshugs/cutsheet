@@ -306,15 +306,15 @@ const PaidRightPanel = forwardRef<PaidRightPanelHandle, PaidRightPanelProps>(
                     onUpgradeRequired={onUpgradeRequired}
                   />
                 </div>
-                {format === "video" && (
-                  <SoundOffChecklist isLoading={soundOffLoading} data={soundOffResult} />
-                )}
-
                 {/* A/B Hypothesis — format-agnostic, always visible */}
                 <ABHypothesisCard
                   isLoading={abHypothesisLoading}
                   data={abHypothesis}
                 />
+
+                {format === "video" && (
+                  <SoundOffChecklist isLoading={soundOffLoading} data={soundOffResult} />
+                )}
               </motion.div>
             )}
 
