@@ -378,6 +378,9 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
     infoToast: postAnalysisInfoToast,
     abHypothesis,
     abHypothesisLoading,
+    thumbnailScore,
+    isThumbnailLoading,
+    retriggerThumbnailScore,
     handleGenerateBrief,
     handleCTARewrite,
     handleCheckPolicies,
@@ -551,7 +554,8 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
 
     setFile(f);
     reset();
-  }, [format, handleReset, reset]);
+    resetPostAnalysis();
+  }, [format, handleReset, reset, resetPostAnalysis]);
 
   // ── Read static image dimensions from file (stable deps — won't cancel on thumbnail changes) ──
   useEffect(() => {
@@ -913,6 +917,10 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
         engineBudget={engineBudget}
         abHypothesis={abHypothesis}
         abHypothesisLoading={abHypothesisLoading}
+        thumbnailScore={thumbnailScore}
+        isThumbnailLoading={isThumbnailLoading}
+        thumbnailDataUrl={thumbnailDataUrl}
+        onReanalyzeThumbnail={retriggerThumbnailScore}
         reanalyzeMode={reanalyzeMode}
         comparisonResult={comparisonResult}
         comparisonLoading={comparisonLoading}

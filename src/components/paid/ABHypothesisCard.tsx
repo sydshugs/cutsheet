@@ -43,14 +43,14 @@ export function ABHypothesisCard({ isLoading, data }: ABHypothesisCardProps) {
 
           {data && colors && (
             <div
-              className="h-[16px] rounded-full flex items-center px-[9px] py-[3px] border"
+              className="shrink-0 rounded-full flex items-center px-[9px] py-[3px] border"
               style={{ background: colors.bg, borderColor: colors.border }}
             >
               <span
                 className="font-medium text-[10px] leading-[10px] whitespace-nowrap"
                 style={{ color: colors.text }}
               >
-                {data.weakestDimension} · {data.weakestScore}
+                {data.weakestDimension} · {data.weakestScore.toFixed(1)}
               </span>
             </div>
           )}
