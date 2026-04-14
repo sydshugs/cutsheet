@@ -220,6 +220,37 @@ export async function generateABHypothesis(
   });
 }
 
+// ─── THUMBNAIL SCORING ──────────────────────────────────────────────────────
+
+export interface ThumbnailDimensionScore {
+  label: string;
+  score: number;
+  fix: string | null;
+}
+
+export interface ThumbnailScoreResult {
+  overallScore: number;
+  dimensions: ThumbnailDimensionScore[];
+  worstDimension: ThumbnailDimensionScore;
+  platform: string;
+  frameTimestamp: number;
+  lowCTRWarning: boolean;
+}
+
+export async function scoreThumbnail(
+  frameBase64: string,
+  mimeType: "image/jpeg",
+  platform: string,
+  niche: string,
+): Promise<ThumbnailScoreResult> {
+  return callApi<ThumbnailScoreResult>("/api/thumbnail-score", {
+    frameBase64,
+    mimeType,
+    platform,
+    niche,
+  });
+}
+
 // ─── DISPLAY AD SUITE COHESION ──────────────────────────────────────────────
 
 export interface SuiteIssue {

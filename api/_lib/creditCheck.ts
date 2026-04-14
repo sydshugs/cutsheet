@@ -17,6 +17,7 @@ const PRO_MONTHLY_LIMITS: Record<string, number> = {
   policyCheck: 30,
   deconstruct: 20,
   brief: 20,
+  thumbnail_score: 30,
 };
 
 // Monthly limits for Team tier
@@ -30,6 +31,7 @@ const TEAM_MONTHLY_LIMITS: Record<string, number> = {
   policyCheck: 75,
   deconstruct: 50,
   brief: 50,
+  thumbnail_score: 75,
 };
 
 function getMonthTTL(): number {

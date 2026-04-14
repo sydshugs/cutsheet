@@ -9,10 +9,12 @@ import {
   generateBriefWithClaude, generateCTARewrites, generateSecondEyeReview,
   generateStaticSecondEye, generateImprovements, generatePlatformScore,
   generateABHypothesis,
+  scoreThumbnail,
   type SecondEyeResult,
   type StaticSecondEyeResult,
   type PlatformScore,
   type ABHypothesisResult,
+  type ThumbnailScoreResult,
 } from "../services/claudeService";
 import { generateBrief, type AnalysisResult } from "../services/analyzerService";
 import { generateFixIt, type FixItResult } from "../services/fixItService";
@@ -25,7 +27,7 @@ import type { HistoryEntry } from "../hooks/useHistory";
 import type { PaidRightPanelHandle } from "../components/paid/PaidRightPanel";
 
 // Re-export so callers can reference via the hook module if needed
-export type { SecondEyeResult, StaticSecondEyeResult, PlatformScore, ABHypothesisResult };
+export type { SecondEyeResult, StaticSecondEyeResult, PlatformScore, ABHypothesisResult, ThumbnailScoreResult };
 
 type AnalysisStatus = "idle" | "uploading" | "processing" | "complete" | "error";
 
@@ -82,6 +84,8 @@ export interface UsePostAnalysisReturn {
   infoToast: string | null;
   abHypothesis: ABHypothesisResult | null;
   abHypothesisLoading: boolean;
+  thumbnailScore: ThumbnailScoreResult | null;
+  isThumbnailLoading: boolean;
 
   // Setters exposed for callers that need direct access
   setBrief: React.Dispatch<React.SetStateAction<string | null>>;
@@ -93,6 +97,7 @@ export interface UsePostAnalysisReturn {
   handleCheckPolicies: () => Promise<void>;
   handleFixIt: () => Promise<void>;
   handlePlatformSwitch: (newPlatform: string) => Promise<void>;
+  retriggerThumbnailScore: () => void;
   resetPostAnalysis: () => void;
 }
 
@@ -145,6 +150,8 @@ export function usePostAnalysis(params: UsePostAnalysisParams): UsePostAnalysisR
   const [infoToast, setInfoToast] = useState<string | null>(null);
   const [abHypothesis, setAbHypothesis] = useState<ABHypothesisResult | null>(null);
   const [abHypothesisLoading, setAbHypothesisLoading] = useState(false);
+  const [thumbnailScore, setThumbnailScore] = useState<ThumbnailScoreResult | null>(null);
+  const [isThumbnailLoading, setIsThumbnailLoading] = useState(false);
 
   const platformAbortRef = useRef<AbortController | null>(null);
   const postAnalysisFiredRef = useRef<string | null>(null);
@@ -277,6 +284,28 @@ export function usePostAnalysis(params: UsePostAnalysisParams): UsePostAnalysisR
         .then(setAbHypothesis)
         .catch(() => setAbHypothesis(null))
         .finally(() => setAbHypothesisLoading(false));
+    }
+
+    // Thumbnail Score — video + YouTube/TikTok/Shorts/all only
+    const thumbPlatforms = ["youtube", "tiktok", "shorts", "all"];
+    if (format === "video" && thumbPlatforms.includes(platform.toLowerCase()) && thumbnailDataUrl) {
+      setIsThumbnailLoading(true);
+      setThumbnailScore(null);
+      const thumbNiche = userContext.match(/Niche:\s*(.+)/)?.[1]?.trim() || "Other";
+      const frameBase64 = thumbnailDataUrl.split(",")[1];
+      if (frameBase64) {
+        scoreThumbnail(
+          frameBase64,
+          "image/jpeg",
+          platform === "all" ? (rawUserContext?.platform || "YouTube") : platform,
+          thumbNiche,
+        )
+          .then(setThumbnailScore)
+          .catch(() => setThumbnailScore(null))
+          .finally(() => setIsThumbnailLoading(false));
+      } else {
+        setIsThumbnailLoading(false);
+      }
     }
   }, [status, result]); // eslint-disable-line
 
@@ -436,6 +465,25 @@ export function usePostAnalysis(params: UsePostAnalysisParams): UsePostAnalysisR
     [status, result, userContext, sessionMemoryRef, format, rawUserContext],
   );
 
+  // ── retriggerThumbnailScore ─────────────────────────────────────────────────
+  const retriggerThumbnailScore = useCallback(() => {
+    if (!thumbnailDataUrl || !result) return;
+    setIsThumbnailLoading(true);
+    setThumbnailScore(null);
+    const thumbNiche = userContext.match(/Niche:\s*(.+)/)?.[1]?.trim() || "Other";
+    const frameBase64 = thumbnailDataUrl.split(",")[1];
+    if (!frameBase64) { setIsThumbnailLoading(false); return; }
+    scoreThumbnail(
+      frameBase64,
+      "image/jpeg",
+      platform === "all" ? (rawUserContext?.platform || "YouTube") : platform,
+      thumbNiche,
+    )
+      .then(setThumbnailScore)
+      .catch(() => setThumbnailScore(null))
+      .finally(() => setIsThumbnailLoading(false));
+  }, [thumbnailDataUrl, result, userContext, platform, rawUserContext]);
+
   // ── resetPostAnalysis ──────────────────────────────────────────────────────
   const resetPostAnalysis = useCallback(() => {
     setSecondEyeOutput(null);
@@ -465,6 +513,8 @@ export function usePostAnalysis(params: UsePostAnalysisParams): UsePostAnalysisR
     setAnalysisCompletedAt(null);
     setAbHypothesis(null);
     setAbHypothesisLoading(false);
+    setThumbnailScore(null);
+    setIsThumbnailLoading(false);
     postAnalysisFiredRef.current = null;
   }, []);
 
@@ -498,6 +548,8 @@ export function usePostAnalysis(params: UsePostAnalysisParams): UsePostAnalysisR
     infoToast,
     abHypothesis,
     abHypothesisLoading,
+    thumbnailScore,
+    isThumbnailLoading,
 
     // Setters
     setBrief,
@@ -509,6 +561,7 @@ export function usePostAnalysis(params: UsePostAnalysisParams): UsePostAnalysisR
     handleCheckPolicies,
     handleFixIt,
     handlePlatformSwitch,
+    retriggerThumbnailScore,
     resetPostAnalysis,
   };
 }

@@ -15,13 +15,14 @@ import { extractRightPanelSections } from "../ReportCards";
 import type { AnalysisResult } from "../../services/analyzerService";
 import type { FixItResult } from "../FixItPanel";
 import type { PolicyCheckResult } from "../../lib/policyCheckService";
-import type { PlatformScore, ABHypothesisResult } from "../../services/claudeService";
+import type { PlatformScore, ABHypothesisResult, ThumbnailScoreResult } from "../../services/claudeService";
 import type { ComparisonResult } from "../../services/claudeService";
 import { ABHypothesisCard } from "./ABHypothesisCard";
 import type { EngineBudgetRecommendation } from "../../services/budgetService";
 import type { PredictionResult } from "../../services/predictionService";
 import type { SoundOffResult } from "../../services/soundOffService";
 import { SoundOffChecklist } from "./SoundOffChecklist";
+import { ThumbnailScoreCard } from "./ThumbnailScoreCard";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -97,6 +98,11 @@ export interface PaidRightPanelProps {
   abHypothesis: ABHypothesisResult | null;
   abHypothesisLoading: boolean;
 
+  thumbnailScore: ThumbnailScoreResult | null;
+  isThumbnailLoading: boolean;
+  thumbnailDataUrl: string | null;
+  onReanalyzeThumbnail: () => void;
+
   engineBudget: EngineBudgetRecommendation | null;
 
   // ── Before/After comparison ──────────────────────────────────────────────────
@@ -171,6 +177,10 @@ const PaidRightPanel = forwardRef<PaidRightPanelHandle, PaidRightPanelProps>(
       soundOffLoading,
       abHypothesis,
       abHypothesisLoading,
+      thumbnailScore,
+      isThumbnailLoading,
+      thumbnailDataUrl,
+      onReanalyzeThumbnail,
       engineBudget,
       reanalyzeMode,
       comparisonResult,
@@ -314,6 +324,16 @@ const PaidRightPanel = forwardRef<PaidRightPanelHandle, PaidRightPanelProps>(
 
                 {format === "video" && (
                   <SoundOffChecklist isLoading={soundOffLoading} data={soundOffResult} />
+                )}
+
+                {format === "video" && ["youtube", "tiktok", "shorts", "all"].includes(platform.toLowerCase()) && (
+                  <ThumbnailScoreCard
+                    isLoading={isThumbnailLoading}
+                    thumbnailDataUrl={thumbnailDataUrl}
+                    data={thumbnailScore}
+                    platform={platform}
+                    onReanalyze={onReanalyzeThumbnail}
+                  />
                 )}
               </motion.div>
             )}
