@@ -33,6 +33,9 @@ import { getSessionMemory } from "@/src/lib/userMemoryService";
 import type { AppSharedContext } from "../../components/AppLayout";
 import { cn } from "../../lib/utils";
 import { usePostAnalysis } from "../../hooks/usePostAnalysis";
+import { useMediaDimensions } from "../../hooks/useMediaDimensions";
+import { getFormatWarnings, type FormatWarning } from "../../utils/platformFormatWarnings";
+import { FormatWarningBanner } from "../../components/shared/FormatWarningBanner";
 
 const API_KEY = ""; // Gemini calls are now server-side via /api/analyze
 
@@ -183,6 +186,18 @@ export default function PaidAdAnalyzer() {
   const thumbnailDataUrl = useThumbnail(file, fileObjectUrl);
 
   const isAnalyzing = status === "uploading" || status === "processing";
+
+  // ── Format warnings — aspect ratio / platform mismatch detection ──────────
+  const mediaDims = useMediaDimensions(file);
+  const formatWarnings = useMemo<FormatWarning[]>(() => {
+    if (!mediaDims) return [];
+    return getFormatWarnings({
+      width: mediaDims.width,
+      height: mediaDims.height,
+      platform,
+      format,
+    });
+  }, [mediaDims, platform, format]);
 
   // ── Derived: liveResult + activeResult (needed before hook calls) ─────────
   const liveResult: AnalysisResult | null = result
@@ -801,6 +816,9 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
                   </motion.div>
                 ) : (
                   <div className="flex flex-col flex-1">
+                    {formatWarnings.length > 0 && (
+                      <FormatWarningBanner warnings={formatWarnings} className="mx-0 mb-3" />
+                    )}
                     <AnalyzerView
                         file={file}
                         status={effectiveStatus}

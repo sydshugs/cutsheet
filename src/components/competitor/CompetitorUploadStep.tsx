@@ -8,6 +8,8 @@ import { motion } from "framer-motion";
 import { VideoDropzone } from "../VideoDropzone";
 import { sanitizeSearchQuery, sanitizeFileName } from "../../utils/sanitize";
 import { cn } from "@/src/lib/utils";
+import type { FormatWarning } from "../../utils/platformFormatWarnings";
+import { FormatWarningBanner } from "../shared/FormatWarningBanner";
 
 const META_TOKEN = import.meta.env.VITE_META_ACCESS_TOKEN ?? "";
 
@@ -218,6 +220,7 @@ interface CompetitorUploadStepProps {
   onCompetitorFileRemove: () => void;
   error?: string | null;
   onRetry?: () => void;
+  formatWarnings?: FormatWarning[];
 }
 
 export function CompetitorUploadStep({
@@ -229,6 +232,7 @@ export function CompetitorUploadStep({
   onCompetitorFileRemove,
   error,
   onRetry,
+  formatWarnings,
 }: CompetitorUploadStepProps) {
   return (
     <motion.div
@@ -307,6 +311,12 @@ export function CompetitorUploadStep({
             )}
           </div>
         </div>
+
+        {formatWarnings && formatWarnings.length > 0 && (
+          <div className="mt-6 w-full max-w-[724px]">
+            <FormatWarningBanner warnings={formatWarnings} />
+          </div>
+        )}
 
         <div className="mt-8 flex w-full max-w-[724px] flex-col gap-4">
           {error && (
