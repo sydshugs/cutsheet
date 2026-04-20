@@ -11,15 +11,11 @@ import type { LucideIcon } from "lucide-react";
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
-type NavAccent = "indigo" | "emerald" | "cyan" | "amber" | "rose" | "sky" | "violet" | "slate";
-
 interface NavItem {
   label: string;
   sublabel: string;
   path: string;
   icon: LucideIcon;
-  /** Active row treatment — matches cutsheet-Design AppLayout NavItem */
-  accent: NavAccent;
   comingSoon?: boolean;
 }
 
@@ -37,20 +33,20 @@ interface SidebarProps {
 // ─── NAV CONFIG ───────────────────────────────────────────────────────────────
 
 const ANALYZE: NavItem[] = [
-  { label: "Paid Ad", sublabel: "Meta, TikTok, Google", path: "/app/paid", icon: Zap, accent: "indigo" },
-  { label: "Organic", sublabel: "TikTok, Reels, Shorts", path: "/app/organic", icon: TrendingUp, accent: "emerald" },
-  { label: "Display", sublabel: "Google, affiliate", path: "/app/display", icon: Monitor, accent: "cyan" },
-  { label: "Ad Breakdown", sublabel: "Teardown any ad URL", path: "/app/deconstructor", icon: ScanSearch, accent: "amber" },
+  { label: "Paid Ad", sublabel: "Meta, TikTok, Google", path: "/app/paid", icon: Zap },
+  { label: "Organic", sublabel: "TikTok, Reels, Shorts", path: "/app/organic", icon: TrendingUp },
+  { label: "Display", sublabel: "Google, affiliate", path: "/app/display", icon: Monitor },
+  { label: "Ad Breakdown", sublabel: "Teardown any ad URL", path: "/app/deconstructor", icon: ScanSearch },
 ];
 
 const COMPARE: NavItem[] = [
-  { label: "A/B Test", sublabel: "Quick compare 2–5 variants", path: "/app/ab-test", icon: GitBranch, accent: "rose" },
-  { label: "Competitor", sublabel: "Your ad vs theirs", path: "/app/competitor", icon: Swords, accent: "sky" },
-  { label: "Rank Creatives", sublabel: "Score & rank up to 10", path: "/app/batch", icon: Trophy, accent: "violet" },
+  { label: "A/B Test", sublabel: "Quick compare 2–5 variants", path: "/app/ab-test", icon: GitBranch },
+  { label: "Competitor", sublabel: "Your ad vs theirs", path: "/app/competitor", icon: Swords },
+  { label: "Rank", sublabel: "Score & rank up to 10", path: "/app/batch", icon: Trophy },
 ];
 
 const LIBRARY: NavItem[] = [
-  { label: "Saved Ads", sublabel: "Your reference library", path: "/app/swipe-file", icon: Bookmark, accent: "slate" },
+  { label: "Saved Ads", sublabel: "Your reference library", path: "/app/swipe-file", icon: Bookmark },
 ];
 
 // Mobile "More" drawer: Ad Breakdown (ANALYZE[3]) + Competitor + Rank Creatives + Saved Ads
@@ -61,54 +57,13 @@ const MORE_ITEMS = [...ANALYZE.slice(3), ...COMPARE.slice(1), ...LIBRARY];
 
 function SectionLabel({ label }: { label: string }) {
   return (
-    <div role="heading" aria-level={2} className="text-[10px] uppercase text-zinc-600 tracking-[0.12em] font-semibold px-[12px] pt-[16px] pb-[6px]">
+    <div role="heading" aria-level={2} className="text-[11px] uppercase text-zinc-600 tracking-[0.12em] font-semibold px-[12px] pt-[16px] pb-[6px]">
       {label}
     </div>
   );
 }
 
-/** Active nav row — parity with cutsheet-Design/src/app/components/AppLayout.tsx NavItem */
-function activeNavClass(accent: NavAccent): string {
-  switch (accent) {
-    case "emerald":
-      return "bg-emerald-500/[0.08] border-l-[2px] border-l-[#10b981] border-y-0 border-r-0 text-emerald-300 rounded-tl-[4px] rounded-bl-[4px] rounded-tr-[8px] rounded-br-[8px]";
-    case "cyan":
-      return "bg-cyan-500/[0.08] border-l-[2px] border-l-[#06b6d4] border-y-0 border-r-0 text-cyan-300 rounded-tl-[4px] rounded-bl-[4px] rounded-tr-[8px] rounded-br-[8px]";
-    case "amber":
-      return "bg-amber-500/[0.08] border-l-[2px] border-l-[#f59e0b] border-y-0 border-r-0 text-amber-300 rounded-tl-[4px] rounded-bl-[4px] rounded-tr-[8px] rounded-br-[8px]";
-    case "rose":
-      return "bg-rose-500/[0.08] border-l-[2px] border-l-[#f43f5e] border-y-0 border-r-0 text-rose-300 rounded-tl-[4px] rounded-bl-[4px] rounded-tr-[8px] rounded-br-[8px]";
-    case "sky":
-      return "bg-sky-500/[0.08] border-l-[2px] border-l-[#0ea5e9] border-y-0 border-r-0 text-sky-300 rounded-tl-[4px] rounded-bl-[4px] rounded-tr-[8px] rounded-br-[8px]";
-    case "violet":
-      return "bg-violet-500/[0.08] border-l-[2px] border-l-[#8b5cf6] border-y-0 border-r-0 text-violet-300 rounded-tl-[4px] rounded-bl-[4px] rounded-tr-[8px] rounded-br-[8px]";
-    case "slate":
-      return "bg-slate-500/[0.08] border-l-[2px] border-l-[#94a3b8] border-y-0 border-r-0 text-slate-300 rounded-tl-[4px] rounded-bl-[4px] rounded-tr-[8px] rounded-br-[8px]";
-    default:
-      return "bg-[rgba(99,102,241,0.08)] border-l-[2px] border-l-[#6366f1] border-y-0 border-r-0 text-indigo-300 rounded-tl-[4px] rounded-bl-[4px] rounded-tr-[8px] rounded-br-[8px]";
-  }
-}
-
-function activeNavIconClass(accent: NavAccent): string {
-  switch (accent) {
-    case "emerald":
-      return "text-emerald-400";
-    case "cyan":
-      return "text-cyan-400";
-    case "amber":
-      return "text-amber-400";
-    case "rose":
-      return "text-rose-400";
-    case "sky":
-      return "text-sky-400";
-    case "violet":
-      return "text-violet-400";
-    case "slate":
-      return "text-slate-400";
-    default:
-      return "text-indigo-400";
-  }
-}
+const ACTIVE_NAV_CLASS = "bg-[rgba(99,102,241,0.08)] border-l-[2px] border-l-[#6366f1] border-y-0 border-r-0 text-indigo-300 rounded-tl-[4px] rounded-bl-[4px] rounded-tr-[8px] rounded-br-[8px]";
 
 // ─── NAV ITEM ROW ─────────────────────────────────────────────────────────────
 
@@ -127,11 +82,11 @@ function NavItemRow({ item, collapsed }: { item: NavItem; collapsed: boolean }) 
     <>
       {/* Icon */}
       <Icon
-        size={16}
-        strokeWidth={2}
+        size={17.5}
+        strokeWidth={1.5}
         className={
           isActive
-            ? activeNavIconClass(item.accent)
+            ? "text-indigo-400"
             : "text-zinc-400 group-hover:text-zinc-300 transition-colors"
         }
       />
@@ -213,9 +168,9 @@ function NavItemRow({ item, collapsed }: { item: NavItem; collapsed: boolean }) 
         className={({ isActive }) =>
           `group relative flex items-center transition-all duration-200 ${
             collapsed
-              ? `justify-center rounded-[8px]${isActive ? " bg-white/[0.06]" : ""}`
+              ? `justify-center rounded-[8px]${isActive ? " bg-[rgba(99,102,241,0.08)]" : ""}`
               : isActive
-              ? activeNavClass(item.accent)
+              ? ACTIVE_NAV_CLASS
               : "rounded-tl-[4px] rounded-bl-[4px] rounded-tr-[8px] rounded-br-[8px] border-l-[2px] border-transparent text-zinc-400 hover:bg-white/[0.04] hover:text-zinc-300"
           }`
         }
