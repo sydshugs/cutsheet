@@ -748,7 +748,7 @@ export function BatchView() {
       <>
         <div
           className={cn(
-            "relative flex w-full flex-1 flex-col overflow-y-auto bg-[color:var(--bg)] py-8 pb-10",
+            "relative flex w-full flex-1 flex-col overflow-y-auto bg-[color:var(--bg)] py-[62px]",
             items.length === 0
               ? "min-h-[min(100%,calc(100vh-120px))] justify-center"
               : "min-h-[calc(100vh-120px)] justify-start",
@@ -759,35 +759,39 @@ export function BatchView() {
             style={{ background: "var(--rank-ambient)" }}
             aria-hidden
           />
-          <div className="relative z-[1] mx-auto flex w-full max-w-[916px] flex-col items-stretch gap-8 px-6">
-            <div className="flex w-full flex-col items-center gap-2">
+          <div className="relative z-[1] mx-auto flex w-full max-w-[732px] flex-col items-stretch gap-[31px] px-6">
+            <div className="flex w-full flex-col items-center gap-[22px]">
               <div
-                className="flex size-[73px] shrink-0 items-center justify-center rounded-[15px] border border-[color:var(--rank-tile-border)] bg-[color:var(--rank-tile-bg)]"
+                className="flex size-[76px] shrink-0 items-center justify-center rounded-[16px] border border-[color:var(--rank-tile-border)] bg-[color:var(--rank-tile-bg)]"
                 aria-hidden
               >
-                <Trophy className="size-[31px] text-[color:var(--rank-tile-icon)]" strokeWidth={1.75} />
+                <Trophy className="size-[32px] text-[color:var(--rank-tile-icon)]" strokeWidth={1.75} />
               </div>
-              <h2 className="m-0 text-center text-[19px] font-semibold leading-tight text-[color:var(--ink)]">
-                Rank your creatives
-              </h2>
-              <p className="m-0 max-w-[390px] text-center text-[13.5px] leading-[1.6] text-[color:var(--ink-muted)]">
-                Upload up to 10 ad creatives. Cutsheet ranks them by predicted performance so you know exactly where to put your budget.
-              </p>
-              <div className="mt-4 flex max-w-full flex-wrap items-center justify-center gap-2">
-                {FEATURE_CHIPS.map(({ icon: Icon, label }) => (
-                  <span
-                    key={label}
-                    className="inline-flex h-[27px] items-center gap-1.5 rounded-full border border-[color:var(--rank-feature-pill-border)] bg-[color:var(--rank-feature-pill-bg)] px-3 text-[11.5px] text-[color:var(--rank-feature-pill-text)]"
-                  >
-                    <Icon className="size-[11.5px] shrink-0 opacity-90" aria-hidden />
-                    {label}
-                  </span>
-                ))}
+              <div className="flex flex-col items-center gap-[12px]">
+                <div className="flex flex-col items-center gap-[6px]">
+                  <h2 className="m-0 text-center text-[19px] font-semibold leading-tight text-[color:var(--ink)]">
+                    Rank your creatives
+                  </h2>
+                  <p className="m-0 max-w-[390px] text-center text-[13.5px] leading-[1.6] text-[color:var(--ink-muted)]">
+                    Upload up to 10 ad creatives. Cutsheet ranks them by predicted performance so you know exactly where to put your budget.
+                  </p>
+                </div>
+                <div className="flex max-w-full flex-wrap items-center justify-center gap-2">
+                  {FEATURE_CHIPS.map(({ icon: Icon, label }) => (
+                    <span
+                      key={label}
+                      className="inline-flex h-[27px] items-center gap-1.5 rounded-full border border-[color:var(--rank-feature-pill-border)] bg-[color:var(--rank-feature-pill-bg)] px-3 text-[11.5px] text-[color:var(--rank-feature-pill-text)]"
+                    >
+                      <Icon className="size-[11.5px] shrink-0 opacity-90" aria-hidden />
+                      {label}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
 
-            <div className="flex w-full flex-col gap-4 sm:flex-row sm:flex-wrap sm:gap-8">
-              <div className="flex min-w-0 flex-1 flex-col gap-[7.7px]">
+            <div className="flex w-full flex-col gap-[11px]">
+              <div className="flex min-w-0 w-full flex-col gap-[7.7px]">
                 <p className="m-0 text-[9.6px] font-semibold uppercase tracking-[0.12em] text-[color:var(--rank-section-label)]">Platform</p>
                 <div className="flex flex-wrap items-center gap-[5.8px]">
                   {RANK_PLATFORMS.map((opt) => (
@@ -809,72 +813,71 @@ export function BatchView() {
                   ))}
                 </div>
               </div>
-              <div className="flex min-w-0 flex-1 flex-col gap-[7.7px]">
-                <p className="m-0 text-[9.6px] font-semibold uppercase tracking-[0.12em] text-[color:var(--rank-section-label)]">Test type</p>
-                <div className="flex flex-wrap items-center gap-[5.8px]">
-                  {RANK_TEST_TYPES.map((opt) => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => setRankTestType(opt.value)}
-                      className={cn(
-                        "inline-flex h-[27px] shrink-0 items-center justify-center rounded-full border px-3 text-[11.5px] font-medium transition-[background-color,border-color,color,opacity,transform] duration-150",
-                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]",
-                        "active:scale-[0.99]",
-                        rankTestType === opt.value
-                          ? "border-[color:var(--ab-test-type-active-border)] bg-[color:var(--ab-test-type-active-bg)] text-[color:var(--ab-test-type-active-text)]"
-                          : "border-[color:var(--ab-test-type-inactive-border)] bg-[color:var(--ab-test-type-inactive-bg)] text-[color:var(--ab-test-type-inactive-text)] hover:border-[color:var(--border-hover)]",
-                      )}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
 
-            {items.length < MAX_FILES && (
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setDropzoneDrag(true);
-                }}
-                onDragLeave={(e) => {
-                  if (!e.currentTarget.contains(e.relatedTarget as Node)) setDropzoneDrag(false);
-                }}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  setDropzoneDrag(false);
-                  if (e.dataTransfer.files.length > 0) addFiles(e.dataTransfer.files);
-                }}
-                className={cn(
-                  "flex min-h-[155px] w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-[15px] border border-dashed px-4 py-8 transition-[border-color,background-color] duration-150",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]",
-                  dropzoneDrag ? "border-[color:var(--accent-border)] bg-[color:var(--ab-drag-hover-bg)]" : "border-[color:var(--border)] bg-[color:var(--rank-dropzone-bg)]",
-                )}
-              >
-                <div className="flex size-[38px] items-center justify-center rounded-[23px] border border-[color:var(--rank-feature-pill-border)] bg-[color:var(--rank-dropzone-inner-icon-bg)]">
-                  <CloudUpload className="size-[17px] text-[color:var(--ink-muted)]" aria-hidden />
-                </div>
-                <div className="flex flex-col items-center gap-1 text-center">
-                  <p className="m-0 text-[13.5px] font-medium text-[color:var(--ink)]">
-                    Drop creatives here or{" "}
+              {items.length < MAX_FILES && (
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setDropzoneDrag(true);
+                  }}
+                  onDragLeave={(e) => {
+                    if (!e.currentTarget.contains(e.relatedTarget as Node)) setDropzoneDrag(false);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setDropzoneDrag(false);
+                    if (e.dataTransfer.files.length > 0) addFiles(e.dataTransfer.files);
+                  }}
+                  className={cn(
+                    "flex min-h-[223px] w-full cursor-pointer flex-col items-center justify-center gap-[23px] rounded-[15px] border px-4 transition-[border-color,background-color] duration-150",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]",
+                    dropzoneDrag
+                      ? "border-[color:var(--accent-border)] bg-[color:var(--ab-drag-hover-bg)]"
+                      : "border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.03)]",
+                  )}
+                >
+                  <CloudUpload className="size-[27px] shrink-0 text-[color:var(--ink-muted)]" strokeWidth={2} aria-hidden />
+                  <div className="flex flex-col items-center gap-[5px] text-center">
+                    <p className="m-0 text-[14px] font-medium leading-tight text-[color:var(--ink)]">Drop your ad here</p>
                     <button
                       type="button"
-                      className="text-[color:var(--rank-browse-link)] underline-offset-2 transition-opacity duration-150 hover:opacity-90 focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] active:opacity-80"
+                      className="text-[12.5px] font-normal leading-[15px] text-[color:var(--rank-browse-link)] transition-opacity duration-150 hover:opacity-90 focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] active:opacity-80"
                       onClick={(e) => {
                         e.stopPropagation();
                         fileInputRef.current?.click();
                       }}
                     >
-                      browse files
+                      or browse files
                     </button>
-                  </p>
-                  <p className="m-0 text-[11.5px] text-[color:var(--rank-add-more-text)]">MP4, MOV, JPG, PNG · Max 200MB per file</p>
+                  </div>
+                  <p className="m-0 text-[11.5px] font-normal leading-[15px] text-[color:var(--rank-add-more-text)]">MP4 · MOV · JPG · PNG · up to 500MB</p>
                 </div>
+              )}
+            </div>
+
+            <div className="flex min-w-0 w-full flex-col gap-[7.7px]">
+              <p className="m-0 text-[9.6px] font-semibold uppercase tracking-[0.12em] text-[color:var(--rank-section-label)]">Test type</p>
+              <div className="flex flex-wrap items-center gap-[5.8px]">
+                {RANK_TEST_TYPES.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setRankTestType(opt.value)}
+                    className={cn(
+                      "inline-flex h-[27px] shrink-0 items-center justify-center rounded-full border px-3 text-[11.5px] font-medium transition-[background-color,border-color,color,opacity,transform] duration-150",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]",
+                      "active:scale-[0.99]",
+                      rankTestType === opt.value
+                        ? "border-[color:var(--ab-test-type-active-border)] bg-[color:var(--ab-test-type-active-bg)] text-[color:var(--ab-test-type-active-text)]"
+                        : "border-[color:var(--ab-test-type-inactive-border)] bg-[color:var(--ab-test-type-inactive-bg)] text-[color:var(--ab-test-type-inactive-text)] hover:border-[color:var(--border-hover)]",
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
               </div>
-            )}
+            </div>
 
             <input
               ref={fileInputRef}
@@ -964,21 +967,23 @@ export function BatchView() {
               )}
             </div>
 
-            <button
-              type="button"
-              onClick={runBatch}
-              disabled={!canStartRanking}
-              className={cn(
-                "flex h-[46px] w-full items-center justify-center gap-2 rounded-[11.5px] text-[13.5px] font-semibold text-white transition-[transform,background-color,opacity] duration-150",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]",
-                canStartRanking
-                  ? "bg-[color:var(--rank-cta-bg)] hover:bg-[color:var(--rank-cta-hover)] active:scale-[0.99]"
-                  : "cursor-not-allowed bg-[color:var(--rank-cta-disabled-bg)] text-[color:var(--rank-cta-disabled-text)]",
-              )}
-            >
-              <Trophy className="size-[15px]" strokeWidth={2} aria-hidden />
-              Start Ranking
-            </button>
+            <div className="flex w-full justify-center">
+              <button
+                type="button"
+                onClick={runBatch}
+                disabled={!canStartRanking}
+                className={cn(
+                  "inline-flex h-[45px] w-[158px] items-center justify-center gap-2 rounded-[45px] border text-[13.5px] font-semibold transition-[transform,opacity,border-color,background-color] duration-150",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]",
+                  canStartRanking
+                    ? "border-[rgba(129,140,248,0.3)] bg-[rgba(129,140,248,0.1)] text-[#818cf8] hover:bg-[rgba(129,140,248,0.15)] active:scale-[0.98]"
+                    : "cursor-not-allowed border-[rgba(129,140,248,0.12)] bg-[rgba(129,140,248,0.04)] text-[rgba(129,140,248,0.4)]",
+                )}
+              >
+                <Trophy className="size-[15px]" strokeWidth={2} aria-hidden />
+                Start Ranking
+              </button>
+            </div>
           </div>
         </div>
 
