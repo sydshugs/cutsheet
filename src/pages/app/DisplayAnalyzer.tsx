@@ -43,10 +43,7 @@ function EmptyState({ onFileSelect }: { onFileSelect: (f: File | null) => void }
   const PILLS = ["Format detection", "Placement mockup", "GDN compliance"];
   return (
     <div
-      className={cn(
-        "relative flex flex-1 flex-col items-center justify-center overflow-hidden px-6 py-8",
-        "min-h-[min(100%,calc(100vh-120px))]"
-      )}
+      className="relative flex flex-1 flex-col items-center justify-center overflow-hidden px-6 py-[62px] min-h-[min(100%,calc(100vh-120px))]"
       style={{ backgroundColor: "var(--bg)" }}
     >
       <div
@@ -54,38 +51,46 @@ function EmptyState({ onFileSelect }: { onFileSelect: (f: File | null) => void }
         style={{ backgroundImage: "var(--analyzer-idle-ambient-display)" }}
         aria-hidden
       />
-      <div className="relative z-[1] flex w-full max-w-[731px] flex-col items-center">
+
+      <div className="relative z-[1] flex w-full max-w-[731px] flex-col items-center gap-[22px]">
+        {/* Icon tile */}
         <div
-          className={cn(
-            "flex size-[73px] shrink-0 items-center justify-center rounded-[15px] border border-[color:var(--display-border)]",
-            "bg-[var(--display-tile-bg)]"
-          )}
+          className="flex size-[76px] shrink-0 items-center justify-center rounded-[16px] border"
+          style={{ background: "rgba(14,165,233,0.1)", borderColor: "rgba(14,165,233,0.2)" }}
         >
-          <Monitor className="size-[27px] text-[color:var(--display-accent)]" strokeWidth={1.75} aria-hidden />
+          <Monitor className="size-[31px] text-[color:var(--display-accent)]" strokeWidth={1.75} aria-hidden />
         </div>
 
-        <h1 className="mt-[23px] mb-0 text-center text-[19px] font-semibold leading-tight text-[color:var(--ink)]">
-          Score your display ad
-        </h1>
-        <p className="mt-2.5 mb-0 max-w-[325px] text-center text-[13.5px] leading-[1.6] text-[color:var(--ink-muted)]">
-          Upload a banner ad. Get format detection, placement scoring, and a real-life mockup in 30 seconds.
-        </p>
+        {/* Heading + subtitle + pills */}
+        <div className="flex flex-col items-center gap-[12px]">
+          <div className="flex flex-col items-center gap-[6px]">
+            <h1 className="m-0 text-center text-[19px] font-semibold leading-tight text-[color:var(--ink)]">
+              Score your display ad
+            </h1>
+            <p className="m-0 max-w-[325px] text-center text-[13.5px] leading-[1.6] text-[color:var(--ink-muted)]">
+              Upload a banner ad. Get format detection, placement scoring, and a real-life mockup in 30 seconds.
+            </p>
+          </div>
 
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-          {PILLS.map((pill) => (
-            <span
-              key={pill}
-              className={cn(
-                "rounded-full border border-[color:var(--display-border)] bg-[var(--display-pill-bg)]",
-                "px-3 py-1 text-[11.5px] font-normal leading-[15px] text-[color:var(--display-pill-text)]"
-              )}
-            >
-              {pill}
-            </span>
-          ))}
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {PILLS.map((pill) => (
+              <span
+                key={pill}
+                className="rounded-full border px-3 py-1 text-[11.5px] font-normal leading-[15px]"
+                style={{
+                  background: "rgba(14,165,233,0.15)",
+                  borderColor: "rgba(14,165,233,0.25)",
+                  color: "#0ea5e9",
+                }}
+              >
+                {pill}
+              </span>
+            ))}
+          </div>
         </div>
 
-        <div className="mt-8 w-full max-w-[731px]">
+        {/* Dropzone */}
+        <div className="w-full">
           <VideoDropzone
             onFileSelect={onFileSelect}
             file={null}
