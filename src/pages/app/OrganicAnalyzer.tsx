@@ -436,7 +436,7 @@ export default function OrganicAnalyzer() {
     setCtaLoading(true);
     try {
       const ctaSection = activeResult.markdown.match(/CTA[\s\S]*?(?=\n##|\n---)/i)?.[0] ?? "";
-      setCtaRewrites(await generateCTARewrites(ctaSection, activeResult.fileName, userContext || undefined, sessionMemoryRef.current));
+      setCtaRewrites(await generateCTARewrites(ctaSection, activeResult.fileName, userContext || undefined, sessionMemoryRef.current, "organic"));
     } catch (err) {
       console.error('CTA rewrite failed:', err);
       setRateLimitError('CTA rewrite failed. Please try again.');

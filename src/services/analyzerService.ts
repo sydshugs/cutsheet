@@ -1226,7 +1226,7 @@ export async function analyzeVideo(
 
     // 6b. Enhance improvements with Claude (silent fallback to Gemini)
     try {
-      const enhanced = await claudeImprovements(markdown, scores, userContext, undefined, sessionMemory);
+      const enhanced = await claudeImprovements(markdown, scores, userContext, undefined, sessionMemory, contentType);
       if (enhanced.length > 0) improvements = enhanced;
     } catch { /* silent fallback — keep Gemini improvements */ }
 

@@ -77,12 +77,13 @@ export async function generateImprovements(
   scores: { hook: number; clarity: number; cta: number; production: number; overall: number } | null,
   userContext?: string,
   platform?: string,
-  sessionMemory?: string
+  sessionMemory?: string,
+  adType?: "paid" | "organic"
 ): Promise<string[]> {
   if (!scores) return [];
   const data = await callApi<{ improvements: string[] }>("/api/improvements", {
     action: "improvements",
-    payload: { analysisMarkdown, scores, userContext, platform, sessionMemory },
+    payload: { analysisMarkdown, scores, userContext, platform, sessionMemory, adType },
   });
   return data.improvements ?? [];
 }
@@ -111,11 +112,12 @@ export async function generateCTARewrites(
   currentCTA: string,
   productContext: string,
   userContext?: string,
-  sessionMemory?: string
+  sessionMemory?: string,
+  adType?: "paid" | "organic"
 ): Promise<string[]> {
   const data = await callApi<{ rewrites: string[] }>("/api/improvements", {
     action: "cta-rewrites",
-    payload: { currentCTA, productContext, userContext, sessionMemory },
+    payload: { currentCTA, productContext, userContext, sessionMemory, adType },
   });
   return data.rewrites ?? [];
 }
