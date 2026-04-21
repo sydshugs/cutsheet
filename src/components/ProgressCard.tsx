@@ -23,6 +23,8 @@ interface ProgressCardProps {
   compact?: boolean;
   /** Organic analyzer — renders green ambient radial gradient behind the card */
   isOrganic?: boolean;
+  /** Display analyzer — renders cyan ambient radial gradient behind the card */
+  isDisplay?: boolean;
 }
 
 const DIMENSIONS = ["Hook Strength", "Message Clarity", "CTA Effectiveness", "Production Quality"];
@@ -55,6 +57,7 @@ export function ProgressCard({
   sharedFileObjectUrl,
   compact = false,
   isOrganic = false,
+  isDisplay = false,
 }: ProgressCardProps) {
   const title = titleProp ?? "Analyzing your ad";
   const SUBTITLES = format === "static" ? STATIC_SUBTITLES : VIDEO_SUBTITLES;
@@ -137,6 +140,13 @@ export function ProgressCard({
         <div
           className="pointer-events-none absolute inset-0 z-0"
           style={{ background: "radial-gradient(ellipse 70% 55% at 50% 38%, rgba(16,185,129,0.14) 0%, transparent 75%)" }}
+          aria-hidden
+        />
+      )}
+      {isDisplay && (
+        <div
+          className="pointer-events-none absolute inset-0 z-0"
+          style={{ background: "radial-gradient(ellipse 70% 55% at 50% 38%, rgba(14,165,233,0.14) 0%, rgba(7,83,117,0.07) 37.5%, transparent 75%)" }}
           aria-hidden
         />
       )}

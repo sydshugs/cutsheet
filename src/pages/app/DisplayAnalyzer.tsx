@@ -745,6 +745,7 @@ Return JSON only — no prose:
                   format="static"
                   icon={Monitor}
                   title="Analyzing your display ad"
+                  isDisplay
                 />
               )}
 
