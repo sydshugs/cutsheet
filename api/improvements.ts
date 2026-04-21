@@ -151,12 +151,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (action === "brief") {
-    const { analysisMarkdown: rawAnalysis, filename: rawFilename, userContext: rawContext, sessionMemory: rawMemory, adFormat, platform: rawPlatform } = payload ?? {};
+    const { analysisMarkdown: rawAnalysis, filename: rawFilename, userContext: rawContext, sessionMemory: rawMemory, adFormat, platform: rawPlatform, isOrganic: rawIsOrganic } = payload ?? {};
     const sessionMemory = sanitizeSessionMemory(rawMemory);
     const userContext = sanitizeSessionMemory(rawContext);
     const analysisMarkdown = sanitizeAnalysisText(rawAnalysis);
     const filename = sanitizeUserInput(rawFilename);
     const platform = sanitizeUserInput(rawPlatform);
+    const isOrganic = rawIsOrganic === true;
     if (!analysisMarkdown) return res.status(400).json({ error: "analysisMarkdown is required" });
 
     const formatLabel = adFormat === "static" ? "static" : "video";
@@ -172,15 +173,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ? `\n\nOptimize this brief specifically for ${platformLabel} — format, copy length, and hook style should reflect ${platformLabel} best practices.`
       : "";
 
-    const message = await getClient().messages.create({
-      model: CLAUDE_MODEL,
-      max_tokens: 2048,
-      temperature: 0,
-      system: `You are a senior creative strategist at a top performance marketing agency. You write tight, actionable creative briefs that creative teams can execute immediately. Your briefs are specific to the ad analyzed — not generic templates.${contextBlock}${memoryBlock}${platformBlock}${brandVoiceContext}`,
-      messages: [
-        {
-          role: "user",
-          content: `Based on this ${formatLabel} ad analysis for "${filename ?? "this ad"}", write a creative brief for the next iteration of this ad. Structure it exactly like this:
+    const systemPromptPaid = `You are a senior creative strategist at a top performance marketing agency. You write tight, actionable creative briefs that creative teams can execute immediately. Your briefs are specific to the ad analyzed — not generic templates.${contextBlock}${memoryBlock}${platformBlock}${brandVoiceContext}`;
+
+    const systemPromptOrganic = `You are a senior organic content strategist helping a ${platformLabel || "social feed"} creator plan their next post. You write tight, actionable creator briefs targeted at the content's specific weaknesses — not generic templates. You write for organic performance (scroll-stop, save rate, share appeal, rewatch, audience growth), NEVER for conversion.
+
+This is organic creator content, NOT a paid ad. Output rules (violations = failure):
+- **Proof Points** must be creator credibility signals — the creator's lived experience, niche expertise, community trust, trend participation, audience relevance. NEVER review counts, star ratings, testimonials-as-social-proof, money-back guarantees, or risk-free trials.
+- **CTA** section must hold a SOFT ENGAGEMENT PROMPT — "follow for part 2", "save for your next [X]", "comment your favorite", "share with someone who [Y]". NEVER "Shop Now", "Link in bio", "Free Shipping", "Use code", "discount", "buy now", or any purchase/conversion copy. The section label stays "CTA" for schema compatibility; the content is organic.
+- **Format** must be a creator-native format (authentic cut, POV storytelling, lifestyle vignette, day-in-the-life, talking-head, voiceover with b-roll). NEVER "UGC product demonstration" — UGC as a format term is paid advertising vocabulary.
+- **Hook Direction** must describe organic scroll-stop moments (pattern interrupt, curiosity gap, relatable-moment opener, visual hook in first frame). NEVER product reveals or CTA openers.
+- Do NOT invent a product or brand if none is visible in the analysis. If this is lifestyle, storytelling, educational, or brand content, treat it on its own terms.
+- Do NOT use ad terminology (impression, CPA, CTR, CPM, ROAS, funnel, lead, conversion).${contextBlock}${memoryBlock}${platformBlock}${brandVoiceContext}`;
+
+    const systemPrompt = isOrganic ? systemPromptOrganic : systemPromptPaid;
+
+    const userMessagePaid = `Based on this ${formatLabel} ad analysis for "${filename ?? "this ad"}", write a creative brief for the next iteration of this ad. Structure it exactly like this:
 
 ## Creative Brief
 
@@ -213,7 +220,54 @@ CRITICAL FORMAT RULES — follow EXACTLY or the parser will break:
 ---
 
 Analysis:
-${analysisMarkdown}`,
+${analysisMarkdown}`;
+
+    const userMessageOrganic = `Based on this ${formatLabel} creator content analysis for "${filename ?? "this post"}", write a creator brief for the next iteration. This is organic creator content — NOT a paid ad. Structure it exactly like this:
+
+## Creative Brief
+
+**Objective:** One sentence on what this post should achieve — organic performance (scroll-stop, save, share, rewatch, reach new audience). NOT conversion or sales.
+
+**Target Audience:** Feed scrollers on ${platformLabel || "this platform"} who save, share, or rewatch this type of content. Describe who they are, what they care about, what would make them stop scrolling. NOT "shoppers" or "buyers" — feed viewers.
+
+**Hook Direction:** 2-3 organic hook concepts with the first 3 seconds described for each. Each hook must be a scroll-stop pattern interrupt, curiosity gap, relatable moment, or creator-to-camera opener. NO product reveals. NO CTAs in the hook.
+
+**Format:** [Authentic cut / POV storytelling / Lifestyle vignette / Day-in-the-life / Talking head / Voiceover with b-roll / Other creator-native format] — and why this fits the creator and audience. NOT "UGC product demonstration" (UGC is paid ad vocabulary).
+
+**Key Message:** The single most important thing the feed viewer should feel or take away. NOT a product benefit or value prop pitch.
+
+**Proof Points:** 3 creator-credibility signals specific to THIS creator and niche — examples: lived experience ("I've done this for 5 years"), community trust ("my followers know I only recommend things I actually use"), niche expertise, trend participation, specific personal detail. NEVER "review count", "5-star rating", "money-back guarantee", "risk-free trial", or any paid social-proof format.
+
+**CTA:** A SOFT ENGAGEMENT PROMPT — examples: "save this for your next beach day", "comment your favorite part", "share with someone who'd love this", "follow for part 2". NEVER "Shop Now", "Link in bio", "Free Shipping", "Use code", "discount", "buy now", or any purchase language. Output format: one short line + placement note (e.g., "end card", "pinned comment", "caption last line").
+
+**Do:** 3 things the creative must include — each must address a specific weakness from the analysis. Each must be organic-native (save-worthy moment, share trigger, rewatchability, trend awareness, creator-voice authenticity).
+
+**Don't:** 3 things to avoid — each should call out a specific ad-voice pattern the creator must not adopt (no "Shop Now", no product pitch, no urgency copy, no hard sell, no ad terminology).
+
+CRITICAL FORMAT RULES — follow EXACTLY or the parser will break:
+- Every section MUST start with **Label:** followed by content on the same line
+- Use exactly these label names: Objective, Target Audience, Hook Direction, Format, Key Message, Proof Points, CTA, Do, Don't
+- For numbered items (Hook Direction), put each on its own line starting with 1. 2. 3.
+- For bullet items (Proof Points, Do, Don't), put each on its own line starting with -
+- Do NOT add any extra markdown formatting, headers, or dividers
+- Do NOT wrap the brief in code fences
+
+---
+
+Analysis:
+${analysisMarkdown}`;
+
+    const userMessage = isOrganic ? userMessageOrganic : userMessagePaid;
+
+    const message = await getClient().messages.create({
+      model: CLAUDE_MODEL,
+      max_tokens: 2048,
+      temperature: 0,
+      system: systemPrompt,
+      messages: [
+        {
+          role: "user",
+          content: userMessage,
         },
       ],
     });

@@ -1417,9 +1417,10 @@ export async function generateBrief(
   scores?: { hook: number; clarity: number; cta: number; production: number; overall: number } | null,
   intent?: string,
   brandVoice?: string,
+  isOrganic?: boolean,
 ): Promise<string> {
-  const nicheLabel = niche || "performance marketing";
-  const platformLabel = platform || "paid social";
+  const nicheLabel = niche || (isOrganic ? "creator content" : "performance marketing");
+  const platformLabel = platform || (isOrganic ? "this platform" : "paid social");
   const intentLabel = intent || "conversion";
 
   const weakDims = scores
@@ -1436,7 +1437,7 @@ export async function generateBrief(
     ? "drive engagement and click-through rate"
     : "maximize direct response conversion and ROAS";
 
-  const prompt = `You are writing a creative brief for the next iteration of a ${nicheLabel} ad on ${platformLabel}. The current ad scored ${scores?.overall ?? "?"}/10 overall. The user's goal is ${intentLabel} (${intentObjective}).
+  const promptPaid = `You are writing a creative brief for the next iteration of a ${nicheLabel} ad on ${platformLabel}. The current ad scored ${scores?.overall ?? "?"}/10 overall. The user's goal is ${intentLabel} (${intentObjective}).
 
 ${weakDims.length ? `CRITICAL WEAKNESSES TO FIX (these are the #1 priority):\n${weakDims.map(d => `→ ${d}`).join("\n")}\nEvery section of this brief must address at least one of these weaknesses.\n` : ""}
 ${scores ? `CURRENT SCORES: Hook ${scores.hook}/10 | Clarity ${scores.clarity}/10 | CTA ${scores.cta}/10 | Production ${scores.production}/10 | Overall ${scores.overall}/10` : ""}
@@ -1469,9 +1470,58 @@ Every line must be specific to ${nicheLabel} on ${platformLabel}. If a line coul
 ## AD ANALYSIS
 ${analysisMarkdown}`;
 
+  const promptOrganic = `You are writing a creator brief for the next iteration of a ${nicheLabel} creator's post on ${platformLabel}. The current post scored ${scores?.overall ?? "?"}/10 overall. The goal is organic performance — scroll-stop, save rate, share appeal, rewatch, audience growth. This is organic creator content — NOT a paid ad.
+
+${weakDims.length ? `CRITICAL WEAKNESSES TO FIX (these are the #1 priority):\n${weakDims.map(d => `→ ${d}`).join("\n")}\nEvery section of this brief must address at least one of these weaknesses.\n` : ""}
+${scores ? `CURRENT SCORES: Hook ${scores.hook}/10 | Clarity ${scores.clarity}/10 | Shareability ${scores.cta}/10 | Production ${scores.production}/10 | Overall ${scores.overall}/10` : ""}
+
+Never recommend conversion tactics, CTAs, offers, pricing, discounts, or ad-style urgency. Never use ad terminology (impression, CPA, CTR, CPM, ROAS, funnel, lead, conversion).
+
+Structure the brief exactly like this:
+
+## Creative Brief
+
+**Objective:** One sentence — what this creator's post must achieve on ${platformLabel} for organic performance (scroll-stop, save, share, rewatch, reach). Current score: ${scores?.overall ?? "?"}/10. Target: ${Math.min(10, (scores?.overall ?? 5) + 2)}/10.
+
+**Target Audience:** Feed scrollers on ${platformLabel} who save, share, or rewatch ${nicheLabel} content. What they care about. What would make them stop scrolling. NOT shoppers or buyers — feed viewers.
+
+**Hook Direction:** 2-3 organic hook concepts (pattern interrupt, curiosity gap, relatable moment, creator-to-camera opener) with the first 3 seconds described for each.${weakDims.some(d => d.includes("hook")) ? ` PRIORITY FIX: Current hook scored ${scores?.hook ?? "?"}/10 — these hooks must be dramatically stronger. Reference what specifically failed in the current hook.` : ""} NO CTAs in the hook. NO product reveals.
+
+**Format:** [Authentic cut / POV storytelling / Lifestyle vignette / Day-in-the-life / Talking head / Voiceover with b-roll / Other creator-native format] — why this fits the creator and audience. NOT "UGC product demonstration" — UGC as a format term is paid advertising vocabulary.
+
+**Key Message:** The single most important thing a feed viewer on ${platformLabel} should feel or take away from this post. NOT a product pitch or value proposition.
+
+**Proof Points:** 3 creator-credibility signals specific to THIS creator and niche — lived experience, community trust, niche expertise, trend participation, audience relevance. NEVER review counts, star ratings, testimonials-as-social-proof, money-back guarantees, or risk-free trials.
+
+**CTA:** A SOFT ENGAGEMENT PROMPT — examples: "save for your next ${nicheLabel} moment", "comment your favorite part", "share with someone who'd love this", "follow for part 2". NEVER "Shop Now", "Link in bio", "Free Shipping", "Use code", "discount", "buy now", or any purchase language.${weakDims.some(d => d.includes("cta")) ? ` PRIORITY FIX: Current shareability/engagement score was ${scores?.cta ?? "?"}/10 — make the engagement prompt more compelling and specific.` : ""}
+
+**Do:** 3 things the creative must include — each one addresses a specific weakness from the scorecard and is organic-native (save-worthy moment, share trigger, rewatchability, trend awareness, creator-voice authenticity).
+**Don't:** 3 things to avoid — each one calls out a specific ad-voice pattern the creator must not adopt (no "Shop Now", no product pitch, no urgency copy, no hard sell, no ad terminology).
+
+Every line must be specific to ${nicheLabel} on ${platformLabel}. If a line could apply to any product in any niche, rewrite it.
+
+---
+
+## POST ANALYSIS
+${analysisMarkdown}`;
+
+  const prompt = isOrganic ? promptOrganic : promptPaid;
+
+  const systemInstructionPaid = `You are a senior creative strategist specializing in ${nicheLabel} advertising on ${platformLabel}. You write tight, actionable creative briefs for ${intentLabel} campaigns. Your briefs target the ad's specific weaknesses${weakDims.length ? ` (${weakDims.join(", ")})` : ""} — not generic improvement templates. Every recommendation must be executable by a creative team working on ${nicheLabel} ads.${brandVoice ? `\n\n${brandVoice}` : ""}`;
+
+  const systemInstructionOrganic = `You are a senior organic content strategist helping a ${nicheLabel} creator plan their next post on ${platformLabel}. You write tight, actionable creator briefs targeting the content's specific weaknesses${weakDims.length ? ` (${weakDims.join(", ")})` : ""} — not generic templates. You write for organic performance (scroll-stop, save, share, rewatch), NEVER for conversion.
+
+Anti-leak rules (non-negotiable):
+- NEVER write "Shop Now", "Link in bio", "Free Shipping", "Use code", "discount", or any conversion/purchase copy.
+- NEVER cite review counts, star ratings, or money-back guarantees as proof points — use creator credibility (lived experience, community trust, niche expertise).
+- NEVER describe the format as "UGC product demonstration" — use creator-native format names.
+- NEVER invent a product or brand if none is visible in the analysis.${brandVoice ? `\n\n${brandVoice}` : ""}`;
+
+  const systemInstruction = isOrganic ? systemInstructionOrganic : systemInstructionPaid;
+
   return callGeminiProxy({
     prompt,
-    systemInstruction: `You are a senior creative strategist specializing in ${nicheLabel} advertising on ${platformLabel}. You write tight, actionable creative briefs for ${intentLabel} campaigns. Your briefs target the ad's specific weaknesses${weakDims.length ? ` (${weakDims.join(", ")})` : ""} — not generic improvement templates. Every recommendation must be executable by a creative team working on ${nicheLabel} ads.${brandVoice ? `\n\n${brandVoice}` : ""}`,
+    systemInstruction,
     maxOutputTokens: 2048,
     temperature: 0.6,
   });
