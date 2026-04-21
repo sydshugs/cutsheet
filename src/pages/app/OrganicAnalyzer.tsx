@@ -201,7 +201,7 @@ export default function OrganicAnalyzer() {
       generateStaticSecondEye(
         result.markdown, result.fileName,
         result.scores ? { overall: result.scores.overall, cta: result.scores.cta } : undefined,
-        result.improvements, userContext || undefined, sessionMemoryRef.current
+        result.improvements, userContext || undefined, sessionMemoryRef.current, true,
       ).then(setDesignReviewResult).catch(() => setDesignReviewResult(null)).finally(() => setDesignReviewLoading(false));
     }
 

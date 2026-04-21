@@ -180,7 +180,8 @@ export async function generateStaticSecondEye(
   scores?: { overall: number; cta: number },
   improvements?: string[],
   userContext?: string,
-  sessionMemory?: string
+  sessionMemory?: string,
+  isOrganic?: boolean,
 ): Promise<StaticSecondEyeResult> {
   return callApi<StaticSecondEyeResult>("/api/design-review", {
     analysisMarkdown,
@@ -189,6 +190,7 @@ export async function generateStaticSecondEye(
     improvements,
     userContext,
     sessionMemory,
+    isOrganic,
   });
 }
 
