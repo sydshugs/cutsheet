@@ -286,6 +286,7 @@ export const ScoreCard = memo(function ScoreCard({
           overallDeltaLabel={overallDeltaLabel}
           dimensionDeltas={dimensionDeltas}
           platformCta={platformCta}
+          isOrganic={isOrganic}
           dimensions={dimensionOverrides ?? [
             { name: "Hook",   score: scores.hook },
             { name: "Copy",   score: scores.clarity },

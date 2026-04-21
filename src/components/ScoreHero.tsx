@@ -28,6 +28,7 @@ export interface ScoreHeroProps {
   overallDeltaLabel?: string;
   dimensionDeltas?: Record<string, number>;
   platformCta?: string | null;
+  isOrganic?: boolean;
 }
 
 const PLATFORM_BENCHMARKS: Record<string, number> = {
@@ -64,6 +65,10 @@ const PLATFORM_FORMAT_DIMENSIONS: Record<string, Record<string, [string, string,
     'video':  ['Hook', 'Retention', 'Audio & Captions', 'CTA'],
   },
 };
+
+// Organic mode: platform-independent vocabulary that overrides PLATFORM_FORMAT_DIMENSIONS when isOrganic=true.
+// Positional map — order must match ScoreCard's 4-element dimensions prop: [hook, clarity, production, cta].
+const ORGANIC_DIMENSIONS: [string, string, string, string] = ['Hook', 'Message', 'Production', 'Shareability'];
 
 const YOUTUBE_FORMAT_DIMENSIONS: Record<string, [string, string, string, string]> = {
   'skippable':     ['Pre-Skip Hook', 'Watch-Through', 'Message Arc', 'CTA Timing'],
@@ -108,7 +113,7 @@ function useCountUp(target: number, duration = 600): number {
 export function ScoreHero({
   score, verdict, benchmark, dimensions, platform, format, youtubeFormat,
   accentColor, benchmarkLabelOverride, scoreRange, overallDelta, dimensionDeltas,
-  platformCta,
+  platformCta, isOrganic,
 }: ScoreHeroProps) {
   const animatedScore = useCountUp(score, 600);
   const color = scoreColor(score);
@@ -125,7 +130,9 @@ export function ScoreHero({
   const ytFormatOverride = (platform === 'YouTube' || platform === 'Shorts') && youtubeFormat
     ? YOUTUBE_FORMAT_DIMENSIONS[youtubeFormat] : undefined;
   const formatOverride = platform && format ? PLATFORM_FORMAT_DIMENSIONS[platform]?.[format] : undefined;
-  const platformDimLabels = ytFormatOverride ?? formatOverride ?? (platform ? PLATFORM_DIMENSIONS[platform] : undefined);
+  const platformDimLabels = isOrganic
+    ? ORGANIC_DIMENSIONS
+    : (ytFormatOverride ?? formatOverride ?? (platform ? PLATFORM_DIMENSIONS[platform] : undefined));
   const resolvedDimensions = platformDimLabels
     ? dimensions.map((dim, i) => ({ ...dim, name: platformDimLabels[i] ?? dim.name }))
     : dimensions;
