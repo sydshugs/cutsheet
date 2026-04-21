@@ -136,7 +136,8 @@ export function AnalyzerView({
             onCancel={onReset}
             platform={platform}
             format={format}
-            title={isOrganic ? "Analyzing your content" : undefined}
+            title={isOrganic ? "Analyzing your creative" : undefined}
+            isOrganic={isOrganic}
             sharedFileObjectUrl={fileObjectUrl}
           />
         </div>
