@@ -800,9 +800,13 @@ Score "Sound" considering both audio quality AND sound-off viability — a great
             </>
           ) : (status !== "idle" || loadedEntry) ? (
             <div className="relative px-4 py-6 md:px-8 flex-1 flex flex-col">
-              {/* Ambient glow */}
-              <div className="pointer-events-none absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-indigo-600/10 blur-[120px]" />
-              <div className="pointer-events-none absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-violet-600/[0.08] blur-[100px]" />
+              {/* Ambient glow — hidden during upload/processing so ProgressCard gradient renders clean */}
+              {!isAnalyzing && (
+                <>
+                  <div className="pointer-events-none absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-indigo-600/10 blur-[120px]" />
+                  <div className="pointer-events-none absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-violet-600/[0.08] blur-[100px]" />
+                </>
+              )}
               <div className="relative flex flex-col flex-1">
                 {/* Show VisualizePanel IN PLACE OF AnalyzerView when visualize is active */}
                 {status === "complete" && (visualizeOpen || visualizeStatus !== "idle") ? (
