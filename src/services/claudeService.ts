@@ -145,7 +145,8 @@ export async function generateSecondEyeReview(
   scores?: { hook: number; overall: number },
   improvements?: string[],
   userContext?: string,
-  sessionMemory?: string
+  sessionMemory?: string,
+  isOrganic?: boolean,
 ): Promise<SecondEyeResult> {
   return callApi<SecondEyeResult>("/api/second-eye", {
     analysisMarkdown,
@@ -154,6 +155,7 @@ export async function generateSecondEyeReview(
     improvements,
     userContext,
     sessionMemory,
+    isOrganic,
   });
 }
 

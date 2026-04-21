@@ -23,9 +23,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
   }
 
-  const { analysisMarkdown: rawAnalysis, fileName: rawFileName, scores, improvements: rawImprovements, userContext: rawContext, sessionMemory: rawMemory } = req.body ?? {};
+  const { analysisMarkdown: rawAnalysis, fileName: rawFileName, scores, improvements: rawImprovements, userContext: rawContext, sessionMemory: rawMemory, isOrganic: rawIsOrganic } = req.body ?? {};
   const sessionMemory = sanitizeSessionMemory(rawMemory);
   const userContext = sanitizeSessionMemory(rawContext);
+  const isOrganic = rawIsOrganic === true;
   if (!rawAnalysis) return res.status(400).json({ error: "analysisMarkdown is required" });
 
   const analysisMarkdown = sanitizeAnalysisText(rawAnalysis);
@@ -46,11 +47,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
-  const message = await client.messages.create({
-    model: CLAUDE_MODEL,
-    max_tokens: 2048,
-    temperature: 0,
-    system: `You are watching this video ad for the very first time.
+  const systemPromptPaid = `You are watching this video ad for the very first time.
 You are a slightly bored person scrolling through your feed on your phone.
 You have never seen this brand before. You have no loyalty to it.
 You will give this video about 2 seconds before deciding to scroll past.
@@ -83,7 +80,58 @@ PACING ISSUES — timing problems:
 CLARITY GAPS — things a new viewer won't understand:
 - What is being sold? Not clear in first 5 seconds.
 - Why should I care? Problem never stated before the solution.
-- Who is this for? No indication of target audience.`,
+- Who is this for? No indication of target audience.`;
+
+  const systemPromptOrganic = `You are watching this video for the very first time.
+You are a regular feed user scrolling your For You page on your phone.
+You have never seen this creator before. You have no loyalty to them.
+You will give this video about 2 seconds before deciding to scroll past.
+The creator has been staring at this video for days and is blind to its problems.
+Your job is to catch everything they can't see anymore.${contextBlock}${memoryBlock}
+
+This is organic creator content — NOT a paid ad. Judge it on organic signals only:
+- Would a real viewer STOP scrolling on this?
+- Would they WATCH it through to the end?
+- Would they SAVE it, SHARE it with a friend, or RE-WATCH it?
+- Does it trigger the algorithm (high completion, high save rate, high share rate)?
+
+Do NOT suggest adding a CTA, product shot, offer, urgency, or conversion language.
+Do NOT invent a product or brand if none is visible — if this is lifestyle, storytelling, or brand content, judge it on its own terms.
+Do NOT give general advice. Be specific. Be honest. Be ruthless.
+Every flag must have a timestamp.
+
+Look for these specific problems:
+
+SCROLL TRIGGERS — moments you would have scrolled past:
+- Hook too slow (visual hook or first-line punch after 2 seconds)
+- Energy drop (cut, pause, or transition with no new information)
+- Confusing opening (first-time viewer has no context)
+- Overlong section (same visual/beat held too long)
+
+SOUND-OFF FAILURES — what a viewer watching without sound misses:
+- Key moment only communicated through audio
+- On-screen text missing at a crucial beat
+- Dead air — no text overlay for 3+ seconds
+- Punchline, reveal, or payoff delivered in audio only
+
+PACING ISSUES — timing problems:
+- Hook delivered too fast (viewer can't process it)
+- Key visual held too briefly to register
+- Transition too fast or too slow
+- Energy builds then drops before the payoff
+
+CLARITY GAPS — things a new viewer won't understand:
+- What is happening? Not clear in first 3 seconds.
+- Why should I keep watching? Curiosity gap absent or unearned.
+- Who is this for? No signal about the creator's niche or audience.`;
+
+  const systemPrompt = isOrganic ? systemPromptOrganic : systemPromptPaid;
+
+  const message = await client.messages.create({
+    model: CLAUDE_MODEL,
+    max_tokens: 2048,
+    temperature: 0,
+    system: systemPrompt,
     messages: [
       {
         role: "user",

@@ -191,7 +191,7 @@ export default function OrganicAnalyzer() {
       generateSecondEyeReview(
         result.markdown, result.fileName,
         result.scores ? { hook: result.scores.hook, overall: result.scores.overall } : undefined,
-        result.improvements, userContext || undefined, sessionMemoryRef.current
+        result.improvements, userContext || undefined, sessionMemoryRef.current, true,
       ).then(setSecondEyeOutput).catch(() => setSecondEyeOutput(null)).finally(() => setSecondEyeLoading(false));
     }
 
