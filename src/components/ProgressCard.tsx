@@ -21,6 +21,8 @@ interface ProgressCardProps {
   sharedFileObjectUrl?: string | null;
   /** Single-column card (no creative preview) — e.g. Ad Breakdown URL flow */
   compact?: boolean;
+  /** Organic analyzer — renders green ambient radial gradient behind the card */
+  isOrganic?: boolean;
 }
 
 const DIMENSIONS = ["Hook Strength", "Message Clarity", "CTA Effectiveness", "Production Quality"];
@@ -52,6 +54,7 @@ export function ProgressCard({
   title: titleProp,
   sharedFileObjectUrl,
   compact = false,
+  isOrganic = false,
 }: ProgressCardProps) {
   const title = titleProp ?? "Analyzing your ad";
   const SUBTITLES = format === "static" ? STATIC_SUBTITLES : VIDEO_SUBTITLES;
@@ -129,10 +132,17 @@ export function ProgressCard({
   })();
 
   return (
-    <div className={cn("flex flex-1 items-center justify-center p-6", compact && "pt-2")}>
+    <div className={cn("relative flex flex-1 items-center justify-center p-6", compact && "pt-2")}>
+      {isOrganic && (
+        <div
+          className="pointer-events-none absolute inset-0 z-0"
+          style={{ background: "radial-gradient(ellipse 70% 55% at 50% 38%, rgba(16,185,129,0.14) 0%, transparent 75%)" }}
+          aria-hidden
+        />
+      )}
       <div
         className={cn(
-          "w-full overflow-hidden rounded-[16px] border border-[rgba(255,255,255,0.06)] bg-[rgba(24,24,27,0.5)]",
+          "relative z-10 w-full overflow-hidden rounded-[16px] border border-[rgba(255,255,255,0.06)] bg-[rgba(24,24,27,0.5)]",
           compact ? "max-w-[440px] flex-col" : "flex max-w-[768px] min-h-[360px] md:min-h-[474px]",
         )}
       >
