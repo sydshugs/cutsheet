@@ -416,12 +416,12 @@ export default function OrganicAnalyzer() {
     if (!activeResult || briefLoading) return;
     setBriefLoading(true); setBriefError(null);
     try {
-      const r = await generateBriefWithClaude(activeResult.markdown, activeResult.fileName, userContext || undefined, sessionMemoryRef.current, organicFormat, platform);
+      const r = await generateBriefWithClaude(activeResult.markdown, activeResult.fileName, userContext || undefined, sessionMemoryRef.current, organicFormat, platform, true);
       setBrief(r);
       rightPanelRef.current?.setTab("brief");
     } catch {
       try {
-        const r = await generateBrief(activeResult.markdown, API_KEY);
+        const r = await generateBrief(activeResult.markdown, API_KEY, undefined, undefined, undefined, undefined, undefined, true);
         setBrief(r);
         rightPanelRef.current?.setTab("brief");
       } catch (err) {

@@ -99,10 +99,11 @@ export async function generateBriefWithClaude(
   sessionMemory?: string,
   adFormat?: string,
   platform?: string,
+  isOrganic?: boolean,
 ): Promise<string> {
   const data = await callApi<{ brief: string }>("/api/improvements", {
     action: "brief",
-    payload: { analysisMarkdown, filename, userContext, sessionMemory, adFormat, platform },
+    payload: { analysisMarkdown, filename, userContext, sessionMemory, adFormat, platform, isOrganic },
   });
   if (!data.brief) throw new Error("Empty brief response");
   return data.brief;
