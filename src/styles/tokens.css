@@ -123,11 +123,11 @@
   /* Organic analyzer idle — Figma 295-300 (emerald tile, pills, radial, dropzone link) */
   --organic-accent-rgb: 16, 185, 129;
   --organic-accent: #10b981;
-  --organic-tile-bg: rgba(16, 185, 129, 0.12);
+  --organic-tile-bg: rgba(16, 185, 129, 0.1);
   --organic-border: rgba(16, 185, 129, 0.2);
-  --organic-pill-bg: rgba(16, 185, 129, 0.08);
-  --organic-pill-text: #00d492;
-  --organic-browse: rgba(0, 212, 146, 0.8);
+  --organic-pill-bg: rgba(16, 185, 129, 0.1);
+  --organic-pill-text: #10b981;
+  --organic-browse: #10b981;
   --organic-cloud-active: #34d399;
   --organic-border-strong: rgba(16, 185, 129, 0.35);
   --shadow-glow-organic: 0 0 20px rgba(16, 185, 129, 0.12);
@@ -252,8 +252,9 @@
   );
   --analyzer-idle-ambient-organic: radial-gradient(
     ellipse 70% 55% at 50% 38%,
-    rgba(16, 185, 129, 0.08) 0%,
-    transparent 65%
+    rgba(16, 185, 129, 0.14) 0%,
+    rgba(8, 93, 65, 0.07) 37.5%,
+    transparent 75%
   );
   --analyzer-idle-ambient-display: radial-gradient(
     ellipse 70% 55% at 50% 38%,
