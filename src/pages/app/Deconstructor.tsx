@@ -67,15 +67,16 @@ function UrlInput({
   };
 
   return (
-    <div className="mx-auto w-full max-w-2xl">
+    <div className="w-full">
       <div
         className={cn(
-          "flex h-[52px] w-full shrink-0 items-center gap-3 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-el)] px-4 transition-[border-color,box-shadow] duration-200",
-          "focus-within:border-[color:var(--border-hover)] focus-within:shadow-[var(--shadow-sm)]",
+          "flex h-[57px] w-full shrink-0 items-center gap-[13px] rounded-[26px] border px-[18px] transition-[border-color,box-shadow] duration-200",
+          "border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.03)]",
+          "focus-within:border-[rgba(245,158,11,0.35)] focus-within:shadow-[0_0_0_3px_rgba(245,158,11,0.08)]",
         )}
       >
         <div className="flex shrink-0 items-center text-[color:var(--ink-muted)]">
-          <Link2 size={14} strokeWidth={1.75} aria-hidden />
+          <Link2 size={15} strokeWidth={1.75} aria-hidden />
         </div>
         <input
           ref={inputRef}
@@ -87,7 +88,7 @@ function UrlInput({
           }}
           onKeyDown={handleKeyDown}
           placeholder="Paste a Meta Ad Library, TikTok Creative Center, or YouTube URL"
-          className="min-w-0 flex-1 border-none bg-transparent py-2 text-[13px] text-[color:var(--ink)] outline-none placeholder:text-zinc-600 focus-visible:ring-0 disabled:opacity-50"
+          className="min-w-0 flex-1 border-none bg-transparent py-2 text-[14px] text-[color:var(--ink)] outline-none placeholder:text-[color:var(--decon-url-pill-mono)] focus-visible:ring-0 disabled:opacity-50"
           disabled={loading}
           autoFocus={autoFocus}
         />
@@ -97,11 +98,12 @@ function UrlInput({
             onClick={handleSubmit}
             disabled={!url.trim()}
             className={cn(
-              "flex h-9 shrink-0 items-center justify-center gap-2 rounded-lg px-4 text-[13px] font-medium text-white transition-[transform,opacity,background-color] duration-200",
-              "bg-[color:var(--accent)] hover:bg-[color:var(--accent-hover)] active:scale-[0.98]",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg)]",
-              "disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100",
+              "flex h-[39px] shrink-0 items-center justify-center rounded-[74px] px-6 text-[14px] font-medium text-white transition-[transform,opacity,background-color] duration-200",
+              "active:scale-[0.98]",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(245,158,11,0.5)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg)]",
+              "disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100",
             )}
+            style={{ backgroundColor: "#f59e0b" }}
           >
             Deconstruct
           </button>
@@ -333,7 +335,7 @@ export default function Deconstructor() {
           className="pointer-events-none absolute inset-0 z-0"
           style={{
             background:
-              "radial-gradient(ellipse 60% 50% at 50% 40%, rgba(245, 158, 11, 0.08) 0%, transparent 70%)",
+              "radial-gradient(ellipse 70% 55% at 50% 38%, rgba(245, 158, 11, 0.1) 0%, transparent 75%)",
           }}
           aria-hidden
         />
@@ -353,41 +355,46 @@ export default function Deconstructor() {
             onSaveToSwipeFile={handleSaveToSwipeFile}
           />
         ) : (
-          <div className="mx-auto flex w-full max-w-[720px] flex-1 flex-col items-center justify-center px-6 py-12">
-            {/* Figma 263-124 — hero only on idle */}
+          <div className="flex w-full flex-1 flex-col items-center justify-center px-6 py-[62px]">
+            <div className="flex w-full max-w-[732px] flex-col items-center gap-[22px]">
+            {/* Figma 454-1007 — hero only on idle */}
             {!result && !loading && (
-              <div className="mb-8 shrink-0 text-center">
+              <>
+                {/* Icon tile */}
                 <div
-                  className="mx-auto mb-6 flex h-[76px] w-[76px] items-center justify-center rounded-2xl border"
-                  style={{
-                    background: "rgba(245, 158, 11, 0.12)",
-                    borderColor: "rgba(245, 158, 11, 0.2)",
-                  }}
+                  className="flex size-[76px] shrink-0 items-center justify-center rounded-[16px] border"
+                  style={{ background: "rgba(245,158,11,0.1)", borderColor: "rgba(245,158,11,0.2)" }}
                 >
-                  <ScanSearch size={40} color="#f59e0b" strokeWidth={1.5} aria-hidden />
+                  <ScanSearch size={36} color="#f59e0b" strokeWidth={1.5} aria-hidden />
                 </div>
-                <h1 className="mb-2.5 text-2xl font-bold leading-tight tracking-[-0.025em] text-[color:var(--ink)]">
-                  Ad Breakdown
-                </h1>
-                <p className="mx-auto mb-4 max-w-[380px] text-sm leading-relaxed text-[color:var(--ink-muted)]">
-                  Paste any ad URL. Get a full AI breakdown in 30 seconds.
-                </p>
-                <div className="flex flex-wrap items-center justify-center gap-2">
-                  {SOURCE_PLATFORMS.map(({ type, label }) => (
-                    <span
-                      key={type}
-                      className="rounded-full border px-3 py-1 text-xs"
-                      style={{
-                        color: "var(--warn)",
-                        background: "rgba(245, 158, 11, 0.08)",
-                        borderColor: "rgba(245, 158, 11, 0.2)",
-                      }}
-                    >
-                      {label}
-                    </span>
-                  ))}
+
+                {/* Heading + subtitle + pills */}
+                <div className="flex flex-col items-center gap-[12px]">
+                  <div className="flex flex-col items-center gap-[6px]">
+                    <h1 className="m-0 text-center text-[24px] font-bold leading-tight tracking-[-0.025em] text-[color:var(--ink)]">
+                      Ad Breakdown
+                    </h1>
+                    <p className="m-0 max-w-[334px] text-center text-[14px] leading-[1.6] text-[color:var(--ink-muted)]">
+                      Paste any ad URL. Get a full AI breakdown in 30 seconds.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-center gap-2">
+                    {SOURCE_PLATFORMS.map(({ type, label }) => (
+                      <span
+                        key={type}
+                        className="rounded-full border px-3 py-1 text-[11.5px] font-normal leading-[15px]"
+                        style={{
+                          color: "#f59e0b",
+                          background: "rgba(245,158,11,0.04)",
+                          borderColor: "rgba(245,158,11,0.2)",
+                        }}
+                      >
+                        {label}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              </>
             )}
 
             {!result && (
@@ -419,7 +426,7 @@ export default function Deconstructor() {
             )}
 
             {error && !loading && (
-              <div className="mx-auto mt-6 w-full max-w-2xl">
+              <div className="w-full">
                 <InlineError
                   severity="red"
                   message={error}
@@ -433,6 +440,7 @@ export default function Deconstructor() {
                 />
               </div>
             )}
+            </div>{/* end max-w-[732px] gap container */}
           </div>
         )}
       </div>

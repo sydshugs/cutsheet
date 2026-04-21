@@ -232,7 +232,7 @@ export function PreFlightView({ apiKey }: PreFlightViewProps) {
 
     return (
       <div
-        className="relative flex min-h-[calc(100vh-120px)] flex-1 flex-col items-center justify-center overflow-hidden px-6 py-8"
+        className="relative flex min-h-[calc(100vh-120px)] flex-1 flex-col items-center justify-center overflow-hidden px-6 py-[62px]"
         style={{ backgroundColor: "var(--bg)" }}
       >
         <div
@@ -242,46 +242,53 @@ export function PreFlightView({ apiKey }: PreFlightViewProps) {
         />
 
         <div className="relative z-[1] flex w-full max-w-[731px] flex-col items-center">
-          <div
-            className="flex size-[73px] shrink-0 items-center justify-center rounded-[15px] border"
-            style={{
-              background: "var(--ab-tile-bg)",
-              borderColor: "var(--ab-tile-border)",
-            }}
-          >
-            <GitBranch className="size-[31px] text-[color:var(--ab-icon)]" strokeWidth={1.75} aria-hidden />
+          {/* Hero block — icon + heading + pills in gap-[22px] */}
+          <div className="flex flex-col items-center gap-[22px]">
+            <div
+              className="flex size-[76px] shrink-0 items-center justify-center rounded-[16px] border"
+              style={{
+                background: "var(--ab-tile-bg)",
+                borderColor: "var(--ab-tile-border)",
+              }}
+            >
+              <GitBranch className="size-[32px] text-[color:var(--ab-icon)]" strokeWidth={1.75} aria-hidden />
+            </div>
+
+            <div className="flex flex-col items-center gap-[12px]">
+              <div className="flex flex-col items-center gap-[6px]">
+                <h1 className="m-0 text-center text-[19px] font-semibold leading-tight text-[color:var(--ink)]">
+                  Run an A/B Test
+                </h1>
+                <p className="m-0 max-w-[326px] text-center text-[13.5px] leading-[1.6] text-[color:var(--decon-markdown-muted)]">
+                  Upload two variants. Our AI extracts visual features, pacing, and hooks to predict the undisputed winner.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                {PILLS.map((pill) => (
+                  <span
+                    key={pill}
+                    className="rounded-full border px-3 py-1 text-[11.5px] font-normal leading-[15px]"
+                    style={{
+                      background: "var(--ab-pill-bg)",
+                      borderColor: "var(--ab-pill-border)",
+                      color: "var(--ab-pill-text)",
+                    }}
+                  >
+                    {pill}
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
 
-          <h1 className="mt-[23px] mb-0 text-center text-[19px] font-semibold leading-tight text-[color:var(--ink)]">
-            Run an A/B Test
-          </h1>
-          <p className="mt-2.5 max-w-[392px] text-center text-[13.5px] leading-[1.6] text-[color:var(--decon-markdown-muted)]">
-            Upload two variants. Our AI extracts visual features, pacing, and hooks to predict the undisputed winner.
-          </p>
-
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-            {PILLS.map((pill) => (
-              <span
-                key={pill}
-                className="rounded-full border px-3 py-1 text-[11.5px] font-normal leading-[15px]"
-                style={{
-                  background: "var(--ab-pill-bg)",
-                  borderColor: "var(--ab-pill-border)",
-                  color: "var(--ab-pill-text)",
-                }}
-              >
-                {pill}
-              </span>
-            ))}
-          </div>
-
-          <div className="mt-8 grid w-full grid-cols-2 gap-[15px]">
+          <div className="mt-8 grid w-full grid-cols-2 gap-[32px]">
             {variants.map((v, i) => {
               const fileInputId = `preflight-file-${v.id}`;
               const hasFile = !!v.file;
               const isDrag = dragHoverIdx === i;
               return (
-                <div key={v.id} className="flex min-w-0 flex-col gap-[22px]">
+                <div key={v.id} className="flex min-w-0 flex-col gap-[15px]">
                   <div className="flex h-[14px] items-center justify-center gap-1">
                     <input
                       type="text"
@@ -336,14 +343,19 @@ export function PreFlightView({ apiKey }: PreFlightViewProps) {
                     {!hasFile ? (
                       <label
                         htmlFor={fileInputId}
-                        className="flex min-h-[268px] cursor-pointer flex-col items-center justify-center gap-0 px-0.5 py-10 transition-opacity duration-150 hover:opacity-90 focus-within:opacity-100"
+                        className="flex min-h-[280px] cursor-pointer flex-col items-center justify-center gap-[23px] px-2 py-10 transition-opacity duration-150 hover:opacity-90 focus-within:opacity-100"
                       >
-                        <CloudUpload className="size-[19px] shrink-0 text-[color:var(--ink-muted)]" strokeWidth={2} aria-hidden />
-                        <span className="mt-[11px] text-[13.5px] font-normal leading-tight text-[color:var(--decon-markdown-muted)]">
-                          Upload video
-                        </span>
-                        <span className="mt-4 text-[11.5px] font-normal leading-[15px] text-[color:var(--ab-variant-label)]">
-                          MP4 · MOV · JPG
+                        <CloudUpload className="size-[27px] shrink-0 text-[color:var(--ink-muted)]" strokeWidth={2} aria-hidden />
+                        <div className="flex flex-col items-center gap-[5px]">
+                          <span className="text-[14px] font-medium leading-tight text-[color:var(--decon-markdown-muted)]">
+                            Drop your creative here
+                          </span>
+                          <span className="text-[12.5px] font-normal leading-[15px]" style={{ color: "#818cf8" }}>
+                            or browse files
+                          </span>
+                        </div>
+                        <span className="text-[11.5px] font-normal leading-[15px] text-[color:var(--ab-variant-label)]">
+                          MP4 · MOV · JPG · PNG · up to 500MB
                         </span>
                         <input
                           id={fileInputId}

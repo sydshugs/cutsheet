@@ -225,7 +225,7 @@
   --decon-topbar-avatar-ring: rgba(97, 95, 255, 0.3);
 
   /* A/B Test — Figma /app/a-b-test idle + light indigo flow accents */
-  --ab-ambient-gradient: radial-gradient(ellipse 70% 55% at 50% 38%, rgba(129, 140, 248, 0.08) 0%, transparent 65%);
+  --ab-ambient-gradient: radial-gradient(ellipse 70% 55% at 50% 38%, rgba(129, 140, 248, 0.14) 0%, rgba(65, 70, 124, 0.07) 37.5%, transparent 75%);
   --ab-tile-bg: rgba(129, 140, 248, 0.1);
   --ab-tile-border: rgba(129, 140, 248, 0.2);
   --ab-icon: #818cf8;
@@ -233,8 +233,8 @@
   --ab-pill-border: rgba(129, 140, 248, 0.3);
   --ab-pill-text: #818cf8;
   --ab-variant-label: #52525c;
-  --ab-dropzone-bg: rgba(255, 255, 255, 0.02);
-  --ab-dropzone-border: rgba(255, 255, 255, 0.06);
+  --ab-dropzone-bg: rgba(255, 255, 255, 0.03);
+  --ab-dropzone-border: rgba(255, 255, 255, 0.12);
   --ab-test-type-inactive-bg: rgba(255, 255, 255, 0.04);
   --ab-test-type-inactive-border: rgba(255, 255, 255, 0.06);
   --ab-test-type-inactive-text: var(--decon-markdown-muted);
@@ -348,16 +348,16 @@
 
   /* Competitor Analyzer idle — Figma 263-1483 (dual slots + hero) */
   --competitor-upload-ambient: radial-gradient(
-    ellipse 73% 53% at 50% 40%,
-    rgba(239, 68, 68, 0.08) 0%,
-    transparent 70%
+    ellipse 70% 55% at 50% 38%,
+    rgba(239, 68, 68, 0.14) 0%,
+    transparent 75%
   );
   --competitor-slot-drag-border: rgba(239, 68, 68, 0.35);
   --shadow-glow-competitor: 0 0 20px rgba(239, 68, 68, 0.1);
-  --competitor-tile-bg: rgba(239, 68, 68, 0.12);
+  --competitor-tile-bg: rgba(239, 68, 68, 0.1);
   --competitor-tile-border: rgba(239, 68, 68, 0.2);
   --competitor-tile-icon: #ef4444;
-  --competitor-pill-bg: rgba(239, 68, 68, 0.08);
+  --competitor-pill-bg: rgba(239, 68, 68, 0.06);
   --competitor-pill-border: rgba(239, 68, 68, 0.2);
   --competitor-pill-text: #ef4444;
   /* Competitor analyzing — matches upload ambient family */

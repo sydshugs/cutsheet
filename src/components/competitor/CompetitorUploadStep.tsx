@@ -2,10 +2,9 @@
 // Step 0 — dual-upload idle state for CompetitorAnalyzer
 
 import { useMemo, useEffect } from "react";
-import { Swords, Music2, Check, X, Search, ExternalLink, AlertCircle } from "lucide-react";
+import { Swords, Music2, Check, X, Search, ExternalLink, AlertCircle, CloudUpload } from "lucide-react";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { VideoDropzone } from "../VideoDropzone";
 import { sanitizeSearchQuery, sanitizeFileName } from "../../utils/sanitize";
 import { cn } from "@/src/lib/utils";
 import type { FormatWarning } from "../../utils/platformFormatWarnings";
@@ -19,6 +18,8 @@ const SLIDE = {
   exit: { opacity: 0, x: -40 },
   transition: { duration: 0.25, ease: [0.16, 1, 0.3, 1] as const },
 };
+
+const ACCEPT = "video/mp4,video/quicktime,video/mov,image/jpeg,image/jpg,image/png,image/gif,image/webp";
 
 // ─── FILE PREVIEW ────────────────────────────────────────────────────────────
 
@@ -234,11 +235,13 @@ export function CompetitorUploadStep({
   onRetry,
   formatWarnings,
 }: CompetitorUploadStepProps) {
+  const [dragSlot, setDragSlot] = useState<"your" | "competitor" | null>(null);
+
   return (
     <motion.div
       key="upload"
       {...SLIDE}
-      className="relative flex w-full max-w-[724px] flex-col items-center overflow-hidden rounded-none"
+      className="relative flex w-full max-w-[732px] flex-col items-center overflow-hidden rounded-none py-[62px]"
       style={{ backgroundColor: "var(--bg)" }}
     >
       <div
@@ -251,90 +254,186 @@ export function CompetitorUploadStep({
         aria-hidden
       />
 
-      <div className="relative z-[1] flex w-full flex-col items-center">
-        <div
-          className="flex size-[73px] shrink-0 items-center justify-center rounded-[15px] border"
-          style={{
-            background: "var(--competitor-tile-bg)",
-            borderColor: "var(--competitor-tile-border)",
-          }}
-        >
-          <Swords
-            className="size-[31px] text-[color:var(--competitor-tile-icon)]"
-            strokeWidth={1.75}
-            aria-hidden
-          />
+      <div className="relative z-[1] flex w-full flex-col items-center gap-[22px]">
+
+        {/* ── Hero block: icon tile + heading/subtitle/pills ── */}
+        <div className="flex flex-col items-center gap-[22px]">
+          <div
+            className="flex size-[76px] shrink-0 items-center justify-center rounded-[16px] border"
+            style={{
+              background: "var(--competitor-tile-bg)",
+              borderColor: "var(--competitor-tile-border)",
+            }}
+          >
+            <Swords
+              className="size-[32px] text-[color:var(--competitor-tile-icon)]"
+              strokeWidth={1.75}
+              aria-hidden
+            />
+          </div>
+
+          <div className="flex flex-col items-center gap-[12px]">
+            <div className="flex flex-col items-center gap-[6px]">
+              <h1 className="m-0 text-center text-[24px] font-bold leading-tight tracking-[-0.025em] text-[color:var(--ink)]">
+                Competitor Analysis
+              </h1>
+              <p className="m-0 max-w-[340px] text-center text-[14px] leading-[1.6] text-[color:var(--ink-muted)]">
+                Upload your ad and a competitor&apos;s. AI finds the gap and builds your win strategy.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              {(["Gap analysis", "Win probability", "Action plan"] as const).map((pill) => (
+                <span
+                  key={pill}
+                  className="rounded-full border px-3 py-1 text-[11.5px] font-normal leading-[15px]"
+                  style={{
+                    background: "var(--competitor-pill-bg)",
+                    borderColor: "var(--competitor-pill-border)",
+                    color: "var(--competitor-pill-text)",
+                  }}
+                >
+                  {pill}
+                </span>
+              ))}
+            </div>
+          </div>
         </div>
 
-        <h1 className="mt-[23px] mb-0 text-center text-[19px] font-semibold leading-tight text-[color:var(--ink)]">
-          Competitor Analysis
-        </h1>
-        <p className="mt-2.5 mb-0 max-w-[340px] text-center text-[13.5px] leading-[1.6] text-[color:var(--ink-muted)]">
-          Upload your ad and a competitor&apos;s. AI finds the gap and builds your win strategy.
-        </p>
+        {/* ── Two-column upload grid ── */}
+        <div className="grid w-full grid-cols-2 gap-[32px]">
 
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-          {(["Gap analysis", "Win probability", "Action plan"] as const).map((pill) => (
-            <span
-              key={pill}
-              className="rounded-full border px-3 py-1 text-[11.5px] font-normal leading-[15px]"
-              style={{
-                background: "var(--competitor-pill-bg)",
-                borderColor: "var(--competitor-pill-border)",
-                color: "var(--competitor-pill-text)",
-              }}
-            >
-              {pill}
-            </span>
-          ))}
-        </div>
-
-        <div className="mt-8 grid w-full grid-cols-1 gap-[19px] md:grid-cols-2">
-          <div className="flex min-w-0 flex-col gap-[26px]">
-            <p className="text-center text-[9.6px] font-semibold uppercase tracking-[0.12em] text-[color:var(--ink-muted)]">
+          {/* Your ad column */}
+          <div className="flex min-w-0 flex-col gap-[15px]">
+            <p className="m-0 text-center text-[9.6px] font-semibold uppercase tracking-[0.12em] text-[color:var(--ink-muted)]">
               Your ad
             </p>
             {yourFile ? (
               <FilePreview file={yourFile} onRemove={onYourFileRemove} />
             ) : (
-              <VideoDropzone
-                file={null}
-                onFileSelect={(f) => { if (f) onYourFileSelect(f); }}
-                acceptImages
-                heading="Drop your creative here"
-                formatHint="MP4 · MOV · JPG"
-                layoutVariant="competitor"
-                wrapperClassName="max-w-none"
-              />
+              <div
+                className={cn(
+                  "rounded-[15px] border transition-[border-color,background-color] duration-150",
+                  dragSlot === "your"
+                    ? "border-[color:var(--competitor-slot-drag-border)] bg-[rgba(239,68,68,0.04)]"
+                    : "border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.03)]",
+                )}
+                onDragOver={(e) => { e.preventDefault(); setDragSlot("your"); }}
+                onDragLeave={() => setDragSlot(null)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragSlot(null);
+                  const f = e.dataTransfer.files[0];
+                  if (f) onYourFileSelect(f);
+                }}
+              >
+                <label
+                  htmlFor="competitor-your-file"
+                  className="flex min-h-[280px] cursor-pointer flex-col items-center justify-center gap-[23px] px-2 py-10"
+                >
+                  <CloudUpload
+                    className="size-[27px] shrink-0 text-[color:var(--ink-muted)]"
+                    strokeWidth={2}
+                    aria-hidden
+                  />
+                  <div className="flex flex-col items-center gap-[5px]">
+                    <span className="text-[14px] font-medium leading-tight text-[color:var(--ink)]">
+                      Drop your creative here
+                    </span>
+                    <span
+                      className="text-[12.5px] font-normal leading-[15px]"
+                      style={{ color: "#ef4444" }}
+                    >
+                      or browse files
+                    </span>
+                  </div>
+                  <span className="text-[11.5px] font-normal leading-[15px] text-[color:var(--ink-faint)]">
+                    MP4 · MOV · JPG · PNG · up to 500MB
+                  </span>
+                  <input
+                    id="competitor-your-file"
+                    type="file"
+                    accept={ACCEPT}
+                    className="sr-only"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) onYourFileSelect(f);
+                    }}
+                  />
+                </label>
+              </div>
             )}
           </div>
-          <div className="flex min-w-0 flex-col gap-[26px]">
-            <p className="text-center text-[9.6px] font-semibold uppercase tracking-[0.12em] text-[color:var(--ink-muted)]">
+
+          {/* Competitor ad column */}
+          <div className="flex min-w-0 flex-col gap-[15px]">
+            <p className="m-0 text-center text-[9.6px] font-semibold uppercase tracking-[0.12em] text-[color:var(--ink-muted)]">
               Competitor ad
             </p>
             {competitorFile ? (
               <FilePreview file={competitorFile} onRemove={onCompetitorFileRemove} />
             ) : (
-              <VideoDropzone
-                file={null}
-                onFileSelect={(f) => { if (f) onCompetitorFileSelect(f); }}
-                acceptImages
-                heading="Drop your creative here"
-                formatHint="MP4 · MOV · JPG"
-                layoutVariant="competitor"
-                wrapperClassName="max-w-none"
-              />
+              <div
+                className={cn(
+                  "rounded-[15px] border transition-[border-color,background-color] duration-150",
+                  dragSlot === "competitor"
+                    ? "border-[color:var(--competitor-slot-drag-border)] bg-[rgba(239,68,68,0.04)]"
+                    : "border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.03)]",
+                )}
+                onDragOver={(e) => { e.preventDefault(); setDragSlot("competitor"); }}
+                onDragLeave={() => setDragSlot(null)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragSlot(null);
+                  const f = e.dataTransfer.files[0];
+                  if (f) onCompetitorFileSelect(f);
+                }}
+              >
+                <label
+                  htmlFor="competitor-comp-file"
+                  className="flex min-h-[280px] cursor-pointer flex-col items-center justify-center gap-[23px] px-2 py-10"
+                >
+                  <CloudUpload
+                    className="size-[27px] shrink-0 text-[color:var(--ink-muted)]"
+                    strokeWidth={2}
+                    aria-hidden
+                  />
+                  <div className="flex flex-col items-center gap-[5px]">
+                    <span className="text-[14px] font-medium leading-tight text-[color:var(--ink)]">
+                      Drop your creative here
+                    </span>
+                    <span
+                      className="text-[12.5px] font-normal leading-[15px]"
+                      style={{ color: "#ef4444" }}
+                    >
+                      or browse files
+                    </span>
+                  </div>
+                  <span className="text-[11.5px] font-normal leading-[15px] text-[color:var(--ink-faint)]">
+                    MP4 · MOV · JPG · PNG · up to 500MB
+                  </span>
+                  <input
+                    id="competitor-comp-file"
+                    type="file"
+                    accept={ACCEPT}
+                    className="sr-only"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) onCompetitorFileSelect(f);
+                    }}
+                  />
+                </label>
+              </div>
             )}
           </div>
         </div>
 
-        {formatWarnings && formatWarnings.length > 0 && (
-          <div className="mt-6 w-full max-w-[724px]">
+        {/* ── Footer: warnings + TikTok link + Meta search ── */}
+        <div className="flex w-full flex-col gap-4">
+          {formatWarnings && formatWarnings.length > 0 && (
             <FormatWarningBanner warnings={formatWarnings} />
-          </div>
-        )}
+          )}
 
-        <div className="mt-8 flex w-full max-w-[724px] flex-col gap-4">
           {error && (
             <div className="flex items-center justify-between gap-3 rounded-[10px] border border-[color:var(--error)]/20 bg-[color:var(--error)]/[0.06] px-4 py-3">
               <div className="flex items-center gap-2">
@@ -371,7 +470,7 @@ export function CompetitorUploadStep({
             </div>
             <span className="text-xs text-[color:var(--accent-light)]">Creative Center ↗</span>
           </div>
-          <p className="text-center text-[11px] text-[color:var(--ink-muted)]">
+          <p className="m-0 text-center text-[11px] text-[color:var(--ink-muted)]">
             Download from TikTok Creative Center, then upload in Competitor ad
           </p>
 
