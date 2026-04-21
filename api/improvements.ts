@@ -53,11 +53,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { action, payload } = req.body ?? {};
 
   if (action === "improvements") {
-    const { analysisMarkdown: rawAnalysis, scores, userContext: rawContext, platform: rawPlatform, sessionMemory: rawMemory } = payload ?? {};
+    const { analysisMarkdown: rawAnalysis, scores, userContext: rawContext, platform: rawPlatform, sessionMemory: rawMemory, adType: rawAdType } = payload ?? {};
     const sessionMemory = sanitizeSessionMemory(rawMemory);
     const userContext = sanitizeSessionMemory(rawContext);
     const analysisMarkdown = sanitizeAnalysisText(rawAnalysis);
     const platform = sanitizeUserInput(rawPlatform);
+    const isOrganic = rawAdType === "organic";
     if (!scores) return res.status(200).json({ improvements: [] });
 
     const weakAreas = Object.entries(scores as Record<string, number>)
@@ -76,15 +77,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ? `\n\nSESSION HISTORY:\n${sessionMemory}\nDo NOT repeat improvements already given in prior analyses. Prioritize NEW or RECURRING weaknesses.`
       : "";
 
+    const organicSystemPrompt = "You are a senior organic content strategist who advises creators on how to grow reach, saves, shares, and rewatches on TikTok, Instagram Reels, and YouTube Shorts. You write short, specific, actionable improvements for organic content. Each suggestion is 1-2 sentences max. Focus on the weakest scoring areas for ORGANIC performance: hook, clarity, shareability, production. Do NOT suggest adding CTAs, product mentions, offers, urgency language, or conversion tactics — this is organic content, not a paid ad. Do NOT invent a product or brand if none is visible in the creative. No fluff, no preamble.";
+    const paidSystemPrompt = "You are a senior performance marketing creative strategist. You write short, specific, actionable improvement suggestions for ads. Each suggestion should be 1-2 sentences max. Focus on the weakest scoring areas. No fluff, no preamble.";
+
     const message = await getClient().messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 1024,
       temperature: 0,
-      system: `You are a senior performance marketing creative strategist. You write short, specific, actionable improvement suggestions for ads. Each suggestion should be 1-2 sentences max. Focus on the weakest scoring areas. No fluff, no preamble.${contextBlock}${platformBlock}${memoryBlock}${brandVoiceContext}`,
+      system: `${isOrganic ? organicSystemPrompt : paidSystemPrompt}${contextBlock}${platformBlock}${memoryBlock}${brandVoiceContext}`,
       messages: [
         {
           role: "user",
-          content: `Here is a video ad analysis:\n\n${analysisMarkdown}\n\nWeakest areas: ${weakAreas || "none particularly weak"}${platform && platform !== "all" ? `\nTarget platform: ${platform}` : ""}\n\nWrite exactly 4-6 bullet-point improvements. Return ONLY the bullet points, one per line, starting with "- ". No headers, no numbering, no extra text.`,
+          content: `Here is a ${isOrganic ? "video analysis of organic creator content" : "video ad analysis"}:\n\n${analysisMarkdown}\n\nWeakest areas: ${weakAreas || "none particularly weak"}${platform && platform !== "all" ? `\nTarget platform: ${platform}` : ""}\n\nWrite exactly 4-6 bullet-point improvements${isOrganic ? " for organic performance (reach, saves, shares, rewatch)" : ""}. Return ONLY the bullet points, one per line, starting with "- ". No headers, no numbering, no extra text.`,
         },
       ],
     });
@@ -99,11 +103,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (action === "cta-rewrites") {
-    const { currentCTA: rawCTA, productContext: rawProduct, userContext: rawContext, sessionMemory: rawMemory } = payload ?? {};
+    const { currentCTA: rawCTA, productContext: rawProduct, userContext: rawContext, sessionMemory: rawMemory, adType: rawAdType } = payload ?? {};
     const sessionMemory = sanitizeSessionMemory(rawMemory);
     const userContext = sanitizeSessionMemory(rawContext);
     const currentCTA = sanitizeAnalysisText(rawCTA);
     const productContext = sanitizeUserInput(rawProduct);
+    const isOrganic = rawAdType === "organic";
     if (!currentCTA) return res.status(200).json({ rewrites: [] });
 
     const contextBlock = userContext
@@ -113,15 +118,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ? `\n\n${sessionMemory}\nReference the user's prior ads when crafting CTAs — maintain voice consistency.`
       : "";
 
+    const organicCtaSystem = "You are an organic content strategist writing soft creator-to-viewer nudges for organic posts. This is NOT a paid ad. Write short, natural end-frame lines that prompt an organic action — follow, save, share, comment, DM. Under 8 words each. Do NOT use urgency, discount language, 'Shop Now' / 'Buy Now', or any direct-response ad copy. Do NOT invent a product or brand if none is visible in the creative.";
+    const paidCtaSystem = "You are a direct-response copywriter. You write short, punchy CTAs for paid social ads. Each CTA should be under 8 words. Focus on urgency, clarity, and conversion.";
+
     const message = await getClient().messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 512,
       temperature: 0,
-      system: `You are a direct-response copywriter. You write short, punchy CTAs for paid social ads. Each CTA should be under 8 words. Focus on urgency, clarity, and conversion.${contextBlock}${memoryBlock}${brandVoiceContext}`,
+      system: `${isOrganic ? organicCtaSystem : paidCtaSystem}${contextBlock}${memoryBlock}${brandVoiceContext}`,
       messages: [
         {
           role: "user",
-          content: `The current CTA section from this ad analysis:\n\n${currentCTA}\n\nProduct/context: ${productContext}\n\nWrite exactly 3 alternative CTA options. Return ONLY the 3 CTAs, one per line, no numbering, no extra text.`,
+          content: `The current ${isOrganic ? "end-frame or caption" : "CTA"} section from this ${isOrganic ? "organic post" : "ad"} analysis:\n\n${currentCTA}\n\n${isOrganic ? "Context" : "Product/context"}: ${productContext}\n\nWrite exactly 3 ${isOrganic ? "alternative organic nudges" : "alternative CTA options"}. Return ONLY the 3 ${isOrganic ? "nudges" : "CTAs"}, one per line, no numbering, no extra text.`,
         },
       ],
     });

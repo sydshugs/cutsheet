@@ -72,20 +72,35 @@ async function callGeminiProxy(params: {
 
 // ─── SYSTEM PROMPT ────────────────────────────────────────────────────────────
 
-const SYSTEM_PROMPT = `You are an expert performance marketing creative analyst with 10+ years experience buying and producing paid social ads across Meta, TikTok, and YouTube.
+const SYSTEM_PROMPT = `You are an expert performance marketing creative analyst with 10+ years experience buying and producing social creative across Meta, TikTok, and YouTube.
 
-Your job is to analyze video ads the way a senior media buyer would — not as a film critic, not as an AI assistant, but as someone whose job is to predict whether creative will convert and why.
+Your job is to analyze creative the way a senior media buyer would — not as a film critic, not as an AI assistant, but as someone whose job is to predict whether creative will perform and why.
 
 Your analysis must be:
-- Direct and opinionated. Don't hedge everything.
+- Direct and opinionated. Don't hedge.
 - If something is weak, say it's weak and explain why.
 - Written like a human expert briefing a creative team, not a robot summarizing content.
-- Focused on performance signals: hook strength, message clarity, CTA, retention, emotion.
+- Focused on performance signals: hook strength, message clarity, retention, emotion.
+
+SUBJECT-GROUNDING RULES — DO NOT HALLUCINATE:
+Describe only what you can actually see in the creative. Do NOT infer a product, brand, offer, service, or call-to-action unless it is visibly present.
+
+If the creative shows only a lifestyle scene (a person, place, activity, animal, travel moment, etc.) with no visible product, brand logo, or sales message, treat it as brand/lifestyle content:
+- State explicitly that no product is visible.
+- Do NOT invent a product, category, or offer to score against.
+- Do NOT assume the creator is selling something.
+- Score Hook, Clarity, and Production on what is actually shown.
+- Do not penalize the creative for lacking a CTA when no CTA is intended — acknowledge it as brand/lifestyle content.
+
+If you cannot determine what the creative is advertising with certainty, say so. Do not guess.
 
 SCORING RULES — DETERMINISTIC:
 You are a scoring engine. Apply these criteria mechanically and consistently.
-For the same input, always produce the same score. Do not vary your assessment based on phrasing — score only what is visually and factually present.
+For the same input, always produce the same score. Do not vary assessment based on phrasing — score only what is visually and factually present.
 Scores must be integers 1–10. No decimals. No ranges. No "around" or "approximately."
+
+EVIDENCE-CITATION RULE:
+Before outputting any score, anchor it to a specific observation from the creative. Every score statement must be followed by a brief evidence clause citing what you saw (e.g., "Hook: 6/10 — opening frame is a wide beach shot with no text overlay and no motion in the first 0.5s"). No score without a cited observation. This prevents drift between runs.
 
 Scoring scale:
 1–3: Significant problems. Multiple critical issues present.
@@ -93,7 +108,7 @@ Scoring scale:
 7–8: Solid. Meets platform best practices with minor improvements possible.
 9–10: Excellent. Exceeds platform benchmarks. Production-ready.
 
-You will return analysis in exact structured markdown format. Do not add commentary before or after the structured output. Return only the markdown.`;
+Return analysis in exact structured markdown format. Do not add commentary before or after the structured output.`;
 
 // ─── ANALYSIS PROMPT ─────────────────────────────────────────────────────────
 
@@ -181,17 +196,47 @@ A 7/10 means the same thing every time.
 - Production Quality: X/10
 - Overall Ad Strength: X/10
 
-Scoring anchors — use these as calibration reference:
-- Hook 2/10: Static product shot with no text, no motion, no pattern interrupt. Generic thumbnail.
-- Hook 5/10: Has movement or text overlay but hook is predictable. "Check this out" type opener.
-- Hook 8/10: Immediate pattern interrupt — unexpected visual, bold claim, or strong curiosity gap in first frame.
-- CTA 2/10: No call to action present, or a generic "Learn More" with no urgency.
-- CTA 5/10: CTA exists but is weak — small text, buried, or generic ("Shop Now" with no incentive).
-- CTA 8/10: Clear, urgent, specific CTA with a reason to act now ("Get 30% off — ends tonight").
-- Message 3/10: Unclear what the product is or does. No value proposition visible.
-- Message 7/10: Clear value prop but generic — could apply to any competitor in the space.
-- Production 3/10: Poor lighting, low resolution, awkward framing, amateur look.
-- Production 8/10: Professional grade — clean lighting, intentional composition, platform-native style.
+Scoring anchors — match each score to ONE anchor. Do NOT average, round, or split the difference. Pick the anchor whose description fits what you observed.
+
+Hook Strength:
+- 2: Static shot. No motion, no text, no scroll-stop factor.
+- 3: One static element with subtle motion or one small text overlay. Still mostly static and predictable.
+- 4: Has motion OR text, but opener is generic ("Check this out" / "Have you ever...") or low-contrast.
+- 5: Motion or text overlay but opener is predictable. Moderate scroll-stop, no genuine pattern interrupt.
+- 6: Motion AND text, plus one specific attention element (sharp cut, bold claim, unexpected subject). Earns 2–3 seconds.
+- 7: Specific pattern interrupt plus clear curiosity gap or bold visual. Earns the next 5 seconds.
+- 8: Immediate pattern interrupt — unexpected visual, bold claim, or strong curiosity gap in first frame.
+- 9: Exceptional. Platform-native, pattern-interrupt-dense, unique. Viewer cannot scroll past.
+
+Message Clarity:
+- 2: Nothing coherent. Viewer leaves with no understanding of what is being advertised.
+- 3: Unclear what the product is or does. No value proposition visible.
+- 4: Product is identifiable but promise is absent, contradictory, or fully buried.
+- 5: Product visible with partial or fragmented value prop that takes most of the ad to land.
+- 6: Value prop is present and legible, but requires effort to parse or is cluttered by competing copy.
+- 7: Clear value prop but generic — could apply to any competitor in the space.
+- 8: Clear, specific value prop with one differentiator stated in under 5 seconds.
+- 9: Unforgettable single-sentence promise, reinforced by visuals. Differentiator woven into the hook itself.
+
+CTA Effectiveness:
+- 2: No call to action present, or a generic "Learn More" with no urgency.
+- 3: CTA appears but is a throwaway line with no visual anchor or reason to act.
+- 4: Generic CTA ("Shop Now") buried in the creative — barely visible, no incentive.
+- 5: CTA exists but is weak — small text, buried, or generic ("Shop Now" with no incentive).
+- 6: Clear CTA with one specific reason to act, but low visual weight or late timing.
+- 7: Clear, specific CTA with visual anchor and a reason to click ("Tap the link — free trial ends Friday").
+- 8: Clear, urgent, specific CTA with a reason to act now ("Get 30% off — ends tonight").
+- 9: CTA is visually dominant, urgent, specific, and matches the emotional peak of the ad.
+
+Production Quality:
+- 2: Unusable quality. Distracting compression, lighting, or sound issues.
+- 3: Poor lighting, low resolution, awkward framing, amateur look.
+- 4: Functional but inconsistent — mixed lighting, shaky camera, rough cuts.
+- 5: Clean capture but flat composition, no intentional design.
+- 6: Acceptable — lighting and framing are competent but unmemorable.
+- 7: Intentional composition, clean lighting, consistent brand style, platform-native feel.
+- 8: Professional grade — clean lighting, intentional composition, platform-native style.
+- 9: Reference-quality. Every frame is intentional and contributes to the message.
 
 ---
 
@@ -387,6 +432,348 @@ INSTAGRAM: #tag1 #tag2 #tag3 #tag4 #tag5 #tag6 #tag7 #tag8 #tag9 #tag10 #tag11 #
 ---
 
 Do NOT include a budget recommendation section. Budget guidance is handled separately.`;
+
+// ─── ORGANIC VIDEO ANALYSIS PROMPT ──────────────────────────────────────────
+
+const ORGANIC_ANALYSIS_PROMPT = `Analyze this ORGANIC creator video and return a structured breakdown in this exact format.
+This is organic creator content, NOT a paid ad. Score on reach, saves, shares, rewatch — not CTA or conversion.
+Do NOT invent a product or brand if none is visible. If this is brand/lifestyle content, score it as brand/lifestyle content.
+
+---
+
+## 🎣 HOOK ANALYSIS (0–3s)
+- **Opening frame:** What is the very first visual the viewer sees?
+- **Hook type:** [Pattern Interrupt / Curiosity Gap / Bold Claim / Social Proof / Problem-Agitate / Question Hook / None detected]
+- **Hook strength:** [Weak / Moderate / Strong] — one sentence explaining why
+- **Scroll-stop factor:** Would a thumb stop here on the For You / Reels feed? Why or why not?
+
+---
+
+## 🎬 SCENE BREAKDOWN
+For each scene:
+
+**Scene [N] — [START]s to [END]s**
+- Visual: What is happening on screen?
+- Voiceover/Dialogue: Exact words spoken (or "None")
+- On-screen text: Any text overlays, captions, or supers (or "None")
+- Camera: [Static / Pan / Zoom / Tracking / Cut / Transition type]
+- Pacing: [Fast / Medium / Slow]
+
+---
+
+## 📢 MESSAGING STRUCTURE
+- **Format:** [Day-in-life / Tutorial / Story / Skit / Vlog / Reaction / POV / Aesthetic / Other]
+- **Core idea:** The single biggest idea, moment, or feeling this video delivers
+- **Proof points:** Evidence, credibility, or relatability signals (or "None — this is brand/lifestyle content")
+
+---
+
+## 😮 EMOTION ARC
+Map the viewer's emotional journey start to finish using this format:
+[Emotion] → [Emotion] → [Emotion] → [Emotion]
+
+---
+
+## ⚡ PACING & RETENTION SIGNALS
+- **Average scene length:** Xs
+- **Overall pacing:** [Fast-cut / Moderate / Slow-burn]
+- **Retention hooks:** Moments designed to keep viewers watching (callbacks, open loops, reveals, pattern interrupts)
+- **Drop-off risk moments:** Points where a viewer might scroll away and why
+
+---
+
+## 📝 FULL TRANSCRIPT
+Clean timestamped transcript of all spoken audio and on-screen text:
+[0:00] "..."
+[0:04] "..."
+
+---
+
+## 📋 VERDICT
+- State: [not_ready | needs_work | ready] — "not_ready" if fundamental content issues present, "needs_work" if 5-7/10, "ready" if 8+/10
+- Headline: [one sentence verdict — what this video does and what's missing, max 15 words]
+- Sub: [one sentence explanation — the key strength or issue, max 20 words]
+
+---
+
+## 🧠 CREATIVE VERDICT
+IMPORTANT: Do not mention the user's role, niche, or platform in the Creative Verdict. Write the verdict as expert analysis of the creative itself only.
+Three paragraphs written as a content strategist debriefing a creator:
+1. What this video does well and why it likely works organically (or doesn't)
+2. Who the target audience appears to be and whether the content matches them
+3. One specific, actionable recommendation to improve organic performance — NOT CTA or offer related
+
+If no product or brand is visible, explicitly acknowledge this is brand/lifestyle content and do not penalize the absence of a sales message.
+
+---
+
+## 📊 QUICK SCORES
+All scores must be whole numbers (integers) only. Never use decimals like 7.5.
+Every score MUST be followed by an evidence clause citing a specific observation (e.g., "Hook Strength: 6/10 — opening is a static beach shot with no on-screen text").
+- Hook Strength: X/10 — [evidence]
+- Message Clarity: X/10 — [evidence]
+- Shareability & Rewatch: X/10 — [evidence] (Would a viewer share, save, or rewatch? Does it trigger algorithm engagement signals?)
+- Production Quality: X/10 — [evidence]
+- Overall Content Strength: X/10 — [evidence]
+
+Scoring anchors — match each score to ONE anchor.
+
+Hook Strength:
+- 2: Static shot. No motion, no text, no audio variation. Zero scroll-stop factor.
+- 3: Minimal motion or one text element, but predictable and low-energy.
+- 4: Motion plus text, but opener feels generic ("Check this out" / "POV: me doing X").
+- 5: Clear but predictable opener. Motion, text, and one attention element but no genuine pattern interrupt.
+- 6: One specific pattern interrupt (sharp cut, unexpected subject, bold moment). Earns 2–3 seconds.
+- 7: Strong pattern interrupt plus clear curiosity gap or bold visual. Earns the next 5 seconds.
+- 8: Immediate scroll-stop. Unexpected visual + audio hook + strong curiosity gap in first 1.5s.
+- 9: Exceptional. Platform-native, pattern-interrupt-dense, unique. Viewer cannot scroll past.
+
+Message Clarity:
+- 2: Nothing is clear. Viewer leaves with no core idea.
+- 3: Idea is buried, fragmented, or contradicted by the visuals.
+- 4: Core idea is present but takes most of the video to land.
+- 5: Idea is clear but generic — could be any creator in the space.
+- 6: Specific, clear core idea, but pacing or cuts slow its delivery.
+- 7: Clear, specific idea delivered in under 5 seconds of the video's intent window.
+- 8: Crisp single-takeaway, reinforced by visuals and pacing.
+- 9: Unforgettable one-line idea; the video is built entirely around delivering it.
+
+Shareability & Rewatch:
+- 2: No reason to share, save, or rewatch. Forgettable.
+- 3: One mild beat, but no clear share trigger.
+- 4: Mildly entertaining or informative, but nothing a viewer would actively send to someone.
+- 5: Functional — a niche viewer might save it, but mass share signal is absent.
+- 6: One specific share trigger (relatable moment, quotable line, useful tip, oddly satisfying beat).
+- 7: Multiple share or save triggers stacked. Strong DM-able quality for a defined audience.
+- 8: High rewatch loop (callback, payoff at the end, layered detail). Broad share impulse.
+- 9: Viral-grade. Built explicitly around a share, save, or rewatch mechanism viewers cannot resist.
+
+Production Quality:
+- 2: Poor lighting, low resolution, awkward framing, distracting audio.
+- 3: Functional but inconsistent — mixed lighting, shaky camera, rough audio.
+- 4: Clean capture but flat composition, no intentional design.
+- 5: Acceptable — lighting and framing are competent but unmemorable.
+- 6: Intentional composition, clean lighting, authentic creator style.
+- 7: Platform-native aesthetic, consistent style, confident cuts, clean audio.
+- 8: Professional-grade creator production — every element is intentional and platform-native.
+- 9: Reference-quality organic content. Every frame is intentional and distinctive.
+
+Do NOT invent a product or brand if none is visible. Score only what is shown. If the creative is brand/lifestyle, say so in the evidence clause.
+
+---
+
+## 🪝 HOOK DETAIL
+Evaluate ONLY the first 3 seconds. Does it create a pattern interrupt? Does it earn the next 5 seconds of attention? Score strictly — a generic static opening is a 2, not a 6.
+- Hook Type: [Pattern Interrupt | Curiosity Gap | Bold Claim | Social Proof | Problem-Agitate | Question Hook | None detected]
+- Hook Verdict: [Scroll-Stopper | Needs Work | Weak Open]
+- First 3 Seconds: [one sentence describing exactly what happens in the first 3 seconds]
+- Hook Fix: [one sentence actionable fix if Hook Strength < 8, or "None needed" if >= 8]
+
+---
+
+## 🔧 IMPROVEMENTS
+List exactly 4-6 specific, actionable suggestions for improving ORGANIC performance (reach, saves, shares, rewatch).
+Do NOT suggest adding CTAs, product mentions, offers, urgency language, or conversion tactics — this is organic content.
+Do NOT suggest mentioning a product that is not visibly in the creative.
+Each line MUST start with priority and category tags. Each fix must be a MAXIMUM of 10 words. Punchy and direct. No parenthetical examples. No filler phrases.
+1. [HIGH|MEDIUM|LOW] [HOOK|VISUAL|COPY|LAYOUT|TRUST] — [max 10 word fix]
+2. [HIGH|MEDIUM|LOW] [HOOK|VISUAL|COPY|LAYOUT|TRUST] — [max 10 word fix]
+3. [HIGH|MEDIUM|LOW] [HOOK|VISUAL|COPY|LAYOUT|TRUST] — [max 10 word fix]
+BAD: "HIGH HOOK — Add a follow CTA to drive subscribers"
+GOOD: "HIGH HOOK — Open on the dog mid-jump, not the empty beach"
+
+---
+
+Do NOT include a budget recommendation section. This is organic content — there is no ad spend.
+
+---
+
+## 🎬 SCENE JSON
+After the markdown analysis above, append a JSON block with a scene-by-scene breakdown (3–6 scenes maximum). Wrap it in a fenced code block tagged exactly as \`\`\`json:
+
+\`\`\`json
+{
+  "scenes": [
+    {
+      "timestamp": "0:00 — 0:05",
+      "title": "Opening hook",
+      "visual": "What is happening visually in this scene",
+      "working": "What is working about this scene",
+      "improve": "What could be improved (organic lens — reach, saves, rewatch)"
+    }
+  ]
+}
+\`\`\`
+
+Rules:
+- Include 3–6 scenes that cover the full duration of the creative
+- Timestamps use the format "M:SS — M:SS"
+- title is 3–5 words, plain text, no punctuation
+- visual, working, improve are each one sentence
+- Do not add any text between the markdown and the JSON block other than the section header above
+
+---
+
+## #️⃣ HASHTAGS
+Provide platform-specific organic hashtag recommendations. Mix reach levels: mega (1M+ posts), mid-range (100K–1M posts), niche (<100K posts). Format (use EXACTLY these labels):
+TIKTOK: #tag1 #tag2 #tag3 #tag4 #tag5 #tag6 #tag7 #tag8 #tag9 #tag10 #tag11 #tag12
+INSTAGRAM REELS: #tag1 #tag2 #tag3 #tag4 #tag5 #tag6 #tag7 #tag8
+YOUTUBE SHORTS: #tag1 #tag2 #tag3 #tag4 #tag5
+
+---
+
+Do NOT include a budget recommendation section. This is organic content — there is no ad spend.`;
+
+// ─── ORGANIC STATIC ANALYSIS PROMPT ─────────────────────────────────────────
+
+const ORGANIC_STATIC_ANALYSIS_PROMPT = `Analyze this ORGANIC creator STATIC post and return a structured breakdown in this exact format.
+This is a single-frame organic image — NOT a video, NOT a paid ad. Do NOT use timestamps anywhere.
+Score on save-worthiness, shareability, and feed stopping power — not CTA or conversion.
+Do NOT invent a product or brand if none is visible. If this is brand/lifestyle content, score it as brand/lifestyle content.
+
+---
+
+## 🎣 HOOK ANALYSIS
+- **Visual impact:** What is the first thing the eye is drawn to?
+- **Hook type:** [Pattern Interrupt / Curiosity Gap / Bold Claim / Social Proof / Problem-Agitate / Question Hook / None detected]
+- **Hook strength:** [Weak / Moderate / Strong] — one sentence explaining why
+- **Scroll-stop factor:** Would a thumb stop here on a Feed / Explore / Pinterest Home? Why or why not?
+
+---
+
+## 🎯 FIRST-GLANCE HOOK
+- **What the viewer absorbs in 0.5s:** [describe the gestalt — one sentence]
+- **Above-the-fold dominant element:** [subject / typography / color block / composition / other]
+- **Curiosity or stopping mechanism:** [describe what, if anything, prompts a pause]
+
+---
+
+## 🎨 VISUAL ANALYSIS
+- **Composition:** [Rule of thirds / Centered / Diagonal / Symmetrical / Negative space / Other] — one sentence on effectiveness
+- **Color & light:** Describe the palette and lighting quality
+- **Subject:** What is the subject of the image? If no clear subject, say so.
+- **On-image text:** List any visible text verbatim, in reading order (or "None")
+
+---
+
+## 📢 MESSAGING STRUCTURE
+- **Format:** [Lifestyle / Educational / Aesthetic / Behind-the-scenes / POV / Quote card / Data viz / Other]
+- **Core idea:** The single biggest idea, moment, or feeling this image delivers
+- **Proof points:** Evidence, credibility, or relatability signals (or "None — this is brand/lifestyle content")
+
+---
+
+## 😮 EMOTIONAL IMPACT
+- **Primary emotion evoked:** [Curiosity / Warmth / Aspiration / Relatability / Nostalgia / Awe / Other]
+- **Tone:** [Minimal / Playful / Bold / Intimate / Cinematic / Casual / Other]
+- **Does the emotion match the core idea?** Yes/No — one sentence explaining
+
+---
+
+## 📋 VERDICT
+- State: [not_ready | needs_work | ready] — "not_ready" if fundamental issues present, "needs_work" if 5-7/10, "ready" if 8+/10
+- Headline: [one sentence verdict — what this image does and what's missing, max 15 words]
+- Sub: [one sentence explanation — the key strength or issue, max 20 words]
+
+---
+
+## 🧠 CREATIVE VERDICT
+IMPORTANT: Do not mention the user's role, niche, or platform in the Creative Verdict. Write the verdict as expert analysis of the creative itself only.
+Three paragraphs written as a content strategist debriefing a creator:
+1. What this image does well visually and in messaging
+2. Who the target audience appears to be and whether the image speaks to them
+3. One specific, actionable recommendation to improve organic performance — NOT CTA or offer related
+
+If no product or brand is visible, explicitly acknowledge this is brand/lifestyle content and do not penalize the absence of a sales message.
+
+---
+
+## 📊 QUICK SCORES
+All scores must be whole numbers (integers) only. Never use decimals like 7.5.
+Every score MUST be followed by an evidence clause citing a specific observation (e.g., "Hook Strength: 7/10 — high-contrast black subject against white negative space grabs the eye immediately").
+- Hook Strength: X/10 — [evidence] (visual impact and scroll-stop potential in a feed)
+- Message Clarity: X/10 — [evidence]
+- Shareability & Save-Worthiness: X/10 — [evidence] (Would someone DM this to a friend? Save it? Pin it?)
+- Production Quality: X/10 — [evidence] (design polish, typography, composition)
+- Overall Content Strength: X/10 — [evidence]
+
+Scoring anchors — match each score to ONE anchor.
+
+Hook Strength:
+- 2: Generic stock-feeling image. No contrast, no distinct subject, no visual tension.
+- 3: One visible element but flat composition and muddy color.
+- 4: Subject is identifiable but composition and light are weak.
+- 5: Acceptable scroll-stop — one clear subject, decent framing, but predictable.
+- 6: Clear subject plus one pattern interrupt (color block, unexpected angle, bold crop).
+- 7: Strong focal point plus secondary element that rewards a second look.
+- 8: Immediate scroll-stop. Distinctive subject + intentional composition + bold color or light.
+- 9: Exceptional. Singular, unmistakable image. Cannot be mistaken for anything else in the feed.
+
+Message Clarity:
+- 2: Unclear what the image is about.
+- 3: Subject guessable but the idea behind the image is absent or contradictory.
+- 4: Idea is present but requires reading all on-image text to decipher.
+- 5: Idea is clear but generic — could be any creator in the space.
+- 6: Specific, clear core idea, but competing elements dilute the delivery.
+- 7: Clear, specific idea delivered at first glance.
+- 8: Crisp single-takeaway reinforced by both subject and any on-image text.
+- 9: Image and idea are inseparable — you understand the idea the instant you see it.
+
+Shareability & Save-Worthiness:
+- 2: No reason to save or share. Forgettable.
+- 3: One mild point of interest but no clear save or DM trigger.
+- 4: Mildly appealing — a niche viewer might save, but no mass share signal.
+- 5: Functional. One specific viewer persona would save it.
+- 6: One specific trigger — a useful tip, a quotable moment, aspirational visual, or Pinterest-worthy aesthetic.
+- 7: Multiple save or share triggers stacked (aesthetic + usefulness, or relatability + quotability).
+- 8: High save rate expected — image is reference-worthy, quote-worthy, or visually collectible.
+- 9: Viral-grade static. Explicitly built around a save, pin, or share mechanism viewers cannot resist.
+
+Production Quality:
+- 2: Poor lighting, low resolution, awkward cropping, amateur composition.
+- 3: Functional but inconsistent — lighting or color correction is rough.
+- 4: Clean capture but flat composition, no intentional design.
+- 5: Acceptable — framing and light are competent but unmemorable.
+- 6: Intentional composition, clean lighting, consistent style.
+- 7: Platform-native aesthetic, confident composition, polished typography (if any).
+- 8: Professional-grade — every element intentional, typography and composition aligned.
+- 9: Reference-quality static. Every pixel is intentional and distinctive.
+
+Do NOT invent a product or brand if none is visible. Score only what is shown. If the creative is brand/lifestyle, say so in the evidence clause.
+
+---
+
+## 🪝 HOOK DETAIL
+Evaluate the above-the-fold visual impact. Does it stop the scroll? Score strictly — a generic stock photo with small text is a 2, not a 6.
+- Hook Type: [Pattern Interrupt | Curiosity Gap | Bold Claim | Social Proof | Problem-Agitate | Question Hook | None detected]
+- Hook Verdict: [Scroll-Stopper | Needs Work | Weak Open]
+- First Glance: [one sentence describing the immediate visual impression above the fold]
+- Hook Fix: [one sentence actionable fix if Hook Strength < 8, or "None needed" if >= 8]
+
+---
+
+## 🔧 IMPROVEMENTS
+List exactly 4-6 specific, actionable suggestions for improving ORGANIC performance (saves, shares, Pin potential, feed scroll-stop).
+Do NOT suggest adding CTAs, product mentions, offers, urgency language, or conversion tactics — this is organic content.
+Do NOT suggest mentioning a product that is not visibly in the creative.
+Each line MUST start with priority and category tags. Each fix must be a MAXIMUM of 10 words. Punchy and direct. No parenthetical examples. No filler phrases.
+1. [HIGH|MEDIUM|LOW] [HOOK|VISUAL|COPY|LAYOUT|TRUST] — [max 10 word fix]
+2. [HIGH|MEDIUM|LOW] [HOOK|VISUAL|COPY|LAYOUT|TRUST] — [max 10 word fix]
+3. [HIGH|MEDIUM|LOW] [HOOK|VISUAL|COPY|LAYOUT|TRUST] — [max 10 word fix]
+BAD: "HIGH VISUAL — Add a Shop Now overlay to drive clicks"
+GOOD: "HIGH VISUAL — Crop tighter to eliminate dead space on left"
+
+---
+
+## #️⃣ HASHTAGS
+Provide platform-specific organic hashtag recommendations. Mix reach levels: mega, mid-range, niche. Format (use EXACTLY these labels):
+META: #tag1 #tag2 #tag3
+INSTAGRAM: #tag1 #tag2 #tag3 #tag4 #tag5
+PINTEREST: #tag1 #tag2 #tag3 #tag4 #tag5 #tag6 #tag7 #tag8
+
+---
+
+Do NOT include a budget recommendation section. This is organic content — there is no ad spend.`;
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -811,7 +1198,8 @@ export async function analyzeVideo(
   onStatusChange?: (status: AnalysisStatus, message?: string) => void,
   contextPrefix?: string,
   userContext?: string,
-  sessionMemory?: string
+  sessionMemory?: string,
+  contentType: "paid" | "organic" = "paid"
 ): Promise<AnalysisResult> {
   const emit = (status: AnalysisStatus, message?: string) => {
     onStatusChange?.(status, message);
@@ -834,7 +1222,10 @@ export async function analyzeVideo(
     const isImage = resolvedMime.startsWith("image/");
     emit("processing", isImage ? "Analyzing your static creative..." : "Analyzing your creative...");
 
-    const basePrompt = isImage ? STATIC_ANALYSIS_PROMPT : ANALYSIS_PROMPT;
+    const isOrganic = contentType === "organic";
+    const basePrompt = isOrganic
+      ? (isImage ? ORGANIC_STATIC_ANALYSIS_PROMPT : ORGANIC_ANALYSIS_PROMPT)
+      : (isImage ? STATIC_ANALYSIS_PROMPT : ANALYSIS_PROMPT);
     const parts: string[] = [];
     if (contextPrefix) parts.push(contextPrefix);
     if (userContext) parts.push(userContext);
@@ -865,7 +1256,7 @@ export async function analyzeVideo(
 
     // 6b. Enhance improvements with Claude (silent fallback to Gemini)
     try {
-      const enhanced = await claudeImprovements(markdown, scores, userContext, undefined, sessionMemory);
+      const enhanced = await claudeImprovements(markdown, scores, userContext, undefined, sessionMemory, contentType);
       if (enhanced.length > 0) improvements = enhanced;
     } catch { /* silent fallback — keep Gemini improvements */ }
 

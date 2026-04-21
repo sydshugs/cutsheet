@@ -291,7 +291,7 @@ export default function OrganicAnalyzer() {
       ({ text: sessionMemory } = await getSessionMemory());
     } catch { /* non-critical */ }
     sessionMemoryRef.current = sessionMemory;
-    await analyze(file, API_KEY, contextPrefix, userContext || undefined, sessionMemory);
+    await analyze(file, API_KEY, contextPrefix, userContext || undefined, sessionMemory, "organic");
   }, [file, isAnalyzing, canAnalyze, analyze, contextPrefix]);
 
   useEffect(() => {
@@ -436,7 +436,7 @@ export default function OrganicAnalyzer() {
     setCtaLoading(true);
     try {
       const ctaSection = activeResult.markdown.match(/CTA[\s\S]*?(?=\n##|\n---)/i)?.[0] ?? "";
-      setCtaRewrites(await generateCTARewrites(ctaSection, activeResult.fileName, userContext || undefined, sessionMemoryRef.current));
+      setCtaRewrites(await generateCTARewrites(ctaSection, activeResult.fileName, userContext || undefined, sessionMemoryRef.current, "organic"));
     } catch (err) {
       console.error('CTA rewrite failed:', err);
       setRateLimitError('CTA rewrite failed. Please try again.');
