@@ -106,7 +106,9 @@ const PredictedPerformanceCard = memo(function PredictedPerformanceCard({ predic
     ? `~${prediction.organicMetrics.longevity.days}d`
     : `~${Math.round((prediction.fatigueDays.low + prediction.fatigueDays.high) / 2)} days`
 
-  const avgLabel = `${platformLabel} avg · ${prediction.ctr.benchmark}%`
+  const avgLabel = organic
+    ? `${platformLabel} organic avg · ${prediction.ctr.benchmark}%`
+    : `${platformLabel} avg · ${prediction.ctr.benchmark}%`
 
   const aiInsight = prediction.confidenceReason || ''
 
@@ -162,7 +164,7 @@ const PredictedPerformanceCard = memo(function PredictedPerformanceCard({ predic
         </div>
         {/* Creative Fatigue */}
         <div className="flex flex-col rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 text-center">
-          <span className="text-[9px] uppercase tracking-wider text-zinc-500 mb-2">Creative Fatigue</span>
+          <span className="text-[9px] uppercase tracking-wider text-zinc-500 mb-2">{organic ? 'Posting Rhythm' : 'Creative Fatigue'}</span>
           <span className="text-[16px] font-semibold text-white leading-snug">
             {fatigueDisplay}
           </span>

@@ -34,7 +34,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
   }
 
-  const { analysisMarkdown, scores, platform, adType, niche, intent } = req.body != null ? req.body : {};
+  const { analysisMarkdown, scores, platform, adType, niche, intent, isOrganic: rawIsOrganic } = req.body != null ? req.body : {};
+  const isOrganic = rawIsOrganic === true;
   // Sanitize analysis text — AI-generated but returned through client req.body (untrusted)
   const safeAnalysis = sanitizeAnalysisText(analysisMarkdown);
 
@@ -58,7 +59,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const nicheBench = getNicheBenchmark(nicheLabel, platformKey);
   let benchmarkBlock: string;
-  if (nicheBench) {
+  if (isOrganic) {
+    // Organic benchmarks are platform-level rules of thumb — no niche-level CTR data applies.
+    benchmarkBlock = `\nORGANIC BENCHMARKS (${platformLabel}):
+- Top-quartile save rate on ${platformLabel} for ${nicheLabel} organic content: 1.5-4%. Below 0.3% is weak, above 4% is viral territory.
+- Top-quartile share rate on ${platformLabel}: 0.5-2%. Below 0.1% is weak, above 2% is viral territory.
+- Completion past 3s: 40-60% is typical, <25% is weak, >75% is strong.
+- Creator posting rhythm (days between posts to maintain momentum): 2-4 days on TikTok/Reels/Shorts, 3-7 days on Instagram/Pinterest, 5-10 days on Meta/Facebook.`;
+  } else if (nicheBench) {
     const ctrLine = `${platformLabel} ${nicheLabel} avg CTR: ${nicheBench.ctr.low}–${nicheBench.ctr.high}% (avg ${nicheBench.ctr.avg}%).`;
     const hookLine = nicheBench.hookRate ? ` Avg hook retention: ${nicheBench.hookRate.avg}%.` : "";
     const cpmLine = ` Avg CPM: $${nicheBench.cpm.avg}.`;
@@ -78,7 +86,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .map(([k, v]) => `${k} (${v}/10)`)
     : [];
 
-  const systemPrompt = `You are a performance marketing analyst specializing in ${nicheLabel} ${adTypeLabel} advertising on ${platformLabel}. You have studied over 100,000 ${platformLabel} ad campaigns in the ${nicheLabel} category.
+  const systemPrompt = isOrganic
+    ? `You are an organic content strategist who has analyzed over 100,000 ${platformLabel} organic posts in the ${nicheLabel} category. You predict organic performance — save rate, share rate, completion, rewatch likelihood, algorithm fit — NOT advertising metrics.
+
+This post scored ${scores?.overall != null ? scores.overall : "?"}/10 overall. Weakest areas: ${weakDims.join(", ") || "not identified"}. Hook: ${scores?.hook != null ? scores.hook : "?"}/10, Shareability & Rewatch: ${scores?.cta != null ? scores.cta : "?"}/10.
+
+CALIBRATION RULES:
+- A hook score of 3/10 → predict save rate below 0.3% and completion below 25%. A hook of 8/10 → predict save rate above 2% and completion above 60%.
+- A shareability score of 3/10 → predict share rate in the bottom quartile for organic ${nicheLabel} on ${platformLabel}. A shareability of 8/10 → top quartile.
+- An overall score of 4/10 → creator should post again in 5-7 days to rebuild momentum. An 8/10 → 2-4 days keeps the wave.
+- Every prediction must cite the specific score that drives it: "Save rate predicted at X% because [dimension] scored [N]/10."
+- Never guess high to flatter. Weak organic content gets weak predictions.
+- You never predict CTR, CPM, CPC, CVR, ROAS, or any advertising-only metric. You never suggest adding CTAs, offers, or conversion tactics.`
+    : `You are a performance marketing analyst specializing in ${nicheLabel} ${adTypeLabel} advertising on ${platformLabel}. You have studied over 100,000 ${platformLabel} ad campaigns in the ${nicheLabel} category.
 
 This ad scored ${scores?.overall != null ? scores.overall : "?"}/10 overall. Weakest areas: ${weakDims.join(", ") || "not identified"}. Hook: ${scores?.hook != null ? scores.hook : "?"}/10, CTA: ${scores?.cta != null ? scores.cta : "?"}/10.
 
@@ -89,7 +109,55 @@ CALIBRATION RULES:
 - Every prediction must cite the specific score that drives it: "CTR predicted at X% vs Y% ${platformLabel} average for ${nicheLabel} because [dimension] scored [N]/10."
 - Never guess high to flatter. A weak ad gets weak predictions.`;
 
-  const prompt = `Based on the following creative scorecard, generate a performance prediction for this ${adTypeLabel} ad on ${platformLabel} in the ${nicheLabel} niche.
+  const promptOrganic = `Based on the following organic content scorecard, generate an organic performance prediction for this ${adTypeLabel} post on ${platformLabel} in the ${nicheLabel} niche.
+
+Scorecard & Analysis:
+<analysis>
+${safeAnalysis}
+</analysis>
+
+Scores: Hook ${scores.hook != null ? scores.hook : 0}/10, Clarity ${scores.clarity != null ? scores.clarity : 0}/10, Shareability ${scores.cta != null ? scores.cta : 0}/10, Production ${scores.production != null ? scores.production : 0}/10, Overall ${scores.overall != null ? scores.overall : 0}/10
+Platform: ${platformLabel} | Format: ${adTypeLabel} | Niche: ${nicheLabel}
+${benchmarkBlock}
+
+Predict organic performance only. Never predict CTR, CPM, CPC, CVR, or ROAS.
+
+1. Save Rate Range — % of viewers who save this post. Anchor against the organic benchmarks above. (Will be returned in the "ctr" field.)
+2. Share Rate Range — % of viewers who share this post via DM or repost. (Will be returned in the "cvr" field.)
+3. Hook Retention (video only) — estimated % who watch past 3 seconds on ${platformLabel}. ${platformLabel === "TikTok" ? "TikTok users decide in 0.5-1s." : platformLabel === "YouTube" ? "YouTube users can skip at 5s." : "Meta/Instagram feed users decide in 1-2s."}
+4. Creator Posting Rhythm — days until this creator should post next to maintain algorithm momentum. (Will be returned in the "fatigueDays" field.)
+5. Confidence Level — how reliable is this prediction?
+Rules:
+- 'High' = scores are clear-cut (very high 8+ or very low 3-), strong organic signal in the content.
+- 'Medium' = scores are mid-range (4-7), mixed signals.
+- 'Low' = unusual format, atypical niche, or contradictory signals.
+Confidence reflects prediction RELIABILITY, not content quality.
+6. Top 2 signals boosting organic performance — be specific to what you saw in the analysis.
+7. Top 2 signals limiting organic performance — reference the weakest scores.
+
+IMPORTANT FIELD MAPPING — the response uses paid-named fields for schema compatibility, but the VALUES are organic:
+- "ctr" field → save rate values (% who save the post)
+- "ctr.benchmark" field → typical save rate for this platform/niche (from the organic benchmarks above)
+- "ctr.vsAvg" → "above" / "at" / "below" the organic save-rate benchmark
+- "cvr" field → share rate values (% who share or DM the post)
+- "fatigueDays" field → days until next post for creator momentum
+- "hookRetention" field → % who watch past 3s (same meaning as paid)
+
+Return as JSON:
+{
+  "ctr": { "low": number, "high": number, "benchmark": number, "vsAvg": "above" | "at" | "below" },
+  "cvr": { "low": number, "high": number },
+  "hookRetention": { "low": number, "high": number } | null,
+  "fatigueDays": { "low": number, "high": number },
+  "confidence": "Low" | "Medium" | "High",
+  "confidenceReason": string,
+  "positiveSignals": [string, string],
+  "negativeSignals": [string, string]
+}
+
+Return ONLY valid JSON, no markdown fencing. Be calibrated — a hook score of 3/10 should predict low save rate and low completion, not moderate.`;
+
+  const promptPaid = `Based on the following creative scorecard, generate a performance prediction for this ${adTypeLabel} ad on ${platformLabel} in the ${nicheLabel} niche.
 
 Scorecard & Analysis:
 <analysis>
@@ -129,6 +197,8 @@ Return as JSON:
 }
 
 Return ONLY valid JSON, no markdown fencing. Be calibrated — a hook score of 3/10 should predict low retention, not moderate.`;
+
+  const prompt = isOrganic ? promptOrganic : promptPaid;
 
   try {
     const client = getClient();

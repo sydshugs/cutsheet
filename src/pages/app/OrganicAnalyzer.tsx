@@ -191,7 +191,7 @@ export default function OrganicAnalyzer() {
       generateSecondEyeReview(
         result.markdown, result.fileName,
         result.scores ? { hook: result.scores.hook, overall: result.scores.overall } : undefined,
-        result.improvements, userContext || undefined, sessionMemoryRef.current
+        result.improvements, userContext || undefined, sessionMemoryRef.current, true,
       ).then(setSecondEyeOutput).catch(() => setSecondEyeOutput(null)).finally(() => setSecondEyeLoading(false));
     }
 
@@ -201,7 +201,7 @@ export default function OrganicAnalyzer() {
       generateStaticSecondEye(
         result.markdown, result.fileName,
         result.scores ? { overall: result.scores.overall, cta: result.scores.cta } : undefined,
-        result.improvements, userContext || undefined, sessionMemoryRef.current
+        result.improvements, userContext || undefined, sessionMemoryRef.current, true,
       ).then(setDesignReviewResult).catch(() => setDesignReviewResult(null)).finally(() => setDesignReviewLoading(false));
     }
 
@@ -217,7 +217,7 @@ export default function OrganicAnalyzer() {
           const staticPlatforms = ['meta', 'instagram', 'pinterest'];
           const plats = organicFormat === 'static' ? staticPlatforms : videoPlatforms;
           const results = await Promise.race([
-            Promise.all(plats.map(p => generatePlatformScore(p, { markdown: result.markdown, scores: result.scores ?? { overall: 0 } }, result.fileName, organicFormat, userContext || undefined, rawUserContext?.niche))),
+            Promise.all(plats.map(p => generatePlatformScore(p, { markdown: result.markdown, scores: result.scores ?? { overall: 0 } }, result.fileName, organicFormat, userContext || undefined, rawUserContext?.niche, true))),
             timeout,
           ]);
           setPlatformScores(results);
@@ -225,7 +225,7 @@ export default function OrganicAnalyzer() {
           const k = PLATFORM_SERVICE_MAP[platform as keyof typeof PLATFORM_SERVICE_MAP];
           if (k) {
             const score = await Promise.race([
-              generatePlatformScore(k, { markdown: result.markdown, scores: result.scores ?? { overall: 0 } }, result.fileName, organicFormat, userContext || undefined, rawUserContext?.niche),
+              generatePlatformScore(k, { markdown: result.markdown, scores: result.scores ?? { overall: 0 } }, result.fileName, organicFormat, userContext || undefined, rawUserContext?.niche, true),
               timeout,
             ]);
             setPlatformScores([score]);
@@ -291,7 +291,7 @@ export default function OrganicAnalyzer() {
       ({ text: sessionMemory } = await getSessionMemory());
     } catch { /* non-critical */ }
     sessionMemoryRef.current = sessionMemory;
-    await analyze(file, API_KEY, contextPrefix, userContext || undefined, sessionMemory);
+    await analyze(file, API_KEY, contextPrefix, userContext || undefined, sessionMemory, "organic");
   }, [file, isAnalyzing, canAnalyze, analyze, contextPrefix]);
 
   useEffect(() => {
@@ -436,7 +436,7 @@ export default function OrganicAnalyzer() {
     setCtaLoading(true);
     try {
       const ctaSection = activeResult.markdown.match(/CTA[\s\S]*?(?=\n##|\n---)/i)?.[0] ?? "";
-      setCtaRewrites(await generateCTARewrites(ctaSection, activeResult.fileName, userContext || undefined, sessionMemoryRef.current));
+      setCtaRewrites(await generateCTARewrites(ctaSection, activeResult.fileName, userContext || undefined, sessionMemoryRef.current, "organic"));
     } catch (err) {
       console.error('CTA rewrite failed:', err);
       setRateLimitError('CTA rewrite failed. Please try again.');

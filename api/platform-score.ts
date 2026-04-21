@@ -30,6 +30,15 @@ const PLATFORM_GUIDANCE: Record<string, string> = {
   pinterest: `Prioritize: vertical 2:3 aspect ratio, text overlay with clear value prop, lifestyle imagery, rich pin compatibility, keyword-rich description, save-worthy design. Penalize: horizontal format, no text overlay, hard-sell copy, low-resolution imagery.`,
 };
 
+const ORGANIC_PLATFORM_GUIDANCE: Record<string, string> = {
+  tiktok: `Prioritize: scroll-stop in first 0.5s, native feel (phone-shot energy beats polished production), trending audio, text overlay that matches the audio beat, rewatch-triggering payoff, completion through 100%. Penalize: polished/corporate feel, horizontal framing, stock music, slow or exposition-heavy intros.`,
+  reels: `Prioritize: vertical 9:16 framing, strong visual opener, trending or native-feel audio, text overlays at key beats, save-worthy payoff (information, transformation, aesthetic), share triggers (DM-worthy moments). Penalize: horizontal format, overly produced content, slow pacing, no clear reason to save or share.`,
+  shorts: `Prioritize: strong hook in first 3s (skip threshold), vertical format, fast pacing, clear on-screen text, rewatch-triggering reveals or payoffs. Penalize: weak audio, no clear narrative, slow opener, horizontal framing.`,
+  meta: `Prioritize: thumb-stop opener, save-worthy content (educational, inspirational, relatable), sound-off readability, strong first-frame or first-line clarity, platform-native post energy. Penalize: ad-like framing, stock imagery, long exposition, no clear value for the scroller.`,
+  instagram: `Prioritize: editorial or platform-native aesthetic, cohesive feel, strong first-frame hook, save-worthy content (aesthetic, educational, quotable), shareable moments for Stories/DMs, caption discoverability. Penalize: low-quality imagery, generic stock look, hard-sell framing, no clear save/share trigger.`,
+  pinterest: `Prioritize: vertical 2:3 aspect ratio, text overlay with clear value prop, lifestyle or how-to imagery, rich pin compatibility, keyword-rich on-image text, save-worthy design (Pinterest rewards save rate above everything). Penalize: horizontal format, no text overlay, hard-sell copy, low-resolution imagery.`,
+};
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handlePreflight(req, res)) return;
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
@@ -42,7 +51,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(429).json({ error: "RATE_LIMITED", resetAt: rl.resetAt });
   }
 
-  const { analysisMarkdown: rawAnalysis, platform: rawPlatform, adType: rawAdType, userContext: rawUserContext, niche: rawNiche, scores } = req.body ?? {};
+  const { analysisMarkdown: rawAnalysis, platform: rawPlatform, adType: rawAdType, userContext: rawUserContext, niche: rawNiche, scores, isOrganic: rawIsOrganic } = req.body ?? {};
+  const isOrganic = rawIsOrganic === true;
 
   if (!rawAnalysis || !rawPlatform) {
     return res.status(400).json({ error: "Missing analysisMarkdown or platform" });
@@ -57,7 +67,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const userContext = sanitizeSessionMemory(rawUserContext);
 
   const platformKey = platform.toLowerCase().replace(/\s+/g, "");
-  const guidance = PLATFORM_GUIDANCE[platformKey] ?? PLATFORM_GUIDANCE.meta;
+  const guidance = isOrganic
+    ? (ORGANIC_PLATFORM_GUIDANCE[platformKey] ?? ORGANIC_PLATFORM_GUIDANCE.meta)
+    : (PLATFORM_GUIDANCE[platformKey] ?? PLATFORM_GUIDANCE.meta);
 
   // Niche-specific platform expectations — all 8 niches
   const nichePlatformContext: Record<string, Record<string, string>> = {
@@ -126,16 +138,55 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const nicheKey = NICHE_ALIASES[nicheLabel.toLowerCase().trim()]
     ?? NICHE_ALIASES[nicheLabel.toLowerCase().replace(/[^a-z\s\/]/g, "").trim()]
     ?? "";
-  const nicheContext = nicheKey ? (nichePlatformContext[nicheKey]?.[platformKey] ?? "") : "";
+  // Paid niche×platform context is paid-voiced ("SaaS ads on Meta…"). Skip for organic —
+  // follow-up ticket will build an organicNichePlatformContext map.
+  const nicheContext = isOrganic
+    ? ""
+    : (nicheKey ? (nichePlatformContext[nicheKey]?.[platformKey] ?? "") : "");
 
   // Include scores context if available
   const scoresContext = scores
     ? `\nORIGINAL SCORES: Overall ${scores.overall ?? "?"}/10, Hook ${scores.hook ?? "?"}/10, Clarity ${scores.clarity ?? "?"}/10, CTA ${scores.cta ?? "?"}/10, Production ${scores.production ?? "?"}/10`
     : "";
 
-  const systemPrompt = `You are a ${platform} advertising specialist for ${nicheLabel} brands. You score creative specifically for how ${nicheLabel} ads perform on ${platform} — not generic ad quality. A 7 means "good for ${nicheLabel} on ${platform}", not "good in general". A ${nicheLabel} ad optimized for Meta might score 4 on TikTok. Be platform-honest and niche-calibrated.`;
+  const systemPrompt = isOrganic
+    ? `You are a ${platform} organic content strategist who advises ${nicheLabel} creators on how their content performs natively on ${platform}. You score creator content on organic signals — scroll-stop, save rate, share appeal, rewatch value, algorithm fit — NOT on advertising metrics. A 7 means "performs well as organic ${nicheLabel} content on ${platform}", not "good ad". Be platform-honest and organic-calibrated.
 
-  const prompt = `A ${nicheLabel} creative has already been analyzed. Based on the following analysis, generate a platform-specific scorecard for ${platform}.
+Do NOT suggest adding CTAs, products, offers, urgency, discount codes, or conversion tactics.
+Do NOT invent a product or brand if none is visible in the content.
+If this is lifestyle, storytelling, educational, or brand content, judge it on its own terms as organic content.`
+    : `You are a ${platform} advertising specialist for ${nicheLabel} brands. You score creative specifically for how ${nicheLabel} ads perform on ${platform} — not generic ad quality. A 7 means "good for ${nicheLabel} on ${platform}", not "good in general". A ${nicheLabel} ad optimized for Meta might score 4 on TikTok. Be platform-honest and niche-calibrated.`;
+
+  const promptOrganic = `A ${nicheLabel} creator's organic post has already been analyzed. Based on the following analysis, generate a platform-specific organic scorecard for ${platform}.
+
+ORIGINAL ANALYSIS:
+${analysisMarkdown}
+${scoresContext}
+
+CONTENT TYPE: ${adType ?? "video"}
+TARGET PLATFORM: ${platform}
+NICHE: ${nicheLabel}
+
+${userContext ? `<user_context>\n${userContext}\n</user_context>\n` : ""}
+
+Platform-specific organic scoring guidance for ${platform}:
+${guidance}
+
+Score this post specifically for organic ${platform} performance — scroll-stop, completion, save rate, share appeal, rewatch value, algorithm fit. Do NOT score for advertising or conversion performance. Return a JSON object with these exact keys:
+{
+  "platform": "${platform}",
+  "score": <number 1-10, whole number>,
+  "platformFit": <number 1-10, how well this post suits ${platform} natively>,
+  "strengths": [<3 specific organic strengths for ${platform}>],
+  "weaknesses": [<3 specific organic weaknesses for ${platform} — NOT ad weaknesses>],
+  "improvements": [<3-5 actionable organic improvements — NOT ad copy rewrites, NOT CTA additions, NOT offer additions>],
+  "tips": [<2-3 organic best practice tips for ${platform}>],
+  "verdict": "<one sentence summary of how this post performs as organic content on ${platform}>"
+}
+
+Return ONLY valid JSON, no markdown fencing.`;
+
+  const promptPaid = `A ${nicheLabel} creative has already been analyzed. Based on the following analysis, generate a platform-specific scorecard for ${platform}.
 
 ORIGINAL ANALYSIS:
 ${analysisMarkdown}
@@ -165,6 +216,8 @@ Score this ad specifically for ${platform} performance. Return a JSON object wit
 }
 
 Return ONLY valid JSON, no markdown fencing.`;
+
+  const prompt = isOrganic ? promptOrganic : promptPaid;
 
   try {
     const client = getClient();

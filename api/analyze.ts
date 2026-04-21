@@ -2,7 +2,7 @@
 // Keeps GEMINI_API_KEY server-side only, never exposed to the browser
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI, type GenerationConfig } from "@google/generative-ai";
 import { verifyAuth, checkRateLimit, handlePreflight } from "./_lib/auth";
 import { sanitizeSessionMemory, sanitizeUserInput } from "./_lib/sanitizeMemory";
 import { safeNiche, safePlatform } from "./_lib/validateInput";
@@ -38,6 +38,7 @@ interface AnalyzeRequest {
   temperature?: number;
   topP?: number;
   topK?: number;
+  seed?: number;
   niche?: string;
   platform?: string;
 }
@@ -69,6 +70,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       temperature = 0,
       topP = 0.8,
       topK = 40,
+      seed = 42,
       niche,
       platform,
     } = (req.body ?? {}) as AnalyzeRequest;
@@ -132,12 +134,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const model = genAI.getGenerativeModel({
       model: GEMINI_MODEL,
       ...(systemInstruction ? { systemInstruction: sanitizeSessionMemory(systemInstruction) } : {}),
+      // Fixed seed + temp:0 = deterministic token sampling. Video frame sampling is non-deterministic server-side (known Phase 2 limit).
+      // `seed` is supported by the Gemini REST API but not yet in @google/generative-ai v0.24.1 types — cast narrowly.
       generationConfig: {
         maxOutputTokens: Math.min(maxOutputTokens, 16384),
         temperature: Math.min(Math.max(temperature, 0), 2),
         topP: Math.min(Math.max(topP, 0), 1),
         topK: Math.min(Math.max(topK, 1), 100),
-      },
+        seed: Math.floor(seed),
+      } as GenerationConfig & { seed: number },
     });
 
     // Build niche context block when niche is known from onboarding

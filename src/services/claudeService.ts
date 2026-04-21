@@ -59,6 +59,7 @@ export async function generatePlatformScore(
   adType?: 'video' | 'static',
   userContext?: string,
   niche?: string,
+  isOrganic?: boolean,
 ): Promise<PlatformScore> {
   return callApi<PlatformScore>("/api/platform-score", {
     analysisMarkdown: result.markdown,
@@ -67,6 +68,7 @@ export async function generatePlatformScore(
     userContext,
     niche,
     scores: result.scores,
+    isOrganic,
   });
 }
 
@@ -77,12 +79,13 @@ export async function generateImprovements(
   scores: { hook: number; clarity: number; cta: number; production: number; overall: number } | null,
   userContext?: string,
   platform?: string,
-  sessionMemory?: string
+  sessionMemory?: string,
+  adType?: "paid" | "organic"
 ): Promise<string[]> {
   if (!scores) return [];
   const data = await callApi<{ improvements: string[] }>("/api/improvements", {
     action: "improvements",
-    payload: { analysisMarkdown, scores, userContext, platform, sessionMemory },
+    payload: { analysisMarkdown, scores, userContext, platform, sessionMemory, adType },
   });
   return data.improvements ?? [];
 }
@@ -111,11 +114,12 @@ export async function generateCTARewrites(
   currentCTA: string,
   productContext: string,
   userContext?: string,
-  sessionMemory?: string
+  sessionMemory?: string,
+  adType?: "paid" | "organic"
 ): Promise<string[]> {
   const data = await callApi<{ rewrites: string[] }>("/api/improvements", {
     action: "cta-rewrites",
-    payload: { currentCTA, productContext, userContext, sessionMemory },
+    payload: { currentCTA, productContext, userContext, sessionMemory, adType },
   });
   return data.rewrites ?? [];
 }
@@ -143,7 +147,8 @@ export async function generateSecondEyeReview(
   scores?: { hook: number; overall: number },
   improvements?: string[],
   userContext?: string,
-  sessionMemory?: string
+  sessionMemory?: string,
+  isOrganic?: boolean,
 ): Promise<SecondEyeResult> {
   return callApi<SecondEyeResult>("/api/second-eye", {
     analysisMarkdown,
@@ -152,6 +157,7 @@ export async function generateSecondEyeReview(
     improvements,
     userContext,
     sessionMemory,
+    isOrganic,
   });
 }
 
@@ -176,7 +182,8 @@ export async function generateStaticSecondEye(
   scores?: { overall: number; cta: number },
   improvements?: string[],
   userContext?: string,
-  sessionMemory?: string
+  sessionMemory?: string,
+  isOrganic?: boolean,
 ): Promise<StaticSecondEyeResult> {
   return callApi<StaticSecondEyeResult>("/api/design-review", {
     analysisMarkdown,
@@ -185,6 +192,7 @@ export async function generateStaticSecondEye(
     improvements,
     userContext,
     sessionMemory,
+    isOrganic,
   });
 }
 
