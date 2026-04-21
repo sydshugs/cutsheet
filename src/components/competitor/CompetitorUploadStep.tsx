@@ -266,12 +266,28 @@ export function CompetitorUploadStep({
           />
         </div>
 
-        <h1 className="mt-[23px] text-center text-[23px] font-bold leading-tight tracking-[-0.025em] text-[color:var(--ink)]">
+        <h1 className="mt-[23px] mb-0 text-center text-[19px] font-semibold leading-tight text-[color:var(--ink)]">
           Competitor Analysis
         </h1>
-        <p className="mt-2.5 max-w-[340px] text-center text-[13.5px] leading-[1.6] text-[color:var(--ink-muted)]">
+        <p className="mt-2.5 mb-0 max-w-[340px] text-center text-[13.5px] leading-[1.6] text-[color:var(--ink-muted)]">
           Upload your ad and a competitor&apos;s. AI finds the gap and builds your win strategy.
         </p>
+
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+          {(["Gap analysis", "Win probability", "Action plan"] as const).map((pill) => (
+            <span
+              key={pill}
+              className="rounded-full border px-3 py-1 text-[11.5px] font-normal leading-[15px]"
+              style={{
+                background: "var(--competitor-pill-bg)",
+                borderColor: "var(--competitor-pill-border)",
+                color: "var(--competitor-pill-text)",
+              }}
+            >
+              {pill}
+            </span>
+          ))}
+        </div>
 
         <div className="mt-8 grid w-full grid-cols-1 gap-[19px] md:grid-cols-2">
           <div className="flex min-w-0 flex-col gap-[26px]">

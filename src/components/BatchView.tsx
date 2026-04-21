@@ -767,7 +767,7 @@ export function BatchView() {
               >
                 <Trophy className="size-[31px] text-[color:var(--rank-tile-icon)]" strokeWidth={1.75} />
               </div>
-              <h2 className="m-0 text-center text-[clamp(1.75rem,4vw,2.4rem)] font-bold tracking-[-0.025em] text-[color:var(--ink)]">
+              <h2 className="m-0 text-center text-[19px] font-semibold leading-tight text-[color:var(--ink)]">
                 Rank your creatives
               </h2>
               <p className="m-0 max-w-[390px] text-center text-[13.5px] leading-[1.6] text-[color:var(--ink-muted)]">

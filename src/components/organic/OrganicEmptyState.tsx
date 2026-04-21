@@ -61,7 +61,7 @@ export function OrganicEmptyState({ onFileSelect, onUrlSubmit }: OrganicEmptySta
             file={null}
             onUrlSubmit={onUrlSubmit}
             acceptImages
-            heading="Drop your content here"
+            heading="Drop your ad here"
             layoutVariant="hero"
             heroAccent="organic"
             wrapperClassName="max-w-none"

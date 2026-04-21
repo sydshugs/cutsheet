@@ -229,9 +229,9 @@
   --ab-tile-bg: rgba(129, 140, 248, 0.1);
   --ab-tile-border: rgba(129, 140, 248, 0.2);
   --ab-icon: #818cf8;
-  --ab-pill-bg: rgba(129, 140, 248, 0.08);
-  --ab-pill-border: rgba(129, 140, 248, 0.2);
-  --ab-pill-text: #a5b4fc;
+  --ab-pill-bg: rgba(129, 140, 248, 0.1);
+  --ab-pill-border: rgba(129, 140, 248, 0.3);
+  --ab-pill-text: #818cf8;
   --ab-variant-label: #52525c;
   --ab-dropzone-bg: rgba(255, 255, 255, 0.02);
   --ab-dropzone-border: rgba(255, 255, 255, 0.06);
@@ -269,13 +269,13 @@
   --rank-tile-bg: rgba(99, 102, 241, 0.12);
   --rank-tile-border: rgba(99, 102, 241, 0.25);
   --rank-tile-icon: #6366f1;
-  --rank-feature-pill-bg: rgba(255, 255, 255, 0.04);
-  --rank-feature-pill-border: rgba(255, 255, 255, 0.06);
-  --rank-feature-pill-text: #9f9fa9;
+  --rank-feature-pill-bg: rgba(99, 102, 241, 0.15);
+  --rank-feature-pill-border: rgba(99, 102, 241, 0.06);
+  --rank-feature-pill-text: #6366f1;
   --rank-section-label: #52525c;
   --rank-dropzone-bg: rgba(255, 255, 255, 0.01);
   --rank-dropzone-inner-icon-bg: rgba(255, 255, 255, 0.04);
-  --rank-browse-link: #818cf8;
+  --rank-browse-link: #6366f1;
   --rank-queue-label: #9f9fa9;
   --rank-add-more-text: #71717b;
   --rank-badge-overlay: rgba(0, 0, 0, 0.7);
@@ -356,7 +356,7 @@
   --competitor-tile-icon: #ef4444;
   --competitor-pill-bg: rgba(239, 68, 68, 0.08);
   --competitor-pill-border: rgba(239, 68, 68, 0.2);
-  --competitor-pill-text: #f87171;
+  --competitor-pill-text: #ef4444;
   /* Competitor analyzing — matches upload ambient family */
   --competitor-loading-card-border: rgba(239, 68, 68, 0.14);
   --competitor-loading-card-shadow: 0 0 48px rgba(239, 68, 68, 0.07);

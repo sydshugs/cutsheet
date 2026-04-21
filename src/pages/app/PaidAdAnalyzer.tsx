@@ -96,8 +96,8 @@ function PaidEmptyState({
             <span
               key={pill}
               className={cn(
-                "rounded-full border border-[color:var(--accent-border)] bg-[var(--accent-subtle)]",
-                "px-3 py-1 text-[11.5px] font-normal leading-[15px] text-[color:var(--accent-light)]"
+                "rounded-full border border-[color:var(--ab-pill-border)] bg-[var(--ab-pill-bg)]",
+                "px-3 py-1 text-[11.5px] font-normal leading-[15px] text-[color:var(--ab-pill-text)]"
               )}
             >
               {pill}

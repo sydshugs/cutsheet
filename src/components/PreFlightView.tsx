@@ -241,7 +241,7 @@ export function PreFlightView({ apiKey }: PreFlightViewProps) {
           aria-hidden
         />
 
-        <div className="relative z-[1] flex w-full max-w-[580px] flex-col items-center">
+        <div className="relative z-[1] flex w-full max-w-[731px] flex-col items-center">
           <div
             className="flex size-[73px] shrink-0 items-center justify-center rounded-[15px] border"
             style={{
@@ -252,7 +252,7 @@ export function PreFlightView({ apiKey }: PreFlightViewProps) {
             <GitBranch className="size-[31px] text-[color:var(--ab-icon)]" strokeWidth={1.75} aria-hidden />
           </div>
 
-          <h1 className="mt-[23px] text-center text-[2.375rem] font-semibold leading-tight tracking-[-0.025em] text-[color:var(--ink)]">
+          <h1 className="mt-[23px] mb-0 text-center text-[19px] font-semibold leading-tight text-[color:var(--ink)]">
             Run an A/B Test
           </h1>
           <p className="mt-2.5 max-w-[392px] text-center text-[13.5px] leading-[1.6] text-[color:var(--decon-markdown-muted)]">
