@@ -1,14 +1,18 @@
-// src/components/deconstructor/DeconstructorLoading.tsx — Loading state components
+// src/components/deconstructor/DeconstructorLoading.tsx — Figma 473-3442
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle, Circle } from "lucide-react";
+import { CheckCircle, Circle, X } from "lucide-react";
 import { getSourceLabel } from "../../lib/deconstructorService";
 import type { SourceType } from "../../lib/deconstructorService";
 import { cn } from "../../lib/utils";
-import { SOURCE_PLATFORMS, sourcePillStyle } from "./deconstructorUtils";
 
-// ─── FIGMA 263-124 — LOADING ─────────────────────────────────────────────────
+const STEPS = [
+  "Fetching ad creative...",
+  "Reading the hook and structure...",
+  "Analyzing what makes it work...",
+  "Building your steal-this brief...",
+] as const;
 
 function LoadingStepRow({
   label,
@@ -18,25 +22,27 @@ function LoadingStepRow({
   status: "pending" | "active" | "done";
 }) {
   return (
-    <div className="flex items-center gap-3 py-2">
-      <div className="flex h-4 w-4 shrink-0 items-center justify-center">
+    <div className="flex items-center gap-[13px] py-[8.7px]">
+      <div className="flex h-[17px] w-[17px] shrink-0 items-center justify-center">
         {status === "done" && (
-          <CheckCircle className="h-4 w-4 text-[color:var(--success)]" aria-hidden />
+          <CheckCircle className="h-[17px] w-[17px] text-[#10b981]" aria-hidden />
         )}
         {status === "active" && (
           <div
-            className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/10 border-t-[color:var(--accent)]"
+            className="h-[15px] w-[15px] animate-spin rounded-full border-2 border-[rgba(97,95,255,0.2)] border-t-[color:var(--accent)]"
             aria-hidden
           />
         )}
-        {status === "pending" && <Circle className="h-4 w-4 text-zinc-700" aria-hidden />}
+        {status === "pending" && (
+          <Circle className="h-[17px] w-[17px] text-[#3f3f47]" aria-hidden />
+        )}
       </div>
       <span
         className={cn(
-          "text-sm transition-colors duration-300",
-          status === "done" && "text-zinc-500",
-          status === "active" && "font-medium text-[color:var(--ink)]",
-          status === "pending" && "text-zinc-700",
+          "text-[15px] leading-[21.8px] transition-colors duration-300",
+          status === "done" && "text-[#71717b]",
+          status === "active" && "font-medium text-[#e4e4e7]",
+          status === "pending" && "text-[#3f3f47]",
         )}
       >
         {label}
@@ -66,82 +72,64 @@ export function DeconstructLoadingPanel({
     return () => timers.forEach(clearTimeout);
   }, [url, source]);
 
+  const progressPct = ((step - 1) / (STEPS.length - 1)) * 100;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-      className="mt-6 w-full max-w-2xl"
+      className="w-full"
     >
-      <div className="mb-3 flex flex-col gap-1.5">
-        <span className="text-[9px] tracking-wide text-zinc-700">
-          Source detected from your URL
-        </span>
-        <div className="flex flex-wrap items-center gap-2">
-          {SOURCE_PLATFORMS.map(({ type, label }) => (
-            <span
-              key={type}
-              className="rounded border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider"
-              style={sourcePillStyle(type)}
-            >
-              {label}
+      {/* Card */}
+      <div className="w-full rounded-[17px] border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.03)]">
+
+        {/* Header: source badge + URL */}
+        <div className="flex items-center gap-[13px] border-b border-[rgba(255,255,255,0.12)] px-[26px] pb-[18px] pt-[26px]">
+          <div className="shrink-0 rounded-[4px] border border-[rgba(255,255,255,0.05)] bg-[rgba(24,24,27,0.05)] px-[8.7px] py-[2.2px]">
+            <span className="text-[10.9px] font-medium uppercase tracking-[0.5px] text-[#71717b]">
+              {getSourceLabel(source)}
             </span>
-          ))}
-        </div>
-      </div>
-
-      <div className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] p-6">
-        <div className="mb-8 flex items-center gap-3 border-b border-white/[0.04] pb-4">
-          <span
-            className="rounded border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider"
-            style={sourcePillStyle(source)}
-          >
-            {getSourceLabel(source)}
-          </span>
-          <span className="flex-1 truncate font-mono text-xs text-zinc-600">{url}</span>
+          </div>
+          <span className="min-w-0 flex-1 truncate font-mono text-[13px] text-[#52525c]">{url}</span>
         </div>
 
-        <div className="mb-8 flex flex-col gap-1">
-          <LoadingStepRow
-            label="Fetching ad creative..."
-            status={step > 1 ? "done" : step === 1 ? "active" : "pending"}
-          />
-          <LoadingStepRow
-            label="Reading the hook and structure..."
-            status={step > 2 ? "done" : step === 2 ? "active" : "pending"}
-          />
-          <LoadingStepRow
-            label="Analyzing what makes it work..."
-            status={step > 3 ? "done" : step === 3 ? "active" : "pending"}
-          />
-          <LoadingStepRow
-            label="Building your steal-this brief..."
-            status={step > 4 ? "done" : step === 4 ? "active" : "pending"}
-          />
+        {/* Steps */}
+        <div className="flex flex-col gap-[4px] px-[26px] pb-[20px] pt-[26px]">
+          {STEPS.map((label, i) => {
+            const stepNum = i + 1;
+            const status: "done" | "active" | "pending" =
+              step > stepNum ? "done" : step === stepNum ? "active" : "pending";
+            return <LoadingStepRow key={label} label={label} status={status} />;
+          })}
         </div>
 
-        <div className="mb-3 h-[3px] w-full overflow-hidden rounded-full bg-white/[0.04]">
+        {/* Progress bar */}
+        <div className="mx-[26px] h-[3px] overflow-hidden rounded-full bg-white/[0.04]">
           <motion.div
-            className="h-full rounded-full bg-[color:var(--accent)]"
+            className="h-full rounded-full bg-[#6366f1]"
             initial={{ width: "0%" }}
-            animate={{ width: `${(step / 4) * 100}%` }}
+            animate={{ width: `${progressPct}%` }}
             transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
           />
         </div>
 
-        <p className="text-center text-xs italic text-zinc-600">
+        {/* Status text */}
+        <p className="mb-0 mt-4 pb-[26px] text-center text-[13px] text-[#52525c]">
           Studying the ad from a first-time viewer&apos;s perspective...
         </p>
+      </div>
 
-        <div className="mt-6 flex flex-col items-center gap-2 border-t border-white/[0.04] pt-5">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="flex cursor-pointer items-center gap-1.5 border-none bg-transparent p-0 text-[13px] text-[color:var(--ink-muted)] transition-colors hover:text-[color:var(--ink-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg)]"
-          >
-            Cancel analysis
-          </button>
-        </div>
+      {/* Cancel */}
+      <div className="mt-4 flex justify-center">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="flex cursor-pointer items-center gap-1.5 border-none bg-transparent p-0 text-[13px] text-[color:var(--ink-muted)] transition-colors hover:text-[color:var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg)]"
+        >
+          <X size={11} aria-hidden />
+          Cancel analysis
+        </button>
       </div>
     </motion.div>
   );
