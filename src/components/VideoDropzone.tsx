@@ -231,7 +231,7 @@ export function VideoDropzone({
                   ? "focus-visible:ring-[rgb(var(--display-accent-rgb)/0.35)] text-[color:var(--display-browse)]"
                   : isOrganicHero
                     ? "focus-visible:ring-[rgb(var(--organic-accent-rgb)/0.35)] text-[color:var(--organic-browse)]"
-                    : "focus-visible:ring-[rgb(var(--accent-rgb)/0.35)] text-[color:var(--accent-light)]",
+                    : "focus-visible:ring-[rgb(var(--accent-rgb)/0.35)] text-[color:var(--accent)]",
                 "hover:opacity-90 active:opacity-80",
                 isHero ? "text-[12.5px] leading-normal" : "text-sm"
               )}

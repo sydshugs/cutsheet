@@ -246,8 +246,9 @@
      Do not use rgb(var(--*-rgb) / α) in gradients; comma-rgb + slash-alpha is invalid. */
   --analyzer-idle-ambient-paid: radial-gradient(
     ellipse 70% 55% at 50% 38%,
-    rgba(99, 102, 241, 0.08) 0%,
-    transparent 65%
+    rgba(99, 102, 241, 0.14) 0%,
+    rgba(50, 51, 121, 0.07) 37.5%,
+    transparent 75%
   );
   --analyzer-idle-ambient-organic: radial-gradient(
     ellipse 70% 55% at 50% 38%,

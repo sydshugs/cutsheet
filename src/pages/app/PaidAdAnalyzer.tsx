@@ -63,49 +63,62 @@ function PaidEmptyState({
   return (
     <div
       className={cn(
-        "relative flex flex-1 flex-col items-center justify-center overflow-hidden px-6 py-8",
+        "relative flex flex-1 flex-col items-center justify-center overflow-hidden px-6 py-[62px]",
         "min-h-[min(100%,calc(100vh-120px))]"
       )}
       style={{ backgroundColor: "var(--bg)" }}
     >
+      {/* Ambient gradient — Figma 453:684 */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{ backgroundImage: "var(--analyzer-idle-ambient-paid)" }}
         aria-hidden
       />
-      <div className="relative z-[1] flex w-full max-w-[731px] flex-col items-center">
-        {/* Icon tile — Figma 216:137 */}
+
+      {/* Content — gap-[22px] between icon / text+pills / dropzone (Figma 453:685) */}
+      <div className="relative z-[1] flex w-full max-w-[731px] flex-col items-center gap-[22px]">
+
+        {/* Icon tile — Figma 473:426: 76×76, rounded-[16px], rgba(99,102,241,0.1) bg */}
         <div
-          className={cn(
-            "flex size-[73px] shrink-0 items-center justify-center rounded-[15px] border border-[color:var(--accent-border)]",
-            "bg-[var(--accent-subtle)]"
-          )}
+          className="flex size-[76px] shrink-0 items-center justify-center rounded-[16px] border"
+          style={{ background: "rgba(99,102,241,0.1)", borderColor: "rgba(99,102,241,0.2)" }}
         >
-          <Zap className="size-[27px] text-[color:var(--accent)]" strokeWidth={1.75} aria-hidden />
+          <Zap className="size-[32px] text-[color:var(--accent)]" strokeWidth={1.75} aria-hidden />
         </div>
 
-        <h1 className="mt-[23px] mb-0 text-center text-[19px] font-semibold leading-tight text-[color:var(--ink)]">
-          Score your paid ad
-        </h1>
-        <p className="mt-2.5 mb-0 max-w-[276px] text-center text-[13.5px] leading-[1.6] text-[color:var(--ink-muted)]">
-          Upload a video or static creative. Get a full AI breakdown in 30 seconds.
-        </p>
+        {/* Heading + subtitle + pills — inner gap-[12px] (Figma 454:1049) */}
+        <div className="flex flex-col items-center gap-[12px]">
 
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-          {PILLS.map((pill) => (
-            <span
-              key={pill}
-              className={cn(
-                "rounded-full border border-[color:var(--ab-pill-border)] bg-[var(--ab-pill-bg)]",
-                "px-3 py-1 text-[11.5px] font-normal leading-[15px] text-[color:var(--ab-pill-text)]"
-              )}
-            >
-              {pill}
-            </span>
-          ))}
+          {/* Heading + subtitle — gap-[6px] (Figma 454:1050) */}
+          <div className="flex flex-col items-center gap-[6px]">
+            <h1 className="m-0 text-center text-[19px] font-semibold leading-tight text-[color:var(--ink)]">
+              Score your paid ad
+            </h1>
+            <p className="m-0 max-w-[276px] text-center text-[13.5px] leading-[1.6] text-[color:var(--ink-muted)]">
+              Upload a video or static creative. Get a full AI breakdown in 30 seconds.
+            </p>
+          </div>
+
+          {/* Pills — Figma 453:694: light indigo rgba(129,140,248,0.1)/#818cf8 */}
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {PILLS.map((pill) => (
+              <span
+                key={pill}
+                className="rounded-full border px-3 py-1 text-[11.5px] font-normal leading-[15px]"
+                style={{
+                  background: "rgba(129,140,248,0.1)",
+                  borderColor: "rgba(129,140,248,0.3)",
+                  color: "#818cf8",
+                }}
+              >
+                {pill}
+              </span>
+            ))}
+          </div>
         </div>
 
-        <div className="mt-8 w-full max-w-[731px]">
+        {/* Dropzone — Figma 453:701: full width, h-[308px] */}
+        <div className="w-full">
           <VideoDropzone
             onFileSelect={onFileSelect}
             file={null}
