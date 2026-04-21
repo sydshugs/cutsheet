@@ -217,7 +217,7 @@ export default function OrganicAnalyzer() {
           const staticPlatforms = ['meta', 'instagram', 'pinterest'];
           const plats = organicFormat === 'static' ? staticPlatforms : videoPlatforms;
           const results = await Promise.race([
-            Promise.all(plats.map(p => generatePlatformScore(p, { markdown: result.markdown, scores: result.scores ?? { overall: 0 } }, result.fileName, organicFormat, userContext || undefined, rawUserContext?.niche))),
+            Promise.all(plats.map(p => generatePlatformScore(p, { markdown: result.markdown, scores: result.scores ?? { overall: 0 } }, result.fileName, organicFormat, userContext || undefined, rawUserContext?.niche, true))),
             timeout,
           ]);
           setPlatformScores(results);
@@ -225,7 +225,7 @@ export default function OrganicAnalyzer() {
           const k = PLATFORM_SERVICE_MAP[platform as keyof typeof PLATFORM_SERVICE_MAP];
           if (k) {
             const score = await Promise.race([
-              generatePlatformScore(k, { markdown: result.markdown, scores: result.scores ?? { overall: 0 } }, result.fileName, organicFormat, userContext || undefined, rawUserContext?.niche),
+              generatePlatformScore(k, { markdown: result.markdown, scores: result.scores ?? { overall: 0 } }, result.fileName, organicFormat, userContext || undefined, rawUserContext?.niche, true),
               timeout,
             ]);
             setPlatformScores([score]);

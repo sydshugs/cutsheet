@@ -59,6 +59,7 @@ export async function generatePlatformScore(
   adType?: 'video' | 'static',
   userContext?: string,
   niche?: string,
+  isOrganic?: boolean,
 ): Promise<PlatformScore> {
   return callApi<PlatformScore>("/api/platform-score", {
     analysisMarkdown: result.markdown,
@@ -67,6 +68,7 @@ export async function generatePlatformScore(
     userContext,
     niche,
     scores: result.scores,
+    isOrganic,
   });
 }
 
