@@ -1168,7 +1168,8 @@ export async function analyzeVideo(
   onStatusChange?: (status: AnalysisStatus, message?: string) => void,
   contextPrefix?: string,
   userContext?: string,
-  sessionMemory?: string
+  sessionMemory?: string,
+  contentType: "paid" | "organic" = "paid"
 ): Promise<AnalysisResult> {
   const emit = (status: AnalysisStatus, message?: string) => {
     onStatusChange?.(status, message);
@@ -1191,7 +1192,10 @@ export async function analyzeVideo(
     const isImage = resolvedMime.startsWith("image/");
     emit("processing", isImage ? "Analyzing your static creative..." : "Analyzing your creative...");
 
-    const basePrompt = isImage ? STATIC_ANALYSIS_PROMPT : ANALYSIS_PROMPT;
+    const isOrganic = contentType === "organic";
+    const basePrompt = isOrganic
+      ? (isImage ? ORGANIC_STATIC_ANALYSIS_PROMPT : ORGANIC_ANALYSIS_PROMPT)
+      : (isImage ? STATIC_ANALYSIS_PROMPT : ANALYSIS_PROMPT);
     const parts: string[] = [];
     if (contextPrefix) parts.push(contextPrefix);
     if (userContext) parts.push(userContext);

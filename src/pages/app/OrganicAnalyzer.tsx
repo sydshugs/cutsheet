@@ -291,7 +291,7 @@ export default function OrganicAnalyzer() {
       ({ text: sessionMemory } = await getSessionMemory());
     } catch { /* non-critical */ }
     sessionMemoryRef.current = sessionMemory;
-    await analyze(file, API_KEY, contextPrefix, userContext || undefined, sessionMemory);
+    await analyze(file, API_KEY, contextPrefix, userContext || undefined, sessionMemory, "organic");
   }, [file, isAnalyzing, canAnalyze, analyze, contextPrefix]);
 
   useEffect(() => {
