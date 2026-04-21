@@ -196,17 +196,47 @@ A 7/10 means the same thing every time.
 - Production Quality: X/10
 - Overall Ad Strength: X/10
 
-Scoring anchors — use these as calibration reference:
-- Hook 2/10: Static product shot with no text, no motion, no pattern interrupt. Generic thumbnail.
-- Hook 5/10: Has movement or text overlay but hook is predictable. "Check this out" type opener.
-- Hook 8/10: Immediate pattern interrupt — unexpected visual, bold claim, or strong curiosity gap in first frame.
-- CTA 2/10: No call to action present, or a generic "Learn More" with no urgency.
-- CTA 5/10: CTA exists but is weak — small text, buried, or generic ("Shop Now" with no incentive).
-- CTA 8/10: Clear, urgent, specific CTA with a reason to act now ("Get 30% off — ends tonight").
-- Message 3/10: Unclear what the product is or does. No value proposition visible.
-- Message 7/10: Clear value prop but generic — could apply to any competitor in the space.
-- Production 3/10: Poor lighting, low resolution, awkward framing, amateur look.
-- Production 8/10: Professional grade — clean lighting, intentional composition, platform-native style.
+Scoring anchors — match each score to ONE anchor. Do NOT average, round, or split the difference. Pick the anchor whose description fits what you observed.
+
+Hook Strength:
+- 2: Static shot. No motion, no text, no scroll-stop factor.
+- 3: One static element with subtle motion or one small text overlay. Still mostly static and predictable.
+- 4: Has motion OR text, but opener is generic ("Check this out" / "Have you ever...") or low-contrast.
+- 5: Motion or text overlay but opener is predictable. Moderate scroll-stop, no genuine pattern interrupt.
+- 6: Motion AND text, plus one specific attention element (sharp cut, bold claim, unexpected subject). Earns 2–3 seconds.
+- 7: Specific pattern interrupt plus clear curiosity gap or bold visual. Earns the next 5 seconds.
+- 8: Immediate pattern interrupt — unexpected visual, bold claim, or strong curiosity gap in first frame.
+- 9: Exceptional. Platform-native, pattern-interrupt-dense, unique. Viewer cannot scroll past.
+
+Message Clarity:
+- 2: Nothing coherent. Viewer leaves with no understanding of what is being advertised.
+- 3: Unclear what the product is or does. No value proposition visible.
+- 4: Product is identifiable but promise is absent, contradictory, or fully buried.
+- 5: Product visible with partial or fragmented value prop that takes most of the ad to land.
+- 6: Value prop is present and legible, but requires effort to parse or is cluttered by competing copy.
+- 7: Clear value prop but generic — could apply to any competitor in the space.
+- 8: Clear, specific value prop with one differentiator stated in under 5 seconds.
+- 9: Unforgettable single-sentence promise, reinforced by visuals. Differentiator woven into the hook itself.
+
+CTA Effectiveness:
+- 2: No call to action present, or a generic "Learn More" with no urgency.
+- 3: CTA appears but is a throwaway line with no visual anchor or reason to act.
+- 4: Generic CTA ("Shop Now") buried in the creative — barely visible, no incentive.
+- 5: CTA exists but is weak — small text, buried, or generic ("Shop Now" with no incentive).
+- 6: Clear CTA with one specific reason to act, but low visual weight or late timing.
+- 7: Clear, specific CTA with visual anchor and a reason to click ("Tap the link — free trial ends Friday").
+- 8: Clear, urgent, specific CTA with a reason to act now ("Get 30% off — ends tonight").
+- 9: CTA is visually dominant, urgent, specific, and matches the emotional peak of the ad.
+
+Production Quality:
+- 2: Unusable quality. Distracting compression, lighting, or sound issues.
+- 3: Poor lighting, low resolution, awkward framing, amateur look.
+- 4: Functional but inconsistent — mixed lighting, shaky camera, rough cuts.
+- 5: Clean capture but flat composition, no intentional design.
+- 6: Acceptable — lighting and framing are competent but unmemorable.
+- 7: Intentional composition, clean lighting, consistent brand style, platform-native feel.
+- 8: Professional grade — clean lighting, intentional composition, platform-native style.
+- 9: Reference-quality. Every frame is intentional and contributes to the message.
 
 ---
 
