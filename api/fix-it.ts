@@ -55,8 +55,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Profile fetch failure is non-fatal — proceed without brand voice
   }
 
-  const { analysisMarkdown: rawAnalysis, platform: rawPlatform, niche: rawNiche, intent: rawIntent, adType: rawAdType, scores, ctaFree } = req.body ?? {};
+  const { analysisMarkdown: rawAnalysis, platform: rawPlatform, niche: rawNiche, intent: rawIntent, adType: rawAdType, scores, ctaFree, isOrganic: rawIsOrganic } = req.body ?? {};
   const isCTAFree = ctaFree === true;
+  const isOrganic = rawIsOrganic === true;
 
   if (!rawAnalysis) {
     return res.status(400).json({ error: "Missing analysisMarkdown" });
@@ -88,9 +89,42 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     google: "Display copy rules: Headline max 30 chars. One message per banner. CTA button must have high contrast. No body copy that requires reading — the ad has <2 seconds of attention.",
   };
 
-  const platformRules = platformCopyRules[platform] || "";
+  const organicPlatformCopyRules: Record<string, string> = {
+    tiktok: "TikTok organic rules: Speak like a creator, not a brand. First person. Hook in the first line of caption. No brand-speak, no corporate tone. Trending-audio-aware phrasing beats generic copy.",
+    reels: "Reels organic rules: First line of caption is the hook (before the 'more' truncation). Use line breaks for readability. Caption should reward saves and shares, not drive clicks.",
+    shorts: "Shorts organic rules: Title and caption do the heavy lifting for discoverability. Hook in first 5 seconds of the video, supporting text minimal.",
+    meta: "Meta organic rules: Caption under 125 chars for full visibility. Conversational tone. No ALL CAPS. Save-worthy content (educational, inspirational, relatable) beats promotional copy.",
+    instagram: "Instagram organic rules: First line is the hook (before 'more' truncation). Line breaks for readability. Hashtags at the end, not inline. Caption should invite saves and DMs, not clicks.",
+    pinterest: "Pinterest organic rules: Keyword-rich description (Pinterest is search-driven). Include the topic, style, and use case. On-image text should reinforce the pin's value prop.",
+  };
 
-  const systemPrompt = `You are a senior performance creative director specializing in <user_niche>${niche}</user_niche> advertising on <user_platform>${platform}</user_platform>. You're rewriting a <user_ad_type>${adType}</user_ad_type> ad that scored ${scores?.overall ?? "?"}/10 overall, with weakest areas: ${weakDims.join(", ") || "not identified"}.
+  const platformRules = isOrganic
+    ? (organicPlatformCopyRules[platform] || "")
+    : (platformCopyRules[platform] || "");
+
+  const systemPrompt = isOrganic
+    ? `You are a senior creator strategist specializing in <user_niche>${niche}</user_niche> organic content on <user_platform>${platform}</user_platform>. You're rewriting a <user_content_type>${adType}</user_content_type> post that scored ${scores?.overall ?? "?"}/10 overall, with weakest areas: ${weakDims.join(", ") || "not identified"}.
+
+Your rewrites must:
+- Preserve the creator's existing voice and tone — read the original carefully before rewriting
+- Be specific to ${niche} content — use language ${niche} creators and audiences actually use, not marketing speak
+- Follow ${platform} organic best practices and character limits
+- Fix the specific weaknesses identified in the scorecard — don't touch what scored 8+
+- Address the weakest dimensions FIRST: ${weakDims.join(", ") || "all areas"}
+- Rewrite for organic performance: scroll-stop, save rate, share appeal, completion, rewatch. NOT for conversion.
+
+ANTI-CTA RULES (violations = failure):
+- Do NOT suggest adding a CTA, "Shop Now" button, discount code, offer, or purchase language.
+- Do NOT invent a product or brand if none is visible in the content.
+- Do NOT add urgency copy ("Act now!", "Limited time!", "Last chance!") — organic content earns attention, it doesn't demand it.
+- For the "newCTA" field in your JSON response, return a SOFT ENGAGEMENT PROMPT only (e.g., "comment your pick", "save for your next plan", "share with someone who needs this", "follow for part two") — NEVER a conversion CTA. If no engagement prompt fits, return { "copy": "", "placement": "N/A" }.
+- Every rewritten line must reference something specific from THIS post — a visual element, the creator's phrasing, a score finding.
+- If you catch yourself writing copy that could apply to any product in any niche, delete it and try again.
+
+IMPORTANT FIELD MAPPING — the response uses paid-named fields for schema compatibility, but the VALUES are organic:
+- "newCTA" field → soft engagement prompt (follow/save/share/comment/DM) — NOT a conversion CTA.
+- All other fields retain their plain meanings (hook = hook, revisedBody = full rewrite, textOverlays = on-screen text, predictedImprovements = score lifts).${brandVoiceContext}`
+    : `You are a senior performance creative director specializing in <user_niche>${niche}</user_niche> advertising on <user_platform>${platform}</user_platform>. You're rewriting a <user_ad_type>${adType}</user_ad_type> ad that scored ${scores?.overall ?? "?"}/10 overall, with weakest areas: ${weakDims.join(", ") || "not identified"}.
 
 Your rewrites must:
 - Preserve the brand's existing voice and tone — read the original ad carefully before rewriting
@@ -112,7 +146,36 @@ Do NOT suggest adding a CTA, Shop Now button, or any verbal call-to-action to th
 For the "newCTA" field in your JSON response, return: { "copy": "", "placement": "Uses Meta native CTA button" }.
 Focus rewrite energy on hook strength, visual storytelling, offer clarity, and sound-off viability instead.` : ""}`;
 
-  const prompt = `A user's ${adType} ad on ${platform} in the ${niche} niche received this scorecard:
+  const promptOrganic = `A creator's ${adType} post on ${platform} in the ${niche} niche received this organic scorecard:
+
+${analysisMarkdown}
+
+Scores: Hook ${scores?.hook ?? "?"}/10 | Clarity ${scores?.clarity ?? "?"}/10 | Shareability ${scores?.cta ?? "?"}/10 | Production ${scores?.production ?? "?"}/10 | Overall ${scores?.overall ?? "?"}/10
+${weakDims.length ? `\nWEAKEST AREAS (fix these first): ${weakDims.join(", ")}` : ""}
+
+${platformRules}
+
+RULES:
+1. Read the original carefully. Match its voice — if it's casual, stay casual. If it's storytelling, stay storytelling.
+2. The rewritten hook must stop the scroll on organic ${platform} feed specifically — not paid.
+3. Every change must address a specific weakness from the scorecard. Don't change things that scored 8+.
+4. Text overlays must be readable on mobile in ${adType === "static" ? "a single glance" : "under 3 seconds"}.
+5. The "newCTA" field is a SOFT ENGAGEMENT PROMPT only (follow/save/share/comment/DM) — never a conversion CTA. Empty string + placement "N/A" is fine if no prompt fits.
+6. Do NOT invent a product or brand if none is visible.
+
+Return a JSON object with these exact keys:
+{
+  "rewrittenHook": { "copy": "<new hook text/script>", "reasoning": "<1 sentence why this is stronger for organic ${platform}>" },
+  "revisedBody": "<full rewrite with **bold** on every changed part>",
+  "newCTA": { "copy": "<soft engagement prompt, or empty string>", "placement": "<where to put it, or 'N/A'>" },
+  "textOverlays": [{ "timestamp": "<when>", "copy": "<text>", "placement": "<where>" }],
+  "predictedImprovements": [{ "dimension": "<metric name>", "oldScore": <number>, "newScore": <number>, "reason": "<why>" }],
+  "editorNotes": ["<bullet 1>", "<bullet 2>", "<bullet 3>"]
+}
+
+Return ONLY valid JSON, no markdown fencing.`;
+
+  const promptPaid = `A user's ${adType} ad on ${platform} in the ${niche} niche received this scorecard:
 
 ${analysisMarkdown}
 
@@ -142,6 +205,8 @@ Return a JSON object with these exact keys:
 }
 
 Return ONLY valid JSON, no markdown fencing.`;
+
+  const prompt = isOrganic ? promptOrganic : promptPaid;
 
   try {
     const client = getClient();
