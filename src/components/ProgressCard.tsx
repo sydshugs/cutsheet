@@ -132,14 +132,14 @@ export function ProgressCard({
     <div className={cn("flex flex-1 items-center justify-center p-6", compact && "pt-2")}>
       <div
         className={cn(
-          "w-full overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)]",
+          "w-full overflow-hidden rounded-[16px] border border-[rgba(255,255,255,0.06)] bg-[rgba(24,24,27,0.5)]",
           compact ? "max-w-[440px] flex-col" : "flex max-w-[768px] min-h-[360px] md:min-h-[474px]",
         )}
       >
 
         {/* ── Left — creative preview ── */}
         {!compact && (
-        <div className="relative m-[6px] min-h-[280px] flex-1 overflow-hidden rounded-xl bg-[color:var(--bg)]">
+        <div className="relative m-[6px] min-h-[280px] flex-1 overflow-hidden rounded-[12px] bg-[#09090b]">
           {/* Video files: always render <video> — use thumbnail as poster only */}
           {!isImage && file?.type.startsWith("video/") ? (
             <video
@@ -165,14 +165,6 @@ export function ProgressCard({
             <div className="absolute inset-0 bg-white/[0.02]" />
           )}
 
-          {/* Scanning overlay */}
-          <motion.div
-            className="absolute inset-0 pointer-events-none"
-            style={{ background: "linear-gradient(180deg, transparent 0%, rgba(99,102,241,0.04) 50%, transparent 100%)" }}
-            animate={{ y: ["-100%", "100%"] }}
-            transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
-          />
-
           {/* Bottom gradient fade */}
           <div className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none"
             style={{ background: "linear-gradient(to top, var(--bg) 0%, rgba(9,9,11,0.6) 50%, transparent 100%)" }}
@@ -193,12 +185,12 @@ export function ProgressCard({
         <div
           className={cn(
             "flex flex-shrink-0 flex-col",
-            compact ? "w-full p-6" : "w-[300px] p-8",
+            compact ? "w-full p-6" : "w-[302px] px-8 pt-6 pb-6",
           )}
         >
 
           {/* Header */}
-          <div className={cn("mb-8 flex flex-col items-center gap-1.5", compact && "mb-6")}>
+          <div className={cn("mb-[28px] flex flex-col items-center gap-[4px]", compact && "mb-6")}>
             <p className="m-0 text-center text-[18px] font-semibold tracking-[-0.45px] text-[color:var(--ink)]">{title}</p>
             <div className="min-h-[20px] flex items-center justify-center">
               <AnimatePresence mode="wait">
@@ -217,7 +209,7 @@ export function ProgressCard({
           </div>
 
           {/* Divider */}
-          <div className="mb-8 h-px bg-[color:var(--border)]" />
+          <div className="mb-[28px] h-px bg-[rgba(255,255,255,0.06)]" />
 
           {/* Dimension bars */}
           <div className="flex flex-1 flex-col gap-5">
@@ -230,10 +222,10 @@ export function ProgressCard({
                       className={cn(
                         "text-[14px] font-medium transition-colors duration-300",
                         dimState === "complete"
-                          ? "text-[color:var(--success)]"
+                          ? "text-[#9f9fa9]"
                           : dimState === "progress"
                             ? "text-[color:var(--ink)]"
-                            : "text-zinc-700",
+                            : "text-[#52525c]",
                       )}
                     >
                       {label}
@@ -252,14 +244,9 @@ export function ProgressCard({
                       className={cn(
                         "h-full rounded-full transition-[width] ease-out",
                         dimState === "complete" && "w-full bg-[color:var(--success)] duration-[600ms]",
-                        dimState === "progress" && "w-[40%] duration-[2000ms]",
+                        dimState === "progress" && "w-[60%] bg-[color:var(--accent)] duration-[2000ms]",
                         dimState === "pending" && "w-0 duration-0",
                       )}
-                      style={
-                        dimState === "progress"
-                          ? { background: "var(--grad)" }
-                          : undefined
-                      }
                     />
                   </div>
                 </div>
@@ -268,7 +255,7 @@ export function ProgressCard({
           </div>
 
           {/* Footer */}
-          <div className="mt-8 flex flex-col items-center gap-3">
+          <div className="mt-5 flex flex-col items-center gap-3">
             <p className="m-0 text-[13px] text-[color:var(--ink-muted)]">This usually takes 20–30 seconds</p>
             <button
               type="button"
