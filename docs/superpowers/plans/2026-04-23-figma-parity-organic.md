@@ -296,3 +296,13 @@ Items discovered during Pass 0 that should be captured but are out-of-scope for 
 3. **`scoreDelta` computation duplication** — The `useMemo` block that computes `scoreDelta` in `PaidAdAnalyzer.tsx:664-690` will need to be mirrored in `OrganicAnalyzer.tsx` during Pass 1. Candidate for extraction to `src/hooks/useScoreDelta.ts` during the shared-component pass.
 
 4. **Track B rebase risk** — See §11 Track B coordination above. Single line item to watch: `ReportCards.tsx` insertion point for `PlatformOptimizationCard`.
+
+5. **`VERDICT_CONFIG` duplication between `DesignReviewCard` and `CreativeVerdictAndSecondEye`** — Pass 4 copy-pasted the `VERDICT_HEADER_CONFIG` constant from `CreativeVerdictAndSecondEye.tsx:23-54` into `DesignReviewCard.tsx:34`. Inline TODO already present at the duplicate site. Extract to a shared `verdictConfig.ts` module when doing a design-system consolidation pass.
+
+6. **Product-wide score-tier vocabulary fragmentation** — Pass 5 logged 4 conflicting tier-label systems: `ScoreCard` (Strong Performance / Good Potential / Average / Needs Work at 8/7/5), `PlatformScoreCard` (Excellent / Good / Fair / Needs Work at 8/6/4), Remotion + Demo (Excellent / Good / Average / Weak at 9/7/5), `verdictState` (3-tier not_ready / needs_work / ready at mixed 5/8 and 4/8 thresholds). Inline JSDoc in `PlatformScoreCard.tsx:5` (labelled "#8" inline — pre-existing tag, retained to avoid file churn; global registry index is this §13 #6). Needs a scoring-philosophy brainstorm → single source of truth → coordinated update across all 4 systems.
+
+7. **`OrganicAnalyzer.tsx:65` outer `useNavigate()` dead-code** — Page-level `const navigate = useNavigate()` with `void navigate;` suppressor; the actual navigation consumer is the inner `useNavigate()` call inside `OrganicRightPanel.tsx:109`. The outer hook can be removed. Flagged by code-reviewer on PR #113. Belongs in a dedicated dead-code pass.
+
+8. **`OrganicAnalyzer.tsx:369-372` `void …` unused-var suppression block** — After Pass 3b wiring of Visualize, audit whether `visualizeStatus` / `visualizeResult` / adjacent state is still reachable (modal not yet wired) or should be pruned. Flagged by code-reviewer on PR #113. Belongs in a dedicated dead-code pass.
+
+9. **`scoreRange ±0.65` hard-coded inline** — `OrganicRightPanel.tsx:135-138` computes `scoreRange.low/high` via `±0.65` hard-coded offset. Extract to a shared constant or per-analyzer benchmark helper when the right-panel extraction pass (§13 #2) lands.
