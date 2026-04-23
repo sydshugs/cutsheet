@@ -210,10 +210,12 @@ Each pass = one commit, ends with `npm run build` + `npm run lint`, then STOP fo
 |---|---|---|---|---|
 | 1 — Right panel: dimension relabel + delta + score range | §4 gaps 7, 8, 14 | **Edit 1:** `src/components/ScoreHero.tsx:71` — change `ORGANIC_DIMENSIONS` from `['Hook', 'Message', 'Production', 'Shareability']` to `['Hook', 'Message', 'Visual', 'Brand']`. Add inline `// TODO(tech-debt):` comment documenting the pipeline rename (rename `cta` → `brand` and `production` → `visual` across `Scores` type, analyzerService parsing, Supabase schema). **Edit 2:** `OrganicRightPanel.tsx` — wire `overallDelta` + `overallDeltaLabel` + `scoreRange` props on the ScoreCard call (values computed from `activeResult.scores.overall` and `platformScores` — mirror `PaidRightPanel.tsx:247-253` pattern). | ~40 LOC in 2 files | Edit |
 | 2 — Right panel: extract Predicted Performance to sibling card | §4 gap 12 | Render `<PredictedPerformanceCard>` as a sibling of `<ScoreCard>` inside `OrganicRightPanel`, stacked with the `gap-[16px]` pattern used in `PaidRightPanel`. Pass `prediction={undefined}` into the inner ScoreCard so the inline version does not double-render. Visual audit: match Figma's two-column stat strip (`Conversion potential` / `Estimated conversion rate`) + `What's driving this` collapsible. | ~60 LOC in 1–2 files | Structural refactor |
-| 3 — Main column: 3-button action row (Visualize wired, Policy omitted) | §4 gap 2, Q2, Q3 | New `src/components/organic/OrganicActionRow.tsx`: **AI Rewrite** (→ `handleFixIt`), **Visualize** (→ existing visualize path, format-agnostic — requires flipping `canVisualize={false}` and wiring the entry point), **Safe Zone** (→ existing `onSafeZone` from `AnalyzerView`). Policy Check button is **omitted entirely** per Syd's Q3 answer. Render above the existing `AnalyzerView` content. | ~120 LOC + new component | New component + wiring |
-| 4 — Main column: Creative Verdict card (static) | §4 gap 3 | Visual audit of existing `CreativeVerdictAndSecondEye.tsx` against Figma's `CreativeVerdict_Design` (static) layout: "Fresh viewer perspective" subtitle, `Not ready` badge, "The Verdict" / "3 critical fixes" row, body paragraph, "Review" subsection with `PRIORITY FIX` banner, filter tabs (`All 3` · `Hierarchy` · `Typography` · `Layout` · `Contrast`), summary badge, 3 stacked HIGH PRIORITY rows. Render in main column via existing data in `activeResult`. | ~150 LOC | Edit (possible new wrapper) |
-| 5 — Main column: Platform Optimization card (static platforms) | §4 gap 5 | Audit existing `PlatformScoreCard.tsx` against Figma's 3-row static layout: `Meta Feed` EXCELLENT 7.8, `Instagram Feed` GOOD 6.9, `Pinterest` GOOD 5.2. Each row needs name + verdict badge + score + body paragraph + `QUICK CHECKS` chip group + `RECOMMENDATIONS` bullet list. Data already flows through `platformScores` state. Render below Creative Verdict in main column. | ~150 LOC | Edit + layout |
-| 6 — Main column: Ad preview card + final polish + screenshot compare | §4 gap 1, 10, 11 | Ad preview thumbnail row with filename + file size (right-aligned). Verify Hashtags count badge + `Copy all`, verify collapsibles match Figma default states. Capture screenshot via `preview_screenshot`, side-by-side compare vs Figma static frame at 100% zoom. | ~80 LOC | Polish |
+| **3a — Pre-flight: wire Visualize service into OrganicAnalyzer** | §4 gap 2, Q2 | `handleVisualize`/`onVisualize` does NOT exist in `OrganicAnalyzer.tsx` today. Import `useVisualize` hook from `src/hooks/useVisualize.ts`, wire handler + state, test locally with a real upload, confirm end-to-end. If a deeper incompatibility surfaces (missing `platform` context, prompt assumes paid), STOP and escalate before Pass 3b. | ~80 LOC | Service wiring |
+| **3b — Main column: 3-button action row** | §4 gap 2, Q2, Q3 | New `src/components/organic/OrganicActionRow.tsx`: **AI Rewrite** (→ `handleFixIt`), **Visualize** (→ handler wired in 3a — flip `canVisualize` on ScoreCard), **Safe Zone** (→ existing `onSafeZone`). Policy Check omitted per Q3. Render above existing `AnalyzerView` content. Pass opens with a `Read` of `src/components/AnalyzerView.tsx` in full (resolves Q4). | ~120 LOC + new component | New component + wiring |
+| 4 — Main column: Creative Verdict card (static) | §4 gap 3 | **Pass opens with an audit table** in the commit body: diff each Figma element (header, `Not ready` badge, "The Verdict" / "3 critical fixes" row, `PRIORITY FIX` banner, filter tabs `All 3` · `Hierarchy` · `Typography` · `Layout` · `Contrast`, summary badge, 3 HIGH PRIORITY rows) against shipped internals — **shell** `CreativeVerdictAndSecondEye.tsx`, **internals** `DesignReviewCard.tsx` + `CreativeAnalysis.tsx`. Columns: `aligned / needs change / out-of-scope`. Then adjust. Render in main column. | ~150 LOC | Audit + edit |
+| 5 — Main column: Platform Optimization card (static platforms) | §4 gap 5 | **Pass opens with a Track B port re-check** (see §11 Track B coordination). If `PlatformOptimizationCard.tsx` + `platformOptimizationAdapter.ts` have landed in `src/components/`, scope pivots to "wire new via adapter, remove old `PlatformScoreCard` usage from organic render path". Otherwise, default scope stands: audit existing `PlatformScoreCard.tsx` against Figma's 3-row static layout (Meta Feed EXCELLENT 7.8, Instagram Feed GOOD 6.9, Pinterest GOOD 5.2) with `QUICK CHECKS` chips + `RECOMMENDATIONS` bullets. Render below Creative Verdict. | ~150 LOC | Re-check + edit |
+| **6a — Ad preview card** (commit) | §4 gap 1 | Ad preview thumbnail row with filename + file size (right-aligned, `image-file-name.png` · `4.6 MB` layout). | ~80 LOC | New component / layout |
+| **6 verification artifact** (NOT a commit — PR body) | §4 gap 10, 11 | Hashtags count badge + `Copy all` sanity check, collapsibles default states, `preview_screenshot` side-by-side vs Figma static frame at 100% zoom. Findings pasted into PR description as the verification section. | — | PR artifact |
 
 **Deferred to `figma-parity/organic-video` branch (do NOT execute here):**
 - Hook Analysis timeline (main column, video only)
@@ -258,9 +260,15 @@ Before final PR (all passes complete):
 
 ---
 
-## 11. Remaining blockers before Pass 1
+## 11. Track B coordination + remaining blockers
 
-All Q1–Q7 resolved per §9. Scope locked to static-only. Revised §8 pass structure (6 passes) awaits one last confirmation: **Syd's sign-off on §8 itself**, per the rule "paste the revised pass structure in chat for review before Pass 1."
+### Track B coordination (PlatformOptimizationCard + platformOptimizationAdapter.ts)
+
+This branch was cut from `main` at `77123c5` (before Track B's PR #112 merged). Track B's `PlatformOptimizationCard` and `platformOptimizationAdapter.ts` **do not exist in this branch's tree**. Pass 5 will re-check Track B's merge state at its top and adapt scope accordingly. **Recommended merge order:** Track B first, then Figma-parity rebases. If Figma-parity ends up merging first, Track B's PR will need a rebase and may hit conflicts at `ReportCards.tsx` around the card insertion point.
+
+### Remaining blockers before Pass 1
+
+All Q1–Q7 resolved per §9. §8 approved with the 6 baked-in adjustments (Pass 3 → 3a + 3b, Pass 4 audit table, Pass 5 Track B re-check, Pass 6 → 6a + PR artifact, §13 tech-debt log, inline TODO at ScoreHero.tsx:71). Scope locked to static-only. Proceeding to Pass 1.
 
 ---
 
@@ -273,4 +281,18 @@ All Q1–Q7 resolved per §9. Scope locked to static-only. Revised §8 pass stru
 - Notion has no matching spec row; Figma is sole source of truth.
 - Q5 dimension-label shim is viable (1 render site, passes <3 threshold).
 
-**STOP here. Awaiting Syd's OK on §8 before starting Pass 1.**
+**§8 approved. Proceeding to Pass 1.**
+
+---
+
+## 13. Tech-debt log (deferred, not executed in this branch)
+
+Items discovered during Pass 0 that should be captured but are out-of-scope for visual-parity work:
+
+1. **Dimension pipeline rename** — `Scores` type and all consumers use `{ hook, clarity, cta, production, overall }` while the product vocabulary has shifted to `{ hook, message, visual, brand }`. Pass 1 adds a `dimensionOverrides` shim at `ScoreHero.tsx:71` as a label-only fix. True rename requires touching `api/analyze.ts` prompt schemas, `src/services/analyzerService.ts` parsing regexes, Supabase `analyses` table, every analyzer page, PDF export, Remotion export, and history records. Scheduled as a standalone backend pass.
+
+2. **Right-panel sibling-card pattern duplication** — Passes 1 + 2 will copy `overallDelta`/`overallDeltaLabel`/`scoreRange` prop wiring and the `PredictedPerformanceCard` sibling-card pattern from `PaidRightPanel` into `OrganicRightPanel`. Extract to a shared `RightPanelResultsStack` component or helper hook when doing the paid/organic shared-component pass.
+
+3. **`scoreDelta` computation duplication** — The `useMemo` block that computes `scoreDelta` in `PaidAdAnalyzer.tsx:664-690` will need to be mirrored in `OrganicAnalyzer.tsx` during Pass 1. Candidate for extraction to `src/hooks/useScoreDelta.ts` during the shared-component pass.
+
+4. **Track B rebase risk** — See §11 Track B coordination above. Single line item to watch: `ReportCards.tsx` insertion point for `PlatformOptimizationCard`.
