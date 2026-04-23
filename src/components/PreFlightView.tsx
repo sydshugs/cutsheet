@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { GitBranch, Plus, X, CloudUpload, Check } from "lucide-react";
+import { GitBranch, Plus, X, CloudUpload } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { useSwipeFile } from "../hooks/useSwipeFile";
 import { PreFlightLoadingView } from "./PreFlightLoadingView";
@@ -369,30 +369,51 @@ export function PreFlightView({ apiKey }: PreFlightViewProps) {
                         />
                       </label>
                     ) : (
-                      <div className="flex min-h-[268px] flex-col justify-center gap-2 px-2 py-4">
-                        <div
-                          className="flex items-center gap-2 rounded-lg border px-2.5 py-2"
-                          style={{
-                            background: "var(--score-good-bg)",
-                            borderColor: "var(--score-good-border)",
-                          }}
+                      <div className="relative h-[280px] overflow-hidden rounded-[14px]">
+                        {v.file!.type.startsWith("video/") ? (
+                          <video
+                            src={variantThumbnailUrls[i] ?? undefined}
+                            muted
+                            playsInline
+                            preload="metadata"
+                            className="absolute inset-0 h-full w-full object-cover"
+                            onLoadedData={(e) => {
+                              const vid = e.currentTarget;
+                              if (vid.readyState >= 2) {
+                                vid.currentTime = Math.min(0.5, (vid.duration || 10) * 0.08);
+                              }
+                            }}
+                          />
+                        ) : variantThumbnailUrls[i] ? (
+                          <img
+                            src={variantThumbnailUrls[i] ?? undefined}
+                            alt=""
+                            className="absolute inset-0 h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="absolute inset-0 bg-[color:var(--surface-el)]" />
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => handleFileSelect(i, null)}
+                          className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-[rgba(0,0,0,0.6)] text-white/80 transition-colors duration-150 hover:border-[rgba(239,68,68,0.4)] hover:text-[color:var(--error)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] active:scale-[0.95]"
+                          aria-label={`Remove ${v.label}`}
                         >
-                          <Check className="h-[13px] w-[13px] shrink-0 text-[color:var(--success)]" aria-hidden />
-                          <span className="min-w-0 flex-1 truncate font-mono text-[11px] text-[color:var(--ink)]">
-                            {v.file!.name}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="font-mono text-[10px] text-[color:var(--ink-muted)]">
-                            {(v.file!.size / (1024 * 1024)).toFixed(1)}MB
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => handleFileSelect(i, null)}
-                            className="cursor-pointer bg-transparent px-1.5 py-0.5 font-mono text-[10px] text-[color:var(--ink-muted)] transition-colors duration-150 hover:text-[color:var(--error)] focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] active:scale-[0.98]"
-                          >
-                            Remove
-                          </button>
+                          <X className="h-3 w-3" aria-hidden />
+                        </button>
+
+                        <div
+                          className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end bg-gradient-to-t from-[rgba(0,0,0,0.8)] to-transparent pb-2 pt-5"
+                        >
+                          <div className="flex w-full items-center justify-between gap-2 px-3">
+                            <span className="min-w-0 truncate font-mono text-[11px] text-white">
+                              {v.file!.name}
+                            </span>
+                            <span className="shrink-0 font-mono text-[10px] text-white/70">
+                              {(v.file!.size / (1024 * 1024)).toFixed(1)}MB
+                            </span>
+                          </div>
                         </div>
                       </div>
                     )}
