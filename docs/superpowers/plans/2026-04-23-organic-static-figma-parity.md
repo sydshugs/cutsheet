@@ -85,23 +85,22 @@ Policy Check hidden on organic. Three buttons only.
 
 Commit: `feat(organic): action bar with AI Rewrite, Visualize, Safe Zone wired to existing handlers`. STOP.
 
-### Pass 4 — Creative Verdict card extraction
+### Pass 4 — Creative Verdict card extraction — ALREADY SHIPPED
 
-Wrap existing verdict prose in Figma-designed Verdict card shell (header bar + body). Mount in center column directly above Review card, below action bar.
+Code audit (Apr 23) found:
+- `src/components/DesignReviewCard.tsx` already wraps verdict prose in a card shell (header + headline + priority fix + footer badge). Mounted in ReportCards line 568+ when `designReviewData.flags.length > 0`.
+- `src/components/CreativeAnalysis.tsx` fallback also wraps verdict prose in a card shell (gradient header + status badge + headline + body). Mounted when design review flags are empty.
 
-If Verdict is currently rendering via ScoreCard's `verdict` prop (right rail): leave it; add the new center-column Verdict card.
+Shipped verdict is NOT floating prose — it's already inside a Figma-aligned card shell. Gap #2 in the eyeball audit was incorrect. No code change needed.
 
-Verdict badge copy stays paid-voiced for now — logged as tech debt.
+### Pass 5 — Review card polish — ALREADY SHIPPED
 
-Commit: `feat(organic): Creative Verdict card in center column`. STOP.
+Code audit (Apr 23) found:
+- Hierarchy tab (Pass 5a): exists in `DesignReviewCard` (`ALL_FILTER_IDS` line 44) and `CreativeAnalysis` (CATEGORY_STYLES line 48).
+- Severity labels (Pass 5b): "HIGH PRIORITY" renders when severity === 'high' | 'critical'. "MEDIUM" renders when severity === 'medium'. User's screenshot showing MEDIUM reflects the input data severity, not a missing label. Data-driven, not code gap.
+- Footer badge (Pass 5c): shipped in DesignReviewCard lines 210-227 ("Not Ready · N Critical Fixes"). CreativeAnalysis fallback doesn't have this specific badge shape, but it renders the critical count in the header instead (line 173-177).
 
-### Pass 5 — Review card polish
-
-5a. Add Hierarchy tab.
-5b. Severity label mapping audit (MEDIUM → HIGH PRIORITY if a label-only change).
-5c. Footer badge ("Not Ready · N Critical Fixes").
-
-Commit: `feat(organic): Review card polish — Hierarchy tab, severity labels, footer badge`. STOP.
+No code change needed.
 
 ### Verification (mandatory before PR)
 
