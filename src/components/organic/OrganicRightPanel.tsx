@@ -4,6 +4,7 @@
 import { forwardRef, useImperativeHandle, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ScoreCard } from "../ScoreCard";
+import PredictedPerformanceCard from "../PredictedPerformanceCard";
 import { BriefResultView, type BriefSection } from "../BriefResultView";
 import { AlertDialog } from "../ui/AlertDialog";
 import { PlatformSwitcher, ORGANIC_PLATFORMS, ORGANIC_STATIC_PLATFORMS } from "../PlatformSwitcher";
@@ -64,6 +65,15 @@ export interface OrganicRightPanelProps {
 
   // ── Prediction ────────────────────────────────────────────────────────────────
   prediction: PredictionResult | null;
+  predictionLoading: boolean;
+
+  // ── Score delta vs previous analysis ─────────────────────────────────────────
+  // Keys on `dims` use ORGANIC_DIMENSIONS labels: Hook / Message / Visual / Brand.
+  scoreDelta: {
+    overall: number;
+    label: string;
+    dims: { [label: string]: number };
+  } | null;
 
   // ── User context ─────────────────────────────────────────────────────────────
   rawUserContext: { niche: string; platform: string } | null;
@@ -89,7 +99,8 @@ export const OrganicRightPanel = forwardRef<OrganicRightPanelHandle, OrganicRigh
       brief, briefLoading, briefError,
       ctaRewrites, ctaLoading,
       fixItResult, fixItLoading,
-      prediction,
+      prediction, predictionLoading,
+      scoreDelta,
       rawUserContext,
       onGenerateBrief, onAddToSwipeFile, onCTARewrite, onShare,
       onFixIt, onReset, onUpgradeRequired,
@@ -112,7 +123,8 @@ export const OrganicRightPanel = forwardRef<OrganicRightPanelHandle, OrganicRigh
         }`}
       >
         {showRightPanel && activeResult?.scores && rightTab === "analysis" && (
-          <>
+          // Figma 493:2051 — card stack sits in a ~33px horizontal gutter within the 430px rail.
+          <div className="flex flex-col gap-[16px] px-[33px]">
             <ScoreCard
               scores={activeResult.scores}
               hookDetail={activeResult.hookDetail}
@@ -121,6 +133,13 @@ export const OrganicRightPanel = forwardRef<OrganicRightPanelHandle, OrganicRigh
               scenes={activeResult.scenes}
               fileName={activeResult.fileName}
               analysisTime={analysisCompletedAt ?? undefined}
+              scoreRange={activeResult.scores ? {
+                low:  Math.max(0,  Math.round((activeResult.scores.overall - 0.65) * 10) / 10),
+                high: Math.min(10, Math.round((activeResult.scores.overall + 0.65) * 10) / 10),
+              } : undefined}
+              overallDelta={scoreDelta?.overall}
+              overallDeltaLabel={scoreDelta?.label}
+              dimensionDeltas={scoreDelta?.dims}
               modelName="Gemini + Claude"
               onGenerateBrief={onGenerateBrief}
               onAddToSwipeFile={onAddToSwipeFile}
@@ -136,7 +155,8 @@ export const OrganicRightPanel = forwardRef<OrganicRightPanelHandle, OrganicRigh
               onFixIt={onFixIt}
               fixItResult={fixItResult}
               fixItLoading={fixItLoading}
-              prediction={prediction}
+              prediction={undefined}
+              predictionLoading={false}
               onReanalyze={onReset}
               canVisualize={false}
               verdict={(() => {
@@ -173,6 +193,16 @@ export const OrganicRightPanel = forwardRef<OrganicRightPanelHandle, OrganicRigh
               }
             />
 
+            {(predictionLoading || prediction) && (
+              <PredictedPerformanceCard
+                prediction={prediction}
+                platform={platform !== "all" ? platform : rawUserContext?.platform}
+                niche={rawUserContext?.niche}
+                isOrganic={true}
+                loading={predictionLoading}
+              />
+            )}
+
             <AlertDialog
               open={confirmStartOver}
               onClose={() => setConfirmStartOver(false)}
@@ -185,7 +215,7 @@ export const OrganicRightPanel = forwardRef<OrganicRightPanelHandle, OrganicRigh
               confirmLabel="Start Over"
               variant="destructive"
             />
-          </>
+          </div>
         )}
 
         {showRightPanel && rightTab === "brief" && (

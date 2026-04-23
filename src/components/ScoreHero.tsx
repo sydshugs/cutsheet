@@ -68,7 +68,14 @@ const PLATFORM_FORMAT_DIMENSIONS: Record<string, Record<string, [string, string,
 
 // Organic mode: platform-independent vocabulary that overrides PLATFORM_FORMAT_DIMENSIONS when isOrganic=true.
 // Positional map — order must match ScoreCard's 4-element dimensions prop: [hook, clarity, production, cta].
-const ORGANIC_DIMENSIONS: [string, string, string, string] = ['Hook', 'Message', 'Production', 'Shareability'];
+// TODO(tech-debt): Dimension label shim — positional map.
+// The Scores type in code uses { hook, clarity, production, cta } but the product
+// vocabulary has shifted to { hook, message, visual, brand } per Figma node 456:2343.
+// This constant is a label-only fix: slot 0→Hook, slot 1→Message (clarity), slot 2→Visual (production),
+// slot 3→Brand (cta). The full rename (Scores type, analyzerService parsing, api/analyze.ts prompt schema,
+// Supabase analyses table, ReportCover, Remotion ScorecardScene, ProgressCard loading labels) is scheduled
+// as a standalone backend pass — see docs/superpowers/plans/2026-04-23-figma-parity-organic.md §13.
+const ORGANIC_DIMENSIONS: [string, string, string, string] = ['Hook', 'Message', 'Visual', 'Brand'];
 
 const YOUTUBE_FORMAT_DIMENSIONS: Record<string, [string, string, string, string]> = {
   'skippable':     ['Pre-Skip Hook', 'Watch-Through', 'Message Arc', 'CTA Timing'],

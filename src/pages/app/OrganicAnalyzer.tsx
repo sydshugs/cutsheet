@@ -7,6 +7,7 @@ import { AnalyzerView } from "../../components/AnalyzerView";
 import { HistoryDrawer } from "../../components/HistoryDrawer";
 import { OrganicEmptyState } from "../../components/organic/OrganicEmptyState";
 import { useVideoAnalyzer } from "../../hooks/useVideoAnalyzer";
+import { useVisualize } from "../../hooks/useVisualize";
 import { type HistoryEntry } from "../../hooks/useHistory";
 import { useThumbnail } from "../../hooks/useThumbnail";
 import {
@@ -30,6 +31,7 @@ import { getUserContext, formatUserContextBlock } from "../../services/userConte
 import { getSessionMemory } from "@/src/lib/userMemoryService";
 import type { AppSharedContext } from "../../components/AppLayout";
 import { OrganicRightPanel, type OrganicRightPanelHandle } from "../../components/organic/OrganicRightPanel";
+import { OrganicActionRow } from "../../components/organic/OrganicActionRow";
 import { getOrganicContextPrefix } from "../../components/organic/organicContextPrefix";
 
 const API_KEY = ""; // Gemini calls are now server-side via /api/analyze
@@ -123,6 +125,12 @@ export default function OrganicAnalyzer() {
   const platformLabel = platform === "all" ? "all platforms" : platform;
   const contextPrefix = getOrganicContextPrefix(organicFormat, platformLabel);
 
+  // Ref to resetVisualize — assigned after useVisualize call (which depends on activeResult
+  // declared further down). This avoids a circular declaration order between handleReset,
+  // activeResult, and useVisualize. handleReset stays in its current position so downstream
+  // callbacks (handleFileWithCheck, registerCallbacks) don't need to move.
+  const resetVisualizeRef = useRef<(() => void) | null>(null);
+
   const handleReset = useCallback(() => {
     setFile(null);
     setLoadedEntry(null);
@@ -145,6 +153,7 @@ export default function OrganicAnalyzer() {
     setPrediction(null);
     setStaticImageDims(null);
     setVideoDims(null);
+    resetVisualizeRef.current?.();
   }, [reset]);
 
   // ── Auto-reset platform when format switches to static ──
@@ -328,6 +337,40 @@ export default function OrganicAnalyzer() {
       }
     : liveResult;
 
+  // ── Visualize (Pass 3a: service wiring only — UI button arrives in Pass 3b) ──
+  const {
+    visualizeOpen,
+    setVisualizeOpen,
+    visualizeStatus,
+    visualizeResult,
+    visualizeError,
+    visualizeCreditData,
+    motionVideoUrl,
+    motionLoading,
+    motionError,
+    motionSource,
+    visualizeMode,
+    handleVisualize,
+    handleMotionPreview,
+    handleAnimateVisualized,
+    handleAnimateOriginalFromPanel,
+    resetVisualize,
+  } = useVisualize({
+    file,
+    format: organicFormat,
+    platform,
+    thumbnailDataUrl,
+    activeResult,
+    userContext,
+    onUpgradeRequired,
+    adType: "organic",
+  });
+  resetVisualizeRef.current = resetVisualize;
+  void visualizeOpen; void setVisualizeOpen; void visualizeStatus; void visualizeResult;
+  void visualizeError; void visualizeCreditData; void motionVideoUrl; void motionLoading;
+  void motionError; void motionSource; void visualizeMode;
+  void handleMotionPreview; void handleAnimateVisualized; void handleAnimateOriginalFromPanel;
+
   // ── Read static image dimensions from file (stable deps — won't cancel on thumbnail changes) ──
   useEffect(() => {
     if (organicFormat !== "static") {
@@ -394,6 +437,39 @@ export default function OrganicAnalyzer() {
 
   const effectiveStatus = (loadedEntry || loadedFromHistory) ? "complete" : status;
   const showRightPanel = effectiveStatus === "complete" && activeResult !== null;
+
+  // ── Score delta vs previous analysis ─────────────────────────────────────
+  // Mirrors PaidAdAnalyzer.tsx:664-690. See plan §13 item 3 — extract to
+  // src/hooks/useScoreDelta.ts during the shared-component pass.
+  // Dims keys use ORGANIC_DIMENSIONS labels (Hook/Message/Visual/Brand) which
+  // ScoreHero.tsx:71 maps to the {hook, clarity, production, cta} score fields.
+  const scoreDelta = useMemo(() => {
+    if (loadedEntry) return null;
+    const currentScores = activeResult?.scores;
+    if (!currentScores) return null;
+    const prevEntry = historyEntries.find(e => e.scores != null);
+    if (!prevEntry?.scores) return null;
+    const overall = Math.round((currentScores.overall - prevEntry.scores.overall) * 10) / 10;
+    const diffMs = Date.now() - new Date(prevEntry.timestamp).getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const label = diffDays >= 1
+      ? `vs ${diffDays} day${diffDays === 1 ? '' : 's'} ago`
+      : diffHours >= 1 ? `vs ${diffHours}h ago`
+      : diffMins >= 1  ? `vs ${diffMins}m ago`
+      : 'vs last analysis';
+    return {
+      overall,
+      label,
+      dims: {
+        'Hook':    Math.round((currentScores.hook       - prevEntry.scores.hook)       * 10) / 10,
+        'Message': Math.round((currentScores.clarity    - prevEntry.scores.clarity)    * 10) / 10,
+        'Visual':  Math.round((currentScores.production - prevEntry.scores.production) * 10) / 10,
+        'Brand':   Math.round((currentScores.cta        - prevEntry.scores.cta)        * 10) / 10,
+      },
+    };
+  }, [activeResult?.scores, historyEntries, loadedEntry]);
 
   useEffect(() => {
     registerCallbacks({
@@ -500,7 +576,7 @@ export default function OrganicAnalyzer() {
     } catch { setUrlError("Could not fetch video from this URL."); }
     finally { setIsImporting(false); }
   };
-  void urlInput; void urlError; void isImporting; void predictionLoading;
+  void urlInput; void urlError; void isImporting;
   void imageMismatch; void secondEyeOutput; void secondEyeLoading;
   void designReviewResult; void designReviewLoading;
 
@@ -528,7 +604,14 @@ export default function OrganicAnalyzer() {
                   <div className="pointer-events-none absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-violet-600/[0.08] blur-[100px]" />
                 </>
               )}
-              <div className="relative flex flex-col flex-1">
+              <div className="relative flex flex-col flex-1 gap-4">
+                {showRightPanel && activeResult?.scores && (
+                  <OrganicActionRow
+                    onFixIt={handleFixIt}
+                    onVisualize={handleVisualize}
+                    onSafeZone={showSafeZone ? () => setSafeZoneOpen(true) : undefined}
+                  />
+                )}
                 <AnalyzerView
                   file={file}
                   status={effectiveStatus}
@@ -591,6 +674,8 @@ export default function OrganicAnalyzer() {
         fixItResult={fixItResult}
         fixItLoading={fixItLoading}
         prediction={prediction}
+        predictionLoading={predictionLoading}
+        scoreDelta={scoreDelta}
         rawUserContext={rawUserContext}
         onGenerateBrief={handleGenerateBrief}
         onAddToSwipeFile={handleAddToSwipeFile}

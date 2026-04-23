@@ -36,6 +36,8 @@ export interface UseVisualizeParams {
   activeResult: AnalysisResult | null;
   userContext: string;
   onUpgradeRequired: (feature: string) => void;
+  /** 'paid' (default) or 'organic' — selects the visualize prompt quadrant in api/visualize-v2. */
+  adType?: "paid" | "organic";
 }
 
 // ─── Return shape ─────────────────────────────────────────────────────────────
@@ -95,6 +97,7 @@ export function useVisualize({
   activeResult,
   userContext,
   onUpgradeRequired,
+  adType = "paid",
 }: UseVisualizeParams): UseVisualizeReturn {
   // ── Visualize It state ────────────────────────────────────────────────────
   const [visualizeOpen, setVisualizeOpen] = useState(false);
@@ -174,7 +177,7 @@ export function useVisualize({
         excludeCta: isMetaStatic,
         visualizeMode: mode,
         visualizeContext: {
-          adType: "paid",
+          adType,
           format: format as "static" | "video",
           platform: cleanPlatform,
           excludeCta: isMetaStatic,
