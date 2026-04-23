@@ -214,7 +214,7 @@ export function PlatformOptimizationCard({
                 {entry.verdict && (
                   <div className="rounded-xl bg-white/[0.02] border border-white/[0.04] px-3 py-2.5 mb-3 flex items-start gap-2">
                     <Sparkles
-                      className="w-3 h-3 text-indigo-400 mt-[2px] shrink-0"
+                      className="w-3 h-3 text-zinc-500 mt-[2px] shrink-0"
                       aria-hidden="true"
                     />
                     <p className="text-xs text-zinc-400 italic leading-relaxed">
