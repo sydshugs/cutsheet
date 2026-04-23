@@ -573,10 +573,13 @@ export const ReportCards = memo(function ReportCards({
             fix: f.fix,
           }));
           const topFix2 = designReviewData.flags.find(f => f.severity === 'critical') ?? designReviewData.flags[0];
+          const criticalCount = designReviewData.flags.filter(f => f.severity === 'critical').length;
           return (
             <DesignReviewCard
               verdictState={vState}
               verdictHeadline={designReviewData.overallDesignVerdict ?? oneLiner}
+              verdictDetail={detail}
+              criticalCount={criticalCount}
               priorityFix={topFix2?.fix}
               flags={staticFlags}
               onFixWithAI={onFixIt}

@@ -2,7 +2,7 @@
 // Layout: outer card → verdict headline → priority fix → filter pills → fix rows → footer (verdict pill + count)
 
 import React, { memo, useState, useRef, useEffect, useMemo } from "react";
-import { CircleX, Type, Layers, Box, Activity, AlertCircle, ChevronRight, Wand2, X } from "lucide-react";
+import { CircleX, Type, Layers, Box, Activity, AlertCircle, ChevronRight, Wand2, X, Eye, TrendingDown, TrendingUp, CheckCircle } from "lucide-react";
 
 interface DesignFlag {
   category: string;
@@ -15,6 +15,10 @@ interface DesignFlag {
 interface DesignReviewCardProps {
   verdictState: 'not_ready' | 'needs_work' | 'ready';
   verdictHeadline: string;
+  /** When provided, renders the Figma 493:2842 top stack: header bar + THE VERDICT block + Review heading. */
+  verdictDetail?: string;
+  /** Critical-fix count shown next to the THE VERDICT eyebrow. Only rendered when verdictDetail is also provided. */
+  criticalCount?: number;
   priorityFix?: string;
   flags: DesignFlag[];
   onFixWithAI?: () => void;
@@ -24,6 +28,42 @@ const VERDICT_BADGE = {
   not_ready:  { label: 'Not Ready',  bg: 'rgba(251,44,54,0.1)',  border: 'rgba(251,44,54,0.2)',  text: '#ff6467' },
   needs_work: { label: 'Needs Work', bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.2)', text: '#f59e0b' },
   ready:      { label: 'Ready',      bg: 'rgba(16,185,129,0.1)', border: 'rgba(16,185,129,0.2)', text: '#10b981' },
+} as const;
+
+// Figma 493:2842 — header-pill + THE VERDICT block config.
+// TODO(tech-debt): duplicates CreativeVerdictAndSecondEye.tsx:23-54 VERDICT_CONFIG.
+// Extract to shared VerdictHeader + VerdictBlock components during paid/organic shared-component pass.
+const VERDICT_HEADER_CONFIG = {
+  not_ready: {
+    label: 'Not ready',
+    pillBg: 'rgba(251,44,54,0.10)',
+    pillColor: '#ff6467',
+    gradient: 'linear-gradient(171.28deg, rgba(239,68,68,0.08) 0%, rgba(239,68,68,0.02) 100%)',
+    iconBg: 'rgba(251,44,54,0.15)',
+    iconColor: '#ff6467',
+    labelColor: '#ff6467',
+    Icon: TrendingDown,
+  },
+  needs_work: {
+    label: 'Needs work',
+    pillBg: 'rgba(254,154,0,0.10)',
+    pillColor: '#fea000',
+    gradient: 'linear-gradient(171.28deg, rgba(254,154,0,0.08) 0%, rgba(254,154,0,0.02) 100%)',
+    iconBg: 'rgba(254,154,0,0.15)',
+    iconColor: '#fea000',
+    labelColor: '#fea000',
+    Icon: TrendingUp,
+  },
+  ready: {
+    label: 'Strong',
+    pillBg: 'rgba(0,188,125,0.10)',
+    pillColor: '#00d492',
+    gradient: 'linear-gradient(171.28deg, rgba(0,188,125,0.08) 0%, rgba(0,188,125,0.02) 100%)',
+    iconBg: 'rgba(0,188,125,0.15)',
+    iconColor: '#00d492',
+    labelColor: '#00d492',
+    Icon: CheckCircle,
+  },
 } as const;
 
 // Category → icon + Figma rgba colors
@@ -43,7 +83,7 @@ function getCategoryMeta(category: string) {
 
 const ALL_FILTER_IDS = ['All', 'Hierarchy', 'Typography', 'Layout', 'Contrast'];
 
-export const DesignReviewCard = memo(function DesignReviewCard({ verdictState, verdictHeadline, priorityFix, flags, onFixWithAI }: DesignReviewCardProps) {
+export const DesignReviewCard = memo(function DesignReviewCard({ verdictState, verdictHeadline, verdictDetail, criticalCount: criticalCountProp, priorityFix, flags, onFixWithAI }: DesignReviewCardProps) {
   const [activeFilter, setActiveFilter] = useState('All');
   const [priorityDismissed, setPriorityDismissed] = useState(false);
   const [popoverOpen, setPopoverOpen] = useState(false);
@@ -61,6 +101,8 @@ export const DesignReviewCard = memo(function DesignReviewCard({ verdictState, v
   }, [popoverOpen]);
 
   const badge = VERDICT_BADGE[verdictState];
+  const hc = verdictDetail !== undefined ? VERDICT_HEADER_CONFIG[verdictState] : null;
+  const HeaderIcon = hc?.Icon;
 
   const criticalCount = useMemo(() => flags.filter(f =>
     f.severity === 'critical' || f.severity === 'high'
@@ -81,13 +123,87 @@ export const DesignReviewCard = memo(function DesignReviewCard({ verdictState, v
   return (
     <div className="w-full flex flex-col shrink-0 rounded-2xl border border-white/[0.08] bg-[rgba(24,24,27,0.5)] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] overflow-hidden font-['Geist',sans-serif]">
 
+      {/* ── Header bar (Figma 493:2842) — only rendered when verdictDetail is provided ── */}
+      {hc && HeaderIcon && (
+        <div className="h-[45px] flex items-center justify-between px-4 border-b border-white/[0.06]">
+          <div className="flex items-center gap-2">
+            <Eye size={13} color="#71717a" />
+            <span className="text-[14px] font-medium whitespace-nowrap" style={{ color: "#e4e4e7" }}>
+              Creative verdict
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] whitespace-nowrap hidden sm:block" style={{ color: "#52525c" }}>
+              Fresh viewer perspective
+            </span>
+            <div className="flex items-center gap-[6px] h-[19px] px-2 rounded-full" style={{ background: hc.pillBg }}>
+              <HeaderIcon size={10} color={hc.pillColor} />
+              <span className="text-[10px] font-semibold whitespace-nowrap" style={{ color: hc.pillColor }}>
+                {hc.label}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── THE VERDICT block (Figma 493:2842) ── */}
+      {hc && HeaderIcon && (
+        <div
+          className="flex gap-3 px-4 py-4 border-b border-white/[0.06]"
+          style={{ backgroundImage: hc.gradient }}
+        >
+          <div
+            className="w-8 h-8 rounded-2xl flex items-center justify-center shrink-0"
+            style={{ background: hc.iconBg }}
+          >
+            <HeaderIcon size={16} color={hc.iconColor} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-[10px]">
+              <span
+                className="text-[10px] font-semibold uppercase tracking-[0.5px]"
+                style={{ color: hc.labelColor }}
+              >
+                THE VERDICT
+              </span>
+              {criticalCountProp !== undefined && criticalCountProp > 0 && (
+                <span className="text-[10px]" style={{ color: "#71717b" }}>
+                  {criticalCountProp} critical {criticalCountProp === 1 ? 'fix' : 'fixes'}
+                </span>
+              )}
+            </div>
+            <p
+              className="text-sm font-medium leading-relaxed"
+              style={{ color: "#f4f4f5", margin: "0 0 6px" }}
+            >
+              {verdictHeadline}
+            </p>
+            <p className="text-xs leading-relaxed" style={{ color: "#9f9fa9", margin: 0 }}>
+              {verdictDetail}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* ── Content ── */}
       <div className="p-5 flex flex-col gap-5">
 
-        {/* Verdict headline */}
-        <h2 className="text-[18px] font-semibold text-[#f4f4f5] leading-snug tracking-tight">
-          {verdictHeadline}
-        </h2>
+        {/* Review section heading (Figma 493:2842) — paired with top stack */}
+        {hc && (
+          <div className="flex items-center gap-2">
+            <Eye size={14} color="#9f9fa9" />
+            <span className="text-[14px] font-semibold" style={{ color: "#e4e4e7" }}>
+              Review
+            </span>
+          </div>
+        )}
+
+        {/* Verdict headline — fallback when top stack not rendered (Display path) */}
+        {!hc && (
+          <h2 className="text-[18px] font-semibold text-[#f4f4f5] leading-snug tracking-tight">
+            {verdictHeadline}
+          </h2>
+        )}
 
         {/* Priority Fix — full amber border (Figma 428-529) */}
         {priorityFix && !priorityDismissed && (
