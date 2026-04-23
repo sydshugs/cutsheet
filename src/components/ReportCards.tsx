@@ -448,7 +448,7 @@ export const ReportCards = memo(function ReportCards({
             iconColor: '#10b981',
             onClick: onVisualize,
           }] : []),
-          {
+          ...(isOrganic ? [] : [{
             key: 'policy',
             icon: ShieldCheck,
             name: 'Policy Check',
@@ -457,7 +457,7 @@ export const ReportCards = memo(function ReportCards({
             iconColor: '#f59e0b',
             onClick: onCheckPolicies,
             loading: policyLoading
-          },
+          }]),
           ...(onSafeZone ? [{
             key: 'safe_zone',
             icon: Shield,
@@ -469,7 +469,11 @@ export const ReportCards = memo(function ReportCards({
             loading: false,
           }] : []),
         ];
-        const colClass = tools.length === 4 ? 'grid-cols-4' : 'grid-cols-3';
+        const colClass =
+          tools.length >= 4 ? 'grid-cols-4'
+          : tools.length === 3 ? 'grid-cols-3'
+          : tools.length === 2 ? 'grid-cols-2'
+          : 'grid-cols-1';
         return (
           <div className="w-full">
             <div className={`grid ${colClass} gap-[12px]`}>
