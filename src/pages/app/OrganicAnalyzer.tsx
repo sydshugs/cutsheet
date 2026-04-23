@@ -395,6 +395,39 @@ export default function OrganicAnalyzer() {
   const effectiveStatus = (loadedEntry || loadedFromHistory) ? "complete" : status;
   const showRightPanel = effectiveStatus === "complete" && activeResult !== null;
 
+  // ── Score delta vs previous analysis ─────────────────────────────────────
+  // Mirrors PaidAdAnalyzer.tsx:664-690. See plan §13 item 3 — extract to
+  // src/hooks/useScoreDelta.ts during the shared-component pass.
+  // Dims keys use ORGANIC_DIMENSIONS labels (Hook/Message/Visual/Brand) which
+  // ScoreHero.tsx:71 maps to the {hook, clarity, production, cta} score fields.
+  const scoreDelta = useMemo(() => {
+    if (loadedEntry) return null;
+    const currentScores = activeResult?.scores;
+    if (!currentScores) return null;
+    const prevEntry = historyEntries.find(e => e.scores != null);
+    if (!prevEntry?.scores) return null;
+    const overall = Math.round((currentScores.overall - prevEntry.scores.overall) * 10) / 10;
+    const diffMs = Date.now() - new Date(prevEntry.timestamp).getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const label = diffDays >= 1
+      ? `vs ${diffDays} day${diffDays === 1 ? '' : 's'} ago`
+      : diffHours >= 1 ? `vs ${diffHours}h ago`
+      : diffMins >= 1  ? `vs ${diffMins}m ago`
+      : 'vs last analysis';
+    return {
+      overall,
+      label,
+      dims: {
+        'Hook':    Math.round((currentScores.hook       - prevEntry.scores.hook)       * 10) / 10,
+        'Message': Math.round((currentScores.clarity    - prevEntry.scores.clarity)    * 10) / 10,
+        'Visual':  Math.round((currentScores.production - prevEntry.scores.production) * 10) / 10,
+        'Brand':   Math.round((currentScores.cta        - prevEntry.scores.cta)        * 10) / 10,
+      },
+    };
+  }, [activeResult?.scores, historyEntries, loadedEntry]);
+
   useEffect(() => {
     registerCallbacks({
       onNewAnalysis: handleReset,
@@ -591,6 +624,7 @@ export default function OrganicAnalyzer() {
         fixItResult={fixItResult}
         fixItLoading={fixItLoading}
         prediction={prediction}
+        scoreDelta={scoreDelta}
         rawUserContext={rawUserContext}
         onGenerateBrief={handleGenerateBrief}
         onAddToSwipeFile={handleAddToSwipeFile}

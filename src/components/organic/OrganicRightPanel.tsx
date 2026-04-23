@@ -65,6 +65,14 @@ export interface OrganicRightPanelProps {
   // ── Prediction ────────────────────────────────────────────────────────────────
   prediction: PredictionResult | null;
 
+  // ── Score delta vs previous analysis ─────────────────────────────────────────
+  // Keys on `dims` use ORGANIC_DIMENSIONS labels: Hook / Message / Visual / Brand.
+  scoreDelta: {
+    overall: number;
+    label: string;
+    dims: { [label: string]: number };
+  } | null;
+
   // ── User context ─────────────────────────────────────────────────────────────
   rawUserContext: { niche: string; platform: string } | null;
 
@@ -90,6 +98,7 @@ export const OrganicRightPanel = forwardRef<OrganicRightPanelHandle, OrganicRigh
       ctaRewrites, ctaLoading,
       fixItResult, fixItLoading,
       prediction,
+      scoreDelta,
       rawUserContext,
       onGenerateBrief, onAddToSwipeFile, onCTARewrite, onShare,
       onFixIt, onReset, onUpgradeRequired,
@@ -121,6 +130,13 @@ export const OrganicRightPanel = forwardRef<OrganicRightPanelHandle, OrganicRigh
               scenes={activeResult.scenes}
               fileName={activeResult.fileName}
               analysisTime={analysisCompletedAt ?? undefined}
+              scoreRange={activeResult.scores ? {
+                low:  Math.max(0,  Math.round((activeResult.scores.overall - 0.65) * 10) / 10),
+                high: Math.min(10, Math.round((activeResult.scores.overall + 0.65) * 10) / 10),
+              } : undefined}
+              overallDelta={scoreDelta?.overall}
+              overallDeltaLabel={scoreDelta?.label}
+              dimensionDeltas={scoreDelta?.dims}
               modelName="Gemini + Claude"
               onGenerateBrief={onGenerateBrief}
               onAddToSwipeFile={onAddToSwipeFile}
