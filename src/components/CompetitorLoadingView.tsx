@@ -1,8 +1,8 @@
-// CompetitorLoadingView — Figma 473-3301
+// CompetitorLoadingView — Figma 473-3301 + per-file status from 473-3330
 
 import { useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { X } from "lucide-react";
+import { Check, Loader2, X } from "lucide-react";
 import { useThumbnail } from "../hooks/useThumbnail";
 
 export type CompetitorFormat = "video" | "static";
@@ -15,6 +15,8 @@ export interface CompetitorLoadingViewProps {
   statusMessage: string;
   onCancel?: () => void;
 }
+
+type CompetitorPhase = "complete" | "analyzing";
 
 function progressFromStatus(msg: string): number {
   if (msg.toLowerCase().includes("gap")) return 78;
@@ -36,13 +38,50 @@ function headlinesForStatus(msg: string): { primary: string; secondary: string }
   };
 }
 
+function StatusBadge({ phase }: { phase: CompetitorPhase }) {
+  if (phase === "complete") {
+    return (
+      <motion.div
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ type: "spring", stiffness: 320, damping: 22 }}
+        className="flex size-[39px] items-center justify-center rounded-full bg-[rgba(16,185,129,0.8)]"
+      >
+        <Check className="size-[19.7px] text-white" strokeWidth={2.5} aria-hidden />
+      </motion.div>
+    );
+  }
+  return (
+    <div className="flex size-[39px] items-center justify-center rounded-full bg-[rgba(99,102,241,0.8)]">
+      <Loader2 className="size-[19.7px] animate-spin text-white" strokeWidth={2} aria-hidden />
+    </div>
+  );
+}
+
+function StatusLabel({ phase }: { phase: CompetitorPhase }) {
+  const labelMap: Record<CompetitorPhase, { text: string; color: string }> = {
+    complete: { text: "Complete", color: "#00d492" },
+    analyzing: { text: "Analyzing…", color: "#7c86ff" },
+  };
+  const { text, color } = labelMap[phase];
+  return (
+    <p
+      className="m-0 text-[9.856px] font-semibold uppercase tracking-[0.4928px]"
+      style={{ color }}
+    >
+      {text}
+    </p>
+  );
+}
+
 interface CompetitorThumbProps {
   label: string;
   file: File;
   borderColor: string;
+  phase: CompetitorPhase;
 }
 
-function CompetitorThumb({ label, file, borderColor }: CompetitorThumbProps) {
+function CompetitorThumb({ label, file, borderColor, phase }: CompetitorThumbProps) {
   const objectUrl = useMemo(() => URL.createObjectURL(file), [file]);
   useEffect(() => {
     return () => URL.revokeObjectURL(objectUrl);
@@ -58,7 +97,7 @@ function CompetitorThumb({ label, file, borderColor }: CompetitorThumbProps) {
         {label}
       </p>
       <div
-        className="h-[280px] w-full max-w-[350px] overflow-hidden rounded-[15.411px] border bg-[#c4c4c4]"
+        className="relative h-[280px] w-full max-w-[350px] overflow-hidden rounded-[15.411px] border bg-[#c4c4c4]"
         style={{ borderColor }}
       >
         {displayUrl ? (
@@ -75,7 +114,11 @@ function CompetitorThumb({ label, file, borderColor }: CompetitorThumbProps) {
             />
           )
         ) : null}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <StatusBadge phase={phase} />
+        </div>
       </div>
+      <StatusLabel phase={phase} />
     </div>
   );
 }
@@ -88,6 +131,7 @@ export function CompetitorLoadingView({
 }: CompetitorLoadingViewProps) {
   const progressPct = progressFromStatus(statusMessage);
   const { primary, secondary } = headlinesForStatus(statusMessage);
+  const bothPhase: CompetitorPhase = statusMessage.toLowerCase().includes("gap") ? "complete" : "analyzing";
 
   return (
     <div
@@ -112,11 +156,13 @@ export function CompetitorLoadingView({
             label="Your Ad"
             file={yourFile}
             borderColor="rgba(255,255,255,0.12)"
+            phase={bothPhase}
           />
           <CompetitorThumb
             label="Competitor Ad"
             file={competitorFile}
             borderColor="rgba(239,68,68,0.20)"
+            phase={bothPhase}
           />
         </div>
 

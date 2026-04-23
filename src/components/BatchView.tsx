@@ -85,52 +85,6 @@ function rankOverallScoreColorClass(overall: number): string {
   return "text-[color:var(--error)]";
 }
 
-/** Shared hero — Figma Rank page 264-2926 / 286-677; optional pulse while batch is running */
-function RankPageHero({
-  title,
-  creativeCount,
-  testTypeLabel,
-  showPulse,
-}: {
-  title: string;
-  creativeCount: number;
-  testTypeLabel: string;
-  showPulse?: boolean;
-}) {
-  return (
-    <div className="flex w-full flex-col items-center gap-2 pt-1">
-      <div
-        className="relative flex size-[83px] shrink-0 items-center justify-center overflow-visible rounded-[17.5px] border border-[color:var(--rank-tile-border)] bg-[color:var(--rank-tile-bg)]"
-        aria-hidden
-      >
-        {showPulse ? (
-          <span
-            className="pointer-events-none absolute inset-0 rounded-[17.5px] border border-[color:var(--rank-tile-border)] opacity-40 animate-ping"
-            aria-hidden
-          />
-        ) : (
-          <div
-            className="pointer-events-none absolute -inset-[38px] rounded-[17.5px] border border-[color:var(--rank-tile-border)] opacity-30"
-            aria-hidden
-          />
-        )}
-        <Trophy className="relative z-[1] size-[35px] text-[color:var(--rank-tile-icon)]" strokeWidth={1.75} />
-      </div>
-      <h2 className="m-0 text-center text-[clamp(2rem,5vw,2.75rem)] font-bold tracking-[-0.025em] text-[color:var(--ink)]">{title}</h2>
-      <div className="inline-flex h-[31px] items-center gap-2 rounded-full border border-[color:var(--rank-loading-meta-pill-border)] bg-[color:var(--rank-loading-meta-pill-bg)] px-3.5">
-        <span
-          className="size-[6.5px] shrink-0 rounded-full bg-[color:var(--rank-loading-meta-dot)] opacity-90 data-[pulse=1]:animate-pulse"
-          data-pulse={showPulse ? 1 : 0}
-          aria-hidden
-        />
-        <span className="text-[13px] font-medium text-[color:var(--rank-loading-meta-text)]">
-          {creativeCount} {creativeCount === 1 ? "creative" : "creatives"} · {testTypeLabel}
-        </span>
-      </div>
-    </div>
-  );
-}
-
 function RankDimensionBar({ label, score, delay }: { label: string; score: number; delay: number }) {
   const pct = (score / 10) * 100;
   const bar =
@@ -164,15 +118,66 @@ function rankItemLoadPhase(item: BatchItem): RankLoadCardPhase {
   return "pending";
 }
 
+function RankStatusBadge({ phase }: { phase: RankLoadCardPhase }) {
+  if (phase === "complete") {
+    return (
+      <motion.div
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ type: "spring", stiffness: 320, damping: 22 }}
+        className="flex size-[39px] items-center justify-center rounded-full bg-[rgba(16,185,129,0.8)]"
+      >
+        <Check className="size-[19.7px] text-white" strokeWidth={2.5} aria-hidden />
+      </motion.div>
+    );
+  }
+  if (phase === "analyzing") {
+    return (
+      <div className="flex size-[39px] items-center justify-center rounded-full bg-[rgba(99,102,241,0.8)]">
+        <Loader2 className="size-[19.7px] animate-spin text-white" strokeWidth={2} aria-hidden />
+      </div>
+    );
+  }
+  if (phase === "error") {
+    return (
+      <div className="flex size-[39px] items-center justify-center rounded-full bg-[rgba(0,0,0,0.8)]">
+        <XCircle className="size-[17.5px] text-[color:var(--error)]" strokeWidth={2} aria-hidden />
+      </div>
+    );
+  }
+  return (
+    <div className="flex size-[39px] items-center justify-center rounded-full bg-[rgba(0,0,0,0.8)]">
+      <Clock className="size-[17.5px] text-[#9f9fa9]" strokeWidth={2} aria-hidden />
+    </div>
+  );
+}
+
+function RankStatusLabel({ phase }: { phase: RankLoadCardPhase }) {
+  const labelMap: Record<RankLoadCardPhase, { text: string; color: string }> = {
+    complete: { text: "Complete", color: "#00d492" },
+    analyzing: { text: "Analyzing…", color: "#7c86ff" },
+    pending: { text: "Pending", color: "#52525c" },
+    error: { text: "Failed", color: "var(--error)" },
+  };
+  const { text, color } = labelMap[phase];
+  return (
+    <p
+      className="m-0 pt-[10px] text-[9.856px] font-semibold uppercase tracking-[0.4928px]"
+      style={{ color }}
+    >
+      {text}
+    </p>
+  );
+}
+
 interface RankBatchLoadingViewProps {
   items: BatchItem[];
   previewUrls: Record<string, string>;
-  rankTestType: RankTestType;
   showStopLink: boolean;
   onRequestStopAfterCurrent: () => void;
 }
 
-function RankBatchLoadingView({ items, previewUrls, rankTestType, showStopLink, onRequestStopAfterCurrent }: RankBatchLoadingViewProps) {
+function RankBatchLoadingView({ items, previewUrls, showStopLink, onRequestStopAfterCurrent }: RankBatchLoadingViewProps) {
   const total = items.length;
   const finished = items.filter((i) => i.status === "complete" || i.status === "error").length;
   const analyzingNow = items.some((i) => i.status === "analyzing");
@@ -180,44 +185,32 @@ function RankBatchLoadingView({ items, previewUrls, rankTestType, showStopLink, 
     total > 0 ? Math.min(100, Math.round(((finished + (analyzingNow ? 0.6 : 0)) / total) * 100)) : 0;
 
   return (
-    <div className="relative flex min-h-[min(100%,calc(100vh-120px))] flex-col justify-center bg-[color:var(--bg)] py-10 pb-12">
+    <div
+      className="relative flex min-h-[calc(100vh-120px)] flex-1 flex-col items-center justify-center overflow-hidden px-4 py-10 sm:px-6"
+      role="status"
+      aria-live="polite"
+      aria-busy
+      aria-label="Ranking creatives in progress"
+    >
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-[min(548px,50vh)]"
+        className="pointer-events-none absolute inset-0"
         style={{ background: "var(--rank-ambient)" }}
         aria-hidden
       />
-      <div className="relative z-[1] mx-auto flex w-full max-w-4xl flex-col items-center gap-8 px-6">
-        <RankPageHero
-          title="Ranking Creatives"
-          creativeCount={total}
-          testTypeLabel={rankTestTypeLabel(rankTestType)}
-          showPulse
-        />
 
-        <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+      <div className="relative z-[1] flex w-full max-w-[1042px] flex-col items-center gap-[60px]">
+        <div className="inline-flex items-center gap-[9px] rounded-full border border-[rgba(97,95,255,0.2)] bg-[rgba(99,102,241,0.08)] px-[14px] py-[5px]">
+          <span className="size-[6.57px] shrink-0 rounded-full bg-[#7c86ff] opacity-80" aria-hidden />
+          <span className="text-[13.141px] font-medium text-[#a3b3ff]">
+            {total} {total === 1 ? "creative" : "creatives"}
+          </span>
+        </div>
+
+        <div className="grid w-full grid-cols-2 gap-x-[31px] gap-y-8 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           {items.map((item, i) => {
             const phase = rankItemLoadPhase(item);
             const name = sanitizeFileName(item.file.name);
             const displayName = name.length > 22 ? `${name.slice(0, 19)}…` : name;
-            const score =
-              item.result?.scores != null ? (recalculateOverallScore(item.result.scores) ?? item.result.scores).overall : null;
-
-            const shell = cn(
-              "relative flex flex-col overflow-hidden rounded-xl border transition-[border-color,background-color] duration-200",
-              phase === "complete" &&
-                "border-[color:var(--rank-load-card-complete-border)] bg-[color:var(--rank-load-card-complete-bg)]",
-              phase === "analyzing" &&
-                "border-[color:var(--rank-load-card-analyzing-border)] bg-[color:var(--rank-load-card-analyzing-bg)]",
-              (phase === "pending" || phase === "error") &&
-                "border-[color:var(--rank-load-card-pending-border)] bg-[color:var(--rank-load-card-pending-bg)]",
-            );
-
-            const mediaFilter =
-              phase === "pending" || phase === "error"
-                ? "grayscale-[0.85] brightness-[0.48]"
-                : phase === "analyzing"
-                  ? "brightness-[0.78]"
-                  : "brightness-[0.88]";
 
             return (
               <motion.div
@@ -225,113 +218,65 @@ function RankBatchLoadingView({ items, previewUrls, rankTestType, showStopLink, 
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05, duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-                className={shell}
+                className="flex flex-col items-center"
               >
-                <div className="relative aspect-[9/16] w-full overflow-hidden">
-                  <div className={cn("absolute inset-0", mediaFilter)}>
-                    {item.format === "static" ? (
-                      <img src={previewUrls[item.id]} alt="" className="size-full object-cover" />
-                    ) : (
-                      <video src={previewUrls[item.id]} className="size-full object-cover" muted playsInline preload="metadata" />
-                    )}
+                <div className="relative aspect-square w-full overflow-hidden rounded-[15.54px] border border-[rgba(255,255,255,0.06)] bg-[#c4c4c4]">
+                  {item.format === "static" && previewUrls[item.id] ? (
+                    <img src={previewUrls[item.id]} alt="" className="absolute inset-0 size-full object-cover" />
+                  ) : previewUrls[item.id] ? (
+                    <video src={previewUrls[item.id]} className="absolute inset-0 size-full object-cover" muted playsInline preload="metadata" />
+                  ) : null}
+
+                  <div className="absolute right-[11px] top-[11px] flex items-center rounded-[5px] bg-[rgba(0,0,0,0.7)] px-[7px] py-px">
+                    <span className="text-[11.2px] font-medium text-white">
+                      {item.format === "video" ? "Video" : "Static"}
+                    </span>
                   </div>
 
-                  <div className="pointer-events-none absolute bottom-2 left-2 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-medium text-white bg-[color:var(--rank-badge-overlay)]">
-                    {item.format === "video" ? (
-                      <Play className="size-2 shrink-0 text-white" aria-hidden />
-                    ) : (
-                      <ImageIcon className="size-2 shrink-0 text-white" aria-hidden />
-                    )}
-                    {item.format === "video" ? "Video" : "Static"}
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end bg-gradient-to-t from-[rgba(0,0,0,0.8)] to-transparent pb-[10px] pt-[20px]">
+                    <p className="m-0 w-full truncate px-[10px] text-[11.2px] font-medium text-white">
+                      {displayName}
+                    </p>
                   </div>
-
-                  {phase === "complete" && score != null && (
-                    <div
-                      className={cn(
-                        "absolute right-2 top-2 rounded-md bg-[color:var(--rank-load-score-badge-bg)] px-2 py-0.5 font-bold tabular-nums text-[11px] backdrop-blur-sm",
-                        rankOverallScoreColorClass(score),
-                      )}
-                    >
-                      {formatRankScoreDisplay(score)}
-                    </div>
-                  )}
 
                   <div className="absolute inset-0 flex items-center justify-center">
-                    {phase === "complete" && (
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ type: "spring", stiffness: 320, damping: 22 }}
-                        className="flex size-9 items-center justify-center rounded-full bg-[color:var(--rank-load-complete-check-bg)] shadow-sm"
-                      >
-                        <Check className="size-[18px] text-white" strokeWidth={2.5} aria-hidden />
-                      </motion.div>
-                    )}
-                    {phase === "analyzing" && (
-                      <div className="flex size-9 items-center justify-center rounded-full bg-[color:var(--rank-load-analyzing-spinner-bg)]">
-                        <Loader2 className="size-[18px] animate-spin text-white" strokeWidth={2} aria-hidden />
-                      </div>
-                    )}
-                    {phase === "pending" && (
-                      <div className="flex size-9 items-center justify-center rounded-full bg-[color:var(--rank-load-pending-icon-bg)]">
-                        <Clock className="size-4 text-[color:var(--ink-muted)]" strokeWidth={2} aria-hidden />
-                      </div>
-                    )}
-                    {phase === "error" && (
-                      <div className="flex size-9 items-center justify-center rounded-full bg-[color:var(--rank-load-pending-icon-bg)]">
-                        <XCircle className="size-4 text-[color:var(--error)]" strokeWidth={2} aria-hidden />
-                      </div>
-                    )}
+                    <RankStatusBadge phase={phase} />
                   </div>
                 </div>
-
-                <div className="flex min-h-[36px] items-center gap-1.5 px-2 pt-2">
-                  <p
-                    className={cn(
-                      "m-0 text-[9px] font-semibold uppercase tracking-[0.08em]",
-                      phase === "complete" && "text-[color:var(--rank-load-complete-label)]",
-                      phase === "analyzing" && "text-[color:var(--rank-load-analyzing-label)]",
-                      phase === "pending" && "text-[color:var(--rank-load-pending-label)]",
-                      phase === "error" && "text-[color:var(--error)]",
-                    )}
-                  >
-                    {phase === "complete" && "Complete"}
-                    {phase === "analyzing" && "Analyzing…"}
-                    {phase === "pending" && "Pending"}
-                    {phase === "error" && "Failed"}
-                  </p>
-                </div>
-                <p className="m-0 truncate px-2 pb-2 text-[10px] leading-snug text-[color:var(--rank-feature-pill-text)]">{displayName}</p>
+                <RankStatusLabel phase={phase} />
               </motion.div>
             );
           })}
         </div>
 
-        <div className="flex w-full max-w-4xl flex-col gap-3">
-          <div className="flex w-full items-center gap-3">
-            <p className="m-0 shrink-0 text-[13px] font-medium text-[color:var(--rank-load-progress-label)]" aria-live="polite">
+        <div className="flex w-full max-w-[910px] flex-col items-center gap-3">
+          <div className="flex w-full items-center gap-[13.141px]">
+            <p className="m-0 shrink-0 text-[14.236px] font-medium text-[#9f9fa9]" aria-live="polite">
               {finished} of {total} analyzed
             </p>
-            <div className="relative h-1 min-w-0 flex-1 overflow-hidden rounded-full bg-[color:var(--rank-load-progress-track)]">
+            <div className="relative h-[4.38px] min-w-0 flex-1 overflow-hidden rounded-full bg-[#27272a]">
               <motion.div
-                className="absolute left-0 top-0 h-full rounded-full bg-[color:var(--rank-load-progress-fill)]"
+                className="absolute left-0 top-0 h-full rounded-full bg-[color:var(--accent)]"
                 animate={{ width: `${pct}%` }}
                 transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
               />
             </div>
-            <p className="m-0 w-10 shrink-0 text-right font-mono text-[12px] font-medium text-[color:var(--rank-load-progress-pct)]">{pct}%</p>
+            <p className="m-0 shrink-0 font-mono text-[13.141px] font-medium text-[#7c86ff]">{pct}%</p>
           </div>
-          {showStopLink && (
-            <div className="flex justify-center">
+
+          <div className="flex flex-col items-center gap-3 pt-3">
+            <p className="m-0 text-[13px] text-[#71717b]">This usually takes 20–30 seconds</p>
+            {showStopLink && (
               <button
                 type="button"
                 onClick={onRequestStopAfterCurrent}
-                className="border-0 bg-transparent p-0 text-[12px] font-normal text-[color:var(--rank-load-stop-link)] underline decoration-solid underline-offset-2 transition-[color,opacity] duration-150 hover:text-[color:var(--ink-muted)] focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] active:opacity-90"
+                className="flex cursor-pointer items-center gap-1.5 border-none bg-transparent p-0 text-[13px] text-[#71717b] transition-colors hover:text-[color:var(--ink-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
               >
-                Stop after current
+                <X size={11} aria-hidden />
+                Cancel analysis
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -715,7 +660,6 @@ export function BatchView() {
         <RankBatchLoadingView
           items={items}
           previewUrls={previewUrls}
-          rankTestType={rankTestType}
           showStopLink={!stopAfterCurrentUi}
           onRequestStopAfterCurrent={() => {
             stopRequestedRef.current = true;
