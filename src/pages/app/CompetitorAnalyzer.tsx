@@ -2,7 +2,7 @@
 // Thin orchestrator — UI extracted to CompetitorUploadStep
 
 import { Helmet } from "react-helmet-async";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useOutletContext } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { CompetitorResultPanel } from "../../components/CompetitorResult";
@@ -11,9 +11,6 @@ import { CompetitorUploadStep } from "../../components/competitor/CompetitorUplo
 import { analyzeCompetitor, type CompetitorResult } from "../../services/competitorService";
 import type { AppSharedContext } from "../../components/AppLayout";
 import { cn } from "@/src/lib/utils";
-import { useMediaDimensions } from "../../hooks/useMediaDimensions";
-import { getFormatWarnings, type FormatWarning } from "../../utils/platformFormatWarnings";
-import { FormatWarningBanner } from "../../components/shared/FormatWarningBanner";
 
 const API_KEY = ""; // Gemini calls are now server-side via /api/analyze
 
@@ -41,13 +38,6 @@ export default function CompetitorAnalyzer() {
 
   // Derive format from files — if either is video, treat as video comparison
   const format: Format = (yourFile?.type.startsWith('video/') || competitorFile?.type.startsWith('video/')) ? 'video' : 'static';
-
-  // ── Format warnings — detect aspect ratio mismatches on user's file ──────
-  const yourDims = useMediaDimensions(yourFile);
-  const formatWarnings = useMemo<FormatWarning[]>(() => {
-    if (!yourDims) return [];
-    return getFormatWarnings({ width: yourDims.width, height: yourDims.height, platform: 'all', format });
-  }, [yourDims, format]);
 
   const handleReset = useCallback(() => {
     setStep(0); setYourFile(null); setCompetitorFile(null);
@@ -139,7 +129,6 @@ export default function CompetitorAnalyzer() {
                 onCompetitorFileRemove={() => setCompetitorFile(null)}
                 error={error}
                 onRetry={handleAnalyze}
-                formatWarnings={formatWarnings}
               />
             )}
 
