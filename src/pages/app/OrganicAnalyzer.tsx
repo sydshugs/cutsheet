@@ -533,7 +533,7 @@ export default function OrganicAnalyzer() {
     } catch { setUrlError("Could not fetch video from this URL."); }
     finally { setIsImporting(false); }
   };
-  void urlInput; void urlError; void isImporting; void predictionLoading;
+  void urlInput; void urlError; void isImporting;
   void imageMismatch; void secondEyeOutput; void secondEyeLoading;
   void designReviewResult; void designReviewLoading;
 
@@ -624,6 +624,7 @@ export default function OrganicAnalyzer() {
         fixItResult={fixItResult}
         fixItLoading={fixItLoading}
         prediction={prediction}
+        predictionLoading={predictionLoading}
         scoreDelta={scoreDelta}
         rawUserContext={rawUserContext}
         onGenerateBrief={handleGenerateBrief}
