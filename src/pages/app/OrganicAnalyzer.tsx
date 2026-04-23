@@ -7,6 +7,7 @@ import { AnalyzerView } from "../../components/AnalyzerView";
 import { HistoryDrawer } from "../../components/HistoryDrawer";
 import { OrganicEmptyState } from "../../components/organic/OrganicEmptyState";
 import { useVideoAnalyzer } from "../../hooks/useVideoAnalyzer";
+import { useVisualize } from "../../hooks/useVisualize";
 import { type HistoryEntry } from "../../hooks/useHistory";
 import { useThumbnail } from "../../hooks/useThumbnail";
 import {
@@ -123,6 +124,12 @@ export default function OrganicAnalyzer() {
   const platformLabel = platform === "all" ? "all platforms" : platform;
   const contextPrefix = getOrganicContextPrefix(organicFormat, platformLabel);
 
+  // Ref to resetVisualize — assigned after useVisualize call (which depends on activeResult
+  // declared further down). This avoids a circular declaration order between handleReset,
+  // activeResult, and useVisualize. handleReset stays in its current position so downstream
+  // callbacks (handleFileWithCheck, registerCallbacks) don't need to move.
+  const resetVisualizeRef = useRef<(() => void) | null>(null);
+
   const handleReset = useCallback(() => {
     setFile(null);
     setLoadedEntry(null);
@@ -145,6 +152,7 @@ export default function OrganicAnalyzer() {
     setPrediction(null);
     setStaticImageDims(null);
     setVideoDims(null);
+    resetVisualizeRef.current?.();
   }, [reset]);
 
   // ── Auto-reset platform when format switches to static ──
@@ -327,6 +335,40 @@ export default function OrganicAnalyzer() {
         timestamp: new Date(loadedEntry.timestamp),
       }
     : liveResult;
+
+  // ── Visualize (Pass 3a: service wiring only — UI button arrives in Pass 3b) ──
+  const {
+    visualizeOpen,
+    setVisualizeOpen,
+    visualizeStatus,
+    visualizeResult,
+    visualizeError,
+    visualizeCreditData,
+    motionVideoUrl,
+    motionLoading,
+    motionError,
+    motionSource,
+    visualizeMode,
+    handleVisualize,
+    handleMotionPreview,
+    handleAnimateVisualized,
+    handleAnimateOriginalFromPanel,
+    resetVisualize,
+  } = useVisualize({
+    file,
+    format: organicFormat,
+    platform,
+    thumbnailDataUrl,
+    activeResult,
+    userContext,
+    onUpgradeRequired,
+    adType: "organic",
+  });
+  resetVisualizeRef.current = resetVisualize;
+  void visualizeOpen; void setVisualizeOpen; void visualizeStatus; void visualizeResult;
+  void visualizeError; void visualizeCreditData; void motionVideoUrl; void motionLoading;
+  void motionError; void motionSource; void visualizeMode; void handleVisualize;
+  void handleMotionPreview; void handleAnimateVisualized; void handleAnimateOriginalFromPanel;
 
   // ── Read static image dimensions from file (stable deps — won't cancel on thumbnail changes) ──
   useEffect(() => {
