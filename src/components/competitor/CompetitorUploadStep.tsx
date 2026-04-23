@@ -2,13 +2,11 @@
 // Step 0 — dual-upload idle state for CompetitorAnalyzer
 
 import { useMemo, useEffect } from "react";
-import { Swords, Music2, Check, X, Search, ExternalLink, AlertCircle, CloudUpload } from "lucide-react";
+import { Swords, Music2, X, Search, ExternalLink, AlertCircle, CloudUpload } from "lucide-react";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { sanitizeSearchQuery, sanitizeFileName } from "../../utils/sanitize";
 import { cn } from "@/src/lib/utils";
-import type { FormatWarning } from "../../utils/platformFormatWarnings";
-import { FormatWarningBanner } from "../shared/FormatWarningBanner";
 
 const META_TOKEN = import.meta.env.VITE_META_ACCESS_TOKEN ?? "";
 
@@ -27,27 +25,43 @@ export function FilePreview({ file, onRemove }: { file: File; onRemove: () => vo
   const url = useMemo(() => URL.createObjectURL(file), [file]);
   useEffect(() => () => URL.revokeObjectURL(url), [url]);
   const isImage = file.type.startsWith("image/");
+  const name = sanitizeFileName(file.name);
+  const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+
   return (
-    <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(16,185,129,0.15)", borderRadius: 12, overflow: "hidden" }}>
-      <div style={{ display: "flex", justifyContent: "center", background: "#0a0a0b", maxHeight: 200 }}>
-        {isImage
-          ? <img src={url} alt={sanitizeFileName(file.name)} style={{ maxWidth: "100%", maxHeight: 200, objectFit: "contain" }} />
-          : <video src={url} style={{ maxWidth: "100%", maxHeight: 200, objectFit: "contain" }} />
-        }
-      </div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Check size={14} color="#10b981" />
-          <span style={{ fontSize: 12, color: "#a1a1aa", fontFamily: "var(--font-mono, monospace)" }}>
-            {(() => { const n = sanitizeFileName(file.name); return n.length > 26 ? n.slice(0, 23) + "..." : n; })()}
-          </span>
-          <span style={{ fontSize: 10, color: "#71717a", background: "rgba(255,255,255,0.05)", borderRadius: 9999, padding: "2px 8px" }}>
-            {file.type.startsWith("video/") ? "Video" : "Static"}
-          </span>
+    <div className="relative h-[280px] overflow-hidden rounded-[15px] border border-[rgba(255,255,255,0.12)]">
+      {isImage ? (
+        <img src={url} alt={name} className="absolute inset-0 h-full w-full object-cover" />
+      ) : (
+        <video
+          src={url}
+          muted
+          playsInline
+          preload="metadata"
+          className="absolute inset-0 h-full w-full object-cover"
+          onLoadedData={(e) => {
+            const vid = e.currentTarget;
+            if (vid.readyState >= 2) {
+              vid.currentTime = Math.min(0.5, (vid.duration || 10) * 0.08);
+            }
+          }}
+        />
+      )}
+
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label="Remove"
+        className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-[rgba(0,0,0,0.6)] text-white/80 transition-colors duration-150 hover:border-[rgba(239,68,68,0.4)] hover:text-[color:var(--error)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-border)] active:scale-[0.95]"
+      >
+        <X className="h-3 w-3" aria-hidden />
+      </button>
+
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end bg-gradient-to-t from-[rgba(0,0,0,0.8)] to-transparent pb-2 pt-5">
+        <div className="flex w-full items-center justify-between gap-2 px-3">
+          <span className="min-w-0 truncate font-mono text-[11px] text-white">{name}</span>
+          <span className="shrink-0 font-mono text-[10px] text-white/70">{sizeMb}MB</span>
         </div>
-        <button type="button" onClick={onRemove} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#71717a", background: "none", border: "none", cursor: "pointer" }}>
-          <X size={12} /> Remove
-        </button>
       </div>
     </div>
   );
@@ -221,7 +235,6 @@ interface CompetitorUploadStepProps {
   onCompetitorFileRemove: () => void;
   error?: string | null;
   onRetry?: () => void;
-  formatWarnings?: FormatWarning[];
 }
 
 export function CompetitorUploadStep({
@@ -233,7 +246,6 @@ export function CompetitorUploadStep({
   onCompetitorFileRemove,
   error,
   onRetry,
-  formatWarnings,
 }: CompetitorUploadStepProps) {
   const [dragSlot, setDragSlot] = useState<"your" | "competitor" | null>(null);
 
@@ -428,12 +440,8 @@ export function CompetitorUploadStep({
           </div>
         </div>
 
-        {/* ── Footer: warnings + TikTok link + Meta search ── */}
+        {/* ── Footer: TikTok link + Meta search ── */}
         <div className="flex w-full flex-col gap-4">
-          {formatWarnings && formatWarnings.length > 0 && (
-            <FormatWarningBanner warnings={formatWarnings} />
-          )}
-
           {error && (
             <div className="flex items-center justify-between gap-3 rounded-[10px] border border-[color:var(--error)]/20 bg-[color:var(--error)]/[0.06] px-4 py-3">
               <div className="flex items-center gap-2">

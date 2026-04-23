@@ -1,8 +1,10 @@
-// PreFlightLoadingView — A/B test analyzing UI (Figma 473-3272)
+// PreFlightLoadingView — A/B test analyzing UI (Figma 473-3272 + per-variant status from 473-3330)
 
 import { motion } from "framer-motion";
-import { X } from "lucide-react";
+import { Check, Clock, Loader2, X } from "lucide-react";
 import type { VariantInput } from "../types/preflight";
+
+type VariantPhase = "complete" | "analyzing" | "pending";
 
 function previewUrlForFile(
   file: File | undefined,
@@ -14,14 +16,59 @@ function previewUrlForFile(
   return i >= 0 ? urls[i] ?? null : null;
 }
 
+function StatusBadge({ phase }: { phase: VariantPhase }) {
+  if (phase === "complete") {
+    return (
+      <motion.div
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ type: "spring", stiffness: 320, damping: 22 }}
+        className="flex size-[39px] items-center justify-center rounded-full bg-[rgba(16,185,129,0.8)]"
+      >
+        <Check className="size-[19.7px] text-white" strokeWidth={2.5} aria-hidden />
+      </motion.div>
+    );
+  }
+  if (phase === "analyzing") {
+    return (
+      <div className="flex size-[39px] items-center justify-center rounded-full bg-[rgba(99,102,241,0.8)]">
+        <Loader2 className="size-[19.7px] animate-spin text-white" strokeWidth={2} aria-hidden />
+      </div>
+    );
+  }
+  return (
+    <div className="flex size-[39px] items-center justify-center rounded-full bg-[rgba(0,0,0,0.8)]">
+      <Clock className="size-[17.5px] text-[#9f9fa9]" strokeWidth={2} aria-hidden />
+    </div>
+  );
+}
+
+function StatusLabel({ phase }: { phase: VariantPhase }) {
+  const labelMap: Record<VariantPhase, { text: string; color: string }> = {
+    complete: { text: "Complete", color: "#00d492" },
+    analyzing: { text: "Analyzing…", color: "#7c86ff" },
+    pending: { text: "Pending", color: "#52525c" },
+  };
+  const { text, color } = labelMap[phase];
+  return (
+    <p
+      className="m-0 text-[9.856px] font-semibold uppercase tracking-[0.4928px]"
+      style={{ color }}
+    >
+      {text}
+    </p>
+  );
+}
+
 interface VariantThumbProps {
   label: string;
   file: File | null | undefined;
   previewUrl: string | null;
   borderColor: string;
+  phase: VariantPhase;
 }
 
-function VariantThumb({ label, file, previewUrl, borderColor }: VariantThumbProps) {
+function VariantThumb({ label, file, previewUrl, borderColor, phase }: VariantThumbProps) {
   const isVideo = file?.type.startsWith("video/") ?? false;
 
   return (
@@ -30,7 +77,7 @@ function VariantThumb({ label, file, previewUrl, borderColor }: VariantThumbProp
         {label}
       </p>
       <div
-        className="h-[280px] w-full max-w-[350px] overflow-hidden rounded-[15.411px] border bg-[#c4c4c4]"
+        className="relative h-[280px] w-full max-w-[350px] overflow-hidden rounded-[15.411px] border bg-[#c4c4c4]"
         style={{ borderColor }}
       >
         {isVideo && previewUrl ? (
@@ -50,7 +97,11 @@ function VariantThumb({ label, file, previewUrl, borderColor }: VariantThumbProp
         ) : !isVideo && previewUrl ? (
           <img src={previewUrl} alt="" className="h-full w-full object-cover" />
         ) : null}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <StatusBadge phase={phase} />
+        </div>
       </div>
+      <StatusLabel phase={phase} />
     </div>
   );
 }
@@ -80,6 +131,13 @@ export function PreFlightLoadingView({
   const leftUrl = leftFile ? previewUrlForFile(leftFile, variants, variantPreviewUrls) : null;
   const rightUrl = rightFile ? previewUrlForFile(rightFile, variants, variantPreviewUrls) : null;
 
+  const variantPhase = (i: number): VariantPhase => {
+    if (phase === "comparing") return "complete";
+    if (i < analysisProgress) return "complete";
+    if (i === analysisProgress) return "analyzing";
+    return "pending";
+  };
+
   const primaryLine = phase === "comparing" ? "Comparing creatives..." : "Scoring both creatives...";
   const secondaryLine =
     phase === "comparing"
@@ -105,12 +163,14 @@ export function PreFlightLoadingView({
             file={leftFile}
             previewUrl={leftUrl}
             borderColor="rgba(255,255,255,0.12)"
+            phase={variantPhase(0)}
           />
           <VariantThumb
             label="Variant B"
             file={rightFile}
             previewUrl={rightUrl}
             borderColor="rgba(129,140,248,0.10)"
+            phase={variantPhase(1)}
           />
         </div>
 
