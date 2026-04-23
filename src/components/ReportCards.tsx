@@ -389,12 +389,12 @@ export const ReportCards = memo(function ReportCards({
               />
             )}
           </div>
-          {/* File info bar */}
-          <div className="w-full flex items-center justify-between border-t border-white/[0.05] px-4 py-3 shrink-0">
-            <span className="font-mono text-xs text-zinc-500 truncate" title={file.name}>
-              {(() => { const n = sanitizeFileName(file.name); return n.length > 35 ? n.slice(0, 32) + "…" : n; })()}
+          {/* File info bar — Figma 493:2043: 43.5px strip, Geist Regular 16px both sides */}
+          <div className="w-full flex items-center justify-between border-t border-white/[0.05] px-4 h-[43.5px] shrink-0 gap-3">
+            <span className="text-[15px] leading-none text-zinc-400 truncate min-w-0" title={file.name}>
+              {sanitizeFileName(file.name)}
             </span>
-            <span className="text-xs text-zinc-500">
+            <span className="text-[15px] leading-none text-zinc-500 shrink-0">
               {(file.size / 1024 / 1024).toFixed(1)} MB
             </span>
           </div>
