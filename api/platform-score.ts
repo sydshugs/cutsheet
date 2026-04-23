@@ -172,11 +172,30 @@ ${userContext ? `<user_context>\n${userContext}\n</user_context>\n` : ""}
 Platform-specific organic scoring guidance for ${platform}:
 ${guidance}
 
-Score this post specifically for organic ${platform} performance — scroll-stop, completion, save rate, share appeal, rewatch value, algorithm fit. Do NOT score for advertising or conversion performance. Return a JSON object with these exact keys:
+Score this post specifically for organic ${platform} performance — scroll-stop, completion, save rate, share appeal, rewatch value, algorithm fit. Do NOT score for advertising or conversion performance.
+
+SIGNALS CHECKLIST — REQUIRED (exactly 3 per platform, organic-only):
+Each signal is { "label": <≤20-char title-case platform-native check>, "pass": true | false }.
+EVIDENCE RULE: mark pass:true ONLY when you can point to specific evidence visible in the creative (e.g. you see a vertical aspect ratio, you see on-screen text overlay, you see creator-style handheld framing, you hear trending audio). If you cannot cite evidence, mark pass:false. Do NOT assume pass by default.
+VOCABULARY RULE: labels must be platform-native organic checks. NEVER use paid-ad vocabulary: no "Clear CTA", no "Strong offer", no "Conversion intent", no "Link in bio", no "Shop Now", no "Free Shipping".
+Platform-native label anchors (use these or close variants — prefer evidence-specific labels over copying):
+- TikTok: "Vertical 9:16", "Trending audio", "Fast hook", "Native cut"
+- Instagram Reels: "Vertical 9:16", "Save-worthy", "Creator-native feel", "Audio-forward"
+- YouTube Shorts: "Vertical 9:16", "Hook < 3s", "Retention cue", "Loopable end"
+- Instagram Feed: "Square 1:1", "Premium aesthetic", "Grid-consistent", "High-contrast"
+- Pinterest: "Vertical 2:3", "Search-discoverable", "Text overlay", "Inspirational tone"
+- Meta Feed: "Native format", "Thumb-stop", "Mobile-legible", "Square 1:1"
+
+Return a JSON object with these exact keys:
 {
   "platform": "${platform}",
   "score": <number 1-10, whole number>,
   "platformFit": <number 1-10, how well this post suits ${platform} natively>,
+  "signals": [
+    { "label": "<≤20-char platform-native check>", "pass": true|false },
+    { "label": "<≤20-char platform-native check>", "pass": true|false },
+    { "label": "<≤20-char platform-native check>", "pass": true|false }
+  ],
   "strengths": [<3 specific organic strengths for ${platform}>],
   "weaknesses": [<3 specific organic weaknesses for ${platform} — NOT ad weaknesses>],
   "improvements": [<3-5 actionable organic improvements — NOT ad copy rewrites, NOT CTA additions, NOT offer additions>],
@@ -240,6 +259,7 @@ Return ONLY valid JSON, no markdown fencing.`;
         platform,
         score: 5,
         platformFit: 5,
+        ...(isOrganic ? { signals: [] } : {}),
         strengths: [],
         weaknesses: [],
         improvements: [],

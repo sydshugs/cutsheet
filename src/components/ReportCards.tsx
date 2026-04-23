@@ -18,6 +18,8 @@ import { CreativeVerdictAndSecondEye } from "./CreativeVerdictAndSecondEye";
 import { DesignReviewCard } from "./DesignReviewCard";
 import { MotionTestIdeaCard } from "./MotionTestIdeaCard";
 import PlatformScoreCard from "./PlatformScoreCard";
+import { PlatformOptimizationCard } from "./organic/PlatformOptimizationCard";
+import { toPlatformOptimizationEntries } from "./organic/platformOptimizationAdapter";
 
 interface ReportCardsProps {
   file: File | null;
@@ -446,7 +448,7 @@ export const ReportCards = memo(function ReportCards({
             iconColor: '#10b981',
             onClick: onVisualize,
           }] : []),
-          {
+          ...(isOrganic ? [] : [{
             key: 'policy',
             icon: ShieldCheck,
             name: 'Policy Check',
@@ -455,7 +457,7 @@ export const ReportCards = memo(function ReportCards({
             iconColor: '#f59e0b',
             onClick: onCheckPolicies,
             loading: policyLoading
-          },
+          }]),
           ...(onSafeZone ? [{
             key: 'safe_zone',
             icon: Shield,
@@ -467,7 +469,11 @@ export const ReportCards = memo(function ReportCards({
             loading: false,
           }] : []),
         ];
-        const colClass = tools.length === 4 ? 'grid-cols-4' : 'grid-cols-3';
+        const colClass =
+          tools.length >= 4 ? 'grid-cols-4'
+          : tools.length === 3 ? 'grid-cols-3'
+          : tools.length === 2 ? 'grid-cols-2'
+          : 'grid-cols-1';
         return (
           <div className="w-full">
             <div className={`grid ${colClass} gap-[12px]`}>
@@ -605,10 +611,26 @@ export const ReportCards = memo(function ReportCards({
       </motion.div>
 
       {/* ─── Platform Optimization (organic only) ─── */}
-      {isOrganic && (platformScores?.length || platformScoresLoading) && (
-        <motion.div 
-          initial={{ opacity: 0, y: 12 }} 
-          animate={{ opacity: 1, y: 0 }} 
+      {/* Static organic: new PlatformOptimizationCard (Figma 493:1439). */}
+      {/* Video organic: legacy PlatformScoreCard (unchanged). */}
+      {isOrganic && format === 'static' && (platformScores?.length ?? 0) > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: 'easeOut', delay: 0.12 }}
+          className="mx-4 mb-4"
+        >
+          <PlatformOptimizationCard
+            entries={toPlatformOptimizationEntries(
+              (platformScores ?? []) as OrganicPlatformScore[],
+            )}
+          />
+        </motion.div>
+      )}
+      {isOrganic && format !== 'static' && (platformScores?.length || platformScoresLoading) && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, ease: 'easeOut', delay: 0.12 }}
         >
           <PlatformScoreCard
