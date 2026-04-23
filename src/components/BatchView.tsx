@@ -206,7 +206,7 @@ function RankBatchLoadingView({ items, previewUrls, showStopLink, onRequestStopA
           </span>
         </div>
 
-        <div className="grid w-full grid-cols-2 gap-x-[31px] gap-y-8 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+        <div className="flex w-full flex-wrap items-start justify-center gap-x-[31px] gap-y-8">
           {items.map((item, i) => {
             const phase = rankItemLoadPhase(item);
             const name = sanitizeFileName(item.file.name);
@@ -218,7 +218,7 @@ function RankBatchLoadingView({ items, previewUrls, showStopLink, onRequestStopA
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05, duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-                className="flex flex-col items-center"
+                className="flex w-[min(100%,220px)] shrink-0 flex-col items-center"
               >
                 <div className="relative aspect-square w-full overflow-hidden rounded-[15.54px] border border-[rgba(255,255,255,0.06)] bg-[#c4c4c4]">
                   {item.format === "static" && previewUrls[item.id] ? (
@@ -664,6 +664,7 @@ export function BatchView() {
           onRequestStopAfterCurrent={() => {
             stopRequestedRef.current = true;
             setStopAfterCurrentUi(true);
+            setItems([]);
           }}
         />
         {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} t={t} />}
