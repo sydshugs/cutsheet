@@ -123,7 +123,8 @@ export const OrganicRightPanel = forwardRef<OrganicRightPanelHandle, OrganicRigh
         }`}
       >
         {showRightPanel && activeResult?.scores && rightTab === "analysis" && (
-          <div className="flex flex-col gap-[16px]">
+          // Figma 493:2051 — card stack sits in a ~33px horizontal gutter within the 430px rail.
+          <div className="flex flex-col gap-[16px] px-[33px]">
             <ScoreCard
               scores={activeResult.scores}
               hookDetail={activeResult.hookDetail}
