@@ -2,9 +2,9 @@
 
 > **For agentic workers:** This is the Pass 0 audit only. No code changes yet. Once Syd approves the gap analysis and pass structure below, each pass gets its own TDD-style task breakdown and commit. REQUIRED: wait for approval before starting Pass 1.
 
-**Goal:** Bring the shipped Organic Analyzer page (`src/pages/app/OrganicAnalyzer.tsx` + dependents) to visual parity with Figma node `456:2343` in file `IUp5N6pPMUJuAmbBG9ecDR` ("Organic"), covering both static and video upload states. This is a visual/layout parity pass — existing data flow, API endpoints, scoring pipeline, and business logic stay untouched.
+**Goal:** Bring the shipped Organic Analyzer page (`src/pages/app/OrganicAnalyzer.tsx` + dependents) to visual parity with Figma node `456:2343` in file `IUp5N6pPMUJuAmbBG9ecDR` ("Organic"), **STATIC variant only** (`493:1439` Organic-Static). The video variant (`493:3016` Organic-Video) is deferred to a future `figma-parity/organic-video` branch per Syd's "keep paid/organic sides separate, ship one variant per branch" rule. This is a visual/layout parity pass — existing data flow, API endpoints, scoring pipeline, and business logic stay untouched.
 
-**Architecture:** Single branch `figma-parity/organic` (currently on worktree branch `claude/brave-murdock-7c9d03`). Multiple sequential passes, each one commit, each ending in `npm run build` + `npm run lint`. Paid Analyzer is the primary byte-identity check target (`src/pages/app/PaidAdAnalyzer.tsx` and `src/components/paid/**` must not change).
+**Architecture:** Single branch `figma-parity/organic-static` (renamed from `claude/brave-murdock-7c9d03` — no push yet). Multiple sequential passes, each one commit, each ending in `npm run build` + `npm run lint`. Paid Analyzer is the primary byte-identity check target (`src/pages/app/PaidAdAnalyzer.tsx` and `src/components/paid/**` must not change).
 
 **Tech Stack:** React 19, Vite 6, TypeScript, Tailwind CSS v4, CVA + Radix, framer-motion, lucide-react. Design tokens in `src/styles/tokens.css`. Figma MCP for design context. No Next.js / no `use client` anywhere (Vite SPA).
 
@@ -15,7 +15,7 @@
 | Source | Reference | Status |
 |---|---|---|
 | Figma node `456:2343` "Organic" | `IUp5N6pPMUJuAmbBG9ecDR?node-id=456-2343` | ✅ pulled screenshot + metadata + variable defs |
-| Notion Page Build Spec | Not provided | ❌ **MISSING** — flagged below |
+| Notion Page Build Specs DB | `e4b423527d154616976db3ad2def852b` (collection `01ee6786-5cbb-4ed6-9be6-08cc75b8cb1d`) | ✅ searched — **no row exists for node `456:2343`**. The closest match ("Organic-Native Analysis + Score Consistency Fix", Build Order 5) is a prompt-engineering spec with `Figma Node: "(n/a — prompt engineering, not UI)"`. **Figma is sole source of truth for this pass.** |
 | Shipped page — entry | [`src/pages/app/OrganicAnalyzer.tsx`](src/pages/app/OrganicAnalyzer.tsx) (633 lines) | ✅ read in full |
 | Shipped page — empty state | [`src/components/organic/OrganicEmptyState.tsx`](src/components/organic/OrganicEmptyState.tsx) (77 lines) | ✅ read in full |
 | Shipped page — right panel | [`src/components/organic/OrganicRightPanel.tsx`](src/components/organic/OrganicRightPanel.tsx) (266 lines) | ✅ read in full |
@@ -200,35 +200,39 @@ Confirmed no-touch unless Syd explicitly approves:
 
 ---
 
-## 8. Proposed pass structure
+## 8. Proposed pass structure — STATIC-ONLY (6 passes)
+
+**Scope change from Pass 0 draft:** video-only sections (Hook Analysis timeline, Pacing & Retention, Sound-Off Check) deferred to a future `figma-parity/organic-video` branch per Syd's one-variant-per-branch rule. This plan now covers the 6 passes that produce a shippable Organic-Static variant.
 
 Each pass = one commit, ends with `npm run build` + `npm run lint`, then STOP for Syd's OK.
 
 | Pass | Gap refs | Scope | Rough effort | Type |
 |---|---|---|---|---|
-| 1 — Right panel: dimension labels + delta wiring + score range | §4 gaps 7, 8, 14 | Map `{hook, clarity, cta, production}` → `{Hook, Message, Visual, Brand}` via `dimensionOverrides` in `OrganicRightPanel`. Wire `overallDelta` + `scoreRange` props (values plumbed from `activeResult.scores`). Pure prop-wiring pass, no new components. | ~30 LOC in 1 file | Edit |
-| 2 — Right panel: extract Predicted Performance to sibling card | §4 gap 12 | Render `<PredictedPerformanceCard>` as a sibling of `<ScoreCard>` in `OrganicRightPanel` instead of inline inside ScoreCard. Remove `prediction` prop from the inner ScoreCard call if it ends up duplicated. Visual audit: match Figma's two-column stat strip + `What's driving this` collapsible. | ~50 LOC in 1–2 files | Edit + structural refactor |
-| 3 — Right panel: Sound-Off Check for video | §4 gap 13 | **Sub-step a:** move `src/components/paid/SoundOffChecklist.tsx` to `src/components/SoundOffChecklist.tsx` (shared location), update the two import sites in `PaidRightPanel.tsx`, byte-identity check that paid rendering is unchanged. **Sub-step b:** wire `soundOffResult` + `soundOffLoading` through `OrganicAnalyzer` → `OrganicRightPanel`, render when `organicFormat === "video"`. Requires calling `generateSoundOffCheck` service (already exists per paid wiring). | ~150 LOC + 1 file move | Move + wire |
-| 4 — Main column: 4-button action row | §4 gap 2 | Add action row component above existing `AnalyzerView` content: AI Rewrite (→ `handleFixIt`), Visualize (→ existing visualize path — **blocked if organic has no visualize** — confirm Q2), Policy Check (→ requires wiring new service — see Q3), Safe Zone (→ existing `onSafeZone`). | ~100 LOC + new component | New component + wiring |
-| 5 — Main column: Creative Verdict card | §4 gap 3 | Visual audit of existing `CreativeVerdictAndSecondEye.tsx` against Figma; adjust layout, tabs (All/Hierarchy/Typography/Layout/Contrast), badges, priority-fix banner. Render inside `AnalyzerView` or new `OrganicResultsMain` wrapper — TBD. | ~100–200 LOC | Edit (possible new wrapper) |
-| 6 — Main column: Platform Optimization card | §4 gap 5 | Audit existing `PlatformScoreCard` against Figma's 3-row layout with Quick Checks + Recommendations. Data already flows through `platformScores` state. Render below Creative Verdict in main column. | ~100–200 LOC | Edit + layout |
-| 7 — Main column: Hook Analysis timeline (VIDEO ONLY) | §4 gap 4 | Promote `HookAnalysisExpanded` from right-panel collapsible to main-column card; adjust layout to match Figma's time-range row structure. | ~100 LOC | Layout change |
-| 8 — Main column: Pacing & Retention card (VIDEO ONLY) | §4 gap 6 | **New component** `PacingRetentionCard.tsx`. Needs data: `scenes` with timestamps (already on `AnalysisResult`). Render retention curve (SVG with ticks 0/25/50/75/100%), avg scene duration stat, pacing verdict, drop-off risk copy. Likely reuses data from existing Gemini output. | ~250 LOC + new component | New component |
-| 9 — Final visual polish + Ad preview card | §4 gap 1 + 10 + 11 | Confirm Ad preview matches Figma, verify Hashtags count badge + Copy all, verify all collapsibles match Figma default states. Side-by-side screenshot compare. | ~50 LOC | Polish |
+| 1 — Right panel: dimension relabel + delta + score range | §4 gaps 7, 8, 14 | **Edit 1:** `src/components/ScoreHero.tsx:71` — change `ORGANIC_DIMENSIONS` from `['Hook', 'Message', 'Production', 'Shareability']` to `['Hook', 'Message', 'Visual', 'Brand']`. Add inline `// TODO(tech-debt):` comment documenting the pipeline rename (rename `cta` → `brand` and `production` → `visual` across `Scores` type, analyzerService parsing, Supabase schema). **Edit 2:** `OrganicRightPanel.tsx` — wire `overallDelta` + `overallDeltaLabel` + `scoreRange` props on the ScoreCard call (values computed from `activeResult.scores.overall` and `platformScores` — mirror `PaidRightPanel.tsx:247-253` pattern). | ~40 LOC in 2 files | Edit |
+| 2 — Right panel: extract Predicted Performance to sibling card | §4 gap 12 | Render `<PredictedPerformanceCard>` as a sibling of `<ScoreCard>` inside `OrganicRightPanel`, stacked with the `gap-[16px]` pattern used in `PaidRightPanel`. Pass `prediction={undefined}` into the inner ScoreCard so the inline version does not double-render. Visual audit: match Figma's two-column stat strip (`Conversion potential` / `Estimated conversion rate`) + `What's driving this` collapsible. | ~60 LOC in 1–2 files | Structural refactor |
+| 3 — Main column: 3-button action row (Visualize wired, Policy omitted) | §4 gap 2, Q2, Q3 | New `src/components/organic/OrganicActionRow.tsx`: **AI Rewrite** (→ `handleFixIt`), **Visualize** (→ existing visualize path, format-agnostic — requires flipping `canVisualize={false}` and wiring the entry point), **Safe Zone** (→ existing `onSafeZone` from `AnalyzerView`). Policy Check button is **omitted entirely** per Syd's Q3 answer. Render above the existing `AnalyzerView` content. | ~120 LOC + new component | New component + wiring |
+| 4 — Main column: Creative Verdict card (static) | §4 gap 3 | Visual audit of existing `CreativeVerdictAndSecondEye.tsx` against Figma's `CreativeVerdict_Design` (static) layout: "Fresh viewer perspective" subtitle, `Not ready` badge, "The Verdict" / "3 critical fixes" row, body paragraph, "Review" subsection with `PRIORITY FIX` banner, filter tabs (`All 3` · `Hierarchy` · `Typography` · `Layout` · `Contrast`), summary badge, 3 stacked HIGH PRIORITY rows. Render in main column via existing data in `activeResult`. | ~150 LOC | Edit (possible new wrapper) |
+| 5 — Main column: Platform Optimization card (static platforms) | §4 gap 5 | Audit existing `PlatformScoreCard.tsx` against Figma's 3-row static layout: `Meta Feed` EXCELLENT 7.8, `Instagram Feed` GOOD 6.9, `Pinterest` GOOD 5.2. Each row needs name + verdict badge + score + body paragraph + `QUICK CHECKS` chip group + `RECOMMENDATIONS` bullet list. Data already flows through `platformScores` state. Render below Creative Verdict in main column. | ~150 LOC | Edit + layout |
+| 6 — Main column: Ad preview card + final polish + screenshot compare | §4 gap 1, 10, 11 | Ad preview thumbnail row with filename + file size (right-aligned). Verify Hashtags count badge + `Copy all`, verify collapsibles match Figma default states. Capture screenshot via `preview_screenshot`, side-by-side compare vs Figma static frame at 100% zoom. | ~80 LOC | Polish |
+
+**Deferred to `figma-parity/organic-video` branch (do NOT execute here):**
+- Hook Analysis timeline (main column, video only)
+- Pacing & Retention card (main column, video only, new component)
+- Sound-Off Check (right panel, video only, requires extracting `SoundOffChecklist` out of `paid/`)
 
 ---
 
-## 9. Risks / items needing Syd's call before starting
+## 9. Pass 0 resolutions (from Syd's review)
 
-| ID | Risk | Why it matters | Options |
-|---|---|---|---|
-| **Q1** | Figma shows **no top-of-panel platform switcher pills** — only a `Meta` button inside ScoreCard header | Current organic right panel renders `platformSwitcher` pills via `OrganicRightPanel.tsx:165-173`. Removing or relocating this is a UX change, not pure visual parity. | **A:** Keep shipped pills (ignore Figma absence — treat as template artifact). **B:** Move platform selection into ScoreCard header as a dropdown (matches Figma literally). **C:** Ship both and toggle. |
-| **Q2** | Figma action row has a **Visualize button** | Organic currently sets `canVisualize={false}` (`OrganicRightPanel.tsx:141`). Visualize is disabled for organic. Matching Figma literally would require enabling Visualize for organic (or showing it disabled). | **A:** Add Visualize button, disabled with tooltip. **B:** Omit Visualize button (drop it from the 4-row). **C:** Enable Visualize for organic (scope creep, pipeline change). |
-| **Q3** | Figma action row has a **Policy Check button** | Organic does not currently wire Policy Check. Paid does. | **A:** Wire policy check through `OrganicAnalyzer` (requires same Claude service path as paid). **B:** Omit Policy Check button. |
-| **Q4** | I did not read `AnalyzerView.tsx` in Pass 0 | It's the current main-column renderer. Some gaps may already exist inside it that I haven't seen. | **A:** Read before Pass 1 starts. **B:** Proceed and read only when a pass needs it. — I recommend **A** (adds maybe 10 min to Pass 1). |
-| **Q5** | Figma dimension `Brand` does not cleanly map to existing `cta` score | Using `dimensionOverrides` to show "Brand" using the `cta` number will mislead users if `cta` measures something different. | **A:** Use `dimensionOverrides` and accept the semantic drift for now (fastest). **B:** Block on scoring-pipeline redesign (out of scope). **C:** Keep existing dimension labels Hook/Clarity/CTA/Production and treat this as a Figma mismatch the dev team accepts. |
-| **Q6** | No Notion Page Build Spec was provided | Template explicitly requires reading the spec before code. May contain exceptions or decisions that override the Figma (e.g. "we decided to keep the old Predicted Performance inline"). | **A:** Ship without Notion, Figma becomes sole source of truth. **B:** Pause until Syd provides spec or confirms there is none. — I recommend **B** for at least Q5 above, **A** otherwise. |
-| **Q7** | Worktree is on branch `claude/brave-murdock-7c9d03`, not `figma-parity/organic` as the template specifies | User's template expects a named branch per PR. | **A:** Rename branch before first implementation commit. **B:** Keep worktree branch, PR title/branch on merge become `figma-parity/organic`. — I recommend **B** since the worktree is already scoped. |
+| ID | Question | Resolution |
+|---|---|---|
+| **Q1** | Platform switcher pills above ScoreCard? | **Keep shipped pills** — Figma's lone `Meta` button is a template artifact; removing the pill row would be a UX regression without discoverable benefit. Investigated the Figma frame: the only platform control shown is a single `Meta` button inside the ScoreCard header (62×31px). No pill row or dropdown. Shipped `PlatformSwitcher` pills at `OrganicRightPanel.tsx:166-173` are preserved in every pass. |
+| **Q2** | Visualize button | **Add and wire** — format-agnostic. Pass 3 flips `canVisualize` from `false` to `true` and wires the Visualize path. |
+| **Q3** | Policy Check button | **Omit entirely** — action row collapses to 3 buttons: AI Rewrite · Visualize · Safe Zone. No policy-check plumbing touched. |
+| **Q4** | `AnalyzerView.tsx` not read in Pass 0 | **Read before Pass 3** (first pass that touches main column). Pass 1 + 2 touch only right-panel files, so AnalyzerView read is not blocking. |
+| **Q5** | `Brand` ↔ `cta` dimension mapping | **Option A — `dimensionOverrides` shim with inline tech-debt TODO.** Render-site audit result: **1 UI render site in parity scope** (`src/components/ScoreHero.tsx:71`, constant `ORGANIC_DIMENSIONS: [string, string, string, string] = ['Hook', 'Message', 'Production', 'Shareability']`). Fully localizable to one adapter — passes the <3 site threshold. Out-of-scope render sites (not touched): `ProgressCard.tsx:30` (loading animation), `ReportCover.tsx:227-230` (PDF export), `remotion/scenes/ScorecardScene.tsx:7-10` (Remotion video export), `analyzerService.ts:909-912` + `comparisonService.ts:25-28` (backend prompt strings). Pass 1 adds an inline `TODO(tech-debt)` comment at the shim site documenting the pipeline rename (`cta` → `brand`, `production` → `visual`) as a future backend pass. |
+| **Q6** | Notion Page Build Spec | **No matching row exists.** Page Build Specs DB (`collection://01ee6786-5cbb-4ed6-9be6-08cc75b8cb1d`) searched for "Organic analyzer page". Closest result ("Organic-Native Analysis + Score Consistency Fix", Build Order 5, Spec ready) is a prompt-engineering plan with `Figma Node: "(n/a — prompt engineering, not UI)"`. **Figma is sole source of truth for this pass.** |
+| **Q7** | Branch name | **Renamed** from `claude/brave-murdock-7c9d03` to `figma-parity/organic-static` (local only, no push). Confirmed via `git branch --show-current`. |
 
 ---
 
@@ -254,23 +258,19 @@ Before final PR (all passes complete):
 
 ---
 
-## 11. Open / blocking for review
+## 11. Remaining blockers before Pass 1
 
-**Before I start Pass 1, I need from Syd:**
-
-1. Answer to **Q5** (Brand ↔ CTA dimension label) — it's the only blocker that could require a full-pipeline rethink. Everything else is resolvable at dev time.
-2. Answer to **Q1–Q4, Q6, Q7** (below blocker level but each affects scope)
-3. Notion Page Build Spec URL if one exists; otherwise explicit confirmation that Figma is sole source of truth
-4. Confirmation of pass structure in §8 (or rewrite it)
-5. Confirmation of DO-NOT-TOUCH list in §7 (or add/remove items)
+All Q1–Q7 resolved per §9. Scope locked to static-only. Revised §8 pass structure (6 passes) awaits one last confirmation: **Syd's sign-off on §8 itself**, per the rule "paste the revised pass structure in chat for review before Pass 1."
 
 ---
 
 ## 12. Summary
 
-- Figma `456:2343` shows 2 variants × 6–7 sections each; the shipped page has ~3 of those sections, mostly in the right panel rather than the main column.
-- This is a **Type 2 structural refactor** by CLAUDE.md's classification (moving content between components/panels, adding new main-column cards), not a Type 1 polish pass.
-- Proposed: **9 passes**, each one commit, paid byte-identity preserved, plan doc committed as Chunk 0.
-- **Blocker:** the Figma dimension labels `Hook / Message / Visual / Brand` do not map cleanly to shipped `Hook / Clarity / CTA / Production`. Q5 must be resolved before Pass 1.
+- Figma `456:2343` contains 2 variants. **This plan covers the static variant only** (`493:1439`). Video variant deferred to `figma-parity/organic-video`.
+- Shipped Organic-Static currently has ~3 of 6 target sections, mostly in the right panel rather than the main column.
+- This is a **Type 2 structural refactor** by CLAUDE.md's classification.
+- **6 passes**, each one commit, paid byte-identity preserved.
+- Notion has no matching spec row; Figma is sole source of truth.
+- Q5 dimension-label shim is viable (1 render site, passes <3 threshold).
 
-**STOP here. Awaiting Syd's review.**
+**STOP here. Awaiting Syd's OK on §8 before starting Pass 1.**
