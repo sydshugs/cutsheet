@@ -31,6 +31,7 @@ import { getUserContext, formatUserContextBlock } from "../../services/userConte
 import { getSessionMemory } from "@/src/lib/userMemoryService";
 import type { AppSharedContext } from "../../components/AppLayout";
 import { OrganicRightPanel, type OrganicRightPanelHandle } from "../../components/organic/OrganicRightPanel";
+import { OrganicActionRow } from "../../components/organic/OrganicActionRow";
 import { getOrganicContextPrefix } from "../../components/organic/organicContextPrefix";
 
 const API_KEY = ""; // Gemini calls are now server-side via /api/analyze
@@ -367,7 +368,7 @@ export default function OrganicAnalyzer() {
   resetVisualizeRef.current = resetVisualize;
   void visualizeOpen; void setVisualizeOpen; void visualizeStatus; void visualizeResult;
   void visualizeError; void visualizeCreditData; void motionVideoUrl; void motionLoading;
-  void motionError; void motionSource; void visualizeMode; void handleVisualize;
+  void motionError; void motionSource; void visualizeMode;
   void handleMotionPreview; void handleAnimateVisualized; void handleAnimateOriginalFromPanel;
 
   // ── Read static image dimensions from file (stable deps — won't cancel on thumbnail changes) ──
@@ -603,7 +604,14 @@ export default function OrganicAnalyzer() {
                   <div className="pointer-events-none absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-violet-600/[0.08] blur-[100px]" />
                 </>
               )}
-              <div className="relative flex flex-col flex-1">
+              <div className="relative flex flex-col flex-1 gap-4">
+                {showRightPanel && activeResult?.scores && (
+                  <OrganicActionRow
+                    onFixIt={handleFixIt}
+                    onVisualize={handleVisualize}
+                    onSafeZone={showSafeZone ? () => setSafeZoneOpen(true) : undefined}
+                  />
+                )}
                 <AnalyzerView
                   file={file}
                   status={effectiveStatus}
